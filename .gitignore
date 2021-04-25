@@ -21,6 +21,8 @@
 .env.test.local
 .env.production.local
 .firebaseerc
+.imageRepository.js
+
 
 npm-debug.log*
 yarn-debug.log*
