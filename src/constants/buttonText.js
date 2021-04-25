@@ -1,0 +1,9 @@
+export const DUPLICATE = "duplicate";
+export const DELETE = "delete";
+export const YES = "yes";
+export const CANCEL = "cancel";
+export const EDIT = "edit";
+export const DISPLAY = "display";
+export const ACCOUNT = "account";
+export const SIGNOUT = "Abmelden";
+export const CHANGE_PASSWORD = "change_password";

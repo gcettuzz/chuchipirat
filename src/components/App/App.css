@@ -1,0 +1,74 @@
+.ribbon {
+  line-height: 0.8em;
+  font-size: 1.5em;
+  text-transform: uppercase;
+  text-align: center;
+  font-weight: bold;
+  text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.15);
+  letter-spacing: -2px;
+  display: block;
+  width: 4rem;
+  height: 4rem;
+  background: linear-gradient(to bottom, #999999 0%, #cccccc 100%);
+  color: white;
+  margin: 0 0.5em 0;
+  float: left;
+  padding-top: 1rem;
+  position: relative;
+  -webkit-filter: drop-shadow(0 0.5rem 0.3em rgba(0, 0, 0, 0.5));
+  transform: translate3d(0, 0, 0);
+}
+
+.ribbon::after {
+  content: "";
+  width: 0;
+  height: 0;
+  border-right: 2rem solid transparent;
+  border-left: 2rem solid transparent;
+  border-top: 1.5rem solid #cccccc;
+  position: absolute;
+  top: 4rem;
+  left: 0;
+}
+
+.ribbon--red {
+  background: #d32f2f;
+}
+.ribbon--red::after {
+  border-top: 1.5rem solid #d32f2f;
+}
+.ribbon--orange {
+  background: linear-gradient(to bottom, #e7711b 0%, #f7981d 100%);
+}
+.ribbon--orange::after {
+  border-top: 1.5rem solid #f7981d;
+}
+
+.ribbon--yellow {
+  background: linear-gradient(to bottom, #f1ca3a 0%, #f6eb3b 100%);
+}
+.ribbon--yellow::after {
+  border-top: 1.5rem solid #f6eb3b;
+}
+.ribbon--green {
+  background: linear-gradient(to bottom, #5f9654 0%, #65b045 100%);
+}
+
+.ribbon--green::after {
+  border-top: 1.5rem solid #65b045;
+}
+
+.ribbon--blue {
+  background: linear-gradient(to bottom, #1c91c0 0%, #11a9cc 100%);
+}
+.ribbon--blue::after {
+  border-top: 1.5rem solid #11a9cc;
+}
+
+.ribbon--purple {
+  background: linear-gradient(to bottom, #5c3292 0%, #7e3794 100%);
+}
+
+.ribbon--purple:after {
+  border-top: 1.5rem solid #7e3794;
+}

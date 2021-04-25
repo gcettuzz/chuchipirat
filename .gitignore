@@ -2,6 +2,9 @@
 
 # dependencies
 /node_modules
+/functions
+/cors
+/.VSCodeCounter
 /.pnp
 .pnp.js
 
@@ -17,7 +20,12 @@
 .env.development.local
 .env.test.local
 .env.production.local
+.firebaseerc
 
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Logs & cache
+*.log
+*.cache
