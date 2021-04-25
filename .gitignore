@@ -32,3 +32,4 @@ yarn-error.log*
 *.log
 *.cache
 imageRepository.js
+.firebaserc
