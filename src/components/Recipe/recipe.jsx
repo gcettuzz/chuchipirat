@@ -922,12 +922,18 @@ const RecipeBase = ({ props, authUser }) => {
   /* ------------------------------------------
   // Zutat - OnChange
   // ------------------------------------------ */
-  const onChangeIngredient = (event, newValue) => {
-    if (!event.target.id) {
+  const onChangeIngredient = (event, newValue, action, objectId) => {
+    let ingredientPos;
+
+    if (!event.target.id && action !== "clear") {
       return;
     }
 
-    let ingredientPos = event.target.id.split("_");
+    if (event.target.id) {
+      ingredientPos = event.target.id.split("_");
+    } else {
+      ingredientPos = objectId.split("_");
+    }
     ingredientPos[2] = ingredientPos[2].split("-")[0];
     let value;
 
@@ -943,7 +949,6 @@ const RecipeBase = ({ props, authUser }) => {
       setTriggeredIngredientPos(ingredientPos[2]);
       return;
     }
-
     if (ingredientPos[0] === "unit") {
       // Die Autocomplete Komponente liefert den Event anders zurück
       // hier wird die gewählte Option als -Option# zurückgegeben
@@ -952,10 +957,14 @@ const RecipeBase = ({ props, authUser }) => {
       // ingredientPos[1] = ingredientPos[1];
     } else if (ingredientPos[0] === "product") {
       // Nur Produkte, die wir kennen (und somit eine UID haben)
-      if (!newValue || !newValue.uid) {
+      if (action !== "clear" && (!newValue || !newValue.uid)) {
         return;
       }
-      value = { uid: newValue.uid, name: newValue.name };
+      if (!newValue) {
+        value = { uid: "", name: "" };
+      } else {
+        value = { uid: newValue.uid, name: newValue.name };
+      }
     } else {
       value = event.target.value;
     }
@@ -1059,13 +1068,13 @@ const RecipeBase = ({ props, authUser }) => {
         });
         break;
       case "delete":
-        newList = Recipe.deleteEntry(
-          oldList,
-          parseInt(pressedButton[2]),
-          "pos",
-          newObject,
-          "pos"
-        );
+        newList = Recipe.deleteEntry({
+          array: oldList,
+          fieldValue: parseInt(pressedButton[2]),
+          fieldName: "pos",
+          emptyObject: newObject,
+          renumberByField: "pos",
+        });
         break;
       case "up":
         newList = Recipe.moveArrayEntryUp({
@@ -1121,6 +1130,7 @@ const RecipeBase = ({ props, authUser }) => {
       payload: newComments,
     });
   };
+
   /* ------------------------------------------
   // ================= AUSGABE ================
   // ------------------------------------------ */
@@ -1930,11 +1940,18 @@ const IngredientPosition = ({
               autoHighlight
               getOptionSelected={(unit) => unit === ingredient.unit}
               getOptionLabel={(unit) => unit}
-              onChange={onChangeIngredient}
+              onChange={(event, newValue, action) =>
+                onChangeIngredient(
+                  event,
+                  newValue,
+                  action,
+                  "unit_" + ingredient.uid + "_" + ingredient.pos
+                )
+              }
               fullWidth
               renderInput={(params) => (
                 <TextField
-                  value={ingredient.unit}
+                  // value={ingredient.unit}
                   {...params}
                   label={TEXT.FIELD_UNIT}
                   size="small"
@@ -1993,7 +2010,14 @@ const IngredientPosition = ({
                 }
                 return option.name;
               }}
-              onChange={onChangeIngredient}
+              onChange={(event, newValue, action) =>
+                onChangeIngredient(
+                  event,
+                  newValue,
+                  action,
+                  "product_" + ingredient.uid + "_" + ingredient.pos
+                )
+              }
               fullWidth
               filterOptions={(options, params) => {
                 const filtered = filter(options, params);

@@ -95,9 +95,7 @@ export default class Recipe {
         !ingredient.product.uid &&
         (ingredient.quantity || ingredient.unit || ingredient.product.name)
       ) {
-        throw new Error(
-          TEXT.ERROR_PRODUCT_WIHTOUT_UID(ingredient.product.name)
-        );
+        throw new Error(TEXT.ERROR_POS_WITHOUT_PRODUCT(ingredient.pos));
       }
     });
   }
@@ -134,6 +132,17 @@ export default class Recipe {
     } catch (error) {
       throw error;
     }
+
+    // Zutaten und Zubereitung nochmals Positionen nummerieren
+    recipe.ingredients = Utils.renumberArray({
+      array: recipe.ingredients,
+      field: "pos",
+    });
+    recipe.preparationSteps = Utils.renumberArray({
+      array: recipe.preparationSteps,
+      field: "pos",
+    });
+
     // Genutzte Produkte sammeln (damit diese auch wieder gefunden werden)
     recipe.ingredients.forEach((ingredient) =>
       usedProducts.push(ingredient.product.uid)
@@ -347,13 +356,13 @@ export default class Recipe {
   /* =====================================================================
   // Eintrag in Array löschen
   // ===================================================================== */
-  static deleteEntry(
+  static deleteEntry({
     array,
     fieldValue,
     fieldName,
     emptyObject,
-    renumberByField
-  ) {
+    renumberByField,
+  }) {
     array = array.filter((entry) => entry[fieldName] !== fieldValue);
 
     if (array.length === 0) {
