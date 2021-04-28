@@ -1442,7 +1442,7 @@ const ImagePanel = ({
           <Grid item key={"grid_imageUpload"} xs={12}>
             <React.Fragment>
               <input
-                accept="image/jpg"
+                accept="image/*"
                 className={classes.inputFileUpload}
                 id="icon-button-file"
                 type="file"
