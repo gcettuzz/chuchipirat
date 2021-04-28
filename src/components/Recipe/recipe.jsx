@@ -1935,7 +1935,7 @@ const IngredientPosition = ({
               id={"unit_" + ingredient.uid + "_" + ingredient.pos}
               value={ingredient.unit}
               options={units}
-              autoSelect
+              autoSelect={!ingredient.unit}
               autoHighlight
               getOptionSelected={(unit) => unit === ingredient.unit}
               getOptionLabel={(unit) => unit}
