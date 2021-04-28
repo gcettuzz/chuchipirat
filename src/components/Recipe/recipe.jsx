@@ -1527,7 +1527,7 @@ const InfoPanel = ({ recipe, editMode, onChange }) => {
               icon={<BookmarkIcon fontSize="small" />}
               editMode={editMode}
               onChange={onChange}
-              isLink={true}
+              isLink={Utils.isUrl(recipe.source)}
             />
             <FormListItem
               id={"preparationTime"}
@@ -1736,7 +1736,6 @@ const FormListItem = ({
   onClick,
 }) => {
   const classes = useStyles();
-
   return (
     <React.Fragment>
       <ListItem key={"listItem_" + id}>
