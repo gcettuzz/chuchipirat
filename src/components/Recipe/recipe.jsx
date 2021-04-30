@@ -241,7 +241,7 @@ const recipeReducer = (state, action) => {
           state._loadingUnits,
           state._loadingDepartments
         ),
-        _loadingRecipeHead: false,
+        _loadingRecipe: false,
         isError: false,
       };
     case REDUCER_ACTIONS.RECIPE_SET_PROPS:
@@ -1084,7 +1084,7 @@ const RecipeBase = ({ props, authUser }) => {
       payload: newComments,
     });
   };
-
+  console.log(recipe);
   /* ------------------------------------------
   // ================= AUSGABE ================
   // ------------------------------------------ */

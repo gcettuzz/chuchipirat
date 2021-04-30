@@ -238,7 +238,7 @@ export default class Recipe {
       });
     }
 
-    if (triggerCloudfunction) {
+    if (triggerCloudfunction && !newRecipe) {
       firebase.createTriggerDocForCloudFunctions({
         docRef: firebase.cloudFunctions_recipe().doc(),
         uid: recipe.uid,
@@ -247,6 +247,13 @@ export default class Recipe {
       });
     }
 
+    // sicherstellen, dass mindestens eine Postion in Zutaten und Zubereitungsschritte vorhanden ist
+    if (recipe.ingredients.length === 0) {
+      recipe.ingredients.push(Recipe.createEmptyIngredient());
+    }
+    if (recipe.preparationSteps.length === 0) {
+      recipe.preparationSteps.push(Recipe.createEmptyPreparationStep());
+    }
     return recipe;
   }
   /* =====================================================================
@@ -474,6 +481,14 @@ export default class Recipe {
         recipe = snapshot.data();
         recipe.uid = uid;
         recipe.createdAt = recipe.createdAt.toDate();
+
+        // sicherstellen, dass mindestens eine Postion in Zutaten und Zubereitungsschritte vorhanden ist
+        if (recipe.ingredients.length === 0) {
+          recipe.ingredients.push(Recipe.createEmptyIngredient());
+        }
+        if (recipe.preparationSteps.length === 0) {
+          recipe.preparationSteps.push(Recipe.createEmptyPreparationStep());
+        }
       })
       .then(async () => {
         // Bewertung holen
