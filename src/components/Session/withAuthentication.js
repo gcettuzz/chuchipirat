@@ -15,6 +15,7 @@ const withAuthentication = (Component) => {
     }
 
     componentDidMount() {
+      console.warn("=== didMount ===");
       this.listener = this.props.firebase.onAuthUserListener(
         (authUser) => {
           localStorage.setItem(
@@ -31,7 +32,7 @@ const withAuthentication = (Component) => {
     }
 
     componentWillUnmount() {
-      // this.listener();
+      this.listener();
     }
 
     render() {

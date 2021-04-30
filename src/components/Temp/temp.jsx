@@ -4,7 +4,8 @@ import { compose } from "recompose";
 import Typography from "@material-ui/core/Typography";
 
 import Button from "@material-ui/core/Button";
-
+import Input from "@material-ui/core/Input";
+import Link from "@material-ui/core/Link";
 import * as ROLES from "../../constants/roles";
 
 import { withFirebase } from "../Firebase";
@@ -13,7 +14,6 @@ import {
   withAuthorization,
   withEmailVerification,
 } from "../Session";
-import users from "../User/users";
 
 const Temp = (props) => {
   return (
@@ -26,82 +26,18 @@ const Temp = (props) => {
 const TempBase = ({ props, authUser }) => {
   const firebase = props.firebase;
 
-  const [dbError, setDbError] = React.useState();
-  const doRequest = () => {
-    // var xhttp = new XMLHttpRequest();
-    // xhttp.onreadystatechange = function () {
-    //   if (this.readyState == 4 && this.status == 200) {
-    //     alert(this.responseText);
-    //   }
-    // };
-    // xhttp.open(
-    //   "POST",
-    //   "https://maker.ifttt.com/trigger/chuchipirat_user_created/with/key/bDl9vn7PMDEUwlwEsiVDjU",
-    //   true
-    // );
-    // xhttp.setRequestHeader("Content-type", "application/json");
-    // xhttp.send({ value1: "Gio", value2: "42" });
+  const [recipeUid, setRecipeUid] = React.useState("");
 
-    fetch(
-      "https://maker.ifttt.com/trigger/chuchipirat_user_created/with/key/bDl9vn7PMDEUwlwEsiVDjU?value1=xyz&value2=13",
-      // "https://maker.ifttt.com/trigger/chuchipirat_user_created/with/key/bDl9vn7PMDEUwlwEsiVDjU",
-      {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        // body: JSON.stringify({
-        //   value1: "Gio",
-        //   value2: "42",
-        // }),
-      }
-    );
+  const onInputChange = (event) => {
+    setRecipeUid(event.target.value);
   };
 
-  // Index docs_collectionGroup usedProducts
-  const shoppingList_docs_usedProducts = async () => {
-    const menuplan = firebase.event_docs_collectionGroup();
-
-    await menuplan
-      .where("usedProducts", "array-contains", "i58ib4CpQcRGetDLvt3J")
-      .get()
-      .then((snapshot) => {
-        snapshot.forEach((document) => {
-          console.log(document.ref.parent.parent.id);
-          console.log(document.id);
-        });
-      })
-      .catch((error) => {
-        console.error(error);
-        setDbError(error);
-        throw error;
-      });
-  };
-  const recipe_details_usedProducts = async () => {
-    const recipe = firebase.recipe_details_collectionGroup();
-
-    await recipe
-      .where("usedProducts", "array-contains", "i58ib4CpQcRGetDLvt3J")
-      .get()
-      .then((snapshot) => {
-        snapshot.forEach((document) => {
-          console.log(document.ref.parent.parent.id);
-          console.log(document.id);
-        });
-      })
-      .catch((error) => {
-        console.error(error);
-        setDbError(error);
-        throw error;
-      });
-  };
-
-  const shoppingList_docs_createdFromUid = async () => {
+  //FIXME: prüfen
+  const menuplan_usedRecipes_index = async () => {
     const menuplans = firebase.event_docs_collectionGroup();
 
     await menuplans
-      .where("createdFromUid", "==", "tasT02c6mxOWDstBdvwzjbs5Tfc2")
+      .where("usedRecipes", "array-contains", "h5VqrDq8g4Vn6wdekLpg")
       .get()
       .then((snapshot) => {
         snapshot.forEach((document) => {
@@ -111,64 +47,59 @@ const TempBase = ({ props, authUser }) => {
       })
       .catch((error) => {
         console.error(error);
-        setDbError(error);
         throw error;
       });
   };
 
-  const shoppingList_docs_generatedFromUid = async () => {
-    const shoppingLists = firebase.event_docs_collectionGroup();
+  const remodelRecipes = async () => {
+    if (!recipeUid) {
+      return;
+    }
 
-    await shoppingLists
-      .where("generatedFromUid", "==", "tasT02c6mxOWDstBdvwzjbs5Tfc2")
+    let recipeHead = {};
+    let recipeDetails = {};
+    let recipeDocRef;
+    let recipeDetailsDocRef;
+    let allRecipes = {};
+    let recipe = {};
+    let recipes = [];
+
+    const recipesRef = firebase.recipe(recipeUid);
+    await recipesRef
       .get()
-      .then((snapshot) => {
-        snapshot.forEach((document) => {
-          console.log(document.ref.parent.parent.id);
-          console.log(document.id);
+      .then(async (snapshot) => {
+        recipeHead = snapshot.data();
+      })
+      .then(async () => {
+        recipeDetailsDocRef = firebase.recipe_details(recipeUid);
+        await recipeDetailsDocRef.get().then((snapshot) => {
+          recipeDetails = snapshot.data();
         });
       })
-      .catch((error) => {
-        console.error(error);
-        setDbError(error);
-        throw error;
-      });
-  };
-
-  const shoppingList_docs_lastChangeFromUid = async () => {
-    const menuplans = firebase.event_docs_collectionGroup();
-
-    await menuplans
-      .where("lastChangeFromUid", "==", "tasT02c6mxOWDstBdvwzjbs5Tfc2")
-      .get()
-      .then((snapshot) => {
-        snapshot.forEach((document) => {
-          console.log(document.ref.parent.parent.id);
-          console.log(document.id);
+      .then(() => {
+        recipe = { ...recipeHead, ...recipeDetails };
+        delete recipe.searchString;
+        console.log(recipe);
+        // Hier updaten
+        recipeDocRef = firebase.recipe(recipeUid);
+        recipeDocRef.set(recipe);
+      })
+      .then(() => {
+        let allRecipesDocRef = firebase.allRecipes();
+        allRecipesDocRef.update({
+          [recipeUid]: {
+            name: recipe.name,
+            pictureSrc: recipe.pictureSrcFullSize,
+            tags: recipe.tags,
+          },
         });
       })
-      .catch((error) => {
-        console.error(error);
-        setDbError(error);
-        throw error;
-      });
-  };
-
-  const user_public_email = async () => {
-    const users = firebase.public_CollectionGroup();
-
-    await users
-      .where("email", "==", "hallo@chuchipirat.ch")
-      .get()
-      .then((snapshot) => {
-        snapshot.forEach((document) => {
-          console.log(document.ref.parent.parent.id);
-          console.log(document.id);
-        });
+      .then(() => {
+        console.log(allRecipes);
       })
+
       .catch((error) => {
         console.error(error);
-        setDbError(error);
         throw error;
       });
   };
@@ -176,26 +107,29 @@ const TempBase = ({ props, authUser }) => {
   return (
     <React.Fragment>
       <Typography variant="h1">TEMP</Typography>
+      <Input
+        id={"input"}
+        value={recipeUid}
+        // fullWidth={true}
+        autoFocus
+        autoComplete="off"
+        onChange={onInputChange}
+      />
+      <Button onClick={remodelRecipes}>Rezepte neu aufbauen</Button>
 
-      {dbError && <Typography color="error">{dbError?.message}</Typography>}
-
-      <Button onClick={shoppingList_docs_usedProducts}>
-        shoppingList_docs_usedProducts
+      <Button onClick={menuplan_usedRecipes_index}>
+        menuplan_usedRecipes_index
       </Button>
-      <Button onClick={shoppingList_docs_createdFromUid}>
-        shoppingList_docs_createdFromUid
-      </Button>
-      <Button onClick={shoppingList_docs_generatedFromUid}>
-        shoppingList_docs_generatedFromUid
-      </Button>
-      <Button onClick={shoppingList_docs_lastChangeFromUid}>
-        shoppingList_docs_lastChangeFromUid
-      </Button>
-      <Button onClick={recipe_details_usedProducts}>
-        recipe_details_usedProducts
-      </Button>
-      <Button onClick={doRequest}>doRequest</Button>
-      <Button onClick={user_public_email}>user_public_email</Button>
+      <br></br>
+      <Link
+        component="button"
+        variant="h6"
+        // color="inherit"
+        underline="none"
+        onClick={() => alert("click")}
+      >
+        {"test"}
+      </Link>
     </React.Fragment>
   );
 };

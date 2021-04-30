@@ -95,22 +95,23 @@ export default class Recipe {
         !ingredient.product.uid &&
         (ingredient.quantity || ingredient.unit || ingredient.product.name)
       ) {
-        throw new Error(
-          TEXT.ERROR_PRODUCT_WIHTOUT_UID(ingredient.product.name)
-        );
+        throw new Error(TEXT.ERROR_POS_WITHOUT_PRODUCT(ingredient.pos));
       }
     });
   }
   /* =====================================================================
   // Daten in Firebase SPEICHERN
   // ===================================================================== */
-  static async save({ firebase, recipe, authUser }) {
+  static async save({
+    firebase,
+    recipe,
+    authUser,
+    triggerCloudfunction = false,
+  }) {
     //NEXT_FEATURE: Untescheiden zwischen Rezept und Anpassung für Event
     let newRecipe = false;
     let docRef = null;
     let usedProducts = [];
-
-    let searchString = Utils.createSearchStringArray(recipe.name);
 
     // Falls leere Einträge vorhanden, diese entfernen
     recipe.ingredients = recipe.ingredients.filter((ingredient) => {
@@ -134,12 +135,23 @@ export default class Recipe {
     } catch (error) {
       throw error;
     }
+
+    // Zutaten und Zubereitung nochmals Positionen nummerieren
+    recipe.ingredients = Utils.renumberArray({
+      array: recipe.ingredients,
+      field: "pos",
+    });
+    recipe.preparationSteps = Utils.renumberArray({
+      array: recipe.preparationSteps,
+      field: "pos",
+    });
+
     // Genutzte Produkte sammeln (damit diese auch wieder gefunden werden)
     recipe.ingredients.forEach((ingredient) =>
       usedProducts.push(ingredient.product.uid)
     );
 
-    //Ingredients: sicherstellen, dass Nummerische Werte auch so gespeichert werden
+    //Zutaten: sicherstellen, dass Nummerische Werte auch so gespeichert werden
     recipe.ingredients.forEach((ingredient) => {
       ingredient.quantity = parseFloat(ingredient.quantity);
       ingredient.scalingFactor = parseFloat(ingredient.scalingFactor);
@@ -170,34 +182,32 @@ export default class Recipe {
         lastChangeFromUid: authUser.uid,
         lastChangeFromDisplayName: authUser.publicProfile.displayName,
         lastChangeAt: firebase.timestamp.fromDate(new Date()),
-        searchString: searchString,
+        usedProducts: usedProducts,
+        portions: recipe.portions,
+        source: recipe.source,
+        preparationTime: recipe.preparationTime,
+        restTime: recipe.restTime,
+        cookTime: recipe.cookTime,
+        tags: recipe.tags,
+        note: recipe.note,
+        ingredients: recipe.ingredients,
+        preparationSteps: recipe.preparationSteps,
+        rating: {
+          avgRating: recipe.rating.avgRating,
+          noRatings: recipe.rating.noRatings,
+        },
       })
       .then(() => {
-        // Details zu Rezept erstellen
-        const newSubRef = firebase.recipe_details(recipe.uid);
-        newSubRef
-          .set({
-            usedProducts: usedProducts,
-            portions: recipe.portions,
-            source: recipe.source,
-            preparationTime: recipe.preparationTime,
-            restTime: recipe.restTime,
-            cookTime: recipe.cookTime,
+        // Update aller Rezepte
+        let allRecipesDocRef = firebase.allRecipes();
+        allRecipesDocRef.update({
+          [recipe.uid]: {
+            name: recipe.name,
+            pictureSrc: recipe.pictureSrcFullSize,
             tags: recipe.tags,
-            note: recipe.note,
-            ingredients: recipe.ingredients,
-            preparationSteps: recipe.preparationSteps,
-            rating: {
-              avgRating: recipe.rating.avgRating,
-              noRatings: recipe.rating.noRatings,
-            },
-          })
-          .catch((error) => {
-            console.error(error);
-            throw error;
-          });
+          },
+        });
       })
-
       .catch((error) => {
         console.error(error);
         throw error;
@@ -223,21 +233,29 @@ export default class Recipe {
         feedType: FEED_TYPE.RECIPE_CREATED,
         objectUid: recipe.uid,
         text: recipe.name,
+        objectName: recipe.name,
+        objectPictureSrc: recipe.pictureSrc,
       });
     }
 
+    if (triggerCloudfunction && !newRecipe) {
+      firebase.createTriggerDocForCloudFunctions({
+        docRef: firebase.cloudFunctions_recipe().doc(),
+        uid: recipe.uid,
+        newValue: recipe.name,
+        newValue2: recipe.pictureSrc,
+      });
+    }
+
+    // sicherstellen, dass mindestens eine Postion in Zutaten und Zubereitungsschritte vorhanden ist
+    if (recipe.ingredients.length === 0) {
+      recipe.ingredients.push(Recipe.createEmptyIngredient());
+    }
+    if (recipe.preparationSteps.length === 0) {
+      recipe.preparationSteps.push(Recipe.createEmptyPreparationStep());
+    }
     return recipe;
   }
-  /* =====================================================================
-  // Statistik hochzählen
-  // ===================================================================== */
-  // static addOneRecipeToStats(firebase) {
-  //   // Stats
-  //   return firebase.stats_recipe().set({
-  //     // noRecipes: firebase.serverValue.increment(1),
-  //     noRecipes: firebase.fieldValue.increment(1),
-  //   });
-  // }
   /* =====================================================================
   // Bild in Firebase Storage hochladen
   // ===================================================================== */
@@ -290,27 +308,26 @@ export default class Recipe {
           lastChangeAt: firebase.timestamp.fromDate(new Date()),
         });
       })
+      .then(() => {
+        // CloudFunction Triggern
+        firebase.createTriggerDocForCloudFunctions({
+          docRef: firebase.cloudFunctions_recipe().doc(),
+          uid: recipe.uid,
+          newValue: recipe.name,
+          newValue2: recipe.pictureSrc,
+        });
+      })
       .catch((error) => {
         console.error(error);
         throw error;
       });
     // Analytik
-    firebase.analytics.logEvent(FIREBASE_EVENTS.UPLOAD_PICTRE, {
+    firebase.analytics.logEvent(FIREBASE_EVENTS.UPLOAD_PICTURE, {
       folder: "recipes",
     });
 
     return recipe.pictureSrc;
   }
-  /* =====================================================================
-  // Rating zu Rezept setzen 
-  // ===================================================================== */
-  // static setRating = async (firebase, uid, rating, authUser, isNew) => {
-  //   // Globales Rating setzen
-  //   const docRef = firebase.recipe(uid);
-
-  //   // firebase;
-
-  // };
   /* =====================================================================
   // Leeres Objket Zutat erzeugen
   // ===================================================================== */
@@ -347,13 +364,13 @@ export default class Recipe {
   /* =====================================================================
   // Eintrag in Array löschen
   // ===================================================================== */
-  static deleteEntry(
+  static deleteEntry({
     array,
     fieldValue,
     fieldName,
     emptyObject,
-    renumberByField
-  ) {
+    renumberByField,
+  }) {
     array = array.filter((entry) => entry[fieldName] !== fieldValue);
 
     if (array.length === 0) {
@@ -384,95 +401,127 @@ export default class Recipe {
     array = Utils.renumberArray({ array: array, field: renumberByField });
     return array;
   }
+  /* =====================================================================
+  // Liste aller Rezepte holen
+  // ===================================================================== */
+  static getRecipes = async ({ firebase }) => {
+    let allRecipes;
+    const allRecipesDocRef = firebase.allRecipes();
 
+    await allRecipesDocRef
+      .get()
+      .then((snapshot) => {
+        allRecipes = snapshot.data();
+      })
+      .catch((error) => {
+        console.log(error);
+        throw error;
+      });
+
+    return allRecipes;
+  };
   /* =====================================================================
   // Rezepte aus der DB suchen
   // ===================================================================== */
   static async searchRecipes({ firebase, searchString, lastPaginationName }) {
-    let recipes = [];
-    let recipe = {};
-    let snapshot = {};
-
-    const recipesRef = firebase.recipes();
-
-    if (!lastPaginationName) {
-      // Die ersten Einträge holen (ohne Pagination)
-      snapshot = await recipesRef
-        .orderBy("name", "asc")
-        .where("searchString", "array-contains", searchString.toLowerCase())
-        .limit(DEFAULT_VALUES.RECIPES_SEARCH)
-        .get()
-        .catch((error) => {
-          console.error(error);
-          throw error;
-        });
-    } else {
-      // Die nächsten Einträge holen (mit Pagination)
-      snapshot = await recipesRef
-        .orderBy("name", "asc")
-        .where("searchString", "array-contains", searchString.toLowerCase())
-        .limit(DEFAULT_VALUES.RECIPES_SEARCH)
-        .startAfter(lastPaginationName)
-        .get()
-        .catch((error) => {
-          console.error(error);
-          throw error;
-        });
-    }
-    snapshot.forEach((obj) => {
-      recipe = obj.data();
-      recipe.uid = obj.id;
-      //   // Timestamp umwandeln
-      recipe.createdAt = recipe.createdAt.toDate();
-      recipes.push(recipe);
-    });
-
-    firebase.analytics.logEvent(FIREBASE_EVENTS.RECIPE_SEARCH, {
-      searchString: searchString,
-    });
-
-    return recipes;
+    // let recipes = [];
+    // let recipe = {};
+    // let snapshot = {};
+    // const recipesRef = firebase.recipes();
+    // if (!lastPaginationName) {
+    //   // Die ersten Einträge holen (ohne Pagination)
+    //   snapshot = await recipesRef
+    //     .orderBy("name", "asc")
+    //     .where("searchString", "array-contains", searchString.toLowerCase())
+    //     .limit(DEFAULT_VALUES.RECIPES_SEARCH)
+    //     .get()
+    //     .catch((error) => {
+    //       console.error(error);
+    //       throw error;
+    //     });
+    // } else {
+    //   // Die nächsten Einträge holen (mit Pagination)
+    //   snapshot = await recipesRef
+    //     .orderBy("name", "asc")
+    //     .where("searchString", "array-contains", searchString.toLowerCase())
+    //     .limit(DEFAULT_VALUES.RECIPES_SEARCH)
+    //     .startAfter(lastPaginationName)
+    //     .get()
+    //     .catch((error) => {
+    //       console.error(error);
+    //       throw error;
+    //     });
+    // }
+    // snapshot.forEach((obj) => {
+    //   recipe = obj.data();
+    //   recipe.uid = obj.id;
+    //   //   // Timestamp umwandeln
+    //   recipe.createdAt = recipe.createdAt.toDate();
+    //   recipes.push(recipe);
+    // });
+    // firebase.analytics.logEvent(FIREBASE_EVENTS.RECIPE_SEARCH, {
+    //   searchString: searchString,
+    // });
+    // return recipes;
   }
   /* =====================================================================
-  // Rezeptkopf lesen
+  // Rezept lesen
   // ===================================================================== */
-  static getRecipeHead = async (firebase, uid) => {
-    let recipeHead = {};
+  static getRecipe = async ({ firebase, uid, userUid }) => {
+    let recipe = {};
+
+    if (!firebase || !uid || !userUid) {
+      throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
+    }
 
     const recipeRef = firebase.recipe(uid);
     await recipeRef
       .get()
       .then((snapshot) => {
-        recipeHead = snapshot.data();
-        recipeHead.uid = snapshot.id;
-        recipeHead.createdAt = recipeHead.createdAt.toDate();
-      })
-      .catch((error) => {
-        console.error(error);
-        throw error;
-      });
-    return recipeHead;
-  };
-  /* =====================================================================
-  // Rezeptdetails lesen
-  // ===================================================================== */
-  static getRecipeDetails = async ({ firebase, uid, userUid }) => {
-    let recipeDetails = {};
-    const recipeRef = firebase.recipe_details(uid);
+        recipe = snapshot.data();
+        recipe.uid = uid;
+        recipe.createdAt = recipe.createdAt.toDate();
 
-    await recipeRef
-      .get()
-      .then(async (snapshot) => {
-        recipeDetails = snapshot.data();
+        // sicherstellen, dass mindestens eine Postion in Zutaten und Zubereitungsschritte vorhanden ist
+        if (recipe.ingredients.length === 0) {
+          recipe.ingredients.push(Recipe.createEmptyIngredient());
+        }
+        if (recipe.preparationSteps.length === 0) {
+          recipe.preparationSteps.push(Recipe.createEmptyPreparationStep());
+        }
+      })
+      .then(async () => {
         // Bewertung holen
         const ratingRef = firebase.recipe_ratings_user(uid, userUid);
-
         await ratingRef.get().then((snapshot) => {
           if (snapshot && snapshot.exists) {
-            recipeDetails.rating.myRating = snapshot.data()["rating"];
+            recipe.rating.myRating = snapshot.data()["rating"];
           } else {
-            recipeDetails.rating.myRating = 0;
+            recipe.rating.myRating = 0;
           }
+        });
+      })
+      .then(async () => {
+        //Kommentare holen
+        let comment;
+        recipe.comments = [];
+        const commentsRef = firebase.recipe_comments(uid);
+
+        const snapshot = await commentsRef
+          .orderBy("createdAt", "desc")
+          .limit(DEFAULT_VALUES.COMMENT_DISPLAY)
+          .get()
+          .catch((error) => {
+            console.error(error);
+            throw error;
+          });
+
+        snapshot.forEach((obj) => {
+          comment = obj.data();
+          comment.uid = obj.id;
+          //   // Timestamp umwandeln
+          comment.createdAt = comment.createdAt.toDate();
+          recipe.comments.unshift(comment);
         });
       })
       .catch((error) => {
@@ -480,34 +529,57 @@ export default class Recipe {
         throw error;
       });
 
-    //Kommentare holen
-    let comment;
-    recipeDetails.comments = [];
-    const commentsRef = firebase.recipe_comments(uid);
-
-    const snapshot = await commentsRef
-      .orderBy("createdAt", "desc")
-      .limit(DEFAULT_VALUES.COMMENT_DISPLAY)
-      .get()
-      .catch((error) => {
-        console.error(error);
-        throw error;
-      });
-
-    snapshot.forEach((obj) => {
-      comment = obj.data();
-      comment.uid = obj.id;
-      //   // Timestamp umwandeln
-      comment.createdAt = comment.createdAt.toDate();
-      recipeDetails.comments.unshift(comment);
-    });
-
-    return recipeDetails;
+    return recipe;
   };
   /* =====================================================================
-  // Mehrere Rezept-Details aus der DB suchen
+  // Rezeptdetails lesen
   // ===================================================================== */
-  static getMultipleRecipeDetails = async ({ firebase, uids = [] }) => {
+  // static getRecipeDetails = async ({ firebase, uid, userUid }) => {
+  // let recipeDetails = {};
+  // const recipeRef = firebase.recipe_details(uid);
+  // await recipeRef
+  //   .get()
+  //   .then(async (snapshot) => {
+  //     recipeDetails = snapshot.data();
+  //     // Bewertung holen
+  //     const ratingRef = firebase.recipe_ratings_user(uid, userUid);
+  //     await ratingRef.get().then((snapshot) => {
+  //       if (snapshot && snapshot.exists) {
+  //         recipeDetails.rating.myRating = snapshot.data()["rating"];
+  //       } else {
+  //         recipeDetails.rating.myRating = 0;
+  //       }
+  //     });
+  //   })
+  //   .catch((error) => {
+  //     console.error(error);
+  //     throw error;
+  //   });
+  // //Kommentare holen
+  // let comment;
+  // recipeDetails.comments = [];
+  // const commentsRef = firebase.recipe_comments(uid);
+  // const snapshot = await commentsRef
+  //   .orderBy("createdAt", "desc")
+  //   .limit(DEFAULT_VALUES.COMMENT_DISPLAY)
+  //   .get()
+  //   .catch((error) => {
+  //     console.error(error);
+  //     throw error;
+  //   });
+  // snapshot.forEach((obj) => {
+  //   comment = obj.data();
+  //   comment.uid = obj.id;
+  //   //   // Timestamp umwandeln
+  //   comment.createdAt = comment.createdAt.toDate();
+  //   recipeDetails.comments.unshift(comment);
+  // });
+  // return recipeDetails;
+  // };
+  /* =====================================================================
+  // Mehrere Rezepte aus der DB suchen
+  // ===================================================================== */
+  static getMultipleRecipes = async ({ firebase, uids = [] }) => {
     let docRefs = [];
     let results = [];
     let recipes = [];
@@ -516,12 +588,12 @@ export default class Recipe {
       throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
     }
 
-    uids.forEach((uid) => docRefs.push(firebase.recipe_details(uid).get()));
+    uids.forEach((uid) => docRefs.push(firebase.recipe(uid).get()));
 
     results = await Promise.all(docRefs);
 
     results.forEach((result) => {
-      recipes.push({ ...result.data(), uid: result.ref.parent.parent.id });
+      recipes.push({ ...result.data(), uid: result.id });
     });
 
     return recipes;
@@ -567,8 +639,8 @@ export default class Recipe {
     rating.myRating = newRating;
 
     // Rezept Details updaten
-    const recipeDetailsDoc = firebase.recipe_details(uid);
-    recipeDetailsDoc.update({
+    const recipeDocRef = firebase.recipe(uid);
+    recipeDocRef.update({
       rating: {
         avgRating: rating.avgRating,
         noRatings: rating.noRatings,
@@ -604,8 +676,8 @@ export default class Recipe {
 
     comment.uid = commentDoc.id;
 
-    // Rezept Details updaten
-    const recipeDetailsDoc = firebase.recipe_details(uid);
+    // Rezept  updaten
+    const recipeDetailsDoc = firebase.recipe(uid);
 
     recipeDetailsDoc
       .update({
@@ -699,6 +771,7 @@ export default class Recipe {
     firebase,
     limitTo = DEFAULT_VALUES.RECIPE_DISPLAY
   ) => {
+    //FIXME: kann das über den Feed gelöst werden?
     let recipes = [];
     let recipe = {};
 

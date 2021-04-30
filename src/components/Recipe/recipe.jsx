@@ -89,26 +89,19 @@ import {
   withAuthorization,
   withEmailVerification,
 } from "../Session";
-// import { act } from "react-dom/test-utils";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
-
-// --> Next Department und Ingredients
-
 const REDUCER_ACTIONS = {
-  RECIPE_HEAD_FETCH_INIT: "RECIPE_HEAD_FETCH_INIT",
-  RECIPE_HEAD_FETCH_SUCCESS: "RECIPE_HEAD_FETCH_SUCCESS",
-  RECIPE_DETAILS_FETCH_INIT: "RECIPE_DETAILS_FETCH_INIT",
-  RECIPE_DETAILS_FETCH_SUCCESS: "RECIPE_DETAILS_FETCH_SUCCESS",
+  RECIPE_FETCH_INIT: "RECIPE_HEAD_FETCH_INIT",
+  RECIPE_FETCH_SUCCESS: "RECIPE_HEAD_FETCH_SUCCESS",
+  RECIPE_SET_PROPS: "RECIPE_SET_PROPS",
   RESTORE_DB_VERSION: "RESTORE_DB_VERSION",
   RECIPE_FETCH_FAILURE: "RECIPE_FETCH_FAILURE",
   RECIPE_ON_CHANGE: "RECIPE_ON_CHANGE",
   RECIPE_ON_SAVE: "RECIPE_ON_SAVE",
   RECIPE_ON_ERROR: "RECIPE_ON_ERROR",
-  // RECIPE_SET_HEAD_VALUES: "RECIPE_SET_HEAD_VALUES",
-  // RECIPE_SET_DETAILS_VALUES: "RECIPE_SET_DETAILS_VALUES",
   CLOSE_SNACKBAR: "CLOSE_SNACKBAR",
   SNACKBAR_SHOW: "SNACKBAR_SHOW",
 
@@ -120,10 +113,7 @@ const REDUCER_ACTIONS = {
 
   RATING_UPDATE: "RATING_UPDATE",
   INGREDIENT_ONCHANGE: "INGREDIENT_ONCHANGE",
-  // INGREDIENT_UPDATE_LIST: "INGREDIENT_UPDATE_LIST",
   PREPARATIONSTEP_ONCHANGE: "PREPARATIONSTEP_ONCHANGE",
-  // PREPARATIONSTEP_UPDATE_LIST: "PREPARATIONSTEP_UPDATE_LIST",
-  //NEW
   COMMENT_ADD: "COMMENT_ADD",
   COMMENT_LOAD_PREVIOUS: "COMMENT_LOAD_PREVIOUS",
   RECIPE_UPDATE_LIST: "RECIPE_UPDATE_LIST",
@@ -156,12 +146,6 @@ const recipeReducer = (state, action) => {
         data: {
           ...state.data,
           ingredients: tmpIngredients,
-          // ingredients: state.data.ingredients.map((ingredient) => {
-          //   if (ingredient.uid === action.uid) {
-          //     ingredient[action.field] = action.value;
-          //   }
-          //   return ingredient;
-          // }),
         },
       };
     case REDUCER_ACTIONS.RECIPE_UPDATE_LIST:
@@ -197,14 +181,14 @@ const recipeReducer = (state, action) => {
           }),
         },
       };
-    case REDUCER_ACTIONS.RECIPE_HEAD_FETCH_INIT:
+    case REDUCER_ACTIONS.RECIPE_FETCH_INIT:
       return {
         ...state,
         isLoading: true,
         isError: false,
-        _loadingRecipeHead: true,
+        _loadingRecipe: true,
       };
-    case REDUCER_ACTIONS.RECIPE_HEAD_FETCH_SUCCESS:
+    case REDUCER_ACTIONS.RECIPE_FETCH_SUCCESS:
       return {
         ...state,
         data: {
@@ -216,39 +200,6 @@ const recipeReducer = (state, action) => {
           createdFromUid: action.payload.createdFromUid,
           createdFromDisplayName: action.payload.createdFromDisplayName,
           createdAt: action.payload.createdAt,
-        },
-        dbVersion: {
-          ...state.dbVersion,
-          uid: action.payload.uid,
-          name: action.payload.name,
-          pictureSrc: action.payload.pictureSrc,
-          pictureSrcFullSize: action.payload.pictureSrcFullSize,
-          createdFromUid: action.payload.createdFromUid,
-          createdFromDisplayName: action.payload.createdFromDisplayName,
-          createdAt: action.payload.createdAt,
-        },
-        isLoading: deriveIsLoading(
-          state._loadingProducts,
-          false,
-          state._loadingRecipeDetails,
-          state._loadingUnits,
-          state._loadingDepartments
-        ),
-        _loadingRecipeHead: false,
-        isError: false,
-      };
-    case REDUCER_ACTIONS.RECIPE_DETAILS_FETCH_INIT:
-      return {
-        ...state,
-        isLoading: true,
-        isError: false,
-        _loadingRecipeDetails: true,
-      };
-    case REDUCER_ACTIONS.RECIPE_DETAILS_FETCH_SUCCESS:
-      return {
-        ...state,
-        data: {
-          ...state.data,
           portions: action.payload.portions,
           source: action.payload.source,
           preparationTime: action.payload.preparationTime,
@@ -264,6 +215,13 @@ const recipeReducer = (state, action) => {
         },
         dbVersion: {
           ...state.dbVersion,
+          uid: action.payload.uid,
+          name: action.payload.name,
+          pictureSrc: action.payload.pictureSrc,
+          pictureSrcFullSize: action.payload.pictureSrcFullSize,
+          createdFromUid: action.payload.createdFromUid,
+          createdFromDisplayName: action.payload.createdFromDisplayName,
+          createdAt: action.payload.createdAt,
           portions: action.payload.portions,
           source: action.payload.source,
           preparationTime: action.payload.preparationTime,
@@ -279,13 +237,23 @@ const recipeReducer = (state, action) => {
         },
         isLoading: deriveIsLoading(
           state._loadingProducts,
-          state._loadingRecipeHead,
           false,
           state._loadingUnits,
           state._loadingDepartments
         ),
-        _loadingRecipeDetails: false,
+        _loadingRecipe: false,
         isError: false,
+      };
+    case REDUCER_ACTIONS.RECIPE_SET_PROPS:
+      // Übergabeparameter setzen
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          uid: action.payload.uid,
+          name: action.payload.name,
+          pictureSrcFullSize: action.payload.pictureSrc,
+        },
       };
     case REDUCER_ACTIONS.RESTORE_DB_VERSION:
       // Version aus DB wieder anzeigen
@@ -325,8 +293,7 @@ const recipeReducer = (state, action) => {
         ...state,
         isLoading: deriveIsLoading(
           state._loadingProducts,
-          state._loadingRecipeHead,
-          state._loadingRecipeDetails,
+          state._loadingRecipe,
           false,
           state._loadingDepartments
         ),
@@ -346,8 +313,7 @@ const recipeReducer = (state, action) => {
         ...state,
         isLoading: deriveIsLoading(
           false,
-          state._loadingRecipeHead,
-          state._loadingRecipeDetails,
+          state._loadingRecipe,
           state._loadingUnits,
           state._loadingDepartments
         ),
@@ -381,8 +347,7 @@ const recipeReducer = (state, action) => {
         ...state,
         isLoading: deriveIsLoading(
           state._loadingProducts,
-          state._loadingRecipeHead,
-          state._loadingRecipeDetails,
+          state._loadingRecipe,
           state._loadingUnits,
           false
         ),
@@ -523,15 +488,13 @@ const recipeReducer = (state, action) => {
 // ===================================================================== */
 const deriveIsLoading = (
   loadingProducts,
-  loadingRecipeHead,
-  loadingRecipeDetails,
+  loadingRecipe,
   loadingUnits,
   loadingDepartment
 ) => {
   if (
     loadingProducts === false &&
-    loadingRecipeHead === false &&
-    loadingRecipeDetails === false &&
+    loadingRecipe === false &&
     loadingUnits === false &&
     loadingDepartment === false
   ) {
@@ -586,7 +549,6 @@ const RecipeBase = ({ props, authUser }) => {
   const classes = useStyles();
   const { push } = useHistory();
 
-  let recipeHead = null;
   let action;
   let urlUid;
 
@@ -614,15 +576,13 @@ const RecipeBase = ({ props, authUser }) => {
     isError: false,
     error: {},
     snackbar: { open: false, severity: "success", message: "" },
-    _loadingRecipeHead: false,
-    _loadingRecipeDetails: false,
+    _loadingRecipe: false,
     _loadingUnits: false,
     _loadingProducts: false,
     _loadingDepartments: false,
   });
 
   if (props.location.state) {
-    recipeHead = props.location.state.recipeHead;
     action = props.location.state.action;
   } else {
     action = ACTIONS.VIEW;
@@ -647,38 +607,28 @@ const RecipeBase = ({ props, authUser }) => {
       let newRecipe = new Recipe();
       // setDbRecipe(newRecipe);
       dispatchRecipe({
-        type: REDUCER_ACTIONS.RECIPE_HEAD_FETCH_SUCCESS,
+        type: REDUCER_ACTIONS.RECIPE_FETCH_SUCCESS,
         payload: newRecipe,
       });
       setEditMode(true);
     } else {
-      // Müssen die KopfInfos geholt werden?
-      if (!recipeHead) {
-        dispatchRecipe({ type: REDUCER_ACTIONS.RECIPE_HEAD_FETCH_INIT });
-        // Über URL eingestiegen ... Rezept lesen
-        Recipe.getRecipeHead(firebase, urlUid).then((result) => {
-          dispatchRecipe({
-            type: REDUCER_ACTIONS.RECIPE_HEAD_FETCH_SUCCESS,
-            payload: result,
-          });
-        });
-      } else {
-        dispatchRecipe({
-          type: REDUCER_ACTIONS.RECIPE_HEAD_FETCH_SUCCESS,
-          payload: recipeHead,
-        });
-      }
-
-      dispatchRecipe({ type: REDUCER_ACTIONS.RECIPE_DETAILS_FETCH_INIT });
-      // Details holen
-      Recipe.getRecipeDetails({
+      dispatchRecipe({
+        type: REDUCER_ACTIONS.RECIPE_SET_PROPS,
+        payload: {
+          uid: urlUid,
+          name: props.location.state?.recipeName,
+          pictureSrc: props.location.state?.recipePictureSrc,
+        },
+      });
+      dispatchRecipe({ type: REDUCER_ACTIONS.RECIPE_FETCH_INIT });
+      // Über URL eingestiegen ... Rezept lesen
+      Recipe.getRecipe({
         firebase: firebase,
         uid: urlUid,
         userUid: authUser.uid,
-        withComments: true,
       }).then((result) => {
         dispatchRecipe({
-          type: REDUCER_ACTIONS.RECIPE_DETAILS_FETCH_SUCCESS,
+          type: REDUCER_ACTIONS.RECIPE_FETCH_SUCCESS,
           payload: result,
         });
       });
@@ -783,6 +733,10 @@ const RecipeBase = ({ props, authUser }) => {
         firebase: firebase,
         recipe: recipe.data,
         authUser: authUser,
+        triggerCloudfunction:
+          recipe.dbVersion.name !== recipe.data.name ||
+          recipe.dbVersion.pictureSrcFullSize !==
+            recipe.data.pictureSrcFullSize,
       });
     } catch (error) {
       alert("error");
@@ -922,12 +876,18 @@ const RecipeBase = ({ props, authUser }) => {
   /* ------------------------------------------
   // Zutat - OnChange
   // ------------------------------------------ */
-  const onChangeIngredient = (event, newValue) => {
-    if (!event.target.id) {
+  const onChangeIngredient = (event, newValue, action, objectId) => {
+    let ingredientPos;
+
+    if (!event.target.id && action !== "clear") {
       return;
     }
 
-    let ingredientPos = event.target.id.split("_");
+    if (event.target.id) {
+      ingredientPos = event.target.id.split("_");
+    } else {
+      ingredientPos = objectId.split("_");
+    }
     ingredientPos[2] = ingredientPos[2].split("-")[0];
     let value;
 
@@ -943,7 +903,6 @@ const RecipeBase = ({ props, authUser }) => {
       setTriggeredIngredientPos(ingredientPos[2]);
       return;
     }
-
     if (ingredientPos[0] === "unit") {
       // Die Autocomplete Komponente liefert den Event anders zurück
       // hier wird die gewählte Option als -Option# zurückgegeben
@@ -952,10 +911,14 @@ const RecipeBase = ({ props, authUser }) => {
       // ingredientPos[1] = ingredientPos[1];
     } else if (ingredientPos[0] === "product") {
       // Nur Produkte, die wir kennen (und somit eine UID haben)
-      if (!newValue || !newValue.uid) {
+      if (action !== "clear" && (!newValue || !newValue.uid)) {
         return;
       }
-      value = { uid: newValue.uid, name: newValue.name };
+      if (!newValue) {
+        value = { uid: "", name: "" };
+      } else {
+        value = { uid: newValue.uid, name: newValue.name };
+      }
     } else {
       value = event.target.value;
     }
@@ -1059,13 +1022,13 @@ const RecipeBase = ({ props, authUser }) => {
         });
         break;
       case "delete":
-        newList = Recipe.deleteEntry(
-          oldList,
-          parseInt(pressedButton[2]),
-          "pos",
-          newObject,
-          "pos"
-        );
+        newList = Recipe.deleteEntry({
+          array: oldList,
+          fieldValue: parseInt(pressedButton[2]),
+          fieldName: "pos",
+          emptyObject: newObject,
+          renumberByField: "pos",
+        });
         break;
       case "up":
         newList = Recipe.moveArrayEntryUp({
@@ -1121,6 +1084,7 @@ const RecipeBase = ({ props, authUser }) => {
       payload: newComments,
     });
   };
+  console.log(recipe);
   /* ------------------------------------------
   // ================= AUSGABE ================
   // ------------------------------------------ */
@@ -1432,7 +1396,7 @@ const ImagePanel = ({
           <Grid item key={"grid_imageUpload"} xs={12}>
             <React.Fragment>
               <input
-                accept="image/jpg"
+                accept="image/*"
                 className={classes.inputFileUpload}
                 id="icon-button-file"
                 type="file"
@@ -1517,7 +1481,7 @@ const InfoPanel = ({ recipe, editMode, onChange }) => {
               icon={<BookmarkIcon fontSize="small" />}
               editMode={editMode}
               onChange={onChange}
-              isLink={true}
+              isLink={Utils.isUrl(recipe.source)}
             />
             <FormListItem
               id={"preparationTime"}
@@ -1726,7 +1690,6 @@ const FormListItem = ({
   onClick,
 }) => {
   const classes = useStyles();
-
   return (
     <React.Fragment>
       <ListItem key={"listItem_" + id}>
@@ -1926,15 +1889,22 @@ const IngredientPosition = ({
               id={"unit_" + ingredient.uid + "_" + ingredient.pos}
               value={ingredient.unit}
               options={units}
-              autoSelect
+              autoSelect={!ingredient.unit}
               autoHighlight
               getOptionSelected={(unit) => unit === ingredient.unit}
               getOptionLabel={(unit) => unit}
-              onChange={onChangeIngredient}
+              onChange={(event, newValue, action) =>
+                onChangeIngredient(
+                  event,
+                  newValue,
+                  action,
+                  "unit_" + ingredient.uid + "_" + ingredient.pos
+                )
+              }
               fullWidth
               renderInput={(params) => (
                 <TextField
-                  value={ingredient.unit}
+                  // value={ingredient.unit}
                   {...params}
                   label={TEXT.FIELD_UNIT}
                   size="small"
@@ -1993,7 +1963,14 @@ const IngredientPosition = ({
                 }
                 return option.name;
               }}
-              onChange={onChangeIngredient}
+              onChange={(event, newValue, action) =>
+                onChangeIngredient(
+                  event,
+                  newValue,
+                  action,
+                  "product_" + ingredient.uid + "_" + ingredient.pos
+                )
+              }
               fullWidth
               filterOptions={(options, params) => {
                 const filtered = filter(options, params);

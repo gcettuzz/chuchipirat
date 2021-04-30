@@ -67,8 +67,10 @@ import * as TEXT from "../../constants/text";
 import * as DEFAULT_VALUES from "../../constants/defaultValues";
 import * as FIREBASE_MESSAGES from "../../constants/firebaseMessages";
 import Event from "../Event/event.class";
+import Recipe from "../Recipe/recipe.class";
 import Menuplan from "./menuplan.class";
 import MenuplanPdf from "./menuplanPdf";
+import Utils from "../Shared/utils.class";
 
 import useStyles from "../../constants/styles";
 
@@ -91,6 +93,7 @@ const REDUCER_ACTIONS = {
   MENUPLAN_FETCH_SUCCESS: "MENUPLAN_FETCH_SUCCESS",
   MENUPLAN_SAVE_SUCCESS: "MENUPLAN_SAVE_SUCCESS",
   MENUPLAN_CLOSE_SNACKBAR: "MENUPLAN_CLOSE_SNACKBAR",
+  RECIPES_FETCH_SUCCESS: "RECIPES_FETCH_SUCCESS",
   EVENT_FETCH_SUCCESS: "EVENT_FETCH_SUCCES",
   PAGINATION_CHANGE: "PAGINATION_CHANGE",
   SETTINGS_CHANGE: "SETTINGS_CHANGE",
@@ -364,6 +367,14 @@ const menuplanReducer = (state, action) => {
           notes: state.data.notes.filter((note) => note.uid !== action.payload),
         },
       };
+    case REDUCER_ACTIONS.RECIPES_FETCH_SUCCESS:
+      // Rezepte geholt
+      return {
+        ...state,
+        allRecipes: action.payload,
+        isLoading: false,
+        isError: false,
+      };
     case REDUCER_ACTIONS.RECIPE_ADD:
       // Neues Rezept hinzugefügt
       mealRecipe = Menuplan.createMealRecipe({
@@ -544,6 +555,7 @@ const MenuPlanBase = ({ props, authUser }) => {
           : DEFAULT_VALUES.MENUPLAN_NO_OF_COLUMS_X_LARGE
       ),
     },
+    allRecipes: [],
     isLoading: false,
     isError: false,
     error: null,
@@ -879,14 +891,50 @@ const MenuPlanBase = ({ props, authUser }) => {
       pathname: `${ROUTES.RECIPE}/${recipe.uid}`,
       state: {
         action: ACTIONS.VIEW,
-        recipeHead: recipe,
+        recipeName: recipe.name,
+        recipePictureSrc: recipe.pictureSrc,
       },
     });
   };
   /* ------------------------------------------
   // Rezept hinzufügen - Drawer öffnen 
   // ------------------------------------------ */
-  const onRecipesSearch = () => {
+  const onRecipeSearch = async () => {
+    if (menuplan.allRecipes.length === 0) {
+      // Rezepte lesen
+      dispatchMenuplan({ type: REDUCER_ACTIONS.MENUPLAN_FETCH_INIT });
+
+      await Recipe.getRecipes({ firebase: firebase })
+        .then((result) => {
+          // Object in Array umwandeln
+          let recipes = [];
+          Object.keys(result).forEach((uid) => {
+            recipes.push({
+              uid: uid,
+              name: result[uid].name,
+              pictureSrc: result[uid].pictureSrc,
+              tags: result[uid].tags,
+            });
+          });
+
+          recipes = Utils.sortArrayWithObjectByText({
+            list: recipes,
+            attributeName: "name",
+          });
+
+          dispatchMenuplan({
+            type: REDUCER_ACTIONS.RECIPES_FETCH_SUCCESS,
+            payload: recipes,
+          });
+        })
+        .catch((error) => {
+          dispatchMenuplan({
+            type: REDUCER_ACTIONS.GENERIC_ERROR,
+            payload: error,
+          });
+        });
+    }
+
     setRecipeSearchDrawer({ ...recipeSearchDrawer, open: true });
   };
   /* ------------------------------------------
@@ -1057,7 +1105,7 @@ const MenuPlanBase = ({ props, authUser }) => {
               <TableHeaderButtons
                 onMealAdd={onMealAdd}
                 onNoteAdd={onNoteAdd}
-                onRecipesSearch={onRecipesSearch}
+                onRecipeSearch={onRecipeSearch}
                 onSettingClick={onSettingOpen}
               />
             </Grid>
@@ -1099,7 +1147,7 @@ const MenuPlanBase = ({ props, authUser }) => {
       </Container>
 
       <RecipeSearchDrawer
-        firebase={firebase}
+        allRecipes={menuplan.allRecipes}
         drawerState={recipeSearchDrawer}
         toggleRecipeSearch={toggleRecipeSearchDrawer}
         onRecipeShow={onRecipeShow}
@@ -1226,7 +1274,7 @@ const PageHeader = ({
 const TableHeaderButtons = ({
   onMealAdd,
   onNoteAdd,
-  onRecipesSearch,
+  onRecipeSearch,
   onSettingClick,
 }) => {
   return (
@@ -1245,7 +1293,7 @@ const TableHeaderButtons = ({
           visible: true,
           label: TEXT.BUTTON_ADD_RECIPE,
           color: "primary",
-          onClick: onRecipesSearch,
+          onClick: onRecipeSearch,
         },
         {
           id: "addMeal",
@@ -1898,7 +1946,7 @@ const TablePaginator = ({ noOfElements, onChange }) => {
 // ======================= Recipe Search Drawer ======================
 // =================================================================== */
 const RecipeSearchDrawer = ({
-  firebase,
+  allRecipes,
   drawerState,
   toggleRecipeSearch,
   onRecipeShow,
@@ -1941,6 +1989,7 @@ const RecipeSearchDrawer = ({
         </Typography>
 
         <RecipeSearch
+          recipes={allRecipes}
           onNewClick={onNewRecipe}
           cardActions={[
             {
@@ -1950,7 +1999,6 @@ const RecipeSearchDrawer = ({
             },
             { key: ACTIONS.ADD, name: TEXT.BUTTON_ADD, onClick: onRecipeAdd },
           ]}
-          firebase={firebase}
           embededMode={true}
         />
       </Container>

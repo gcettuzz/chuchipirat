@@ -17,4 +17,4 @@ export const SHOPPING_LIST_GENERATED = "shopping_list_generated";
 export const MENUPLAN_CREATED = "menuplan_created";
 export const MENUPLAN_GET = "menuplan_get";
 export const QUANTITY_CALCULATION_CREATED = "quantity_calculation_created";
-export const UPLOAD_PICTRE = "upload_pictrue";
+export const UPLOAD_PICTURE = "upload_picture";

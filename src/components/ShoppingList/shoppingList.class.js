@@ -79,7 +79,7 @@ export default class ShoppingList {
     // ====== Rezepte holen ======
     uids = allMealRecipes.map((recipe) => recipe.recipeUid);
 
-    let allRecipes = await Recipe.getMultipleRecipeDetails({
+    let allRecipes = await Recipe.getMultipleRecipes({
       firebase: firebase,
       uids: uids,
     });
@@ -118,7 +118,7 @@ export default class ShoppingList {
             });
             fxUnit = product.shoppingUnit;
           } catch (error) {
-            console.error(ingredient.product, error);
+            console.warn(ingredient.product, error);
             fxQuantity = ingredient.quantity;
             fxUnit = ingredient.unit;
           }

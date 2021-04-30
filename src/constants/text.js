@@ -70,7 +70,7 @@ export const PAGE_SUBTITLE_UNIT_CONVERSION =
   "Weil 276 g Zucker einfacher zu handhaben sind als 23 EL.";
 export const PAGE_TITLE_DEPARTMENTS = "Abteilungen";
 export const PAGE_SUBTITLE_DEPARTMENTS =
-  "Damit du im Laden nicht kreuz und quer umher irrst.";
+  "Damit du im Laden nicht kreuz und quer umherirrst.";
 export const PAGE_TITLE_PRODUCTS = "Produkte";
 export const PAGE_SUBTITLE_PRODUCTS = "Ohne uns gehts gar nichts.";
 export const PAGE_TITLE_PUBLIC_PROFILE = (name) => `${name} stellt sich vor`;
@@ -225,6 +225,8 @@ export const NO_RECIPE_FOUND = "Kein passendes Rezept gefunden";
 export const CREATE_A_NEW_ONE = "Erfasse ein neues!";
 export const ERROR_PRODUCT_WIHTOUT_UID = (product) =>
   `Das Produkt ${product} besitzt keine UID. Wende dich an den Support`;
+export const ERROR_POS_WITHOUT_PRODUCT = (pos) =>
+  `Das Produkt in der Position ${pos} ist unbekannt.`;
 /* =====================================================================
 // Meldungen zum Produkt
 // ===================================================================== */
@@ -468,7 +470,7 @@ export const FEED_TEXT = {
 // Landing Page
 // ===================================================================== */
 export const LANDING_LEAD_TEXT =
-  "Kochst du gerne? Für grössere Gruppe? In Lager, Kursen oder Anlässen? Dann wird dich der chuchipirat unterstützen.";
+  "Kochst du gerne? Für grössere Gruppe? In Lagern, Kursen oder bei Anlässen? Dann wird dich der chuchipirat unterstützen.";
 export const LANDING_RECIPES_BLOCK_TITLE = "Deine Lieblingsrezepte";
 export const LANDING_RECIPES_BLOCK_TEXT =
   "Suche nach den Rezepten, die andere schon gekocht haben. Nicht fündig geworden? Erfasse dein Super-Gericht und die Community wird dir dankbar sein.";

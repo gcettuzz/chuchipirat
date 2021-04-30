@@ -352,7 +352,7 @@ export default class Event {
       });
 
     // Analytik
-    firebase.analytics.logEvent(FIREBASE_EVENTS.UPLOAD_PICTRE, {
+    firebase.analytics.logEvent(FIREBASE_EVENTS.UPLOAD_PICTURE, {
       folder: "events",
     });
 

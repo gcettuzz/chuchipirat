@@ -34,7 +34,7 @@ export default class QuantityCalculation {
     });
     uids = allMealRecipes.map((recipe) => recipe.recipeUid);
 
-    allRecipes = await Recipe.getMultipleRecipeDetails({
+    allRecipes = await Recipe.getMultipleRecipes({
       firebase: firebase,
       uids: uids,
     });

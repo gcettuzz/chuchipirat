@@ -2,6 +2,7 @@ import React from "react";
 import { withRouter } from "react-router-dom";
 import { compose } from "recompose";
 import { useMediaQuery } from "@material-ui/core";
+import { useHistory } from "react-router";
 
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -19,9 +20,7 @@ import MenuIcon from "@material-ui/icons/Menu";
 import AccountCircle from "@material-ui/icons/AccountCircle";
 import MenuItem from "@material-ui/core/MenuItem";
 import Menu from "@material-ui/core/Menu";
-
-import MuiLink from "@material-ui/core/Link";
-import { useHistory } from "react-router";
+import Link from "@material-ui/core/Link";
 
 import clsx from "clsx";
 
@@ -289,9 +288,20 @@ const NavigationAuthBase = (props) => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" className={classes.navigationTitle}>
-            <MuiLink href="/home" color="inherit" underline="none">
+            <Link
+              component="button"
+              className={classes.navigationTitle}
+              variant="h6"
+              color="inherit"
+              underline="none"
+              onClick={() =>
+                push({
+                  pathname: ROUTES.HOME,
+                })
+              }
+            >
               {TEXT.APP_NAME}
-            </MuiLink>
+            </Link>
           </Typography>
           <Ribbon text={"BETA"} />
 
@@ -375,6 +385,7 @@ const NavigationAuthBase = (props) => {
 // Komponente für Navigation ohne Login//Ohne Berechtigunge
 export function NavigationNoAuthBase(props) {
   const classes = useStyles();
+  const { push } = useHistory();
 
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 
@@ -386,15 +397,37 @@ export function NavigationNoAuthBase(props) {
           className={prefersDarkMode ? classes.appBarDark : classes.appBar}
         >
           <Typography variant="h6" className={classes.navigationTitle}>
-            <MuiLink href="/" color="inherit" underline="none">
+            <Link
+              variant="h6"
+              component="button"
+              color="inherit"
+              underline="none"
+              onClick={() =>
+                push({
+                  pathname: ROUTES.LANDING,
+                })
+              }
+            >
               {TEXT.APP_NAME}
-            </MuiLink>
+            </Link>
           </Typography>
 
           <div>
-            <MuiLink href="/signin" color="inherit" underline="none">
-              <Typography>{TEXT.NAVIGATION_SIGN_IN}</Typography>
-            </MuiLink>
+            <Typography variant="h6" className={classes.navigationTitle}>
+              <Link
+                variant="body1"
+                component="button"
+                color="inherit"
+                underline="none"
+                onClick={() =>
+                  push({
+                    pathname: ROUTES.SIGN_IN,
+                  })
+                }
+              >
+                {TEXT.NAVIGATION_SIGN_IN}
+              </Link>
+            </Typography>
           </div>
         </Toolbar>
       </AppBar>

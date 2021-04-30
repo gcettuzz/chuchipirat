@@ -40,64 +40,67 @@ const SearchInputWithButton = ({
   }, [isFocused]);
 
   return (
-    <form onSubmit={onSearch}>
-      <Container className={classes.container} component="main">
-        <Grid container spacing={2} className={classes.gridSearchInput}>
-          <Grid item xs={8} sm={9}>
-            <FormControl fullWidth>
-              <InputLabel id={id}>{label}</InputLabel>
-              <Input
-                id={id}
-                type={type}
-                value={value}
-                fullWidth={true}
-                autoFocus
-                autoComplete="off"
-                onChange={onInputChange}
-                endAdornment={
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="clear Search Term"
-                      onClick={onInputClear}
-                      edge="end"
-                      size="small"
-                    >
-                      <ClearIcon />
-                    </IconButton>
-                  </InputAdornment>
+    <Container className={classes.container} component="main">
+      <Grid container spacing={2} className={classes.gridSearchInput}>
+        <Grid item xs={8} sm={9}>
+          <FormControl fullWidth>
+            <InputLabel id={id}>{label}</InputLabel>
+            <Input
+              id={id}
+              type={type}
+              value={value}
+              fullWidth={true}
+              autoFocus
+              autoComplete="off"
+              onChange={onInputChange}
+              onKeyPress={(event) => {
+                if (event.key === "Enter") {
+                  onSearch();
                 }
-              />
-            </FormControl>
-          </Grid>
-          <Grid item xs={4} sm={3}>
-            {breakpointIsSm ? (
-              <Button
-                fullWidth
-                color="primary"
-                variant="contained" // onClick={onSearch}
-                type="submit"
-                disabled={!value}
-              >
-                <SearchIcon />
-              </Button>
-            ) : (
-              <Button
-                fullWidth
-                variant="contained"
-                color="primary"
-                className={classes.button}
-                startIcon={<SearchIcon />}
-                // onClick={onSearch}
-                type="submit"
-                disabled={!value}
-              >
-                {TEXT.BUTTON_SEARCH}
-              </Button>
-            )}
-          </Grid>
+              }}
+              endAdornment={
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="clear Search Term"
+                    onClick={onInputClear}
+                    edge="end"
+                    size="small"
+                  >
+                    <ClearIcon />
+                  </IconButton>
+                </InputAdornment>
+              }
+            />
+          </FormControl>
         </Grid>
-      </Container>
-    </form>
+        <Grid item xs={4} sm={3}>
+          {breakpointIsSm ? (
+            <Button
+              fullWidth
+              color="primary"
+              variant="contained" // onClick={onSearch}
+              type="submit"
+              disabled={!value}
+            >
+              <SearchIcon />
+            </Button>
+          ) : (
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              className={classes.button}
+              startIcon={<SearchIcon />}
+              // onClick={onSearch}
+              type="submit"
+              disabled={!value}
+            >
+              {TEXT.BUTTON_SEARCH}
+            </Button>
+          )}
+        </Grid>
+      </Grid>
+    </Container>
   );
 };
 

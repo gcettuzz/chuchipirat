@@ -315,7 +315,7 @@ export default class User {
       throw error;
     }
 
-    // Alte werte holen um zu vergelichen ob die Cloud Function gestartet werden muss
+    // Alte werte holen um zu vergleichen ob die Cloud Function gestartet werden muss
     await User.getPublicProfile({ firebase: firebase, uid: userProfile.uid })
       .then((result) => {
         oldPublicProfile = result;
@@ -422,7 +422,7 @@ export default class User {
       newValue: userProfile.pictureSrc,
     });
     // Analytik
-    firebase.analytics.logEvent(FIREBASE_EVENTS.UPLOAD_PICTRE, {
+    firebase.analytics.logEvent(FIREBASE_EVENTS.UPLOAD_PICTURE, {
       foleder: "users",
     });
 
