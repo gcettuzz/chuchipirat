@@ -1423,6 +1423,8 @@ const ImagePanel = ({
         {isLoadingPicture && <LinearProgress />}
         <Grid container spacing={2}>
           <Grid item key={"grid_pictureSrc"} xs={12}>
+            {/* TODO: wenn bild hochgeladen input nicht anzeigen 
+            stattdesen einen löschbutton*/}
             <FormListItem
               value={editMode ? pictureSrc : Utils.getDomain(pictureSrc)}
               id={"pictureSrc"}
