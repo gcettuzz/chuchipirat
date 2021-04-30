@@ -124,7 +124,11 @@ const HomeBase = ({ props, authUser }) => {
         setError(error);
       });
 
-    Recipe.getNewestRecipes(firebase, DEFAULT_VALUES.RECIPE_DISPLAY)
+    Feed.getNewestFeedsOfType(
+      firebase,
+      DEFAULT_VALUES.RECIPE_DISPLAY,
+      FEED_TYPE.RECIPE_CREATED
+    )
       .then((result) => {
         setRecipes(result);
         setIsLoadingRecipe(false);
@@ -133,6 +137,16 @@ const HomeBase = ({ props, authUser }) => {
         console.error(error);
         setError(error);
       });
+
+    // Recipe.getNewestRecipes(firebase, DEFAULT_VALUES.RECIPE_DISPLAY)
+    //   .then((result) => {
+    //     setRecipes(result);
+    //     setIsLoadingRecipe(false);
+    //   })
+    //   .catch((error) => {
+    //     console.error(error);
+    //     setError(error);
+    //   });
 
     Event.getEvents(firebase, authUser, EVENT_TYPES.TYPE_ACTUAL)
       .then((result) => {
@@ -465,14 +479,14 @@ const RecipesPanel = ({ recipes, isLoading }) => {
   const classes = useStyles();
   const { push } = useHistory();
 
+  // !! ℹ️ die Rezpte stammen aus dem Feed
   const onCardClick = (event, recipe) => {
-    // let pressedButton = event.currentTarget.id.split("_");
-
     push({
       pathname: `${ROUTES.RECIPE}/${recipe.uid}`,
       state: {
         action: ACTIONS.VIEW,
-        recipeHead: recipe,
+        recipeName: recipe.name,
+        recipePictureSrc: recipe.pictureSrc,
       },
     });
   };
@@ -489,12 +503,16 @@ const RecipesPanel = ({ recipes, isLoading }) => {
         </Typography>
       </Grid>
       {recipes.map((recipe, counter) => (
-        <Grid item key={"recipe" + counter} xs={12} sm={6} md={4}>
+        <Grid item key={"recipe_" + counter} xs={12} sm={6} md={4}>
           {isLoading ? (
             <RecipeCardLoading />
           ) : (
             <RecipeCard
-              recipe={recipe}
+              recipe={{
+                name: recipe.objectName,
+                pictureSrc: recipe.objectPictureSrc,
+                uid: recipe.objectUid,
+              }}
               cardActions={[
                 { key: "show", name: "Anzeigen", onClick: onCardClick },
               ]}
@@ -505,6 +523,7 @@ const RecipesPanel = ({ recipes, isLoading }) => {
     </Grid>
   );
 };
+
 /* ===================================================================
 // ======================== Loading List Element =====================
 // =================================================================== */

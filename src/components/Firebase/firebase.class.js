@@ -68,9 +68,9 @@ class Firebase {
     let dbUser;
     let counter = 0;
 
-    return this.auth.onAuthStateChanged(async (authUser) => {
+    return this.auth.onAuthStateChanged((authUser) => {
       if (authUser) {
-        await this.user(authUser.uid)
+        this.user(authUser.uid)
           .get()
           .then((snapshot) => {
             dbUser = snapshot.data();
@@ -201,14 +201,6 @@ class Firebase {
   stats = () => this.db.doc("stats/counter");
   // Feeds
   feeds = () => this.db.collection("feeds");
-  // Statistik - User
-  // stats_user = () => this.db.doc("stats/users");
-  // // Statistik Rezepte
-  // stats_recipe = () => this.db.doc("stats/recipes");
-  // // Statistik Zutaten
-  // stats_ingredients = () => this.db.doc("stats/ingredients");
-  // // Statistik Events
-  // stats_event = () => this.db.doc("stats/events");
   // Einheiten
   units = () => this.db.doc("masterData/units");
   // Umrechnung Einheiten Basic
@@ -222,6 +214,8 @@ class Firebase {
   departments = () => this.db.doc("masterData/departments");
   // Rezept
   recipe = (uid) => this.db.doc(`recipes/${uid}`);
+  // Übersicht aller Rezepte
+  allRecipes = () => this.db.doc(`recipes/000_allRecipes`);
   // Rezepte
   recipes = () => this.db.collection("recipes");
   // alle Details-Dokumente zum Rezept
@@ -257,6 +251,9 @@ class Firebase {
     this.db.collection("_cloudFunctions/waitingArea/user_motto");
   cloudFunctions_product = () =>
     this.db.collection("_cloudFunctions/waitingArea/product");
+  cloudFunctions_recipe = () =>
+    this.db.collection("_cloudFunctions/waitingArea/recipe");
+
   /* =====================================================================
   // Alle Referenzen zu den Bildern
   // ===================================================================== */
@@ -415,7 +412,12 @@ class Firebase {
   /* =====================================================================
   // Trigger-File für CloudFunctions erstellen
   // ===================================================================== */
-  createTriggerDocForCloudFunctions = async ({ docRef, uid, newValue }) => {
+  createTriggerDocForCloudFunctions = async ({
+    docRef,
+    uid,
+    newValue,
+    newValue2,
+  }) => {
     if (!docRef || !uid || !newValue) {
       throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
     }
@@ -424,6 +426,7 @@ class Firebase {
       .set({
         uid: uid,
         newValue: newValue,
+        newValue2: newValue2,
       })
       .catch((error) => {
         console.error(error);

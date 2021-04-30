@@ -106,6 +106,8 @@ export default class Menuplan {
   }) => {
     let menuplanDoc = firebase.menuplan(uid);
     let newMenuplan = false;
+    let usedRecipes = [];
+
     // Wenn kein Datum, wird der Menüplan gerade neu angelegt
     if (!createdAt) {
       createdAt = firebase.timestamp.fromDate(new Date());
@@ -119,12 +121,16 @@ export default class Menuplan {
       recipe.noOfServings = parseInt(recipe.noOfServings);
     });
 
+    // Alle Rezepte sammeln (für suche)
+    recipes.forEach((recipe) => usedRecipes.push(recipe.recipeUid));
+
     menuplanDoc
       .set({
         dates: dates,
         meals: meals,
         notes: notes,
         recipes: recipes,
+        usedRecipes: usedRecipes,
         createdAt: createdAt,
         createdFromUid: createdFromUid,
         createdFromDisplayName: createdFromDisplayName,

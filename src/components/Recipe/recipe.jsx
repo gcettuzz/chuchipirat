@@ -89,26 +89,19 @@ import {
   withAuthorization,
   withEmailVerification,
 } from "../Session";
-// import { act } from "react-dom/test-utils";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
-
-// --> Next Department und Ingredients
-
 const REDUCER_ACTIONS = {
-  RECIPE_HEAD_FETCH_INIT: "RECIPE_HEAD_FETCH_INIT",
-  RECIPE_HEAD_FETCH_SUCCESS: "RECIPE_HEAD_FETCH_SUCCESS",
-  RECIPE_DETAILS_FETCH_INIT: "RECIPE_DETAILS_FETCH_INIT",
-  RECIPE_DETAILS_FETCH_SUCCESS: "RECIPE_DETAILS_FETCH_SUCCESS",
+  RECIPE_FETCH_INIT: "RECIPE_HEAD_FETCH_INIT",
+  RECIPE_FETCH_SUCCESS: "RECIPE_HEAD_FETCH_SUCCESS",
+  RECIPE_SET_PROPS: "RECIPE_SET_PROPS",
   RESTORE_DB_VERSION: "RESTORE_DB_VERSION",
   RECIPE_FETCH_FAILURE: "RECIPE_FETCH_FAILURE",
   RECIPE_ON_CHANGE: "RECIPE_ON_CHANGE",
   RECIPE_ON_SAVE: "RECIPE_ON_SAVE",
   RECIPE_ON_ERROR: "RECIPE_ON_ERROR",
-  // RECIPE_SET_HEAD_VALUES: "RECIPE_SET_HEAD_VALUES",
-  // RECIPE_SET_DETAILS_VALUES: "RECIPE_SET_DETAILS_VALUES",
   CLOSE_SNACKBAR: "CLOSE_SNACKBAR",
   SNACKBAR_SHOW: "SNACKBAR_SHOW",
 
@@ -120,10 +113,7 @@ const REDUCER_ACTIONS = {
 
   RATING_UPDATE: "RATING_UPDATE",
   INGREDIENT_ONCHANGE: "INGREDIENT_ONCHANGE",
-  // INGREDIENT_UPDATE_LIST: "INGREDIENT_UPDATE_LIST",
   PREPARATIONSTEP_ONCHANGE: "PREPARATIONSTEP_ONCHANGE",
-  // PREPARATIONSTEP_UPDATE_LIST: "PREPARATIONSTEP_UPDATE_LIST",
-  //NEW
   COMMENT_ADD: "COMMENT_ADD",
   COMMENT_LOAD_PREVIOUS: "COMMENT_LOAD_PREVIOUS",
   RECIPE_UPDATE_LIST: "RECIPE_UPDATE_LIST",
@@ -156,12 +146,6 @@ const recipeReducer = (state, action) => {
         data: {
           ...state.data,
           ingredients: tmpIngredients,
-          // ingredients: state.data.ingredients.map((ingredient) => {
-          //   if (ingredient.uid === action.uid) {
-          //     ingredient[action.field] = action.value;
-          //   }
-          //   return ingredient;
-          // }),
         },
       };
     case REDUCER_ACTIONS.RECIPE_UPDATE_LIST:
@@ -197,14 +181,14 @@ const recipeReducer = (state, action) => {
           }),
         },
       };
-    case REDUCER_ACTIONS.RECIPE_HEAD_FETCH_INIT:
+    case REDUCER_ACTIONS.RECIPE_FETCH_INIT:
       return {
         ...state,
         isLoading: true,
         isError: false,
-        _loadingRecipeHead: true,
+        _loadingRecipe: true,
       };
-    case REDUCER_ACTIONS.RECIPE_HEAD_FETCH_SUCCESS:
+    case REDUCER_ACTIONS.RECIPE_FETCH_SUCCESS:
       return {
         ...state,
         data: {
@@ -216,6 +200,18 @@ const recipeReducer = (state, action) => {
           createdFromUid: action.payload.createdFromUid,
           createdFromDisplayName: action.payload.createdFromDisplayName,
           createdAt: action.payload.createdAt,
+          portions: action.payload.portions,
+          source: action.payload.source,
+          preparationTime: action.payload.preparationTime,
+          restTime: action.payload.restTime,
+          cookTime: action.payload.cookTime,
+          note: action.payload.note,
+          tags: action.payload.tags,
+          ingredients: action.payload.ingredients,
+          preparationSteps: action.payload.preparationSteps,
+          comments: action.payload.comments,
+          rating: action.payload.rating,
+          noComments: action.payload.noComments,
         },
         dbVersion: {
           ...state.dbVersion,
@@ -226,66 +222,38 @@ const recipeReducer = (state, action) => {
           createdFromUid: action.payload.createdFromUid,
           createdFromDisplayName: action.payload.createdFromDisplayName,
           createdAt: action.payload.createdAt,
+          portions: action.payload.portions,
+          source: action.payload.source,
+          preparationTime: action.payload.preparationTime,
+          restTime: action.payload.restTime,
+          cookTime: action.payload.cookTime,
+          note: action.payload.note,
+          tags: action.payload.tags,
+          ingredients: action.payload.ingredients,
+          preparationSteps: action.payload.preparationSteps,
+          comments: action.payload.comments,
+          rating: action.payload.rating,
+          noComments: action.payload.noComments,
         },
         isLoading: deriveIsLoading(
           state._loadingProducts,
           false,
-          state._loadingRecipeDetails,
           state._loadingUnits,
           state._loadingDepartments
         ),
         _loadingRecipeHead: false,
         isError: false,
       };
-    case REDUCER_ACTIONS.RECIPE_DETAILS_FETCH_INIT:
-      return {
-        ...state,
-        isLoading: true,
-        isError: false,
-        _loadingRecipeDetails: true,
-      };
-    case REDUCER_ACTIONS.RECIPE_DETAILS_FETCH_SUCCESS:
+    case REDUCER_ACTIONS.RECIPE_SET_PROPS:
+      // Übergabeparameter setzen
       return {
         ...state,
         data: {
           ...state.data,
-          portions: action.payload.portions,
-          source: action.payload.source,
-          preparationTime: action.payload.preparationTime,
-          restTime: action.payload.restTime,
-          cookTime: action.payload.cookTime,
-          note: action.payload.note,
-          tags: action.payload.tags,
-          ingredients: action.payload.ingredients,
-          preparationSteps: action.payload.preparationSteps,
-          comments: action.payload.comments,
-          rating: action.payload.rating,
-          noComments: action.payload.noComments,
+          uid: action.payload.uid,
+          name: action.payload.name,
+          pictureSrcFullSize: action.payload.pictureSrc,
         },
-        dbVersion: {
-          ...state.dbVersion,
-          portions: action.payload.portions,
-          source: action.payload.source,
-          preparationTime: action.payload.preparationTime,
-          restTime: action.payload.restTime,
-          cookTime: action.payload.cookTime,
-          note: action.payload.note,
-          tags: action.payload.tags,
-          ingredients: action.payload.ingredients,
-          preparationSteps: action.payload.preparationSteps,
-          comments: action.payload.comments,
-          rating: action.payload.rating,
-          noComments: action.payload.noComments,
-        },
-        isLoading: deriveIsLoading(
-          state._loadingProducts,
-          state._loadingRecipeHead,
-          false,
-          state._loadingUnits,
-          state._loadingDepartments
-        ),
-        _loadingRecipeDetails: false,
-        isError: false,
       };
     case REDUCER_ACTIONS.RESTORE_DB_VERSION:
       // Version aus DB wieder anzeigen
@@ -325,8 +293,7 @@ const recipeReducer = (state, action) => {
         ...state,
         isLoading: deriveIsLoading(
           state._loadingProducts,
-          state._loadingRecipeHead,
-          state._loadingRecipeDetails,
+          state._loadingRecipe,
           false,
           state._loadingDepartments
         ),
@@ -346,8 +313,7 @@ const recipeReducer = (state, action) => {
         ...state,
         isLoading: deriveIsLoading(
           false,
-          state._loadingRecipeHead,
-          state._loadingRecipeDetails,
+          state._loadingRecipe,
           state._loadingUnits,
           state._loadingDepartments
         ),
@@ -381,8 +347,7 @@ const recipeReducer = (state, action) => {
         ...state,
         isLoading: deriveIsLoading(
           state._loadingProducts,
-          state._loadingRecipeHead,
-          state._loadingRecipeDetails,
+          state._loadingRecipe,
           state._loadingUnits,
           false
         ),
@@ -523,15 +488,13 @@ const recipeReducer = (state, action) => {
 // ===================================================================== */
 const deriveIsLoading = (
   loadingProducts,
-  loadingRecipeHead,
-  loadingRecipeDetails,
+  loadingRecipe,
   loadingUnits,
   loadingDepartment
 ) => {
   if (
     loadingProducts === false &&
-    loadingRecipeHead === false &&
-    loadingRecipeDetails === false &&
+    loadingRecipe === false &&
     loadingUnits === false &&
     loadingDepartment === false
   ) {
@@ -586,7 +549,6 @@ const RecipeBase = ({ props, authUser }) => {
   const classes = useStyles();
   const { push } = useHistory();
 
-  let recipeHead = null;
   let action;
   let urlUid;
 
@@ -614,15 +576,13 @@ const RecipeBase = ({ props, authUser }) => {
     isError: false,
     error: {},
     snackbar: { open: false, severity: "success", message: "" },
-    _loadingRecipeHead: false,
-    _loadingRecipeDetails: false,
+    _loadingRecipe: false,
     _loadingUnits: false,
     _loadingProducts: false,
     _loadingDepartments: false,
   });
 
   if (props.location.state) {
-    recipeHead = props.location.state.recipeHead;
     action = props.location.state.action;
   } else {
     action = ACTIONS.VIEW;
@@ -647,38 +607,28 @@ const RecipeBase = ({ props, authUser }) => {
       let newRecipe = new Recipe();
       // setDbRecipe(newRecipe);
       dispatchRecipe({
-        type: REDUCER_ACTIONS.RECIPE_HEAD_FETCH_SUCCESS,
+        type: REDUCER_ACTIONS.RECIPE_FETCH_SUCCESS,
         payload: newRecipe,
       });
       setEditMode(true);
     } else {
-      // Müssen die KopfInfos geholt werden?
-      if (!recipeHead) {
-        dispatchRecipe({ type: REDUCER_ACTIONS.RECIPE_HEAD_FETCH_INIT });
-        // Über URL eingestiegen ... Rezept lesen
-        Recipe.getRecipeHead(firebase, urlUid).then((result) => {
-          dispatchRecipe({
-            type: REDUCER_ACTIONS.RECIPE_HEAD_FETCH_SUCCESS,
-            payload: result,
-          });
-        });
-      } else {
-        dispatchRecipe({
-          type: REDUCER_ACTIONS.RECIPE_HEAD_FETCH_SUCCESS,
-          payload: recipeHead,
-        });
-      }
-
-      dispatchRecipe({ type: REDUCER_ACTIONS.RECIPE_DETAILS_FETCH_INIT });
-      // Details holen
-      Recipe.getRecipeDetails({
+      dispatchRecipe({
+        type: REDUCER_ACTIONS.RECIPE_SET_PROPS,
+        payload: {
+          uid: urlUid,
+          name: props.location.state?.recipeName,
+          pictureSrc: props.location.state?.recipePictureSrc,
+        },
+      });
+      dispatchRecipe({ type: REDUCER_ACTIONS.RECIPE_FETCH_INIT });
+      // Über URL eingestiegen ... Rezept lesen
+      Recipe.getRecipe({
         firebase: firebase,
         uid: urlUid,
         userUid: authUser.uid,
-        withComments: true,
       }).then((result) => {
         dispatchRecipe({
-          type: REDUCER_ACTIONS.RECIPE_DETAILS_FETCH_SUCCESS,
+          type: REDUCER_ACTIONS.RECIPE_FETCH_SUCCESS,
           payload: result,
         });
       });
@@ -783,6 +733,10 @@ const RecipeBase = ({ props, authUser }) => {
         firebase: firebase,
         recipe: recipe.data,
         authUser: authUser,
+        triggerCloudfunction:
+          recipe.dbVersion.name !== recipe.data.name ||
+          recipe.dbVersion.pictureSrcFullSize !==
+            recipe.data.pictureSrcFullSize,
       });
     } catch (error) {
       alert("error");

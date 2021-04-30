@@ -22,6 +22,8 @@ export default class Feed {
     feedType,
     objectUid,
     text = "",
+    objectName = "",
+    objectPictureSrc = "",
   }) {
     const feedDoc = firebase.feeds().doc();
     feedDoc.set({
@@ -33,6 +35,8 @@ export default class Feed {
       text: Feed.getText(feedType, text),
       feedType: feedType,
       objectUid: objectUid,
+      objectName: objectName,
+      objectPictureSrc: objectPictureSrc,
     });
   }
   /* =====================================================================
@@ -49,6 +53,41 @@ export default class Feed {
 
     const snapshot = await feedsRef
       .orderBy("createdAt", "desc")
+      .limit(limitTo)
+      .get()
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+
+    snapshot.forEach((obj) => {
+      feed = obj.data();
+      feed.uid = obj.id;
+      // Timestamp umwandeln
+      feed.createdAt = feed.createdAt.toDate();
+      feeds.push(feed);
+    });
+
+    return feeds;
+  };
+  /* =====================================================================
+  // Neuste X Feed eines bestimmten Typs holen
+  // ===================================================================== */
+  static getNewestFeedsOfType = async (
+    firebase,
+    limitTo = DEFAULT_VALUES.FEEDS_DISPLAY,
+    feedType
+  ) => {
+    let feeds = [];
+    let feed = {};
+
+    if (!firebase || !feedType) {
+      throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
+    }
+    const feedsRef = firebase.feeds();
+    const snapshot = await feedsRef
+      .orderBy("createdAt", "desc")
+      .where("feedType", "==", feedType)
       .limit(limitTo)
       .get()
       .catch((error) => {
