@@ -2,8 +2,6 @@ import app from "firebase/app";
 import Utils from "../Shared/utils.class";
 import Stats, { STATS_FIELDS } from "../Shared/stats.class";
 import Feed, { FEED_TYPE } from "../Shared/feed.class";
-import { IMAGES_SUFFIX } from "../Firebase/firebase.class";
-
 import * as ROLES from "../../constants/roles";
 import * as TEXT from "../../constants/text";
 import * as FIREBASE_EVENTS from "../../constants/firebaseEvents";
@@ -380,19 +378,27 @@ export default class User {
         folder: firebase.user_folder(),
       })
       .then(async () => {
+        await firebase.waitUntilFileDeleted({
+          folder: firebase.user_folder(),
+          uid: authUser.uid,
+          originalFile: file,
+        });
+        await firebase.delay(2);
+      })
+      .then(async () => {
         // Redimensionierte Varianten holen
         await firebase
           .getPictureVariants({
             folder: firebase.user_folder(),
             uid: authUser.uid,
-            sizes: [IMAGES_SUFFIX.size50.size, IMAGES_SUFFIX.size600.size],
+            sizes: [50, 600],
             oldDownloadUrl: userProfile.pictureSrc,
           })
           .then((fileVariants) => {
             fileVariants.forEach((fileVariant, counter) => {
-              if (fileVariant.size === IMAGES_SUFFIX.size50.size) {
+              if (fileVariant.size === 50) {
                 userProfile.pictureSrc = fileVariant.downloadURL;
-              } else if (fileVariant.size === IMAGES_SUFFIX.size600.size) {
+              } else if (fileVariant.size === 600) {
                 userProfile.pictureSrcFullSize = fileVariant.downloadURL;
               }
             });
@@ -405,77 +411,24 @@ export default class User {
           pictureSrcFullSize: userProfile.pictureSrcFullSize,
         });
       })
-      .then(() => {
-        // CloudFunction Triggern
-        firebase.createTriggerDocForCloudFunctions({
-          docRef: firebase.cloudFunctions_user_pictureSrc().doc(),
-          uid: userProfile.uid,
-          newValue: userProfile.pictureSrc,
-          newValue2: userProfile.pictureSrcFullSize,
-        });
-      })
       .catch((error) => {
         throw error;
       });
 
+    // CloudFunction Triggern
+    firebase.createTriggerDocForCloudFunctions({
+      docRef: firebase.cloudFunctions_user_pictureSrc().doc(),
+      uid: userProfile.uid,
+      newValue: userProfile.pictureSrc,
+    });
     // Analytik
     firebase.analytics.logEvent(FIREBASE_EVENTS.UPLOAD_PICTURE, {
       foleder: "users",
     });
 
-    return {
-      pictureSrc: userProfile.pictureSrc,
-      pictureSrcFullSize: userProfile.pictureSrcFullSize,
-    };
+    return userProfile.pictureSrcFullSize;
   };
-  /* =====================================================================
-  // Bild löschen
-  // ===================================================================== */
-  static deletePicture = async ({ firebase, authUser }) => {
-    firebase
-      .deletePicture({
-        folder: firebase.user_folder(),
-        filename: `${authUser.uid}${IMAGES_SUFFIX.size50.suffix}`,
-      })
-      .catch((error) => {
-        throw error;
-      });
-    firebase
-      .deletePicture({
-        folder: firebase.user_folder(),
-        filename: `${authUser.uid}${IMAGES_SUFFIX.size600.suffix}`,
-      })
-      .catch((error) => {
-        throw error;
-      });
 
-    const userPublicProfileDoc = firebase.user_publicProfile(authUser.uid);
-
-    // Neuer Wert gleich speichern
-    userPublicProfileDoc
-      .update({
-        pictureSrc: "",
-        pictureSrcFullSize: "",
-      })
-      .catch((error) => {
-        throw error;
-      });
-    // CloudFunction Triggern
-    firebase
-      .createTriggerDocForCloudFunctions({
-        docRef: firebase.cloudFunctions_user_pictureSrc().doc(),
-        uid: authUser.uid,
-        newValue: "",
-        newValue2: "",
-      })
-      .catch((error) => {
-        throw error;
-      });
-    // Analytik
-    firebase.analytics.logEvent(FIREBASE_EVENTS.DELETE_PICTURE, {
-      folder: "user",
-    });
-  };
   /* =====================================================================
   /* =====================================================================
   /* =====================================================================

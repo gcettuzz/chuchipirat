@@ -301,7 +301,7 @@ export const ALERT_TITLE_TATSCH_BANG_DONE = "Tätsch-Bäng-Meringue: Erledigt!";
 export const ALERT_TEXT_IMAGE_SAVE_FIRST =
   "Bitte speichere den Anlass bevor du ein Bild hochlädst.";
 export const ALERT_TEXT_IMAGE_SOURCE =
-  "Du kannst die URL eines Bildes im Netz angeben oder dein eigenes Bild hochladen.";
+  "Du kannst die URL eines Bildes im Netz angeben oder dein eigenes Bild (.jpg) hochladen.";
 /* =====================================================================
 // Diverse (längere) Texte
 // ===================================================================== */
@@ -468,12 +468,6 @@ export const FEED_TEXT = {
   MENUPLAN_CREATED: (text) => `Plant gerade den ${text}`,
   SHOPPINGLIST_CREATED: (text) => `kauft ${text} ein.`,
 };
-/* =====================================================================
-// Texte zum Handling mit Bilder/Images
-// ===================================================================== */
-export const QUESTION_DELETE_IMAGE =
-  "Sicher, dass du das Bild löschen möchtest?";
-export const PICTURE_HAS_BEEN_DELETED = "Bild wurde gelöscht.";
 /* =====================================================================
 // Landing Page
 // ===================================================================== */

@@ -32,7 +32,6 @@ import LocalActivityIcon from "@material-ui/icons/LocalActivity";
 import HowToRegIcon from "@material-ui/icons/HowToReg";
 import AssignmentIndIcon from "@material-ui/icons/AssignmentInd";
 import PhotoCamera from "@material-ui/icons/PhotoCamera";
-import DeleteIcon from "@material-ui/icons/Delete";
 
 import * as ROUTES from "../../constants/routes";
 import * as ACTIONS from "../../constants/actions";
@@ -62,7 +61,6 @@ import {
   withAuthorization,
   withEmailVerification,
 } from "../Session";
-import { Delete } from "@material-ui/icons";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -74,7 +72,6 @@ const REDUCER_ACTIONS = {
   USER_PROFILE_ON_SAVE: "USER_PROFILE_ON_SAVE",
   PICTURE_UPLOAD_INIT: "PICTURE_UPLOAD_INIT",
   PICTURE_UPLOAD_SUCCESS: "PICTURE_UPLOAD_SUCCESS",
-  PICTURE_DELETE: "PICTURE_DELETE",
   CLOSE_SNACKBAR: "CLOSE_SNACKBAR",
   GENERIC_ERROR: "GENERIC_ERROR",
 };
@@ -123,30 +120,13 @@ const userProfileReducer = (state, action) => {
         ...state,
         data: {
           ...state.data,
-          pictureSrc: action.payload.pictureSrc,
-          pictureSrcFullSize: action.payload.pictureSrcFullSize,
+          pictureSrcFullSize: action.payload,
         },
         isLoadingPicture: false,
         snackbar: {
           open: true,
           severity: "success",
           message: TEXT.PROFILE_PICTURE_UPLOAD_SUCCESS,
-        },
-      };
-    case REDUCER_ACTIONS.PICTURE_DELETE:
-      // Bild gelöscht
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          pictureSrc: "",
-          pictureSrcFullSize: "",
-          isLoadingPicture: false,
-          snackbar: {
-            severity: "info",
-            message: TEXT.PICTURE_HAS_BEEN_DELETED,
-            open: true,
-          },
         },
       };
     case REDUCER_ACTIONS.CLOSE_SNACKBAR:
@@ -309,28 +289,6 @@ const UserProfileBase = ({ props, authUser }) => {
       });
   };
   /* ------------------------------------------
-  // Bild löschen
-  // ------------------------------------------ */
-  const onPictureDelete = () => {
-    if (window.confirm(TEXT.QUESTION_DELETE_IMAGE)) {
-      User.deletePicture({
-        firebase: firebase,
-        authUser: authUser,
-      })
-        .then(() => {
-          dispatchUserProfile({
-            type: REDUCER_ACTIONS.PICTURE_DELETE,
-          });
-        })
-        .catch((error) => {
-          dispatchUserProfile({
-            type: REDUCER_ACTIONS.GENERIC_ERROR,
-            payload: error,
-          });
-        });
-    }
-  };
-  /* ------------------------------------------
   // Snackback schliessen
   // ------------------------------------------ */
   const handleSnackbarClose = (event, reason) => {
@@ -383,7 +341,6 @@ const UserProfileBase = ({ props, authUser }) => {
                   isLoadingPicture={userProfile.isLoadingPicture}
                   onChange={onChangeField}
                   onUpload={onPictureUpload}
-                  onDelete={onPictureDelete}
                 />
               </Grid>
               <Grid item key={"publicProfileCard"} xs={12}>
@@ -471,7 +428,6 @@ const ProfileCard = ({
   editMode,
   onChange,
   onUpload,
-  onDelete,
 }) => {
   const classes = useStyles();
 
@@ -512,16 +468,6 @@ const ProfileCard = ({
                   <PhotoCamera />
                 </Fab>
               </label>
-              {userProfile.pictureSrcFullSize && (
-                <Fab
-                  component="span"
-                  size="small"
-                  className={classes.userProfileCardIconButtonDelete}
-                  onClick={onDelete}
-                >
-                  <DeleteIcon />
-                </Fab>
-              )}
             </div>
           )}
           <Grid container direction="row" alignItems="center" justify="center">

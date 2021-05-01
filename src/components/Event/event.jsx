@@ -96,7 +96,6 @@ const REDUCER_ACTIONS = {
   DATES_UPDATE_LIST: "DATES_UPDATE_LIST",
   PICTURE_UPLOAD_INIT: "PICTURE_UPLOAD_INIT",
   PICTURE_UPLOAD_SUCCESS: "PICTURE_UPLOAD_SUCCESS",
-  DELETE_PICTURE_SUCCESS: "DELETE_PICTURE_SUCCESS",
   SNACKBAR_SET_MESSAGE: "SNACKBAR_SET_MESSAGE",
   RESTORE_DB_VERSION: "RESTORE_DB_VERSION",
 };
@@ -248,36 +247,13 @@ const eventReducer = (state, action) => {
         ...state,
         data: {
           ...state.data,
-          pictureSrc: action.payload.pictureSrc,
-          pictureSrcFullSize: action.payload.pictureSrcFullSize,
+          pictureSrc: action.payload,
         },
         dbVersion: {
           ...state.dbVersion,
           pictureSrc: action.payload,
-          pictureSrcFullSize: action.payload.pictureSrcFullSize,
         },
         isLoadingPicture: false,
-      };
-    case REDUCER_ACTIONS.DELETE_PICTURE_SUCCESS:
-      // Bild gelöscht
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          pictureSrc: "",
-          pictureSrcFullSize: "",
-        },
-        dbVersion: {
-          ...state.dbVersion,
-          pictureSrc: "",
-          pictureSrcFullSize: "",
-        },
-        isLoadingPicture: false,
-        snackbar: {
-          severity: "info",
-          message: TEXT.PICTURE_HAS_BEEN_DELETED,
-          open: true,
-        },
       };
     case REDUCER_ACTIONS.RESTORE_DB_VERSION:
       // DB Version wieder anzeigen
@@ -650,35 +626,12 @@ const EventBase = ({ props, authUser }) => {
       file: file,
       event: event.data,
       authUser: authUser,
-    }).then((downloadURLs) => {
+    }).then((downloadURL) => {
       dispatchEvent({
         type: REDUCER_ACTIONS.PICTURE_UPLOAD_SUCCESS,
-        payload: downloadURLs,
+        payload: downloadURL,
       });
     });
-  };
-  /* ------------------------------------------
-  // Bild löschen
-  // ------------------------------------------ */
-  const onPictureDelete = () => {
-    if (window.confirm(TEXT.QUESTION_DELETE_IMAGE)) {
-      Event.deletePicture({
-        firebase: firebase,
-        event: event.data,
-        authUser: authUser,
-      })
-        .then(() => {
-          dispatchEvent({
-            type: REDUCER_ACTIONS.DELETE_PICTURE_SUCCESS,
-          });
-        })
-        .catch((error) => {
-          dispatchEvent({
-            type: REDUCER_ACTIONS.EVENT_ON_ERROR,
-            payload: error,
-          });
-        });
-    }
   };
   /* ------------------------------------------
   // Bild aus Google Maps generieren
@@ -768,7 +721,6 @@ const EventBase = ({ props, authUser }) => {
                   editMode={editMode}
                   onChange={onChangeField}
                   onUpload={onPictureUpload}
-                  onDelete={onPictureDelete}
                   // onGenerate={onPictureGenerate}
                 />
               </Grid>
@@ -1293,7 +1245,6 @@ const ImagePanel = ({
   editMode,
   onChange,
   onUpload,
-  onDelete,
   // onGenerate,
 }) => {
   const classes = useStyles();
@@ -1313,49 +1264,27 @@ const ImagePanel = ({
         </Typography>
         {isLoadingPicture && <LinearProgress />}
         <Grid container spacing={2}>
-          {!event.pictureSrc.includes("firebasestorage.googleapis") &&
-            !event.pictureSrc.includes("chuchipirat") && (
-              <Grid item key={"grid_pictureSrc"} xs={12}>
-                {/* <List> */}
-                <FormListItem
-                  value={
-                    editMode
-                      ? event.pictureSrc
-                      : Utils.getDomain(event.pictureSrc)
-                  }
-                  id={"pictureSrc"}
-                  key={"pictureSrc"}
-                  label={TEXT.FIELD_IMAGE_SOURCE}
-                  icon={<ImageIcon fontSize="small" />}
-                  multiLine={false}
-                  disabled={
-                    !event.pictureSrc
-                      ? false
-                      : event.pictureSrc.includes(
-                          "firebasestorage.googleapis"
-                        ) && event.pictureSrc.includes("chuchipirat")
-                  }
-                  editMode={editMode}
-                  onChange={onChange}
-                />
-              </Grid>
-            )}
-          {event.pictureSrc.includes("firebasestorage.googleapis") &&
-            event.pictureSrc.includes("chuchipirat") && (
-              <Grid item key={"grid_pictureDelete"} xs={12}>
-                <Button
-                  disabled={!event.pictureSrc}
-                  fullWidth
-                  variant="outlined"
-                  color="default"
-                  onClick={onDelete}
-                  startIcon={<DeleteIcon />}
-                  component="span"
-                >
-                  {TEXT.BUTTON_DELETE}
-                </Button>
-              </Grid>
-            )}
+          <Grid item key={"grid_pictureSrc"} xs={12}>
+            {/* <List> */}
+            <FormListItem
+              value={
+                editMode ? event.pictureSrc : Utils.getDomain(event.pictureSrc)
+              }
+              id={"pictureSrc"}
+              key={"pictureSrc"}
+              label={TEXT.FIELD_IMAGE_SOURCE}
+              icon={<ImageIcon fontSize="small" />}
+              multiLine={false}
+              disabled={
+                !event.pictureSrc
+                  ? false
+                  : event.pictureSrc.includes("firebasestorage.googleapis") &&
+                    event.pictureSrc.includes("chuchipirat")
+              }
+              editMode={editMode}
+              onChange={onChange}
+            />
+          </Grid>
           <Grid item key={"grid_imageUpload"} xs={12}>
             <React.Fragment>
               <input

@@ -107,7 +107,7 @@ const REDUCER_ACTIONS = {
 
   UPLOAD_PICTURE_SUCCESS: "UPLOAD_PICTURE_SUCCESS",
   UPLOAD_PICTURE_INIT: "UPLOAD_PICTURE_INIT",
-  DELETE_PICTURE_SUCCESS: "DELETE_PICTURE_SUCCESS",
+
   TAG_ADD: "TAG_ADD",
   TAG_DELETE: "TAG_DELETE",
 
@@ -397,35 +397,13 @@ const recipeReducer = (state, action) => {
         ...state,
         data: {
           ...state.data,
-          pictureSrc: action.payload.pictureSrc,
-          pictureSrcFullSize: action.payload.pictureSrcFullSize,
+          pictureSrcFullSize: action.payload,
         },
         dbVersion: {
           ...state.dbVersion,
-          pictureSrc: action.payload.pictureSrc,
-          pictureSrcFullSize: action.payload.pictureSrcFullSize,
+          pictureSrcFullSize: action.payload,
         },
         isLoadingPicture: false,
-      };
-    case REDUCER_ACTIONS.DELETE_PICTURE_SUCCESS:
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          pictureSrc: "",
-          pictureSrcFullSize: "",
-        },
-        dbVersion: {
-          ...state.dbVersion,
-          pictureSrc: "",
-          pictureSrcFullSize: "",
-        },
-        isLoadingPicture: false,
-        snackbar: {
-          severity: "info",
-          message: TEXT.PICTURE_HAS_BEEN_DELETED,
-          open: true,
-        },
       };
     case REDUCER_ACTIONS.TAG_ADD:
       return {
@@ -886,35 +864,12 @@ const RecipeBase = ({ props, authUser }) => {
       file: file,
       recipe: recipe.data,
       authUser: authUser,
-    }).then((downloadURLs) => {
+    }).then((downloadURL) => {
       dispatchRecipe({
         type: REDUCER_ACTIONS.UPLOAD_PICTURE_SUCCESS,
-        payload: downloadURLs,
+        payload: downloadURL,
       });
     });
-  };
-  /* ------------------------------------------
-  // Bild löschen
-  // ------------------------------------------ */
-  const onPictureDelete = () => {
-    if (window.confirm(TEXT.QUESTION_DELETE_IMAGE)) {
-      Recipe.deletePicture({
-        firebase: firebase,
-        recipe: recipe.data,
-        authUser: authUser,
-      })
-        .then(() => {
-          dispatchRecipe({
-            type: REDUCER_ACTIONS.DELETE_PICTURE_SUCCESS,
-          });
-        })
-        .catch((error) => {
-          dispatchRecipe({
-            type: REDUCER_ACTIONS.RECIPE_ON_ERROR,
-            payload: error,
-          });
-        });
-    }
   };
   /* ------------------------------------------
   // Profi Modus umschalten
@@ -1197,7 +1152,6 @@ const RecipeBase = ({ props, authUser }) => {
                 editMode={editMode}
                 onChange={onChangeField}
                 onUpload={onPictureUpload}
-                onDelete={onPictureDelete}
               />
             </Grid>
           )}
@@ -1411,7 +1365,6 @@ const ImagePanel = ({
   editMode,
   onChange,
   onUpload,
-  onDelete,
 }) => {
   const classes = useStyles();
 
@@ -1431,43 +1384,23 @@ const ImagePanel = ({
         </Typography>
         {isLoadingPicture && <LinearProgress />}
         <Grid container spacing={2}>
-          {/* URL nur anzeigen, wenn nicht auf eigenem Server */}
-          {!pictureSrc.includes("firebasestorage.googleapis") &&
-            !pictureSrc.includes("chuchipirat") && (
-              <Grid item key={"grid_pictureSrc"} xs={12}>
-                <FormListItem
-                  value={editMode ? pictureSrc : Utils.getDomain(pictureSrc)}
-                  id={"pictureSrc"}
-                  key={"pictureSrc"}
-                  label={TEXT.FIELD_IMAGE_SOURCE}
-                  icon={<ImageIcon fontSize="small" />}
-                  disabled={
-                    !pictureSrc
-                      ? false
-                      : pictureSrc.includes("firebasestorage.googleapis") &&
-                        pictureSrc.includes("chuchipirat")
-                  }
-                  editMode={editMode}
-                  onChange={onChange}
-                />
-              </Grid>
-            )}
-          {pictureSrc.includes("firebasestorage.googleapis") &&
-            pictureSrc.includes("chuchipirat") && (
-              <Grid item key={"grid_pictureDelete"} xs={12}>
-                <Button
-                  disabled={!pictureSrc}
-                  fullWidth
-                  variant="outlined"
-                  color="default"
-                  onClick={onDelete}
-                  startIcon={<DeleteIcon />}
-                  component="span"
-                >
-                  {TEXT.BUTTON_DELETE}
-                </Button>
-              </Grid>
-            )}
+          <Grid item key={"grid_pictureSrc"} xs={12}>
+            <FormListItem
+              value={editMode ? pictureSrc : Utils.getDomain(pictureSrc)}
+              id={"pictureSrc"}
+              key={"pictureSrc"}
+              label={TEXT.FIELD_IMAGE_SOURCE}
+              icon={<ImageIcon fontSize="small" />}
+              disabled={
+                !pictureSrc
+                  ? false
+                  : pictureSrc.includes("firebasestorage.googleapis") &&
+                    pictureSrc.includes("chuchipirat")
+              }
+              editMode={editMode}
+              onChange={onChange}
+            />
+          </Grid>
           <Grid item key={"grid_imageUpload"} xs={12}>
             <React.Fragment>
               <input
@@ -1483,6 +1416,7 @@ const ImagePanel = ({
                   fullWidth
                   variant="contained"
                   color="default"
+                  className={classes.button}
                   startIcon={<CloudUploadIcon />}
                   component="span"
                 >
@@ -1499,6 +1433,7 @@ const ImagePanel = ({
               />
             </Grid>
           )}
+
           <Grid item key={"grid_imageText"} xs={12}>
             <Typography color="textSecondary" variant="body2">
               {TEXT.ALERT_TEXT_IMAGE_SOURCE}
