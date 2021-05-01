@@ -109,8 +109,6 @@ export default class Recipe {
     authUser,
     triggerCloudfunction = false,
   }) {
-    console.log("recipe:", recipe);
-
     //NEXT_FEATURE: Untescheiden zwischen Rezept und Anpassung für Event
     let newRecipe = false;
     let docRef = null;
@@ -470,7 +468,7 @@ export default class Recipe {
         allRecipes = snapshot.data();
       })
       .catch((error) => {
-        console.log(error);
+        console.error(error);
         throw error;
       });
 

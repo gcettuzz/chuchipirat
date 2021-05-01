@@ -214,8 +214,6 @@ export default class Event {
     // Max-Datum bestimmen
     let maxDate = new Date();
 
-    console.log(event);
-
     maxDate = event.dates[0].to;
     for (let i = 1; i < event.dates.length; i++) {
       if (event.dates[i].to > maxDate) {

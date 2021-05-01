@@ -251,6 +251,8 @@ class Firebase {
   event_docs_collectionGroup = () => this.db.collectionGroup("docs");
   // Postizettel
   shoppingList = (uid) => this.db.doc(`events/${uid}/docs/shoppingList`);
+  // Aktuelle Version
+  actualVersion = () => this.db.doc("_environment/version");
   /* =====================================================================
   // Cloud Functions Speicherorte
   // ===================================================================== */
