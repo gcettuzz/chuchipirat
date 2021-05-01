@@ -323,6 +323,9 @@ export const NAVIGATION_USER_PROFILE = "Profil";
 export const NAVIGATION_ADMIN = "Admin";
 export const NAVIGATION_USERS = "Users";
 export const NAVIGATION_HELP = "Hilfe";
+export const DIALOG_REFRESH_APP_TILE = "Neue Version verfügbar";
+export const DIALOG_REFRESH_APP_TEXT =
+  "Es gibt eine neue Version des chuchipirat. Um die App zu aktualisieren, muss ein Refresh durchgeführt werden. Sichere daher vorher allfällige Änderungen. Mit OK bestätigst du, dass die Seite neu geladen werden kann.";
 /* =====================================================================
 // Home 
 // ===================================================================== */

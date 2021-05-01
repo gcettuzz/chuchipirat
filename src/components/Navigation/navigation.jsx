@@ -40,18 +40,25 @@ import ShoppingCartIcon from "@material-ui/icons/ShoppingCart";
 import LoyaltyIcon from "@material-ui/icons/Loyalty";
 import SettingsIcon from "@material-ui/icons/Settings";
 import GroupIcon from "@material-ui/icons/Group";
+import NewReleasesIcon from "@material-ui/icons/NewReleases";
 
 import * as ACTIONS from "../../constants/actions";
 import * as ROUTES from "../../constants/routes";
 import * as TEXT from "../../constants/text";
 import * as BUTTONTEXT from "../../constants/buttonText";
 import * as DEFAULT_VALUES from "../../constants/defaultValues";
+import * as LOCAL_STORAGE from "../../constants/localStorage";
+import * as FIREBASE_EVENTS from "../../constants/firebaseEvents";
+
+import packageJson from "../../../package.json";
+import DialogRefreshApp from "./dialogRefreshApp";
 
 import { withFirebase } from "../Firebase/index.js";
 import { AuthUserContext } from "../Session/index";
 import * as ROLES from "../../constants/roles";
 
 import useStyles from "../../constants/styles";
+import { act } from "@testing-library/react";
 
 // ===================================================================
 // ========================== Scroll to Top  =========================
@@ -112,6 +119,7 @@ const NavigationAuthBase = (props) => {
   const open = Boolean(anchorEl);
 
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+  const [showDialogRefreshApp, setShowDialogRefreshApp] = React.useState(false);
 
   const handleMenu = (event) => {
     event.stopPropagation();
@@ -160,6 +168,74 @@ const NavigationAuthBase = (props) => {
       default:
     }
     setAnchorEl(null);
+  };
+  /* ------------------------------------------
+  // Fragen ob Seite refresht werden darf
+  // ------------------------------------------ */
+  const onClickUpdateRibon = () => {
+    setShowDialogRefreshApp(true);
+  };
+  /* ------------------------------------------
+  // App auffrischen
+  // ------------------------------------------ */
+  const onUpdateAppOk = () => {
+    // Event auslösen
+    firebase.analytics.logEvent(FIREBASE_EVENTS.APP_FORCED_REFRESH);
+    window.localStorage.clear();
+    window.location.reload();
+    setShowDialogRefreshApp(false);
+  };
+  /* ------------------------------------------
+  // Refresh abbrechen
+  // ------------------------------------------ */
+  const onUpdateAppCancel = () => {
+    setShowDialogRefreshApp(false);
+  };
+  /* ------------------------------------------
+  // Prüfen ob sich die Version geändert hat
+  // ------------------------------------------ */
+  const isVersionUpToDate = () => {
+    let actualVersion;
+    let localStorageVersion = JSON.parse(
+      localStorage.getItem(LOCAL_STORAGE.VERSION)
+    );
+    // aktuelles Datum als String - für bessere Vergleichbarkeit
+    let today = new Date();
+    let todayString = `${String(today.getFullYear())}-${String(
+      today.getMonth() + 1
+    ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+    if (
+      !localStorageVersion ||
+      localStorageVersion?.lastCheck !== todayString
+    ) {
+      // Kein Wert oder veraltet
+      firebase
+        .actualVersion()
+        .get()
+        .then((result) => {
+          actualVersion = result.data().actualVersion;
+
+          // speichern
+          localStorage.setItem(
+            LOCAL_STORAGE.VERSION,
+            JSON.stringify({
+              lastCheck: todayString,
+              lastFetchedVersion: actualVersion,
+            })
+          );
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    } else {
+      actualVersion = localStorageVersion.lastFetchedVersion;
+    }
+    if (actualVersion !== packageJson.version) {
+      return false;
+    } else {
+      return true;
+    }
   };
 
   const list = (anchor) => (
@@ -303,7 +379,11 @@ const NavigationAuthBase = (props) => {
               {TEXT.APP_NAME}
             </Link>
           </Typography>
-          <Ribbon text={"BETA"} />
+          {isVersionUpToDate() ? (
+            <Ribbon text={"BETA"} />
+          ) : (
+            <UpdateRibbon onClick={onClickUpdateRibon} />
+          )}
 
           <div>
             {/* {authUser.publicProfile.pictureSrc ? (
@@ -376,6 +456,11 @@ const NavigationAuthBase = (props) => {
           <KeyboardArrowUpIcon />
         </Fab>
       </ScrollTop>
+      <DialogRefreshApp
+        dialogOpen={showDialogRefreshApp}
+        handleOk={onUpdateAppOk}
+        handleClose={onUpdateAppCancel}
+      />
     </React.Fragment>
   );
 };
@@ -441,7 +526,15 @@ export function NavigationNoAuthBase(props) {
 export const Ribbon = ({ text }) => {
   return <div className="ribbon  ribbon--red">{text}</div>;
 };
-
+export const UpdateRibbon = ({ onClick }) => {
+  return (
+    <div className="ribbon  ribbon--purple">
+      <Link component="button" color="inherit" onClick={onClick}>
+        {<NewReleasesIcon fontSize="large" />}
+      </Link>
+    </div>
+  );
+};
 const NavigationAuth = compose(withRouter, withFirebase)(NavigationAuthBase);
 const NavigationNoAuth = compose(
   withRouter,
