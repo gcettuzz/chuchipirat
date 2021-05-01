@@ -67,6 +67,11 @@ const INITIAL_STATE_KPI = [
     caption: TEXT.HOME_STATS_CAPTIONS.INGREDIENTS,
   },
   {
+    id: "noParticipants",
+    value: 0,
+    caption: TEXT.HOME_STATS_CAPTIONS.PARTICIPANTS,
+  },
+  {
     id: "noRecipes",
     value: 0,
     caption: TEXT.HOME_STATS_CAPTIONS.RECIPES,

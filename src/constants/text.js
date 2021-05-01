@@ -227,6 +227,8 @@ export const ERROR_PRODUCT_WIHTOUT_UID = (product) =>
   `Das Produkt ${product} besitzt keine UID. Wende dich an den Support`;
 export const ERROR_POS_WITHOUT_PRODUCT = (pos) =>
   `Das Produkt in der Position ${pos} ist unbekannt.`;
+export const ERROR_RECIPE_UNKNOWN = (uid) =>
+  `Das Rezept mit der UID ${uid} ist unbekannt.`;
 /* =====================================================================
 // Meldungen zum Produkt
 // ===================================================================== */
@@ -325,12 +327,12 @@ export const NAVIGATION_HELP = "Hilfe";
 // Home 
 // ===================================================================== */
 export const HOME_STATS_CAPTIONS = {
-  USERS: "Anzahl Köche",
-  EVENTS: "Anzahl Anlässe",
-  INGREDIENTS: "Anzahl Lebensmittel",
-  RECIPES: "Anzahl Rezepte",
-  SHOPPING_LISTS: " Generierte Postizettel",
-  PARTICIPANTS: "Anzahl bekochte Personen",
+  USERS: "Köche",
+  EVENTS: "Anlässe",
+  INGREDIENTS: "Lebensmittel",
+  RECIPES: "Rezepte",
+  SHOPPING_LISTS: "Generierte Postizettel",
+  PARTICIPANTS: "bekochte Personen",
 };
 /* =====================================================================
 // Home 
