@@ -209,7 +209,7 @@ export default class Event {
     let authUsers = [];
     let oldParticipants = 0;
     // NEXT_FEATURE: Bild generieren aus Google Maps
-    let pictureSrc = event.pictureSrc;
+    // let pictureSrc = event.pictureSrc;
 
     // Max-Datum bestimmen
     let maxDate = new Date();
@@ -235,9 +235,10 @@ export default class Event {
 
     // Bild URL kopieren falls nicht auf eigenem Server
     if (
-      !event.pictureSrc.includes("firebasestorage.googleapis") &&
-      !event.pictureSrc.includes("chuchipirat") &&
-      !event.pictureSrc
+      (!event.pictureSrc.includes("firebasestorage.googleapis") &&
+        !event.pictureSrc.includes("chuchipirat") &&
+        !event.pictureSrc) ||
+      !event.pictureSrcFullSize
     ) {
       event.pictureSrcFullSize = event.pictureSrc;
     }

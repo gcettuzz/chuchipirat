@@ -163,9 +163,10 @@ export default class Recipe {
 
     // Bild URL kopieren falls nicht auf eigenem Server
     if (
-      !recipe.pictureSrc.includes("firebasestorage.googleapis") &&
-      !recipe.pictureSrc.includes("chuchipirat") &&
-      !recipe.pictureSrc
+      (!recipe.pictureSrc.includes("firebasestorage.googleapis") &&
+        !recipe.pictureSrc.includes("chuchipirat") &&
+        !recipe.pictureSrc) ||
+      !recipe.pictureSrcFullSize
     ) {
       recipe.pictureSrcFullSize = recipe.pictureSrc;
     }

@@ -345,6 +345,7 @@ export default class User {
         displayName: userProfile.displayName,
         motto: userProfile.motto,
         pictureSrc: userProfile.pictureSrc,
+        pictureSrcFullSize: userProfile.pictureSrcFullSize,
       })
       .catch((error) => {
         console.error(error);
