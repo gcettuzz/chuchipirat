@@ -325,12 +325,12 @@ export const NAVIGATION_HELP = "Hilfe";
 // Home 
 // ===================================================================== */
 export const HOME_STATS_CAPTIONS = {
-  USERS: "Anzahl Köche",
-  EVENTS: "Anzahl Anlässe",
-  INGREDIENTS: "Anzahl Lebensmittel",
-  RECIPES: "Anzahl Rezepte",
-  SHOPPING_LISTS: " Generierte Postizettel",
-  PARTICIPANTS: "Anzahl bekochte Personen",
+  USERS: "Köche",
+  EVENTS: "Anlässe",
+  INGREDIENTS: "Lebensmittel",
+  RECIPES: "Rezepte",
+  SHOPPING_LISTS: "Generierte Postizettel",
+  PARTICIPANTS: "bekochte Personen",
 };
 /* =====================================================================
 // Home 
