@@ -243,15 +243,18 @@ const eventReducer = (state, action) => {
       };
     case REDUCER_ACTIONS.PICTURE_UPLOAD_SUCCESS:
       // Bild erfolgreich hochgeladen
+      console.log(action.payload);
       return {
         ...state,
         data: {
           ...state.data,
-          pictureSrc: action.payload,
+          pictureSrc: action.payload.pictureSrc,
+          pictureSrcFullSize: action.payload.pictureSrcFullSize,
         },
         dbVersion: {
           ...state.dbVersion,
           pictureSrc: action.payload,
+          pictureSrcFullSize: action.payload.pictureSrcFullSize,
         },
         isLoadingPicture: false,
       };
