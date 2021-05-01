@@ -412,7 +412,13 @@ class Firebase {
   /* =====================================================================
   // Bild löschen
   // ===================================================================== */
-  deletePicture = async () => {};
+  deletePicture = async ({ folder, filename }) => {
+    const imageRef = this.storage.ref(`${folder}${filename}`);
+
+    await imageRef.delete().catch((error) => {
+      throw error;
+    });
+  };
   /* =====================================================================
   // Warte-Funktion
   // ===================================================================== */
@@ -428,9 +434,9 @@ class Firebase {
     docRef,
     uid,
     newValue,
-    newValue2,
+    newValue2 = "",
   }) => {
-    if (!docRef || !uid || !newValue) {
+    if (!docRef || !uid) {
       throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
     }
 

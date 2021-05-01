@@ -6,6 +6,7 @@ import Feed, { FEED_TYPE } from "../Shared/feed.class";
 
 import * as FIREBASE_EVENTS from "../../constants/firebaseEvents";
 import * as DEFAULT_VALUES from "../../constants/defaultValues";
+import { IMAGES_SUFFIX } from "../Firebase/firebase.class";
 import * as TEXT from "../../constants/text";
 
 export default class Recipe {
@@ -108,6 +109,8 @@ export default class Recipe {
     authUser,
     triggerCloudfunction = false,
   }) {
+    console.log("recipe:", recipe);
+
     //NEXT_FEATURE: Untescheiden zwischen Rezept und Anpassung für Event
     let newRecipe = false;
     let docRef = null;
@@ -161,7 +164,8 @@ export default class Recipe {
     // Bild URL kopieren falls nicht auf eigenem Server
     if (
       !recipe.pictureSrc.includes("firebasestorage.googleapis") &&
-      !recipe.pictureSrc.includes("chuchipirat")
+      !recipe.pictureSrc.includes("chuchipirat") &&
+      !recipe.pictureSrc
     ) {
       recipe.pictureSrcFullSize = recipe.pictureSrc;
     }
@@ -181,9 +185,7 @@ export default class Recipe {
       .set({
         name: recipe.name,
         pictureSrc: recipe.pictureSrc,
-        pictureSrcFullSize: recipe.pictureSrcFullSize
-          ? recipe.pictureSrcFullSize
-          : recipe.pictureSrc,
+        pictureSrcFullSize: recipe.pictureSrcFullSize,
         createdAt: recipe.createdAt,
         createdFromUid: recipe.createdFromUid,
         createdFromDisplayName: recipe.createdFromDisplayName,
@@ -279,28 +281,19 @@ export default class Recipe {
         folder: firebase.recipe_folder(),
       })
       .then(async () => {
-        await firebase.waitUntilFileDeleted({
-          folder: firebase.recipe_folder(),
-          uid: recipe.uid,
-          originalFile: file,
-        });
-      })
-      .then(async (downloadURL) => {
-        recipe.pictureSrc = downloadURL;
-      })
-      .then(async () => {
         // Redimensionierte Varianten holen
         await firebase
           .getPictureVariants({
             folder: firebase.recipe_folder(),
             uid: recipe.uid,
-            sizes: [300, 1000],
+            sizes: [IMAGES_SUFFIX.size300.size, IMAGES_SUFFIX.size1000.size],
+            oldDownloadUrl: recipe.pictureSrc,
           })
           .then((fileVariants) => {
             fileVariants.forEach((fileVariant, counter) => {
-              if (fileVariant.size === 300) {
+              if (fileVariant.size === IMAGES_SUFFIX.size300.size) {
                 recipe.pictureSrc = fileVariant.downloadURL;
-              } else if (fileVariant.size === 1000) {
+              } else if (fileVariant.size === IMAGES_SUFFIX.size1000.size) {
                 recipe.pictureSrcFullSize = fileVariant.downloadURL;
               }
             });
@@ -334,8 +327,62 @@ export default class Recipe {
       folder: "recipes",
     });
 
-    return recipe.pictureSrc;
+    return {
+      pictureSrc: recipe.pictureSrc,
+      pictureSrcFullSize: recipe.pictureSrcFullSize,
+    };
   }
+  /* =====================================================================
+  // Bild löschen
+  // ===================================================================== */
+  static deletePicture = async ({ firebase, recipe, authUser }) => {
+    firebase
+      .deletePicture({
+        folder: firebase.recipe_folder(),
+        filename: `${recipe.uid}${IMAGES_SUFFIX.size300.suffix}`,
+      })
+      .catch((error) => {
+        throw error;
+      });
+    firebase
+      .deletePicture({
+        folder: firebase.recipe_folder(),
+        filename: `${recipe.uid}${IMAGES_SUFFIX.size1000.suffix}`,
+      })
+      .catch((error) => {
+        throw error;
+      });
+
+    const recipeDoc = firebase.recipe(recipe.uid);
+
+    // Neuer Wert gleich speichern
+    recipeDoc
+      .update({
+        pictureSrc: "",
+        pictureSrcFullSize: "",
+        lastChangeFromUid: authUser.uid,
+        lastChangeFromDisplayName: authUser.publicProfile.displayName,
+        lastChangeAt: firebase.timestamp.fromDate(new Date()),
+      })
+      .catch((error) => {
+        throw error;
+      });
+    // CloudFunction Triggern
+    firebase
+      .createTriggerDocForCloudFunctions({
+        docRef: firebase.cloudFunctions_recipe().doc(),
+        uid: recipe.uid,
+        newValue: recipe.name,
+        newValue2: "",
+      })
+      .catch((error) => {
+        throw error;
+      });
+    // Analytik
+    firebase.analytics.logEvent(FIREBASE_EVENTS.DELETE_PICTURE, {
+      folder: "recipes",
+    });
+  };
   /* =====================================================================
   // Leeres Objket Zutat erzeugen
   // ===================================================================== */

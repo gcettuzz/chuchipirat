@@ -18,3 +18,4 @@ export const MENUPLAN_CREATED = "menuplan_created";
 export const MENUPLAN_GET = "menuplan_get";
 export const QUANTITY_CALCULATION_CREATED = "quantity_calculation_created";
 export const UPLOAD_PICTURE = "upload_picture";
+export const DELETE_PICTURE = "delete_picture";

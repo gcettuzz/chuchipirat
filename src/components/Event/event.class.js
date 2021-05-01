@@ -2,6 +2,7 @@ import Utils from "../Shared/utils.class";
 import Stats, { STATS_FIELDS } from "../Shared/stats.class";
 import User, { PUBLIC_PROFILE_FIELDS } from "../User/user.class";
 import Feed, { FEED_TYPE } from "../Shared/feed.class";
+import { IMAGES_SUFFIX } from "../Firebase/firebase.class";
 import * as FIREBASE_EVENTS from "../../constants/firebaseEvents";
 import * as TEXT from "../../constants/text";
 
@@ -229,6 +230,18 @@ export default class Event {
     event.dates = Utils.sortArrayWithObjectByDate(event.dates, "from");
     event.dates = Utils.renumberArray({ array: event.dates, field: "pos" });
 
+    // sicherstellen, dass Nummerische Werte auch so gespeichert werden
+    event.participants = parseInt(event.participants);
+
+    // Bild URL kopieren falls nicht auf eigenem Server
+    if (
+      !event.pictureSrc.includes("firebasestorage.googleapis") &&
+      !event.pictureSrc.includes("chuchipirat") &&
+      !event.pictureSrc
+    ) {
+      event.pictureSrcFullSize = event.pictureSrc;
+    }
+
     if (!event.uid) {
       docRef = firebase.events().doc();
       event.uid = docRef.id;
@@ -253,9 +266,7 @@ export default class Event {
         cooks: event.cooks,
         authUsers: authUsers,
         pictureSrc: event.pictureSrc,
-        pictureSrcFullSize: event.pictureSrcFullSize
-          ? event.pictureSrcFullSize
-          : event.pictureSrc,
+        pictureSrcFullSize: event.pictureSrcFullSize,
         participants: event.participants,
         createdAt: event.createdAt,
         createdFromUid: event.createdFromUid,
@@ -303,6 +314,8 @@ export default class Event {
   // Bild in Firebase Storage hochladen
   // ===================================================================== */
   static async uploadPicture({ firebase, file, event, authUser }) {
+    let downloadURL;
+
     const eventDoc = firebase.event(event.uid);
 
     await firebase
@@ -312,25 +325,19 @@ export default class Event {
         folder: firebase.event_folder(),
       })
       .then(async () => {
-        await firebase.waitUntilFileDeleted({
-          folder: firebase.event_folder(),
-          uid: event.uid,
-          originalFile: file,
-        });
-      })
-      .then(async () => {
         // Redimensionierte Varianten holen
         await firebase
           .getPictureVariants({
             folder: firebase.event_folder(),
             uid: event.uid,
-            sizes: [300, 1000],
+            sizes: [IMAGES_SUFFIX.size300.size, IMAGES_SUFFIX.size1000.size],
+            oldDownloadUrl: event.pictureSrc,
           })
           .then((fileVariants) => {
             fileVariants.forEach((fileVariant, counter) => {
-              if (fileVariant.size === 300) {
+              if (fileVariant.size === IMAGES_SUFFIX.size300.size) {
                 event.pictureSrc = fileVariant.downloadURL;
-              } else if (fileVariant.size === 1000) {
+              } else if (fileVariant.size === IMAGES_SUFFIX.size1000.size) {
                 event.pictureSrcFullSize = fileVariant.downloadURL;
               }
             });
@@ -356,8 +363,52 @@ export default class Event {
       folder: "events",
     });
 
-    return event.pictureSrcFullSize;
+    return {
+      pictureSrc: event.pictureSrc,
+      pictureSrcFullSize: event.pictureSrcFullSize,
+    };
   }
+  /* =====================================================================
+  // Bild löschen
+  // ===================================================================== */
+  static deletePicture = async ({ firebase, event, authUser }) => {
+    firebase
+      .deletePicture({
+        folder: firebase.event_folder(),
+        filename: `${event.uid}${IMAGES_SUFFIX.size300.suffix}`,
+      })
+      .catch((error) => {
+        throw error;
+      });
+    firebase
+      .deletePicture({
+        folder: firebase.event_folder(),
+        filename: `${event.uid}${IMAGES_SUFFIX.size1000.suffix}`,
+      })
+      .catch((error) => {
+        throw error;
+      });
+
+    const eventDoc = firebase.event(event.uid);
+
+    // Neuer Wert gleich speichern
+    eventDoc
+      .update({
+        pictureSrc: "",
+        pictureSrcFullSize: "",
+        lastChangeFromUid: authUser.uid,
+        lastChangeFromDisplayName: authUser.publicProfile.displayName,
+        lastChangeAt: firebase.timestamp.fromDate(new Date()),
+      })
+      .catch((error) => {
+        throw error;
+      });
+
+    // Analytik
+    firebase.analytics.logEvent(FIREBASE_EVENTS.DELETE_PICTURE, {
+      folder: "events",
+    });
+  };
   /* =====================================================================
   // Event lesen
   // ===================================================================== */
