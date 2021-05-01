@@ -185,9 +185,7 @@ export default class Recipe {
       .set({
         name: recipe.name,
         pictureSrc: recipe.pictureSrc,
-        pictureSrcFullSize: recipe.pictureSrcFullSize
-          ? recipe.pictureSrcFullSize
-          : recipe.pictureSrc,
+        pictureSrcFullSize: recipe.pictureSrcFullSize,
         createdAt: recipe.createdAt,
         createdFromUid: recipe.createdFromUid,
         createdFromDisplayName: recipe.createdFromDisplayName,

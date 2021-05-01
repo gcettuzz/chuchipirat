@@ -215,6 +215,11 @@ const useStyles = makeStyles((theme) => ({
     bottom: "23%",
     right: "5%",
   },
+  userProfileCardIconButtonDelete: {
+    position: "absolute",
+    bottom: "23%",
+    right: "15%",
+  },
   imageButtonInput: {
     display: "none",
   },

@@ -434,9 +434,9 @@ class Firebase {
     docRef,
     uid,
     newValue,
-    newValue2,
+    newValue2 = "",
   }) => {
-    if (!docRef || !uid || !newValue) {
+    if (!docRef || !uid) {
       throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
     }
 

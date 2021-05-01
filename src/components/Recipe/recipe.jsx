@@ -886,10 +886,10 @@ const RecipeBase = ({ props, authUser }) => {
       file: file,
       recipe: recipe.data,
       authUser: authUser,
-    }).then((downloadURL) => {
+    }).then((downloadURLs) => {
       dispatchRecipe({
         type: REDUCER_ACTIONS.UPLOAD_PICTURE_SUCCESS,
-        payload: downloadURL,
+        payload: downloadURLs,
       });
     });
   };
@@ -1454,7 +1454,7 @@ const ImagePanel = ({
             )}
           {pictureSrc.includes("firebasestorage.googleapis") &&
             pictureSrc.includes("chuchipirat") && (
-              <Grid item key={"grid_pictureSrc"} xs={12}>
+              <Grid item key={"grid_pictureDelete"} xs={12}>
                 <Button
                   disabled={!pictureSrc}
                   fullWidth
