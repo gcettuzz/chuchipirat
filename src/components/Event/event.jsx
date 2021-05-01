@@ -1004,7 +1004,6 @@ const CookPanel = ({
       },
     });
   };
-
   return (
     <React.Fragment>
       <Card className={classes.card} key={"cardInfo"}>

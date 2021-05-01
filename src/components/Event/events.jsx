@@ -17,6 +17,7 @@ import Typography from "@material-ui/core/Typography";
 import * as ROUTES from "../../constants/routes";
 import * as ACTIONS from "../../constants/actions";
 import * as TEXT from "../../constants/text";
+
 import useStyles from "../../constants/styles";
 
 import Event, { EVENT_TYPES } from "./event.class";
@@ -164,93 +165,85 @@ const EventsBase = ({ props, authUser }) => {
   };
 
   return (
-    <AuthUserContext.Consumer>
-      {(authUser) => (
+    <React.Fragment>
+      <CssBaseline />
+      {/*===== HEADER ===== */}
+      <PageTitle
+        title={TEXT.PAGE_TITLE_EVENTS}
+        subTitle={TEXT.PAGE_SUBTITLE_EVENTS}
+      />
+      <ButtonRow
+        key="buttons_create"
+        buttons={[
+          {
+            id: "new",
+            hero: true,
+            label: TEXT.BUTTON_EVENT_CREATE,
+            variant: "outlined",
+            color: "primary",
+            onClick: onNewClick,
+          },
+        ]}
+      />
+      {/* ===== BODY ===== */}
+      <Container className={classes.container} component="main" maxWidth="md">
+        <Backdrop className={classes.backdrop} open={events.isLoading}>
+          <CircularProgress color="inherit" />
+        </Backdrop>
+        <EventList
+          eventList={events.dataActual}
+          cardActions={[
+            { key: "show", name: TEXT.BUTTON_SHOW, onClick: onCardClick },
+            { key: "edit", name: TEXT.BUTTON_EDIT, onClick: onCardClick },
+            {
+              key: "menuplan",
+              name: TEXT.BUTTON_MENUPLAN,
+              onClick: onCardClick,
+            },
+          ]}
+        />
+
+        <Grid container spacing={2} justify="center">
+          <Grid item>
+            <Box m={4}>
+              {events.dataHistory.length === 0 ? (
+                <Button
+                  align="center"
+                  color="primary"
+                  className={classes.button}
+                  onClick={readPastEvents}
+                >
+                  {TEXT.EVENT_SHOW_PAST_EVENTS}{" "}
+                </Button>
+              ) : (
+                <Typography
+                  variant="h5"
+                  align="center"
+                  color="textSecondary"
+                  paragraph
+                >
+                  {TEXT.EVENT_PAST_EVENTS}
+                </Typography>
+              )}
+            </Box>
+          </Grid>
+        </Grid>
         <React.Fragment>
-          <CssBaseline />
-          {/*===== HEADER ===== */}
-          <PageTitle
-            title={TEXT.PAGE_TITLE_EVENTS}
-            subTitle={TEXT.PAGE_SUBTITLE_EVENTS}
-          />
-          <ButtonRow
-            key="buttons_create"
-            buttons={[
+          <EventList
+            eventList={events.dataHistory}
+            cardActions={[
+              { key: "show", name: TEXT.BUTTON_SHOW, onClick: onCardClick },
+              { key: "edit", name: TEXT.BUTTON_EDIT, onClick: onCardClick },
               {
-                id: "new",
-                hero: true,
-                label: TEXT.BUTTON_EVENT_CREATE,
-                variant: "outlined",
-                color: "primary",
-                onClick: onNewClick,
+                key: "menuplan",
+                name: TEXT.BUTTON_MENUPLAN,
+                onClick: onCardClick,
               },
             ]}
           />
-          {/* ===== BODY ===== */}
-          <Container
-            className={classes.container}
-            component="main"
-            maxWidth="md"
-          >
-            <Backdrop className={classes.backdrop} open={events.isLoading}>
-              <CircularProgress color="inherit" />
-            </Backdrop>
-            <EventList
-              eventList={events.dataActual}
-              cardActions={[
-                { key: "show", name: TEXT.BUTTON_SHOW, onClick: onCardClick },
-                { key: "edit", name: TEXT.BUTTON_EDIT, onClick: onCardClick },
-                {
-                  key: "menuplan",
-                  name: TEXT.BUTTON_MENUPLAN,
-                  onClick: onCardClick,
-                },
-              ]}
-            />
-
-            <Grid container spacing={2} justify="center">
-              <Grid item>
-                <Box m={4}>
-                  {events.dataHistory.length === 0 ? (
-                    <Button
-                      align="center"
-                      color="primary"
-                      className={classes.button}
-                      onClick={readPastEvents}
-                    >
-                      {TEXT.EVENT_SHOW_PAST_EVENTS}{" "}
-                    </Button>
-                  ) : (
-                    <Typography
-                      variant="h5"
-                      align="center"
-                      color="textSecondary"
-                      paragraph
-                    >
-                      {TEXT.EVENT_PAST_EVENTS}
-                    </Typography>
-                  )}
-                </Box>
-              </Grid>
-            </Grid>
-            <React.Fragment>
-              <EventList
-                eventList={events.dataHistory}
-                cardActions={[
-                  { key: "show", name: TEXT.BUTTON_SHOW, onClick: onCardClick },
-                  { key: "edit", name: TEXT.BUTTON_EDIT, onClick: onCardClick },
-                  {
-                    key: "menuplan",
-                    name: TEXT.BUTTON_MENUPLAN,
-                    onClick: onCardClick,
-                  },
-                ]}
-              />
-            </React.Fragment>
-          </Container>
         </React.Fragment>
-      )}
-    </AuthUserContext.Consumer>
+      </Container>
+    </React.Fragment>
   );
 };
 /* ===================================================================

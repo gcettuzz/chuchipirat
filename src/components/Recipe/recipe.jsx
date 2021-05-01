@@ -476,6 +476,7 @@ const recipeReducer = (state, action) => {
       return {
         ...state,
         isError: true,
+        isLoading: false,
         error: action.error,
       };
     default:
@@ -626,12 +627,20 @@ const RecipeBase = ({ props, authUser }) => {
         firebase: firebase,
         uid: urlUid,
         userUid: authUser.uid,
-      }).then((result) => {
-        dispatchRecipe({
-          type: REDUCER_ACTIONS.RECIPE_FETCH_SUCCESS,
-          payload: result,
+      })
+        .then((result) => {
+          dispatchRecipe({
+            type: REDUCER_ACTIONS.RECIPE_FETCH_SUCCESS,
+            payload: result,
+          });
+        })
+        .catch((error) => {
+          console.error(error);
+          dispatchRecipe({
+            type: REDUCER_ACTIONS.GENERIC_FAILURE,
+            error: error,
+          });
         });
-      });
     }
   }, [action]);
   /* ------------------------------------------
@@ -1084,7 +1093,6 @@ const RecipeBase = ({ props, authUser }) => {
       payload: newComments,
     });
   };
-  console.log(recipe);
   /* ------------------------------------------
   // ================= AUSGABE ================
   // ------------------------------------------ */

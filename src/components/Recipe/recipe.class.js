@@ -158,6 +158,14 @@ export default class Recipe {
     });
     recipe.portions = parseInt(recipe.portions);
 
+    // Bild URL kopieren falls nicht auf eigenem Server
+    if (
+      !recipe.pictureSrc.includes("firebasestorage.googleapis") &&
+      !recipe.pictureSrc.includes("chuchipirat")
+    ) {
+      recipe.pictureSrcFullSize = recipe.pictureSrc;
+    }
+
     if (!recipe.uid) {
       docRef = firebase.recipes().doc();
       recipe.uid = docRef.id;
@@ -479,6 +487,11 @@ export default class Recipe {
       .get()
       .then((snapshot) => {
         recipe = snapshot.data();
+
+        if (!recipe) {
+          throw Error(TEXT.ERROR_RECIPE_UNKNOWN(uid));
+        }
+
         recipe.uid = uid;
         recipe.createdAt = recipe.createdAt.toDate();
 

@@ -1,5 +1,6 @@
 import Utils from "../Shared/utils.class";
 import * as TEXT from "../../constants/text";
+import * as LOCAL_STORAGE from "../../constants/localStorage";
 
 import app from "firebase/app";
 import "firebase/auth";
@@ -70,49 +71,60 @@ class Firebase {
 
     return this.auth.onAuthStateChanged((authUser) => {
       if (authUser) {
-        this.user(authUser.uid)
-          .get()
-          .then((snapshot) => {
-            dbUser = snapshot.data();
-            // default empty roles
-            if (!dbUser && !dbUser.roles) {
-              dbUser.roles = [];
-            }
-          })
-          .then(async () => {
-            // Public Profile holen (oder warten bis zur Verfügung)
-            do {
-              await this.user_publicProfile(authUser.uid)
-                .get()
-                .then(async (snapshot) => {
-                  if (!snapshot) {
-                    await this.delay(1);
-                  } else {
-                    publicProfile = snapshot.data();
-                  }
-                });
+        // Prüfen ob Infos zu User bereits im local Storage gepseichert wurden
+        let localStorageAuthUser = JSON.parse(
+          localStorage.getItem(LOCAL_STORAGE.AUTH_USER)
+        );
 
-              counter++;
-            } while (!publicProfile === false && counter <= 10);
-          })
-          .then(() => {
-            // merge auth and db user
-            authUser = {
-              uid: authUser.uid,
-              email: authUser.email,
-              emailVerified: authUser.emailVerified,
-              providerData: authUser.providerData,
-              firstName: dbUser.firstName,
-              lastName: dbUser.lastName,
-              roles: dbUser.roles,
-              publicProfile: {
-                motto: publicProfile?.motto,
-                displayName: publicProfile?.displayName,
-                pictureSrc: publicProfile?.pictureSrc,
-              },
-            };
-            next(authUser);
-          });
+        if (!localStorageAuthUser) {
+          console.warn("=== READ ===");
+          this.user(authUser.uid)
+            .get()
+            .then((snapshot) => {
+              dbUser = snapshot.data();
+              // default empty roles
+              if (!dbUser && !dbUser.roles) {
+                dbUser.roles = [];
+              }
+            })
+            .then(async () => {
+              // Public Profile holen (oder warten bis zur Verfügung)
+              do {
+                await this.user_publicProfile(authUser.uid)
+                  .get()
+                  .then(async (snapshot) => {
+                    if (!snapshot) {
+                      await this.delay(1);
+                    } else {
+                      publicProfile = snapshot.data();
+                    }
+                  });
+
+                counter++;
+              } while (!publicProfile === false && counter <= 10);
+            })
+            .then(() => {
+              // merge auth and db user
+              authUser = {
+                uid: authUser.uid,
+                email: authUser.email,
+                emailVerified: authUser.emailVerified,
+                providerData: authUser.providerData,
+                firstName: dbUser.firstName,
+                lastName: dbUser.lastName,
+                roles: dbUser.roles,
+                publicProfile: {
+                  motto: publicProfile?.motto,
+                  displayName: publicProfile?.displayName,
+                  pictureSrc: publicProfile?.pictureSrc,
+                },
+              };
+              next(authUser);
+            });
+        } else {
+          authUser = localStorageAuthUser;
+          next(authUser);
+        }
       } else {
         fallback();
       }
