@@ -19,6 +19,7 @@ import CardMedia from "@material-ui/core/CardMedia";
 import Typography from "@material-ui/core/Typography";
 
 import TextField from "@material-ui/core/TextField";
+import Input from "@material-ui/core/Input";
 import Link from "@material-ui/core/Link";
 import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
@@ -108,8 +109,7 @@ const REDUCER_ACTIONS = {
   UPLOAD_PICTURE_SUCCESS: "UPLOAD_PICTURE_SUCCESS",
   UPLOAD_PICTURE_INIT: "UPLOAD_PICTURE_INIT",
   DELETE_PICTURE_SUCCESS: "DELETE_PICTURE_SUCCESS",
-  TAG_ADD: "TAG_ADD",
-  TAG_DELETE: "TAG_DELETE",
+  SET_TAGS: "SET_TAGS",
 
   RATING_UPDATE: "RATING_UPDATE",
   INGREDIENT_ONCHANGE: "INGREDIENT_ONCHANGE",
@@ -427,26 +427,12 @@ const recipeReducer = (state, action) => {
           open: true,
         },
       };
-    case REDUCER_ACTIONS.TAG_ADD:
+    case REDUCER_ACTIONS.SET_TAGS:
       return {
         ...state,
         data: {
           ...state.data,
-          tags: Recipe.addTag({
-            tags: state.data.tags,
-            tagToAdd: action.payload,
-          }),
-        },
-      };
-    case REDUCER_ACTIONS.TAG_DELETE:
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          tags: Recipe.deleteTag({
-            tags: state.data.tags,
-            tagToDelete: action.payload,
-          }),
+          tags: action.payload,
         },
       };
     case REDUCER_ACTIONS.RATING_UPDATE:
@@ -817,11 +803,25 @@ const RecipeBase = ({ props, authUser }) => {
   // Tag hinzufügen
   // ------------------------------------------ */
   const onAddTag = () => {
-    if (recipe.data.tags.find((tag) => tag === tagInput) === undefined) {
-      dispatchRecipe({
-        type: REDUCER_ACTIONS.TAG_ADD,
-        payload: tagInput,
+    if (tagInput) {
+      let tags = Recipe.addTag({
+        tags: recipe.data.tags,
+        tagsToAdd: tagInput,
       });
+
+      dispatchRecipe({
+        type: REDUCER_ACTIONS.SET_TAGS,
+        payload: tags,
+      });
+      if (!editMode) {
+        // Speichern
+        Recipe.save({
+          firebase: firebase,
+          recipe: { ...recipe.data, tags: tags },
+          authUser: authUser,
+          triggerCloudfunction: false,
+        });
+      }
       setTagInput("");
     }
   };
@@ -829,10 +829,24 @@ const RecipeBase = ({ props, authUser }) => {
   // Tag löschen
   // ------------------------------------------ */
   const onTagDelete = (tagToDelete) => {
-    dispatchRecipe({
-      type: REDUCER_ACTIONS.TAG_DELETE,
-      payload: tagToDelete,
+    let tags = Recipe.deleteTag({
+      tags: recipe.data.tags,
+      tagToDelete: tagToDelete,
     });
+
+    dispatchRecipe({
+      type: REDUCER_ACTIONS.SET_TAGS,
+      payload: tags,
+    });
+    if (!editMode) {
+      // Speichern
+      Recipe.save({
+        firebase: firebase,
+        recipe: { ...recipe.data, tags: tags },
+        authUser: authUser,
+        triggerCloudfunction: false,
+      });
+    }
   };
   /* ------------------------------------------
   // Rating setzen
@@ -1712,7 +1726,28 @@ const TagsPanel = ({
           {TEXT.PANEL_TAGS}
         </Typography>
         <List>
-          <FormListItem
+          <Input
+            id={"tag"}
+            key={"tag"}
+            label={TEXT.FIELD_DAY}
+            name={"tag"}
+            autoComplete={"tag"}
+            value={tagInput}
+            onChange={onChangeTagInput}
+            onKeyPress={(event) => {
+              if (event.key === "Enter" && tagInput) {
+                onAddTag();
+              }
+            }}
+            fullWidth
+          />
+          {/* onKeyPress={(event) => {
+                if (event.key === "Enter") {
+                  onSearch();
+                }
+              }} */}
+
+          {/* <FormListItem
             id={"tag"}
             key={"tag"}
             value={tagInput}
@@ -1720,7 +1755,7 @@ const TagsPanel = ({
             // icon={<KitchenIcon fontSize="small" />}
             editMode={true}
             onChange={onChangeTagInput}
-          />
+          /> */}
           <ListItemSecondaryAction>
             <IconButton
               onClick={onAddTag}

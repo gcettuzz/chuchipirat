@@ -8,6 +8,7 @@ import * as FIREBASE_EVENTS from "../../constants/firebaseEvents";
 import * as DEFAULT_VALUES from "../../constants/defaultValues";
 import { IMAGES_SUFFIX } from "../Firebase/firebase.class";
 import * as TEXT from "../../constants/text";
+import { ContactSupportOutlined } from "@material-ui/icons";
 
 export default class Recipe {
   /* =====================================================================
@@ -73,10 +74,20 @@ export default class Recipe {
   /* =====================================================================
   // Tag hinzufügen
   // ===================================================================== */
-  static addTag({ tags, tagToAdd }) {
-    // Alle Leerzeichen löschen und in Kleinbuchstaben umwandeln.
-    let newTagLabel = tagToAdd.replace(/\s/g, "");
-    tags = tags.concat([newTagLabel.toLowerCase()]);
+  static addTag({ tags, tagsToAdd }) {
+    if (!tagsToAdd) {
+      return tags;
+    }
+
+    // Wenn der Input Leerzeichen hat in mehrere Tags spliten
+    let newTags = tagsToAdd.split(" ");
+
+    newTags.forEach((newTag) => {
+      // Nur neue Tags hinzufügen
+      if (tags.find((tag) => tag === newTag.toLowerCase()) === undefined) {
+        tags.push(newTag.toLowerCase());
+      }
+    });
     return tags;
   }
   /* =====================================================================
