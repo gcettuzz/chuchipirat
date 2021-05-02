@@ -125,21 +125,24 @@ export default class Recipe {
     let docRef = null;
     let usedProducts = [];
 
-    // Falls leere Einträge vorhanden, diese entfernen
-    recipe.ingredients = recipe.ingredients.filter((ingredient) => {
-      if (
-        !ingredient.quantity &&
-        !ingredient.unit &&
-        !ingredient.product.name
-      ) {
-        return false;
-      }
-      return true;
-    });
-
-    recipe.preparationSteps = recipe.preparationSteps.filter(
-      (preparationStep) => preparationStep.step
-    );
+    // Falls mehrere leere Einträge vorhanden, diese entfernen
+    if (recipe.ingredients.length > 1) {
+      recipe.ingredients = recipe.ingredients.filter((ingredient) => {
+        if (
+          !ingredient.quantity &&
+          !ingredient.unit &&
+          !ingredient.product.name
+        ) {
+          return false;
+        }
+        return true;
+      });
+    }
+    if (recipe.preparationSteps.length > 1) {
+      recipe.preparationSteps = recipe.preparationSteps.filter(
+        (preparationStep) => preparationStep.step
+      );
+    }
 
     // Nochmals prüfen ob alles ok.
     try {
