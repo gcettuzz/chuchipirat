@@ -179,7 +179,7 @@ const DialogProduct = ({
   if (!productPopUpValues.name && productName) {
     setProductPopUpValues({
       uid: productUid,
-      name: productName,
+      name: productName.trim(),
       department: selectedDepartment,
       shoppingUnit: selectedUnit,
       usable: usable,
