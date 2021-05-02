@@ -16,7 +16,6 @@ import InputLabel from "@material-ui/core/InputLabel";
 import IconButton from "@material-ui/core/IconButton";
 import InputAdornment from "@material-ui/core/InputAdornment";
 
-import EditIcon from "@material-ui/icons/Edit";
 import * as TEXT from "../../constants/text";
 import * as ROLES from "../../constants/roles";
 
@@ -26,6 +25,7 @@ import EnhancedTable, { TABLE_COLUMN_TYPES } from "../Shared/enhancedTable";
 import DialogProduct, { PRODUCT_DIALOG_TYPE } from "./dialogProduct";
 import AlertMessage from "../Shared/AlertMessage";
 
+import EditIcon from "@material-ui/icons/Edit";
 import SearchIcon from "@material-ui/icons/Search";
 
 import CustomSnackbar from "../Shared/customSnackbar";
@@ -340,6 +340,7 @@ const ProductsBase = ({ props, authUser }) => {
   // Produkt wurde angepasst
   // ------------------------------------------ */
   const onProductEdited = (updatedProduct) => {
+    console.log(updatedProduct);
     dispatchProducts({
       type: REDUCER_ACTIONS.PRODUCT_UPDATED,
       payload: updatedProduct,
@@ -509,14 +510,14 @@ const ProductsPanel = ({
       label: TEXT.FIELD_SHOPPING_UNIT,
       visible: true,
     },
-    {
-      id: "usable",
-      type: TABLE_COLUMN_TYPES.CHECKBOX,
-      textAlign: "center",
-      disablePadding: false,
-      label: TEXT.FIELD_USABLE,
-      visible: true,
-    },
+    // {
+    //   id: "usable",
+    //   type: TABLE_COLUMN_TYPES.CHECKBOX,
+    //   textAlign: "center",
+    //   disablePadding: false,
+    //   label: TEXT.FIELD_USABLE,
+    //   visible: true,
+    // },
     {
       id: "edit",
       type: TABLE_COLUMN_TYPES.BUTTON,

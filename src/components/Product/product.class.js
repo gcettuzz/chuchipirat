@@ -109,7 +109,7 @@ export default class Product {
     // Dokument updaten mit neuem Produkt
     await firebase.products().update({
       [uid]: {
-        name: name,
+        name: name.trim(),
         departmentUid: departmentUid,
         shoppingUnit: shoppingUnit ? shoppingUnit : "",
         usable: true,
@@ -125,7 +125,7 @@ export default class Product {
 
     let product = new Product({
       uid: uid,
-      name: name,
+      name: name.trim(),
       departmentUid: departmentUid,
       shoppingUnit: shoppingUnit,
       usable: true,
@@ -150,7 +150,7 @@ export default class Product {
       .products()
       .update({
         [uid]: {
-          name: name,
+          name: name.trim(),
           departmentUid: departmentUid,
           shoppingUnit: shoppingUnit,
           usable: usable,
@@ -171,7 +171,7 @@ export default class Product {
 
     let product = new Product({
       uid: uid,
-      name: name,
+      name: name.trim(),
       departmentUid: departmentUid,
       shoppingUnit: shoppingUnit,
       usable: usable,

@@ -1030,10 +1030,11 @@ const RecipeBase = ({ props, authUser }) => {
   // PopUp Produkt Hinzufügen - onCreate
   // ------------------------------------------ */
   const onCreateProductToAdd = (productToAdd, product) => {
+    console.log(product);
     dispatchRecipe({
       type: REDUCER_ACTIONS.INGREDIENT_ONCHANGE,
       field: "product",
-      value: { uid: product.uid, name: productToAdd.name },
+      value: { uid: product.uid, name: product.name },
       pos: triggeredIngredientPos,
     });
 
@@ -1045,7 +1046,7 @@ const RecipeBase = ({ props, authUser }) => {
 
     dispatchRecipe({
       type: REDUCER_ACTIONS.SNACKBAR_SHOW,
-      message: TEXT.PRODUCT_CREATED(productToAdd.name),
+      message: TEXT.PRODUCT_CREATED(product.name),
       severity: "success",
     });
 
