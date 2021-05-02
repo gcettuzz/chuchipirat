@@ -68,9 +68,17 @@ const DialogProduct = ({
   /* ------------------------------------------
   // Change Ereignis Felder
   // ------------------------------------------ */
-  const onChangeField = (event, newValue) => {
+  const onChangeField = (event, newValue, action, objectId) => {
     let value;
-    let field = event.target.id.split("-")[0];
+    let field;
+
+    if (event.target.id) {
+      field = event.target.id.split("-")[0];
+    } else {
+      field = objectId;
+    }
+    console.log(field);
+    console.log(event, newValue, action, objectId);
 
     switch (field) {
       case "shoppingUnit":
@@ -89,6 +97,7 @@ const DialogProduct = ({
       default:
         return;
     }
+    console.log(field, value);
     setProductPopUpValues({
       ...productPopUpValues,
       [field]: value,
@@ -250,7 +259,9 @@ const DialogProduct = ({
                 //   department.uid === selectedDepartmentUid
                 // }
                 getOptionLabel={(department) => department.name}
-                onChange={onChangeField}
+                onChange={(event, newValue, action) => {
+                  onChangeField(event, newValue, action, "department");
+                }}
                 fullWidth
                 renderInput={(params) => (
                   <TextField
@@ -277,7 +288,9 @@ const DialogProduct = ({
                 //   unit === productPopUpValues.shoppingUnit
                 // }
                 getOptionLabel={(unit) => unit}
-                onChange={onChangeField}
+                onChange={(event, newValue, action) => {
+                  onChangeField(event, newValue, action, "shoppingUnit");
+                }}
                 noOptionsText={TEXT.ERROR_NO_MATCHING_UNIT_FOUND}
                 fullWidth
                 renderInput={(params) => (
