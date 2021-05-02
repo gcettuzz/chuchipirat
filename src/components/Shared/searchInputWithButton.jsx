@@ -78,8 +78,8 @@ const SearchInputWithButton = ({
             <Button
               fullWidth
               color="primary"
-              variant="contained" // onClick={onSearch}
-              type="submit"
+              variant="contained"
+              onClick={onSearch}
               disabled={!value}
             >
               <SearchIcon />
@@ -91,8 +91,7 @@ const SearchInputWithButton = ({
               color="primary"
               className={classes.button}
               startIcon={<SearchIcon />}
-              // onClick={onSearch}
-              type="submit"
+              onClick={onSearch}
               disabled={!value}
             >
               {TEXT.BUTTON_SEARCH}
