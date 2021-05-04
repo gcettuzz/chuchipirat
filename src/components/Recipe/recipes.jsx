@@ -206,7 +206,7 @@ const RecipesBase = ({ props, authUser }) => {
         ]}
       />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="md">
+      <Container className={classes.container} component="main" maxWidth="lg">
         <Backdrop className={classes.backdrop} open={recipes.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
@@ -246,6 +246,7 @@ const RecipeSearch = ({
   // Rezepte suchen
   // ------------------------------------------ */
   const onSearch = (event) => {
+    //TODO: Button muss wohl weg....
     let filteredRecipes = recipes.filter(
       (recipe) =>
         recipe.name.toLowerCase().includes(searchString.toLowerCase()) ||
@@ -293,6 +294,7 @@ const RecipeSearch = ({
   const onSearchChange = (event) => {
     setSearchString(event.target.value);
   };
+
   if (!searchString && recipes.length > 0 && filteredData.length === 0) {
     setFilteredData(recipes);
   }
@@ -316,7 +318,7 @@ const RecipeSearch = ({
             sm={embededMode ? 12 : 6}
             md={embededMode ? 6 : 4}
             lg={embededMode ? 4 : 3}
-            xl={embededMode ? 3 : 2}
+            // xl={embededMode ? 3 : 2}
           >
             <RecipeCard
               key={"recipe_card_" + recipe.uid}

@@ -194,7 +194,7 @@ const NavigationAuthBase = (props) => {
   /* ------------------------------------------
   // Prüfen ob sich die Version geändert hat
   // ------------------------------------------ */
-  const isVersionUpToDate = () => {
+  const isVersionUpToDate = async () => {
     let actualVersion;
     let localStorageVersion = JSON.parse(
       localStorage.getItem(LOCAL_STORAGE.VERSION)
@@ -209,8 +209,9 @@ const NavigationAuthBase = (props) => {
       !localStorageVersion ||
       localStorageVersion?.lastCheck !== todayString
     ) {
+      console.warn("=== READ VERSION===");
       // Kein Wert oder veraltet
-      firebase
+      await firebase
         .actualVersion()
         .get()
         .then((result) => {
