@@ -252,6 +252,8 @@ export const ERROR_PRODUCT_UNKNOWN = (productName) =>
 export const DIALOG_ALERT_TITLE_ADD_PRODUCT = "";
 export const DIALOG_ALERT_TEXT_ADD_PRODUCT =
   "Bitte nutze die Mehrzalform. Tomaten statt Tomate.";
+export const ERROR_PRODUCT_WITH_THIS_NAME_ALREADY_EXISTS =
+  "Es existiert bereits ein Produkt mit diesen Namen. Bitte wähle das gewünschte Produkt aus dem DropDown aus.";
 /* =====================================================================
 // Meldungen zu Einheiten
 // ===================================================================== */
