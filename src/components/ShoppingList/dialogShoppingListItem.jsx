@@ -290,7 +290,15 @@ const DialogShoppingListItem = ({
               fullWidth
               filterOptions={(options, params) => {
                 const filtered = filter(options, params);
-                if (params.inputValue !== "") {
+                if (
+                  params.inputValue !== "" &&
+                  // Sicherstellen, dass kein Produkt mit gleichem Namen erfasst wird
+                  products.find(
+                    (product) =>
+                      product.name.toLowerCase() ===
+                      params.inputValue.toLowerCase()
+                  ) === undefined
+                ) {
                   filtered.push({
                     inputValue: params.inputValue,
                     name: `"${params.inputValue}" ${TEXT.ADD}`,
@@ -375,6 +383,7 @@ const DialogShoppingListItem = ({
         productName={productAddValues.productName}
         dialogType={PRODUCT_DIALOG_TYPE.CREATE}
         dialogOpen={productAddValues.popUpOpen}
+        products={products}
         handleOk={onPopUpAddProductOk}
         handleClose={onPopUpAddProductCancel}
         units={units}

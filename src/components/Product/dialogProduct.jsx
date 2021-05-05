@@ -45,6 +45,7 @@ const DialogProduct = ({
   dialogType,
   productName = "",
   productUid = "",
+  products = [],
   dialogOpen,
   handleOk,
   handleClose,
@@ -77,8 +78,6 @@ const DialogProduct = ({
     } else {
       field = objectId;
     }
-    console.log(field);
-    console.log(event, newValue, action, objectId);
 
     switch (field) {
       case "shoppingUnit":
@@ -97,7 +96,7 @@ const DialogProduct = ({
       default:
         return;
     }
-    console.log(field, value);
+
     setProductPopUpValues({
       ...productPopUpValues,
       [field]: value,
@@ -136,6 +135,23 @@ const DialogProduct = ({
         department: {
           hasError: true,
           errorText: TEXT.FORM_GIVE_DEPARTMENT,
+        },
+      });
+      hasError = true;
+    }
+    if (
+      products.find(
+        (product) =>
+          product.name.toLowerCase() ===
+          productPopUpValues.name.toLowerCase().trim()
+      ) !== undefined
+    ) {
+      // Ein Produkt mit diesem Namen besteht schon. --> Abbruch
+      setValidation({
+        ...validation,
+        name: {
+          hasError: true,
+          errorText: TEXT.ERROR_PRODUCT_WITH_THIS_NAME_ALREADY_EXISTS,
         },
       });
       hasError = true;

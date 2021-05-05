@@ -447,6 +447,7 @@ const ProductsBase = ({ props, authUser }) => {
         dialogType={PRODUCT_DIALOG_TYPE.EDIT}
         productUid={productPopUpValues.productUid}
         productName={productPopUpValues.productName}
+        products={products.data}
         dialogOpen={productPopUpValues.popUpOpen}
         handleOk={onProductEdited}
         handleClose={onPopUpClose}

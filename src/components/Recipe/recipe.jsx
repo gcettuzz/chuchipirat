@@ -1288,6 +1288,7 @@ const RecipeBase = ({ props, authUser }) => {
         // handleProductNameChange={}
         // handleDepartmentChange={}
         // handleUnitChange={}
+        products={recipe.products}
         units={recipe.units}
         departments={recipe.departments}
       />
@@ -1947,7 +1948,7 @@ const IngredientPosition = ({
 
   const theme = useTheme();
   const breakpointIsXs = useMediaQuery(theme.breakpoints.down("xs"));
-
+  console.log(products);
   return (
     <React.Fragment>
       {editMode ? (
@@ -2083,7 +2084,15 @@ const IngredientPosition = ({
               fullWidth
               filterOptions={(options, params) => {
                 const filtered = filter(options, params);
-                if (params.inputValue !== "") {
+                if (
+                  params.inputValue !== "" &&
+                  // Sicherstellen, dass kein Produkt mit gleichem Namen erfasst wird
+                  products.find(
+                    (product) =>
+                      product.name.toLowerCase() ===
+                      params.inputValue.toLowerCase()
+                  ) === undefined
+                ) {
                   filtered.push({
                     inputValue: params.inputValue,
                     name: `"${params.inputValue}" ${TEXT.ADD}`,
