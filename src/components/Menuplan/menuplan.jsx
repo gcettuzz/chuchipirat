@@ -71,7 +71,7 @@ import Recipe from "../Recipe/recipe.class";
 import Menuplan from "./menuplan.class";
 import MenuplanPdf from "./menuplanPdf";
 import Utils from "../Shared/utils.class";
-
+import RecipeSearchDrawer from "../Recipe/recipeDrawer";
 import useStyles from "../../constants/styles";
 
 import PageTitle from "../Shared/pageTitle";
@@ -1942,69 +1942,7 @@ const TablePaginator = ({ noOfElements, onChange }) => {
     />
   );
 };
-/* ===================================================================
-// ======================= Recipe Search Drawer ======================
-// =================================================================== */
-const RecipeSearchDrawer = ({
-  allRecipes,
-  drawerState,
-  toggleRecipeSearch,
-  onRecipeShow,
-  onRecipeAdd,
-}) => {
-  const classes = useStyles();
-  const theme = useTheme();
-  const { push } = useHistory();
 
-  /* ------------------------------------------
-// Neues Rezept anlegen
-// ------------------------------------------ */
-  const onNewRecipe = () => {
-    push({
-      pathname: ROUTES.RECIPE,
-      state: { action: ACTIONS.NEW },
-    });
-  };
-
-  return (
-    <Drawer
-      anchor={drawerState.anchor}
-      open={drawerState.open}
-      onClose={toggleRecipeSearch(false)}
-      classes={{
-        paper: useMediaQuery(theme.breakpoints.down("xs"), { noSsr: true })
-          ? classes.recipeSearchDrawerPaperVertical
-          : classes.recipeSearchDrawerPaperHorizontal,
-      }}
-    >
-      <Container className={classes.container} component="main" maxWidth="lg">
-        <Typography
-          component="h3"
-          variant="h4"
-          align="center"
-          color="textPrimary"
-          gutterBottom
-        >
-          {TEXT.MENUPLAN_DRAWER_SEARCH_RECIPE_TITLE}
-        </Typography>
-
-        <RecipeSearch
-          recipes={allRecipes}
-          onNewClick={onNewRecipe}
-          cardActions={[
-            {
-              key: ACTIONS.VIEW,
-              name: TEXT.BUTTON_SHOW,
-              onClick: onRecipeShow,
-            },
-            { key: ACTIONS.ADD, name: TEXT.BUTTON_ADD, onClick: onRecipeAdd },
-          ]}
-          embededMode={true}
-        />
-      </Container>
-    </Drawer>
-  );
-};
 /* ===================================================================
 // =========================== Setting Dialog ========================
 // =================================================================== */

@@ -16,6 +16,9 @@ import CardHeader from "@material-ui/core/CardHeader";
 import CardContent from "@material-ui/core/CardContent";
 
 import ForwardIcon from "@material-ui/icons/Forward";
+import DeleteIcon from "@material-ui/icons/Delete";
+import ZoomOutMapIcon from "@material-ui/icons/ZoomOutMap";
+import CallMergeIcon from "@material-ui/icons/CallMerge";
 
 import * as TEXT from "../../constants/text";
 import * as ROLES from "../../constants/roles";
@@ -35,6 +38,7 @@ import {
   withEmailVerification,
 } from "../Session";
 import Feed from "../Shared/feed.class";
+import { CallMerge } from "@material-ui/icons";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -84,18 +88,28 @@ const AdminBase = ({ props, authUser }) => {
       {/* ===== BODY ===== */}
       <Container className={classes.container} component="main" maxWidth="sm">
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} lg={4}>
+          <Grid item xs={12} md={6} lg={4}>
             <AdminTile
               id={"deleteFeeds"}
               text={TEXT.PANEL_ADMIN_DELETE_FEED}
+              icon={<DeleteIcon />}
               action={goToDeleteFeed}
             />
           </Grid>
-          <Grid item xs={12} sm={6} lg={4}>
+          <Grid item xs={12} md={6} lg={4}>
             <AdminTile
               id={"whereUsed"}
               text={TEXT.PANEL_ADMIN_WHERE_USED}
+              icon={<ZoomOutMapIcon />}
               action={goToWhereUsed}
+            />
+          </Grid>
+          <Grid item xs={12} md={6} lg={4}>
+            <AdminTile
+              id={"merge"}
+              text={TEXT.PANEL_ADMIN_MERGE}
+              icon={<CallMergeIcon />}
+              // action={goToWhereUsed}
             />
           </Grid>
         </Grid>
@@ -106,7 +120,7 @@ const AdminBase = ({ props, authUser }) => {
 /* ===================================================================
 // ============================ Admin Tile  ==========================
 // =================================================================== */
-const AdminTile = ({ id, text, action }) => {
+const AdminTile = ({ id, text, icon, action }) => {
   const classes = useStyles();
 
   return (
@@ -114,8 +128,12 @@ const AdminTile = ({ id, text, action }) => {
       <CardHeader
         title={text}
         action={
-          <IconButton aria-label={"admin Card " + text} onClick={action}>
-            <ForwardIcon />
+          <IconButton
+            disabled={!action}
+            aria-label={"admin Card " + text}
+            onClick={action}
+          >
+            {icon ? icon : <ForwardIcon />}
           </IconButton>
         }
       />
