@@ -15,11 +15,6 @@ export const RECIPE_PLACEHOLDER_PICTURE =
 const RecipeCard = ({ recipe, cardActions = [] }) => {
   const classes = useStyles();
   return (
-    // <Link
-    //   underline="none"
-    //   style={{ textDecoration: "none" }}
-    //   to={onCardClickTarget}
-    // >
     <Card className={classes.card}>
       <CardMedia
         className={classes.cardMedia}
@@ -49,7 +44,6 @@ const RecipeCard = ({ recipe, cardActions = [] }) => {
         </CardActions>
       )}
     </Card>
-    // </Link>
   );
 };
 /* ===================================================================

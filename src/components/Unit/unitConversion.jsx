@@ -756,7 +756,7 @@ const UnitConversionBase = ({ props, authUser }) => {
           )}
 
           {/* Tabs */}
-          {tabValue == 0 && (
+          {tabValue === 0 && (
             <Grid item key={"BasicConversionPanel"} xs={12}>
               <br />
               <BasicConversionPanel
@@ -767,7 +767,7 @@ const UnitConversionBase = ({ props, authUser }) => {
               />
             </Grid>
           )}
-          {tabValue == 1 && (
+          {tabValue === 1 && (
             <Grid item key={"BasicConversionPanel"} xs={12}>
               <br />
               <ProductConversionPanel

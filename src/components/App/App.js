@@ -23,8 +23,11 @@ import Events from "../Event/events";
 import Recipe from "../Recipe/recipe";
 import Recipes from "../Recipe/recipes";
 // import HomeX from "../Home/homeX";
-import Admin from "../Admin/admin";
 import Users from "../User/users";
+import Admin from "../Admin/admin";
+import FeedDelete from "../Admin/feedDelete";
+import WhereUsed from "../Admin/whereUsed";
+
 import UserPublicProfile from "../User/publicProfile";
 import UserProfile from "../User/userProfile";
 // import Help from "../Help/help";
@@ -182,8 +185,18 @@ const App = (props) => {
                 component={ShoppingList}
               />
 
-              <Route path={ROUTES.ADMIN} component={Admin} />
               <Route path={ROUTES.USERS} component={Users} />
+              <Route exact path={ROUTES.ADMIN} component={Admin} />
+              <Route
+                exact
+                path={ROUTES.ADMIN_FEED_DELETE}
+                component={FeedDelete}
+              />
+              <Route
+                exact
+                path={ROUTES.ADMIN_WHERE_USED}
+                component={WhereUsed}
+              />
 
               <Route exact path={ROUTES.USER_PROFILE} component={UserProfile} />
               <Route
