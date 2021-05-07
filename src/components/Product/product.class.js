@@ -1,9 +1,9 @@
 import Utils from "../Shared/utils.class";
 import Stats, { STATS_FIELDS } from "../Shared/stats.class";
 import * as FIREBASE_EVENTS from "../../constants/firebaseEvents";
-import Department from "../Department/department.class";
-import { Alert } from "@material-ui/lab";
+import * as TEXT from "../../constants/text";
 
+import Department from "../Department/department.class";
 export default class Product {
   /* =====================================================================
   // Constructor
@@ -178,5 +178,37 @@ export default class Product {
     });
 
     return product;
+  };
+  /* =====================================================================
+  // Produkt tracen
+  // ===================================================================== */
+  static traceProduct = async ({ firebase, uid, traceListener }) => {
+    if (!firebase || !uid) {
+      throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
+    }
+    let listener;
+    let docRef = firebase.cloudFunctions_productTrace().doc();
+
+    await docRef
+      .set({
+        uid: uid,
+      })
+      .then(async () => {
+        await firebase.delay(1);
+      })
+      .then(() => {
+        const unsubscribe = docRef.onSnapshot((snapshot) => {
+          traceListener(snapshot.data());
+          if (snapshot.data()?.done) {
+            // Wenn das Feld DONE vorhanden ist, ist die Cloud-Function durch
+            unsubscribe();
+          }
+        });
+      })
+      .catch((error) => {
+        throw error;
+      });
+
+    return listener;
   };
 }

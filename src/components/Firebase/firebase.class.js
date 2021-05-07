@@ -267,7 +267,8 @@ class Firebase {
     this.db.collection("_cloudFunctions/waitingArea/product");
   cloudFunctions_recipe = () =>
     this.db.collection("_cloudFunctions/waitingArea/recipe");
-
+  cloudFunctions_productTrace = () =>
+    this.db.collection("_cloudFunctions/waitingArea/productTrace");
   /* =====================================================================
   // Alle Referenzen zu den Bildern
   // ===================================================================== */

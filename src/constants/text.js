@@ -49,6 +49,8 @@ export const BUTTON_POS_DOWN = "Position runter";
 export const BUTTON_GENERATE = "Generieren";
 export const BUTTON_CHANGE_MAIL_PASSWORD = "Mail / Passwort ändern";
 export const BUTTON_DELETE_FEED = "Feed-Einträge löschen";
+export const BUTTON_TRACE = "Trace";
+export const BUTTON_CHOOSE_RECIPE = "Rezept auswählen";
 /* =====================================================================
 // Seiten Titel und Untertitel
 // ===================================================================== */
@@ -94,7 +96,8 @@ export const PAGE_SUBTITLE_SHOPPING_LIST = "";
 export const PAGE_USER_PROFILE_TITLE = (name) => `Hoi ${name}`;
 export const PAGE_USER_PROFILE_SUBTITLE = "Zeig uns wer Du bist.";
 export const PAGE_REAUTHENTICATE_DIALOG_TITLE = "Ausweis bitte...";
-
+export const PAGE_TITLE_ADMIN_WHERE_USED = "Trace";
+export const PAGE_SUBTITLE_ADMIN_WHERE_USED = "Wo bist du?";
 /* =====================================================================
 // Tabellen Überschriften
 // ===================================================================== */
@@ -306,6 +309,10 @@ export const ALERT_TEXT_IMAGE_SAVE_FIRST =
 export const ALERT_TEXT_IMAGE_SOURCE =
   "Du kannst die URL eines Bildes im Netz angeben oder dein eigenes Bild hochladen.";
 /* =====================================================================
+// Texte zum Admin Bereich
+// ===================================================================== */
+export const TRACE_RESULT = "Trace Ergebnis";
+/* =====================================================================
 // Diverse (längere) Texte
 // ===================================================================== */
 export const ENTRY_DELETED = "Eintrag gelöscht.";
@@ -340,10 +347,6 @@ export const HOME_STATS_CAPTIONS = {
   SHOPPING_LISTS: "Generierte Postizettel",
   PARTICIPANTS: "bekochte Personen",
 };
-/* =====================================================================
-// Home 
-// ===================================================================== */
-
 /* =====================================================================
 // Meldungen rund um SignIn/SignUp
 // ===================================================================== */
@@ -556,6 +559,9 @@ export const SETTINGS = "Einstellungen";
 export const MEAL = "Mahlzeit";
 export const NOTE = "Notiz";
 export const RECIPE = "Rezept";
+export const RECIPES = "Rezepte";
+export const PRODUCT = "Produkt";
+export const PRODUCTS = "Produkte";
 export const QUANTITY_CALCULATION = "Mengenberechnung";
 export const SHOPPING_LIST = "Postizettel";
 export const MENUPLAN = "Menüplan";
