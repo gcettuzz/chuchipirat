@@ -13,9 +13,11 @@ export const RECIPES = "/recipes";
 export const EVENT = "/event";
 export const EVENT_UID = "/event/:id";
 export const EVENTS = "/events";
-// export const USER_ACCOUNT = "/account";
-export const ADMIN = "/admin";
+
 export const USERS = "/users";
+export const ADMIN = "/admin";
+export const ADMIN_FEED_DELETE = "/admin/feeddelete";
+export const ADMIN_WHERE_USED = "/admin/whereused";
 
 export const USER_PUBLIC_PROFILE = "/publicprofile";
 export const USER_PUBLIC_PROFILE_UID = "/publicprofile/:id";

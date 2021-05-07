@@ -232,6 +232,7 @@ const NavigationAuthBase = (props) => {
     } else {
       actualVersion = localStorageVersion.lastFetchedVersion;
     }
+
     if (actualVersion !== packageJson.version) {
       return false;
     } else {

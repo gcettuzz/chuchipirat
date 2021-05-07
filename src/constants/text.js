@@ -125,6 +125,7 @@ export const PANEL_COMMENTS = "Kommentare";
 export const PANEL_PRODUCTS = "Produkte";
 export const PANEL_INTRODUCE_YOURSELF = "Stell dich vor";
 export const PANEL_ADMIN_DELETE_FEED = "Feed-Einträge löschen";
+export const PANEL_ADMIN_WHERE_USED = "Verfolgungsnachweis";
 /* =====================================================================
 // Felder
 // ===================================================================== */
