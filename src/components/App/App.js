@@ -14,8 +14,11 @@ import Footer from "../Footer/footer";
 import LandingPage from "../Landing/landing";
 import SignUpPage from "../SignUp/signUp";
 import SignInPage from "../SignIn/signIn";
-import VerifyEmail from "../VerifyEmail/verifyEmail";
-import PasswordReset from "../PasswordReset/passwordReset";
+import AuthServiceHandler from "../AuthServiceHandler/authServiceHandler";
+
+// import VerifyEmail from "../VerifyEmail/verifyEmail";
+// import PasswordReset from "../PasswordReset/passwordReset";
+
 import PasswordChange from "../PasswordChange/passwordChange";
 import HomePage from "../Home/home";
 import Event from "../Event/event";
@@ -136,9 +139,14 @@ const App = (props) => {
 
               <Route path={ROUTES.HOME} component={HomePage} />
 
-              <Route path={ROUTES.VERIFY_EMAIL} component={VerifyEmail} />
-              <Route path={ROUTES.PASSWORD_RESET} component={PasswordReset} />
+              {/* <Route path={ROUTES.VERIFY_EMAIL} component={VerifyEmail} />
+              <Route path={ROUTES.PASSWORD_RESET} component={PasswordReset} /> */}
               <Route path={ROUTES.PASSWORD_CHANGE} component={PasswordChange} />
+
+              <Route
+                path={ROUTES.AUTH_SERVICE_HANDLER}
+                component={AuthServiceHandler}
+              />
 
               <Route path={ROUTES.EVENTS} component={Events} />
               <Route exact path={ROUTES.EVENT} component={Event} />
