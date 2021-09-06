@@ -11,8 +11,20 @@ import FirebaseMessageHandler from "../Firebase/firebaseMessageHandler.class";
 
 import * as ROUTES from "../../constants/routes";
 import * as TEXT from "../../constants/text";
+import * as LOCAL_STORAGE from "../../constants/localStorage";
 import useStyles from "../../constants/styles";
 import PageTitle from "../Shared/pageTitle";
+
+// ===================================================================
+// ============================ Funktionen ===========================
+// ===================================================================
+const updateSessionStorage = () => {
+  // Nach dem verifizieren der Person, muss der LocalStorage angepasst
+  // werden. Sonst funktioniert die Weiterleitung nicht korrekt.
+  let user = JSON.parse(sessionStorage.getItem(LOCAL_STORAGE.AUTH_USER));
+  user.emailVerified = true;
+  sessionStorage.setItem(LOCAL_STORAGE.AUTH_USER, JSON.stringify(user));
+};
 
 // ===================================================================
 // =============================== Page ==============================
@@ -56,6 +68,7 @@ const VerifyEmailBase = (props) => {
       .applyActionCode(oobCode)
       .then(() => {
         setIsVerified(true);
+        updateSessionStorage();
         setTimer(9);
       })
       .catch((error) => {

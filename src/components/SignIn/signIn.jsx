@@ -30,7 +30,7 @@ import User from "../User/user.class";
 import PageTitle from "../Shared/pageTitle";
 import { withFirebase } from "../Firebase/index.js";
 import { SignUpLink } from "../SignUp/signUp";
-import { ForgotPasswordLink } from "../PasswordReset/passwordReset";
+import { ForgotPasswordLink } from "../AuthServiceHandler/passwordReset";
 import AlertMessage from "../Shared/AlertMessage";
 
 import * as FIREBASE_MSG from "../../constants/firebaseMessages";

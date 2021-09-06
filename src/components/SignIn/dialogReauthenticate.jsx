@@ -17,7 +17,7 @@ import * as TEXT from "../../constants/text";
 import User from "../User/user.class";
 
 import AlertMessage from "../Shared/AlertMessage";
-import { ForgotPasswordLink } from "../PasswordReset/passwordReset";
+import { ForgotPasswordLink } from "../AuthServiceHandler/passwordReset";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================

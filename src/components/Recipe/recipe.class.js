@@ -263,7 +263,7 @@ export default class Recipe {
 
     if (triggerCloudfunction && !newRecipe) {
       firebase.createTriggerDocForCloudFunctions({
-        docRef: firebase.cloudFunctions_recipe().doc(),
+        docRef: firebase.cloudFunctions_recipeUpdate().doc(),
         uid: recipe.uid,
         newValue: recipe.name,
         newValue2: recipe.pictureSrc,
@@ -325,7 +325,7 @@ export default class Recipe {
       .then(() => {
         // CloudFunction Triggern
         firebase.createTriggerDocForCloudFunctions({
-          docRef: firebase.cloudFunctions_recipe().doc(),
+          docRef: firebase.cloudFunctions_recipeUpdate().doc(),
           uid: recipe.uid,
           newValue: recipe.name,
           newValue2: recipe.pictureSrc,
@@ -383,7 +383,7 @@ export default class Recipe {
     // CloudFunction Triggern
     firebase
       .createTriggerDocForCloudFunctions({
-        docRef: firebase.cloudFunctions_recipe().doc(),
+        docRef: firebase.cloudFunctions_recipeUpdate().doc(),
         uid: recipe.uid,
         newValue: recipe.name,
         newValue2: "",

@@ -478,6 +478,35 @@ export default class User {
     });
   };
   /* =====================================================================
+  // E-Mailadresse updaten
+  // ===================================================================== */
+  static updateEmail = async ({ firebase, uid, newEmail }) => {
+    // Email muss im Profil und in den Searchfiedls angepasst werden
+
+    const userDoc = firebase.user(uid);
+    const userPublicSearchFieldsDoc = firebase.user_publicSearchFields(uid);
+
+    await userDoc
+      .update({
+        email: newEmail,
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+
+    await userPublicSearchFieldsDoc
+      .update({
+        email: newEmail,
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+    firebase.analytics.logEvent(FIREBASE_EVENTS.USER_CHANGED_EMAIL);
+  };
+
+  /* =====================================================================
   /* =====================================================================
   /* =====================================================================
   /* =====================================================================

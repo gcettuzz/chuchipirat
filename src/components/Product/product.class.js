@@ -163,7 +163,7 @@ export default class Product {
 
     if (runCloudFunction) {
       firebase.createTriggerDocForCloudFunctions({
-        docRef: firebase.cloudFunctions_product().doc(),
+        docRef: firebase.cloudFunctions_productUpdate().doc(),
         uid: uid,
         newValue: name,
       });

@@ -1,4 +1,5 @@
 import React from "react";
+import qs from "qs";
 import { compose } from "recompose";
 
 import { Link } from "react-router-dom";
@@ -35,8 +36,10 @@ import * as FIREBASE_MSG from "../../constants/firebaseMessages";
 import * as ROUTES from "../../constants/routes";
 import * as TEXT from "../../constants/text";
 import * as IMAGE_REPOSITORY from "../../constants/imageRepository";
-import { ForgotPasswordLink } from "../PasswordReset/passwordReset";
+import * as LOCAL_STORAGE from "../../constants/localStorage";
+import { ForgotPasswordLink } from "../AuthServiceHandler/passwordReset";
 import Utils from "../Shared/utils.class";
+import User from "../User/user.class";
 
 // ===================================================================
 // ======================== globale Funktionen =======================
@@ -68,18 +71,15 @@ const PasswordChangePage = (props) => {
 const PasswordChangBase = ({ props, authUser }) => {
   const classes = useStyles();
   const firebase = props.firebase;
-
-  let resetCode;
-  // const { push } = useHistory();
+  const resetCode = props.oobCode;
 
   const [formValues, setFormValues] = React.useState(INITIAL_STATE);
 
-  let qs = require("qs");
-
   // kommt die Anfrage aus der Passwort-Zurücksetzen-Mail.
   // Dann ist in der URL der objektCode
-  props.location?.search &&
-    (resetCode = qs.parse(props.location.search).oobCode);
+  if (props?.oobCode && !resetCode) {
+    resetCode = props.oobCode;
+  }
 
   React.useEffect(() => {
     if (!formValues.email && resetCode && !formValues.error) {
@@ -97,7 +97,7 @@ const PasswordChangBase = ({ props, authUser }) => {
     }
   }, []);
 
-  // Neu Authentifizieren, wenn icht über ResetCode eingestiegen
+  // Neu Authentifizieren, wenn nicht über resetCode eingestiegen
   const [reauthenticattion, setReauthenticattion] = React.useState({
     needed: resetCode ? false : true,
     done: false,
@@ -110,6 +110,21 @@ const PasswordChangBase = ({ props, authUser }) => {
     firebase
       .emailChange(formValues.email)
       .then(() => {
+        // Profilfelder updaten
+        User.updateEmail({
+          firebase: firebase,
+          uid: authUser.uid,
+          newEmail: formValues.email,
+        })
+          .then(updateSessionStorage())
+          .catch((error) => {
+            setFormValues({
+              ...formValues,
+              error: error,
+              successEmailChange: false,
+            });
+          });
+
         // link senden....
         firebase
           .sendEmailVerification()
@@ -127,6 +142,7 @@ const PasswordChangBase = ({ props, authUser }) => {
             });
           });
       })
+      .then()
       .catch((error) => {
         setFormValues({
           ...formValues,
@@ -134,6 +150,16 @@ const PasswordChangBase = ({ props, authUser }) => {
           successEmailChange: false,
         });
       });
+  };
+  /* ------------------------------------------
+  // Session-Storage auf Änderungen umbiegen
+  // ------------------------------------------ */
+  const updateSessionStorage = () => {
+    // Nach dem ändern der Mailadresse muss der Auth-Prozess gestartet werden.
+    let user = JSON.parse(sessionStorage.getItem(LOCAL_STORAGE.AUTH_USER));
+    user.email = formValues.email;
+    user.emailVerified = false;
+    sessionStorage.setItem(LOCAL_STORAGE.AUTH_USER, JSON.stringify(user));
   };
 
   /* ------------------------------------------

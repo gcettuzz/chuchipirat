@@ -304,7 +304,11 @@ export const ALERT_TITLE_ONE_TWO_TRHEE_DONE = "1, 2, 3... Erledigt.";
 export const ALERT_TITLE_MUTINY_ON_THE_HIGH_SEAS = "Meuterei auf hoher See...";
 export const ALERT_TITLE_WELCOME_ON_BOARD = "Willkommen an Bord";
 export const ALERT_TITLE_TATSCH_BANG_DONE = "Tätsch-Bäng-Meringue: Erledigt!";
-
+export const ALERT_TITLE_BACKSPELLED = "Zurück-buchstabiert";
+export const ALERT_TITLE_EMAIL_RECOVERED =
+  "Die Änderung wurde rückgängig gemacht.";
+export const ALERT_TEXT_EMAIL_RECOVERED =
+  "Die alte E-Mailadresse ist wieder deine Login-Adresse. Sicherheitshalber wurdest du abgemeldet. Hier kannst du dich wieder anmelden:  ";
 export const ALERT_TEXT_IMAGE_SAVE_FIRST =
   "Bitte speichere den Anlass bevor du ein Bild hochlädst.";
 export const ALERT_TEXT_IMAGE_SOURCE =
@@ -352,7 +356,7 @@ export const HOME_STATS_CAPTIONS = {
 // Meldungen rund um SignIn/SignUp
 // ===================================================================== */
 export const VERIFY_YOUR_EMAIL =
-  "Bestätige deine E-Mailadresse: Prüfe in deinem Postfach (auch den Spam-Ordner) ob du diese Nachricht erhalten hast und klicke auf den Link darin. Du kannst dir auch die Bestätigungs-E-Mail erneut zusenden.";
+  "Bestätige deine E-Mailadresse: Prüfe in deinem Postfach (auch den Spam-Ordner) ob du eine Nachricht erhalten hast und klicke auf den Link darin. Du kannst dir die Bestätigungs-E-Mail auch erneut zusenden lassen.";
 export const VERIFICATION_EMAIL_SENT =
   "Bestätigungs-E-Mail wurde versendet: Prüfe deine E-Mails (Spam Ordner) auf deine Bestätigungs-E-Mail. Aktualisiere diese Seite, sobald du die E-Mail bestätigt hast.";
 export const NO_AUTH_REDIRECT_TO_HOME =
@@ -368,7 +372,7 @@ export const LOGIN_SUCCESSFULL = "Login erfolgreich";
 export const PASSWORD_RESET_EXPIRED =
   "Deine Anfrage zum Zurücksetzen des Passworts ist abgelaufen oder der Link wurde bereits verwendet. Versuche erneut das ";
 export const PASSWORD_MAGIC_LINK_IN_INBOX =
-  "Schau in deinem E-Mail-Postfach für den magischen Link um das Passwort zurückzusetzen.";
+  "Schau in deinem E-Mail-Postfach für den magischen Link, um das Passwort zurückzusetzen.";
 export const PASSWORD_HAS_BEEN_CHANGED = "Das Passwort wurde geändert.";
 export const PASSWORD_LINK_SENT =
   "Schau in deinem E-Mail-Postfach für den magischen Link um das Passwort zurückzusetzen.";
@@ -585,3 +589,5 @@ export const REQUIRED = "Erforderlich";
 export const DIALOG_DELETION_CONFIRMATION_STRING_DOES_NOT_MATCH =
   "Die angegebene ID ist nicht korrekt";
 export const VERSION = "Version";
+export const AUTH_SERVICE_HANLDER_NO_MODE =
+  "Sorry. Wir wissen gerade nicht was zu tun ist. Bitte prüfe, ob du die richtige URL gewählt hast.";

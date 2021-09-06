@@ -4,6 +4,13 @@ import qs from "qs";
 
 import useStyles from "../../constants/styles";
 
+import VerifyEmail from "./verifyEmail";
+import RecoverEmail from "./recoverEmail";
+import ChangePassword from "../PasswordChange/passwordChange";
+import AlertMessage from "../Shared/AlertMessage";
+
+import * as TEXT from "../../constants/text";
+
 import { withFirebase } from "../Firebase";
 import {
   AuthUserContext,
@@ -24,41 +31,54 @@ const AUTH_SERVICE_HANDLER_MODE = {
 // =================================================================== */
 const AuthServiceHandlerPage = (props) => {
   return (
-    <AuthUserContext.Consumer>
-      {(authUser) => (
-        <AuthServiceHandlerBase props={props} authUser={authUser} />
-      )}
-    </AuthUserContext.Consumer>
+    // <AuthUserContext.Consumer>
+    //   {(authUser) => (
+    <AuthServiceHandlerBase props={props} />
+    //   )}
+    // </AuthUserContext.Consumer>
   );
 };
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const AuthServiceHandlerBase = ({ props, authUser }) => {
+const AuthServiceHandlerBase = ({ props }) => {
   const firebase = props.firebase;
   const classes = useStyles();
 
   //TODO: Anhand des Actions-Mode entscheiden welche Seite angezeigt wird.
-  // let oobCode;
-  // // Die URL enthält einen ObjektCode. Mit diesem kann die Adresse
-  // // verifziert werden....
-  // props.location.search && (oobCode = qs.parse(props.location.search).oobCode);
+  let mode;
+  let queryString;
+  let oobCode;
 
-  // Die URL enthält einen ObjektCode. Mit diesem kann die Adresse
-  // verifziert werden....
-
-  //FIXME: die beiden Seiten in dieses Verzeichnis verschieben.
+  // Die URL enthält den Actioncode, --> Mode entscheidet welche Aktion
+  // nötig ist.
+  if (props.location.search && (!mode || !oobCode)) {
+    queryString = props.location.search;
+    if (queryString.charAt(0) === "?") {
+      queryString = queryString.slice(1, -1);
+    }
+    mode = qs.parse(queryString).mode;
+    oobCode = qs.parse(queryString).oobCode;
+  } else if (false) {
+    //TODO: übergeben falls intern.. weiss noch nicht wo das passiert...
+  }
 
   return (
     <React.Fragment>
-      {/* {mode === AUTH_SERVICE_HANDLER_MODE.VERIFY_EMAIL && (<VerifyEmail />)} */}
-      {/* oder Push mit Props? */}
+      {mode === AUTH_SERVICE_HANDLER_MODE.VERIFY_EMAIL && <VerifyEmail />}
+      {mode === AUTH_SERVICE_HANDLER_MODE.RESET_PASSWORD && (
+        <ChangePassword oobCode={oobCode} />
+      )}
+      {mode === AUTH_SERVICE_HANDLER_MODE.RECOVER_EMAIL && (
+        <RecoverEmail oobCode={oobCode} />
+      )}
+      {!mode && <AlertMessage body={TEXT.AUTH_SERVICE_HANLDER_NO_MODE} />}
     </React.Fragment>
   );
 };
 
 export default compose(
-  withEmailVerification,
+  //withEmailVerification,
   // withAuthorization(condition),
   withFirebase
 )(AuthServiceHandlerPage);
