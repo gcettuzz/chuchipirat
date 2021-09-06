@@ -2534,7 +2534,7 @@ const CommentPanel = ({ recipe, onSaveComment, onLoadPrevious }) => {
             <TextField
               id="comment_input"
               key="comment_input"
-              label={TEXT.FIELD_YOUT_COMMENT}
+              label={TEXT.FIELD_YOUR_COMMENT}
               multiline
               rows={3}
               fullWidth
@@ -2548,6 +2548,7 @@ const CommentPanel = ({ recipe, onSaveComment, onLoadPrevious }) => {
             <Button
               variant="outlined"
               color="primary"
+              disabled={!newComment || !newComment.replace(/\s/g, "").length}
               className={classes.button}
               endIcon={<SendIcon />}
               onClick={onClickSave}
