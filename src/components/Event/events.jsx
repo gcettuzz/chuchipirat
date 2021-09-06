@@ -178,6 +178,7 @@ const EventsBase = ({ props, authUser }) => {
           {
             id: "new",
             hero: true,
+            visible: true,
             label: TEXT.BUTTON_EVENT_CREATE,
             variant: "outlined",
             color: "primary",
