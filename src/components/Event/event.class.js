@@ -21,7 +21,7 @@ export default class Event {
     this.motto = "";
     this.location = "";
 
-    this.participants = "";
+    this.participants = 0;
     this.pictureSrc = "";
     if (authUser) {
       this.cooks = [
@@ -229,8 +229,11 @@ export default class Event {
     event.dates = Utils.renumberArray({ array: event.dates, field: "pos" });
 
     // sicherstellen, dass Nummerische Werte auch so gespeichert werden
-    event.participants = parseInt(event.participants);
-
+    if (Number.isInteger(parseInt(event.participants)))
+      event.participants = parseInt(event.participants);
+    else {
+      event.participants = 0;
+    }
     // Bild URL kopieren falls nicht auf eigenem Server
     if (
       (!event.pictureSrc.includes("firebasestorage.googleapis") &&
@@ -250,10 +253,6 @@ export default class Event {
       newEvent = true;
     } else {
       docRef = firebase.event(event.uid);
-      // Anzahl TNs holen
-      await docRef.get().then((result) => {
-        oldParticipants = result.data().participants;
-      });
     }
     await docRef
       .set({
@@ -301,11 +300,13 @@ export default class Event {
       });
     }
     // Anzahl TNs updaten
-    Stats.incrementStat({
-      firebase: firebase,
-      field: STATS_FIELDS.PARTICIPANTS,
-      value: event.participants - oldParticipants,
-    });
+    if (parseInt(event.participants) !== parseInt(event.participantsOld)) {
+      Stats.incrementStat({
+        firebase: firebase,
+        field: STATS_FIELDS.PARTICIPANTS,
+        value: event.participants - event.participantsOld,
+      });
+    }
 
     return event;
   }

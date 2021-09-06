@@ -125,6 +125,7 @@ const eventReducer = (state, action) => {
           motto: action.payload.motto,
           location: action.payload.location,
           participants: action.payload.participants,
+          participantsOld: action.payload.participants,
           pictureSrc: action.payload.pictureSrc,
           dates: action.payload.dates,
           cooks: action.payload.cooks,
@@ -928,6 +929,7 @@ const InfoPanel = ({ event, editMode, onChange }) => {
             <FormListItem
               id={"participants"}
               key={"participants"}
+              type={"number"}
               value={event.participants}
               label={TEXT.FIELD_PARTICIPANTS}
               icon={<PeopleIcon fontSize="small" />}
