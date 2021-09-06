@@ -38,7 +38,6 @@ const withEmailVerification = (Component) => {
         .sendEmailVerification()
         .then(() => this.setState({ isSent: true }));
     };
-
     render() {
       return (
         <AuthUserContext.Consumer>

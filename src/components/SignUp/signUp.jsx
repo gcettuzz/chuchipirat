@@ -21,7 +21,7 @@ import InputAdornment from "@material-ui/core/InputAdornment";
 import Visibility from "@material-ui/icons/Visibility";
 import VisibilityOff from "@material-ui/icons/VisibilityOff";
 
-import { ForgotPasswordLink } from "../PasswordReset/passwordReset";
+import { ForgotPasswordLink } from "../AuthServiceHandler/passwordReset";
 
 import PageTitle from "../Shared/pageTitle";
 import PasswordStrengthMeter from "../Shared/passwordStrengthMeter";

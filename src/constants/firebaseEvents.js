@@ -9,6 +9,7 @@ export const EVENT_GET_ACTUAL = "event_get_actual";
 export const EVENT_GET_HISTORY = "event_get_history";
 export const EVENT_COOK_ADDED = "event_cook_added";
 export const USER_CREATED = "user_created";
+export const USER_CHANGED_EMAIL = "user_changed_email";
 export const UNIT_CREATED = "unit_created";
 export const UNIT_CONVERSION_CREATED = "unit_conversion_created";
 export const DEPARTMENT_CREATED = "department_created";

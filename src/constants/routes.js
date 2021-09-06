@@ -1,8 +1,10 @@
 export const LANDING = "/";
 export const SIGN_UP = "/signup";
 export const SIGN_IN = "/signin";
-export const VERIFY_EMAIL = "/verifyemail";
+export const AUTH_SERVICE_HANDLER = "/authservicehandler";
+
 export const PASSWORD_RESET = "/passwordreset";
+
 export const PASSWORD_CHANGE = "/passwordchange";
 
 export const HOME = "/home";

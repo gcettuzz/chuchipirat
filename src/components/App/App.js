@@ -14,15 +14,16 @@ import Footer from "../Footer/footer";
 import LandingPage from "../Landing/landing";
 import SignUpPage from "../SignUp/signUp";
 import SignInPage from "../SignIn/signIn";
-import VerifyEmail from "../VerifyEmail/verifyEmail";
-import PasswordReset from "../PasswordReset/passwordReset";
+import AuthServiceHandler from "../AuthServiceHandler/authServiceHandler";
+
+import PasswordReset from "../AuthServiceHandler/passwordReset";
+
 import PasswordChange from "../PasswordChange/passwordChange";
 import HomePage from "../Home/home";
 import Event from "../Event/event";
 import Events from "../Event/events";
 import Recipe from "../Recipe/recipe";
 import Recipes from "../Recipe/recipes";
-// import HomeX from "../Home/homeX";
 import Users from "../User/users";
 import Admin from "../Admin/admin";
 import FeedDelete from "../Admin/feedDelete";
@@ -30,7 +31,6 @@ import WhereUsed from "../Admin/whereUsed";
 
 import UserPublicProfile from "../User/publicProfile";
 import UserProfile from "../User/userProfile";
-// import Help from "../Help/help";
 import Menuplan from "../Menuplan/menuplan";
 import QuantityCalculation from "../QuantityCalculation/quantityCalculation";
 import ShoppingList from "../ShoppingList/shoppingList";
@@ -136,9 +136,14 @@ const App = (props) => {
 
               <Route path={ROUTES.HOME} component={HomePage} />
 
-              <Route path={ROUTES.VERIFY_EMAIL} component={VerifyEmail} />
+              {/* <Route path={ROUTES.VERIFY_EMAIL} component={VerifyEmail} />*/}
               <Route path={ROUTES.PASSWORD_RESET} component={PasswordReset} />
               <Route path={ROUTES.PASSWORD_CHANGE} component={PasswordChange} />
+
+              <Route
+                path={ROUTES.AUTH_SERVICE_HANDLER}
+                component={AuthServiceHandler}
+              />
 
               <Route path={ROUTES.EVENTS} component={Events} />
               <Route exact path={ROUTES.EVENT} component={Event} />

@@ -71,13 +71,11 @@ class Firebase {
 
     return this.auth.onAuthStateChanged((authUser) => {
       if (authUser) {
-        // Prüfen ob Infos zu User bereits im local Storage gepseichert wurden
-        let localStorageAuthUser = JSON.parse(
-          localStorage.getItem(LOCAL_STORAGE.AUTH_USER)
+        // Prüfen ob Infos zu User bereits im Session Storage gepseichert wurden
+        let sessionStorageAuthUser = JSON.parse(
+          sessionStorage.getItem(LOCAL_STORAGE.AUTH_USER)
         );
-
-        if (!localStorageAuthUser) {
-          console.warn("=== READ ===");
+        if (!sessionStorageAuthUser) {
           this.user(authUser.uid)
             .get()
             .then((snapshot) => {
@@ -122,7 +120,7 @@ class Firebase {
               next(authUser);
             });
         } else {
-          authUser = localStorageAuthUser;
+          authUser = sessionStorageAuthUser;
           next(authUser);
         }
       } else {
@@ -188,6 +186,9 @@ class Firebase {
   // Referenz zu DB zurückgeben
   getDbReference = () => {
     return this.db;
+  };
+  getUser = () => {
+    return this.auth.currentUser;
   };
   /* =====================================================================
   // Objektcode Verifizieren
@@ -263,10 +264,10 @@ class Firebase {
     this.db.collection("_cloudFunctions/waitingArea/user_displayName");
   cloudFunctions_user_motto = () =>
     this.db.collection("_cloudFunctions/waitingArea/user_motto");
-  cloudFunctions_product = () =>
-    this.db.collection("_cloudFunctions/waitingArea/product");
-  cloudFunctions_recipe = () =>
-    this.db.collection("_cloudFunctions/waitingArea/recipe");
+  cloudFunctions_productUpdate = () =>
+    this.db.collection("_cloudFunctions/waitingArea/productUpdate");
+  cloudFunctions_recipeUpdate = () =>
+    this.db.collection("_cloudFunctions/waitingArea/recipeUpdate");
   cloudFunctions_productTrace = () =>
     this.db.collection("_cloudFunctions/waitingArea/productTrace");
   cloudFunctions_recipeTrace = () =>
