@@ -190,25 +190,30 @@ const RecipeIngredients = ({ mealRecipe }) => {
           </View>
         </View>
         <View style={styles.tableRow}>
-          <View style={styles.tableCol50}>
-            <Text style={styles.tableCellBold}>{TEXT.ORIGINAL_QUANTITIES}</Text>
+          <View style={styles.tableCol25}>
+            <Text style={{ ...styles.tableCellBold, ...styles.tableCellGrey }}>
+              {TEXT.ORIGINAL_QUANTITIES}
+            </Text>
           </View>
-          <View style={styles.tableCol50}>
+          <View style={styles.tableCol25}>
             <Text style={styles.tableCellBold}>{TEXT.SCALED_QUANTITIES}</Text>
           </View>
+          <View style={styles.tableCol50} />
         </View>
         <View style={styles.tableRow}>
-          <View style={styles.tableCol50}>
-            <Text style={styles.tableCell}>
+          <View style={styles.tableCol25}>
+            <Text style={{ ...styles.tableCell, ...styles.tableCellGrey }}>
               {mealRecipe.recipe.portions} {TEXT.FIELD_PORTIONS}
             </Text>
           </View>
-          <View style={styles.tableCol50}>
+          <View style={styles.tableCol25}>
             <Text style={styles.tableCell}>
               {mealRecipe.recipe.scaledNoOfServings} {TEXT.FIELD_PORTIONS}
             </Text>
           </View>
+          <View style={styles.tableCol50} />
         </View>
+
         {/* Leerzeile */}
         <View style={styles.tableRow}>
           <View style={styles.tableCol100}>
@@ -229,7 +234,12 @@ const RecipeIngredients = ({ mealRecipe }) => {
                   "ingredientQuantity_Left_" + mealRecipe.uid + "_" + counter
                 }
               >
-                <Text style={styles.tableCell}>
+                <Text
+                  style={{
+                    ...styles.tableCell,
+                    ...styles.tableCellGrey,
+                  }}
+                >
                   {Number.isNaN(ingredient.quantity)
                     ? ""
                     : ingredient.quantity.toLocaleString("de-CH")}
@@ -239,13 +249,9 @@ const RecipeIngredients = ({ mealRecipe }) => {
                 style={styles.tableColUnit}
                 key={"ingredientUnit_Left_" + mealRecipe.uid + "_" + counter}
               >
-                <Text style={styles.tableCell}>{ingredient.unit}</Text>
-              </View>
-              <View
-                style={styles.tableColItem}
-                key={"ingredientProduct_Left_" + mealRecipe.uid + "_" + counter}
-              >
-                <Text style={styles.tableCell}>{ingredient.product.name}</Text>
+                <Text style={{ ...styles.tableCell, ...styles.tableCellGrey }}>
+                  {ingredient.unit}
+                </Text>
               </View>
               <View
                 style={styles.tableColQuantity}
@@ -279,6 +285,12 @@ const RecipeIngredients = ({ mealRecipe }) => {
               >
                 <Text style={styles.tableCell}>
                   {mealRecipe.recipe.scaledIngredients[counter].product.name}
+                  {/* Details abdrucken, falls vorhanden */}
+                  {mealRecipe.recipe.scaledIngredients[counter].detail && (
+                    <Text style={styles.tableCellThin}>
+                      , {mealRecipe.recipe.scaledIngredients[counter].detail}
+                    </Text>
+                  )}
                 </Text>
               </View>
             </View>
