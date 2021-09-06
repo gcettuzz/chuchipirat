@@ -1030,7 +1030,6 @@ const RecipeBase = ({ props, authUser }) => {
   // PopUp Produkt Hinzufügen - onCreate
   // ------------------------------------------ */
   const onCreateProductToAdd = (productToAdd, product) => {
-    console.log(product);
     dispatchRecipe({
       type: REDUCER_ACTIONS.INGREDIENT_ONCHANGE,
       field: "product",
@@ -1948,7 +1947,7 @@ const IngredientPosition = ({
 
   const theme = useTheme();
   const breakpointIsXs = useMediaQuery(theme.breakpoints.down("xs"));
-  console.log(products);
+
   return (
     <React.Fragment>
       {editMode ? (
