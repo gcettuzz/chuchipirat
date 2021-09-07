@@ -426,9 +426,15 @@ const MealRecipe = ({ mealRecipe }) => {
           preparationSteps={mealRecipe.recipe.preparationSteps}
         />
       </Grid>
-      {/* <Grid item key={"recipeInfosPreparationSteps_" + mealRecipe.uid} xs={12}>
-        <Divider variant="middle" />
-      </Grid> */}
+      {/* Rezept-Hinweis */}
+      {mealRecipe.recipe.note && (
+        <Grid item key={"note_" + mealRecipe.uid} xs={12}>
+          <NoteBlock
+            mealRecipeUid={mealRecipe.uid}
+            note={mealRecipe.recipe.note}
+          />
+        </Grid>
+      )}
     </React.Fragment>
   );
 };
@@ -678,11 +684,30 @@ const PreparationStepsBlock = ({ mealRecipeUid, preparationSteps }) => {
       <List disablePadding dense>
         {preparationSteps.map((preparationStep) => (
           <ListItem
-            key={"preparationStep" + mealRecipeUid + "_" + preparationStep.uid}
+            key={"preparationStep_" + mealRecipeUid + "_" + preparationStep.uid}
           >
             <ListItemText primary={preparationStep.step} />
           </ListItem>
         ))}
+      </List>
+    </React.Fragment>
+  );
+};
+/* ===================================================================
+// ============================== Hinweis ============================
+// =================================================================== */
+const NoteBlock = ({ mealRecipeUid, note }) => {
+  const classes = useStyles();
+
+  return (
+    <React.Fragment>
+      <Typography variant="subtitle2" gutterBottom align="center">
+        {TEXT.PANEL_NOTES}
+      </Typography>
+      <List disablePadding dense>
+        <ListItem key={"notes_" + mealRecipeUid}>
+          <ListItemText primary={note} />
+        </ListItem>
       </List>
     </React.Fragment>
   );
