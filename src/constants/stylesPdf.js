@@ -211,6 +211,10 @@ export default class PdfStyles {
         width: "90%",
         textAlign: "left",
       },
+      tableColNote: {
+        width: "100%",
+        textAlign: "left",
+      },
       // Spezifische Formate für den Menüplan
       tableCellRecipe: {
         textAlign: "left",

@@ -25,6 +25,8 @@ const QuantityCalculationPdf = ({
 }) => {
   let actualDate = new Date();
 
+  console.log(quantityCalculation);
+
   return (
     <Document
       author={authUser.publicProfile.displayName}
@@ -68,6 +70,7 @@ const RecipePage = ({ mealRecipe, event, actualDate, authUser }) => {
       <RecipeIngredients mealRecipe={mealRecipe} />
       <View style={styles.containerBottomBorder} />
       <RecipePreparation mealRecipe={mealRecipe} />
+      {mealRecipe.recipe?.note ? <RecipeNote mealRecipe={mealRecipe} /> : null}
       {/*===== Fusszeile =====*/}
       <Text
         key={"pageFooter_generatedOn_" + mealRecipe.uid}
@@ -309,7 +312,6 @@ const RecipePreparation = ({ mealRecipe }) => {
       <View style={styles.tableCol100}>
         <Text style={styles.subTitle}>{TEXT.PANEL_PREPARATION}</Text>
       </View>
-
       {mealRecipe.recipe.preparationSteps.map((step) => (
         <View
           style={styles.tableRow}
@@ -332,6 +334,31 @@ const RecipePreparation = ({ mealRecipe }) => {
     </View>
   );
 };
+/* ===================================================================
+// ========================== Hinweis Rezept =========================
+// =================================================================== */
+const RecipeNote = ({ mealRecipe }) => {
+  return (
+    <React.Fragment>
+      {mealRecipe.recipe.note ? (
+        <View style={styles.table}>
+          <View style={styles.tableCol100}>
+            <Text style={styles.subTitle}>{TEXT.PANEL_NOTES}</Text>
+          </View>
+          <View style={styles.tableRow} key={"recipeNote_" + mealRecipe.uid}>
+            <View
+              style={styles.tableColNote}
+              key={"recipeNoteText_" + mealRecipe.uid}
+            >
+              <Text style={styles.tableCell}>{mealRecipe.recipe.note}</Text>
+            </View>
+          </View>
+        </View>
+      ) : null}
+    </React.Fragment>
+  );
+};
+
 export default QuantityCalculationPdf;
 /* ===================================================================
 // ======================== Fonts registrieren =======================
