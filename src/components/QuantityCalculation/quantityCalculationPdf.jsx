@@ -25,8 +25,6 @@ const QuantityCalculationPdf = ({
 }) => {
   let actualDate = new Date();
 
-  console.log(quantityCalculation);
-
   return (
     <Document
       author={authUser.publicProfile.displayName}

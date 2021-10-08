@@ -326,12 +326,10 @@ const ShoppingListBase = ({ props, authUser }) => {
     }
   );
 
-  const [
-    generateShoppingListPopUp,
-    setGenerateShoppingListPopUp,
-  ] = React.useState({
-    open: false,
-  });
+  const [generateShoppingListPopUp, setGenerateShoppingListPopUp] =
+    React.useState({
+      open: false,
+    });
   const [shoppingListItemPopUp, setShoppingListItemPopUp] = React.useState({
     item: null,
     open: false,

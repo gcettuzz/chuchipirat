@@ -184,13 +184,13 @@ const DialogShoppingListItem = ({
   /* ------------------------------------------
   // PopUp Produkt Hinzufügen - onCreate
   // ------------------------------------------ */
-  const onPopUpAddProductOk = (productToAdd, newUid) => {
+  const onPopUpAddProductOk = (productToAdd, product) => {
     let newProduct = {
       departmentName: productToAdd.department.name,
       departmentUid: productToAdd.department.uid,
-      name: productToAdd.name,
+      name: product.name,
       shoppingUnit: productToAdd.shoppingUnit,
-      uid: newUid,
+      uid: product.uid,
       usable: true,
     };
 
