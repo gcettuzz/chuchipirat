@@ -21,7 +21,6 @@ export const MENUPLAN_NO_OF_COLUMS_X_LARGE = 11;
 
 export const MENUPLAN_NO_OF_COLUMS_PRINT = 4;
 
-export const HELPCENTER_URL =
-  "https://chuchipirat.atlassian.net/wiki/spaces/HELP/overview";
+export const HELPCENTER_URL = "https://chuchipirat.wordpress.com/";
 
 export const MAILADRESS = "hallo@chuchipirat.ch";

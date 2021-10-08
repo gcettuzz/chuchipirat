@@ -1,3 +1,4 @@
+import { red } from "@material-ui/core/colors";
 import { StyleSheet } from "@react-pdf/renderer";
 
 export default class PdfStyles {
@@ -177,16 +178,28 @@ export default class PdfStyles {
         width: "20%",
         textAlign: "center",
       },
+      tableCol25: {
+        width: "25%",
+        textAlign: "center",
+      },
+      tableCol75: {
+        width: "75%",
+        textAlign: "center",
+      },
+      tableCol80: {
+        width: "80%",
+        textAlign: "center",
+      },
       tableColQuantity: {
         width: "10%",
         textAlign: "right",
       },
       tableColUnit: {
-        width: "10%",
+        width: "7%",
         textAlign: "left",
       },
       tableColItem: {
-        width: "30%",
+        width: "60%",
         textAlign: "left",
       },
       tableColStepPos: {
@@ -196,6 +209,10 @@ export default class PdfStyles {
       },
       tableColStep: {
         width: "90%",
+        textAlign: "left",
+      },
+      tableColNote: {
+        width: "100%",
         textAlign: "left",
       },
       // Spezifische Formate für den Menüplan
@@ -246,6 +263,12 @@ export default class PdfStyles {
       },
       tableCellGrey: {
         color: "grey",
+      },
+      tableCellThin: {
+        fontSize: 11,
+        fontFamily: "Roboto",
+        fontStyle: "thin",
+        fontWeight: 100,
       },
       tableCellBold: {
         margin: 3,

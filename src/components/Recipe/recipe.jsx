@@ -1030,7 +1030,6 @@ const RecipeBase = ({ props, authUser }) => {
   // PopUp Produkt Hinzufügen - onCreate
   // ------------------------------------------ */
   const onCreateProductToAdd = (productToAdd, product) => {
-    console.log(product);
     dispatchRecipe({
       type: REDUCER_ACTIONS.INGREDIENT_ONCHANGE,
       field: "product",
@@ -1948,7 +1947,7 @@ const IngredientPosition = ({
 
   const theme = useTheme();
   const breakpointIsXs = useMediaQuery(theme.breakpoints.down("xs"));
-  console.log(products);
+
   return (
     <React.Fragment>
       {editMode ? (
@@ -2535,7 +2534,7 @@ const CommentPanel = ({ recipe, onSaveComment, onLoadPrevious }) => {
             <TextField
               id="comment_input"
               key="comment_input"
-              label={TEXT.FIELD_YOUT_COMMENT}
+              label={TEXT.FIELD_YOUR_COMMENT}
               multiline
               rows={3}
               fullWidth
@@ -2549,6 +2548,7 @@ const CommentPanel = ({ recipe, onSaveComment, onLoadPrevious }) => {
             <Button
               variant="outlined"
               color="primary"
+              disabled={!newComment || !newComment.replace(/\s/g, "").length}
               className={classes.button}
               endIcon={<SendIcon />}
               onClick={onClickSave}

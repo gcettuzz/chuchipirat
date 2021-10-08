@@ -140,6 +140,8 @@ const DialogProduct = ({
       hasError = true;
     }
     if (
+      // Nur wenn keine UID
+      !productPopUpValues.uid &&
       products.find(
         (product) =>
           product.name.toLowerCase() ===
