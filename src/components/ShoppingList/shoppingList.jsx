@@ -169,6 +169,12 @@ const shoppingListReducer = (state, action) => {
         (item) => item.uid !== action.itemUid || item.unit !== action.itemUnit
       );
 
+      // Eine Abteilung ohne Produkte, muss weggelöscht werden.
+      if (department.items.length === 0) {
+        tmpList = tmpList.filter(
+          (department) => department.uid !== action.departmentUid
+        );
+      }
       return {
         ...state,
         data: { ...state.data, list: tmpList },
@@ -343,7 +349,6 @@ const ShoppingListBase = ({ props, authUser }) => {
   if (!urlUid) {
     urlUid = props.match.params.id;
   }
-
   /* ------------------------------------------
   // Daten aus DB lesen
   // ------------------------------------------ */
