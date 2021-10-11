@@ -215,6 +215,14 @@ export default class PdfStyles {
         width: "100%",
         textAlign: "left",
       },
+      tableColUnitShoppingList: {
+        width: "10%",
+        textAlign: "left",
+      },
+      tableColItemShoppingList: {
+        width: "30%",
+        textAlign: "left",
+      },
       // Spezifische Formate für den Menüplan
       tableCellRecipe: {
         textAlign: "left",
