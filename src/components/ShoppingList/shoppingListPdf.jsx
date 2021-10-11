@@ -104,9 +104,8 @@ class FormatedShoppingList {
             pageControl.lineCounter++;
             break;
           case COLUMN.RIGHT:
-            let lineItem = this.pages[this.actualPage].list[
-              pageControl.lineCounter
-            ];
+            let lineItem =
+              this.pages[this.actualPage].list[pageControl.lineCounter];
             lineItem.quantity2 = item.quantity;
             lineItem.unit2 = item.unit;
             lineItem.name2 = item.name;
@@ -172,6 +171,7 @@ const ShoppingListPdf = ({ event, shoppingList, authUser }) => {
           event={event}
           shoppingList={shoppingList}
           formatedList={page.list}
+          pageCounter={counter + 1}
           actualDate={actualDate}
           authUser={authUser}
         />
@@ -346,13 +346,13 @@ const ShoppingListItemsBlock = ({ formatedList, pageCounter }) => {
                 </Text>
               </View>
               <View
-                style={styles.tableColUnit}
+                style={styles.tableColUnitShoppingList}
                 key={"itemBlockUnit_Left" + pageCounter + "_" + line}
               >
                 <Text style={styles.tableCell}>{item.unit1}</Text>
               </View>
               <View
-                style={styles.tableColItem}
+                style={styles.tableColItemShoppingList}
                 key={"itemBlockProduct_Left" + pageCounter + "_" + line}
               >
                 <Text style={styles.tableCell}>{item.name1}</Text>
@@ -388,13 +388,13 @@ const ShoppingListItemsBlock = ({ formatedList, pageCounter }) => {
                 </Text>
               </View>
               <View
-                style={styles.tableColUnit}
+                style={styles.tableColUnitShoppingList}
                 key={"itemBlockUnit_Right" + pageCounter + "_" + line}
               >
                 <Text style={styles.tableCell}>{item.unit2}</Text>
               </View>
               <View
-                style={styles.tableColItem}
+                style={styles.tableColItemShoppingList}
                 key={"itemBlockProduct_Right" + pageCounter + "_" + line}
               >
                 <Text style={styles.tableCell}>{item.name2}</Text>
