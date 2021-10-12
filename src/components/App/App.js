@@ -28,6 +28,7 @@ import Users from "../User/users";
 import Admin from "../Admin/admin";
 import FeedDelete from "../Admin/feedDelete";
 import WhereUsed from "../Admin/whereUsed";
+import MergeProducts from "../Admin/mergeProducts";
 
 import UserPublicProfile from "../User/publicProfile";
 import UserProfile from "../User/userProfile";
@@ -202,7 +203,11 @@ const App = (props) => {
                 path={ROUTES.ADMIN_WHERE_USED}
                 component={WhereUsed}
               />
-
+              <Route
+                exact
+                path={ROUTES.ADMIN_MERGE_PRODUCT}
+                component={MergeProducts}
+              />
               <Route exact path={ROUTES.USER_PROFILE} component={UserProfile} />
               <Route
                 exact

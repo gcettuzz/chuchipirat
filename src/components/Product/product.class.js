@@ -192,6 +192,62 @@ export default class Product {
     await docRef
       .set({
         uid: uid,
+        date: firebase.timestamp.fromDate(new Date()),
+      })
+      .then(async () => {
+        await firebase.delay(1);
+      })
+      .then(() => {
+        const unsubscribe = docRef.onSnapshot((snapshot) => {
+          traceListener(snapshot.data());
+          if (snapshot.data()?.done) {
+            // Wenn das Feld DONE vorhanden ist, ist die Cloud-Function durch
+            unsubscribe();
+          }
+        });
+      })
+      .catch((error) => {
+        throw error;
+      });
+
+    return listener;
+  };
+  /* =====================================================================
+    // Produkte mergen
+    // ===================================================================== */
+  static mergeProducts = async ({
+    firebase,
+    productA,
+    productB,
+    authUser,
+    traceListener,
+  }) => {
+    if (!firebase || !productA || !productB) {
+      console.log("db");
+      throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
+    }
+    let listener;
+    let docRef = firebase.cloudFunctions_mergeProducts().doc();
+
+    await docRef
+      .set({
+        productA: {
+          uid: productA.uid,
+          name: productA.name,
+          departmentUid: productA.departmentUid,
+          // departmentName: "",
+        },
+        productB: {
+          uid: productB.uid,
+          name: productB.name,
+          departmentUid: productB.departmentUid,
+          // departmentName: "",
+        },
+        user: {
+          uid: authUser.uid,
+          displayName: authUser.publicProfile.displayName,
+        },
+        date: firebase.timestamp.fromDate(new Date()),
       })
       .then(async () => {
         await firebase.delay(1);

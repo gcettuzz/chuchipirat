@@ -77,6 +77,14 @@ const AdminBase = ({ props, authUser }) => {
       pathname: ROUTES.ADMIN_WHERE_USED,
     });
   };
+  /* ------------------------------------------
+  // Produkte mergen
+  // ------------------------------------------ */
+  const goToMergeProducts = () => {
+    push({
+      pathname: ROUTES.ADMIN_MERGE_PRODUCT,
+    });
+  };
 
   return (
     <React.Fragment>
@@ -109,7 +117,7 @@ const AdminBase = ({ props, authUser }) => {
               id={"merge"}
               text={TEXT.PANEL_ADMIN_MERGE}
               icon={<CallMergeIcon />}
-              // action={goToWhereUsed}
+              action={goToMergeProducts}
             />
           </Grid>
         </Grid>

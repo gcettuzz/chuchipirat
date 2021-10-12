@@ -20,6 +20,7 @@ export const USERS = "/users";
 export const ADMIN = "/admin";
 export const ADMIN_FEED_DELETE = "/admin/feeddelete";
 export const ADMIN_WHERE_USED = "/admin/whereused";
+export const ADMIN_MERGE_PRODUCT = "/admin/mergeproducts";
 
 export const USER_PUBLIC_PROFILE = "/publicprofile";
 export const USER_PUBLIC_PROFILE_UID = "/publicprofile/:id";
