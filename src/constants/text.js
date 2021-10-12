@@ -51,6 +51,7 @@ export const BUTTON_CHANGE_MAIL_PASSWORD = "Mail / Passwort ändern";
 export const BUTTON_DELETE_FEED = "Feed-Einträge löschen";
 export const BUTTON_TRACE = "Trace";
 export const BUTTON_CHOOSE_RECIPE = "Rezept auswählen";
+export const BUTTON_MERGE_PRODUCTS = "Produkte zusammenführen";
 /* =====================================================================
 // Seiten Titel und Untertitel
 // ===================================================================== */
@@ -98,6 +99,8 @@ export const PAGE_USER_PROFILE_SUBTITLE = "Zeig uns wer Du bist.";
 export const PAGE_REAUTHENTICATE_DIALOG_TITLE = "Ausweis bitte...";
 export const PAGE_TITLE_ADMIN_WHERE_USED = "Trace";
 export const PAGE_SUBTITLE_ADMIN_WHERE_USED = "Wo bist du?";
+export const PAGE_TITLE_MERGE_PRODUCTS = "Produkte Mergen";
+export const PAGE_SUBTITLE_MERGE_PRODUCTS = "Zeit aufzuräumen";
 /* =====================================================================
 // Tabellen Überschriften
 // ===================================================================== */
@@ -317,6 +320,14 @@ export const ALERT_TEXT_IMAGE_SOURCE =
 // Texte zum Admin Bereich
 // ===================================================================== */
 export const TRACE_RESULT = "Trace Ergebnis";
+export const MERGE_PRODUCT_SELECTION = "Produkteauswahl";
+export const MERGE_PRODUCT_EXPLANATION =
+  "Das Produkt A wird zu Produkt B. Alle Vorkommnisse des Produktes A (Rezepte und Einkaufslisten) werden angepasst. Nach erfolgreicher Änderungen aller nötigen Einträge wird das Produkt A gelöscht und steht nicht mehr zur Verfügung. ";
+export const MERGE_PRODUCT_A = "Produkt A";
+export const MERGE_PRODUCT_B = "Produkt B";
+export const MERGE_RESULT = "Geänderte Dokumente";
+export const MERGE_ERROR_SAME_PRODUCTS =
+  "Produkt A und Produkt B sind identisch. Ein Zusammenführen macht daher keinen Sinn.";
 /* =====================================================================
 // Diverse (längere) Texte
 // ===================================================================== */
@@ -591,3 +602,4 @@ export const DIALOG_DELETION_CONFIRMATION_STRING_DOES_NOT_MATCH =
 export const VERSION = "Version";
 export const AUTH_SERVICE_HANLDER_NO_MODE =
   "Sorry. Wir wissen gerade nicht was zu tun ist. Bitte prüfe, ob du die richtige URL gewählt hast.";
+export const LOG = "Log";

@@ -272,6 +272,8 @@ class Firebase {
     this.db.collection("_cloudFunctions/waitingArea/productTrace");
   cloudFunctions_recipeTrace = () =>
     this.db.collection("_cloudFunctions/waitingArea/recipeTrace");
+  cloudFunctions_mergeProducts = () =>
+    this.db.collection("_cloudFunctions/waitingArea/mergeProducts");
   /* =====================================================================
   // Alle Referenzen zu den Bildern
   // ===================================================================== */
@@ -445,7 +447,6 @@ class Firebase {
     if (!docRef || !uid) {
       throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
     }
-
     await docRef
       .set({
         uid: uid,
