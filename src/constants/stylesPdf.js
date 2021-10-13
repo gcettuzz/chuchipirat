@@ -76,7 +76,6 @@ export default class PdfStyles {
         fontStyle: "thin",
         fontWeight: 200,
         textAlign: "center",
-        color: "grey",
       },
       pageNumber: {
         position: "absolute",
@@ -88,7 +87,6 @@ export default class PdfStyles {
         fontStyle: "thin",
         fontWeight: 200,
         textAlign: "center",
-        color: "grey",
       },
       chuchipirat: {
         position: "absolute",
@@ -100,7 +98,6 @@ export default class PdfStyles {
         fontStyle: "thin",
         fontWeight: 200,
         textAlign: "center",
-        color: "grey",
       },
       printedOn: {
         position: "absolute",
@@ -112,7 +109,6 @@ export default class PdfStyles {
         fontStyle: "thin",
         fontWeight: 200,
         textAlign: "left",
-        color: "grey",
       },
       printedFrom: {
         position: "absolute",
@@ -124,7 +120,6 @@ export default class PdfStyles {
         fontStyle: "thin",
         fontWeight: 200,
         textAlign: "left",
-        color: "grey",
       },
 
       // tabellen Coding
@@ -299,7 +294,7 @@ export default class PdfStyles {
         textAlign: "left",
       },
       footerImage: {
-        opacity: 0.2,
+        opacity: 0.5,
         width: "50px",
         position: "absolute",
         bottom: 10,
