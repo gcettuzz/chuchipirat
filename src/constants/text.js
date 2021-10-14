@@ -15,6 +15,7 @@ export const BUTTON_CREATE = "Erstellen";
 export const BUTTON_ADD = "Hinzufügen";
 export const BUTTON_CHANGE = "Ändern";
 export const BUTTON_DELETE = "Löschen";
+export const BUTTON_SCALE = "Skalieren";
 export const BUTTON_ADD_DEPARTMENT = "Abteilung hinzufügen";
 export const BUTTON_ADD_PERSON = "Person hinzufügen";
 export const BUTTON_ADD_TO_EVENT = "Zu Anlass hinzufügen";
@@ -237,6 +238,11 @@ export const ERROR_POS_WITHOUT_PRODUCT = (pos) =>
   `Das Produkt in der Position ${pos} ist unbekannt.`;
 export const ERROR_RECIPE_UNKNOWN = (uid) =>
   `Das Rezept mit der UID ${uid} ist unbekannt.`;
+export const DIALOG_TITLE_SCALE_RECIPE = "Rezept skalieren";
+export const PORTIONS_TO_SCALE = "zu skalierende Portionen";
+export const INFO_PANEL_TITLE_SCALE = "2*2 ist nicht immer 4";
+export const INFO_PANEL_TEXT_SCALE =
+  "Beachte das eine Skalierung einige Tücken mit sich bringt. So können die Zubereitungstexte allenfalls nicht mehr stimmen (enthaltene Mengen) und auch die Koch-/Backzeit kann allenfalls variieren.";
 /* =====================================================================
 // Meldungen zum Produkt
 // ===================================================================== */

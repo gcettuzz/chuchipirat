@@ -54,6 +54,7 @@ import DialogProduct, {
   PRODUCT_POP_UP_VALUES_INITIAL_STATE,
   PRODUCT_DIALOG_TYPE,
 } from "../Product/dialogProduct";
+import DialogScaleRecipe from "./dialogScaleRecipe";
 import AlertMessage from "../Shared/AlertMessage";
 
 import Recipe from "./recipe.class";
@@ -107,6 +108,7 @@ const REDUCER_ACTIONS = {
   RECIPE_ON_CHANGE: "RECIPE_ON_CHANGE",
   RECIPE_ON_SAVE: "RECIPE_ON_SAVE",
   RECIPE_ON_ERROR: "RECIPE_ON_ERROR",
+  RECIPE_ON_SCALE: "RECIPE_ON_SCALE",
   CLOSE_SNACKBAR: "CLOSE_SNACKBAR",
   SNACKBAR_SHOW: "SNACKBAR_SHOW",
 
@@ -508,6 +510,13 @@ const recipeReducer = (state, action) => {
           comments: action.payload.concat(...state.data.comments),
         },
       };
+    case REDUCER_ACTIONS.RECIPE_ON_SCALE:
+      // Rezept skaliert
+      return {
+        ...state,
+        scaledPortions: parseInt(action.scaledPortions),
+        scaledIngredients: action.scaledIngredients,
+      };
     case REDUCER_ACTIONS.GENERIC_FAILURE:
       // Allgemeiner Fehler
       return {
@@ -600,6 +609,9 @@ const RecipeBase = ({ props, authUser }) => {
     ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
     ...{ popUpOpen: false },
   });
+  const [dialogScaleRecipe, setDialogScaleRecipe] = React.useState({
+    popUpOpen: false,
+  });
   // Position die das PopUp ausgelöst
   const [triggeredIngredientPos, setTriggeredIngredientPos] = React.useState();
   const [tagInput, setTagInput] = React.useState("");
@@ -609,6 +621,8 @@ const RecipeBase = ({ props, authUser }) => {
     units: [],
     products: [],
     departments: [],
+    scaledPortions: null,
+    scaledIngredients: [],
     isLoading: false,
     isLoadingPicture: false,
     isError: false,
@@ -1282,6 +1296,37 @@ const RecipeBase = ({ props, authUser }) => {
       payload: newComments,
     });
   };
+  /* ------------------------------------------
+  // PopUp Rezept Skalieren öffnen
+  // ------------------------------------------ */
+  const onOpenRecipeScaleDialog = () => {
+    setDialogScaleRecipe({ ...dialogScaleRecipe, popUpOpen: true });
+  };
+  /* ------------------------------------------
+  // PopUp Rezept Skalieren schliessen (cancel)
+  // ------------------------------------------ */
+  const onCloseRecipeScaleDialog = () => {
+    setDialogScaleRecipe({ ...dialogScaleRecipe, popUpOpen: false });
+  };
+  /* ------------------------------------------
+  // PopUp Rezept wurde mit OK geschlossen
+  // ------------------------------------------ */
+  const onRecipeScale = (scaledPortions) => {
+    let scaledIngredients = [];
+    if (!Number.isNaN(scaledPortions) && parseInt(scaledPortions) > 0) {
+      scaledIngredients = Recipe.scale({
+        recipe: recipe.data,
+        portionsToScale: scaledPortions,
+      });
+    }
+    dispatchRecipe({
+      type: REDUCER_ACTIONS.RECIPE_ON_SCALE,
+      scaledPortions: scaledPortions,
+      scaledIngredients: scaledIngredients,
+    });
+    //PopUp schliessen
+    setDialogScaleRecipe({ ...dialogScaleRecipe, popUpOpen: false });
+  };
 
   /* ------------------------------------------
   // ================= AUSGABE ================
@@ -1298,6 +1343,7 @@ const RecipeBase = ({ props, authUser }) => {
         onEditClick={onEditClick}
         onSaveClick={() => onSaveClick(authUser)}
         onCancelClick={onCancelClick}
+        onScaleClick={onOpenRecipeScaleDialog}
       />
       {/* ===== BODY ===== */}
       <Container className={classes.container} component="main" maxWidth="md">
@@ -1329,6 +1375,7 @@ const RecipeBase = ({ props, authUser }) => {
               recipe={recipe.data}
               editMode={editMode}
               onChange={onChangeField}
+              scaledPortions={recipe.scaledPortions}
             />
           </Grid>
           {editMode && (
@@ -1386,6 +1433,7 @@ const RecipeBase = ({ props, authUser }) => {
               onToggleProfiModus={onToggleProfiModus}
               gridIngredientsCols={gridIngredientsCols}
               onPositionMoreClick={onPositionMoreClick}
+              scaledIngredients={recipe.scaledIngredients}
             />
           </Grid>
           <Grid item key={"prepartionSteps"} xs={12} sm={12}>
@@ -1428,7 +1476,16 @@ const RecipeBase = ({ props, authUser }) => {
         units={recipe.units}
         departments={recipe.departments}
       />
-
+      <DialogScaleRecipe
+        dialogOpen={dialogScaleRecipe.popUpOpen}
+        scaledPortions={
+          recipe.data.scaledPortions
+            ? recipe.data.scaledPortions
+            : recipe.data.portions
+        }
+        handleOk={onRecipeScale}
+        handleClose={onCloseRecipeScaleDialog}
+      />
       <CustomSnackbar
         message={recipe.snackbar.message}
         severity={recipe.snackbar.severity}
@@ -1448,6 +1505,7 @@ const RecipeHeader = ({
   onEditClick,
   onSaveClick,
   onCancelClick,
+  onScaleClick,
 }) => {
   return (
     <React.Fragment>
@@ -1474,6 +1532,16 @@ const RecipeHeader = ({
                 color: "primary",
                 onClick: onEditClick,
               },
+              {
+                id: "scale",
+                hero: true,
+                visible: true,
+                label: TEXT.BUTTON_SCALE,
+                variant: "outlined",
+                color: "primary",
+                onClick: onScaleClick,
+              },
+
               //NEXT_FEATURE: zu Event hinzufügen --> neues PopUp!
               // {
               //   id: "addToEvent",
@@ -1665,7 +1733,7 @@ const ImagePanel = ({
 /* ===================================================================
 // =========================== Infos Panel ===========================
 // =================================================================== */
-const InfoPanel = ({ recipe, editMode, onChange }) => {
+const InfoPanel = ({ recipe, editMode, onChange, scaledPortions }) => {
   const classes = useStyles();
   const { push } = useHistory();
 
@@ -1690,7 +1758,13 @@ const InfoPanel = ({ recipe, editMode, onChange }) => {
             <FormListItem
               id={"portions"}
               key={"portions"}
-              value={recipe.portions}
+              value={
+                !editMode &&
+                scaledPortions &&
+                recipe.portions !== scaledPortions
+                  ? scaledPortions
+                  : recipe.portions
+              }
               label={TEXT.FIELD_PORTIONS}
               icon={<PieChartIcon fontSize="small" />}
               type="number"
@@ -1995,10 +2069,19 @@ const IngredientsPanel = ({
   ingredientProfiModus,
   onToggleProfiModus,
   gridIngredientsCols,
-  handleFormButtonRowClick,
   onPositionMoreClick,
+  scaledIngredients,
 }) => {
   const classes = useStyles();
+
+  // Entscheiden ob skalierte Zutaten angezeigt werden sollen
+  let ingredientsToDisplay = [];
+  if (!editMode && scaledIngredients.length > 0) {
+    ingredientsToDisplay = scaledIngredients;
+  } else {
+    ingredientsToDisplay = ingredients;
+  }
+
   return (
     <Card className={classes.card} key={"ingredientsCard"}>
       <CardContent
@@ -2031,7 +2114,7 @@ const IngredientsPanel = ({
             View Modus wird im List Style aufgebaut*/}
         {editMode ? (
           <Grid container spacing={2}>
-            {ingredients.map((ingredient) => (
+            {ingredientsToDisplay.map((ingredient) => (
               <IngredientPosition
                 key={ingredient.uid}
                 ingredient={ingredient}
@@ -2048,15 +2131,13 @@ const IngredientsPanel = ({
           </Grid>
         ) : (
           <List key={"ingredientsList"}>
-            {ingredients.map((ingredient) => (
+            {ingredientsToDisplay.map((ingredient) => (
               <IngredientPosition
                 key={ingredient.uid}
                 ingredient={ingredient}
                 editMode={editMode}
                 ingredientProfiModus={ingredientProfiModus}
                 gridIngredientsCols={gridIngredientsCols}
-                // onChangeIngredient={onChangeIngredient}
-                // handleFormButtonRowClick={handleFormButtonRowClick}
               />
             ))}
           </List>
