@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Suspense, lazy } from "react";
 import {
   BrowserRouter as Router,
   Route,
@@ -32,16 +32,12 @@ import MergeProducts from "../Admin/mergeProducts";
 
 import UserPublicProfile from "../User/publicProfile";
 import UserProfile from "../User/userProfile";
-import Menuplan from "../Menuplan/menuplan";
-import QuantityCalculation from "../QuantityCalculation/quantityCalculation";
-import ShoppingList from "../ShoppingList/shoppingList";
 
 import Units from "../Unit/units";
 import UnitConversion from "../Unit/unitConversion";
 import Products from "../Product/products";
 import Departments from "../Department/departments";
 import useStyles from "../../constants/styles";
-
 import NotFound from "../404/404";
 
 import Temp from "../Temp/temp";
@@ -50,11 +46,17 @@ import * as ROUTES from "../../constants/routes";
 import { withAuthentication } from "../Session/index";
 
 import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
-// import lime from "@material-ui/core/colors/lime";
-// import blueGrey from "@material-ui/core/colors/blueGrey";
 import red from "@material-ui/core/colors/red";
 import publicProfile from "../User/publicProfile";
 import { useMediaQuery } from "@material-ui/core";
+import FallbackLoading from "../Shared/fallbackLoading";
+
+// Für nachträglicher Load --> Code Splitting
+const ShoppingList = lazy(() => import("../ShoppingList/shoppingList"));
+const Menuplan = lazy(() => import("../Menuplan/menuplan"));
+const QuantityCalculation = lazy(() =>
+  import("../QuantityCalculation/quantityCalculation")
+);
 
 const App = (props) => {
   const firebase = props.firebase;
@@ -166,31 +168,6 @@ const App = (props) => {
               <Route path={ROUTES.PRODUCTS} component={Products} />
               <Route path={ROUTES.DEPARTMENTS} component={Departments} />
 
-              <Route exact path={ROUTES.MENUPLAN} component={Menuplan} />
-              <Route exact path={ROUTES.MENUPLAN_UID} component={Menuplan} />
-
-              <Route
-                exact
-                path={ROUTES.QUANTITY_CALCULATION}
-                component={QuantityCalculation}
-              />
-              <Route
-                exact
-                path={ROUTES.QUANTITY_CALCULATION_UID}
-                component={QuantityCalculation}
-              />
-
-              <Route
-                exact
-                path={ROUTES.SHOPPINGLIST}
-                component={ShoppingList}
-              />
-              <Route
-                exact
-                path={ROUTES.SHOPPINGLIST_UID}
-                component={ShoppingList}
-              />
-
               <Route path={ROUTES.USERS} component={Users} />
               <Route exact path={ROUTES.ADMIN} component={Admin} />
               <Route
@@ -215,6 +192,38 @@ const App = (props) => {
                 component={UserProfile}
               />
               <Route path={ROUTES.TEMP} component={Temp} />
+
+              <Suspense fallback={<FallbackLoading />}>
+                <Switch>
+                  <Route
+                    exact
+                    path={ROUTES.SHOPPINGLIST}
+                    component={ShoppingList}
+                  />
+                  <Route
+                    exact
+                    path={ROUTES.SHOPPINGLIST_UID}
+                    component={ShoppingList}
+                  />
+
+                  <Route exact path={ROUTES.MENUPLAN} component={Menuplan} />
+                  <Route
+                    exact
+                    path={ROUTES.MENUPLAN_UID}
+                    component={Menuplan}
+                  />
+                  <Route
+                    exact
+                    path={ROUTES.QUANTITY_CALCULATION}
+                    component={QuantityCalculation}
+                  />
+                  <Route
+                    exact
+                    path={ROUTES.QUANTITY_CALCULATION_UID}
+                    component={QuantityCalculation}
+                  />
+                </Switch>
+              </Suspense>
 
               <Route path={ROUTES.NOT_FOUND} component={NotFound} />
               <Redirect to="404" />
