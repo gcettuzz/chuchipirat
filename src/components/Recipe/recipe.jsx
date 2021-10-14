@@ -145,6 +145,19 @@ const recipeReducer = (state, action) => {
     case REDUCER_ACTIONS.INGREDIENT_ONCHANGE:
       let tmpIngredients = state.data.ingredients;
       tmpIngredients[action.pos - 1][action.field] = action.value;
+
+      // Wenn das die letzte Zeile ist, automatisch eine neue einfügen
+      if (parseInt(action.pos) === state.data.ingredients.length) {
+        let newObject = Recipe.createEmptyIngredient();
+
+        tmpIngredients = Recipe.addEmptyEntry({
+          array: tmpIngredients,
+          pos: parseInt(action.pos),
+          emptyObject: newObject,
+          renumberByField: "pos",
+        });
+      }
+
       return {
         ...state,
         data: {
@@ -164,6 +177,18 @@ const recipeReducer = (state, action) => {
     case REDUCER_ACTIONS.PREPARATIONSTEP_ONCHANGE:
       let tmpPreparationSteps = state.data.preparationSteps;
       tmpPreparationSteps[action.pos - 1][action.field] = action.value;
+
+      // Wenn das die letzte Zeile ist, automatisch eine neue einfügen
+      if (parseInt(action.pos) === state.data.preparationSteps.length) {
+        let newObject = Recipe.createEmptyPreparationStep();
+
+        tmpPreparationSteps = Recipe.addEmptyEntry({
+          array: tmpPreparationSteps,
+          pos: parseInt(action.pos),
+          emptyObject: newObject,
+          renumberByField: "pos",
+        });
+      }
 
       return {
         ...state,
@@ -987,7 +1012,6 @@ const RecipeBase = ({ props, authUser }) => {
       // hier wird die gewählte Option als -Option# zurückgegeben
       // diese Info muss umgeschlüsselt werden
       value = newValue;
-      // ingredientPos[1] = ingredientPos[1];
     } else if (ingredientPos[0] === "product") {
       // Nur Produkte, die wir kennen (und somit eine UID haben)
       if (action !== "clear" && (!newValue || !newValue.uid)) {
