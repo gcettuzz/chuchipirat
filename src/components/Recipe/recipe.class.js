@@ -489,50 +489,6 @@ export default class Recipe {
     return allRecipes;
   };
   /* =====================================================================
-  // Rezepte aus der DB suchen
-  // ===================================================================== */
-  static async searchRecipes({ firebase, searchString, lastPaginationName }) {
-    // let recipes = [];
-    // let recipe = {};
-    // let snapshot = {};
-    // const recipesRef = firebase.recipes();
-    // if (!lastPaginationName) {
-    //   // Die ersten Einträge holen (ohne Pagination)
-    //   snapshot = await recipesRef
-    //     .orderBy("name", "asc")
-    //     .where("searchString", "array-contains", searchString.toLowerCase())
-    //     .limit(DEFAULT_VALUES.RECIPES_SEARCH)
-    //     .get()
-    //     .catch((error) => {
-    //       console.error(error);
-    //       throw error;
-    //     });
-    // } else {
-    //   // Die nächsten Einträge holen (mit Pagination)
-    //   snapshot = await recipesRef
-    //     .orderBy("name", "asc")
-    //     .where("searchString", "array-contains", searchString.toLowerCase())
-    //     .limit(DEFAULT_VALUES.RECIPES_SEARCH)
-    //     .startAfter(lastPaginationName)
-    //     .get()
-    //     .catch((error) => {
-    //       console.error(error);
-    //       throw error;
-    //     });
-    // }
-    // snapshot.forEach((obj) => {
-    //   recipe = obj.data();
-    //   recipe.uid = obj.id;
-    //   //   // Timestamp umwandeln
-    //   recipe.createdAt = recipe.createdAt.toDate();
-    //   recipes.push(recipe);
-    // });
-    // firebase.analytics.logEvent(FIREBASE_EVENTS.RECIPE_SEARCH, {
-    //   searchString: searchString,
-    // });
-    // return recipes;
-  }
-  /* =====================================================================
   // Rezept lesen
   // ===================================================================== */
   static getRecipe = async ({ firebase, uid, userUid }) => {
