@@ -258,30 +258,6 @@ const RecipeSearch = ({
     setSearchExecuted(true);
   };
   /* ------------------------------------------
-  // Weitere Rezepte anzeigen - Pagination
-  // ------------------------------------------ */
-  const onRecipePagination = (event) => {
-    //FIXME:
-    // Recipe.searchRecipes({
-    //   firebase: firebase,
-    //   searchString: searchString,
-    //   lastPaginationName: recipes.data[recipes.data.length - 1].name,
-    // })
-    //   .then((result) => {
-    //     dispatchRecipes({
-    //       type: REDUCER_ACTIONS.RECIPES_FETCH_PAGINATION,
-    //       payload: result,
-    //     });
-    //   })
-    //   .catch((error) => {
-    //     dispatchRecipes({
-    //       type: REDUCER_ACTIONS.RECIPES_FETCH_ERROR,
-    //       error: error,
-    //     });
-    //   });
-    // event.preventDefault();
-  };
-  /* ------------------------------------------
   // Suchfeld clearen
   // ------------------------------------------ */
   const onSearchClear = () => {
@@ -327,14 +303,6 @@ const RecipeSearch = ({
             />
           </Grid>
         ))}
-        {/* Button für Pagination */}
-        {/* {recipes.showLoadMore && (
-          <Grid container key={"loadMore"} justify="center">
-            <Button onClick={onRecipePagination}>
-              {TEXT.BUTTON_LOAD_MORE_RECIPES}
-            </Button>
-          </Grid>
-        )} */}
         {/* Keine Rezepte gefunden --> Neues Erfassen? */}
         {searchExecuted && filteredData.length === 0 && (
           <Grid item key={"noRecipe"} xs={12} sm={12} md={12}>

@@ -43,6 +43,9 @@ import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import ListItemAvatar from "@material-ui/core/ListItemAvatar";
 
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
+
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
 import CustomSnackbar from "../Shared/customSnackbar";
@@ -81,6 +84,7 @@ import AddIcon from "@material-ui/icons/Add";
 import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
 import SendIcon from "@material-ui/icons/Send";
+import MoreVertIcon from "@material-ui/icons/MoreVert";
 
 import useStyles from "../../constants/styles";
 
@@ -141,6 +145,19 @@ const recipeReducer = (state, action) => {
     case REDUCER_ACTIONS.INGREDIENT_ONCHANGE:
       let tmpIngredients = state.data.ingredients;
       tmpIngredients[action.pos - 1][action.field] = action.value;
+
+      // Wenn das die letzte Zeile ist, automatisch eine neue einfügen
+      if (parseInt(action.pos) === state.data.ingredients.length) {
+        let newObject = Recipe.createEmptyIngredient();
+
+        tmpIngredients = Recipe.addEmptyEntry({
+          array: tmpIngredients,
+          pos: parseInt(action.pos),
+          emptyObject: newObject,
+          renumberByField: "pos",
+        });
+      }
+
       return {
         ...state,
         data: {
@@ -160,6 +177,18 @@ const recipeReducer = (state, action) => {
     case REDUCER_ACTIONS.PREPARATIONSTEP_ONCHANGE:
       let tmpPreparationSteps = state.data.preparationSteps;
       tmpPreparationSteps[action.pos - 1][action.field] = action.value;
+
+      // Wenn das die letzte Zeile ist, automatisch eine neue einfügen
+      if (parseInt(action.pos) === state.data.preparationSteps.length) {
+        let newObject = Recipe.createEmptyPreparationStep();
+
+        tmpPreparationSteps = Recipe.addEmptyEntry({
+          array: tmpPreparationSteps,
+          pos: parseInt(action.pos),
+          emptyObject: newObject,
+          renumberByField: "pos",
+        });
+      }
 
       return {
         ...state,
@@ -519,23 +548,23 @@ const INGREDIENT_COLS = {
     quantity: { xs: 6, sm: 2 },
     unit: { xs: 6, sm: 1 },
     scalingFactor: { xs: 2, sm: 1 },
-    product: { xs: 6, sm: 3 },
-    detail: { xs: 6, sm: 2 },
-    buttons: { xs: 12, sm: 3 },
+    product: { xs: 6, sm: 4 },
+    detail: { xs: 5, sm: 3 },
+    buttons: { xs: 1, sm: 1 },
   },
   PROFI_MODE_ON: {
     pos: { xs: 2, sm: 1 },
     quantity: { xs: 5, sm: 2 },
     unit: { xs: 5, sm: 1 },
     scalingFactor: { xs: 2, sm: 1 },
-    product: { xs: 6, sm: 2 },
-    detail: { xs: 6, sm: 2 },
-    buttons: { xs: 12, sm: 3 },
+    product: { xs: 6, sm: 3 },
+    detail: { xs: 5, sm: 3 },
+    buttons: { xs: 1, sm: 1 },
   },
 };
 
 const CONSTANTS = {
-  BUTTONPREFIX: {
+  PANELPREFIX: {
     INGREDIENTS: "ingredients",
     PREPARATIONSTEPS: "preparationSteps",
   },
@@ -589,6 +618,13 @@ const RecipeBase = ({ props, authUser }) => {
     _loadingUnits: false,
     _loadingProducts: false,
     _loadingDepartments: false,
+  });
+  const [menuItemAnchorEl, setMenuItemAnchorEl] = React.useState(null);
+  const [selectedItem, setSelectedItem] = React.useState({
+    type: null,
+    ingredient: null,
+    pos: null,
+    noOfPostitions: null,
   });
 
   if (props.location.state) {
@@ -976,7 +1012,6 @@ const RecipeBase = ({ props, authUser }) => {
       // hier wird die gewählte Option als -Option# zurückgegeben
       // diese Info muss umgeschlüsselt werden
       value = newValue;
-      // ingredientPos[1] = ingredientPos[1];
     } else if (ingredientPos[0] === "product") {
       // Nur Produkte, die wir kennen (und somit eine UID haben)
       if (action !== "clear" && (!newValue || !newValue.uid)) {
@@ -1056,6 +1091,101 @@ const RecipeBase = ({ props, authUser }) => {
     });
   };
   /* ------------------------------------------
+  // ContextMenü für Postionen
+  // ------------------------------------------ */
+  const onPositionMoreClick = (event) => {
+    // Zwischenspeichern bei welchem Element das Menü auf-
+    // gerufen wurde
+    let pressedButton = event.currentTarget.id.split("_");
+    setSelectedItem({
+      type: pressedButton[1],
+      ingredient: pressedButton[2],
+      pos: parseInt(pressedButton[3]),
+      noOfPostitions:
+        pressedButton[1] === CONSTANTS.PANELPREFIX.INGREDIENTS
+          ? recipe.data.ingredients.length
+          : recipe.data.preparationSteps.length,
+    });
+    setMenuItemAnchorEl(event.currentTarget);
+  };
+  /* ------------------------------------------
+  // Kontextmenü Klick
+  // ------------------------------------------ */
+  const onItemContextMenuClick = (event) => {
+    let pressedButton = event.currentTarget.id.split("_");
+    // 0 = in Welchem Block (Ingredient/PreparationStep)
+    // 1 = Aktion (Add, Delete, MoveUp, MoveDown)
+    // 2 = Position des Elements
+    let oldList = [];
+    let newList = [];
+    let newObject = {};
+
+    switch (pressedButton[0]) {
+      case CONSTANTS.PANELPREFIX.INGREDIENTS:
+        oldList = recipe.data.ingredients;
+        newObject = Recipe.createEmptyIngredient();
+        break;
+      case CONSTANTS.PANELPREFIX.PREPARATIONSTEPS:
+        oldList = recipe.data.preparationSteps;
+        newObject = Recipe.createEmptyPreparationStep();
+        break;
+      default:
+        return;
+    }
+
+    switch (pressedButton[1]) {
+      case ACTIONS.ADD:
+        newList = Recipe.addEmptyEntry({
+          array: oldList,
+          pos: parseInt(pressedButton[2]),
+          emptyObject: newObject,
+          renumberByField: "pos",
+        });
+        break;
+      case ACTIONS.DELETE:
+        newList = Recipe.deleteEntry({
+          array: oldList,
+          fieldValue: parseInt(pressedButton[2]),
+          fieldName: "pos",
+          emptyObject: newObject,
+          renumberByField: "pos",
+        });
+        break;
+      case ACTIONS.MOVE_UP:
+        newList = Recipe.moveArrayEntryUp({
+          array: oldList,
+          posToMoveUp: parseInt(pressedButton[2]),
+          renumberByField: "pos",
+        });
+        break;
+      case ACTIONS.MOVE_DOWN:
+        newList = Recipe.moveArrayEntryDown({
+          array: oldList,
+          posToMoveDown: parseInt(pressedButton[2]),
+          renumberByField: "pos",
+        });
+        break;
+      default:
+        return;
+    }
+
+    dispatchRecipe({
+      type: REDUCER_ACTIONS.RECIPE_UPDATE_LIST,
+      payload: newList,
+      array: pressedButton[0],
+    });
+
+    setMenuItemAnchorEl(null);
+  };
+  /* ------------------------------------------
+  // Kontextmenü schliessen
+  // ------------------------------------------ */
+  const onItemContextMenuClose = () => {
+    setMenuItemAnchorEl();
+    setMenuItemAnchorEl(null);
+  };
+
+  /* ------------------------------------------
   // Buttons Zutaten - onClick
   // ------------------------------------------ */
   const onFormButonRowClick = (event) => {
@@ -1068,11 +1198,11 @@ const RecipeBase = ({ props, authUser }) => {
     let newObject = {};
 
     switch (pressedButton[0]) {
-      case CONSTANTS.BUTTONPREFIX.INGREDIENTS:
+      case CONSTANTS.PANELPREFIX.INGREDIENTS:
         oldList = recipe.data.ingredients;
         newObject = Recipe.createEmptyIngredient();
         break;
-      case CONSTANTS.BUTTONPREFIX.PREPARATIONSTEPS:
+      case CONSTANTS.PANELPREFIX.PREPARATIONSTEPS:
         oldList = recipe.data.preparationSteps;
         newObject = Recipe.createEmptyPreparationStep();
         break;
@@ -1152,6 +1282,7 @@ const RecipeBase = ({ props, authUser }) => {
       payload: newComments,
     });
   };
+
   /* ------------------------------------------
   // ================= AUSGABE ================
   // ------------------------------------------ */
@@ -1254,7 +1385,7 @@ const RecipeBase = ({ props, authUser }) => {
               ingredientProfiModus={ingredientProfiModus}
               onToggleProfiModus={onToggleProfiModus}
               gridIngredientsCols={gridIngredientsCols}
-              handleFormButtonRowClick={onFormButonRowClick}
+              onPositionMoreClick={onPositionMoreClick}
             />
           </Grid>
           <Grid item key={"prepartionSteps"} xs={12} sm={12}>
@@ -1263,7 +1394,7 @@ const RecipeBase = ({ props, authUser }) => {
               preparationSteps={recipe.data.preparationSteps}
               editMode={editMode}
               onChangePrepartionStep={onChangePreparationStep}
-              handleFormButtonRowClick={onFormButonRowClick}
+              onPositionMoreClick={onPositionMoreClick}
             />
           </Grid>
           {!editMode && (
@@ -1277,6 +1408,15 @@ const RecipeBase = ({ props, authUser }) => {
           )}
         </Grid>
       </Container>
+      {/* Kontextmenü Positionen */}
+      <PositionContextMenu
+        anchorEl={menuItemAnchorEl}
+        handleMenuClick={onItemContextMenuClick}
+        handleMenuClose={onItemContextMenuClose}
+        type={selectedItem.type}
+        pos={selectedItem.pos}
+        noListEntries={selectedItem.noOfPostitions}
+      />
       {/* Neues Produkt hinzufügen PopUp */}
       <DialogProduct
         productName={productAddValues.productName}
@@ -1284,9 +1424,6 @@ const RecipeBase = ({ props, authUser }) => {
         dialogOpen={productAddValues.popUpOpen}
         handleOk={onCreateProductToAdd}
         handleClose={onCloseProductToAdd}
-        // handleProductNameChange={}
-        // handleDepartmentChange={}
-        // handleUnitChange={}
         products={recipe.products}
         units={recipe.units}
         departments={recipe.departments}
@@ -1859,6 +1996,7 @@ const IngredientsPanel = ({
   onToggleProfiModus,
   gridIngredientsCols,
   handleFormButtonRowClick,
+  onPositionMoreClick,
 }) => {
   const classes = useStyles();
   return (
@@ -1904,7 +2042,7 @@ const IngredientsPanel = ({
                 gridIngredientsCols={gridIngredientsCols}
                 noListEntries={ingredients.length}
                 onChangeIngredient={onChangeIngredient}
-                handleFormButtonRowClick={handleFormButtonRowClick}
+                onPositionMoreClick={onPositionMoreClick}
               />
             ))}
           </Grid>
@@ -1940,6 +2078,7 @@ const IngredientPosition = ({
   onChangeIngredient,
   noListEntries,
   handleFormButtonRowClick,
+  onPositionMoreClick,
 }) => {
   const classes = useStyles();
   // Handler für Zutaten/Produkt hinzufügen
@@ -2131,17 +2270,20 @@ const IngredientPosition = ({
             sm={gridIngredientsCols.buttons.sm}
             className={classes.centerCenter}
           >
-            <FormButtonRow
-              key={
-                "buttonRow_" +
-                CONSTANTS.BUTTONPREFIX.INGREDIENTS +
-                ingredient.uid
+            <IconButton
+              id={
+                "MoreBtn_" +
+                CONSTANTS.PANELPREFIX.INGREDIENTS +
+                "_" +
+                ingredient.uid +
+                "_" +
+                ingredient.pos
               }
-              buttonPrefix={CONSTANTS.BUTTONPREFIX.INGREDIENTS}
-              pos={ingredient.pos}
-              noListEntries={noListEntries}
-              onClick={handleFormButtonRowClick}
-            />
+              aria-label="settings"
+              onClick={onPositionMoreClick}
+            >
+              <MoreVertIcon />
+            </IconButton>
           </Grid>
           <Grid
             item
@@ -2222,66 +2364,69 @@ const IngredientFormField = ({
   );
 };
 /* ===================================================================
-// ============================ Form Buttons =========================
+// ==================== Kontextmenü für Positionen ===================
 // =================================================================== */
-const FormButtonRow = ({ buttonPrefix, pos, noListEntries, onClick }) => {
+const PositionContextMenu = ({
+  anchorEl,
+  handleMenuClick,
+  handleMenuClose,
+  type,
+  pos,
+  noListEntries,
+}) => {
   return (
-    <React.Fragment>
-      <Tooltip title={TEXT.TOOLTIP_ADD_POS}>
-        <span>
-          <IconButton
-            key={buttonPrefix + "_add_" + pos}
-            id={buttonPrefix + "_add_" + pos}
-            aria-label="new"
-            color="primary"
-            onClick={onClick}
-          >
-            <AddIcon fontSize="small" />
-          </IconButton>
-        </span>
-      </Tooltip>
-      <Tooltip title={TEXT.TOOLTIP_DEL_POS}>
-        <span>
-          <IconButton
-            key={buttonPrefix + "_delete_" + pos}
-            id={buttonPrefix + "_delete_" + pos}
-            aria-label="delete"
-            onClick={onClick}
-            color="primary"
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </span>
-      </Tooltip>
-      <Tooltip title={TEXT.TOOLTIP_MOVE_POS_UP}>
-        <span>
-          <IconButton
-            id={buttonPrefix + "_up_" + pos}
-            key={buttonPrefix + "_up_" + pos}
-            aria-label="up"
-            onClick={onClick}
-            color="primary"
-            disabled={pos === 1}
-          >
-            <KeyboardArrowUpIcon fontSize="small" />
-          </IconButton>
-        </span>
-      </Tooltip>
-      <Tooltip title={TEXT.TOOLTIP_MOVE_POS_DOWN}>
-        <span>
-          <IconButton
-            id={buttonPrefix + "_down_" + pos}
-            key={buttonPrefix + "_down_" + pos}
-            aria-label="down"
-            disabled={pos === noListEntries}
-            onClick={onClick}
-            color="primary"
-          >
-            <KeyboardArrowDownIcon fontSize="small" />
-          </IconButton>
-        </span>
-      </Tooltip>
-    </React.Fragment>
+    <Menu
+      keepMounted
+      id={"positionMenu"}
+      anchorEl={anchorEl}
+      open={Boolean(anchorEl)}
+      onClose={handleMenuClose}
+    >
+      <MenuItem
+        id={type + "_" + ACTIONS.ADD + "_" + pos}
+        onClick={handleMenuClick}
+      >
+        <ListItemIcon>
+          <AddIcon fontSize="small" />
+        </ListItemIcon>
+        <Typography variant="inherit">{TEXT.TOOLTIP_ADD_POS}</Typography>
+      </MenuItem>
+      <MenuItem
+        id={type + "_" + ACTIONS.DELETE + "_" + pos}
+        onClick={handleMenuClick}
+      >
+        <ListItemIcon>
+          <DeleteIcon fontSize="small" />
+        </ListItemIcon>
+        <Typography variant="inherit" noWrap>
+          {TEXT.BUTTON_DELETE}
+        </Typography>
+      </MenuItem>
+      <MenuItem
+        id={type + "_" + ACTIONS.MOVE_UP + "_" + pos}
+        onClick={handleMenuClick}
+        disabled={pos === 1}
+      >
+        <ListItemIcon>
+          <KeyboardArrowUpIcon fontSize="small" />
+        </ListItemIcon>
+        <Typography variant="inherit" noWrap>
+          {TEXT.TOOLTIP_MOVE_POS_UP}
+        </Typography>
+      </MenuItem>
+      <MenuItem
+        id={type + "_" + ACTIONS.MOVE_DOWN + "_" + pos}
+        onClick={handleMenuClick}
+        disabled={pos === noListEntries}
+      >
+        <ListItemIcon>
+          <KeyboardArrowDownIcon fontSize="small" />
+        </ListItemIcon>
+        <Typography variant="inherit" noWrap>
+          {TEXT.TOOLTIP_MOVE_POS_DOWN}
+        </Typography>
+      </MenuItem>
+    </Menu>
   );
 };
 /* ===================================================================
@@ -2291,7 +2436,8 @@ const PrepartionStepsPanel = ({
   preparationSteps,
   editMode,
   onChangePrepartionStep,
-  handleFormButtonRowClick,
+  // handleFormButtonRowClick,
+  onPositionMoreClick,
 }) => {
   const classes = useStyles();
   return (
@@ -2312,7 +2458,7 @@ const PrepartionStepsPanel = ({
                 editMode={editMode}
                 noPreparationSteps={preparationSteps.length}
                 onChangePreparationStep={onChangePrepartionStep}
-                handleFormButtonRowClick={handleFormButtonRowClick}
+                onPositionMoreClick={onPositionMoreClick}
               />
             ))}
           </Grid>
@@ -2324,8 +2470,6 @@ const PrepartionStepsPanel = ({
                 preparationStep={preparationStep}
                 editMode={editMode}
                 noPreparationSteps={preparationSteps.length}
-                onChangePreparationStep={onChangePrepartionStep}
-                handleFormButtonRowClick={handleFormButtonRowClick}
               />
             ))}
           </List>
@@ -2342,7 +2486,8 @@ const PreparationStepPosition = ({
   editMode,
   onChangePreparationStep,
   noPreparationSteps,
-  handleFormButtonRowClick,
+  // handleFormButtonRowClick,
+  onPositionMoreClick,
 }) => {
   const classes = useStyles();
 
@@ -2399,17 +2544,20 @@ const PreparationStepPosition = ({
             sm={3}
             className={classes.centerCenter}
           >
-            <FormButtonRow
-              key={
-                "buttonRow_" +
-                CONSTANTS.BUTTONPREFIX.PREPARATIONSTEPS +
-                preparationStep.uid
+            <IconButton
+              id={
+                "MoreBtn_" +
+                CONSTANTS.PANELPREFIX.PREPARATIONSTEPS +
+                "_" +
+                preparationStep.uid +
+                "_" +
+                preparationStep.pos
               }
-              buttonPrefix={CONSTANTS.BUTTONPREFIX.PREPARATIONSTEPS}
-              pos={preparationStep.pos}
-              noListEntries={noPreparationSteps}
-              onClick={handleFormButtonRowClick}
-            />
+              aria-label="settings"
+              onClick={onPositionMoreClick}
+            >
+              <MoreVertIcon />
+            </IconButton>
           </Grid>
           {noPreparationSteps > 1 && (
             <Grid
