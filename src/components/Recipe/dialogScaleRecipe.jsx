@@ -3,10 +3,7 @@ import React from "react";
 import Dialog from "@material-ui/core/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
-import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogActions from "@material-ui/core/DialogActions";
-
-import WarningIcon from "@material-ui/icons/Warning";
 
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
@@ -18,9 +15,7 @@ import * as TEXT from "../../constants/text";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
-// export const DELETION_CONFIRMATION_INITIAL_STATE = {
-//   confirmationString: "",
-// };
+
 /* ===================================================================
 // ==================== Pop Up Abteilung hinzufügen ==================
 // =================================================================== */
@@ -86,7 +81,6 @@ const DialogScaleRecipe = ({
           id="scaledPortions"
           name="scaledPortions"
           value={formFields.scaledPortions}
-          // required
           fullWidth
           onChange={onChangeField}
           variant="outlined"
@@ -103,11 +97,7 @@ const DialogScaleRecipe = ({
         <Button onClick={onCancelClick} variant="outlined">
           {TEXT.BUTTON_CANCEL}
         </Button>
-        <Button
-          // disabled={formFields.confirmationString !== confirmationString}
-          onClick={onOkClick}
-          variant="contained"
-        >
+        <Button onClick={onOkClick} variant="contained">
           {TEXT.BUTTON_OK}
         </Button>
       </DialogActions>

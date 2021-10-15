@@ -272,6 +272,8 @@ const recipeReducer = (state, action) => {
           state._loadingUnits,
           state._loadingDepartments
         ),
+        scaledPortions: action?.scaledPortions,
+        scaledIngredients: action?.scaledIngredients,
         _loadingRecipe: false,
         isError: false,
       };
@@ -598,6 +600,7 @@ const RecipeBase = ({ props, authUser }) => {
 
   let action;
   let urlUid;
+  let scaledPortions;
 
   // const [dbRecipe, setDbRecipe] = React.useState();
   const [editMode, setEditMode] = React.useState(false);
@@ -643,6 +646,7 @@ const RecipeBase = ({ props, authUser }) => {
 
   if (props.location.state) {
     action = props.location.state.action;
+    scaledPortions = props.location.state?.scaledPortions;
   } else {
     action = ACTIONS.VIEW;
   }
@@ -661,6 +665,7 @@ const RecipeBase = ({ props, authUser }) => {
   React.useEffect(() => {
     // Wen das Ereignis NEW ist, wird ein neues Rezept angelegt.
     // Ansonsten wird aus der DB das geforderte gelesen
+    let scaledIngredients = [];
 
     if (action === ACTIONS.NEW) {
       let newRecipe = new Recipe();
@@ -687,9 +692,18 @@ const RecipeBase = ({ props, authUser }) => {
         userUid: authUser.uid,
       })
         .then((result) => {
+          if (scaledPortions && !Number.isNaN(scaledPortions)) {
+            // Rezept gleich hochskalieren auf Anzahl Portionen
+            scaledIngredients = Recipe.scale({
+              recipe: result,
+              portionsToScale: scaledPortions,
+            });
+          }
           dispatchRecipe({
             type: REDUCER_ACTIONS.RECIPE_FETCH_SUCCESS,
             payload: result,
+            scaledPortions: scaledPortions,
+            scaledIngredients: scaledIngredients,
           });
         })
         .catch((error) => {
@@ -1327,7 +1341,6 @@ const RecipeBase = ({ props, authUser }) => {
     //PopUp schliessen
     setDialogScaleRecipe({ ...dialogScaleRecipe, popUpOpen: false });
   };
-
   /* ------------------------------------------
   // ================= AUSGABE ================
   // ------------------------------------------ */

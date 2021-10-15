@@ -993,6 +993,7 @@ const MenuPlanBase = ({ props, authUser }) => {
           pathname: `${ROUTES.RECIPE}/${mealRecipe.recipeUid}`,
           state: {
             action: ACTIONS.VIEW,
+            scaledPortions: mealRecipe.noOfServings,
           },
         });
         break;
