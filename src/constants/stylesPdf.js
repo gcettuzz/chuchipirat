@@ -177,6 +177,10 @@ export default class PdfStyles {
         width: "25%",
         textAlign: "center",
       },
+      tableCol50: {
+        width: "50%",
+        textAlign: "center",
+      },
       tableCol75: {
         width: "75%",
         textAlign: "center",
@@ -282,6 +286,9 @@ export default class PdfStyles {
       },
       tableCellAlignLeft: {
         textAlign: "left",
+      },
+      tableCellAlignRight: {
+        textAlign: "right",
       },
       italic: {
         fontStyle: "italic",
