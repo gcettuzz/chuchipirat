@@ -19,7 +19,7 @@ import * as IMAGE_REPOSITORY from "../../constants/imageRepository";
 // Anzahl Zeilen, die pro Seite platz haben
 const LINES_PER_PAGE = {
   FIRST: 33,
-  REST: 38,
+  REST: 35,
 };
 
 const COLUMN = {
