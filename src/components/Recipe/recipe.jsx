@@ -4,6 +4,9 @@ import { useHistory } from "react-router";
 
 import { useTheme } from "@material-ui/core/styles";
 
+import { pdf } from "@react-pdf/renderer";
+import { saveAs } from "file-saver";
+
 import CssBaseline from "@material-ui/core/CssBaseline";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 
@@ -62,6 +65,7 @@ import Product from "../Product/product.class";
 import Unit from "../Unit/unit.class";
 import Utils from "../Shared/utils.class";
 import Department from "../Department/department.class";
+import RecipePdf from "./recipePdf";
 import FirebaseMessageHandler from "../Firebase/firebaseMessageHandler.class";
 
 // import * as ROLES from "../../constants/roles";
@@ -1342,6 +1346,23 @@ const RecipeBase = ({ props, authUser }) => {
     setDialogScaleRecipe({ ...dialogScaleRecipe, popUpOpen: false });
   };
   /* ------------------------------------------
+// Printversion erzeugen
+// ------------------------------------------ */
+  const onPrintVersionClick = async () => {
+    const doc = (
+      <RecipePdf
+        recipe={recipe.data}
+        scaledPortions={recipe.scaledPortions}
+        scaledIngredients={recipe.scaledIngredients}
+        authUser={authUser}
+      />
+    );
+    const asPdf = pdf([]);
+    asPdf.updateContainer(doc);
+    const blob = await asPdf.toBlob();
+    saveAs(blob, recipe.data.name + TEXT.SUFFIX_PDF);
+  };
+  /* ------------------------------------------
   // ================= AUSGABE ================
   // ------------------------------------------ */
   return (
@@ -1357,6 +1378,7 @@ const RecipeBase = ({ props, authUser }) => {
         onSaveClick={() => onSaveClick(authUser)}
         onCancelClick={onCancelClick}
         onScaleClick={onOpenRecipeScaleDialog}
+        onPrintversionClick={onPrintVersionClick}
       />
       {/* ===== BODY ===== */}
       <Container className={classes.container} component="main" maxWidth="md">
@@ -1519,6 +1541,7 @@ const RecipeHeader = ({
   onSaveClick,
   onCancelClick,
   onScaleClick,
+  onPrintversionClick,
 }) => {
   return (
     <React.Fragment>
@@ -1554,7 +1577,15 @@ const RecipeHeader = ({
                 color: "primary",
                 onClick: onScaleClick,
               },
-
+              {
+                id: "print",
+                hero: true,
+                visible: true,
+                label: TEXT.BUTTON_PRINTVERSION,
+                variant: "outlined",
+                color: "primary",
+                onClick: onPrintversionClick,
+              },
               //NEXT_FEATURE: zu Event hinzufügen --> neues PopUp!
               // {
               //   id: "addToEvent",

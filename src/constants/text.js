@@ -243,6 +243,9 @@ export const PORTIONS_TO_SCALE = "zu skalierende Portionen";
 export const INFO_PANEL_TITLE_SCALE = "2*2 ist nicht immer 4";
 export const INFO_PANEL_TEXT_SCALE =
   "Beachte das eine Skalierung einige Tücken mit sich bringt. So können die Zubereitungstexte allenfalls nicht mehr stimmen (enthaltene Mengen) und auch die Koch-/Backzeit kann allenfalls variieren.";
+export const SCALED_RECIPE_ORIGINAL_IS = (portions) =>
+  ` - skaliert, Original ${portions} Portionen`;
+
 /* =====================================================================
 // Meldungen zum Produkt
 // ===================================================================== */
@@ -594,6 +597,8 @@ export const ERROR_GIVE_FIELD_VALUE = (field) => `Bitte ${field} angeben.`;
 export const WE_NEED_THIS_VALUE = "Wir brauchen diesen Wert.";
 export const GENERATED_ON = "Generiert am: ";
 export const GENERATED_FROM = "Generiert von: ";
+export const EXPORTED_ON = "Exportiert am: ";
+export const EXPORTED_FROM = "Exportiert von: ";
 export const ERROR_PARAMETER_NOT_PASSED =
   "Methodenparameter wurden nicht übergeben.";
 export const SEARCH_STRING = "Suchbegriff";
