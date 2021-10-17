@@ -22,7 +22,6 @@ import PasswordChange from "../PasswordChange/passwordChange";
 import HomePage from "../Home/home";
 import Event from "../Event/event";
 import Events from "../Event/events";
-import Recipe from "../Recipe/recipe";
 import Recipes from "../Recipe/recipes";
 import Users from "../User/users";
 import Admin from "../Admin/admin";
@@ -57,6 +56,7 @@ const Menuplan = lazy(() => import("../Menuplan/menuplan"));
 const QuantityCalculation = lazy(() =>
   import("../QuantityCalculation/quantityCalculation")
 );
+const Recipe = lazy(() => import("../Recipe/recipe"));
 
 const App = (props) => {
   const firebase = props.firebase;
@@ -153,8 +153,6 @@ const App = (props) => {
               <Route exact path={ROUTES.EVENT_UID} component={Event} />
 
               <Route path={ROUTES.RECIPES} component={Recipes} />
-              <Route exact path={ROUTES.RECIPE} component={Recipe} />
-              <Route exact path={ROUTES.RECIPE_UID} component={Recipe} />
 
               <Route
                 exact
@@ -195,6 +193,8 @@ const App = (props) => {
 
               <Suspense fallback={<FallbackLoading />}>
                 <Switch>
+                  <Route exact path={ROUTES.RECIPE} component={Recipe} />
+                  <Route exact path={ROUTES.RECIPE_UID} component={Recipe} />
                   <Route
                     exact
                     path={ROUTES.SHOPPINGLIST}
