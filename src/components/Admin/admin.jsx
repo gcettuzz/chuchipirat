@@ -5,15 +5,12 @@ import { useHistory } from "react-router";
 import Container from "@material-ui/core/Container";
 import Grid from "@material-ui/core/Grid";
 
-import Typography from "@material-ui/core/Typography";
-import TextField from "@material-ui/core/TextField";
-import Button from "@material-ui/core/Button";
-import LinearProgress from "@material-ui/core/LinearProgress";
 import IconButton from "@material-ui/core/IconButton";
 
 import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
 import CardContent from "@material-ui/core/CardContent";
+import CardActionArea from "@material-ui/core/CardActionArea";
 
 import ForwardIcon from "@material-ui/icons/Forward";
 import DeleteIcon from "@material-ui/icons/Delete";
@@ -39,6 +36,7 @@ import {
 } from "../Session";
 import Feed from "../Shared/feed.class";
 import { CallMerge } from "@material-ui/icons";
+import { Typography } from "@material-ui/core";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -94,12 +92,13 @@ const AdminBase = ({ props, authUser }) => {
         subTitle={TEXT.PAGE_SUBTITLE_ADMIN}
       />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="sm">
+      <Container className={classes.container} component="main" maxWidth="md">
         <Grid container spacing={2}>
-          <Grid item xs={12} md={6} lg={4}>
+          <Grid item xs={12} md={6}>
             <AdminTile
               id={"deleteFeeds"}
               text={TEXT.PANEL_ADMIN_DELETE_FEED}
+              description={TEXT.PANEL_ADMIN_DELETE_FEED_DESCRIPTION}
               icon={<DeleteIcon />}
               action={goToDeleteFeed}
             />
@@ -108,6 +107,7 @@ const AdminBase = ({ props, authUser }) => {
             <AdminTile
               id={"whereUsed"}
               text={TEXT.PANEL_ADMIN_WHERE_USED}
+              description={TEXT.PANEL_ADMIN_WHERE_USED_DESCRIPTION}
               icon={<ZoomOutMapIcon />}
               action={goToWhereUsed}
             />
@@ -116,6 +116,7 @@ const AdminBase = ({ props, authUser }) => {
             <AdminTile
               id={"merge"}
               text={TEXT.PANEL_ADMIN_MERGE}
+              description={TEXT.PANEL_ADMIN_MERGE_DESCRICPTION}
               icon={<CallMergeIcon />}
               action={goToMergeProducts}
             />
@@ -128,23 +129,24 @@ const AdminBase = ({ props, authUser }) => {
 /* ===================================================================
 // ============================ Admin Tile  ==========================
 // =================================================================== */
-const AdminTile = ({ id, text, icon, action }) => {
+const AdminTile = ({ id, text, description, icon, action }) => {
   const classes = useStyles();
 
   return (
     <Card className={classes.card} key={"card_" + id}>
-      <CardHeader
-        title={text}
-        action={
-          <IconButton
-            disabled={!action}
-            aria-label={"admin Card " + text}
-            onClick={action}
-          >
-            {icon ? icon : <ForwardIcon />}
-          </IconButton>
-        }
-      />
+      <CardActionArea onClick={action}>
+        <CardHeader
+          title={text}
+          action={
+            <IconButton aria-label={"admin Card " + text}>
+              {icon ? icon : <ForwardIcon />}
+            </IconButton>
+          }
+        />
+        <CardContent>
+          <Typography>{description}</Typography>
+        </CardContent>
+      </CardActionArea>
     </Card>
   );
 };

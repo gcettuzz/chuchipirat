@@ -1,6 +1,6 @@
 {
   "name": "chuchipirat",
-  "version": "0.8.5",
+  "version": "0.8.7",
   "private": true,
   "dependencies": {
     "@date-io/date-fns": "^1.3.13",
