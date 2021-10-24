@@ -53,6 +53,7 @@ export const BUTTON_DELETE_FEED = "Feed-Einträge löschen";
 export const BUTTON_TRACE = "Trace";
 export const BUTTON_CHOOSE_RECIPE = "Rezept auswählen";
 export const BUTTON_MERGE_PRODUCTS = "Produkte zusammenführen";
+export const BUTTON_TRACE_ITEM = "Produktnachverfolgung";
 /* =====================================================================
 // Seiten Titel und Untertitel
 // ===================================================================== */
@@ -462,6 +463,7 @@ export const SHOPPING_LIST_GENERATED_ON = "Generiert am: ";
 export const SHOPPING_LIST_GENERATED_FROM = "von: ";
 export const DIALOG_TITLE_SHOPPING_LIST_ADD_ITEM = "Produkt hinzufügen";
 export const DIALOG_TITLE_SHOPPING_LIST_EDIT_ITEM = "Eintrag ändern";
+export const DIALOG_TITLE_ITEM_TRACE = "Nachverfolgung Produkt";
 export const ERROR_ADD_ITEM_PRODUCT_UNKNOWN =
   "Produkt unbekannt. Hast du es angelegt?";
 /* =====================================================================

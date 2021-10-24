@@ -36,6 +36,7 @@ import * as FIREBASE_MESSAGES from "../../constants/firebaseMessages";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
 import EditIcon from "@material-ui/icons/Edit";
 import DeleteIcon from "@material-ui/icons/Delete";
+import CallSplitIcon from "@material-ui/icons/CallSplit";
 
 import useStyles from "../../constants/styles";
 
@@ -47,6 +48,7 @@ import CustomSnackbar from "../Shared/customSnackbar";
 import Event from "../Event/event.class";
 import Product from "../Product/product.class";
 import Unit from "../Unit/unit.class";
+import Recipe from "../Recipe/recipe.class";
 import Menuplan from "../Menuplan/menuplan.class";
 import Department from "../Department/department.class";
 import ShoppingList from "./shoppingList.class";
@@ -56,6 +58,7 @@ import DialogGenerateShoppingList from "./dialogGenerateShoppingList";
 import DialogShoppingListItem, {
   DIALOG_TYPE as ITEM_DIALOG_TYPE,
 } from "./dialogShoppingListItem";
+import DialogItemTrace from "./dialogItemTrace";
 import ShoppingListPdf from "./shoppingListPdf";
 
 import { withFirebase } from "../Firebase";
@@ -81,6 +84,8 @@ const REDUCER_ACTIONS = {
   UNITS_FETCH_SUCCESS: "UNITS_FETCH_SUCCESS",
   PRODUCTS_FETCH_SUCCESS: "PRODUCTS_FETCH_SUCCESS",
   PRODUCT_CREATED: "PRODUCT_CREATED",
+  RECIPES_FETCH_INIT: "RECIPES_FETCH_INIT",
+  RECIPES_FETCH_SUCCESS: "RECIPES_FETCH_SUCCESS",
   DEPARTMENTS_FETCH_SUCCES: "DEPARTMENTS_FETCH_SUCCES",
   UNIT_CONVERSION_BASIC_FETCH_SUCCESS: "UNIT_CONVERSION_BASIC_FETCH_SUCCESS",
   UNIT_CONVERSION_PRODUCTS_FETCH_SUCCESS:
@@ -128,6 +133,7 @@ const shoppingListReducer = (state, action) => {
           generatedFromUid: action.generatedFromUid,
           generatedOn: action.generatedOn,
         },
+        recipes: [],
         isLoading: false,
       };
     case REDUCER_ACTIONS.SHOPPING_LIST_ON_SAVE:
@@ -266,6 +272,19 @@ const shoppingListReducer = (state, action) => {
         ...state,
         menuplan: action.payload,
       };
+    case REDUCER_ACTIONS.RECIPES_FETCH_INIT:
+      // Rezepte lesen
+      return {
+        ...state,
+        isLoading: true,
+      };
+    case REDUCER_ACTIONS.RECIPES_FETCH_SUCCESS:
+      // Rezepte speichern
+      return {
+        ...state,
+        recipes: action.payload,
+        isLoading: false,
+      };
     case REDUCER_ACTIONS.GENERIC_ERROR:
       return {
         ...state,
@@ -325,6 +344,7 @@ const ShoppingListBase = ({ props, authUser }) => {
       departments: [],
       unitConversionBasic: [],
       unitConversionProducts: [],
+      recipes: [],
       isLoading: false,
       isError: false,
       error: null,
@@ -339,6 +359,11 @@ const ShoppingListBase = ({ props, authUser }) => {
   const [shoppingListItemPopUp, setShoppingListItemPopUp] = React.useState({
     item: null,
     open: false,
+  });
+  const [itemTracePopUp, setItemTracePopUp] = React.useState({
+    open: false,
+    recipesWithProduct: [],
+    allMealRecipes: [],
   });
 
   // Handler für Mehr-Menü bei den einzelen Positionen
@@ -579,6 +604,11 @@ const ShoppingListBase = ({ props, authUser }) => {
           generatedFromUid: authUser.uid,
           generatedOn: new Date(),
         });
+        setItemTracePopUp({
+          ...itemTracePopUp,
+          recipesWithProduct: [],
+          allMealRecipes: [],
+        });
       })
       .catch((error) => {
         dispatchShoppingList({
@@ -752,8 +782,9 @@ const ShoppingListBase = ({ props, authUser }) => {
   /* ------------------------------------------
   // Kontextmenü Klick
   // ------------------------------------------ */
-  const onItemContextMenuClick = (event) => {
+  const onItemContextMenuClick = async (event) => {
     let pressedButton = event.currentTarget.id.split("_");
+    let recipesWithProduct = [];
 
     switch (pressedButton[0]) {
       case ACTIONS.EDIT:
@@ -767,6 +798,77 @@ const ShoppingListBase = ({ props, authUser }) => {
         });
 
         break;
+      case ACTIONS.TRACE:
+        //FIXME:
+        // Falls Rezepte fehlen diese holen
+        if (shoppingList.recipes.length === 0) {
+          dispatchShoppingList({
+            type: REDUCER_ACTIONS.RECIPES_FETCH_INIT,
+          });
+
+          let allMealRecipes = ShoppingList.defineRequiredRecipes({
+            menuplan: shoppingList.menuplan,
+            dateFrom: shoppingList.data.dateFrom,
+            dateTo: shoppingList.data.dateTo,
+            mealFrom: shoppingList.data.mealFrom,
+            mealTo: shoppingList.data.mealTo,
+          });
+
+          await ShoppingList.getRecipesFromList({
+            firebase: firebase,
+            allMealRecipes: allMealRecipes,
+          })
+            .then((result) => {
+              let recipe;
+              // Alle Rezepte skalieren
+              allMealRecipes.forEach((mealRecipe) => {
+                // Rezept finden
+                recipe = result.find(
+                  (recipe) => recipe.uid === mealRecipe.recipeUid
+                );
+              });
+              // Nachverfolgung
+              recipesWithProduct = ShoppingList.getRecipesWithItem({
+                itemUid: selectedItem.productId,
+                recipes: result,
+                mealRecipes: allMealRecipes,
+                meals: shoppingList.menuplan.meals,
+              });
+              setItemTracePopUp({
+                ...itemTracePopUp,
+                open: true,
+                recipesWithProduct: recipesWithProduct,
+                allMealRecipes: allMealRecipes,
+              });
+              // Rezepte speichern
+              dispatchShoppingList({
+                type: REDUCER_ACTIONS.RECIPES_FETCH_SUCCESS,
+                payload: result,
+              });
+            })
+            .catch((error) => {
+              dispatchShoppingList({
+                type: REDUCER_ACTIONS.GENERIC_ERROR,
+                payload: error,
+              });
+            });
+        } else {
+          // Nachverfolgung
+          recipesWithProduct = ShoppingList.getRecipesWithItem({
+            itemUid: selectedItem.productId,
+            recipes: shoppingList.recipes,
+            mealRecipes: itemTracePopUp.allMealRecipes,
+            meals: shoppingList.menuplan.meals,
+          });
+
+          // PopUp öffnen
+          setItemTracePopUp({
+            ...itemTracePopUp,
+            open: true,
+            recipesWithProduct: recipesWithProduct,
+          });
+        }
+        break;
       case ACTIONS.DELETE:
         dispatchShoppingList({
           type: REDUCER_ACTIONS.SHOPPING_LIST_DELETE_ITEM,
@@ -779,6 +881,7 @@ const ShoppingListBase = ({ props, authUser }) => {
 
     setMenuItemAnchorEl(null);
   };
+
   /* ------------------------------------------
   // Ein neues Produkt wurde angelegt
   // ------------------------------------------ */
@@ -800,6 +903,12 @@ const ShoppingListBase = ({ props, authUser }) => {
     dispatchShoppingList({
       type: REDUCER_ACTIONS.CLOSE_SNACKBAR,
     });
+  };
+  /* ------------------------------------------
+  // Trace-PopUp schliessen
+  // ------------------------------------------ */
+  const handleItemTraceDialogOk = () => {
+    setItemTracePopUp({ ...itemTracePopUp, open: false });
   };
 
   return (
@@ -877,6 +986,17 @@ const ShoppingListBase = ({ props, authUser }) => {
         units={shoppingList.units}
         departments={shoppingList.departments}
         handleProductCreate={onProductCreate}
+      />
+      <DialogItemTrace
+        dialogOpen={itemTracePopUp.open}
+        handleOk={handleItemTraceDialogOk}
+        itemUid={selectedItem?.productId}
+        itemName={
+          shoppingList.products.find(
+            (product) => product.uid === selectedItem?.productId
+          )?.name
+        }
+        tracedRecipes={itemTracePopUp.recipesWithProduct}
       />
       <CustomSnackbar
         message={shoppingList.snackbar.message}
@@ -1178,6 +1298,12 @@ const PositionMenu = ({ anchorEl, handleMenuClick, handleMenuClose }) => {
           <EditIcon fontSize="small" />
         </ListItemIcon>
         <Typography variant="inherit">{TEXT.BUTTON_CHANGE}</Typography>
+      </MenuItem>
+      <MenuItem id={ACTIONS.TRACE + "_item"} onClick={handleMenuClick}>
+        <ListItemIcon>
+          <CallSplitIcon fontSize="small" />
+        </ListItemIcon>
+        <Typography variant="inherit">{TEXT.BUTTON_TRACE_ITEM}</Typography>
       </MenuItem>
       <MenuItem id={ACTIONS.DELETE + "_item"} onClick={handleMenuClick}>
         <ListItemIcon>
