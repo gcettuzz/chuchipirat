@@ -2636,8 +2636,7 @@ const PreparationStepPosition = ({
           <Grid
             item
             key={"preparationstep_step_grid_" + preparationStep.uid}
-            xs={11}
-            sm={8}
+            xs={10}
           >
             {/* Schritt */}
             <TextField
@@ -2665,8 +2664,7 @@ const PreparationStepPosition = ({
           <Grid
             item
             key={"preparationstep_buttonRow_grid_" + preparationStep.uid}
-            xs={12}
-            sm={3}
+            xs={1}
             className={classes.centerCenter}
           >
             <IconButton
@@ -2689,7 +2687,6 @@ const PreparationStepPosition = ({
               item
               key={"preparationstep_divider_grid_" + preparationStep.uid}
               xs={12}
-              sm={12}
             >
               <Divider />
             </Grid>
