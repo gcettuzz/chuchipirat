@@ -135,6 +135,12 @@ export const PANEL_INTRODUCE_YOURSELF = "Stell dich vor";
 export const PANEL_ADMIN_DELETE_FEED = "Feed-Einträge löschen";
 export const PANEL_ADMIN_WHERE_USED = "Verfolgungsnachweis";
 export const PANEL_ADMIN_MERGE = "Produkte-Merge";
+export const PANEL_ADMIN_MERGE_DESCRICPTION =
+  "Produkte zusammenführen in Rezepten, Postizettel und Stammdaten.";
+export const PANEL_ADMIN_DELETE_FEED_DESCRIPTION =
+  "Feed-Einträge löschen, welche älter als X Tage sind.";
+export const PANEL_ADMIN_WHERE_USED_DESCRIPTION =
+  "Verfolgungsnachweis für Produkte und Rezepte. ";
 /* =====================================================================
 // Felder
 // ===================================================================== */
