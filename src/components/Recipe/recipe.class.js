@@ -790,7 +790,6 @@ export default class Recipe {
 
       recipe.scaledIngredients.push(scaledIngredient);
     });
-
     return recipe.scaledIngredients;
   };
   /* =====================================================================

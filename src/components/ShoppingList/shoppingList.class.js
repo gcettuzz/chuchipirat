@@ -1,4 +1,3 @@
-import Recipe from "../Recipe/recipe.class";
 import Feed, { FEED_TYPE } from "../Shared/feed.class";
 import Stats, { STATS_FIELDS } from "../Shared/stats.class";
 
@@ -7,6 +6,7 @@ import * as FIREBASE_EVENTS from "../../constants/firebaseEvents";
 
 import UnitConversion from "../Unit/unitConversion.class";
 import Utils from "../Shared/utils.class";
+import Recipe from "../Recipe/recipe.class";
 
 export default class ShoppingList {
   constructor() {
@@ -16,42 +16,18 @@ export default class ShoppingList {
     this.mealTo = null;
     this.list = [];
   }
-
   /* =====================================================================
-  // Einkaufsliste generieren
+  // Nötige Rezepte aus dem Mahlzeiten bestimmen
   // ===================================================================== */
-  static generateShoppingList = async ({
-    firebase,
+  static defineRequiredRecipes = ({
+    menuplan,
     dateFrom,
     dateTo,
     mealFrom,
     mealTo,
-    convertUnits,
-    menuplan,
-    products,
-    departments,
-    unitConversionBasic,
-    unitConversionProducts,
   }) => {
-    let list = [];
-    let uids = [];
     let allMealRecipes = [];
-    let fxQuantity;
-    let fxUnit;
 
-    if (
-      !firebase ||
-      !dateFrom ||
-      !dateTo ||
-      !mealFrom ||
-      !mealTo ||
-      !menuplan ||
-      (convertUnits && (!unitConversionBasic || !unitConversionProducts))
-    ) {
-      throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
-    }
-
-    // ====== Rezepte bestimmen ======
     // Nur Rezepte, die auch eingeplant sind
     menuplan.dates.forEach((day) => {
       if (day < dateFrom || day > dateTo) {
@@ -75,13 +51,72 @@ export default class ShoppingList {
         );
       });
     });
+    return allMealRecipes;
+  };
+  /* =====================================================================
+  // Rezepte der gewählten Periodelesen
+  // ===================================================================== */
+  static getRecipesFromList = async ({ firebase, allMealRecipes }) => {
+    let uids = [];
 
     // ====== Rezepte holen ======
     uids = allMealRecipes.map((recipe) => recipe.recipeUid);
 
+    // doppelte Rezepte löschen
+    uids = [...new Set(uids)];
+
     let allRecipes = await Recipe.getMultipleRecipes({
       firebase: firebase,
       uids: uids,
+    });
+    return allRecipes;
+  };
+  /* =====================================================================
+  // Einkaufsliste generieren
+  // ===================================================================== */
+  static generateShoppingList = async ({
+    firebase,
+    dateFrom,
+    dateTo,
+    mealFrom,
+    mealTo,
+    convertUnits,
+    menuplan,
+    products,
+    departments,
+    unitConversionBasic,
+    unitConversionProducts,
+  }) => {
+    let list = [];
+    let allMealRecipes = [];
+    let fxQuantity;
+    let fxUnit;
+
+    if (
+      !firebase ||
+      !dateFrom ||
+      !dateTo ||
+      !mealFrom ||
+      !mealTo ||
+      !menuplan ||
+      (convertUnits && (!unitConversionBasic || !unitConversionProducts))
+    ) {
+      throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
+    }
+
+    // Rezepte bestimmen
+    allMealRecipes = ShoppingList.defineRequiredRecipes({
+      menuplan: menuplan,
+      dateFrom: dateFrom,
+      dateTo: dateTo,
+      mealFrom: mealFrom,
+      mealTo: mealTo,
+    });
+
+    // Rezepte lesen
+    let allRecipes = await ShoppingList.getRecipesFromList({
+      firebase: firebase,
+      allMealRecipes: allMealRecipes,
     });
 
     // ====== hochrechnen und hinzufügen======
@@ -345,5 +380,47 @@ export default class ShoppingList {
       }
     });
     return noDepartment;
+  };
+  /* =====================================================================
+  // Alles Rezepte auslesen, die ein bestimmtes Produkt beinhalten
+  // ===================================================================== */
+  static getRecipesWithItem = ({ itemUid, recipes, mealRecipes, meals }) => {
+    let recipesWithItem = [];
+
+    mealRecipes.forEach((mealRecipe) => {
+      // Rezept suchen
+      let recipe = recipes.find(
+        (recipe) => recipe.uid === mealRecipe.recipeUid
+      );
+
+      // Prüfen ob Zutat vorkommt
+      let foundIngredientsOfRecipe = recipe.ingredients.filter(
+        (ingredient) => ingredient.product.uid === itemUid
+      );
+
+      if (foundIngredientsOfRecipe.length > 0) {
+        // Rezept skalieren
+        recipe.scaledIngredients = Recipe.scale({
+          recipe: recipe,
+          portionsToScale: mealRecipe.noOfServings,
+        });
+        recipe.scaledIngredients.forEach((ingredient) => {
+          if (ingredient.product.uid === itemUid) {
+            // hinzufügen
+            recipesWithItem.push({
+              recipeUid: recipe.uid,
+              recipeName: recipe.name,
+              ingredientQuantity: ingredient.quantity,
+              ingredientUnit: ingredient.unit,
+              mealDate: mealRecipe.date,
+              mealName: meals.find((meal) => meal.uid === mealRecipe.mealUid)
+                .name,
+            });
+          }
+        });
+      }
+    });
+
+    return recipesWithItem;
   };
 }

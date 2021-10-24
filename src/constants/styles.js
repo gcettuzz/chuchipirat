@@ -350,6 +350,25 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: "#B2DFDB",
   },
   /* ------------------------------------------
+  // Postizettel
+  // ------------------------------------------ */
+  traceListItemRecipe: {
+    width: "60%",
+  },
+  traceListItemDate: {
+    width: "30%",
+  },
+  traceListItemQuantity: {
+    width: "15%",
+    display: "flex",
+    justifyContent: "flex-end",
+    marginLeft: theme.spacing(1),
+    marginRight: theme.spacing(1),
+  },
+  traceListItemUnit: {
+    width: "15%",
+  },
+  /* ------------------------------------------
   // Quantity Calculation
   // ------------------------------------------ */
   quantityCalculationListGridItem: {
