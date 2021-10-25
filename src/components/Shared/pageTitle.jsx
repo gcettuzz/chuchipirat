@@ -5,12 +5,14 @@ import Typography from "@material-ui/core/Typography";
 import useStyles from "../../constants/styles";
 
 // Seiten Titel
-const PageTitle = ({ title, smallTitle, subTitle, pictureSrc }) => {
+const PageTitle = ({ title, smallTitle, subTitle, pictureSrc, ribbon }) => {
   const classes = useStyles();
 
   let boxStyle = {};
   if (pictureSrc) {
     boxStyle = {
+      position: "sticky",
+      overflow: "hidden",
       height: "25em",
       backgroundImage: `url(${pictureSrc})`,
       backgroundPosition: "center center",
@@ -23,7 +25,9 @@ const PageTitle = ({ title, smallTitle, subTitle, pictureSrc }) => {
 
   return (
     <React.Fragment>
-      <Box component="span" display="block" style={boxStyle} />
+      <Box component="span" display="block" style={boxStyle}>
+        {ribbon && <Ribbon text={ribbon.text} cssProperty={ribbon.class} />}
+      </Box>
       <div className={classes.heroContent}>
         {title && (
           <Typography
@@ -63,4 +67,10 @@ const PageTitle = ({ title, smallTitle, subTitle, pictureSrc }) => {
   );
 };
 
+/* ===================================================================
+// ============================== Ribbon =============================
+// =================================================================== */
+export const Ribbon = ({ text, cssProperty }) => {
+  return <div className={cssProperty}>{text}</div>;
+};
 export default PageTitle;

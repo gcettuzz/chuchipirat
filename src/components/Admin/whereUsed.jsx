@@ -200,7 +200,7 @@ const WhereUsedBase = ({ props, authUser }) => {
         });
     }
     if (whereUsed.recipes.length === 0) {
-      Recipe.getRecipes({ firebase: firebase })
+      Recipe.getRecipes({ firebase: firebase, authUser: authUser })
         .then((result) => {
           // Object in Array umwandeln
           let recipes = [];

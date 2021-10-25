@@ -904,7 +904,7 @@ const MenuPlanBase = ({ props, authUser }) => {
       // Rezepte lesen
       dispatchMenuplan({ type: REDUCER_ACTIONS.MENUPLAN_FETCH_INIT });
 
-      await Recipe.getRecipes({ firebase: firebase })
+      await Recipe.getRecipes({ firebase: firebase, authUser: authUser })
         .then((result) => {
           // Object in Array umwandeln
           let recipes = [];
@@ -913,6 +913,7 @@ const MenuPlanBase = ({ props, authUser }) => {
               uid: uid,
               name: result[uid].name,
               pictureSrc: result[uid].pictureSrc,
+              private: result[uid]?.private,
               tags: result[uid].tags,
             });
           });
@@ -1563,6 +1564,12 @@ const TableContentRow = ({
                         mealRecipe={recipe}
                         showPicture={settings.showRecipePictures}
                         onMealRecipeAction={onMealRecipeAction}
+                        ribbon={
+                          recipe?.private && {
+                            text: TEXT.FIELD_PRIVATE,
+                            cssProperty: "cardRibbon cardRibbon-top-right",
+                          }
+                        }
                       />
                     </Grid>
                   ))}

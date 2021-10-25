@@ -29,6 +29,7 @@ export default class Recipe {
     this.createdAt = new Date();
     this.note = "";
     this.tags = [];
+    this.private = false;
 
     let ingredient = Recipe.createEmptyIngredient();
     ingredient.pos = 1;
@@ -211,6 +212,7 @@ export default class Recipe {
         preparationTime: recipe.preparationTime,
         restTime: recipe.restTime,
         cookTime: recipe.cookTime,
+        private: recipe.private,
         tags: recipe.tags,
         note: recipe.note,
         ingredients: recipe.ingredients,
@@ -228,6 +230,8 @@ export default class Recipe {
             name: recipe.name,
             pictureSrc: recipe.pictureSrcFullSize,
             tags: recipe.tags,
+            private: recipe.private,
+            createdFromUid: recipe.private ? recipe.createdFromUid : "",
           },
         });
       })
@@ -249,16 +253,18 @@ export default class Recipe {
         1
       );
 
-      // Feed Eintrag
-      Feed.createFeedEntry({
-        firebase: firebase,
-        authUser: authUser,
-        feedType: FEED_TYPE.RECIPE_CREATED,
-        objectUid: recipe.uid,
-        text: recipe.name,
-        objectName: recipe.name,
-        objectPictureSrc: recipe.pictureSrc,
-      });
+      if (!recipe.private) {
+        // Feed Eintrag
+        Feed.createFeedEntry({
+          firebase: firebase,
+          authUser: authUser,
+          feedType: FEED_TYPE.RECIPE_CREATED,
+          objectUid: recipe.uid,
+          text: recipe.name,
+          objectName: recipe.name,
+          objectPictureSrc: recipe.pictureSrc,
+        });
+      }
     }
 
     if (triggerCloudfunction && !newRecipe) {
@@ -472,14 +478,24 @@ export default class Recipe {
   /* =====================================================================
   // Liste aller Rezepte holen
   // ===================================================================== */
-  static getRecipes = async ({ firebase }) => {
-    let allRecipes;
+  static getRecipes = async ({ firebase, authUser }) => {
+    let allRecipes = {};
     const allRecipesDocRef = firebase.allRecipes();
 
     await allRecipesDocRef
       .get()
       .then((snapshot) => {
-        allRecipes = snapshot.data();
+        // die privaten Rezepte herausfiltern
+        Object.keys(snapshot.data()).forEach((key) => {
+          if (
+            !snapshot.data()[key].hasOwnProperty("private") ||
+            snapshot.data()[key]?.private === false ||
+            (snapshot.data()[key]?.private &&
+              snapshot.data()[key]?.createdFromUid === authUser.uid)
+          ) {
+            allRecipes[key] = snapshot.data()[key];
+          }
+        });
       })
       .catch((error) => {
         console.error(error);
@@ -557,7 +573,6 @@ export default class Recipe {
         console.error(error);
         throw error;
       });
-
     return recipe;
   };
   /* =====================================================================

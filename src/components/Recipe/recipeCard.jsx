@@ -12,10 +12,15 @@ import Skeleton from "@material-ui/lab/Skeleton";
 export const RECIPE_PLACEHOLDER_PICTURE =
   "https://firebasestorage.googleapis.com/v0/b/chuchipirat-a99de.appspot.com/o/placeholder.png?alt=media&token=333b62f9-db26-4bdb-96ba-8f6bf95c8d1e";
 
-const RecipeCard = ({ recipe, cardActions = [] }) => {
+const RecipeCard = ({ recipe, cardActions = [], ribbon }) => {
   const classes = useStyles();
   return (
     <Card className={classes.card}>
+      {ribbon && (
+        <div className={ribbon.cssProperty}>
+          <span>{ribbon.text}</span>
+        </div>
+      )}
       <CardMedia
         className={classes.cardMedia}
         image={
