@@ -58,6 +58,7 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: theme.palette.secondary.main,
   },
   card: {
+    position: "relative",
     height: "100%",
     display: "flex",
     flexDirection: "column",
@@ -397,5 +398,4 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: theme.spacing(1),
   },
 }));
-
 export default useStyles;

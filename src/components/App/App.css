@@ -1,3 +1,6 @@
+/* ===================================================================
+// ========================= Navigation Ribbon =======================
+// =================================================================== */
 .ribbon {
   line-height: 0.8em;
   font-size: 1.5em;
@@ -71,4 +74,210 @@
 
 .ribbon--purple:after {
   border-top: 1.5rem solid #7e3794;
+}
+/* ===================================================================
+// =========================== Corner Ribbon =========================
+// =================================================================== */
+.cornerRibon {
+  width: 250px;
+  padding: 0.5rem;
+  overflow: hidden;
+  text-align: center;
+  color: #fff;
+  font-size: large;
+}
+
+.cornerRibon-sticky {
+  position: absolute;
+}
+
+/* Positions */
+.cornerRibon-top {
+  top: 2.5rem;
+}
+.cornerRibon-bottom {
+  bottom: 2.5rem;
+}
+.cornerRibon-left {
+  left: 2.5rem;
+}
+.cornerRibon-right {
+  right: -5rem;
+}
+
+/* Rotations */
+.cornerRibon-top.cornerRibon-left,
+.cornerRibon-bottom.cornerRibon-right {
+  transform: rotate(-45deg);
+}
+
+.cornerRibon-top.cornerRibon-right,
+.cornerRibon-bottom.cornerRibon-left {
+  transform: rotate(45deg);
+}
+
+/* Colors */
+.cornerRibon-white {
+  background-color: #f0f0f0;
+  color: #444;
+}
+.cornerRibon-black {
+  background-color: #333;
+}
+.cornerRibon-grey {
+  background-color: #999;
+}
+.cornerRibon-blue {
+  background-color: #39d;
+}
+.cornerRibon-green {
+  background-color: #2c7;
+}
+.cornerRibon-turquoise {
+  background-color: #1b9;
+}
+.cornerRibon-purple {
+  background-color: #95b;
+}
+.cornerRibon-red {
+  background-color: #d32f2f;
+}
+.cornerRibon-orange {
+  background-color: #e82;
+}
+.cornerRibon-yellow {
+  background-color: #ec0;
+}
+
+/* ===================================================================
+// ============================ Card Ribbon ==========================
+// =================================================================== */
+.cardRibbonBox {
+  position: relative;
+}
+
+/* common */
+.cardRibbon {
+  width: 8rem;
+  height: 8rem;
+  overflow: hidden;
+  position: absolute;
+  z-index: 1;
+}
+.cardRibbon::before,
+.cardRibbon::after {
+  position: absolute;
+  /* z-index: 999; */
+  content: "";
+  display: block;
+  border: 5px solid #a32525;
+}
+.cardRibbon span {
+  position: absolute;
+  display: block;
+  width: 13rem;
+  padding: 0.75rem 0;
+  background-color: #d32f2f;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+  color: #fff;
+  font: 700 18px/1 "Lato", sans-serif;
+  /* text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2); */
+  text-transform: uppercase;
+  text-align: center;
+}
+
+/* top left*/
+.cardRibbon-top-left {
+  top: -10px;
+  left: -10px;
+}
+.cardRibbon-top-left::before,
+.cardRibbon-top-left::after {
+  border-top-color: transparent;
+  border-left-color: transparent;
+}
+.cardRibbon-top-left::before {
+  top: 0;
+  right: 0;
+}
+.cardRibbon-top-left::after {
+  bottom: 0;
+  left: 0;
+}
+.cardRibbon-top-left span {
+  right: -25px;
+  top: 30px;
+  transform: rotate(-45deg);
+}
+
+/* top right*/
+.cardRibbon-top-right {
+  top: -10px;
+  right: -10px;
+}
+.cardRibbon-top-right::before,
+.cardRibbon-top-right::after {
+  border-top-color: transparent;
+  border-right-color: transparent;
+}
+.cardRibbon-top-right::before {
+  top: 0;
+  left: 0;
+}
+.cardRibbon-top-right::after {
+  bottom: 0;
+  right: 0;
+}
+.cardRibbon-top-right span {
+  left: -25px;
+  top: 30px;
+  transform: rotate(45deg);
+}
+
+/* bottom left*/
+.cardRibbon-bottom-left {
+  bottom: -10px;
+  left: -10px;
+}
+.cardRibbon-bottom-left::before,
+.cardRibbon-bottom-left::after {
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+}
+.cardRibbon-bottom-left::before {
+  bottom: 0;
+  right: 0;
+}
+.cardRibbon-bottom-left::after {
+  top: 0;
+  left: 0;
+}
+.cardRibbon-bottom-left span {
+  right: -25px;
+  bottom: 30px;
+  transform: rotate(225deg);
+}
+
+/* bottom right*/
+.cardRibbon-bottom-right {
+  bottom: -10px;
+  right: -10px;
+}
+.cardRibbon-bottom-right::before,
+.cardRibbon-bottom-right::after {
+  border-bottom-color: transparent;
+  border-right-color: transparent;
+}
+.cardRibbon-bottom-right::before {
+  bottom: 0;
+  left: 0;
+}
+.cardRibbon-bottom-right::after {
+  top: 0;
+  right: 0;
+}
+.cardRibbon-bottom-right span {
+  left: -25px;
+  bottom: 30px;
+  transform: rotate(-225deg);
 }

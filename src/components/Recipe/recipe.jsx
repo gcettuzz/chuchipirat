@@ -90,6 +90,7 @@ import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
 import SendIcon from "@material-ui/icons/Send";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
+import LockIcon from "@material-ui/icons/Lock";
 
 import useStyles from "../../constants/styles";
 
@@ -240,6 +241,7 @@ const recipeReducer = (state, action) => {
           preparationTime: action.payload.preparationTime,
           restTime: action.payload.restTime,
           cookTime: action.payload.cookTime,
+          private: action.payload.private,
           note: action.payload.note,
           tags: action.payload.tags,
           ingredients: action.payload.ingredients,
@@ -262,6 +264,7 @@ const recipeReducer = (state, action) => {
           preparationTime: action.payload.preparationTime,
           restTime: action.payload.restTime,
           cookTime: action.payload.cookTime,
+          private: action.payload.private,
           note: action.payload.note,
           tags: action.payload.tags,
           ingredients: action.payload.ingredients,
@@ -309,6 +312,7 @@ const recipeReducer = (state, action) => {
           preparationTime: state.dbVersion.preparationTime,
           restTime: state.dbVersion.restTime,
           cookTime: state.dbVersion.cookTime,
+          private: state.dbVersion.private,
           note: state.dbVersion.note,
           tags: state.dbVersion.tags,
           ingredients: state.dbVersion.ingredients,
@@ -790,11 +794,19 @@ const RecipeBase = ({ props, authUser }) => {
   // Feldwert ändern -- onChange
   // ------------------------------------------ */
   const onChangeField = (event) => {
+    let value;
+
+    if (event.target.name === "private") {
+      value = event.target.checked;
+    } else {
+      value = event.target.value;
+    }
+
     dispatchRecipe({
       type: REDUCER_ACTIONS.RECIPE_ON_CHANGE,
       data: recipe,
       field: event.target.name,
-      value: event.target.value,
+      value: value,
     });
   };
   /* ------------------------------------------
@@ -1551,6 +1563,13 @@ const RecipeHeader = ({
             title={recipe.name}
             // subTitle={recipe.uid}
             pictureSrc={recipe.pictureSrcFullSize}
+            ribbon={
+              recipe.private && {
+                text: TEXT.FIELD_PRIVATE,
+                class:
+                  "cornerRibon cornerRibon-top cornerRibon-right cornerRibon-sticky cornerRibon-red",
+              }
+            }
           />
           {/* Bearbeitung nur durch Berechtigte Person */}
           <ButtonRow
@@ -1853,7 +1872,19 @@ const InfoPanel = ({ recipe, editMode, onChange, scaledPortions }) => {
               editMode={editMode}
               onChange={onChange}
             />
-
+            {editMode && (
+              <FormListItem
+                id={"private"}
+                key={"private"}
+                value={recipe.private}
+                label={TEXT.FIELD_PRIVATE_RECIPE}
+                tooltip={TEXT.FIELD_PRIVATE_RECIPE_TOOLTIP}
+                icon={<LockIcon fontSize="small" />}
+                editMode={editMode}
+                onChange={onChange}
+                isSwitch={true}
+              />
+            )}
             {!editMode && (
               <React.Fragment>
                 <FormListItem
@@ -2045,12 +2076,14 @@ const FormListItem = ({
   label,
   icon,
   type,
+  tooltip = "",
   multiLine = false,
   disabled = false,
   required = false,
   editMode,
   onChange,
   isLink,
+  isSwitch = false,
   onClick,
 }) => {
   const classes = useStyles();
@@ -2061,21 +2094,41 @@ const FormListItem = ({
           <ListItemIcon className={classes.listItemIcon}>{icon}</ListItemIcon>
         )}
         {editMode ? (
-          <TextField
-            id={id}
-            key={id}
-            type={type}
-            InputProps={type === "number" ? { inputProps: { min: 0 } } : null}
-            label={label}
-            name={id}
-            disabled={disabled}
-            required={required}
-            autoComplete={id}
-            value={value}
-            onChange={onChange}
-            multiline={multiLine}
-            fullWidth
-          />
+          !isSwitch ? (
+            <Tooltip title={tooltip} arrow>
+              <TextField
+                id={id}
+                key={id}
+                type={type}
+                InputProps={
+                  type === "number" ? { inputProps: { min: 0 } } : null
+                }
+                label={label}
+                name={id}
+                disabled={disabled}
+                required={required}
+                autoComplete={id}
+                value={value}
+                onChange={onChange}
+                multiline={multiLine}
+                fullWidth
+              />
+            </Tooltip>
+          ) : (
+            <React.Fragment>
+              <ListItemText>{label}</ListItemText>
+              <ListItemSecondaryAction>
+                <Tooltip title={tooltip} arrow>
+                  <Switch
+                    checked={value}
+                    onChange={onChange}
+                    name={id}
+                    color="primary"
+                  />
+                </Tooltip>
+              </ListItemSecondaryAction>
+            </React.Fragment>
+          )
         ) : (
           <React.Fragment>
             <ListItemText className={classes.listItemTitle} secondary={label} />

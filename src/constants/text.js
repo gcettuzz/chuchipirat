@@ -175,6 +175,10 @@ export const FIELD_SOURCE = "Quelle";
 export const FIELD_PREPARATION_TIME = "Vorbereitung";
 export const FIELD_REST_TIME = "Ruhezeit";
 export const FIELD_COOK_TIME = "Koch-/Backzeit";
+export const FIELD_PRIVATE = "Privat";
+export const FIELD_PRIVATE_RECIPE = "Privates Rezept";
+export const FIELD_PRIVATE_RECIPE_TOOLTIP =
+  "Markiere ein Rezept als Privat. Nur du kannst das Rezept finden.";
 export const FIELD_AVG_RATING = "Durchschnittliche Bewertung";
 export const FIELD_YOUR_RATING = "Deine Bewertung";
 export const FIELD_HINT = "Hinweis";

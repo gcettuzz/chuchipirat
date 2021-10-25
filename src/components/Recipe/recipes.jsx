@@ -42,11 +42,6 @@ import {
   withEmailVerification,
 } from "../Session";
 
-//TODO:
-// alles holen
-// speichern in all und gefiltert (siehe Ingredients) anzeigen nur von den
-// ersten X (24?)
-// filtern auf Knopfdruck (inkl tags, )
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
@@ -130,7 +125,7 @@ const RecipesBase = ({ props, authUser }) => {
   React.useEffect(() => {
     dispatchRecipes({ type: REDUCER_ACTIONS.RECIPES_FETCH_INIT });
 
-    Recipe.getRecipes({ firebase: firebase })
+    Recipe.getRecipes({ firebase: firebase, authUser: authUser })
       .then((result) => {
         // Object in Array umwandeln
         let recipes = [];
@@ -139,10 +134,11 @@ const RecipesBase = ({ props, authUser }) => {
             uid: uid,
             name: result[uid].name,
             pictureSrc: result[uid].pictureSrc,
+            private: result[uid]?.private,
             tags: result[uid].tags,
           });
         });
-
+        console.log(recipes);
         recipes = Utils.sortArrayWithObjectByText({
           list: recipes,
           attributeName: "name",
@@ -300,6 +296,12 @@ const RecipeSearch = ({
               key={"recipe_card_" + recipe.uid}
               recipe={recipe}
               cardActions={cardActions}
+              ribbon={
+                recipe?.private && {
+                  text: TEXT.FIELD_PRIVATE,
+                  cssProperty: "cardRibbon cardRibbon-top-right",
+                }
+              }
             />
           </Grid>
         ))}
