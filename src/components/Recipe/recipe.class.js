@@ -534,6 +534,9 @@ export default class Recipe {
         if (recipe.preparationSteps.length === 0) {
           recipe.preparationSteps.push(Recipe.createEmptyPreparationStep());
         }
+        if (!recipe.private) {
+          recipe.private = false;
+        }
       })
       .then(async () => {
         // Bewertung holen
