@@ -161,6 +161,7 @@ const NavigationAuthBase = (props) => {
         break;
       case BUTTONTEXT.SIGNOUT:
         firebase.signOut();
+        sessionStorage.removeItem(LOCAL_STORAGE.AUTH_USER);
         push({
           pathname: ROUTES.LANDING,
         });
