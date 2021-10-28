@@ -812,7 +812,7 @@ const RecipeBase = ({ props, authUser }) => {
   /* ------------------------------------------
   // Rezept speichern
   // ------------------------------------------ */
-  const onSaveClick = async (authUser) => {
+  const onSaveClick = async () => {
     try {
       Recipe.checkRecipeData(recipe.data);
     } catch (error) {
@@ -1500,6 +1500,32 @@ const RecipeBase = ({ props, authUser }) => {
                 onLoadPrevious={onLoadPreviousComments}
               />
             </Grid>
+          )}
+          {editMode && (
+            // Speicherbuttons nochmals anzeigen
+            <ButtonRow
+              key="buttons_save_bottom"
+              buttons={[
+                {
+                  id: "save",
+                  hero: true,
+                  label: TEXT.BUTTON_SAVE,
+                  variant: "contained",
+                  color: "primary",
+                  visible: true,
+                  onClick: onSaveClick,
+                },
+                {
+                  id: "cancel",
+                  hero: true,
+                  label: TEXT.BUTTON_CANCEL,
+                  variant: "outlined",
+                  color: "primary",
+                  visible: true,
+                  onClick: onCancelClick,
+                },
+              ]}
+            />
           )}
         </Grid>
       </Container>
