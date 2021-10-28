@@ -17,19 +17,30 @@ import useStyles from "../../constants/styles";
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
 
-import { withFirebase } from "../Firebase";
-import {
-  AuthUserContext,
-  withAuthorization,
-  withEmailVerification,
-} from "../Session";
+import { AuthUserContext } from "../Session";
 
 /* ===================================================================
 // ================================ Page =============================
 // =================================================================== */
-const LandingPage = ({ props }) => {
+const LandingPage = (props) => {
+  return (
+    <AuthUserContext.Consumer>
+      {(authUser) => <LandingBase props={props} authUser={authUser} />}
+    </AuthUserContext.Consumer>
+  );
+};
+
+/* ===================================================================
+// ================================ Base =============================
+// =================================================================== */
+const LandingBase = ({ props, authUser }) => {
   const classes = useStyles();
   const { push } = useHistory();
+
+  // Wenn angemeldet direkt weiterleiten
+  if (authUser) {
+    props.history.push(ROUTES.HOME);
+  }
 
   /* ------------------------------------------
   // Klick auf Button --> Ziel = ID des Buttons
@@ -39,7 +50,7 @@ const LandingPage = ({ props }) => {
       pathname: ROUTES[event.currentTarget.id],
     });
   };
-
+  // TODO: Prüfen ob AutchContext geholt werden kann (mit oder ohne Bedingung)
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}
