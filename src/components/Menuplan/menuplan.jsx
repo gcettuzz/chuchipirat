@@ -60,6 +60,7 @@ import PriorityHighIcon from "@material-ui/icons/PriorityHigh";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
 import RestaurantIcon from "@material-ui/icons/Restaurant";
 import InputIcon from "@material-ui/icons/Input";
+import LockIcon from "@material-ui/icons/Lock";
 
 import * as ROUTES from "../../constants/routes";
 import * as ACTIONS from "../../constants/actions";
@@ -1566,8 +1567,9 @@ const TableContentRow = ({
                         onMealRecipeAction={onMealRecipeAction}
                         ribbon={
                           recipe?.private && {
-                            text: TEXT.FIELD_PRIVATE,
-                            cssProperty: "cardRibbon cardRibbon-top-right",
+                            tooltip: TEXT.TOOLTIP_PRIVATE_RECIPE,
+                            cssProperty: "cardRibbon  cardRibbon--red",
+                            icon: <LockIcon fontSize="small" />,
                           }
                         }
                       />

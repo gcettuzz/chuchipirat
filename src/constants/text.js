@@ -214,6 +214,7 @@ export const TOOLTIP_ADD_POS = "Neue Position einfügen";
 export const TOOLTIP_DEL_POS = "Position löschen";
 export const TOOLTIP_MOVE_POS_UP = "Position nach oben verschieben";
 export const TOOLTIP_MOVE_POS_DOWN = "Position nach unten verschieben";
+export const TOOLTIP_PRIVATE_RECIPE = "Privates Rezept";
 /* =====================================================================
 // Allgemeine Speicher Meldungen
 // ===================================================================== */

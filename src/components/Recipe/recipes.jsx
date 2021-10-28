@@ -32,6 +32,7 @@ import SearchInputWithButton from "../Shared/searchInputWithButton";
 import LoadingIndicator from "../Shared/loadingIndicator";
 import RecipeCard from "./recipeCard";
 import AlertMessage from "../Shared/AlertMessage";
+import LockIcon from "@material-ui/icons/Lock";
 
 import FirebaseMessageHandler from "../Firebase/firebaseMessageHandler.class";
 
@@ -138,7 +139,6 @@ const RecipesBase = ({ props, authUser }) => {
             tags: result[uid].tags,
           });
         });
-        console.log(recipes);
         recipes = Utils.sortArrayWithObjectByText({
           list: recipes,
           attributeName: "name",
@@ -298,9 +298,16 @@ const RecipeSearch = ({
               cardActions={cardActions}
               ribbon={
                 recipe?.private && {
-                  text: TEXT.FIELD_PRIVATE,
-                  cssProperty: "cardRibbon cardRibbon-top-right",
+                  tooltip: TEXT.TOOLTIP_PRIVATE_RECIPE,
+                  cssProperty: "cardRibbon  cardRibbon--red",
+                  icon: <LockIcon fontSize="small" />,
                 }
+
+                // ribbon={
+                //   recipe?.private && {
+                //     text: TEXT.FIELD_PRIVATE,
+                //     cssProperty: "cardRibbon cardRibbon-top-right",
+                //   }
               }
             />
           </Grid>
