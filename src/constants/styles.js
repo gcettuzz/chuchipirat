@@ -330,18 +330,27 @@ const useStyles = makeStyles((theme) => ({
   listItemQuantity: {
     display: "flex",
     justifyContent: "flex-end",
-    width: "15%",
+    width: "10%",
     marginLeft: theme.spacing(1),
     marginRight: theme.spacing(1),
   },
-  listItemDetail: {
-    width: "35%",
+  listItemDetailSmall: {
+    width: "20%",
+  },
+  listItemDetailLarge: {
+    width: "30%",
   },
   listItemUnit: {
     width: "15%",
   },
-  listItemName: {
-    width: "45%",
+  listItemNameLarge: {
+    width: "40%",
+  },
+  listItemNameSmall: {
+    width: "40%",
+  },
+  listItemScaleFactor: {
+    width: "15%",
   },
 
   colorPrimary: {

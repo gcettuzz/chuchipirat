@@ -562,23 +562,23 @@ const deriveIsLoading = (
 };
 
 const INGREDIENT_COLS = {
-  PROFI_MODE_OFF: {
+  SHOW_SCALE_FACTORS_OFF: {
     pos: { xs: 2, sm: 1 },
     quantity: { xs: 6, sm: 2 },
     unit: { xs: 6, sm: 1 },
     scalingFactor: { xs: 2, sm: 1 },
-    product: { xs: 6, sm: 4 },
+    product: { xs: 5, sm: 4 },
     detail: { xs: 5, sm: 3 },
-    buttons: { xs: 1, sm: 1 },
+    buttons: { xs: 2, sm: 1 },
   },
-  PROFI_MODE_ON: {
+  SHOW_SCALE_FACTORS_ON: {
     pos: { xs: 2, sm: 1 },
     quantity: { xs: 5, sm: 2 },
     unit: { xs: 5, sm: 1 },
     scalingFactor: { xs: 2, sm: 1 },
-    product: { xs: 6, sm: 3 },
+    product: { xs: 5, sm: 3 },
     detail: { xs: 5, sm: 3 },
-    buttons: { xs: 1, sm: 1 },
+    buttons: { xs: 2, sm: 1 },
   },
 };
 
@@ -612,9 +612,10 @@ const RecipeBase = ({ props, authUser }) => {
 
   // const [dbRecipe, setDbRecipe] = React.useState();
   const [editMode, setEditMode] = React.useState(false);
-  const [ingredientProfiModus, setIngredientProfiModus] = React.useState(false);
+  const [ingredientShowScaleFactors, setIngredientShowScaleFactors] =
+    React.useState(false);
   const [gridIngredientsCols, setsetIngredientsCols] = React.useState(
-    INGREDIENT_COLS.PROFI_MODE_OFF
+    INGREDIENT_COLS.SHOW_SCALE_FACTORS_OFF
   );
   const [productAddValues, setProductAddValues] = React.useState({
     ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
@@ -1011,15 +1012,15 @@ const RecipeBase = ({ props, authUser }) => {
     }
   };
   /* ------------------------------------------
-  // Profi Modus umschalten
+  // Skalierungsfaktoren Modus umschalten
   // ------------------------------------------ */
-  const onToggleProfiModus = () => {
-    if (ingredientProfiModus) {
-      setsetIngredientsCols(INGREDIENT_COLS.PROFI_MODE_OFF);
+  const onToggleShowScaleFactors = () => {
+    if (ingredientShowScaleFactors) {
+      setsetIngredientsCols(INGREDIENT_COLS.SHOW_SCALE_FACTORS_OFF);
     } else {
-      setsetIngredientsCols(INGREDIENT_COLS.PROFI_MODE_ON);
+      setsetIngredientsCols(INGREDIENT_COLS.SHOW_SCALE_FACTORS_ON);
     }
-    setIngredientProfiModus(!ingredientProfiModus);
+    setIngredientShowScaleFactors(!ingredientShowScaleFactors);
   };
   /* ------------------------------------------
   // Zutat - OnChange
@@ -1476,8 +1477,8 @@ const RecipeBase = ({ props, authUser }) => {
               units={recipe.units}
               editMode={editMode}
               onChangeIngredient={onChangeIngredient}
-              ingredientProfiModus={ingredientProfiModus}
-              onToggleProfiModus={onToggleProfiModus}
+              showScaleFactors={ingredientShowScaleFactors}
+              onToggleScaleFactors={onToggleShowScaleFactors}
               gridIngredientsCols={gridIngredientsCols}
               onPositionMoreClick={onPositionMoreClick}
               scaledIngredients={recipe.scaledIngredients}
@@ -2189,8 +2190,8 @@ const IngredientsPanel = ({
   products,
   editMode,
   onChangeIngredient,
-  ingredientProfiModus,
-  onToggleProfiModus,
+  showScaleFactors,
+  onToggleScaleFactors,
   gridIngredientsCols,
   onPositionMoreClick,
   scaledIngredients,
@@ -2212,31 +2213,49 @@ const IngredientsPanel = ({
         key={"ingredientsCardContent"}
       >
         <Grid container>
-          <Grid item xs={8} sm={9} md={9}>
+          <Grid
+            item
+            xs={4}
+            container
+            direction="row"
+            alignItems="center"
+            justify="flex-start"
+          >
             <Typography gutterBottom={true} variant="h5" component="h2">
               {TEXT.PANEL_INGREDIENTS}
             </Typography>
           </Grid>
-          <Grid item xs={4} sm={3} md={3}>
-            {editMode && (
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={ingredientProfiModus}
-                    onChange={onToggleProfiModus}
-                    name="checkedProfiMode"
-                    color="primary"
-                  />
-                }
-                label={TEXT.FIELD_PROFI_MODE}
-              />
-            )}
+          <Grid
+            item
+            xs={8}
+            container
+            direction="row"
+            alignItems="center"
+            justify="flex-end"
+          >
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={showScaleFactors}
+                  onChange={onToggleScaleFactors}
+                  name="checkedShowScaleFactors"
+                  color="primary"
+                  size="small"
+                />
+              }
+              label={
+                <Typography variant="caption">
+                  {TEXT.FIELD_SHOW_SCALE_FACTORS}
+                </Typography>
+              }
+              labelPlacement="start"
+            />
           </Grid>
         </Grid>
         {/* Edit Modus wird im Grid aufgebaut
             View Modus wird im List Style aufgebaut*/}
         {editMode ? (
-          <Grid container spacing={2}>
+          <Grid container spacing={4}>
             {ingredientsToDisplay.map((ingredient) => (
               <IngredientPosition
                 key={ingredient.uid}
@@ -2244,7 +2263,7 @@ const IngredientsPanel = ({
                 units={units}
                 products={products}
                 editMode={editMode}
-                ingredientProfiModus={ingredientProfiModus}
+                ingredientShowScaleFactors={showScaleFactors}
                 gridIngredientsCols={gridIngredientsCols}
                 noListEntries={ingredients.length}
                 onChangeIngredient={onChangeIngredient}
@@ -2259,7 +2278,7 @@ const IngredientsPanel = ({
                 key={ingredient.uid}
                 ingredient={ingredient}
                 editMode={editMode}
-                ingredientProfiModus={ingredientProfiModus}
+                ingredientShowScaleFactors={showScaleFactors}
                 gridIngredientsCols={gridIngredientsCols}
               />
             ))}
@@ -2277,7 +2296,7 @@ const IngredientPosition = ({
   units,
   products,
   editMode,
-  ingredientProfiModus,
+  ingredientShowScaleFactors,
   gridIngredientsCols,
   onChangeIngredient,
   noListEntries,
@@ -2365,7 +2384,7 @@ const IngredientPosition = ({
             />
           </Grid>
           {/* Skalierungsfaktor */}
-          {ingredientProfiModus && (
+          {ingredientShowScaleFactors && (
             <Grid
               item
               key={"ingredient_scalingFractor_grid_" + ingredient.uid}
@@ -2515,14 +2534,33 @@ const IngredientPosition = ({
               secondary={ingredient.unit}
               key={"ingredient_listItem_unit" + ingredient.uid}
             />
+
+            {/* Skalierungsfaktor */}
+            {ingredientShowScaleFactors && (
+              <ListItemText
+                className={classes.listItemScaleFactor}
+                secondary={`(${ingredient.scalingFactor}×)`}
+                key={"ingredient_listItem_scalingFactor" + ingredient.uid}
+                // key={"ingredientName_" + ingredient.pos}
+              />
+            )}
+
             <ListItemText
-              className={classes.listItemName}
+              className={
+                ingredientShowScaleFactors
+                  ? classes.listItemNameSmall
+                  : classes.listItemNameLarge
+              }
               primary={ingredient.product.name}
               key={"ingredient_listItem_name" + ingredient.uid}
               // key={"ingredientName_" + ingredient.pos}
             />
             <ListItemText
-              className={classes.listItemDetail}
+              className={
+                ingredientShowScaleFactors
+                  ? classes.listItemDetailSmall
+                  : classes.listItemDetailLarge
+              }
               secondary={ingredient.detail}
               key={"ingredient_listItem_detail" + ingredient.uid}
             />
