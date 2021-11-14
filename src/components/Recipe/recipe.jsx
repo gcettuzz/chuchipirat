@@ -567,18 +567,18 @@ const INGREDIENT_COLS = {
     quantity: { xs: 6, sm: 2 },
     unit: { xs: 6, sm: 1 },
     scalingFactor: { xs: 2, sm: 1 },
-    product: { xs: 6, sm: 4 },
+    product: { xs: 5, sm: 4 },
     detail: { xs: 5, sm: 3 },
-    buttons: { xs: 1, sm: 1 },
+    buttons: { xs: 2, sm: 1 },
   },
   SHOW_SCALE_FACTORS_ON: {
     pos: { xs: 2, sm: 1 },
     quantity: { xs: 5, sm: 2 },
     unit: { xs: 5, sm: 1 },
     scalingFactor: { xs: 2, sm: 1 },
-    product: { xs: 6, sm: 3 },
+    product: { xs: 5, sm: 3 },
     detail: { xs: 5, sm: 3 },
-    buttons: { xs: 1, sm: 1 },
+    buttons: { xs: 2, sm: 1 },
   },
 };
 
