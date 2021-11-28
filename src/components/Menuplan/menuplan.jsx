@@ -1155,6 +1155,7 @@ const MenuPlanBase = ({ props, authUser }) => {
         toggleRecipeSearch={toggleRecipeSearchDrawer}
         onRecipeShow={onRecipeShow}
         onRecipeAdd={onRecipeAdd}
+        onRecipeAddButtonText={TEXT.BUTTON_ADD}
       />
 
       {/* PopUps */}

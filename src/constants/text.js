@@ -16,6 +16,7 @@ export const BUTTON_ADD = "Hinzufügen";
 export const BUTTON_CHANGE = "Ändern";
 export const BUTTON_DELETE = "Löschen";
 export const BUTTON_SCALE = "Skalieren";
+export const BUTTON_LINK = "Verknüpfen";
 export const BUTTON_ADD_DEPARTMENT = "Abteilung hinzufügen";
 export const BUTTON_ADD_PERSON = "Person hinzufügen";
 export const BUTTON_ADD_TO_EVENT = "Zu Anlass hinzufügen";
@@ -129,6 +130,7 @@ export const PANEL_NOTES = "Hinweis";
 export const PANEL_TAGS = "Tags";
 export const PANEL_INGREDIENTS = "Zutaten";
 export const PANEL_PREPARATION = "Zubereitung";
+export const PANEL_LINKED_RECIPES = "Verknüpfte Rezepte";
 export const PANEL_COMMENTS = "Kommentare";
 export const PANEL_PRODUCTS = "Produkte";
 export const PANEL_INTRODUCE_YOURSELF = "Stell dich vor";
@@ -246,6 +248,8 @@ export const NO_RECIPE_FOUND = "Kein passendes Rezept gefunden";
 export const CREATE_A_NEW_ONE = "Erfasse ein neues!";
 export const ERROR_PRODUCT_WIHTOUT_UID = (product) =>
   `Das Produkt ${product} besitzt keine UID. Wende dich an den Support`;
+export const NO_LINKED_RECIPES = "Rezept wurde noch nicht verknüpft.";
+export const BUTTON_LINK_RECIPE = "Rezept verknüpfen";
 export const ERROR_POS_WITHOUT_PRODUCT = (pos) =>
   `Das Produkt in der Position ${pos} ist unbekannt.`;
 export const ERROR_RECIPE_UNKNOWN = (uid) =>

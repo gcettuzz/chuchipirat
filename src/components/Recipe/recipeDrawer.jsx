@@ -25,6 +25,7 @@ const RecipeSearchDrawer = ({
   toggleRecipeSearch,
   onRecipeShow,
   onRecipeAdd,
+  onRecipeAddButtonText,
 }) => {
   const classes = useStyles();
   const theme = useTheme();
@@ -71,7 +72,11 @@ const RecipeSearchDrawer = ({
               name: TEXT.BUTTON_SHOW,
               onClick: onRecipeShow,
             },
-            { key: ACTIONS.ADD, name: TEXT.BUTTON_ADD, onClick: onRecipeAdd },
+            {
+              key: ACTIONS.ADD,
+              name: onRecipeAddButtonText,
+              onClick: onRecipeAdd,
+            },
           ]}
           embededMode={true}
         />

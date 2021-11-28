@@ -619,6 +619,7 @@ const RecipePanel = ({ whereUsed, onTrace, clearTraceList }) => {
           toggleRecipeSearch={toggleRecipeSearchDrawer}
           onRecipeShow={onRecipeShow}
           onRecipeAdd={onRecipeAdd}
+          onRecipeAddButtonText={TEXT.BUTTON_ADD}
         />
       )}
     </React.Fragment>
