@@ -30,6 +30,7 @@ export default class Recipe {
     this.note = "";
     this.tags = [];
     this.private = false;
+    this.linkedRecipes = [];
 
     let ingredient = Recipe.createEmptyIngredient();
     ingredient.pos = 1;
@@ -91,6 +92,26 @@ export default class Recipe {
     });
     return tags;
   }
+  /* =====================================================================
+  // Verlinktes Rezept hinzufügen
+  // ===================================================================== */
+  static addLinkedRecipe({ linkedRecipes, recipeToLink }) {
+    linkedRecipes.push(recipeToLink);
+
+    linkedRecipes = Utils.sortArrayWithObjectByText({
+      list: linkedRecipes,
+      attributeName: "name",
+    });
+
+    return linkedRecipes;
+  }
+  /* =====================================================================
+  // Verlinktes Rezept entfernen
+  // ===================================================================== */
+  static removeLinkedRecipe({ linkedRecipes, recipeToRemoveUid }) {
+    return linkedRecipes.filter((recipe) => recipe.uid !== recipeToRemoveUid);
+  }
+
   /* =====================================================================
   // Daten prüfen
   // ===================================================================== */
@@ -217,6 +238,7 @@ export default class Recipe {
         note: recipe.note,
         ingredients: recipe.ingredients,
         preparationSteps: recipe.preparationSteps,
+        linkedRecipes: recipe.linkedRecipes,
         rating: {
           avgRating: recipe.rating.avgRating,
           noRatings: recipe.rating.noRatings,
@@ -231,6 +253,7 @@ export default class Recipe {
             pictureSrc: recipe.pictureSrcFullSize,
             tags: recipe.tags,
             private: recipe.private,
+            linkedRecipes: recipe.linkedRecipes,
             createdFromUid: recipe.private ? recipe.createdFromUid : "",
           },
         });
@@ -536,6 +559,9 @@ export default class Recipe {
         }
         if (!recipe.private) {
           recipe.private = false;
+        }
+        if (!recipe?.linkedRecipes) {
+          recipe.linkedRecipes = [];
         }
       })
       .then(async () => {

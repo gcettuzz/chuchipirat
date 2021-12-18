@@ -6,3 +6,4 @@ export const DELETE = "delete";
 export const MOVE_UP = "moveup";
 export const MOVE_DOWN = "movedown";
 export const TRACE = "trace";
+export const REFRESH = "refresh";

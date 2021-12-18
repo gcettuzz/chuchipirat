@@ -59,6 +59,7 @@ import DialogProduct, {
 } from "../Product/dialogProduct";
 import DialogScaleRecipe from "./dialogScaleRecipe";
 import AlertMessage from "../Shared/AlertMessage";
+import RecipeSearchDrawer from "./recipeDrawer";
 
 import Recipe from "./recipe.class";
 import Product from "../Product/product.class";
@@ -114,8 +115,12 @@ const REDUCER_ACTIONS = {
   RECIPE_ON_SAVE: "RECIPE_ON_SAVE",
   RECIPE_ON_ERROR: "RECIPE_ON_ERROR",
   RECIPE_ON_SCALE: "RECIPE_ON_SCALE",
+  RECIPE_ON_LINK: "RECIPE_ON_LINK",
   CLOSE_SNACKBAR: "CLOSE_SNACKBAR",
   SNACKBAR_SHOW: "SNACKBAR_SHOW",
+
+  RECIPES_FETCH_INIT: "RECIPES_FETCH_INIT",
+  RECIPES_FETCH_SUCCESS: "RECIPES_FETCH_SUCCESS",
 
   UPLOAD_PICTURE_SUCCESS: "UPLOAD_PICTURE_SUCCESS",
   UPLOAD_PICTURE_INIT: "UPLOAD_PICTURE_INIT",
@@ -246,6 +251,7 @@ const recipeReducer = (state, action) => {
           tags: action.payload.tags,
           ingredients: action.payload.ingredients,
           preparationSteps: action.payload.preparationSteps,
+          linkedRecipes: action.payload.linkedRecipes,
           comments: action.payload.comments,
           rating: action.payload.rating,
           noComments: action.payload.noComments,
@@ -269,6 +275,7 @@ const recipeReducer = (state, action) => {
           tags: action.payload.tags,
           ingredients: action.payload.ingredients,
           preparationSteps: action.payload.preparationSteps,
+          linkedRecipes: action.payload.linkedRecipes,
           comments: action.payload.comments,
           rating: action.payload.rating,
           noComments: action.payload.noComments,
@@ -317,6 +324,7 @@ const recipeReducer = (state, action) => {
           tags: state.dbVersion.tags,
           ingredients: state.dbVersion.ingredients,
           preparationSteps: state.dbVersion.preparationSteps,
+          linkedRecipes: state.dbVersion.linkedRecipes,
           comments: state.dbVersion.comments,
           rating: state.dbVersion.rating,
           noComments: state.dbVersion.noComments,
@@ -527,6 +535,33 @@ const recipeReducer = (state, action) => {
         scaledPortions: parseInt(action.scaledPortions),
         scaledIngredients: action.scaledIngredients,
       };
+    case REDUCER_ACTIONS.RECIPE_ON_LINK:
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          linkedRecipes: action.payload,
+        },
+        dbVersion: {
+          ...state.dbVersion,
+          linkedRecipes: action.payload,
+        },
+      };
+    case REDUCER_ACTIONS.RECIPES_FETCH_INIT:
+      return {
+        ...state,
+        isLoading: true,
+        isError: false,
+        _loadingRecipes: true,
+      };
+    case REDUCER_ACTIONS.RECIPES_FETCH_SUCCESS:
+      return {
+        ...state,
+        isError: false,
+        isLoading: false,
+        allRecipes: action.payload,
+        _loadingRecipes: false,
+      };
     case REDUCER_ACTIONS.GENERIC_FAILURE:
       // Allgemeiner Fehler
       return {
@@ -604,6 +639,7 @@ const RecipePage = (props) => {
 const RecipeBase = ({ props, authUser }) => {
   const firebase = props.firebase;
   const classes = useStyles();
+  const theme = useTheme();
   const { push } = useHistory();
 
   let action;
@@ -635,6 +671,7 @@ const RecipeBase = ({ props, authUser }) => {
     departments: [],
     scaledPortions: null,
     scaledIngredients: [],
+    allRecipes: [],
     isLoading: false,
     isLoadingPicture: false,
     isError: false,
@@ -644,6 +681,7 @@ const RecipeBase = ({ props, authUser }) => {
     _loadingUnits: false,
     _loadingProducts: false,
     _loadingDepartments: false,
+    _loadingRecipes: false,
   });
   const [menuItemAnchorEl, setMenuItemAnchorEl] = React.useState(null);
   const [selectedItem, setSelectedItem] = React.useState({
@@ -651,6 +689,12 @@ const RecipeBase = ({ props, authUser }) => {
     ingredient: null,
     pos: null,
     noOfPostitions: null,
+  });
+  const [recipeSearchDrawer, setRecipeSearchDrawer] = React.useState({
+    anchor: useMediaQuery(theme.breakpoints.down("xs"), { noSsr: true })
+      ? "bottom"
+      : "right",
+    open: false,
   });
 
   if (props.location.state) {
@@ -665,6 +709,13 @@ const RecipeBase = ({ props, authUser }) => {
     if (!urlUid) {
       action = ACTIONS.NEW;
       urlUid = ACTIONS.NEW;
+    }
+  }
+  // Rezeptwechsel -> Klick auf verliktem Rezept
+  if (urlUid !== recipe.data.uid && recipe.data.uid) {
+    action = ACTIONS.REFRESH;
+    if (editMode) {
+      setEditMode(false);
     }
   }
 
@@ -1359,8 +1410,8 @@ const RecipeBase = ({ props, authUser }) => {
     setDialogScaleRecipe({ ...dialogScaleRecipe, popUpOpen: false });
   };
   /* ------------------------------------------
-// Printversion erzeugen
-// ------------------------------------------ */
+  // Printversion erzeugen
+  // ------------------------------------------ */
   const onPrintVersionClick = async () => {
     const doc = (
       <RecipePdf
@@ -1374,6 +1425,131 @@ const RecipeBase = ({ props, authUser }) => {
     asPdf.updateContainer(doc);
     const blob = await asPdf.toBlob();
     saveAs(blob, recipe.data.name + TEXT.SUFFIX_PDF);
+  };
+  /* ------------------------------------------
+  // Panel für Rezepte öffnen
+  // ------------------------------------------ */
+  const onOpenRecipesDrawer = () => {
+    if (recipe.allRecipes.length === 0) {
+      dispatchRecipe({
+        type: REDUCER_ACTIONS.RECIPES_FETCH_INIT,
+      });
+
+      Recipe.getRecipes({ firebase: firebase, authUser: authUser })
+        .then((result) => {
+          // Object in Array umwandeln
+          let recipes = [];
+          Object.keys(result).forEach((uid) => {
+            if (uid !== recipe.data.uid) {
+              recipes.push({
+                uid: uid,
+                name: result[uid].name,
+                pictureSrc: result[uid].pictureSrc,
+                tags: result[uid].tags,
+              });
+            }
+          });
+
+          recipes = Utils.sortArrayWithObjectByText({
+            list: recipes,
+            attributeName: "name",
+          });
+
+          dispatchRecipe({
+            type: REDUCER_ACTIONS.RECIPES_FETCH_SUCCESS,
+            payload: recipes,
+          });
+
+          setRecipeSearchDrawer({ ...recipeSearchDrawer, open: true });
+        })
+        .catch((error) => {
+          dispatchRecipe({
+            type: REDUCER_ACTIONS.GENERIC_ERROR,
+            payload: error,
+          });
+        });
+    } else {
+      setRecipeSearchDrawer({ ...recipeSearchDrawer, open: true });
+    }
+  };
+  /* ------------------------------------------
+  // Rezept-Such-Drawer
+  // ------------------------------------------ */
+  const toggleRecipeSearchDrawer = (open) => (event) => {
+    if (
+      event.type === "keydown" &&
+      (event.key === "Tab" || event.key === "Shift")
+    ) {
+      return;
+    }
+    setRecipeSearchDrawer({ ...recipeSearchDrawer, open: open });
+  };
+  /* ------------------------------------------
+  // Rezept anzeigen 
+  // ------------------------------------------ */
+  const onRecipeShow = (event, recipe) => {
+    push({
+      pathname: `${ROUTES.RECIPE}/${recipe.uid}`,
+      state: {
+        action: ACTIONS.VIEW,
+        recipeName: recipe.name,
+        recipePictureSrc: recipe.pictureSrc,
+      },
+    });
+  };
+  /* ------------------------------------------
+  // Rezept hinzufügen - PopUp öffnen 
+  // ------------------------------------------ */
+  const onRecipeLink = (event, recipeToLink) => {
+    // Änderungen speichern
+    if (recipeToLink.uid) {
+      let linkedRecipes = Recipe.addLinkedRecipe({
+        linkedRecipes: recipe.data.linkedRecipes,
+        recipeToLink: recipeToLink,
+      });
+
+      dispatchRecipe({
+        type: REDUCER_ACTIONS.RECIPE_ON_LINK,
+        payload: linkedRecipes,
+      });
+
+      if (!editMode) {
+        // Speichern
+        Recipe.save({
+          firebase: firebase,
+          recipe: { ...recipe.data, linkedRecipes: linkedRecipes },
+          authUser: authUser,
+          triggerCloudfunction: false,
+        });
+      }
+      setRecipeSearchDrawer({ ...recipeSearchDrawer, open: false });
+    }
+  };
+  /* ------------------------------------------
+  // Verlinktes Rezept löschen
+  // ------------------------------------------ */
+  const onDeleteLinkedRecipe = (recipeUid) => {
+    if (recipeUid) {
+      let linkedRecipes = Recipe.removeLinkedRecipe({
+        linkedRecipes: recipe.data.linkedRecipes,
+        recipeToRemoveUid: recipeUid,
+      });
+
+      dispatchRecipe({
+        type: REDUCER_ACTIONS.RECIPE_ON_LINK,
+        payload: linkedRecipes,
+      });
+
+      if (!editMode) {
+        // Speichern
+        Recipe.save({
+          firebase: firebase,
+          recipe: { ...recipe.data, linkedRecipes: linkedRecipes },
+          authUser: authUser,
+          triggerCloudfunction: false,
+        });
+      }
+    }
   };
   /* ------------------------------------------
   // ================= AUSGABE ================
@@ -1493,6 +1669,19 @@ const RecipeBase = ({ props, authUser }) => {
               onPositionMoreClick={onPositionMoreClick}
             />
           </Grid>
+          <Grid item key={"linkedRecipes"} xs={12}>
+            <LinkedRecipesPanel
+              editMode={editMode}
+              key={"linkedRecipesPanel"}
+              linkedRecipes={recipe.data.linkedRecipes}
+              onOpenRecipesDrawer={onOpenRecipesDrawer}
+              showDeleteButton={
+                authUser.roles.includes(ROLES.SUB_ADMIN) ||
+                authUser.roles.includes(ROLES.ADMIN)
+              }
+              onDeleteLinkedRecipe={onDeleteLinkedRecipe}
+            />
+          </Grid>
           {!editMode && (
             <Grid item key={"comments"} xs={12} sm={12}>
               <CommentPanel
@@ -1560,6 +1749,16 @@ const RecipeBase = ({ props, authUser }) => {
         handleOk={onRecipeScale}
         handleClose={onCloseRecipeScaleDialog}
       />
+      {/* Rezept suchen --> Verknüpfung */}
+      <RecipeSearchDrawer
+        allRecipes={recipe.allRecipes}
+        drawerState={recipeSearchDrawer}
+        toggleRecipeSearch={toggleRecipeSearchDrawer}
+        onRecipeShow={onRecipeShow}
+        onRecipeAdd={onRecipeLink}
+        onRecipeAddButtonText={TEXT.BUTTON_LINK}
+      />
+
       <CustomSnackbar
         message={recipe.snackbar.message}
         severity={recipe.snackbar.severity}
@@ -2824,7 +3023,87 @@ const PreparationStepPosition = ({
     </React.Fragment>
   );
 };
+/* ===================================================================
+// =================== Panel mit verküpften Rezepten =================
+// =================================================================== */
+const LinkedRecipesPanel = ({
+  editMode,
+  linkedRecipes = [],
+  onOpenRecipesDrawer,
+  showDeleteButton,
+  onDeleteLinkedRecipe,
+}) => {
+  const { push } = useHistory();
+  const classes = useStyles();
+  /* ------------------------------------------
+  // Rezept öffnen
+  // ------------------------------------------ */
+  const onClick = (recipe) => {
+    if (editMode) {
+      return;
+    }
+    push({
+      pathname: `${ROUTES.RECIPE}/${recipe.uid}`,
+      state: {
+        action: ACTIONS.VIEW,
+        recipeHead: recipe,
+      },
+    });
+  };
 
+  return (
+    <Card className={classes.card}>
+      <CardContent className={classes.cardContent}>
+        <Typography gutterBottom={true} variant="h5" component="h2">
+          {TEXT.PANEL_LINKED_RECIPES}
+        </Typography>
+
+        {linkedRecipes.length > 0 && (
+          <List>
+            {linkedRecipes.map((recipe, counter) => (
+              <React.Fragment key={"linkedRecipe_" + recipe.uid}>
+                <ListItem
+                  key={"linkedRecipeItem_" + recipe.uid}
+                  button={!editMode}
+                  onClick={() => onClick(recipe)}
+                >
+                  <ListItemText primary={recipe.name} />
+                  {showDeleteButton && (
+                    <ListItemSecondaryAction>
+                      <IconButton
+                        edge="end"
+                        aria-label="delete link"
+                        id={"delete_link_" + recipe.uid}
+                        color="primary"
+                        onClick={() => onDeleteLinkedRecipe(recipe.uid)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  )}
+                </ListItem>
+                {linkedRecipes.length > 1 && <Divider />}
+              </React.Fragment>
+            ))}
+          </List>
+        )}
+        <Grid item key={"noRecipe"} xs={12} sm={12} md={12}>
+          <Grid container spacing={2} justify="center">
+            <Grid item>
+              <Button
+                variant="text"
+                color="primary"
+                onClick={onOpenRecipesDrawer}
+              >
+                {TEXT.BUTTON_LINK_RECIPE}
+              </Button>
+            </Grid>
+          </Grid>
+        </Grid>
+      </CardContent>
+    </Card>
+  );
+};
 /* ===================================================================
 // ========================== Kommentar Panel ========================
 // =================================================================== */
