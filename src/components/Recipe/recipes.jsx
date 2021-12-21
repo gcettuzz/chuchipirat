@@ -327,7 +327,7 @@ const RecipeSearch = ({
             <Typography align="center" paragraph>
               {TEXT.CREATE_A_NEW_ONE}
             </Typography>
-            <Grid container spacing={2} justify="center">
+            <Grid container spacing={2} justifyContent="center">
               <Grid item>
                 <Fab
                   onClick={onNewClick}

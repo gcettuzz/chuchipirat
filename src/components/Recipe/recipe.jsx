@@ -2418,7 +2418,7 @@ const IngredientsPanel = ({
             container
             direction="row"
             alignItems="center"
-            justify="flex-start"
+            justifyContent="flex-start"
           >
             <Typography gutterBottom={true} variant="h5" component="h2">
               {TEXT.PANEL_INGREDIENTS}
@@ -2430,7 +2430,7 @@ const IngredientsPanel = ({
             container
             direction="row"
             alignItems="center"
-            justify="flex-end"
+            justifyContent="flex-end"
           >
             <FormControlLabel
               control={
@@ -3088,7 +3088,7 @@ const LinkedRecipesPanel = ({
           </List>
         )}
         <Grid item key={"noRecipe"} xs={12} sm={12} md={12}>
-          <Grid container spacing={2} justify="center">
+          <Grid container spacing={2} justifyContent="center">
             <Grid item>
               <Button
                 variant="text"

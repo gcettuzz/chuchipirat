@@ -1139,7 +1139,7 @@ const MenuPlanBase = ({ props, authUser }) => {
           />
           {/* Paginator */}
           {menuplan.data.dates.length > 0 && (
-            <Grid container key={"paginator"} justify="center">
+            <Grid container key={"paginator"} justifyContent="center">
               <TablePaginator
                 noOfElements={menuplan.paginationControl.noOfElements}
                 onChange={onPaginationChange}

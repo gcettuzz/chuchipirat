@@ -44,7 +44,7 @@ import Temp from "../Temp/temp";
 import * as ROUTES from "../../constants/routes";
 import { withAuthentication } from "../Session/index";
 
-import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
+import { MuiThemeProvider, createTheme } from "@material-ui/core/styles";
 import red from "@material-ui/core/colors/red";
 import publicProfile from "../User/publicProfile";
 import { useMediaQuery } from "@material-ui/core";
@@ -106,7 +106,7 @@ const App = (props) => {
   // ------------------------------------------ */
   const theme = React.useMemo(
     () =>
-      createMuiTheme(
+      createTheme(
         prefersDarkMode ? { palette: darkPalett } : { palette: lightPalette }
       ),
     [prefersDarkMode]

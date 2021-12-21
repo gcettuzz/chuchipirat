@@ -204,7 +204,7 @@ const EventsBase = ({ props, authUser }) => {
           ]}
         />
 
-        <Grid container spacing={2} justify="center">
+        <Grid container spacing={2} justifyContent="center">
           <Grid item>
             <Box m={4}>
               {events.dataHistory.length === 0 ? (

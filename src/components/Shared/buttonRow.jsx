@@ -63,7 +63,7 @@ const ButtonRow = ({ buttons, buttonGroup, splitButtons }) => {
   return (
     <React.Fragment>
       {/* <div className={classes.heroButtons}> */}
-      <Grid container justify="center">
+      <Grid container justifyContent="center">
         {buttons.map((button) => (
           <Grid item key={"grid_" + button.id}>
             {button.visible && (

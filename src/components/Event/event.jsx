@@ -1116,7 +1116,7 @@ const CookPanel = ({
               </React.Fragment>
             ))}
           </List>
-          <Grid container spacing={2} justify="center">
+          <Grid container spacing={2} justifyContent="center">
             <Button size="small" onClick={onAddCook}>
               {TEXT.BUTTON_ADD_PERSON}{" "}
             </Button>
