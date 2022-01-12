@@ -1,3 +1,4 @@
+//FIXME: löschen nach Typescript Migration
 export const VIEW = "view";
 export const EDIT = "edit";
 export const NEW = "new";

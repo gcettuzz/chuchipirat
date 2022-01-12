@@ -21,3 +21,4 @@ export const QUANTITY_CALCULATION_CREATED = "quantity_calculation_created";
 export const UPLOAD_PICTURE = "upload_picture";
 export const DELETE_PICTURE = "delete_picture";
 export const APP_FORCED_REFRESH = "app_force_refresh";
+export const CLOUD_FUNCTION_EXECUTED = "cloud_function_executed";

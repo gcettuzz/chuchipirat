@@ -24,6 +24,7 @@ import * as DEFAULT_VALUES from "../../constants/defaultValues";
 import useStyles from "../../constants/styles";
 
 import Recipe from "./recipe.class";
+import RecipeShort from "./recipeShort.class";
 import Utils from "../Shared/utils.class";
 
 import PageTitle from "../Shared/pageTitle";
@@ -125,22 +126,13 @@ const RecipesBase = ({ props, authUser }) => {
   // ------------------------------------------ */
   React.useEffect(() => {
     dispatchRecipes({ type: REDUCER_ACTIONS.RECIPES_FETCH_INIT });
-
-    Recipe.getRecipes({ firebase: firebase, authUser: authUser })
+    RecipeShort.getShortRecipes({ firebase: firebase, authUser: authUser })
+      // Recipe.getRecipes({ firebase: firebase, authUser: authUser })
       .then((result) => {
         // Object in Array umwandeln
-        let recipes = [];
-        Object.keys(result).forEach((uid) => {
-          recipes.push({
-            uid: uid,
-            name: result[uid].name,
-            pictureSrc: result[uid].pictureSrc,
-            private: result[uid]?.private,
-            tags: result[uid].tags,
-          });
-        });
-        recipes = Utils.sortArrayWithObjectByText({
-          list: recipes,
+        let recipes = result;
+        recipes = Utils.sortArray({
+          array: recipes,
           attributeName: "name",
         });
 

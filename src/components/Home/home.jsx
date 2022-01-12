@@ -40,7 +40,7 @@ import FirebaseMessageHandler from "../Firebase/firebaseMessageHandler.class";
 
 import Stats, { STATS_CAPTIONS } from "../Shared/stats.class";
 import Recipe from "../Recipe/recipe.class";
-import Event, { EVENT_TYPES } from "../Event/event.class";
+import Event, { EVENT_TYPES, EventType } from "../Event/event.class";
 import Feed, { FEED_TYPE } from "../Shared/feed.class";
 
 import { withFirebase } from "../Firebase";
@@ -129,11 +129,11 @@ const HomeBase = ({ props, authUser }) => {
         setError(error);
       });
 
-    Feed.getNewestFeedsOfType(
-      firebase,
-      DEFAULT_VALUES.RECIPE_DISPLAY,
-      FEED_TYPE.RECIPE_CREATED
-    )
+    Feed.getNewestFeedsOfType({
+      firebase: firebase,
+      limitTo: DEFAULT_VALUES.RECIPE_DISPLAY,
+      feedType: FEED_TYPE.RECIPE_CREATED,
+    })
       .then((result) => {
         setRecipes(result);
         setIsLoadingRecipe(false);
@@ -143,17 +143,11 @@ const HomeBase = ({ props, authUser }) => {
         setError(error);
       });
 
-    // Recipe.getNewestRecipes(firebase, DEFAULT_VALUES.RECIPE_DISPLAY)
-    //   .then((result) => {
-    //     setRecipes(result);
-    //     setIsLoadingRecipe(false);
-    //   })
-    //   .catch((error) => {
-    //     console.error(error);
-    //     setError(error);
-    //   });
-
-    Event.getEvents(firebase, authUser, EVENT_TYPES.TYPE_ACTUAL)
+    Event.getEventsOfUser({
+      firebase: firebase,
+      userUid: authUser.uid,
+      eventType: EventType.actual,
+    })
       .then((result) => {
         setEvents(result);
         setIsLoadingEvent(false);
@@ -163,8 +157,12 @@ const HomeBase = ({ props, authUser }) => {
         setError(error);
       });
 
-    Feed.getNewestFeeds(firebase, DEFAULT_VALUES.FEEDS_DISPLAY)
+    Feed.getNewestFeeds({
+      firebase: firebase,
+      limitTo: DEFAULT_VALUES.FEEDS_DISPLAY,
+    })
       .then((result) => {
+        console.log(result);
         setFeeds(result);
         setIsLoadingFeed(false);
       })
@@ -388,6 +386,8 @@ const FeedPanel = ({ feeds, isLoading }) => {
   const classes = useStyles();
   const { push } = useHistory();
 
+  //FIXME:
+
   /* ------------------------------------------
   // Öffentliches Profil besuchen
   // ------------------------------------------ */
@@ -440,14 +440,14 @@ const FeedPanel = ({ feeds, isLoading }) => {
                     onClick={() => onClick(feed)}
                   >
                     <ListItemAvatar>
-                      {feed.pictureSrc ? (
+                      {feed.objectPictureSrc ? (
                         <Avatar
                           alt={feed.displayName}
-                          src={String(feed.pictureSrc)}
+                          src={String(feed.objectPictureSrc)}
                         />
                       ) : (
                         <Avatar alt={feed.displayName}>
-                          {feed.displayName.charAt(0)}
+                          {feed.displayName.charAt(0).toUpperCase()}
                         </Avatar>
                       )}
                     </ListItemAvatar>

@@ -178,8 +178,8 @@ export default class ShoppingList {
 
     // Einträge alphabetisch sortieren
     list.forEach((department) => {
-      department.items = Utils.sortArrayWithObjectByText({
-        list: department.items,
+      department.items = Utils.sortArray({
+        array: department.items,
         attributeName: "name",
       });
     });
@@ -228,8 +228,8 @@ export default class ShoppingList {
       };
       list.push(department);
       // Abteilungen sortieren
-      list = Utils.sortArrayWithObjectByNumber({
-        list: list,
+      list = Utils.sortArray({
+        array: list,
         attributeName: "pos",
       });
     }

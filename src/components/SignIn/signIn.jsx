@@ -35,7 +35,7 @@ import AlertMessage from "../Shared/AlertMessage";
 
 import * as FIREBASE_MSG from "../../constants/firebaseMessages";
 import * as ROUTES from "../../constants/routes";
-import * as ROLES from "../../constants/roles";
+import * as ROLES from "../../constants/role";
 import * as TEXT from "../../constants/text";
 import * as IMAGE_REPOSITORY from "../../constants/imageRepository";
 
@@ -120,7 +120,10 @@ const SignInFormBase = (props) => {
       .signInWithEmailAndPassword(formValues.email, formValues.password)
       .then((authUser) => {
         // Login in eigener Sammlung registrieren
-        User.registerSignIn(props.firebase, authUser.user.uid);
+        User.registerSignIn({
+          firebase: props.firebase,
+          uid: authUser.user.uid,
+        });
       })
       .then(() => {
         setFormValues({ ...INITIAL_STATE });

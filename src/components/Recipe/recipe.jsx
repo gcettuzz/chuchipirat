@@ -69,7 +69,6 @@ import Department from "../Department/department.class";
 import RecipePdf from "./recipePdf";
 import FirebaseMessageHandler from "../Firebase/firebaseMessageHandler.class";
 
-// import * as ROLES from "../../constants/roles";
 import * as ACTIONS from "../../constants/actions";
 import * as TEXT from "../../constants/text";
 import * as ROLES from "../../constants/roles";
@@ -101,6 +100,7 @@ import {
   withAuthorization,
   withEmailVerification,
 } from "../Session";
+import RecipeComment from "./recipe.comment.class";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -718,7 +718,6 @@ const RecipeBase = ({ props, authUser }) => {
       setEditMode(false);
     }
   }
-
   /* ------------------------------------------
   // Daten aus der DB lesen
   // ------------------------------------------ */
@@ -989,13 +988,13 @@ const RecipeBase = ({ props, authUser }) => {
       return;
     }
 
-    const rating = Recipe.updateRating(
-      firebase,
-      recipe.data.uid,
-      recipe.data.rating,
-      newValue,
-      authUser.uid
-    );
+    const rating = Recipe.updateRating({
+      firebase: firebase,
+      uid: recipe.data.uid,
+      rating: recipe.data.rating,
+      newRating: newValue,
+      userUid: authUser.uid,
+    });
 
     // Reducer setzen
     dispatchRecipe({
@@ -1352,12 +1351,12 @@ const RecipeBase = ({ props, authUser }) => {
   // Kommentar speichern
   // ------------------------------------------ */
   const onSaveComment = async (newComment) => {
-    const comment = await Recipe.saveComment(
-      firebase,
-      recipe.data.uid,
-      newComment,
-      authUser
-    );
+    const comment = await Recipe.saveComment({
+      firebase: firebase,
+      uid: recipe.data.uid,
+      newComment: newComment,
+      authUser: authUser,
+    });
     dispatchRecipe({
       type: REDUCER_ACTIONS.COMMENT_ADD,
       payload: comment,
@@ -1367,11 +1366,11 @@ const RecipeBase = ({ props, authUser }) => {
   // Kommentare laden
   // ------------------------------------------ */
   const onLoadPreviousComments = async () => {
-    const newComments = await Recipe.getPreviousComments(
-      firebase,
-      recipe.data.uid,
-      recipe.data.comments[0]
-    );
+    const newComments = await RecipeComment.getComments({
+      firebase: firebase,
+      recipeUid: recipe.data.uid,
+      lastComment: recipe.data.comments[0],
+    });
 
     dispatchRecipe({
       type: REDUCER_ACTIONS.COMMENT_LOAD_PREVIOUS,
@@ -1434,24 +1433,13 @@ const RecipeBase = ({ props, authUser }) => {
       dispatchRecipe({
         type: REDUCER_ACTIONS.RECIPES_FETCH_INIT,
       });
-
       Recipe.getRecipes({ firebase: firebase, authUser: authUser })
         .then((result) => {
           // Object in Array umwandeln
-          let recipes = [];
-          Object.keys(result).forEach((uid) => {
-            if (uid !== recipe.data.uid) {
-              recipes.push({
-                uid: uid,
-                name: result[uid].name,
-                pictureSrc: result[uid].pictureSrc,
-                tags: result[uid].tags,
-              });
-            }
-          });
+          let recipes = result;
 
-          recipes = Utils.sortArrayWithObjectByText({
-            list: recipes,
+          recipes = Utils.sortArray({
+            array: recipes,
             attributeName: "name",
           });
 
@@ -1461,6 +1449,19 @@ const RecipeBase = ({ props, authUser }) => {
           });
 
           setRecipeSearchDrawer({ ...recipeSearchDrawer, open: true });
+        })
+        .then(() => {
+          //FIXME: Kommentare lesen
+          // .then(async () => {
+          //   //FIXME: --> muss nicht hier geschehen!
+          //   // Kommentare holen
+          //   await RecipeComment.getComments({
+          //     firebase: firebase,
+          //     recipeUid: recipe.uid,
+          //   }).then((result) => {
+          //     recipe.comments = result;
+          //   });
+          // })
         })
         .catch((error) => {
           dispatchRecipe({

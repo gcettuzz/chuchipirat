@@ -48,8 +48,8 @@ export default class UnitConversion {
         }
       });
 
-    unitsConversionBasic = Utils.sortArrayWithObjectByText({
-      list: unitsConversionBasic,
+    unitsConversionBasic = Utils.sortArray({
+      array: unitsConversionBasic,
       attributeName: "fromUnit",
     });
     return unitsConversionBasic;
@@ -151,8 +151,8 @@ export default class UnitConversion {
         }
       });
 
-    unitsConversionProducts = Utils.sortArrayWithObjectByText({
-      list: unitsConversionProducts,
+    unitsConversionProducts = Utils.sortArray({
+      array: unitsConversionProducts,
       attributeName: "productName",
     });
     return unitsConversionProducts;

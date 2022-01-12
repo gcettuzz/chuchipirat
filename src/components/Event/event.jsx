@@ -303,7 +303,6 @@ const eventReducer = (state, action) => {
       throw new Error();
   }
 };
-
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
@@ -329,8 +328,8 @@ const EventBase = ({ props, authUser }) => {
   let urlUid;
   const [editMode, setEditMode] = React.useState(false);
   const [event, dispatchEvent] = React.useReducer(eventReducer, {
-    data: new Event(authUser),
-    dbVersion: new Event(authUser),
+    data: Event.factory(authUser),
+    dbVersion: Event.factory(authUser),
     isError: false,
     isLoading: false,
     isLoadingPicture: false,
@@ -363,7 +362,7 @@ const EventBase = ({ props, authUser }) => {
     // Wen das Ereignis NEW ist, wird ein neues Rezept angelegt.
     // Ansonsten wird aus der DB das geforderte gelesen
     if (action === ACTIONS.NEW) {
-      let newEvent = new Event(authUser);
+      let newEvent = Event.factory(authUser);
       dispatchEvent({
         type: REDUCER_ACTIONS.EVENT_FETCH_SUCCESS,
         payload: newEvent,
@@ -438,7 +437,6 @@ const EventBase = ({ props, authUser }) => {
       });
       return;
     }
-
     let newEvent = {};
     try {
       newEvent = await Event.save({
@@ -506,13 +504,13 @@ const EventBase = ({ props, authUser }) => {
         });
         break;
       case "delete":
-        newList = Event.deleteEntry(
-          oldList,
-          parseInt(pressedButton[2]),
-          "pos",
-          newObject,
-          "pos"
-        );
+        newList = Event.deleteEntry({
+          array: oldList,
+          fieldValue: parseInt(pressedButton[2]),
+          fieldName: "pos",
+          emptyObject: newObject,
+          renumberByField: "pos",
+        });
         break;
       default:
         console.error("Unbekannter ButtonEvent: ", pressedButton[1]);
@@ -577,7 +575,7 @@ const EventBase = ({ props, authUser }) => {
     let cookUid = "";
     let userFound = false;
 
-    await User.getUidByEmail(firebase, email)
+    await User.getUidByEmail({ firebase: firebase, email: email })
       .then(async (result) => {
         cookUid = result;
         // Prüfen, dass nicht bereits vorhanden...
@@ -602,6 +600,7 @@ const EventBase = ({ props, authUser }) => {
             cookPublicProfile = result;
           })
           .then(async () => {
+            console.log(cookPublicProfile);
             await Event.addCookToEvent(
               firebase,
               authUser,
@@ -681,6 +680,7 @@ const EventBase = ({ props, authUser }) => {
         });
     }
   };
+
   /* ------------------------------------------
   // Bild aus Google Maps generieren
   // ------------------------------------------ */
@@ -1166,7 +1166,11 @@ const DatesPanel = ({
                         id={"dateFrom_" + date.uid}
                         key={"dateFrom_" + date.uid}
                         label={TEXT.FIELD_FROM}
-                        value={date.from}
+                        value={
+                          date.from.getTime() == new Date(0).getTime()
+                            ? null
+                            : date.from
+                        }
                         fullWidth
                         onChange={onChangeDate(date.uid + "_from")}
                         KeyboardButtonProps={{
@@ -1174,9 +1178,6 @@ const DatesPanel = ({
                         }}
                       />
                     </Grid>
-                    {/* <Grid item xs={1} className={classes.centerCenter}>
-                      <Typography>-</Typography>
-                    </Grid> */}
                     <Grid item xs={5}>
                       <KeyboardDatePicker
                         disableToolbar
@@ -1186,7 +1187,11 @@ const DatesPanel = ({
                         id={"dateTo_" + date.uid}
                         key={"dateTo_" + date.uid}
                         label={TEXT.FIELD_TO}
-                        value={date.to}
+                        value={
+                          date.to.getTime() == new Date(0).getTime()
+                            ? null
+                            : date.to
+                        }
                         fullWidth
                         onChange={onChangeDate(date.uid + "_to")}
                         KeyboardButtonProps={{
@@ -1267,10 +1272,10 @@ const DatesPanel = ({
                                 })}
                             </Typography>
                             {" - "}{" "}
-                            {Utils.differenceBetweenTwoDates(
-                              date.from,
-                              date.to
-                            ) + " Tage"}
+                            {Utils.differenceBetweenTwoDates({
+                              dateFrom: date.from,
+                              dateTo: date.to,
+                            }) + " Tage"}
                           </React.Fragment>
                         }
                       />

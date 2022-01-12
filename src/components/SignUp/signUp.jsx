@@ -97,13 +97,16 @@ const SignUpFormBase = (props) => {
       .createUserWithEmailAndPassword(formValues.email, formValues.password)
       .then((authUser) => {
         // Neuen user in eigener DB anlegen
-        User.createUser(
-          firebase,
-          authUser.user.uid,
-          formValues.firstName,
-          formValues.lastName,
-          formValues.email
-        );
+        User.createUser({
+          firebase: firebase,
+          uid: authUser.user.uid,
+          firstName: formValues.firstName,
+          lastName: formValues.lastName,
+          email: formValues.email,
+          emailVerified: authUser.user.emailVerified,
+          providerData: authUser.user.providerData,
+          authUser: authUser,
+        });
       })
       .then(() => {
         // Email Verifizierung versenden

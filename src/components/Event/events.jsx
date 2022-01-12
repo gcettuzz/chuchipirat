@@ -20,7 +20,7 @@ import * as TEXT from "../../constants/text";
 
 import useStyles from "../../constants/styles";
 
-import Event, { EVENT_TYPES } from "./event.class";
+import Event, { EVENT_TYPES, EventType } from "./event.class";
 import EventCard from "./eventCard";
 
 import PageTitle from "../Shared/pageTitle";
@@ -92,30 +92,34 @@ const EventsBase = ({ props, authUser }) => {
   // Daten aus der DB lesen
   // ------------------------------------------ */
   React.useEffect(() => {
-    Event.getEvents(firebase, authUser, EVENT_TYPES.TYPE_ACTUAL).then(
-      (result) => {
-        dispatchEvents({
-          type: REDUCER_ACTIONS.EVENTS_FETCH_SUCCESS,
-          array: "dataActual",
-          payload: result,
-        });
-      }
-    );
+    Event.getEventsOfUser({
+      firebase: firebase,
+      userUid: authUser.uid,
+      eventType: EventType.actual,
+    }).then((result) => {
+      dispatchEvents({
+        type: REDUCER_ACTIONS.EVENTS_FETCH_SUCCESS,
+        array: "dataActual",
+        payload: result,
+      });
+    });
   }, []);
   /* ------------------------------------------
   // Vergangene Events holen
   // ------------------------------------------ */
   const readPastEvents = () => {
     dispatchEvents({ type: REDUCER_ACTIONS.EVENTS_FETCH_INIT });
-    Event.getEvents(firebase, authUser, EVENT_TYPES.TYPE_HISTORY).then(
-      (result) => {
-        dispatchEvents({
-          type: REDUCER_ACTIONS.EVENTS_FETCH_SUCCESS,
-          array: "dataHistory",
-          payload: result,
-        });
-      }
-    );
+    Event.getEventsOfUser({
+      firebase: firebase,
+      userUid: authUser.uid,
+      eventType: EventType.history,
+    }).then((result) => {
+      dispatchEvents({
+        type: REDUCER_ACTIONS.EVENTS_FETCH_SUCCESS,
+        array: "dataHistory",
+        payload: result,
+      });
+    });
   };
   /* ------------------------------------------
   // Neuer Anlass anlegen

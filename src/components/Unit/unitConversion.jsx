@@ -21,7 +21,7 @@ import Tab from "@material-ui/core/Tab";
 import DeleteIcon from "@material-ui/icons/Delete";
 
 import * as TEXT from "../../constants/text";
-import * as ROLES from "../../constants/roles";
+import * as ROLES from "../../constants/role";
 
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
@@ -397,13 +397,11 @@ const UnitConversionBase = ({ props, authUser }) => {
       snackbar: { open: false, severity: "success", message: "" },
     }
   );
-  const [
-    unitConversionCreateValues,
-    setUnitConversionCreateValues,
-  ] = React.useState({
-    popUpOpen: false,
-    unitConversionType: "",
-  });
+  const [unitConversionCreateValues, setUnitConversionCreateValues] =
+    React.useState({
+      popUpOpen: false,
+      unitConversionType: "",
+    });
   const [editMode, setEditMode] = React.useState(false);
   const [tabValue, setTabValue] = React.useState(0);
   /* ------------------------------------------

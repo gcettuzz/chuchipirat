@@ -3,9 +3,25 @@ import React from "react";
 import Box from "@material-ui/core/Box";
 import Typography from "@material-ui/core/Typography";
 import useStyles from "../../constants/styles";
+import { ValueObject } from "../Firebase/Db/firebase.db.super.class";
+
+//FIXME:
+interface PageTitleProps {
+  title: string;
+  smallTitle?: string;
+  subTitle?: string;
+  pictureSrc?: string;
+  ribbon?: ValueObject;
+}
 
 // Seiten Titel
-const PageTitle = ({ title, smallTitle, subTitle, pictureSrc, ribbon }) => {
+const PageTitle = ({
+  title,
+  smallTitle,
+  subTitle,
+  pictureSrc,
+  ribbon,
+}: PageTitleProps) => {
   const classes = useStyles();
 
   let boxStyle = {};

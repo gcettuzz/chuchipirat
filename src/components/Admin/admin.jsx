@@ -16,6 +16,7 @@ import ForwardIcon from "@material-ui/icons/Forward";
 import DeleteIcon from "@material-ui/icons/Delete";
 import ZoomOutMapIcon from "@material-ui/icons/ZoomOutMap";
 import CallMergeIcon from "@material-ui/icons/CallMerge";
+import TimelapseIcon from "@material-ui/icons/Timelapse";
 
 import * as TEXT from "../../constants/text";
 import * as ROLES from "../../constants/roles";
@@ -37,6 +38,7 @@ import {
 import Feed from "../Shared/feed.class";
 import { CallMerge } from "@material-ui/icons";
 import { Typography } from "@material-ui/core";
+import Timelapse from "@material-ui/icons/Timelapse";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -83,6 +85,14 @@ const AdminBase = ({ props, authUser }) => {
       pathname: ROUTES.ADMIN_MERGE_PRODUCT,
     });
   };
+  /* ------------------------------------------
+  // Job ausführen 
+  // ------------------------------------------ */
+  const goToJobs = () => {
+    push({
+      pathname: ROUTES.ADMIN_JOBS,
+    });
+  };
 
   return (
     <React.Fragment>
@@ -119,6 +129,15 @@ const AdminBase = ({ props, authUser }) => {
               description={TEXT.PANEL_ADMIN_MERGE_DESCRICPTION}
               icon={<CallMergeIcon />}
               action={goToMergeProducts}
+            />
+          </Grid>
+          <Grid item xs={12} md={6} lg={4}>
+            <AdminTile
+              id={"jobs"}
+              text={TEXT.PANEL_ADMIN_JOBS}
+              description={TEXT.PANEL_ADMIN_JOBS_DESCRIPTION}
+              icon={<Timelapse />}
+              action={goToJobs}
             />
           </Grid>
         </Grid>

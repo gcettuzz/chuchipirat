@@ -26,8 +26,8 @@ export default class Unit {
         }
       });
 
-    units = Utils.sortArrayWithObjectByText({
-      list: units,
+    units = Utils.sortArray({
+      array: units,
       attributeName: "key",
     });
 

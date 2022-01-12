@@ -226,9 +226,8 @@ const ProductsBase = ({ props, authUser }) => {
     snackbar: { open: false, severity: "success", message: "" },
   });
 
-  const [productPopUpValues, setProductPopUpValues] = React.useState(
-    PRODUCT_POPUP_VALUES
-  );
+  const [productPopUpValues, setProductPopUpValues] =
+    React.useState(PRODUCT_POPUP_VALUES);
 
   const [searchString, setSearchString] = React.useState("");
 

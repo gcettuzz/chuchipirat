@@ -35,7 +35,7 @@ import PhotoCamera from "@material-ui/icons/PhotoCamera";
 import DeleteIcon from "@material-ui/icons/Delete";
 
 import * as ROUTES from "../../constants/routes";
-import * as ACTIONS from "../../constants/actions";
+import * as ACTIONS from "../../constants/action";
 import * as TEXT from "../../constants/text";
 import * as DEFAULT_VALUES from "../../constants/defaultValues";
 import * as IMAGE_REPOSITORY from "../../constants/imageRepository";
@@ -219,7 +219,7 @@ const UserProfileBase = ({ props, authUser }) => {
   // ------------------------------------------ */
   React.useEffect(() => {
     dispatchUserProfile({ type: REDUCER_ACTIONS.USER_PROFILE_FETCH_INIT });
-
+    console.log(firebase, urlUid);
     User.getFullProfile({ firebase: firebase, uid: urlUid })
       .then((profile) => {
         dispatchUserProfile({
@@ -288,7 +288,8 @@ const UserProfileBase = ({ props, authUser }) => {
     dispatchUserProfile({
       type: REDUCER_ACTIONS.PICTURE_UPLOAD_INIT,
     });
-
+    console.log(userProfile.data);
+    console.log(file);
     await User.uploadPicture({
       firebase: firebase,
       file: file,
@@ -314,6 +315,7 @@ const UserProfileBase = ({ props, authUser }) => {
   const onPictureDelete = () => {
     if (window.confirm(TEXT.QUESTION_DELETE_IMAGE)) {
       User.deletePicture({
+        uid: userProfile.data.uid,
         firebase: firebase,
         authUser: authUser,
       })

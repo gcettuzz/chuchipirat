@@ -203,18 +203,10 @@ const WhereUsedBase = ({ props, authUser }) => {
       Recipe.getRecipes({ firebase: firebase, authUser: authUser })
         .then((result) => {
           // Object in Array umwandeln
-          let recipes = [];
-          Object.keys(result).forEach((uid) => {
-            recipes.push({
-              uid: uid,
-              name: result[uid].name,
-              pictureSrc: result[uid].pictureSrc,
-              tags: result[uid].tags,
-            });
-          });
+          let recipes = result;
 
-          recipes = Utils.sortArrayWithObjectByText({
-            list: recipes,
+          recipes = Utils.sortArray({
+            array: recipes,
             attributeName: "name",
           });
 

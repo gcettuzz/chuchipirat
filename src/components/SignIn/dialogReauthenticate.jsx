@@ -74,7 +74,7 @@ const DialogReauthenticate = ({
       })
       .then(() => {
         // Login in eigener Sammlung registrieren
-        User.registerSignIn(firebase, authUser.uid);
+        User.registerSignIn({ firebase: firebase, uid: authUser.uid });
       })
       .catch((error) => {
         console.error(error);

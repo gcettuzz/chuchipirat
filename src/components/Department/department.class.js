@@ -35,8 +35,8 @@ export default class Department {
         }
       });
 
-    departments = Utils.sortArrayWithObjectByNumber({
-      list: departments,
+    departments = Utils.sortArray({
+      array: departments,
       attributeName: "pos",
     });
     return departments;

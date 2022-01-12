@@ -21,6 +21,7 @@ export const ADMIN = "/admin";
 export const ADMIN_FEED_DELETE = "/admin/feeddelete";
 export const ADMIN_WHERE_USED = "/admin/whereused";
 export const ADMIN_MERGE_PRODUCT = "/admin/mergeproducts";
+export const ADMIN_JOBS = "/admin/jobs";
 
 export const USER_PUBLIC_PROFILE = "/publicprofile";
 export const USER_PUBLIC_PROFILE_UID = "/publicprofile/:id";
@@ -39,8 +40,6 @@ export const QUANTITY_CALCULATION_UID = "/quantitycalculation/:id";
 export const SHOPPINGLIST = "/shoppinglist";
 export const SHOPPINGLIST_UID = "/shoppinglist/:id";
 
-// export const TEST = "/test";
-// export const MENUPLANER_PRINT = "/menuplanerprint";
 export const UNITS = "/units";
 export const UNITCONVERSION = "/unitconversion";
 export const PRODUCTS = "/products";

@@ -88,8 +88,8 @@ export default class Product {
         throw error;
       });
 
-    products = Utils.sortArrayWithObjectByText({
-      list: products,
+    products = Utils.sortArray({
+      array: products,
       attributeName: "name",
     });
 
@@ -167,6 +167,7 @@ export default class Product {
         uid: uid,
         newValue: name,
       });
+      firebase.analytics.logEvent(FIREBASE_EVENTS.CLOUD_FUNCTION_EXECUTED);
     }
 
     let product = new Product({
@@ -209,7 +210,7 @@ export default class Product {
       .catch((error) => {
         throw error;
       });
-
+    firebase.analytics.logEvent(FIREBASE_EVENTS.CLOUD_FUNCTION_EXECUTED);
     return listener;
   };
   /* =====================================================================
@@ -264,7 +265,7 @@ export default class Product {
       .catch((error) => {
         throw error;
       });
-
+    firebase.analytics.logEvent(FIREBASE_EVENTS.CLOUD_FUNCTION_EXECUTED);
     return listener;
   };
 }
