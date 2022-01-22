@@ -23,6 +23,7 @@
 .firebaseerc
 .imageRepository.js
 .temp.jsx
+report.*.json
 
 
 npm-debug.log*

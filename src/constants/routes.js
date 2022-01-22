@@ -28,7 +28,6 @@ export const USER_PUBLIC_PROFILE_UID = "/publicprofile/:id";
 export const USER_PROFILE_UID = "/profile/:id";
 export const USER_PROFILE = "/profile";
 
-// export const HELP = "/help";
 export const NOT_FOUND = "/404";
 export const MENUPLAN = "/menuplan";
 export const MENUPLAN_UID = "/menuplan/:id";
@@ -39,19 +38,11 @@ export const QUANTITY_CALCULATION_UID = "/quantitycalculation/:id";
 export const SHOPPINGLIST = "/shoppinglist";
 export const SHOPPINGLIST_UID = "/shoppinglist/:id";
 
-// export const TEST = "/test";
-// export const MENUPLANER_PRINT = "/menuplanerprint";
 export const UNITS = "/units";
 export const UNITCONVERSION = "/unitconversion";
 export const PRODUCTS = "/products";
 export const DEPARTMENTS = "/departments";
 export const NO_AUTH = "/noauth";
-// export const PRIVACY_POLICY = "/privacypolicy";
-// export const TEST_RW = "/test_rw";
-
-// export const ADMIN_USER_DETAILS = "/admin/users/:userId";
-
-// export const HOME2 = "/home2";
 
 //NEXT_FEATURE: Muss Raus
 export const TEMP = "/temp";

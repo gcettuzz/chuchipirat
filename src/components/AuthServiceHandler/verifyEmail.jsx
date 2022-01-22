@@ -14,7 +14,6 @@ import * as TEXT from "../../constants/text";
 import * as LOCAL_STORAGE from "../../constants/localStorage";
 import useStyles from "../../constants/styles";
 import PageTitle from "../Shared/pageTitle";
-
 // ===================================================================
 // ============================ Funktionen ===========================
 // ===================================================================
@@ -63,8 +62,8 @@ const VerifyEmailBase = (props) => {
   props.location.search && (oobCode = qs.parse(props.location.search).oobCode);
 
   // Verifizierung ausführen
-  React.useEffect(() => {
-    firebase
+  React.useEffect(async () => {
+    await firebase
       .applyActionCode(oobCode)
       .then(() => {
         setIsVerified(true);
@@ -87,6 +86,7 @@ const VerifyEmailBase = (props) => {
       }
     }
   }, [timer, isVerified, push]);
+
   return (
     <React.Fragment>
       {error ? (
@@ -105,7 +105,8 @@ const VerifyEmailBase = (props) => {
           <Link onClick={() => push({ pathname: ROUTES.HOME })}>
             {TEXT.HERE}
           </Link>
-          .
+          {", "}
+          {TEXT.IF_YOU_ARE_IMPATIENT}.
         </Alert>
       )}
     </React.Fragment>
