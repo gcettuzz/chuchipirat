@@ -165,7 +165,7 @@
   display: block;
   width: 2rem;
   height: 2rem;
-  background: linear-gradient(bottom, #999999 0%, #cccccc 100%);
+  background: linear-gradient(to bottom, #999999 0%, #cccccc 100%);
   color: white;
   /* margin-right: 2em; */
   float: right;

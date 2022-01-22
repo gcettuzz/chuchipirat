@@ -69,14 +69,15 @@ class Firebase {
     let dbUser;
     let counter = 0;
 
-    return this.auth.onAuthStateChanged((authUser) => {
+    return this.auth.onAuthStateChanged(async (authUser) => {
       if (authUser) {
         // Prüfen ob Infos zu User bereits im Session Storage gepseichert wurden
         let sessionStorageAuthUser = JSON.parse(
           sessionStorage.getItem(LOCAL_STORAGE.AUTH_USER)
         );
+
         if (!sessionStorageAuthUser) {
-          this.user(authUser.uid)
+          await this.user(authUser.uid)
             .get()
             .then((snapshot) => {
               dbUser = snapshot.data();
@@ -283,11 +284,6 @@ class Firebase {
   event_folder = () => "events/";
   recipe_folder = () => "recipes/";
   user_folder = () => "users/";
-  // =========
-  // =========
-  // Übungen
-  // message = (uid) => this.db.ref(`messages/${uid}`);
-  // messages = () => this.db.ref("messages");
 
   /* =====================================================================
   // Bild hochladen

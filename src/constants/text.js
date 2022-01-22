@@ -354,7 +354,7 @@ export const MERGE_ERROR_SAME_PRODUCTS =
 // ===================================================================== */
 export const ENTRY_DELETED = "Eintrag gelöscht.";
 export const WELCOME_ON_BOARD_REDIRECT =
-  "Wir erwarten dich auf der Brücke. Weiter gehts...";
+  "Wir erwarten dich auf der Brücke. Es geht gleich weiter...";
 /* =====================================================================
 // Navigation
 // ===================================================================== */
@@ -589,6 +589,7 @@ export const TYPE_UNKNOWN = "Typ unbekannt";
 export const REDIRECTION_IN = "Umleitung in";
 export const OR_CLICK = "oder klicke ";
 export const HERE = "hier";
+export const IF_YOU_ARE_IMPATIENT = "falls du ungeduldig bist";
 export const ATTENTION = "Achtung";
 export const VOTE = "Stimme";
 export const VOTES = "Stimmen";
