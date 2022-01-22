@@ -1359,8 +1359,8 @@ const RecipeBase = ({ props, authUser }) => {
     setDialogScaleRecipe({ ...dialogScaleRecipe, popUpOpen: false });
   };
   /* ------------------------------------------
-// Printversion erzeugen
-// ------------------------------------------ */
+  // Printversion erzeugen
+  // ------------------------------------------ */
   const onPrintVersionClick = async () => {
     const doc = (
       <RecipePdf
@@ -1372,6 +1372,7 @@ const RecipeBase = ({ props, authUser }) => {
     );
     const asPdf = pdf([]);
     asPdf.updateContainer(doc);
+    console.log(asPdf);
     const blob = await asPdf.toBlob();
     saveAs(blob, recipe.data.name + TEXT.SUFFIX_PDF);
   };
