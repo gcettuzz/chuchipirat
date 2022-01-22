@@ -223,7 +223,6 @@ export default class Product {
     traceListener,
   }) => {
     if (!firebase || !productA || !productB) {
-      console.log("db");
       throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
     }
     let listener;

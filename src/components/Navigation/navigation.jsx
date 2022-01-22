@@ -95,6 +95,8 @@ function ScrollTop(props) {
     </Zoom>
   );
 }
+
+// TODO: menü ausblenden, wenn noch nicht authentifiziert....
 // ===================================================================
 // ======================= Navigation Komponente =====================
 // ===================================================================
@@ -363,6 +365,7 @@ const NavigationAuthBase = (props) => {
             color="inherit"
             aria-label="menu"
             onClick={toggleDrawer("left", true)}
+            disabled={!authUser.emailVerified}
           >
             <MenuIcon />
           </IconButton>

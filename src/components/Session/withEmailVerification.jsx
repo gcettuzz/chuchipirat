@@ -15,7 +15,6 @@ import * as TEXT from "../../constants/text";
 /* ===================================================================
 // ============== Prüfung ob Email-Verifizierung nötig ist ===========
 // =================================================================== */
-
 const needsEmailVerification = (authUser) =>
   authUser &&
   !authUser.emailVerified &&
@@ -72,6 +71,7 @@ const withEmailVerification = (Component) => {
                             color: "primary",
                             onClick: this.onSendEmailVerification,
                             disabled: this.state.isSent,
+                            visible: true,
                           },
                         ]}
                       />

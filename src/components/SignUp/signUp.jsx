@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Link, withRouter } from "react-router-dom";
+import { withRouter } from "react-router-dom";
 import { compose } from "recompose";
 import { useHistory } from "react-router";
 
@@ -10,7 +10,6 @@ import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
 
 import TextField from "@material-ui/core/TextField";
-import { Alert, AlertTitle } from "@material-ui/lab";
 import Typography from "@material-ui/core/Typography";
 import Container from "@material-ui/core/Container";
 import Card from "@material-ui/core/Card";
@@ -28,7 +27,6 @@ import PasswordStrengthMeter from "../Shared/passwordStrengthMeter";
 import AlertMessage from "../Shared/AlertMessage";
 
 import { withFirebase } from "../Firebase/index.js";
-import FirebaseMessageHandler from "../Firebase/firebaseMessageHandler.class";
 import useStyles from "../../constants/styles";
 import * as ROUTES from "../../constants/routes";
 import * as FIREBASE_MSG from "../../constants/firebaseMessages";
@@ -119,7 +117,6 @@ const SignUpFormBase = (props) => {
         console.error(error);
         setFormValues({ ...formValues, error: error });
       });
-
     event.preventDefault();
   };
 
@@ -238,13 +235,6 @@ const SignUpFormBase = (props) => {
                 )
               }
             />
-            // <Alert severity="error">
-            //   {FirebaseMessageHandler.translateMessage(formValues.error)}
-            //   {formValues.error.code ===
-            //     FIREBASE_MSG.AUTH.EMAIL_ALREADY_IN_USE && (
-            //     <ForgotPasswordLink />
-            //   )}
-            // </Alert>
           )}
         </CardContent>
       </Card>
@@ -266,17 +256,12 @@ const SignUpLink = () => {
   };
 
   return (
-    // <Typography variant="body2" align="center">
     <Button fullWidth color="primary" onClick={onSignUpClick}>
       {TEXT.NOT_REGISTERED_YET_SIGN_UP}
     </Button>
-    // <Link to={ROUTES.SIGN_UP} color="primary">
-    // </Link>
-    // </Typography>
   );
 };
 
-// Form mit Verbindung zur db
 export default SignUpPage;
 
 const SignUpForm = compose(withRouter, withFirebase)(SignUpFormBase);
