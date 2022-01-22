@@ -385,6 +385,23 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: theme.spacing(2),
     marginRight: theme.spacing(2),
   },
+  quantityCalculationListItemQuantity: {
+    display: "flex",
+    justifyContent: "flex-end",
+    width: "15%",
+    marginLeft: theme.spacing(1),
+    marginRight: theme.spacing(1),
+  },
+  quantityCalculationListItemDetail: {
+    width: "35%",
+  },
+  quantityCalculationListItemUnit: {
+    width: "15%",
+  },
+  quantityCalculationListItemName: {
+    width: "45%",
+  },
+
   /* ------------------------------------------
   // Dialog löschen bestätigen
   // ------------------------------------------ */
