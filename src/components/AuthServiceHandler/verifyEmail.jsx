@@ -25,6 +25,11 @@ const updateLocalStorage = () => {
   // Nach dem verifizieren der Person, muss der LocalStorage angepasst
   // werden. Sonst funktioniert die Weiterleitung nicht korrekt.
   let user = JSON.parse(localStorage.getItem(LOCAL_STORAGE.AUTH_USER));
+  // wenn es nicht genau der gleiche Browser ist, ist der LocalStorage
+  // nicht vorhanden.
+  if (!user) {
+    throw "noLocalStorageFound";
+  }
   user.emailVerified = true;
   localStorage.setItem(LOCAL_STORAGE.AUTH_USER, JSON.stringify(user));
 };
@@ -47,7 +52,9 @@ const VerifyEmailBase = ({ props, authUser }) => {
   const [timer, setTimer] = React.useState(10);
   const [isVerified, setIsVerified] = React.useState(false);
   const [error, setError] = React.useState(null);
-
+  const [forwardDestination, setForwardDestination] = React.useState(
+    ROUTES.HOME
+  );
   const { push } = useHistory();
   const classes = useStyles();
 
@@ -64,7 +71,12 @@ const VerifyEmailBase = ({ props, authUser }) => {
       .applyActionCode(oobCode)
       .then(() => {
         setIsVerified(true);
-        updateLocalStorage();
+
+        try {
+          updateLocalStorage();
+        } catch (error) {
+          setForwardDestination(ROUTES.SIGN_IN);
+        }
         setTimer(9);
       })
       .catch((error) => {
@@ -77,7 +89,7 @@ const VerifyEmailBase = ({ props, authUser }) => {
   React.useEffect(() => {
     if (isVerified) {
       if (timer === 0) {
-        setTimeout(() => push({ pathname: ROUTES.HOME }), 500);
+        setTimeout(() => push({ pathname: forwardDestination }), 500);
       } else {
         setTimeout(() => setTimer(timer - 1), 1000);
       }
