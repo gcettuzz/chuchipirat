@@ -502,7 +502,7 @@ export function NavigationNoAuthBase(props) {
               {TEXT.APP_NAME}
             </Link>
           </Typography>
-
+          <Ribbon text={"BETA"} />
           <div>
             <Typography variant="h6" className={classes.navigationTitle}>
               <Link
