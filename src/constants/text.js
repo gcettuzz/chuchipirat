@@ -541,12 +541,13 @@ export const LANDING_RECIPES_BLOCK_TEXT =
   "Suche nach den Rezepten, die andere schon gekocht haben. Nicht fündig geworden? Erfasse dein Super-Gericht und die Community wird dir dankbar sein.";
 export const LANDING_MENUPLAN_TITLE = "Einen Menüplan erstellen";
 export const LANDING_MENUPLAN_TEXT =
-  "Plane, wann welches Gericht serviert wird. Definiere wie viele Portionen du kochen möchtest und kombiniere unterschiedliche Rezepte zu einer grossartigen Mahlzeit";
+  "Plane, wann welches Gericht serviert wird. Definiere wie viele Portionen du kochen möchtest und kombiniere unterschiedliche Rezepte zu einer grossartigen Mahlzeit";
 export const LANDING_SCALING_TITLE = "Skalierung";
-export const LANDING_SCALING_TEXT = "...";
+export const LANDING_SCALING_TEXT =
+  "Schon mal Salatsauce für 45 Personen zubereitet? Das Abmessen von 33 Esslöffeln Essig kann sehr mühsam sein. Der chuchipirat rechnet dir solche Einheiten in das metrische System um und vereinfacht so die Zubereitung. Auch wird, wo möglich, der Skalierungsfaktor berücksichtigt. So werden für 2 Zöpfe nicht automatisch zwei Eier benötigt (für das bestreichen). So sparst du Lebensmittel und skalierst sinnvoll die Mengen hoch.";
 export const LANDING_SHOPPINGLIST_TITLE = "Spare Zeit beim Einkaufen";
 export const LANDING_SHOPPINGLIST_TEXT =
-  " Anhand des Menüplans lässt sich der Postizettel mit wenigen Klicks generieren. Kümmere dich nicht darum in welchen Rezepten überall Zwiebeln vorkommen. Der chuchipirat führt alles zusammen und erstellt dir eine übersichtliche Liste nach Abteilungen.";
+  "Anhand des Menüplans lässt sich der Postizettel mit wenigen Klicks generieren. Kümmere dich nicht darum, welche Rezepte Zwiebeln benötigen. Der chuchipirat führt alles zusammen und erstellt dir eine übersichtliche Liste nach Abteilungen.";
 export const LANDING_SOCIAL_TITLE = "Gemeinsam kochen macht mehr Spass";
 export const LANDING_SOCIAL_TEXT =
   "Lade deine Freunde ein. Bearbeitet gemeinsam eure Anlässe, kommentiert eure Lieblingsrezepte und plant alles Nötige für euren Anlass.";
