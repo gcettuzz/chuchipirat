@@ -24,7 +24,8 @@ import Event from "../Event/event";
 import Events from "../Event/events";
 import Recipes from "../Recipe/recipes";
 import Users from "../User/users";
-import Admin from "../Admin/admin";
+import System from "../Admin/system";
+import GlobalSettings from "../Admin/globalSettings";
 import FeedDelete from "../Admin/feedDelete";
 import WhereUsed from "../Admin/whereUsed";
 import MergeProducts from "../Admin/mergeProducts";
@@ -44,7 +45,7 @@ import Temp from "../Temp/temp";
 import * as ROUTES from "../../constants/routes";
 import { withAuthentication } from "../Session/index";
 
-import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
+import { MuiThemeProvider, createTheme } from "@material-ui/core/styles";
 import red from "@material-ui/core/colors/red";
 import publicProfile from "../User/publicProfile";
 import { useMediaQuery } from "@material-ui/core";
@@ -106,7 +107,7 @@ const App = (props) => {
   // ------------------------------------------ */
   const theme = React.useMemo(
     () =>
-      createMuiTheme(
+      createTheme(
         prefersDarkMode ? { palette: darkPalett } : { palette: lightPalette }
       ),
     [prefersDarkMode]
@@ -173,20 +174,25 @@ const App = (props) => {
                 <Route path={ROUTES.DEPARTMENTS} component={Departments} />
 
                 <Route path={ROUTES.USERS} component={Users} />
-                <Route exact path={ROUTES.ADMIN} component={Admin} />
+                <Route exact path={ROUTES.SYSTEM} component={System} />
                 <Route
                   exact
-                  path={ROUTES.ADMIN_FEED_DELETE}
+                  path={ROUTES.SYSTEM_GLOBAL_SETTINGS}
+                  component={GlobalSettings}
+                />
+                <Route
+                  exact
+                  path={ROUTES.SYSTEM_FEED_DELETE}
                   component={FeedDelete}
                 />
                 <Route
                   exact
-                  path={ROUTES.ADMIN_WHERE_USED}
+                  path={ROUTES.SYSTEM_WHERE_USED}
                   component={WhereUsed}
                 />
                 <Route
                   exact
-                  path={ROUTES.ADMIN_MERGE_PRODUCT}
+                  path={ROUTES.SYSTEM_MERGE_PRODUCT}
                   component={MergeProducts}
                 />
                 <Route
@@ -251,7 +257,7 @@ const App = (props) => {
                 ROUTES.DEPARTMENTS,
                 ROUTES.SIGN_IN,
                 ROUTES.SIGN_UP,
-                ROUTES.ADMIN,
+                ROUTES.SYSTEM,
                 ROUTES.NOT_FOUND,
               ]}
               component={Footer}

@@ -65,7 +65,9 @@ const AuthServiceHandlerBase = ({ props }) => {
 
   return (
     <React.Fragment>
-      {mode === AUTH_SERVICE_HANDLER_MODE.VERIFY_EMAIL && <VerifyEmail />}
+      {mode === AUTH_SERVICE_HANDLER_MODE.VERIFY_EMAIL && (
+        <VerifyEmail props={props} />
+      )}
       {mode === AUTH_SERVICE_HANDLER_MODE.RESET_PASSWORD && (
         <ChangePassword oobCode={oobCode} />
       )}

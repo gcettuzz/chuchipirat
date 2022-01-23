@@ -14,45 +14,42 @@ import * as TEXT from "../../constants/text";
 import * as LOCAL_STORAGE from "../../constants/localStorage";
 import useStyles from "../../constants/styles";
 import PageTitle from "../Shared/pageTitle";
+import { Typography } from "@material-ui/core";
+
+import { AuthUserContext } from "../Session";
+
 // ===================================================================
 // ============================ Funktionen ===========================
 // ===================================================================
-const updateSessionStorage = () => {
+const updateLocalStorage = () => {
   // Nach dem verifizieren der Person, muss der LocalStorage angepasst
   // werden. Sonst funktioniert die Weiterleitung nicht korrekt.
-  let user = JSON.parse(sessionStorage.getItem(LOCAL_STORAGE.AUTH_USER));
+  let user = JSON.parse(localStorage.getItem(LOCAL_STORAGE.AUTH_USER));
   user.emailVerified = true;
-  sessionStorage.setItem(LOCAL_STORAGE.AUTH_USER, JSON.stringify(user));
+  localStorage.setItem(LOCAL_STORAGE.AUTH_USER, JSON.stringify(user));
 };
 
 // ===================================================================
 // =============================== Page ==============================
 // ===================================================================
-const VerifyEmailPage = (props) => {
-  const classes = useStyles();
-
+const VerifyEmailPage = ({ props }) => {
   return (
-    <React.Fragment>
-      <PageTitle
-        title={TEXT.PAGE_TITLE_VERIFY_EMAIL}
-        subTitle={TEXT.PAGE_SUBTITLE_VERIFY_EMAIL}
-      />
-      <Container className={classes.container} component="main" maxWidth="xs">
-        <VerifyEmailForm />
-      </Container>
-    </React.Fragment>
+    <AuthUserContext.Consumer>
+      {(authUser) => <VerifyEmailBase props={props} authUser={authUser} />}
+    </AuthUserContext.Consumer>
   );
 };
 /* ===================================================================
 // ============================== Formular ===========================
 // =================================================================== */
-const VerifyEmailBase = (props) => {
+const VerifyEmailBase = ({ props, authUser }) => {
   const firebase = props.firebase;
   const [timer, setTimer] = React.useState(10);
   const [isVerified, setIsVerified] = React.useState(false);
   const [error, setError] = React.useState(null);
 
   const { push } = useHistory();
+  const classes = useStyles();
 
   let oobCode;
   let qs = require("qs");
@@ -67,7 +64,7 @@ const VerifyEmailBase = (props) => {
       .applyActionCode(oobCode)
       .then(() => {
         setIsVerified(true);
-        updateSessionStorage();
+        updateLocalStorage();
         setTimer(9);
       })
       .catch((error) => {
@@ -89,29 +86,40 @@ const VerifyEmailBase = (props) => {
 
   return (
     <React.Fragment>
-      {error ? (
-        <Alert severity="error">
-          <AlertTitle>{TEXT.ALERT_TITLE_UUPS}</AlertTitle>
-          {FirebaseMessageHandler.translateMessage(error)}
-        </Alert>
-      ) : (
-        <Alert severity="info">
-          <AlertTitle>
-            {TEXT.ALERT_TITLE_WELCOME_ON_BOARD} - {TEXT.REDIRECTION_IN} {timer}
-          </AlertTitle>
-          {TEXT.WELCOME_ON_BOARD_REDIRECT}
-          <br />
-          {TEXT.OR_CLICK}
-          <Link onClick={() => push({ pathname: ROUTES.HOME })}>
-            {TEXT.HERE}
-          </Link>
-          {", "}
-          {TEXT.IF_YOU_ARE_IMPATIENT}.
-        </Alert>
-      )}
+      <PageTitle
+        title={TEXT.PAGE_TITLE_VERIFY_EMAIL}
+        subTitle={TEXT.PAGE_SUBTITLE_VERIFY_EMAIL}
+      />
+      <Container className={classes.container} component="main" maxWidth="xs">
+        {error ? (
+          <Alert severity="error">
+            <AlertTitle>{TEXT.ALERT_TITLE_UUPS}</AlertTitle>
+            {FirebaseMessageHandler.translateMessage(error)}
+          </Alert>
+        ) : (
+          <Alert severity="info">
+            <AlertTitle>
+              {TEXT.ALERT_TITLE_WELCOME_ON_BOARD} - {TEXT.REDIRECTION_IN}{" "}
+              {timer}
+            </AlertTitle>
+            <Typography>
+              {TEXT.WELCOME_ON_BOARD_REDIRECT}
+              <br />
+              {TEXT.OR_CLICK}
+              <Link onClick={() => push({ pathname: ROUTES.HOME })}>
+                {TEXT.HERE}
+              </Link>
+              {", "}
+              {TEXT.IF_YOU_ARE_IMPATIENT}.
+            </Typography>
+          </Alert>
+        )}
+      </Container>
     </React.Fragment>
   );
 };
 
 export default VerifyEmailPage;
-const VerifyEmailForm = compose(withRouter, withFirebase)(VerifyEmailBase);
+
+// export default VerifyEmailPage;
+// const VerifyEmailForm = compose(withRouter, withFirebase)(VerifyEmailBase);

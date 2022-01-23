@@ -116,7 +116,7 @@ const PasswordChangBase = ({ props, authUser }) => {
           uid: authUser.uid,
           newEmail: formValues.email,
         })
-          .then(updateSessionStorage())
+          .then(updateLocalStorage())
           .catch((error) => {
             setFormValues({
               ...formValues,
@@ -154,12 +154,12 @@ const PasswordChangBase = ({ props, authUser }) => {
   /* ------------------------------------------
   // Session-Storage auf Änderungen umbiegen
   // ------------------------------------------ */
-  const updateSessionStorage = () => {
+  const updateLocalStorage = () => {
     // Nach dem ändern der Mailadresse muss der Auth-Prozess gestartet werden.
-    let user = JSON.parse(sessionStorage.getItem(LOCAL_STORAGE.AUTH_USER));
+    let user = JSON.parse(localStorage.getItem(LOCAL_STORAGE.AUTH_USER));
     user.email = formValues.email;
     user.emailVerified = false;
-    sessionStorage.setItem(LOCAL_STORAGE.AUTH_USER, JSON.stringify(user));
+    localStorage.setItem(LOCAL_STORAGE.AUTH_USER, JSON.stringify(user));
   };
 
   /* ------------------------------------------

@@ -163,7 +163,7 @@ const NavigationAuthBase = (props) => {
         break;
       case BUTTONTEXT.SIGNOUT:
         firebase.signOut();
-        sessionStorage.removeItem(LOCAL_STORAGE.AUTH_USER);
+        localStorage.removeItem(LOCAL_STORAGE.AUTH_USER);
         push({
           pathname: ROUTES.LANDING,
         });
@@ -320,8 +320,8 @@ const NavigationAuthBase = (props) => {
                 <SettingsIcon />
               </ListItemIcon>
               <ListItemText
-                primary={TEXT.NAVIGATION_ADMIN}
-                onClick={() => push(ROUTES.ADMIN)}
+                primary={TEXT.NAVIGATION_SYSTEM}
+                onClick={() => push(ROUTES.SYSTEM)}
               />
             </ListItem>
             <ListItem button key="Users">

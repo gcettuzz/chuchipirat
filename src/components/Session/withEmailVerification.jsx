@@ -16,11 +16,7 @@ import * as TEXT from "../../constants/text";
 // ============== Prüfung ob Email-Verifizierung nötig ist ===========
 // =================================================================== */
 const needsEmailVerification = (authUser) =>
-  authUser &&
-  !authUser.emailVerified &&
-  authUser.providerData
-    .map((provider) => provider.providerId)
-    .includes("password");
+  authUser && !authUser.emailVerified;
 
 /* ===================================================================
 // ======== Prüfung und Anzeige der Verifizierungs-Nachricht =========

@@ -17,10 +17,11 @@ export const EVENT_UID = "/event/:id";
 export const EVENTS = "/events";
 
 export const USERS = "/users";
-export const ADMIN = "/admin";
-export const ADMIN_FEED_DELETE = "/admin/feeddelete";
-export const ADMIN_WHERE_USED = "/admin/whereused";
-export const ADMIN_MERGE_PRODUCT = "/admin/mergeproducts";
+export const SYSTEM = "/system";
+export const SYSTEM_FEED_DELETE = "/system/feeddelete";
+export const SYSTEM_WHERE_USED = "/system/whereused";
+export const SYSTEM_MERGE_PRODUCT = "/system/mergeproducts";
+export const SYSTEM_GLOBAL_SETTINGS = "/system/globalsettings";
 
 export const USER_PUBLIC_PROFILE = "/publicprofile";
 export const USER_PUBLIC_PROFILE_UID = "/publicprofile/:id";

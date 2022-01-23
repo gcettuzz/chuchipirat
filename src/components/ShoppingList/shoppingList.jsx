@@ -930,7 +930,12 @@ const ShoppingListBase = ({ props, authUser }) => {
         <Backdrop className={classes.backdrop} open={shoppingList.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        <Grid container justify="center" alignItems="flex-start" spacing={2}>
+        <Grid
+          container
+          justifyContent="center"
+          alignItems="flex-start"
+          spacing={2}
+        >
           {shoppingList.isError && (
             <Grid item key={"error"} xs={12}>
               <AlertMessage

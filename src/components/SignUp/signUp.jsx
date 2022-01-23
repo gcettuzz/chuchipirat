@@ -33,6 +33,7 @@ import * as FIREBASE_MSG from "../../constants/firebaseMessages";
 import * as TEXT from "../../constants/text";
 import * as IMAGE_REPOSITORY from "../../constants/imageRepository";
 import User from "../User/user.class";
+import GlobalSettings from "../Admin/globalSettings.class";
 
 // ===================================================================
 // ======================== globale Funktionen =======================
@@ -75,6 +76,7 @@ const SignUpFormBase = (props) => {
 
   // Werte aus dem Form
   const [formValues, setFormValues] = React.useState(INITIAL_STATE);
+  const [signUpAllowed, setSignUpAllowed] = React.useState(true);
 
   const isInvalid =
     formValues.password === "" ||
@@ -124,6 +126,14 @@ const SignUpFormBase = (props) => {
   const onChange = (event) => {
     setFormValues({ ...formValues, [event.target.name]: event.target.value });
   };
+  /* ------------------------------------------
+  // Einstellungen holen
+  // ------------------------------------------ */
+  React.useEffect(() => {
+    GlobalSettings.getGlobalSettings({ firebase }).then((result) => {
+      setSignUpAllowed(result.allowSignUp);
+    });
+  }, []);
 
   return (
     <form onSubmit={onSubmit}>
@@ -142,6 +152,15 @@ const SignUpFormBase = (props) => {
           >
             {TEXT.PANEL_SIGN_IN}
           </Typography>
+          {/* Meldung wenn SignUp nicht möglich ist */}
+          {!signUpAllowed && (
+            <AlertMessage
+              error={formValues.error}
+              severity={"info"}
+              messageTitle={TEXT.SIGN_UP_NOT_ALLOWED_TITLE}
+              body={TEXT.SIGN_UP_NOT_ALLOWED_TEXT}
+            />
+          )}
           {/* Vorname */}
           <TextField
             type="text"
@@ -155,6 +174,7 @@ const SignUpFormBase = (props) => {
             autoFocus
             value={formValues.firstName}
             onChange={onChange}
+            disabled={!signUpAllowed}
           />
           {/* Nachname */}
           <TextField
@@ -167,6 +187,7 @@ const SignUpFormBase = (props) => {
             autoComplete="lastname"
             value={formValues.lastName}
             onChange={onChange}
+            disabled={!signUpAllowed}
           />
           {/* Mailadresse */}
           <TextField
@@ -180,6 +201,7 @@ const SignUpFormBase = (props) => {
             autoComplete="email"
             value={formValues.email}
             onChange={onChange}
+            disabled={!signUpAllowed}
           />
           {/* Passwort */}
           <TextField
@@ -193,6 +215,7 @@ const SignUpFormBase = (props) => {
             autoComplete="new-password"
             value={formValues.password}
             onChange={onChange}
+            disabled={!signUpAllowed}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -221,6 +244,7 @@ const SignUpFormBase = (props) => {
             variant="contained"
             color="primary"
             className={classes.submit}
+            disabled={!signUpAllowed}
           >
             {TEXT.BUTTON_REGISTER}
           </Button>
