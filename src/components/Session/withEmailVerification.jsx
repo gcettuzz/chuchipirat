@@ -11,13 +11,26 @@ import AuthUserContext from "./context";
 import { withFirebase } from "../Firebase";
 
 import * as TEXT from "../../constants/text";
+import * as LOCAL_STORAGE from "../../constants/localStorage";
 
 /* ===================================================================
 // ============== Prüfung ob Email-Verifizierung nötig ist ===========
 // =================================================================== */
-const needsEmailVerification = (authUser) =>
-  authUser && !authUser.emailVerified;
-
+const needsEmailVerification = (authUser) => {
+  if (authUser && !authUser.emailVerified) {
+    // Prüfen ob allenfalls LocalStorage ein update Erhalten hat
+    let storageAuthUser = JSON.parse(
+      localStorage.getItem(LOCAL_STORAGE.AUTH_USER)
+    );
+    if (storageAuthUser && storageAuthUser.emailVerified) {
+      return false;
+    } else {
+      return true;
+    }
+  } else {
+    return false;
+  }
+};
 /* ===================================================================
 // ======== Prüfung und Anzeige der Verifizierungs-Nachricht =========
 // =================================================================== */
