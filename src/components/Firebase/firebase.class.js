@@ -72,11 +72,11 @@ class Firebase {
     return this.auth.onAuthStateChanged(async (authUser) => {
       if (authUser) {
         // Prüfen ob Infos zu User bereits im Session Storage gepseichert wurden
-        let sessionStorageAuthUser = JSON.parse(
-          sessionStorage.getItem(LOCAL_STORAGE.AUTH_USER)
+        let localStorageAuthUser = JSON.parse(
+          localStorage.getItem(LOCAL_STORAGE.AUTH_USER)
         );
 
-        if (!sessionStorageAuthUser) {
+        if (!localStorageAuthUser) {
           await this.user(authUser.uid)
             .get()
             .then((snapshot) => {
@@ -121,7 +121,7 @@ class Firebase {
               next(authUser);
             });
         } else {
-          authUser = sessionStorageAuthUser;
+          authUser = localStorageAuthUser;
           next(authUser);
         }
       } else {

@@ -103,6 +103,7 @@ export const PAGE_TITLE_ADMIN_WHERE_USED = "Trace";
 export const PAGE_SUBTITLE_ADMIN_WHERE_USED = "Wo bist du?";
 export const PAGE_TITLE_MERGE_PRODUCTS = "Produkte Mergen";
 export const PAGE_SUBTITLE_MERGE_PRODUCTS = "Zeit aufzuräumen";
+export const PAGE_TITLE_GLOBAL_SETTINGS = "Globale Einstellungen";
 /* =====================================================================
 // Tabellen Überschriften
 // ===================================================================== */
@@ -132,14 +133,17 @@ export const PANEL_PREPARATION = "Zubereitung";
 export const PANEL_COMMENTS = "Kommentare";
 export const PANEL_PRODUCTS = "Produkte";
 export const PANEL_INTRODUCE_YOURSELF = "Stell dich vor";
-export const PANEL_ADMIN_DELETE_FEED = "Feed-Einträge löschen";
-export const PANEL_ADMIN_WHERE_USED = "Verfolgungsnachweis";
-export const PANEL_ADMIN_MERGE = "Produkte-Merge";
-export const PANEL_ADMIN_MERGE_DESCRICPTION =
+export const PANEL_SYSTEM_GLOBAL_SETTINGS = "Globale Einstellungen";
+export const PANEL_SYSTEM_DELETE_FEED = "Feed-Einträge löschen";
+export const PANEL_SYSTEM_WHERE_USED = "Verfolgungsnachweis";
+export const PANEL_SYTEM_MERGE = "Produkte-Merge";
+export const PANEL_SYSTEM_GLOBAL_DESCRIPTION =
+  "Sytemweite-Einstellungen verwalten.";
+export const PANEL_SYSTEM_MERGE_DESCRICPTION =
   "Produkte zusammenführen in Rezepten, Postizettel und Stammdaten.";
-export const PANEL_ADMIN_DELETE_FEED_DESCRIPTION =
+export const PANEL_SYSTEM_DELETE_FEED_DESCRIPTION =
   "Feed-Einträge löschen, welche älter als X Tage sind.";
-export const PANEL_ADMIN_WHERE_USED_DESCRIPTION =
+export const PANEL_SYSTEM_WHERE_USED_DESCRIPTION =
   "Verfolgungsnachweis für Produkte und Rezepte. ";
 /* =====================================================================
 // Felder
@@ -349,6 +353,9 @@ export const MERGE_PRODUCT_B = "Produkt B";
 export const MERGE_RESULT = "Geänderte Dokumente";
 export const MERGE_ERROR_SAME_PRODUCTS =
   "Produkt A und Produkt B sind identisch. Ein Zusammenführen macht daher keinen Sinn.";
+export const GLOBAL_SETTINGS_ALLOW_SIGNUP_LABEL = "Neu-Anmeldung ermöglichen";
+export const GLOBAL_SETTINGS_ALLOW_SIGNUP_DESCRIPTION =
+  "Neue User können sich für den chuchipirat anmelden.";
 /* =====================================================================
 // Diverse (längere) Texte
 // ===================================================================== */
@@ -367,7 +374,7 @@ export const NAVIGATION_DEPARTMENTS = "Abteilungen (Einkauf)";
 export const NAVIGATION_SIGN_OUT = "Abmelden";
 export const NAVIGATION_SIGN_IN = "Anmelden";
 export const NAVIGATION_USER_PROFILE = "Profil";
-export const NAVIGATION_ADMIN = "Admin";
+export const NAVIGATION_SYSTEM = "System";
 export const NAVIGATION_USERS = "Users";
 export const NAVIGATION_HELP = "Hilfe";
 export const DIALOG_REFRESH_APP_TILE = "Neue Version verfügbar";
@@ -398,6 +405,9 @@ export const EMAIL_HAS_BEEN_CHANGED = "Deine E-Mailadresse wurden geändert. ";
 export const LOGIN_CHANGE_ARE_YOU_READY = "Bereit für ein neues Login?";
 export const SIGN_IN_WHY_REAUTHENTICATE = "Bitte authentifiziere dich erneut.";
 export const LOGIN_SUCCESSFULL = "Login erfolgreich";
+export const SIGN_UP_NOT_ALLOWED_TITLE = "Wohin des Weges Pirat?";
+export const SIGN_UP_NOT_ALLOWED_TEXT =
+  "Der chuchipirat befindet sich in der Beta-Phase. Die Anmeldung ist daher auf wenige Personen eingeschränkt. Melde dich unter hallo@chuchipirat für mehr Infos.";
 /* =====================================================================
 // Meldungen zu Password
 // ===================================================================== */
@@ -531,12 +541,13 @@ export const LANDING_RECIPES_BLOCK_TEXT =
   "Suche nach den Rezepten, die andere schon gekocht haben. Nicht fündig geworden? Erfasse dein Super-Gericht und die Community wird dir dankbar sein.";
 export const LANDING_MENUPLAN_TITLE = "Einen Menüplan erstellen";
 export const LANDING_MENUPLAN_TEXT =
-  "Plane, wann welches Gericht serviert wird. Definiere wie viele Portionen du kochen möchtest und kombiniere unterschiedliche Rezepte zu einer grossartigen Mahlzeit";
+  "Plane, wann welches Gericht serviert wird. Definiere wie viele Portionen du kochen möchtest und kombiniere unterschiedliche Rezepte zu einer grossartigen Mahlzeit";
 export const LANDING_SCALING_TITLE = "Skalierung";
-export const LANDING_SCALING_TEXT = "...";
+export const LANDING_SCALING_TEXT =
+  "Schon mal Salatsauce für 45 Personen zubereitet? Das Abmessen von 33 Esslöffeln Essig kann sehr mühsam sein. Der chuchipirat rechnet dir solche Einheiten in das metrische System um und vereinfacht so die Zubereitung. Auch wird, wo möglich, der Skalierungsfaktor berücksichtigt. So werden für 2 Zöpfe nicht automatisch zwei Eier benötigt (für das bestreichen). So sparst du Lebensmittel und skalierst sinnvoll die Mengen hoch.";
 export const LANDING_SHOPPINGLIST_TITLE = "Spare Zeit beim Einkaufen";
 export const LANDING_SHOPPINGLIST_TEXT =
-  " Anhand des Menüplans lässt sich der Postizettel mit wenigen Klicks generieren. Kümmere dich nicht darum in welchen Rezepten überall Zwiebeln vorkommen. Der chuchipirat führt alles zusammen und erstellt dir eine übersichtliche Liste nach Abteilungen.";
+  "Anhand des Menüplans lässt sich der Postizettel mit wenigen Klicks generieren. Kümmere dich nicht darum, welche Rezepte Zwiebeln benötigen. Der chuchipirat führt alles zusammen und erstellt dir eine übersichtliche Liste nach Abteilungen.";
 export const LANDING_SOCIAL_TITLE = "Gemeinsam kochen macht mehr Spass";
 export const LANDING_SOCIAL_TEXT =
   "Lade deine Freunde ein. Bearbeitet gemeinsam eure Anlässe, kommentiert eure Lieblingsrezepte und plant alles Nötige für euren Anlass.";

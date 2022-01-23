@@ -1372,7 +1372,6 @@ const RecipeBase = ({ props, authUser }) => {
     );
     const asPdf = pdf([]);
     asPdf.updateContainer(doc);
-    console.log(asPdf);
     const blob = await asPdf.toBlob();
     saveAs(blob, recipe.data.name + TEXT.SUFFIX_PDF);
   };
@@ -2220,7 +2219,7 @@ const IngredientsPanel = ({
             container
             direction="row"
             alignItems="center"
-            justify="flex-start"
+            justifyContent="flex-start"
           >
             <Typography gutterBottom={true} variant="h5" component="h2">
               {TEXT.PANEL_INGREDIENTS}
@@ -2232,7 +2231,7 @@ const IngredientsPanel = ({
             container
             direction="row"
             alignItems="center"
-            justify="flex-end"
+            justifyContent="flex-end"
           >
             <FormControlLabel
               control={

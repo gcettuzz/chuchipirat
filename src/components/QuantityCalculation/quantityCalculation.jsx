@@ -286,7 +286,7 @@ const QuantityCalculationBase = ({ props, authUser }) => {
         >
           <CircularProgress color="inherit" />
         </Backdrop>
-        <Grid container justify="center" alignItems="center" spacing={2}>
+        <Grid container justifyContent="center" alignItems="center" spacing={2}>
           {quantityCalculation.isError && !quantityCalculation.isLoading && (
             <Grid item key={"error"} xs={12}>
               <AlertMessage
@@ -367,7 +367,7 @@ const MealBlock = ({ quantityCalculation }) => {
           <Grid
             item
             container
-            justify="center"
+            justifyContent="center"
             key={"recipeGridImage_" + mealRecipe.uid}
             xs={2}
           >

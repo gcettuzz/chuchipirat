@@ -226,9 +226,8 @@ const ProductsBase = ({ props, authUser }) => {
     snackbar: { open: false, severity: "success", message: "" },
   });
 
-  const [productPopUpValues, setProductPopUpValues] = React.useState(
-    PRODUCT_POPUP_VALUES
-  );
+  const [productPopUpValues, setProductPopUpValues] =
+    React.useState(PRODUCT_POPUP_VALUES);
 
   const [searchString, setSearchString] = React.useState("");
 
@@ -340,7 +339,6 @@ const ProductsBase = ({ props, authUser }) => {
   // Produkt wurde angepasst
   // ------------------------------------------ */
   const onProductEdited = (updatedProduct) => {
-    console.log(updatedProduct);
     dispatchProducts({
       type: REDUCER_ACTIONS.PRODUCT_UPDATED,
       payload: updatedProduct,

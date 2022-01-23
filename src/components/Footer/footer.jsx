@@ -19,7 +19,7 @@ const Footer = () => {
 
   return (
     <footer>
-      <Grid container justify="center" alignItems="center" spacing={2}>
+      <Grid container justifyContent="center" alignItems="center" spacing={2}>
         <Grid item xs={2} />
         <Grid item xs={3}>
           <Divider
@@ -27,7 +27,7 @@ const Footer = () => {
             key={"footerDividerLeft"}
           />
         </Grid>
-        <Grid item container justify="center" xs={2}>
+        <Grid item container justifyContent="center" xs={2}>
           <img
             className={classes.marginCenter}
             src={

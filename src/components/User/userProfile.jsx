@@ -524,7 +524,12 @@ const ProfileCard = ({
               )}
             </div>
           )}
-          <Grid container direction="row" alignItems="center" justify="center">
+          <Grid
+            container
+            direction="row"
+            alignItems="center"
+            justifyContent="center"
+          >
             <Grid container>
               <Typography
                 className={classes.userProfileCardNameOnImage}

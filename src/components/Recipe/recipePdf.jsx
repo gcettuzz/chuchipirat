@@ -49,7 +49,6 @@ const RecipePage = ({
   actualDate,
   authUser,
 }) => {
-  console.log(recipe.note);
   return (
     <Page key={"page_" + recipe.uid} style={styles.body}>
       {/*===== Body =====*/}

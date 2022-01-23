@@ -159,7 +159,7 @@ const PublicProfileBase = ({ props, authUser }) => {
                       container
                       direction="row"
                       alignItems="center"
-                      justify="center"
+                      justifyContent="center"
                     >
                       <Grid container>
                         <Typography
