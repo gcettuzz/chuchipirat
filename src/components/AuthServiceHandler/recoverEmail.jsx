@@ -49,7 +49,7 @@ const RecoverEmailBase = ({ props, authUser }) => {
   // ------------------------------------------ */
   React.useEffect(() => {
     if (!authUser) {
-      authUser = JSON.parse(sessionStorage.getItem(LOCAL_STORAGE.AUTH_USER));
+      authUser = JSON.parse(localStorage.getItem(LOCAL_STORAGE.AUTH_USER));
     }
 
     firebase.auth.checkActionCode(actionCode).then((actionCodeInfo) => {
@@ -60,7 +60,7 @@ const RecoverEmailBase = ({ props, authUser }) => {
         uid: authUser.uid,
         newEmail: actionCodeInfo.data.email,
       });
-      updateSessionStorage(actionCodeInfo.data.email);
+      updateLocalStorage(actionCodeInfo.data.email);
 
       firebase
         .applyActionCode(actionCode)
@@ -78,12 +78,12 @@ const RecoverEmailBase = ({ props, authUser }) => {
   /* ------------------------------------------
   // Session-Storage auf Änderungen umbiegen
   // ------------------------------------------ */
-  const updateSessionStorage = (oldEmail) => {
+  const updateLocalStorage = (oldEmail) => {
     // alles löschen damit die alten Werte neu gelesen werden
-    let user = JSON.parse(sessionStorage.getItem(LOCAL_STORAGE.AUTH_USER));
+    let user = JSON.parse(localStorage.getItem(LOCAL_STORAGE.AUTH_USER));
     user.email = oldEmail;
     user.emailVerified = true;
-    sessionStorage.setItem(LOCAL_STORAGE.AUTH_USER, JSON.stringify(user));
+    localStorage.setItem(LOCAL_STORAGE.AUTH_USER, JSON.stringify(user));
   };
 
   return (

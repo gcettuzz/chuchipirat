@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Link, withRouter } from "react-router-dom";
+import { withRouter } from "react-router-dom";
 import { compose } from "recompose";
 import { useHistory } from "react-router";
 
@@ -10,7 +10,6 @@ import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
 
 import TextField from "@material-ui/core/TextField";
-import { Alert, AlertTitle } from "@material-ui/lab";
 import Typography from "@material-ui/core/Typography";
 import Container from "@material-ui/core/Container";
 import Card from "@material-ui/core/Card";
@@ -28,13 +27,13 @@ import PasswordStrengthMeter from "../Shared/passwordStrengthMeter";
 import AlertMessage from "../Shared/AlertMessage";
 
 import { withFirebase } from "../Firebase/index.js";
-import FirebaseMessageHandler from "../Firebase/firebaseMessageHandler.class";
 import useStyles from "../../constants/styles";
 import * as ROUTES from "../../constants/routes";
 import * as FIREBASE_MSG from "../../constants/firebaseMessages";
 import * as TEXT from "../../constants/text";
 import * as IMAGE_REPOSITORY from "../../constants/imageRepository";
 import User from "../User/user.class";
+import GlobalSettings from "../Admin/globalSettings.class";
 
 // ===================================================================
 // ======================== globale Funktionen =======================
@@ -77,6 +76,7 @@ const SignUpFormBase = (props) => {
 
   // Werte aus dem Form
   const [formValues, setFormValues] = React.useState(INITIAL_STATE);
+  const [signUpAllowed, setSignUpAllowed] = React.useState(true);
 
   const isInvalid =
     formValues.password === "" ||
@@ -122,7 +122,6 @@ const SignUpFormBase = (props) => {
         console.error(error);
         setFormValues({ ...formValues, error: error });
       });
-
     event.preventDefault();
   };
 
@@ -130,6 +129,14 @@ const SignUpFormBase = (props) => {
   const onChange = (event) => {
     setFormValues({ ...formValues, [event.target.name]: event.target.value });
   };
+  /* ------------------------------------------
+  // Einstellungen holen
+  // ------------------------------------------ */
+  React.useEffect(() => {
+    GlobalSettings.getGlobalSettings({ firebase }).then((result) => {
+      setSignUpAllowed(result.allowSignUp);
+    });
+  }, []);
 
   return (
     <form onSubmit={onSubmit}>
@@ -148,6 +155,15 @@ const SignUpFormBase = (props) => {
           >
             {TEXT.PANEL_SIGN_IN}
           </Typography>
+          {/* Meldung wenn SignUp nicht möglich ist */}
+          {!signUpAllowed && (
+            <AlertMessage
+              error={formValues.error}
+              severity={"info"}
+              messageTitle={TEXT.SIGN_UP_NOT_ALLOWED_TITLE}
+              body={TEXT.SIGN_UP_NOT_ALLOWED_TEXT}
+            />
+          )}
           {/* Vorname */}
           <TextField
             type="text"
@@ -161,6 +177,7 @@ const SignUpFormBase = (props) => {
             autoFocus
             value={formValues.firstName}
             onChange={onChange}
+            disabled={!signUpAllowed}
           />
           {/* Nachname */}
           <TextField
@@ -173,6 +190,7 @@ const SignUpFormBase = (props) => {
             autoComplete="lastname"
             value={formValues.lastName}
             onChange={onChange}
+            disabled={!signUpAllowed}
           />
           {/* Mailadresse */}
           <TextField
@@ -186,6 +204,7 @@ const SignUpFormBase = (props) => {
             autoComplete="email"
             value={formValues.email}
             onChange={onChange}
+            disabled={!signUpAllowed}
           />
           {/* Passwort */}
           <TextField
@@ -199,6 +218,7 @@ const SignUpFormBase = (props) => {
             autoComplete="new-password"
             value={formValues.password}
             onChange={onChange}
+            disabled={!signUpAllowed}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -227,6 +247,7 @@ const SignUpFormBase = (props) => {
             variant="contained"
             color="primary"
             className={classes.submit}
+            disabled={!signUpAllowed}
           >
             {TEXT.BUTTON_REGISTER}
           </Button>
@@ -241,13 +262,6 @@ const SignUpFormBase = (props) => {
                 )
               }
             />
-            // <Alert severity="error">
-            //   {FirebaseMessageHandler.translateMessage(formValues.error)}
-            //   {formValues.error.code ===
-            //     FIREBASE_MSG.AUTH.EMAIL_ALREADY_IN_USE && (
-            //     <ForgotPasswordLink />
-            //   )}
-            // </Alert>
           )}
         </CardContent>
       </Card>
@@ -269,17 +283,12 @@ const SignUpLink = () => {
   };
 
   return (
-    // <Typography variant="body2" align="center">
     <Button fullWidth color="primary" onClick={onSignUpClick}>
       {TEXT.NOT_REGISTERED_YET_SIGN_UP}
     </Button>
-    // <Link to={ROUTES.SIGN_UP} color="primary">
-    // </Link>
-    // </Typography>
   );
 };
 
-// Form mit Verbindung zur db
 export default SignUpPage;
 
 const SignUpForm = compose(withRouter, withFirebase)(SignUpFormBase);

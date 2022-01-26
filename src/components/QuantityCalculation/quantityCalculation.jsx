@@ -617,7 +617,7 @@ const IngredientList = ({ mealRecipeUid, portions, ingredients }) => {
             key={"ingredient_listItem_" + mealRecipeUid + "_" + ingredient.uid}
           >
             <ListItemText
-              className={classes.listItemQuantity}
+              className={classes.quantityCalculationListItemQuantity}
               primary={
                 Number.isNaN(ingredient.quantity)
                   ? ""
@@ -631,7 +631,7 @@ const IngredientList = ({ mealRecipeUid, portions, ingredients }) => {
               }
             />
             <ListItemText
-              className={classes.listItemUnit}
+              className={classes.quantityCalculationListItemUnit}
               secondary={ingredient.unit}
               key={
                 "ingredient_listItem_unit" +
@@ -641,7 +641,7 @@ const IngredientList = ({ mealRecipeUid, portions, ingredients }) => {
               }
             />
             <ListItemText
-              className={classes.listItemName}
+              className={classes.quantityCalculationListItemName}
               primary={ingredient.product.name}
               key={
                 "ingredient_listItem_name" +
@@ -651,7 +651,7 @@ const IngredientList = ({ mealRecipeUid, portions, ingredients }) => {
               }
             />
             <ListItemText
-              className={classes.listItemDetail}
+              className={classes.quantityCalculationListItemDetail}
               secondary={
                 <Typography color="textSecondary" variant="body2">
                   {ingredient.detail}

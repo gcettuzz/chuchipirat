@@ -16,7 +16,7 @@ import ForwardIcon from "@material-ui/icons/Forward";
 import DeleteIcon from "@material-ui/icons/Delete";
 import ZoomOutMapIcon from "@material-ui/icons/ZoomOutMap";
 import CallMergeIcon from "@material-ui/icons/CallMerge";
-import TimelapseIcon from "@material-ui/icons/Timelapse";
+import TuneIcon from "@material-ui/icons/Tune";
 
 import * as TEXT from "../../constants/text";
 import * as ROLES from "../../constants/roles";
@@ -38,7 +38,6 @@ import {
 import Feed from "../Shared/feed.class";
 import { CallMerge } from "@material-ui/icons";
 import { Typography } from "@material-ui/core";
-import Timelapse from "@material-ui/icons/Timelapse";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -47,26 +46,35 @@ import Timelapse from "@material-ui/icons/Timelapse";
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const AdminPage = (props) => {
+const SystemPage = (props) => {
   return (
     <AuthUserContext.Consumer>
-      {(authUser) => <AdminBase props={props} authUser={authUser} />}
+      {(authUser) => <SystemBase props={props} authUser={authUser} />}
     </AuthUserContext.Consumer>
   );
 };
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const AdminBase = ({ props, authUser }) => {
+const SystemBase = ({ props, authUser }) => {
   const classes = useStyles();
   const { push } = useHistory();
+
+  /* ------------------------------------------
+  // Globale Einstelllungen
+  // ------------------------------------------ */
+  const goToGlobalSettings = () => {
+    push({
+      pathname: ROUTES.SYSTEM_GLOBAL_SETTINGS,
+    });
+  };
 
   /* ------------------------------------------
   // Feed löschen
   // ------------------------------------------ */
   const goToDeleteFeed = () => {
     push({
-      pathname: ROUTES.ADMIN_FEED_DELETE,
+      pathname: ROUTES.SYSTEM_FEED_DELETE,
     });
   };
   /* ------------------------------------------
@@ -74,7 +82,7 @@ const AdminBase = ({ props, authUser }) => {
   // ------------------------------------------ */
   const goToWhereUsed = () => {
     push({
-      pathname: ROUTES.ADMIN_WHERE_USED,
+      pathname: ROUTES.SYSTEM_WHERE_USED,
     });
   };
   /* ------------------------------------------
@@ -82,15 +90,12 @@ const AdminBase = ({ props, authUser }) => {
   // ------------------------------------------ */
   const goToMergeProducts = () => {
     push({
-      pathname: ROUTES.ADMIN_MERGE_PRODUCT,
+      pathname: ROUTES.SYSTEM_MERGE_PRODUCT,
     });
   };
-  /* ------------------------------------------
-  // Job ausführen 
-  // ------------------------------------------ */
-  const goToJobs = () => {
+  const goToTemp = () => {
     push({
-      pathname: ROUTES.ADMIN_JOBS,
+      pathname: ROUTES.TEMP,
     });
   };
 
@@ -106,9 +111,19 @@ const AdminBase = ({ props, authUser }) => {
         <Grid container spacing={2}>
           <Grid item xs={12} md={6}>
             <AdminTile
+              id={"globalSettings"}
+              text={TEXT.PANEL_SYSTEM_GLOBAL_SETTINGS}
+              description={TEXT.PANEL_SYSTEM_GLOBAL_DESCRIPTION}
+              icon={<TuneIcon />}
+              action={goToGlobalSettings}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <AdminTile
               id={"deleteFeeds"}
-              text={TEXT.PANEL_ADMIN_DELETE_FEED}
-              description={TEXT.PANEL_ADMIN_DELETE_FEED_DESCRIPTION}
+              text={TEXT.PANEL_SYSTEM_DELETE_FEED}
+              description={TEXT.PANEL_SYSTEM_DELETE_FEED_DESCRIPTION}
               icon={<DeleteIcon />}
               action={goToDeleteFeed}
             />
@@ -116,8 +131,8 @@ const AdminBase = ({ props, authUser }) => {
           <Grid item xs={12} md={6} lg={4}>
             <AdminTile
               id={"whereUsed"}
-              text={TEXT.PANEL_ADMIN_WHERE_USED}
-              description={TEXT.PANEL_ADMIN_WHERE_USED_DESCRIPTION}
+              text={TEXT.PANEL_SYSTEM_WHERE_USED}
+              description={TEXT.PANEL_SYSTEM_WHERE_USED_DESCRIPTION}
               icon={<ZoomOutMapIcon />}
               action={goToWhereUsed}
             />
@@ -125,19 +140,20 @@ const AdminBase = ({ props, authUser }) => {
           <Grid item xs={12} md={6} lg={4}>
             <AdminTile
               id={"merge"}
-              text={TEXT.PANEL_ADMIN_MERGE}
-              description={TEXT.PANEL_ADMIN_MERGE_DESCRICPTION}
+              text={TEXT.PANEL_SYTEM_MERGE}
+              description={TEXT.PANEL_SYSTEM_MERGE_DESCRICPTION}
               icon={<CallMergeIcon />}
               action={goToMergeProducts}
             />
           </Grid>
+
           <Grid item xs={12} md={6} lg={4}>
             <AdminTile
-              id={"jobs"}
-              text={TEXT.PANEL_ADMIN_JOBS}
-              description={TEXT.PANEL_ADMIN_JOBS_DESCRIPTION}
-              icon={<Timelapse />}
-              action={goToJobs}
+              id={"merge"}
+              text={"Temp"}
+              // description={TEXT.PANEL_SYSTEM_MERGE_DESCRICPTION}
+              // icon={<CallMergeIcon />}
+              action={goToTemp}
             />
           </Grid>
         </Grid>
@@ -176,4 +192,4 @@ export default compose(
   withEmailVerification,
   withAuthorization(condition),
   withFirebase
-)(AdminPage);
+)(SystemPage);

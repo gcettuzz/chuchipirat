@@ -21,6 +21,7 @@
     "firebase": "^8.2.7",
     "md5": "^2.3.0",
     "react": "^17.0.1",
+    "react-device-detect": "^2.1.2",
     "react-dom": "^17.0.1",
     "react-router": "^5.2.0",
     "react-router-dom": "^5.2.0",

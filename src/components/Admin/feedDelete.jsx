@@ -204,7 +204,7 @@ const PanelDeleteFeeds = ({ deleteFeeds, onChangeField, onOpenPopUp }) => {
     <Card className={classes.card} key={"cardInfo"}>
       <CardContent className={classes.cardContent} key={"cardContentInfo"}>
         <Typography gutterBottom={true} variant="h5" component="h2">
-          {TEXT.PANEL_ADMIN_DELETE_FEED}
+          {TEXT.PANEL_SYSTEM_DELETE_FEED}
         </Typography>
         {deleteFeeds.isDeleting && <LinearProgress />}
         <TextField

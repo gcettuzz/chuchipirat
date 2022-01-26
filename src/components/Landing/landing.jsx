@@ -4,6 +4,8 @@ import { useHistory } from "react-router";
 import Container from "@material-ui/core/Container";
 import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
+import Card from "@material-ui/core/Card";
+import CardContent from "@material-ui/core/CardContent";
 
 import { Divider, makeStyles } from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
@@ -50,7 +52,6 @@ const LandingBase = ({ props, authUser }) => {
       pathname: ROUTES[event.currentTarget.id],
     });
   };
-  // TODO: Prüfen ob AutchContext geholt werden kann (mit oder ohne Bedingung)
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}
@@ -78,7 +79,6 @@ const LandingBase = ({ props, authUser }) => {
           },
         ]}
       />
-      {/* TODO: Funktionieren Cards? */}
 
       {/* ===== BODY ===== */}
       <Container className={classes.container} component="main" maxWidth="md">
@@ -95,22 +95,22 @@ const LandingBase = ({ props, authUser }) => {
             </Typography>
           </Grid>
           {/* Rezepte */}
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={6}>
             <Typography>
               <strong>{TEXT.LANDING_RECIPES_BLOCK_TITLE}</strong>
               <br />
               {TEXT.LANDING_RECIPES_BLOCK_TEXT}
             </Typography>
           </Grid>
-          <Grid item xs={12} md={8}>
-            <Typography color="error">bild</Typography>
+          <Grid item xs={12} md={6}>
+            <ImageCard />
           </Grid>
           <Grid item xs={12}>
             <Divider color="primary" />
           </Grid>
           {/* Menüplan */}
           <Grid item xs={12} md={6}>
-            <Typography color="error">bild</Typography>
+            <ImageCard />
           </Grid>
           <Grid item xs={12} md={6}>
             <Typography>
@@ -127,11 +127,11 @@ const LandingBase = ({ props, authUser }) => {
             <Typography>
               <strong>{TEXT.LANDING_SCALING_TITLE}</strong>
               <br />
-              <strong>{TEXT.LANDING_SCALING_TEXT}</strong>
+              {TEXT.LANDING_SCALING_TEXT}
             </Typography>
           </Grid>
           <Grid item xs={12} md={6}>
-            <Typography color="error">bild</Typography>
+            <ImageCard />
           </Grid>
           <Grid item xs={12}>
             <Divider color="primary" />
@@ -145,7 +145,7 @@ const LandingBase = ({ props, authUser }) => {
             </Typography>
           </Grid>
           <Grid item xs={12} md={6}>
-            <Typography color="error">bild</Typography>
+            <ImageCard />
           </Grid>
           <Grid item xs={12}>
             <Divider color="primary" />
@@ -159,14 +159,14 @@ const LandingBase = ({ props, authUser }) => {
             </Typography>
           </Grid>
           <Grid item xs={12} md={6}>
-            <Typography color="error">bild</Typography>
+            <ImageCard />
           </Grid>
           <Grid item xs={12}>
             <Divider color="primary" />
           </Grid>
           {/* Offline */}
           <Grid item xs={12} md={6}>
-            <Typography color="error">bild</Typography>
+            <ImageCard />
           </Grid>
           <Grid item xs={12} md={6}>
             <Typography>
@@ -178,6 +178,20 @@ const LandingBase = ({ props, authUser }) => {
         </Grid>
       </Container>
     </React.Fragment>
+  );
+};
+
+const ImageCard = () => {
+  const classes = useStyles();
+
+  return (
+    <Card className={classes.card}>
+      <CardContent>
+        <Typography variant="body2" color="textSecondary">
+          Platzhalter
+        </Typography>
+      </CardContent>
+    </Card>
   );
 };
 

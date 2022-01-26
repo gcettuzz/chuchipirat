@@ -95,6 +95,7 @@ function ScrollTop(props) {
     </Zoom>
   );
 }
+
 // ===================================================================
 // ======================= Navigation Komponente =====================
 // ===================================================================
@@ -161,7 +162,7 @@ const NavigationAuthBase = (props) => {
         break;
       case BUTTONTEXT.SIGNOUT:
         firebase.signOut();
-        sessionStorage.removeItem(LOCAL_STORAGE.AUTH_USER);
+        localStorage.removeItem(LOCAL_STORAGE.AUTH_USER);
         push({
           pathname: ROUTES.LANDING,
         });
@@ -318,8 +319,8 @@ const NavigationAuthBase = (props) => {
                 <SettingsIcon />
               </ListItemIcon>
               <ListItemText
-                primary={TEXT.NAVIGATION_ADMIN}
-                onClick={() => push(ROUTES.ADMIN)}
+                primary={TEXT.NAVIGATION_SYSTEM}
+                onClick={() => push(ROUTES.SYSTEM)}
               />
             </ListItem>
             <ListItem button key="Users">
@@ -363,6 +364,7 @@ const NavigationAuthBase = (props) => {
             color="inherit"
             aria-label="menu"
             onClick={toggleDrawer("left", true)}
+            disabled={!authUser.emailVerified}
           >
             <MenuIcon />
           </IconButton>
@@ -499,7 +501,7 @@ export function NavigationNoAuthBase(props) {
               {TEXT.APP_NAME}
             </Link>
           </Typography>
-
+          <Ribbon text={"BETA"} />
           <div>
             <Typography variant="h6" className={classes.navigationTitle}>
               <Link

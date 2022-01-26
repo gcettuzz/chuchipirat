@@ -339,7 +339,6 @@ const ProductsBase = ({ props, authUser }) => {
   // Produkt wurde angepasst
   // ------------------------------------------ */
   const onProductEdited = (updatedProduct) => {
-    console.log(updatedProduct);
     dispatchProducts({
       type: REDUCER_ACTIONS.PRODUCT_UPDATED,
       payload: updatedProduct,

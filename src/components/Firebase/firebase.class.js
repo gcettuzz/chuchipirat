@@ -97,15 +97,16 @@ class Firebase {
     let publicProfile;
     let dbUser;
     let counter = 0;
-    //FIXME: auf neue Struktur umbiegen
-    return this.auth.onAuthStateChanged((authUser) => {
+
+    return this.auth.onAuthStateChanged(async (authUser) => {
       if (authUser) {
         // Prüfen ob Infos zu User bereits im Session Storage gepseichert wurden
-        let sessionStorageAuthUser = JSON.parse(
-          sessionStorage.getItem(LOCAL_STORAGE.AUTH_USER)
+        let localStorageAuthUser = JSON.parse(
+          localStorage.getItem(LOCAL_STORAGE.AUTH_USER)
         );
-        if (!sessionStorageAuthUser) {
-          this.userDocument(authUser.uid)
+
+        if (!localStorageAuthUser) {
+          await this.user(authUser.uid)
             .get()
             .then((snapshot) => {
               if (snapshot.data()) {
@@ -151,7 +152,7 @@ class Firebase {
               next(authUser);
             });
         } else {
-          authUser = sessionStorageAuthUser;
+          authUser = localStorageAuthUser;
           next(authUser);
         }
       } else {
@@ -316,11 +317,6 @@ class Firebase {
   event_folder = () => "events/";
   recipe_folder = () => "recipes/";
   user_folder = () => "users/";
-  // =========
-  // =========
-  // Übungen
-  // message = (uid) => this.db.ref(`messages/${uid}`);
-  // messages = () => this.db.ref("messages");
 
   /* =====================================================================
   // Bild hochladen

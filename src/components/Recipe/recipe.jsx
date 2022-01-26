@@ -2644,7 +2644,8 @@ const IngredientPosition = ({
               }
               fullWidth
               filterOptions={(options, params) => {
-                const filtered = filter(options, params);
+                let filtered = filter(options, params);
+
                 if (
                   params.inputValue !== "" &&
                   // Sicherstellen, dass kein Produkt mit gleichem Namen erfasst wird
@@ -2659,6 +2660,33 @@ const IngredientPosition = ({
                     name: `"${params.inputValue}" ${TEXT.ADD}`,
                   });
                 }
+
+                // So sortieren, dass Zutaten, die mit den gleichen Zeichen beginnen
+                // vorher angezeigt werden (Salz vor Erdnüsse, gesalzen)
+                filtered = filtered.map((entry) => {
+                  let sortRank;
+
+                  if (entry?.inputValue) {
+                    sortRank = 100;
+                  } else if (
+                    entry.name
+                      .substr(0, params.inputValue.length)
+                      .toLowerCase() === params.inputValue.toLowerCase()
+                  ) {
+                    sortRank = 1;
+                  } else {
+                    sortRank = 10;
+                  }
+
+                  return { ...entry, ...{ sortRank: sortRank } };
+                });
+
+                filtered = Utils.sortArrayWithObjectByNumber({
+                  list: filtered,
+                  attributeName: "sortRank",
+                });
+
+                filtered.forEach((entry) => delete entry.sortRank);
                 return filtered;
               }}
               renderOption={(option) => option.name}

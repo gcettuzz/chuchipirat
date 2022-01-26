@@ -17,11 +17,11 @@ export const EVENT_UID = "/event/:id";
 export const EVENTS = "/events";
 
 export const USERS = "/users";
-export const ADMIN = "/admin";
-export const ADMIN_FEED_DELETE = "/admin/feeddelete";
-export const ADMIN_WHERE_USED = "/admin/whereused";
-export const ADMIN_MERGE_PRODUCT = "/admin/mergeproducts";
-export const ADMIN_JOBS = "/admin/jobs";
+export const SYSTEM = "/system";
+export const SYSTEM_FEED_DELETE = "/system/feeddelete";
+export const SYSTEM_WHERE_USED = "/system/whereused";
+export const SYSTEM_MERGE_PRODUCT = "/system/mergeproducts";
+export const SYSTEM_GLOBAL_SETTINGS = "/system/globalsettings";
 
 export const USER_PUBLIC_PROFILE = "/publicprofile";
 export const USER_PUBLIC_PROFILE_UID = "/publicprofile/:id";
@@ -29,7 +29,6 @@ export const USER_PUBLIC_PROFILE_UID = "/publicprofile/:id";
 export const USER_PROFILE_UID = "/profile/:id";
 export const USER_PROFILE = "/profile";
 
-// export const HELP = "/help";
 export const NOT_FOUND = "/404";
 export const MENUPLAN = "/menuplan";
 export const MENUPLAN_UID = "/menuplan/:id";
@@ -45,12 +44,6 @@ export const UNITCONVERSION = "/unitconversion";
 export const PRODUCTS = "/products";
 export const DEPARTMENTS = "/departments";
 export const NO_AUTH = "/noauth";
-// export const PRIVACY_POLICY = "/privacypolicy";
-// export const TEST_RW = "/test_rw";
-
-// export const ADMIN_USER_DETAILS = "/admin/users/:userId";
-
-// export const HOME2 = "/home2";
 
 //NEXT_FEATURE: Muss Raus
 export const TEMP = "/temp";

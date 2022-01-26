@@ -463,7 +463,7 @@ const ProductSelect = ({
     />
   );
 };
-const condition = (authUser) => !!authUser.roles.includes(ROLES.ADMIN);
+const condition = (authUser) => !!authUser?.roles.includes(ROLES.ADMIN);
 
 export default compose(
   withEmailVerification,

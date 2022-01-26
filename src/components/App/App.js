@@ -5,11 +5,19 @@ import {
   Redirect,
   Switch,
 } from "react-router-dom";
+import {
+  BrowserView,
+  MobileView,
+  isBrowser,
+  isMobile,
+} from "react-device-detect";
+
 import CssBaseline from "@material-ui/core/CssBaseline";
 import "./App.css";
 
 import Navigation from "../Navigation/navigation";
 import ScrollToTop from "../Navigation/scrollToTop";
+import GoBackFab from "../Navigation/goBack";
 import Footer from "../Footer/footer";
 import LandingPage from "../Landing/landing";
 import SignUpPage from "../SignUp/signUp";
@@ -24,7 +32,8 @@ import Event from "../Event/event";
 import Events from "../Event/events";
 import Recipes from "../Recipe/recipes";
 import Users from "../User/users";
-import Admin from "../Admin/admin";
+import System from "../Admin/system";
+import GlobalSettings from "../Admin/globalSettings";
 import FeedDelete from "../Admin/feedDelete";
 import WhereUsed from "../Admin/whereUsed";
 import MergeProducts from "../Admin/mergeProducts";
@@ -123,7 +132,6 @@ const App = (props) => {
       listener();
     };
   });
-
   return (
     <MuiThemeProvider theme={theme}>
       <CssBaseline />
@@ -131,105 +139,137 @@ const App = (props) => {
         <div className={classes.pageContainer}>
           <Navigation />
           <ScrollToTop />
+          <MobileView>
+            <Route
+              path={[
+                ROUTES.RECIPE,
+                ROUTES.RECIPES,
+                ROUTES.EVENTS,
+                ROUTES.EVENT,
+                ROUTES.MENUPLAN,
+                ROUTES.QUANTITY_CALCULATION,
+                ROUTES.SHOPPINGLIST,
+                ROUTES.UNITS,
+                ROUTES.UNITCONVERSION,
+                ROUTES.PRODUCTS,
+                ROUTES.DEPARTMENTS,
+                ROUTES.SYSTEM,
+                ROUTES.NOT_FOUND,
+                ROUTES.USERS,
+                ROUTES.USER_PUBLIC_PROFILE_UID,
+                ROUTES.USER_PROFILE,
+              ]}
+              component={GoBackFab}
+            />
+          </MobileView>
           <div className={classes.content}>
-            <Switch>
-              <Route exact path={ROUTES.LANDING} component={LandingPage} />
+            <Suspense fallback={<FallbackLoading />}>
+              <Switch>
+                <Route exact path={ROUTES.LANDING} component={LandingPage} />
 
-              <Route path={ROUTES.SIGN_IN} component={SignInPage} />
-              <Route path={ROUTES.SIGN_UP} component={SignUpPage} />
+                <Route path={ROUTES.SIGN_IN} component={SignInPage} />
+                <Route path={ROUTES.SIGN_UP} component={SignUpPage} />
 
-              <Route path={ROUTES.HOME} component={HomePage} />
+                <Route path={ROUTES.HOME} component={HomePage} />
 
-              {/* <Route path={ROUTES.VERIFY_EMAIL} component={VerifyEmail} />*/}
-              <Route path={ROUTES.PASSWORD_RESET} component={PasswordReset} />
-              <Route path={ROUTES.PASSWORD_CHANGE} component={PasswordChange} />
+                <Route path={ROUTES.PASSWORD_RESET} component={PasswordReset} />
+                <Route
+                  path={ROUTES.PASSWORD_CHANGE}
+                  component={PasswordChange}
+                />
 
-              <Route
-                path={ROUTES.AUTH_SERVICE_HANDLER}
-                component={AuthServiceHandler}
-              />
+                <Route
+                  path={ROUTES.AUTH_SERVICE_HANDLER}
+                  component={AuthServiceHandler}
+                />
 
-              <Route path={ROUTES.EVENTS} component={Events} />
-              <Route exact path={ROUTES.EVENT} component={Event} />
-              <Route exact path={ROUTES.EVENT_UID} component={Event} />
+                <Route path={ROUTES.EVENTS} component={Events} />
+                <Route exact path={ROUTES.EVENT} component={Event} />
+                <Route exact path={ROUTES.EVENT_UID} component={Event} />
 
-              <Route path={ROUTES.RECIPES} component={Recipes} />
+                <Route path={ROUTES.RECIPES} component={Recipes} />
 
-              <Route
-                exact
-                path={ROUTES.USER_PUBLIC_PROFILE_UID}
-                component={publicProfile}
-              />
+                <Route
+                  exact
+                  path={ROUTES.USER_PUBLIC_PROFILE_UID}
+                  component={publicProfile}
+                />
 
-              <Route path={ROUTES.UNITS} component={Units} />
-              <Route path={ROUTES.UNITCONVERSION} component={UnitConversion} />
+                <Route path={ROUTES.UNITS} component={Units} />
+                <Route
+                  path={ROUTES.UNITCONVERSION}
+                  component={UnitConversion}
+                />
 
-              <Route path={ROUTES.PRODUCTS} component={Products} />
-              <Route path={ROUTES.DEPARTMENTS} component={Departments} />
+                <Route path={ROUTES.PRODUCTS} component={Products} />
+                <Route path={ROUTES.DEPARTMENTS} component={Departments} />
 
-              <Route path={ROUTES.USERS} component={Users} />
-              <Route exact path={ROUTES.ADMIN} component={Admin} />
-              <Route
-                exact
-                path={ROUTES.ADMIN_FEED_DELETE}
-                component={FeedDelete}
-              />
-              <Route
-                exact
-                path={ROUTES.ADMIN_WHERE_USED}
-                component={WhereUsed}
-              />
-              <Route
-                exact
-                path={ROUTES.ADMIN_MERGE_PRODUCT}
-                component={MergeProducts}
-              />
               <Route exact path={ROUTES.ADMIN_JOBS} component={Jobs} />
-              <Route exact path={ROUTES.USER_PROFILE} component={UserProfile} />
-              <Route
-                exact
-                path={ROUTES.USER_PROFILE_UID}
-                component={UserProfile}
-              />
-              <Route path={ROUTES.TEMP} component={Temp} />
+                <Route path={ROUTES.USERS} component={Users} />
+                <Route exact path={ROUTES.SYSTEM} component={System} />
+                <Route
+                  exact
+                  path={ROUTES.SYSTEM_GLOBAL_SETTINGS}
+                  component={GlobalSettings}
+                />
+                <Route
+                  exact
+                  path={ROUTES.SYSTEM_FEED_DELETE}
+                  component={FeedDelete}
+                />
+                <Route
+                  exact
+                  path={ROUTES.SYSTEM_WHERE_USED}
+                  component={WhereUsed}
+                />
+                <Route
+                  exact
+                  path={ROUTES.SYSTEM_MERGE_PRODUCT}
+                  component={MergeProducts}
+                />
+                <Route
+                  exact
+                  path={ROUTES.USER_PROFILE}
+                  component={UserProfile}
+                />
+                <Route
+                  exact
+                  path={ROUTES.USER_PROFILE_UID}
+                  component={UserProfile}
+                />
+                <Route path={ROUTES.TEMP} component={Temp} />
 
-              <Suspense fallback={<FallbackLoading />}>
-                <Switch>
-                  <Route exact path={ROUTES.RECIPE} component={Recipe} />
-                  <Route exact path={ROUTES.RECIPE_UID} component={Recipe} />
-                  <Route
-                    exact
-                    path={ROUTES.SHOPPINGLIST}
-                    component={ShoppingList}
-                  />
-                  <Route
-                    exact
-                    path={ROUTES.SHOPPINGLIST_UID}
-                    component={ShoppingList}
-                  />
+                <Route path={ROUTES.NOT_FOUND} component={NotFound} />
 
-                  <Route exact path={ROUTES.MENUPLAN} component={Menuplan} />
-                  <Route
-                    exact
-                    path={ROUTES.MENUPLAN_UID}
-                    component={Menuplan}
-                  />
-                  <Route
-                    exact
-                    path={ROUTES.QUANTITY_CALCULATION}
-                    component={QuantityCalculation}
-                  />
-                  <Route
-                    exact
-                    path={ROUTES.QUANTITY_CALCULATION_UID}
-                    component={QuantityCalculation}
-                  />
-                </Switch>
-              </Suspense>
+                <Route exact path={ROUTES.RECIPE} component={Recipe} />
+                <Route exact path={ROUTES.RECIPE_UID} component={Recipe} />
+                <Route
+                  exact
+                  path={ROUTES.SHOPPINGLIST}
+                  component={ShoppingList}
+                />
+                <Route
+                  exact
+                  path={ROUTES.SHOPPINGLIST_UID}
+                  component={ShoppingList}
+                />
 
-              <Route path={ROUTES.NOT_FOUND} component={NotFound} />
-              <Redirect to="404" />
-            </Switch>
+                <Route exact path={ROUTES.MENUPLAN} component={Menuplan} />
+                <Route exact path={ROUTES.MENUPLAN_UID} component={Menuplan} />
+                <Route
+                  exact
+                  path={ROUTES.QUANTITY_CALCULATION}
+                  component={QuantityCalculation}
+                />
+                <Route
+                  exact
+                  path={ROUTES.QUANTITY_CALCULATION_UID}
+                  component={QuantityCalculation}
+                />
+
+                <Redirect to="404" />
+              </Switch>
+            </Suspense>
           </div>
           <div className={classes.footer}>
             <Route
@@ -243,14 +283,14 @@ const App = (props) => {
                 ROUTES.MENUPLAN,
                 ROUTES.QUANTITY_CALCULATION,
                 ROUTES.SHOPPINGLIST,
-                // ROUTES.USER_ACCOUNT,
                 ROUTES.UNITS,
                 ROUTES.UNITCONVERSION,
                 ROUTES.PRODUCTS,
                 ROUTES.DEPARTMENTS,
                 ROUTES.SIGN_IN,
                 ROUTES.SIGN_UP,
-                ROUTES.ADMIN,
+                ROUTES.SYSTEM,
+                ROUTES.NOT_FOUND,
               ]}
               component={Footer}
             />
