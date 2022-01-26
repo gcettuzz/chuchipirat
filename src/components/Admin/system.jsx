@@ -93,6 +93,11 @@ const SystemBase = ({ props, authUser }) => {
       pathname: ROUTES.SYSTEM_MERGE_PRODUCT,
     });
   };
+  const goToTemp = () => {
+    push({
+      pathname: ROUTES.TEMP,
+    });
+  };
 
   return (
     <React.Fragment>
@@ -139,6 +144,16 @@ const SystemBase = ({ props, authUser }) => {
               description={TEXT.PANEL_SYSTEM_MERGE_DESCRICPTION}
               icon={<CallMergeIcon />}
               action={goToMergeProducts}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={6} lg={4}>
+            <AdminTile
+              id={"merge"}
+              text={"Temp"}
+              // description={TEXT.PANEL_SYSTEM_MERGE_DESCRICPTION}
+              // icon={<CallMergeIcon />}
+              action={goToTemp}
             />
           </Grid>
         </Grid>

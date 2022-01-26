@@ -5,11 +5,19 @@ import {
   Redirect,
   Switch,
 } from "react-router-dom";
+import {
+  BrowserView,
+  MobileView,
+  isBrowser,
+  isMobile,
+} from "react-device-detect";
+
 import CssBaseline from "@material-ui/core/CssBaseline";
 import "./App.css";
 
 import Navigation from "../Navigation/navigation";
 import ScrollToTop from "../Navigation/scrollToTop";
+import GoBackFab from "../Navigation/goBack";
 import Footer from "../Footer/footer";
 import LandingPage from "../Landing/landing";
 import SignUpPage from "../SignUp/signUp";
@@ -123,7 +131,6 @@ const App = (props) => {
       listener();
     };
   });
-
   return (
     <MuiThemeProvider theme={theme}>
       <CssBaseline />
@@ -131,6 +138,29 @@ const App = (props) => {
         <div className={classes.pageContainer}>
           <Navigation />
           <ScrollToTop />
+          <MobileView>
+            <Route
+              path={[
+                ROUTES.RECIPE,
+                ROUTES.RECIPES,
+                ROUTES.EVENTS,
+                ROUTES.EVENT,
+                ROUTES.MENUPLAN,
+                ROUTES.QUANTITY_CALCULATION,
+                ROUTES.SHOPPINGLIST,
+                ROUTES.UNITS,
+                ROUTES.UNITCONVERSION,
+                ROUTES.PRODUCTS,
+                ROUTES.DEPARTMENTS,
+                ROUTES.SYSTEM,
+                ROUTES.NOT_FOUND,
+                ROUTES.USERS,
+                ROUTES.USER_PUBLIC_PROFILE_UID,
+                ROUTES.USER_PROFILE,
+              ]}
+              component={GoBackFab}
+            />
+          </MobileView>
           <div className={classes.content}>
             <Suspense fallback={<FallbackLoading />}>
               <Switch>

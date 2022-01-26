@@ -1,4 +1,5 @@
 import { makeStyles } from "@material-ui/core/styles";
+import { REDIRECTION_IN } from "./text";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -232,9 +233,6 @@ const useStyles = makeStyles((theme) => ({
   },
   snackbar: {
     width: "100%",
-    // "& > * + *": {
-    //   marginTop: theme.spacing(2),
-    // },
   },
   fabBottom: {
     flexGrow: 1,
@@ -243,6 +241,21 @@ const useStyles = makeStyles((theme) => ({
     bottom: theme.spacing(6),
     right: theme.spacing(3),
     zIndex: 1000,
+  },
+  goBackFabButton: {
+    flexGrow: 1,
+    position: "absolute",
+    margin: theme.spacing(1),
+    top: theme.spacing(9),
+    left: theme.spacing(1),
+    zIndex: 1000,
+    color: theme.palette.primary.main,
+    background: theme.palette.background.paper,
+    borderColor: theme.palette.primary.main,
+    border: "2px solid",
+  },
+  goBackButtonIcon: {
+    marginLeft: theme.spacing(0.9),
   },
   title: {
     flexGrow: 1,
