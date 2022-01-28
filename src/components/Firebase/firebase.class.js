@@ -308,6 +308,9 @@ class Firebase {
     this.db.collection("_cloudFunctions/waitingArea/recipeTrace");
   cloudFunctions_mergeProducts = () =>
     this.db.collection("_cloudFunctions/waitingArea/mergeProducts");
+  cloudFunctions_feed_Delete = () =>
+    this.db.collection("_cloudFunctions/waitingArea/feed_delete");
+
   /* =====================================================================
   // Alle Referenzen zu den Bildern
   // ===================================================================== */

@@ -51,6 +51,8 @@ export const BUTTON_POS_DOWN = "Position runter";
 export const BUTTON_GENERATE = "Generieren";
 export const BUTTON_CHANGE_MAIL_PASSWORD = "Mail / Passwort ändern";
 export const BUTTON_DELETE_FEED = "Feed-Einträge löschen";
+export const BUTTON_DELETE_CHECKED_FEEDS = "markierte Feed-Einträge löschen";
+export const BUTTON_GET_FEEDS = "Feed-Einträge holen";
 export const BUTTON_TRACE = "Trace";
 export const BUTTON_CHOOSE_RECIPE = "Rezept auswählen";
 export const BUTTON_MERGE_PRODUCTS = "Produkte zusammenführen";
@@ -137,6 +139,10 @@ export const PANEL_PRODUCTS = "Produkte";
 export const PANEL_INTRODUCE_YOURSELF = "Stell dich vor";
 export const PANEL_SYSTEM_GLOBAL_SETTINGS = "Globale Einstellungen";
 export const PANEL_SYSTEM_DELETE_FEED = "Feed-Einträge löschen";
+export const PANEL_SYSTEM_DELETE_FEED_BY_DAYS =
+  "Feed-Einträge nach Tagen löschen";
+export const PANEL_SYSTEM_DELETE_FEED_SELECTIV =
+  "Feed-Einträge selektiv löschen";
 export const PANEL_SYSTEM_WHERE_USED = "Verfolgungsnachweis";
 export const PANEL_SYTEM_MERGE = "Produkte-Merge";
 export const PANEL_SYSTEM_GLOBAL_DESCRIPTION =
@@ -213,6 +219,7 @@ export const FIELD_MEAL_TO = "Mahlzeit bis";
 export const FIELD_CONVERT_UNITS = "Einheiten umrechnen.";
 export const FIELD_FEED_DELETE_AFTER_DAYS =
   "Feed löschen, die älter sind als (x) Tage";
+export const FIELD_FEED_DELETE_NO_OF_ENTRIES = "Anzahl Feed Einträge";
 /* =====================================================================
 // Tooltip
 // ===================================================================== */
@@ -643,3 +650,5 @@ export const VERSION = "Version";
 export const AUTH_SERVICE_HANLDER_NO_MODE =
   "Sorry. Wir wissen gerade nicht was zu tun ist. Bitte prüfe, ob du die richtige URL gewählt hast.";
 export const LOG = "Log";
+export const X_FEEDS_DELETED = (no_of_deleted_feeds) =>
+  `${no_of_deleted_feeds} Feed-Einträge gelöscht.`;
