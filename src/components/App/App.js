@@ -165,44 +165,34 @@ const App = (props) => {
             <Suspense fallback={<FallbackLoading />}>
               <Switch>
                 <Route exact path={ROUTES.LANDING} component={LandingPage} />
-
                 <Route path={ROUTES.SIGN_IN} component={SignInPage} />
                 <Route path={ROUTES.SIGN_UP} component={SignUpPage} />
-
                 <Route path={ROUTES.HOME} component={HomePage} />
-
                 <Route path={ROUTES.PASSWORD_RESET} component={PasswordReset} />
                 <Route
                   path={ROUTES.PASSWORD_CHANGE}
                   component={PasswordChange}
                 />
-
                 <Route
                   path={ROUTES.AUTH_SERVICE_HANDLER}
                   component={AuthServiceHandler}
                 />
-
                 <Route path={ROUTES.EVENTS} component={Events} />
                 <Route exact path={ROUTES.EVENT} component={Event} />
                 <Route exact path={ROUTES.EVENT_UID} component={Event} />
-
                 <Route path={ROUTES.RECIPES} component={Recipes} />
-
                 <Route
                   exact
                   path={ROUTES.USER_PUBLIC_PROFILE_UID}
                   component={publicProfile}
                 />
-
                 <Route path={ROUTES.UNITS} component={Units} />
                 <Route
                   path={ROUTES.UNITCONVERSION}
                   component={UnitConversion}
                 />
-
                 <Route path={ROUTES.PRODUCTS} component={Products} />
                 <Route path={ROUTES.DEPARTMENTS} component={Departments} />
-
                 <Route path={ROUTES.USERS} component={Users} />
                 <Route exact path={ROUTES.SYSTEM} component={System} />
                 <Route
@@ -236,9 +226,7 @@ const App = (props) => {
                   component={UserProfile}
                 />
                 <Route path={ROUTES.TEMP} component={Temp} />
-
                 <Route path={ROUTES.NOT_FOUND} component={NotFound} />
-
                 <Route exact path={ROUTES.RECIPE} component={Recipe} />
                 <Route exact path={ROUTES.RECIPE_UID} component={Recipe} />
                 <Route
@@ -251,7 +239,7 @@ const App = (props) => {
                   path={ROUTES.SHOPPINGLIST_UID}
                   component={ShoppingList}
                 />
-
+                f
                 <Route exact path={ROUTES.MENUPLAN} component={Menuplan} />
                 <Route exact path={ROUTES.MENUPLAN_UID} component={Menuplan} />
                 <Route
@@ -264,7 +252,6 @@ const App = (props) => {
                   path={ROUTES.QUANTITY_CALCULATION_UID}
                   component={QuantityCalculation}
                 />
-
                 <Redirect to="404" />
               </Switch>
             </Suspense>

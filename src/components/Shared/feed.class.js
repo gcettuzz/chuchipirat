@@ -42,10 +42,10 @@ export default class Feed {
   /* =====================================================================
   // Neuste X Feed holen
   // ===================================================================== */
-  static getNewestFeeds = async (
+  static getNewestFeeds = async ({
     firebase,
-    limitTo = DEFAULT_VALUES.FEEDS_DISPLAY
-  ) => {
+    limitTo = DEFAULT_VALUES.FEEDS_DISPLAY,
+  }) => {
     let feeds = [];
     let feed = {};
 
@@ -156,24 +156,58 @@ export default class Feed {
   /* =====================================================================
 // Cloud Function deleteFeeds aufrufen
 // ===================================================================== */
-  static callCloudFunctionDeleteFeeds = ({ firebase, daysOffset }) => {
+  static deleteFeeds = async ({
+    firebase,
+    daysOffset,
+    authUser,
+    traceListener,
+  }) => {
     if (!firebase || !daysOffset) {
       throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
     }
-    let deleteFeeds = firebase.functions.httpsCallable("deleteFeeds");
-    deleteFeeds({ daysoffset: daysOffset })
-      .then((result) => {
-        // Read result of the Cloud Function.
-        return result.data.text;
+    let listener;
+    let docRef = firebase.cloudFunctions_feed_Delete().doc();
+    await docRef
+      .set({
+        daysOffset: parseInt(daysOffset),
+        user: {
+          uid: authUser.uid,
+          displayName: authUser.publicProfile.displayName,
+        },
+        date: firebase.timestamp.fromDate(new Date()),
+      })
+      .then(async () => {
+        await firebase.delay(1);
+      })
+      .then(() => {
+        const unsubscribe = docRef.onSnapshot((snapshot) => {
+          traceListener(snapshot.data());
+          if (snapshot.data()?.done) {
+            // Wenn das Feld DONE vorhanden ist, ist die Cloud-Function durch
+            unsubscribe();
+          }
+        });
       })
       .catch((error) => {
-        console.error(error);
         throw error;
-        // Getting the Error details.
-        // var code = error.code;
-        // var message = error.message;
-        // var details = error.details;
-        // ...
+      });
+    console.log(listener);
+    return listener;
+  };
+  /* =====================================================================
+  // Einzelne Feeds löschen
+  // ===================================================================== */
+  static deleteFeed = async ({ firebase, feedUid }) => {
+    if (!firebase || !feedUid) {
+      throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
+    }
+    let docCollection = firebase.feeds();
+
+    await docCollection
+      .doc(feedUid)
+      .delete()
+      .catch((error) => {
+        throw error;
       });
   };
 }
