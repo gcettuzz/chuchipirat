@@ -163,7 +163,10 @@ const HomeBase = ({ props, authUser }) => {
         setError(error);
       });
 
-    Feed.getNewestFeeds(firebase, DEFAULT_VALUES.FEEDS_DISPLAY)
+    Feed.getNewestFeeds({
+      firebase: firebase,
+      limitTo: DEFAULT_VALUES.FEEDS_DISPLAY,
+    })
       .then((result) => {
         setFeeds(result);
         setIsLoadingFeed(false);
