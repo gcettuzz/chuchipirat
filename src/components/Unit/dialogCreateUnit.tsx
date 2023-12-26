@@ -1,0 +1,145 @@
+import React from "react";
+
+import Dialog from "@material-ui/core/Dialog";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import DialogActions from "@material-ui/core/DialogActions";
+
+import Button from "@material-ui/core/Button";
+import TextField from "@material-ui/core/TextField";
+
+import Unit from "./unit.class";
+import {
+  GIVE_UNIT as TEXT_GIVE_UNIT,
+  UNIT_CREATE as TEXT_UNIT_CREATE,
+  UNIT_CREATE_EXPLANATION as TEXT_UNIT_CREATE_EXPLANATION,
+  UNIT_ABREVIATION as TEXT_UNIT_ABREVIATION,
+  UNIT as TEXT_UNIT,
+  CANCEL as TEXT_CANCEL,
+  CREATE as TEXT_CREATE,
+} from "../../constants/text";
+
+/* ===================================================================
+// ======================== globale Funktionen =======================
+// =================================================================== */
+export const UNIT_ADD_INITIAL_STATE = {
+  key: "",
+  name: "",
+};
+/* ===================================================================
+// ===================== Pop Up Einheit hinzufügen ===================
+// =================================================================== */
+const DialogCreateUnit = ({
+  firebase,
+  dialogOpen,
+  handleCreate,
+  handleClose,
+  handleError,
+}) => {
+  const [formFields, setFormFields] = React.useState(UNIT_ADD_INITIAL_STATE);
+
+  const [validation, setValidation] = React.useState({
+    key: {hasError: false, errorText: ""},
+    name: {hasError: false, errorText: ""},
+  });
+
+  /* ------------------------------------------
+  // Change Ereignis Felder
+  // ------------------------------------------ */
+  const onChangeField = (event: React.ChangeEvent<HTMLInputElement>) => {
+    let field = event.target.id.split("-")[0];
+
+    setFormFields({
+      ...formFields,
+      [field]: event.target.value,
+    });
+  };
+  /* ------------------------------------------
+  // PopUp Ok
+  // ------------------------------------------ */
+  const onOkClick = () => {
+    // Prüfung Abteilung und Name gesetzt
+
+    let hasError = false;
+    if (!formFields.name) {
+      setValidation({
+        ...validation,
+        name: {hasError: true, errorText: TEXT_GIVE_UNIT},
+      });
+      hasError = true;
+    }
+    if (!formFields.key) {
+      setValidation({
+        ...validation,
+        key: {
+          hasError: true,
+          errorText: TEXT_GIVE_UNIT,
+        },
+      });
+      hasError = true;
+    }
+    if (hasError) {
+      return;
+    }
+    handleCreate(formFields.key, formFields.name);
+    setFormFields(UNIT_ADD_INITIAL_STATE);
+  };
+  /* ------------------------------------------
+  // PopUp Abbrechen
+  // ------------------------------------------ */
+  const onCancelClick = () => {
+    handleClose();
+  };
+
+  return (
+    <Dialog
+      open={dialogOpen}
+      onClose={handleClose}
+      aria-labelledby="dialogAddUnit"
+    >
+      <DialogTitle id="dialogAddProduct">{TEXT_UNIT_CREATE}</DialogTitle>
+      <DialogContent>
+        <DialogContentText>{TEXT_UNIT_CREATE_EXPLANATION}</DialogContentText>
+        <TextField
+          error={validation.key.hasError}
+          margin="dense"
+          id="key"
+          name="key"
+          value={formFields.key}
+          required
+          fullWidth
+          onChange={onChangeField}
+          label={TEXT_UNIT_ABREVIATION}
+          type="text"
+          helperText={validation.key.errorText}
+          autoComplete="off"
+        />
+        <TextField
+          error={validation.name.hasError}
+          margin="dense"
+          id="name"
+          name="name"
+          value={formFields.name}
+          required
+          fullWidth
+          onChange={onChangeField}
+          label={TEXT_UNIT}
+          type="text"
+          helperText={validation.name.errorText}
+          autoComplete="off"
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onCancelClick} color="primary" variant="outlined">
+          {TEXT_CANCEL}
+        </Button>
+        <Button onClick={onOkClick} color="primary" variant="contained">
+          {TEXT_CREATE}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+export default DialogCreateUnit;

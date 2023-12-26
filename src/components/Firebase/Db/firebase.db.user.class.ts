@@ -2,7 +2,7 @@ import Firebase from "../firebase.class";
 import FirebaseDbUserPublic from "./firebase.db.user.public.class";
 // import User from "../../User/user.class";
 import {
-  FirebaseSuper,
+  FirebaseDbSuper,
   ValueObject,
   // ReadCollection,
   PrepareDataForDb,
@@ -10,7 +10,11 @@ import {
 } from "./firebase.db.super.class";
 // import { AuthUser } from "../firebase.class.temp";
 // import FirebaseUserPublic from "./firebase.user.public.class";
-// import { ERROR_PARAMETER_NOT_PASSED } from "../../../constants/text";
+import { ERROR_NOT_IMPLEMENTED_YET } from "../../../constants/text";
+import {
+  STORAGE_OBJECT_PROPERTY,
+  StorageObjectProperty,
+} from "./sessionStorageHandler.class";
 // //FIXME: KOMMENTARE LÖSCHEN!
 
 // interface Update {
@@ -18,7 +22,7 @@ import {
 //   authUser: AuthUser;
 // }
 
-export class FirebaseDbUser extends FirebaseSuper {
+export class FirebaseDbUser extends FirebaseDbSuper {
   firebase: Firebase;
   public: FirebaseDbUserPublic;
   /* =====================================================================
@@ -34,6 +38,13 @@ export class FirebaseDbUser extends FirebaseSuper {
   // ===================================================================== */
   getCollection() {
     return this.firebase.db.collection("users");
+  }
+  /* =====================================================================
+  // Collection-Group holen
+  // ===================================================================== */
+  getCollectionGroup() {
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
+    return this.firebase.db.collectionGroup("none");
   }
   /* =====================================================================
   // Dokument holen
@@ -54,7 +65,8 @@ export class FirebaseDbUser extends FirebaseSuper {
     return {
       email: value.email,
       firstName: value.firstName,
-      lastLogin: this.firebase.timestamp.fromDate(value.lastLogin),
+      lastLogin: value.lastLogin,
+      // lastLogin: this.firebase.timestamp.fromDate(value.lastLogin),
       lastName: value.lastName,
       noLogins: value.noLogins,
       roles: value.roles,
@@ -69,12 +81,18 @@ export class FirebaseDbUser extends FirebaseSuper {
       firstName: value.firstName,
       lastName: value.lastName,
       email: value.email,
-      lastLogin: value.lastLogin.toDate(),
+      lastLogin: value.lastLogin,
+      // lastLogin: value.lastLogin.toDate(),
       noLogins: value.noLogins,
       roles: value.roles,
     } as unknown as T;
   }
-
+  /* =====================================================================
+  // Einstellungen für den Session Storage zurückgeben
+  //===================================================================== */
+  getSessionHandlerProperty(): StorageObjectProperty {
+    return STORAGE_OBJECT_PROPERTY.NONE;
+  }
   // /* =====================================================================
   // // Create
   // // ===================================================================== */

@@ -1,11 +1,24 @@
 import * as TEXT from "../../constants/text";
 import Firebase from "../Firebase/firebase.class";
 
+// TS_MIGRATION:
+export const STATS_FIELDS = {
+  // USERS: "noUsers",
+  // EVENTS: "noEvents",
+  // INGREDIENTS: "noIngredients",
+  // RECIPES: "noRecipes",
+  SHOPPING_LIST: "noShoppingLists",
+  // PARTICIPANTS: "noParticipants",
+};
+
 export enum StatsField {
   noUsers = "noUsers",
   noEvents = "noEvents",
   noIngredients = "noIngredients",
-  noRecipes = "noRecipes",
+  noMaterials = "noMaterials",
+  noRecipesPublic = "noRecipesPublic",
+  noRecipesPrivate = "noRecipesPrivate",
+  noRecipeVariants = "noRecipesVariants",
   noShoppingLists = "noShoppingLists",
   noParticipants = "noParticipants",
 }
@@ -15,7 +28,7 @@ interface incrementStat {
   field: StatsField;
   value: number;
 }
-interface kpi {
+export interface Kpi {
   id: StatsField;
   value: number;
   caption: string;
@@ -25,7 +38,8 @@ export default class Stats {
   noEvents: number;
   noIngredients: number;
   noParticipants: number;
-  noRecipes: number;
+  noRecipesPublic: number;
+  noRecipesPrivate: number;
   noShoppingLists: number;
   noUsers: number;
   /* =====================================================================
@@ -35,7 +49,8 @@ export default class Stats {
     this.noEvents = 0;
     this.noIngredients = 0;
     this.noParticipants = 0;
-    this.noRecipes = 0;
+    this.noRecipesPublic = 0;
+    this.noRecipesPrivate = 0;
     this.noShoppingLists = 0;
     this.noUsers = 0;
   }
@@ -44,6 +59,7 @@ export default class Stats {
   // ===================================================================== */
   /* istanbul ignore next */
   /* DB-Methode wird zur Zeit nicht geprüft */
+
   static incrementStat({ firebase, field, value = 1 }: incrementStat) {
     firebase.stats.incrementField({ uids: [""], field: field, value: value });
   }
@@ -53,7 +69,7 @@ export default class Stats {
   /* istanbul ignore next */
   /* DB-Methode wird zur Zeit nicht geprüft */
   static getStats = async (firebase: Firebase) => {
-    const stats: kpi[] = [];
+    const stats: Kpi[] = [];
 
     await firebase.stats
       .read<Stats>({})
@@ -62,7 +78,7 @@ export default class Stats {
           stats.push({
             id: key as StatsField,
             value: result[key as StatsField],
-            caption: Stats.getCaptionFromField(key as StatsField),
+            caption: Stats.getCaptionFromField(key as StatsField) as string,
           })
         );
       })
@@ -83,12 +99,18 @@ export default class Stats {
         return TEXT.HOME_STATS_CAPTIONS.EVENTS;
       case StatsField.noIngredients:
         return TEXT.HOME_STATS_CAPTIONS.INGREDIENTS;
-      case StatsField.noRecipes:
-        return TEXT.HOME_STATS_CAPTIONS.RECIPES;
+      case StatsField.noRecipesPublic:
+        return TEXT.HOME_STATS_CAPTIONS.RECIPES_PUBLIC;
+      case StatsField.noRecipesPrivate:
+        return TEXT.HOME_STATS_CAPTIONS.RECIPES_PRIVATE;
       case StatsField.noShoppingLists:
         return TEXT.HOME_STATS_CAPTIONS.SHOPPING_LISTS;
       case StatsField.noParticipants:
         return TEXT.HOME_STATS_CAPTIONS.PARTICIPANTS;
+      case StatsField.noMaterials:
+        return TEXT.HOME_STATS_CAPTIONS.MATERIALS;
+      case StatsField.noRecipeVariants:
+        return TEXT.HOME_STATS_CAPTIONS.RECIPES_VARIANTS;
     }
   };
 }

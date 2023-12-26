@@ -1,12 +1,16 @@
 import Firebase from "../firebase.class";
 import {
-  FirebaseSuper,
+  FirebaseDbSuper,
   ValueObject,
   PrepareDataForDb,
   PrepareDataForApp,
 } from "./firebase.db.super.class";
-
-export class FirebaseDummy extends FirebaseSuper {
+import { ERROR_NOT_IMPLEMENTED_YET } from "../../../constants/text";
+import {
+  STORAGE_OBJECT_PROPERTY,
+  StorageObjectProperty,
+} from "./sessionStorageHandler.class";
+export class FirebaseDummy extends FirebaseDbSuper {
   firebase: Firebase;
   /* =====================================================================
   // Constructor
@@ -21,6 +25,13 @@ export class FirebaseDummy extends FirebaseSuper {
   getCollection() {
     //FIXME:
     return this.firebase.db.collection("XYZ");
+  }
+  /* =====================================================================
+  // Collection-Group holen
+  // ===================================================================== */
+  getCollectionGroup() {
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
+    return this.firebase.db.collectionGroup("none");
   }
   /* =====================================================================
   // Dokument holen
@@ -64,6 +75,12 @@ export class FirebaseDummy extends FirebaseSuper {
   // ===================================================================== */
   prepareDataForApp<T extends ValueObject>({ uid, value }: PrepareDataForApp) {
     return { key: "dummy" } as unknown as T;
+  }
+  /* =====================================================================
+  // Einstellungen für den Session Storage zurückgeben
+  //===================================================================== */
+  getSessionHandlerProperty(): StorageObjectProperty {
+    return STORAGE_OBJECT_PROPERTY.NONE;
   }
 }
 export default FirebaseDummy;

@@ -1,10 +1,15 @@
-import { UserShort } from "../User/user.class";
+import {UserShort} from "../User/user.class";
 import Firebase from "../Firebase/firebase.class";
-import authUser from "../Firebase/__mocks__/authuser.mock";
-import { AuthUser } from "../Firebase/Authentication/authUser.class";
-import Feed, { FeedType } from "../Shared/feed.class";
+import {AuthUser} from "../Firebase/Authentication/authUser.class";
+import Feed, {FeedType} from "../Shared/feed.class";
 import Recipe from "./recipe.class";
+import Role from "../../constants/roles";
 
+export interface Rating {
+  avgRating: number;
+  noRatings: number;
+  myRating: number;
+}
 interface GetRatingOfUser {
   firebase: Firebase;
   recipeUid: string;
@@ -39,21 +44,17 @@ export class RecipeRating {
    * @param param0 - Objekt mit Firebase-Referenz, Rezept-UID, und User-UID
    * @returns Bewertung des angegebenen Users
    */
-  static async getUserRating({
-    firebase,
-    recipeUid,
-    userUid,
-  }: GetRatingOfUser) {
+  static async getUserRating({firebase, recipeUid, userUid}: GetRatingOfUser) {
     let recipeUserRating: number = 0;
 
-    await firebase.recipe.rating
-      .read<RecipeRating>({ uids: [recipeUid, userUid] })
+    await firebase.recipePublic.rating
+      .read<RecipeRating>({uids: [recipeUid, userUid]})
       .then((result) => {
         recipeUserRating = result.rating;
       })
       .catch((error) => {
-        console.error(error);
-        throw error;
+        // Kein Dokument vorhanden
+        recipeUserRating = 0;
       });
 
     return recipeUserRating;
@@ -70,9 +71,9 @@ export class RecipeRating {
     newRating,
     authUser,
   }: UpdateUserRating) {
-    let userRating: RecipeRating = { rating: newRating };
+    let userRating: RecipeRating = {rating: newRating};
 
-    await firebase.recipe.rating
+    await firebase.recipePublic.rating
       .update({
         uids: [recipe.uid, authUser.uid],
         value: userRating,
@@ -88,9 +89,10 @@ export class RecipeRating {
       firebase: firebase,
       authUser: authUser,
       feedType: FeedType.recipeRated,
+      feedVisibility: Role.basic,
       objectUid: recipe.uid,
       objectName: recipe.name,
-      objectPictureSrc: recipe.pictureSrc.normalSize,
+      objectPictureSrc: recipe.pictureSrc,
       textElements: [recipe.name, newRating.toString()],
     });
   }

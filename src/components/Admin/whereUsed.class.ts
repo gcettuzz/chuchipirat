@@ -2,13 +2,14 @@ import Firebase from "../Firebase/firebase.class";
 import FirebaseAnalyticEvent from "../../constants/firebaseEvent";
 
 import { ERROR_PARAMETER_NOT_PASSED } from "../../constants/text";
-import authUser from "../Firebase/__mocks__/authuser.mock";
 import { ValueObject } from "../Firebase/Db/firebase.db.super.class";
+import AuthUser from "../Firebase/Authentication/authUser.class";
 
 interface TraceRecipe {
   firebase: Firebase;
   uid: string;
   traceListener: any;
+  authUser: AuthUser;
 }
 
 export class WhereUsed {
@@ -19,9 +20,10 @@ export class WhereUsed {
    * @returns
    */
   static traceRecipe = async ({
-    firebase,
     uid,
     traceListener,
+    firebase,
+    authUser,
   }: TraceRecipe) => {
     let documentId: string;
     let documentData: ValueObject = {};

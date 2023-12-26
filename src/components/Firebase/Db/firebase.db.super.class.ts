@@ -1,11 +1,17 @@
-import { AuthUser } from "../Authentication/authUser.class";
+import {AuthUser} from "../Authentication/authUser.class";
 import {
   DocumentReference,
-  DocumentData,
   CollectionReference,
+  Query,
 } from "@firebase/firestore-types";
 
 import Firebase from "../firebase.class";
+import {
+  SessionStorageHandler,
+  StorageObjectProperty,
+} from "./sessionStorageHandler.class";
+
+import _ from "lodash";
 
 export interface ValueObject {
   [key: string]: any;
@@ -19,16 +25,25 @@ interface Create<T> {
 }
 interface Read {
   uids?: string[];
+  ignoreCache?: boolean;
 }
 interface ReadCollection {
   uids: string[];
   orderBy: OrderBy;
-  limit: number;
+  limit?: number;
   where?: Where[];
   startAfter?: any;
+  ignoreCache?: boolean;
 }
-interface Listen {
+interface ReadCollectionGroup {
+  orderBy?: OrderBy;
+  limit?: number;
+  where?: Where[];
+  ignoreCache?: boolean;
+}
+interface Listen<T> {
   uids?: string[];
+  callback: (T) => void;
 }
 interface Update<T> {
   uids: string[];
@@ -37,9 +52,14 @@ interface Update<T> {
 }
 interface UpdateFields {
   uids: string[];
-  values: { [key: string]: any };
+  values: {[key: string]: any};
   authUser: AuthUser;
   updateChangeFields?: boolean;
+}
+interface Set<T> {
+  uids: string[];
+  value: T;
+  authUser: AuthUser;
 }
 interface IncrementField {
   uids: string[];
@@ -49,21 +69,31 @@ interface IncrementField {
 interface Delete {
   uids: string[];
 }
-
+interface DeleteField {
+  fieldName: string;
+  uids: string[];
+}
 export interface PrepareDataForDb<T> {
   value: T;
+}
+export interface ListCollections {
+  uids: string[];
 }
 
 export interface PrepareDataForApp {
   uid: string;
   value: ValueObject;
 }
+export interface UpdateSessionStorageFromDbRead {
+  value: ValueObject;
+  documentUid: string;
+}
 
-interface OrderBy {
+export interface OrderBy {
   field: string;
   sortOrder: SortOrder;
 }
-interface Where {
+export interface Where {
   field: string;
   operator: Operator;
   value: any;
@@ -85,7 +115,7 @@ export enum Operator {
   notIn = "not-in",
 }
 
-export abstract class FirebaseSuper {
+export abstract class FirebaseDbSuper {
   abstract firebase: Firebase;
   /* =====================================================================
   // Create
@@ -96,17 +126,29 @@ export abstract class FirebaseSuper {
     uids,
     force = false,
   }: Create<T>): Promise<T> {
-    value = FirebaseSuper.setCreatedFields<T>(value, authUser, force);
+    value = FirebaseDbSuper.setCreatedFields<T>(value, authUser, force);
 
+    let dbObject = _.cloneDeep(this.convertDateValues(value));
     // Felder auf Firebase anpassen
-    let dbObject = this.prepareDataForDb({ value: value });
+    dbObject = this.prepareDataForDb({value: dbObject});
 
     const collection = this.getCollection(uids);
 
     return await collection
       .add(dbObject)
       .then((docRef) => {
-        return this.prepareDataForApp<T>({ uid: docRef.id, value: dbObject });
+        value = this.prepareDataForApp<T>({
+          uid: docRef.id,
+          value: this.convertTimestampValues(dbObject),
+        });
+        // Session Storage aufnehmen
+        SessionStorageHandler.upsertDocument({
+          storageObjectProperty: this.getSessionHandlerProperty(),
+          documentUid: docRef.id,
+          value: value,
+          prefix: uids ? uids[0] : "",
+        });
+        return value as T;
       })
       .catch((error) => {
         console.error(error);
@@ -116,22 +158,87 @@ export abstract class FirebaseSuper {
   /* =====================================================================
   // Read
   // ===================================================================== */
-  async read<T>({ uids }: Read): Promise<T> {
+  async read<T extends ValueObject>({
+    uids,
+    ignoreCache = false,
+  }: Read): Promise<T> {
+    const document = this.getDocument(uids);
+
+    if (!ignoreCache) {
+      // prüfen ob im Session-Storage was ist!
+      let sessionStorageData = SessionStorageHandler.getDocument<T>({
+        storageObjectProperty: this.getSessionHandlerProperty(),
+        documentUid: document.id,
+        prefix: uids ? uids[0] : "",
+      });
+      if (sessionStorageData) {
+        return new Promise((resolve) => {
+          resolve(sessionStorageData!);
+        });
+      }
+    }
+
+    return await document.get().then((snapshot) => {
+      if (!snapshot.data()) {
+        // Keine Daten -> Gibt ein leeres Objekt
+        return <T>{};
+      }
+      let values = this.prepareDataForApp<T>({
+        uid: snapshot.id,
+        value: this.convertTimestampValues(snapshot.data() as ValueObject),
+      });
+      console.warn("Daten aus der DB gelesen:", document.id);
+      // SessionStorage update
+      SessionStorageHandler.upsertDocument({
+        storageObjectProperty: this.getSessionHandlerProperty(),
+        documentUid: document.id,
+        value: values,
+        prefix: uids ? uids[0] : "",
+      });
+
+      return values;
+    });
+  }
+  /* =====================================================================
+  /**
+   * readRawData: Direktes lesen (ohne anpassen des Resultates an
+   * die gewünschte Datenstrutktur). Parameter als 1 Objekt übergeben
+   * @param uid - allfällige UID, die nötig sind für das ermitteln des
+   *              Dokuments
+   */
+  async readRawData({uids}: Read): Promise<ValueObject> {
     const document = this.getDocument(uids);
 
     return await document.get().then((snapshot) => {
-      return this.prepareDataForApp<T>({
-        uid: snapshot.id,
-        value: snapshot.data() as ValueObject,
-      });
+      if (!snapshot.data()) {
+        return {} as ValueObject;
+      } else {
+        return snapshot.data() as ValueObject;
+      }
+    });
+  }
+  /* =====================================================================
+  /**
+   * setRawData: Direktes schreiben (ohne anpassen des Resultates an
+   * die gewünschte Datenstrutktur). Parameter als 1 Objekt übergeben
+   * ATTENTION: Solte nur für Migration u.Ä. genutzt werden.
+   * @param uid - allfällige UID, die nötig sind für das ermitteln des
+   *              Dokuments
+   */
+  async setRawData<T>({uids, value, authUser}: Set<T>): Promise<void> {
+    const document = this.getDocument(uids);
+    let dbObject = value as object;
+    return await document.set(dbObject).catch((error) => {
+      console.error(error);
+      throw error;
     });
   }
   /* =====================================================================
   // Read Collection
   // ===================================================================== */
   /**
-   * readCollection: Lesen mehrere Dokumente. Abstrakt, da nicht alle die gleichen
-   * Paremter (OrderBy, Where, Limit) benötigen.
+   * readCollection: Lesen mehrere Dokumente.
+   * Paremter (OrderBy, Where, Limit) sind im Objektform.
    * @param interface ReadCollection mit Key: uid, orderBy, limit, where?
    */
   async readCollection<T extends ValueObject>({
@@ -140,8 +247,25 @@ export abstract class FirebaseSuper {
     limit,
     where,
     startAfter,
+    ignoreCache = false,
   }: ReadCollection) {
     let result: T[] = [];
+
+    if (!ignoreCache) {
+      // prüfen ob im Session-Storage was ist!
+      let sessionStorageData = SessionStorageHandler.getDocuments<T>({
+        storageObjectProperty: this.getSessionHandlerProperty(),
+        where: where,
+        orderBy: orderBy,
+        limit: limit,
+      });
+
+      if (sessionStorageData !== null) {
+        return new Promise<T[]>((resolve) => {
+          resolve(sessionStorageData!);
+        });
+      }
+    }
 
     const collection = this.getCollection(uids);
 
@@ -161,16 +285,79 @@ export abstract class FirebaseSuper {
         );
       });
     }
-
-    queryObject = queryObject.limit(limit);
+    if (limit) {
+      queryObject = queryObject.limit(limit);
+    }
 
     return await queryObject
+      .get()
+      .then((snapshot) => {
+        console.warn("Daten aus der DB gelesen");
+        snapshot.forEach((document) => {
+          let object = this.prepareDataForApp<T>({
+            uid: document.id,
+            value: this.convertTimestampValues(document.data()),
+          }) as T;
+          result.push(object);
+        });
+        // Session Storage updaten
+        SessionStorageHandler.upsertDocuments({
+          storageObjectProperty: this.getSessionHandlerProperty(),
+          values: result,
+        });
+        return result;
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  }
+  /* =====================================================================
+  // Read Collection
+  // ===================================================================== */
+  /**
+   * readCollectionGroup: Lesen aller Dokumente mit dem gleichen Namen.
+   * Paremter (OrderBy, Where, Limit) sind im Objektform.
+   * @param interface ReadCollection mit Key: uid, orderBy, limit, where?
+   */
+  async readCollectionGroup<T extends ValueObject>({
+    orderBy,
+    limit,
+    where,
+    ignoreCache = false,
+  }: ReadCollectionGroup) {
+    let result: T[] = [];
+    let collectionGroup = this.getCollectionGroup();
+
+    if (orderBy) {
+      collectionGroup = collectionGroup.orderBy(
+        orderBy.field,
+        orderBy.sortOrder
+      );
+    }
+
+    if (where) {
+      // Where Bedingungen verketten
+      where.forEach((statment) => {
+        collectionGroup = collectionGroup.where(
+          statment.field,
+          statment.operator,
+          statment.value
+        );
+      });
+    }
+
+    if (limit) {
+      collectionGroup = collectionGroup.limit(limit);
+    }
+
+    return await collectionGroup
       .get()
       .then((snapshot) => {
         snapshot.forEach((document) => {
           let object = this.prepareDataForApp<T>({
             uid: document.id,
-            value: document.data(),
+            value: this.convertTimestampValues(document.data()),
           }) as T;
           result.push(object);
         });
@@ -181,28 +368,30 @@ export abstract class FirebaseSuper {
         throw error;
       });
   }
+
   // ===================================================================== */
   /**
    * Listener für ein bestimmtes Dokument
    * Sobald das Dokument ändert, werden die Änderungen zurückgegeben
+   * Da die Methode nur ein Objekt zurückgeben kann und dies der Listener ist
+   * --> unsubscribe(), müssen die Werte über einen Callback hochgegeben werden.
    * @param param0 - Objekt mit uids ->  Array mit UIDs um zum Dokument
    *                 zu gelangen
    */
-  async listen<T extends ValueObject>({ uids }: Listen) {
+  async listen<T extends ValueObject>({uids, callback}: Listen<T>) {
     const document = this.getDocument(uids);
 
-    let listener = { unsubscribe: () => {}, data: {} };
+    // let listener = { unsubscribe: () => {}, data: <T>{} };
 
-    listener.unsubscribe = await document.onSnapshot((snapshot) => {
-      listener.data = this.prepareDataForApp<T>({
-        uid: snapshot.id,
-        value: snapshot.data() as ValueObject,
-      });
+    return document.onSnapshot((snapshot) => {
+      callback(
+        this.prepareDataForApp<T>({
+          uid: snapshot.id,
+          value: this.convertTimestampValues(snapshot.data() as ValueObject),
+        })
+      );
     });
-
-    return listener;
   }
-
   // ===================================================================== */
   /**
    * Update: Update des gesamten Dokumentes
@@ -217,16 +406,28 @@ export abstract class FirebaseSuper {
     value,
     authUser,
   }: Update<T>): Promise<ValueObject> {
-    value = FirebaseSuper.setLastChangeFields(value, authUser) as T;
-
+    value = FirebaseDbSuper.setLastChangeFields(value, authUser) as T;
     // Felder auf Firebase anpassen
-    let dbObject = this.prepareDataForDb<T>({ value: value });
+    let dbObject = _.cloneDeep(this.prepareDataForDb<T>({value: value}));
+    dbObject = this.convertDateValues(dbObject);
 
     const document = this.getDocument(uids);
     return await document
-      .set(dbObject)
+      .set(dbObject, {merge: true})
       .then(() => {
-        return this.prepareDataForApp<T>({ uid: value.id, value: value });
+        dbObject = this.prepareDataForApp<T>({
+          uid: document.id,
+          value: this.convertTimestampValues(dbObject),
+        });
+        // Session Storage updaten
+        SessionStorageHandler.upsertDocument({
+          storageObjectProperty: this.getSessionHandlerProperty(),
+          documentUid: document.id,
+          value: dbObject,
+          prefix: uids ? uids[0] : "",
+        });
+
+        return dbObject;
       })
       .catch((error) => {
         console.error(error);
@@ -254,17 +455,73 @@ export abstract class FirebaseSuper {
     authUser,
     updateChangeFields = false,
   }: UpdateFields): Promise<void> {
-    //TODO: Testen und auch die Update Methode!
-    console.log("values vor lastEdit", values);
-    values = FirebaseSuper.setLastChangeFields(
-      values,
-      authUser,
-      updateChangeFields
+    if (updateChangeFields) {
+      values = FirebaseDbSuper.setLastChangeFields(
+        values,
+        authUser,
+        updateChangeFields
+      );
+    }
+    values = _.cloneDeep(this.convertDateValues(values));
+    const document = this.getDocument(uids);
+
+    return document
+      .update(values)
+      .then(() => {
+        SessionStorageHandler.updateDocumentField({
+          storageObjectProperty: this.getSessionHandlerProperty(),
+          documentUid: document.id,
+          value: values,
+          prefix: uids ? uids[0] : "",
+        });
+      })
+      .catch((error) => {
+        throw error;
+      });
+  }
+  // =====================================================================
+  /**
+   * Set:
+   * Ganzes Dokument neu anlegen (oder überschreiben)
+   * Achtung: Wenn das Dokument bereits besteht, wird dieses ohne Rück-
+   * frage überschrieben
+   * @param uid - UID des Dokumentes in der Collection
+   * @param values - Neuer Wert
+   * @returns Promise<void>
+   */
+  // =====================================================================
+  public async set<T extends ValueObject>({
+    uids,
+    value,
+    authUser,
+  }: Set<T>): Promise<ValueObject> {
+    let dbObject = _.cloneDeep(
+      FirebaseDbSuper.setLastChangeFields(value, authUser) as T
     );
-    console.log("values nach lastEdit", values);
+    dbObject = this.convertDateValues(dbObject);
 
     const document = this.getDocument(uids);
-    return document.update(values);
+    dbObject = this.prepareDataForDb<T>({value: dbObject});
+    return document
+      .set(dbObject)
+      .then(() => {
+        dbObject = this.convertTimestampValues(dbObject);
+        dbObject = this.prepareDataForApp({uid: value.uid, value: dbObject});
+
+        // Session Storage updaten
+        SessionStorageHandler.upsertDocument({
+          storageObjectProperty: this.getSessionHandlerProperty(),
+          documentUid: document.id,
+          value: dbObject,
+          prefix: uids ? uids[0] : "",
+        });
+
+        return dbObject;
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
   }
   // ===================================================================== */
   /**
@@ -286,6 +543,16 @@ export abstract class FirebaseSuper {
       .update({
         [field]: this.firebase.fieldValue.increment(value),
       })
+      .then(() => {
+        // Session Storage anpassen
+        SessionStorageHandler.incrementFieldValue({
+          storageObjectProperty: this.getSessionHandlerProperty(),
+          documentUid: document.id,
+          field: field,
+          value: value,
+          prefix: uids ? uids[0] : "",
+        });
+      })
       .catch((error) => {
         console.error(error);
         throw error;
@@ -294,13 +561,51 @@ export abstract class FirebaseSuper {
   // =====================================================================
   /**
    * Delete
-   * Löschen eines Dokumentes - 💥 🧨 Achtung!!! Nicht implementiert!
+   * Löschen eines Dokumentes
    * @param uid - UID des Dokumentes
    */
   // =====================================================================
-  delete({ uids }: Delete): void {
-    console.error("🤪 not implemented!");
-    throw "🤪 not implemented!";
+  async delete({uids}: Delete) {
+    const document = this.getDocument(uids);
+
+    return document
+      .delete()
+      .then(() => {
+        // Session Storage updaten
+        SessionStorageHandler.deleteDocument({
+          storageObjectProperty: this.getSessionHandlerProperty(),
+          documentUid: document.id,
+          prefix: uids ? uids[0] : "",
+        });
+      })
+      .catch((error) => {
+        throw error;
+      });
+  }
+  // =====================================================================
+  /**
+   * Delete Field:
+   * Löschen eines bestimmten Feldes im Dokument
+   * @param uid - UID des Dokumentes
+   */
+  async deleteField({fieldName, uids}: DeleteField) {
+    const document = this.getDocument(uids);
+    return document
+      .update({
+        [fieldName]: this.firebase.fieldValue.delete(),
+      })
+      .then(() => {
+        // Session Storage updaten
+        SessionStorageHandler.deleteDocumentField({
+          storageObjectProperty: this.getSessionHandlerProperty(),
+          documentUid: document.id,
+          field: fieldName,
+          prefix: uids ? uids[0] : "",
+        });
+      })
+      .catch((error) => {
+        throw error;
+      });
   }
   // =====================================================================
   /**
@@ -315,7 +620,7 @@ export abstract class FirebaseSuper {
   abstract getDocument(uids?: string[]): DocumentReference;
   abstract getDocuments(): void;
   abstract getCollection(uids?: string[]): CollectionReference;
-
+  abstract getCollectionGroup(): Query;
   // =====================================================================
   /**
    * structureDataForDb: Daten in Struktur der DB verschieben
@@ -341,6 +646,47 @@ export abstract class FirebaseSuper {
     uid,
     value,
   }: PrepareDataForApp): T;
+  // =====================================================================
+  /**
+   * Einstellungen zu Session Handler holen
+   *
+   */
+  // =====================================================================
+  abstract getSessionHandlerProperty(): StorageObjectProperty;
+  /**
+   * Session Storage updaten
+   * Diese Methoden aktualisieren - wo nötig - den Sesseion Storage
+   */
+  // abstract updateSessionStorageFromDbRead({
+  //   value,
+  //   documentUid,
+  // }: UpdateSessionStorageFromDbRead): void;
+  // =====================================================================
+  /**
+   * Session Storage updaten
+   * Diese Methoden aktualisier gleich mehrere Dokuemnte
+   */
+  // abstract updateSessionStorageFromDbReadCollection(value: ValueObject[]): void;
+  // =====================================================================
+  /**
+   * Session Storage lesen
+   * Holen eines einzelnen Dokumentes
+   */
+  // abstract readSessionStorageValue<T extends ValueObject>(
+  //   documentUid: string
+  // ): T | null;
+  // =====================================================================
+  /**
+   * Session Storage lesen
+   * Holen eines mehrerer Dokumente
+   * @param where: Array mit möglichen Filterkriterien
+   */
+  // abstract readSessionStorageValues<T extends ValueObject>(
+  //   uids: string[] | undefined,
+  //   where: Where[],
+  //   orderBy: OrderBy
+  // ): T | null;
+
   // ===================================================================== */
   /**
    * setCreatedFields: Felder Created setzen. Falls vorhanden werden die
@@ -360,27 +706,10 @@ export abstract class FirebaseSuper {
     force?: boolean
   ) {
     if (value.hasOwnProperty("created") || force) {
-      let created = {
-        date: new Date(),
-        fromUid: authUser.uid,
-        fromDisplayName: authUser.publicProfile.displayName,
-      };
-      value = { ...value, ...created };
+      value.created.date = new Date();
+      value.created.fromUid = authUser.uid;
+      value.created.fromDisplayName = authUser.publicProfile.displayName;
     }
-    // else {
-    //   if (value.hasOwnProperty("createdAt") || force) {
-    //     value = { ...value, ...{ createdAt: new Date() } };
-    //   }
-    //   if (value.hasOwnProperty("createdFromUid") || force) {
-    //     value = { ...value, ...{ createdFromUid: authUser.uid } };
-    //   }
-    //   if (value.hasOwnProperty("createdFromDisplayName") || force) {
-    //     value = {
-    //       ...value,
-    //       ...{ createdFromDisplayName: authUser.publicProfile.displayName },
-    //     };
-    //   }
-    // }
     return value;
   }
   // ===================================================================== */
@@ -403,26 +732,74 @@ export abstract class FirebaseSuper {
     force?: boolean
   ) {
     if (value.hasOwnProperty("lastChange") || force) {
-      let lastChange = {
-        date: new Date(),
-        fromUid: authUser.uid,
-        fromDisplayName: authUser.publicProfile.displayName,
-      };
-      value = { ...value, ...lastChange };
+      value.lastChange.date = new Date();
+      value.lastChange.fromUid = authUser.uid;
+      value.lastChange.fromDisplayName = authUser.publicProfile.displayName;
     }
-
-    // if (value.hasOwnProperty("lastChangeAt") || force) {
-    //   value = { ...value, ...{ lastChangeAt: new Date() } };
-    // }
-    // if (value.hasOwnProperty("lastChangeFromUid") || force) {
-    //   value = { ...value, ...{ lastChangeFromUid: authUser.uid } };
-    // }
-    // if (value.hasOwnProperty("lastChangeFromDisplayName") || force) {
-    //   value = {
-    //     ...value,
-    //     ...{ lastChangeFromDisplayName: authUser.publicProfile.displayName },
-    //   };
-    // }
     return value;
+  }
+  // ===================================================================== */
+  /**
+   * Datum (JS) in Firebase Timestamp umwandeln
+   * Methode wird Rekursiv ausgeführt!
+   * @param values - Objekt
+   * @returns values- Objekt mit angepassten werten
+   */
+  // ===================================================================== */
+  convertDateValues(values: any) {
+    if (typeof values === "object" && values !== null) {
+      Object.entries(values).forEach(([key, value]) => {
+        switch (typeof value) {
+          case "object":
+            if (value instanceof Date) {
+              value = this.firebase.timestamp.fromDate(value);
+            } else if (Array.isArray(value)) {
+              value.forEach((entry) => this.convertDateValues(entry));
+            } else {
+              value = this.convertDateValues(value);
+            }
+            break;
+          default:
+        }
+        values[key] = value;
+      });
+    }
+    return values;
+  }
+  // ===================================================================== */
+  /**
+   * Timestamp (Firebase) in JS Datum umwandeln
+   * Methode wird Rekursiv ausgeführt!
+   * @param values - Objekt
+   * @returns values- Objekt mit angepassten werten
+   */
+  // ===================================================================== */
+  convertTimestampValues(values: any) {
+    if (typeof values === "object" && values !== null) {
+      // Wenn das Objekt bereits der Timestamp ist, hier abfangen
+      if (values instanceof this.firebase.timestamp) {
+        values = values.toDate();
+      } else {
+        // Objekt auseinandernehmen
+        Object.entries(values).forEach(([key, value]) => {
+          switch (typeof value) {
+            case "object":
+              if (value instanceof this.firebase.timestamp) {
+                value = value!.toDate();
+              } else if (Array.isArray(value)) {
+                value = value.map((entry) => {
+                  return this.convertTimestampValues(entry);
+                });
+              } else {
+                value = this.convertTimestampValues(value);
+              }
+              break;
+            default:
+          }
+          values[key] = value;
+        });
+      }
+    }
+    return values;
   }
 }

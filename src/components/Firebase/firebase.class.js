@@ -5,13 +5,29 @@ import FirebaseAnalyticEvent from "../../constants/firebaseEvent";
 
 import FirebaseDbEvent from "./Db/firebase.db.event.class";
 import FirebaseDbFeed from "./Db/firebase.db.feed.class";
-import FirebaseDbRecipe from "./Db/firebase.db.recipe.class";
-import FirebaseDbRecipeShort from "./Db/firebase.db.recipeShort.class";
+import FirebaseDbMasterData from "./Db/firebase.db.masterData.class";
+// import FirebaseDbRecipe from "./Db/firebase.db.recipe.class";
+// import FirebaseDbRecipeShort from "./Db/firebase.db.recipeShort.class";
+import "firebase/functions";
+import FirebaseDbRecipePublic from "./Db/firebase.db.recipe.public.class";
+import FirebaseDbRecipePrivate from "./Db/firebase.db.recipe.private.class";
+import FirebaseDbRecipeVariant from "./Db/firebase.db.recipe.variant.class";
+import FirebaseDbRecipeShortPublic from "./Db/firebase.db.recipeShort.public.class";
+import FirebaseDbRecipeShortPrivate from "./Db/firebase.db.recipeShort.private.class";
+import FirebaseDbRecipeShortVariant from "./Db/firebase.db.recipeShort.variant.class";
+
+import FirebaseEnviroment from "./Db/firebase.db.enviroment.class";
+
+import {FirebaseDbRequest} from "./Db/firebase.db.request.class";
+
 import FirebaseDbStats from "./Db/firebase.db.stats.class";
 import FirebaseDbUser from "./Db/firebase.db.user.class";
 import FirebaseDbCloudFunction from "./Db/firebase.db.cloudfunction.class";
 // import FirebaseDbCloudfunctionWaitingareaRecipetrace from "./Db/firebase.db.cloudfunction.waitingArea.recipeTrace";
 import FirebaseStorage from "./Storage/firebase.storage.class";
+// import { EmailAuthProvider } from "@firebase/auth-types";
+// import { Firestore } from "@firebase/firestore-types";
+import FirebaseDbMailbox from "./Db/firebase.db.mailbox.class";
 
 // import "firebase/database";
 import app from "firebase/app";
@@ -20,7 +36,8 @@ import "firebase/analytics";
 import "firebase/performance";
 import "firebase/storage";
 import "firebase/firestore";
-import "firebase/functions";
+import FirebaseDbEventShort from "./Db/firebase.db.eventShort.class";
+
 //TODO: zusammenführen mit TEMP (TS) Klasse
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -61,10 +78,12 @@ class Firebase {
     this.auth = firebase.auth();
     //TODO: db für struktur verwenden....
     this.db = firebase.firestore();
+
     this.analytics = firebase.analytics();
     this.performance = firebase.performance();
     //FIXME:
     this.storage = firebase.storage();
+
     this.functions = firebase.functions("europe-west6");
     // this.googleProvider = new app.auth.GoogleAuthProvider();
     // this.facebookProvider = new app.auth.FacebookAuthProvider();
@@ -75,17 +94,27 @@ class Firebase {
     this.taskEvent = app.storage.TaskEvent;
 
     //TODO: Das muss nach Upgrade in die Klasse FirebaseDb
-    this.recipe = new FirebaseDbRecipe(this);
-    this.recipeShort = new FirebaseDbRecipeShort(this);
+    this.recipePublic = new FirebaseDbRecipePublic(this);
+    this.recipePrivate = new FirebaseDbRecipePrivate(this);
+    this.recipeVariant = new FirebaseDbRecipeVariant(this);
+    this.recipeShortPublic = new FirebaseDbRecipeShortPublic(this);
+    this.recipeShortPrivate = new FirebaseDbRecipeShortPrivate(this);
+    this.recipeShortVariant = new FirebaseDbRecipeShortVariant(this);
+    this.request = new FirebaseDbRequest(this);
+
     this.event = new FirebaseDbEvent(this);
+    this.eventShort = new FirebaseDbEventShort(this);
     this.user = new FirebaseDbUser(this);
     this.feed = new FirebaseDbFeed(this);
     this.stats = new FirebaseDbStats(this);
+    this.masterdata = new FirebaseDbMasterData(this);
 
+    this.enviroment = new FirebaseEnviroment(this);
     // this.cloudFunctionRecipeTrace =
     //   new FirebaseDbCloudfunctionWaitingareaRecipetrace(this);
 
     this.cloudFunction = new FirebaseDbCloudFunction(this);
+    this.mailbox = new FirebaseDbMailbox(this);
     //TODO: umbennenen sobald V9
     this.fileStore = new FirebaseStorage(this);
   }
@@ -100,13 +129,13 @@ class Firebase {
 
     return this.auth.onAuthStateChanged(async (authUser) => {
       if (authUser) {
-        // Prüfen ob Infos zu User bereits im Session Storage gepseichert wurden
+        // Prüfen ob Infos zu User bereits im Session Storage gespeichert wurden
         let localStorageAuthUser = JSON.parse(
           localStorage.getItem(LOCAL_STORAGE.AUTH_USER)
         );
 
         if (!localStorageAuthUser) {
-          await this.user(authUser.uid)
+          await this.userDocument(authUser.uid)
             .get()
             .then((snapshot) => {
               if (snapshot.data()) {
@@ -180,7 +209,7 @@ class Firebase {
     return this.auth.signInWithEmailAndPassword(email, password);
   };
   // Erneut anmelden
-  reauthenticateWithCredential = ({ email, password }) => {
+  reauthenticateWithCredential = ({email, password}) => {
     let credential = this.emailAuthProvider.credential(email, password);
     return this.auth.currentUser.reauthenticateWithCredential(credential);
   };
@@ -260,7 +289,7 @@ class Firebase {
   // Abteilungen
   departments = () => this.db.doc("masterData/departments");
   // Rezept
-  // recipeDoc = (uid) => this.db.doc(`recipes/${uid}`);
+  recipeDoc = (uid) => this.db.doc(`recipes/${uid}`);
   // Übersicht aller Rezepte
   // allRecipes = () => this.db.doc(`recipes/000_allRecipes`);
   //  Rezepte
@@ -324,7 +353,7 @@ class Firebase {
   /* =====================================================================
   // Bild hochladen
   // ===================================================================== */
-  async uploadPicture({ file, filename = Utils.generateUid(20), folder }) {
+  async uploadPicture({file, filename = Utils.generateUid(20), folder}) {
     throw "🤪 falsche Methode";
 
     filename = filename + "." + Utils.getFileSuffix(file.name);
@@ -360,7 +389,7 @@ class Firebase {
   /* =====================================================================
   // Filevarianten mit Downloadlink holen
   // ===================================================================== */
-  async getPictureVariants({ folder, uid, sizes = [], oldDownloadUrl }) {
+  async getPictureVariants({folder, uid, sizes = [], oldDownloadUrl}) {
     throw "🤪 falsche Methode";
 
     // let counter = 0;
@@ -432,7 +461,7 @@ class Firebase {
   /* =====================================================================
   // Warten bis File gelöscht wurde
   // ===================================================================== */
-  waitUntilFileDeleted({ folder, uid, originalFile }) {
+  waitUntilFileDeleted({folder, uid, originalFile}) {
     let fileDeleted = false;
     let counter = 0;
     let originalRef = this.storage.ref(
@@ -458,7 +487,7 @@ class Firebase {
   /* =====================================================================
   // Bild löschen
   // ===================================================================== */
-  deletePicture = async ({ folder, filename }) => {
+  deletePicture = async ({folder, filename}) => {
     throw "🤪 falsche Methode";
 
     const imageRef = this.storage.ref(`${folder}${filename}`);

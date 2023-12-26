@@ -1,0 +1,1104 @@
+import React from "react";
+import {compose} from "recompose";
+
+import CssBaseline from "@material-ui/core/CssBaseline";
+
+import {
+  Container,
+  Typography,
+  TextField,
+  Divider,
+  Card,
+  CardContent,
+  Grid,
+  Backdrop,
+  CircularProgress,
+  IconButton,
+  Tabs,
+  Tab,
+} from "@material-ui/core";
+
+import DeleteIcon from "@material-ui/icons/Delete";
+
+import {
+  UNIT_CONVERSION_BASIC_CREATED as TEXT_UNIT_CONVERSION_BASIC_CREATED,
+  UNIT_CONVERSION_PRODUCT_CREATED as TEXT_UNIT_CONVERSION_PRODUCT_CREATED,
+  ENTRY_DELETED as TEXT_ENTRY_DELETED,
+  SAVE_SUCCESS as TEXT_SAVE_SUCCESS,
+  UID as TEXT_UID,
+  DENOMINATOR as TEXT_DENOMINATOR,
+  NUMERATOR as TEXT_NUMERATOR,
+  UNIT_FROM as TEXT_UNIT_FROM,
+  UNIT_TO as TEXT_UNIT_TO,
+  PRODUCT as TEXT_PRODUCT,
+  TYPE_UNKNOWN as TEXT_TYPE_UNKNOWN,
+  PAGE_TITLE_UNIT_CONVERSION as TEXT_PAGE_TITLE_UNIT_CONVERSION,
+  PAGE_SUBTITLE_UNIT_CONVERSION as TEXT_PAGE_SUBTITLE_UNIT_CONVERSION,
+  EDIT as TEXT_EDIT,
+  SAVE as TEXT_SAVE,
+  ADD as TEXT_ADD,
+  BASIC as TEXT_BASIC,
+  PRODUCT_SPECIFIC as TEXT_PRODUCT_SPECIFIC,
+  ALERT_TITLE_UUPS as TEXT_ALERT_TITLE_UUPS,
+} from "../../constants/text";
+import * as ROLES from "../../constants/roles";
+
+import PageTitle from "../Shared/pageTitle";
+import ButtonRow from "../Shared/buttonRow";
+import EnhancedTable, {
+  Column,
+  ColumnTextAlign,
+  TABLE_COLUMN_TYPES,
+  TableColumnTypes,
+} from "../Shared/enhancedTable";
+import AlertMessage from "../Shared/AlertMessage";
+
+import DialogCreateUnitConversion, {
+  HandleCreateProps,
+  UnitConversionType,
+} from "./dialogCreateUnitConversion";
+
+import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
+import useStyles from "../../constants/styles";
+
+import Unit from "./unit.class";
+import UnitConversion from "./unitConversion.class";
+import Product from "../Product/product.class";
+
+import {withFirebase} from "../Firebase";
+import {
+  AuthUserContext,
+  withAuthorization,
+  withEmailVerification,
+} from "../Session";
+import Utils from "../Shared/utils.class";
+import AuthUser from "../Firebase/Authentication/authUser.class";
+
+/* ===================================================================
+// ======================== globale Funktionen =======================
+// =================================================================== */
+enum ReducerActions {
+  FETCH_INIT,
+  UNIT_CONVERSION_BASIC_FETCH_SUCCESS,
+  UNIT_CONVERSION_PRODUCTS_FETCH_SUCCESS,
+  SNACKBAR_CLOSE,
+  PRODUCTS_FETCH_SUCCESS,
+  UNITS_FETCH_SUCCESS,
+  NEW_UNIT_CONVERSION_BASIC,
+  NEW_UNIT_CONVERSION_PRODUCT,
+  UNIT_CONVERSION_BASIC_ON_CHANGE,
+  UNIT_CONVERSION_PRODUCT_ON_CHANGE,
+  UNIT_CONVERSIONS_SAVED,
+  DELETE_BASIC_UNIT_CONVERSION,
+  DELETE_PRODUCT_UNIT_CONVERSION,
+  GENERIC_ERROR,
+}
+
+type isLoading = {
+  overall: boolean;
+  products: boolean;
+  units: boolean;
+  unitConversionBasic: boolean;
+  unitConversionProduct: boolean;
+};
+
+type State = {
+  unitConversionBasic: UnitConversion[];
+  unitConversionProduct: UnitConversion[];
+  products: Product[];
+  units: Unit[];
+  error: object;
+  isError: boolean;
+  isLoading: isLoading;
+  snackbar: Snackbar;
+};
+type DispatchAction = {
+  type: ReducerActions;
+  payload: {[key: string]: any};
+};
+
+const inititialState: State = {
+  unitConversionBasic: [],
+  unitConversionProduct: [],
+  products: [],
+  units: [],
+  error: {},
+  isError: false,
+  isLoading: {
+    overall: false,
+    products: false,
+    units: false,
+    unitConversionBasic: false,
+    unitConversionProduct: false,
+  },
+  snackbar: {open: false, severity: "success", message: ""},
+};
+
+const unitConversionReducer = (state: State, action: DispatchAction) => {
+  switch (action.type) {
+    case ReducerActions.FETCH_INIT:
+      // Daten werden geladen
+      return {
+        ...state,
+        isLoading: {
+          ...state.isLoading,
+          overall: true,
+          [action.payload.field]: true,
+        },
+      };
+    case ReducerActions.UNIT_CONVERSION_BASIC_FETCH_SUCCESS:
+      // Basic Umrechnung erfolgreich gelesen
+      return {
+        ...state,
+        unitConversionBasic: action.payload as UnitConversion[],
+        isLoading: {
+          ...state.isLoading,
+          unitConversionBasic: false,
+          overall: deriveIsLoading(
+            state.isLoading,
+            "unitConversionBasic",
+            false
+          ),
+        },
+      };
+    case ReducerActions.UNIT_CONVERSION_PRODUCTS_FETCH_SUCCESS:
+      // Produkte Umrechnung erfolgreich gelesen
+      return {
+        ...state,
+        unitConversionProduct: action.payload as UnitConversion[],
+        isLoading: {
+          ...state.isLoading,
+          unitConversionProduct: false,
+          overall: deriveIsLoading(
+            state.isLoading,
+            "unitConversionProduct",
+            false
+          ),
+        },
+      };
+    case ReducerActions.PRODUCTS_FETCH_SUCCESS:
+      // Produkte erfolgreich gelesen
+      return {
+        ...state,
+        products: action.payload as Product[],
+        isLoading: {
+          ...state.isLoading,
+          products: false,
+          overall: deriveIsLoading(state.isLoading, "products", false),
+        },
+      };
+    case ReducerActions.UNITS_FETCH_SUCCESS:
+      // Produkte erfolgreich gelesen
+      return {
+        ...state,
+        units: action.payload as Unit[],
+        isError: false,
+        isLoading: {
+          ...state.isLoading,
+          overall: deriveIsLoading(state.isLoading, "units", false),
+          units: false,
+        },
+      };
+    case ReducerActions.UNIT_CONVERSION_BASIC_ON_CHANGE:
+      // änderung der Feldwerte
+      return {
+        ...state,
+        unitConversionBasic: state.unitConversionBasic.map((unitConversion) => {
+          if (unitConversion.uid === action.payload.uid) {
+            unitConversion[action.payload.field] = action.payload.value;
+          }
+          return unitConversion;
+        }) as UnitConversion[],
+      };
+    case ReducerActions.UNIT_CONVERSION_PRODUCT_ON_CHANGE:
+      // änderung der Feldwerte
+      return {
+        ...state,
+        unitConversionProduct: state.unitConversionProduct.map(
+          (unitConversion) => {
+            if (unitConversion.uid === action.payload.uid) {
+              unitConversion[action.payload.field] = action.payload.value;
+            }
+            return unitConversion;
+          }
+        ) as UnitConversion[],
+      };
+    case ReducerActions.NEW_UNIT_CONVERSION_BASIC:
+      // Neue Umrechnung wurde erfasst
+      let tempUnitConversionBasic = [...state.unitConversionBasic];
+      tempUnitConversionBasic.push(action.payload as UnitConversion);
+      return {
+        ...state,
+        unitConversionBasic: tempUnitConversionBasic,
+        isError: false,
+      };
+    case ReducerActions.NEW_UNIT_CONVERSION_PRODUCT:
+      let tempUnitConversionProduct = [...state.unitConversionProduct];
+      tempUnitConversionProduct.push(action.payload as UnitConversion);
+      return {
+        ...state,
+        unitConversionProduct: tempUnitConversionProduct,
+        isError: false,
+      };
+    case ReducerActions.DELETE_BASIC_UNIT_CONVERSION:
+      // Einzelne Unit Conversion wurde gelöscht
+      return {
+        ...state,
+        unitConversionBasic: UnitConversion.deleteUnitConversion({
+          unitConversion: state.unitConversionBasic,
+          unitConversionUidToDelete: action.payload.uid,
+        }),
+      };
+    case ReducerActions.DELETE_PRODUCT_UNIT_CONVERSION:
+      // Einzelne Unit Conversion wurde gelöscht
+      return {
+        ...state,
+        unitConversionProduct: UnitConversion.deleteUnitConversion({
+          unitConversion: state.unitConversionProduct,
+          unitConversionUidToDelete: action.payload.uid,
+        }),
+      };
+    case ReducerActions.UNIT_CONVERSIONS_SAVED:
+      // Alles  gepeichert
+      return {
+        ...state,
+        isError: false,
+        snackbar: {
+          severity: "success",
+          message: TEXT_SAVE_SUCCESS,
+          open: true,
+        } as Snackbar,
+      };
+    case ReducerActions.SNACKBAR_CLOSE:
+      // Snackbar schliessen
+      return {
+        ...state,
+        snackbar: {
+          severity: "success",
+          message: "",
+          open: false,
+        } as Snackbar,
+      };
+    case ReducerActions.GENERIC_ERROR:
+      // allgemeiner Fehler
+      return {
+        ...state,
+        isError: true,
+        error: action.payload,
+      };
+    default:
+      console.error("Unbekannter ActionType: ", action.type);
+      throw new Error();
+  }
+};
+/* ------------------------------------------
+// Ableiten ob Daten noch geladen werden
+// ------------------------------------------ */
+const deriveIsLoading = (
+  actualState: isLoading,
+  newField: string,
+  newValue: boolean
+) => {
+  let counterTrue = 0;
+  actualState[newField] = newValue;
+
+  Object.keys(actualState).forEach((key) => {
+    if (key !== "overall" && actualState[key] == true) {
+      counterTrue += 1;
+    }
+  });
+
+  if (counterTrue === 0) {
+    return false;
+  } else {
+    return true;
+  }
+};
+const BASIC_TABLE_COLUMS: Column[] = [
+  {
+    id: "uid",
+    type: TableColumnTypes.string,
+    textAlign: ColumnTextAlign.center,
+    disablePadding: false,
+    label: TEXT_UID,
+    visible: false,
+  },
+  {
+    id: "denominator",
+    type: TableColumnTypes.number,
+    textAlign: ColumnTextAlign.center,
+    disablePadding: false,
+    label: TEXT_DENOMINATOR,
+    visible: true,
+  },
+  {
+    id: "fromUnit",
+    type: TableColumnTypes.string,
+    textAlign: ColumnTextAlign.center,
+    disablePadding: false,
+    label: TEXT_UNIT_FROM,
+    visible: true,
+  },
+  {
+    id: "numerator",
+    type: TableColumnTypes.number,
+    textAlign: ColumnTextAlign.center,
+    disablePadding: false,
+    label: TEXT_NUMERATOR,
+    visible: true,
+  },
+  {
+    id: "toUnit",
+    type: TableColumnTypes.string,
+    textAlign: ColumnTextAlign.center,
+    disablePadding: false,
+    label: TEXT_UNIT_TO,
+    visible: true,
+  },
+];
+const PRODUCT_TABLE_COLUMS: Column[] = [
+  {
+    id: "uid",
+    type: TableColumnTypes.string,
+    textAlign: ColumnTextAlign.center,
+    disablePadding: false,
+    label: TEXT_UID,
+    visible: false,
+  },
+  {
+    id: "productName",
+    type: TableColumnTypes.string,
+    textAlign: ColumnTextAlign.left,
+    disablePadding: false,
+    label: TEXT_PRODUCT,
+    visible: true,
+  },
+  {
+    id: "denominator",
+    type: TableColumnTypes.number,
+    textAlign: ColumnTextAlign.center,
+    disablePadding: false,
+    label: TEXT_DENOMINATOR,
+    visible: true,
+  },
+  {
+    id: "fromUnit",
+    type: TableColumnTypes.string,
+    textAlign: ColumnTextAlign.center,
+    disablePadding: false,
+    label: TEXT_UNIT_TO,
+    visible: true,
+  },
+  {
+    id: "numerator",
+    type: TableColumnTypes.number,
+    textAlign: ColumnTextAlign.center,
+    disablePadding: false,
+    label: TEXT_NUMERATOR,
+    visible: true,
+  },
+  {
+    id: "toUnit",
+    type: TableColumnTypes.string,
+    textAlign: ColumnTextAlign.center,
+    disablePadding: false,
+    label: TEXT_UNIT_TO,
+    visible: true,
+  },
+];
+
+/* ===================================================================
+// =============================== Page ==============================
+// =================================================================== */
+const UnitConversionPage = (props) => {
+  return (
+    <AuthUserContext.Consumer>
+      {(authUser) => <UnitConversionBase props={props} authUser={authUser} />}
+    </AuthUserContext.Consumer>
+  );
+};
+/* ===================================================================
+// =============================== Base ==============================
+// =================================================================== */
+const UnitConversionBase = ({props, authUser}) => {
+  const firebase = props.firebase;
+  const classes = useStyles();
+
+  const [state, dispatch] = React.useReducer(
+    unitConversionReducer,
+    inititialState
+  );
+
+  const [unitConversionCreateValues, setUnitConversionCreateValues] =
+    React.useState({
+      popUpOpen: false,
+      unitConversionType: UnitConversionType.NONE,
+    });
+  const [editMode, setEditMode] = React.useState(false);
+  const [tabValue, setTabValue] = React.useState(0);
+  /* ------------------------------------------
+	// Daten aus der db holen
+	// ------------------------------------------ */
+  React.useEffect(() => {
+    // Umrechnungen Basic holen
+    dispatch({
+      type: ReducerActions.FETCH_INIT,
+      payload: {field: "unitConversionBasic"},
+    });
+
+    UnitConversion.getAllConversionBasic({firebase: firebase}).then(
+      (result) => {
+        // Die Werte werden als Array benötigt, damit die Tabelle damit umgehen kann
+        let unitConversionBasic = Utils.convertObjectToArray(result, "uid");
+        dispatch({
+          type: ReducerActions.UNIT_CONVERSION_BASIC_FETCH_SUCCESS,
+          payload: unitConversionBasic,
+        });
+      }
+    );
+    // Umrechnungen Produkte holen
+    UnitConversion.getAllConversionProducts({firebase: firebase}).then(
+      (result) => {
+        let unitConversionBasicProducts = Utils.convertObjectToArray(
+          result,
+          "uid"
+        );
+        dispatch({
+          type: ReducerActions.UNIT_CONVERSION_PRODUCTS_FETCH_SUCCESS,
+          payload: unitConversionBasicProducts,
+        });
+      }
+    );
+  }, []);
+  React.useEffect(() => {
+    if (editMode) {
+      // Produkte holen
+      if (state.products.length === 0) {
+        dispatch({
+          type: ReducerActions.FETCH_INIT,
+          payload: {field: "products"},
+        });
+        Product.getAllProducts({firebase: firebase, onlyUsable: true})
+          .then((result) => {
+            dispatch({
+              type: ReducerActions.PRODUCTS_FETCH_SUCCESS,
+              payload: result,
+            });
+          })
+          .catch((error) => {
+            console.error(error);
+            dispatch({
+              type: ReducerActions.GENERIC_ERROR,
+              payload: error,
+            });
+          });
+      }
+      // Einheiten holen
+      if (state.units.length === 0) {
+        dispatch({
+          type: ReducerActions.FETCH_INIT,
+          payload: {field: "units"},
+        });
+        Unit.getAllUnits({firebase: firebase})
+          .then((result) => {
+            let units = Utils.convertObjectToArray(result, "key");
+            // result.map((unit) => unit.key);
+
+            dispatch({
+              type: ReducerActions.UNITS_FETCH_SUCCESS,
+              payload: units,
+            });
+          })
+          .catch((error) => {
+            dispatch({
+              type: ReducerActions.GENERIC_ERROR,
+              payload: error,
+            });
+          });
+      }
+    }
+  }, [editMode]);
+  /* ------------------------------------------
+	// Edit Mode wechsel
+	// ------------------------------------------ */
+  const toggleEditMode = () => {
+    setEditMode(!editMode);
+  };
+  /* ------------------------------------------
+	// Tab wechseln
+	// ------------------------------------------ */
+  const onTabChange = (event: React.ChangeEvent<{}>, newValue: number) => {
+    setTabValue(newValue);
+  };
+  /* ------------------------------------------
+	// PopUp öffnen um neue Umrechnung anzulegen
+	// ------------------------------------------ */
+  const onAddUnitConversionClick = () => {
+    let conversionType: UnitConversionType;
+
+    switch (tabValue) {
+      case 0:
+        conversionType = UnitConversionType.BASIC;
+        break;
+      case 1:
+        conversionType = UnitConversionType.PRODUCT;
+        break;
+      default:
+        throw new Error(TEXT_TYPE_UNKNOWN);
+    }
+
+    setUnitConversionCreateValues({
+      ...unitConversionCreateValues,
+      popUpOpen: true,
+      unitConversionType: conversionType,
+    });
+  };
+  /* ------------------------------------------
+	// Einheit hinzufügen --> PopUp schliessen
+	// ------------------------------------------ */
+  const onPopUpClose = () => {
+    setUnitConversionCreateValues({
+      ...unitConversionCreateValues,
+      popUpOpen: false,
+    });
+  };
+  /* ------------------------------------------
+	// Fehler beim anlegen der Einheit
+	// ------------------------------------------ */
+  const onPopUpError = (error: object) => {
+    dispatch({
+      type: ReducerActions.GENERIC_ERROR,
+      payload: error,
+    });
+    setUnitConversionCreateValues({
+      ...unitConversionCreateValues,
+      popUpOpen: false,
+    });
+  };
+  /* ------------------------------------------
+	// Einheit wurde angelegt
+	// ------------------------------------------ */
+  const onAddUnitConversion = (unitConversion: UnitConversion) => {
+    let newUid = Object.keys(unitConversion)[0];
+
+    switch (unitConversionCreateValues.unitConversionType) {
+      case UnitConversionType.BASIC:
+        dispatch({
+          type: ReducerActions.NEW_UNIT_CONVERSION_BASIC,
+          payload: unitConversion,
+        });
+        break;
+      case UnitConversionType.PRODUCT:
+        dispatch({
+          type: ReducerActions.NEW_UNIT_CONVERSION_PRODUCT,
+          payload: unitConversion,
+        });
+        break;
+    }
+    setUnitConversionCreateValues({
+      ...unitConversionCreateValues,
+      popUpOpen: false,
+    });
+  };
+  /* ------------------------------------------
+	// Änderungen speichern
+	// ------------------------------------------ */
+  const onSaveClick = () => {
+    UnitConversion.saveUnitConversions({
+      firebase: firebase,
+      unitConversionBasic: state.unitConversionBasic,
+      unitConversionProducts: state.unitConversionProduct,
+      authUser: authUser,
+    })
+      .then(() => {
+        dispatch({
+          type: ReducerActions.UNIT_CONVERSIONS_SAVED,
+          payload: {},
+        });
+      })
+      .catch((error) => {
+        dispatch({
+          type: ReducerActions.GENERIC_ERROR,
+          payload: error,
+        });
+      });
+  };
+  /* ------------------------------------------
+	// Snackback schliessen
+	// ------------------------------------------ */
+  const handleSnackbarClose = (
+    event: React.SyntheticEvent | React.MouseEvent,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    dispatch({
+      type: ReducerActions.SNACKBAR_CLOSE,
+      payload: {},
+    });
+  };
+  /* ------------------------------------------
+	// OnChange der EditTable
+	// ------------------------------------------ */
+  const onChangeEditTableField = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    let unitConversionField = event.target.id.split("_");
+    switch (tabValue) {
+      case 0:
+        dispatch({
+          type: ReducerActions.UNIT_CONVERSION_BASIC_ON_CHANGE,
+          payload: {
+            uid: unitConversionField[1],
+            field: unitConversionField[0],
+            value: event.target.value,
+          },
+        });
+        break;
+      case 1:
+        dispatch({
+          type: ReducerActions.UNIT_CONVERSION_PRODUCT_ON_CHANGE,
+          payload: {
+            uid: unitConversionField[1],
+            field: unitConversionField[0],
+            value: event.target.value,
+          },
+        });
+        break;
+      default:
+        throw new Error(TEXT_TYPE_UNKNOWN);
+    }
+  };
+  /* ------------------------------------------
+	// Eintrag aus Tabelle löschen
+	// ------------------------------------------ */
+  const onTableRowDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
+    let pressedButton = event.currentTarget.id.split("_");
+    switch (tabValue) {
+      case 0:
+        dispatch({
+          type: ReducerActions.DELETE_BASIC_UNIT_CONVERSION,
+          payload: {uid: pressedButton[1]},
+        });
+
+        break;
+      case 1:
+        dispatch({
+          type: ReducerActions.DELETE_PRODUCT_UNIT_CONVERSION,
+          payload: {uid: pressedButton[1]},
+        });
+        break;
+      default:
+        throw new Error(TEXT_TYPE_UNKNOWN);
+    }
+  };
+  return (
+    <React.Fragment>
+      <CssBaseline />
+      {/*===== HEADER ===== */}
+      <PageTitle
+        title={TEXT_PAGE_TITLE_UNIT_CONVERSION}
+        subTitle={TEXT_PAGE_SUBTITLE_UNIT_CONVERSION}
+      />
+      <ButtonRow
+        key="buttons_edit"
+        buttons={[
+          {
+            id: "edit",
+            hero: true,
+            visible:
+              !editMode &&
+              (authUser.roles.includes(ROLES.SUB_ADMIN) ||
+                authUser.roles.includes(ROLES.ADMIN)),
+            label: TEXT_EDIT,
+            variant: "contained",
+            color: "primary",
+            onClick: toggleEditMode,
+          },
+          {
+            id: "save",
+            hero: true,
+            visible:
+              editMode &&
+              (authUser.roles.includes(ROLES.SUB_ADMIN) ||
+                authUser.roles.includes(ROLES.ADMIN)),
+            label: TEXT_SAVE,
+            variant: "contained",
+            color: "primary",
+            onClick: onSaveClick,
+          },
+          {
+            id: "add",
+            hero: true,
+            visible:
+              (authUser.roles.includes(ROLES.SUB_ADMIN) ||
+                authUser.roles.includes(ROLES.ADMIN)) &&
+              editMode,
+            label: TEXT_ADD,
+            variant: "outlined",
+            color: "primary",
+            onClick: onAddUnitConversionClick,
+          },
+        ]}
+      />
+      {/* ===== BODY ===== */}
+      <Container className={classes.container} component="main" maxWidth="md">
+        <Backdrop className={classes.backdrop} open={state.isLoading.overall}>
+          <CircularProgress color="inherit" />
+        </Backdrop>
+        <Grid container spacing={2}>
+          <Grid item key={"gridTabs"} xs={12}>
+            <Tabs
+              // className={classes.tabs}
+              value={tabValue}
+              onChange={onTabChange}
+              indicatorColor="primary"
+              textColor="primary"
+              centered
+            >
+              <Tab
+                // className={classes.tabs}
+                label={TEXT_BASIC}
+              />
+              <Tab label={TEXT_PRODUCT_SPECIFIC} />
+            </Tabs>
+          </Grid>
+
+          {state.isError && (
+            <Grid item key={"error"} xs={12}>
+              <AlertMessage
+                error={state.error}
+                messageTitle={TEXT_ALERT_TITLE_UUPS}
+              />
+            </Grid>
+          )}
+
+          {/* Tabs */}
+          {tabValue === 0 && (
+            <Grid item key={"BasicConversionPanel"} xs={12}>
+              <br />
+              <BasicConversionPanel
+                unitConversions={state.unitConversionBasic}
+                onChangeField={onChangeEditTableField}
+                onDeleteClick={onTableRowDelete}
+                editMode={editMode}
+              />
+            </Grid>
+          )}
+          {tabValue === 1 && (
+            <Grid item key={"BasicConversionPanel"} xs={12}>
+              <br />
+              <ProductConversionPanel
+                unitConversions={state.unitConversionProduct}
+                onChangeField={onChangeEditTableField}
+                onDeleteClick={onTableRowDelete}
+                editMode={editMode}
+              />
+            </Grid>
+          )}
+          <Grid item key={"empty"} xs={12}></Grid>
+        </Grid>
+      </Container>
+      <DialogCreateUnitConversion
+        firebase={firebase}
+        units={state.units}
+        products={state.products}
+        dialogOpen={unitConversionCreateValues.popUpOpen}
+        unitConversionType={unitConversionCreateValues.unitConversionType}
+        handleCreate={onAddUnitConversion}
+        handleClose={onPopUpClose}
+        handleError={onPopUpError}
+      />
+      <CustomSnackbar
+        message={state.snackbar.message}
+        severity={state.snackbar.severity}
+        snackbarOpen={state.snackbar.open}
+        handleClose={handleSnackbarClose}
+      />
+    </React.Fragment>
+  );
+};
+/* ===================================================================
+// ====================== Basic Conversion Panel  ====================
+// =================================================================== */
+interface BasicConversionPanelProps {
+  unitConversions: UnitConversion[];
+  onChangeField: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onDeleteClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  editMode: boolean;
+}
+const BasicConversionPanel = ({
+  unitConversions,
+  onChangeField,
+  onDeleteClick,
+  editMode,
+}: BasicConversionPanelProps) => {
+  const classes = useStyles();
+
+  return (
+    <Card className={classes.card} key={"cardBasicUnitConversion"}>
+      <CardContent className={classes.cardContent} key={"cardTagsContent"}>
+        <Typography gutterBottom={true} variant="h5" component="h2">
+          {TEXT_BASIC}
+        </Typography>
+        {editMode ? (
+          <Grid container spacing={2}>
+            {/* Überschriften */}
+            <Grid item xs={3}>
+              <Typography variant="subtitle1" align="center">
+                {TEXT_DENOMINATOR}
+              </Typography>
+            </Grid>
+            <Grid item xs={2}>
+              <Typography variant="subtitle1" align="center">
+                {TEXT_UNIT_FROM}
+              </Typography>
+            </Grid>
+            <Grid item xs={3}>
+              <Typography variant="subtitle1" align="center">
+                {TEXT_NUMERATOR}
+              </Typography>
+            </Grid>
+            <Grid item xs={2}>
+              <Typography variant="subtitle1" align="center">
+                {TEXT_UNIT_TO}
+              </Typography>
+            </Grid>
+            <Grid item xs={2} />
+
+            <Divider />
+            {unitConversions.map((conversionRule) => (
+              <BasicConversionEditRow
+                key={"basicConversionRow_" + conversionRule.uid}
+                unitConversion={conversionRule}
+                onChangeField={onChangeField}
+                onDeleteClick={onDeleteClick}
+              />
+            ))}
+          </Grid>
+        ) : (
+          <EnhancedTable
+            tableData={unitConversions}
+            tableColumns={BASIC_TABLE_COLUMS}
+            keyColum={"uid"}
+            onIconClick={() => {}}
+            onRowClick={() => {}}
+          />
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+/* ===================================================================
+// ====================== Reihe Conversion Basic  ===================£=
+// =================================================================== */
+interface BasicConversionEditRowProps {
+  unitConversion: UnitConversion;
+  onChangeField: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onDeleteClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+}
+const BasicConversionEditRow = ({
+  unitConversion,
+  onChangeField,
+  onDeleteClick,
+}: BasicConversionEditRowProps) => {
+  const classes = useStyles();
+  return (
+    <React.Fragment>
+      {/* Überschriften */}
+      <Grid item xs={3} key={"grid_denominator_" + unitConversion.uid}>
+        <TextField
+          id={"denominator_" + unitConversion.uid}
+          key={"denominator_" + unitConversion.uid}
+          value={unitConversion.denominator}
+          onChange={onChangeField}
+          fullWidth
+          inputProps={{style: {textAlign: "center"}}}
+        />
+      </Grid>
+      <Grid item xs={2} key={"grid_fromUnit_" + unitConversion.uid}>
+        <Typography color="textSecondary" align="center">
+          {unitConversion.fromUnit}
+        </Typography>
+      </Grid>
+      <Grid item xs={3} key={"grid_numerator_" + unitConversion.uid}>
+        <TextField
+          id={"numerator_" + unitConversion.uid}
+          key={"numerator_" + unitConversion.uid}
+          value={unitConversion.numerator}
+          onChange={onChangeField}
+          fullWidth
+          inputProps={{style: {textAlign: "center"}}}
+        />
+      </Grid>
+      <Grid item xs={2} key={"grid_toUnit_" + unitConversion.uid}>
+        <Typography color="textSecondary" align="center">
+          {unitConversion.toUnit}
+        </Typography>
+      </Grid>
+      <Grid item xs={2} key={"grid_deleteRow_" + unitConversion.uid}>
+        <IconButton
+          color="primary"
+          component="span"
+          id={"deleteRow_" + unitConversion.uid}
+          onClick={onDeleteClick}
+        >
+          <DeleteIcon fontSize="small" />
+        </IconButton>
+      </Grid>
+      <Grid item xs={12} key={"grid_divider" + unitConversion.uid}>
+        <Divider />
+      </Grid>
+    </React.Fragment>
+  );
+};
+/* ===================================================================
+// ====================== Poduct Conversion Panel  ===================
+// =================================================================== */
+interface ProductConversionPanelProps {
+  unitConversions: UnitConversion[];
+  onChangeField: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onDeleteClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  editMode: boolean;
+}
+const ProductConversionPanel = ({
+  unitConversions,
+  onChangeField,
+  onDeleteClick,
+  editMode,
+}: ProductConversionPanelProps) => {
+  const classes = useStyles();
+
+  return (
+    <Card className={classes.card} key={"cardBasicUnitConversion"}>
+      <CardContent className={classes.cardContent} key={"cardTagsContent"}>
+        <Typography gutterBottom={true} variant="h5" component="h2">
+          {TEXT_PRODUCT_SPECIFIC}
+        </Typography>
+        {editMode ? (
+          <Grid container spacing={2}>
+            {/* Überschriften */}
+            <Grid item xs={12} sm={4}>
+              <Typography variant="subtitle1">{TEXT_PRODUCT}</Typography>
+            </Grid>
+            <Grid item xs={3} sm={2}>
+              <Typography variant="subtitle1" align="center">
+                {TEXT_DENOMINATOR}
+              </Typography>
+            </Grid>
+            <Grid item xs={2} sm={1}>
+              <Typography variant="subtitle1" align="center">
+                {TEXT_UNIT_FROM}
+              </Typography>
+            </Grid>
+            <Grid item xs={3} sm={2}>
+              <Typography variant="subtitle1" align="center">
+                {TEXT_NUMERATOR}
+              </Typography>
+            </Grid>
+            <Grid item xs={2} sm={1}>
+              <Typography variant="subtitle1" align="center">
+                {TEXT_UNIT_TO}
+              </Typography>
+            </Grid>
+            <Grid item xs={2} />
+
+            <Divider />
+            {unitConversions.map((conversionRule) => (
+              <ProductConversionEditRow
+                key={"productConversionRow_" + conversionRule.uid}
+                unitConversion={conversionRule}
+                onChangeField={onChangeField}
+                onDeleteClick={onDeleteClick}
+              />
+            ))}
+          </Grid>
+        ) : (
+          <EnhancedTable
+            tableData={unitConversions}
+            tableColumns={PRODUCT_TABLE_COLUMS}
+            keyColum={"uid"}
+            onIconClick={() => {}}
+            onRowClick={() => {}}
+          />
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+/* ===================================================================
+// ===================== Reihe Conversion Produkt  ===================
+// =================================================================== */
+interface ProductConversionEditRowProps {
+  unitConversion: UnitConversion;
+  onChangeField: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onDeleteClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+}
+const ProductConversionEditRow = ({
+  unitConversion,
+  onChangeField,
+  onDeleteClick,
+}: ProductConversionEditRowProps) => {
+  const classes = useStyles();
+  return (
+    <React.Fragment>
+      <Grid item xs={12} sm={4} key={"grid_productName_" + unitConversion.uid}>
+        <Typography color="textSecondary">
+          {unitConversion.productName}
+        </Typography>
+      </Grid>{" "}
+      <Grid item xs={3} sm={2} key={"grid_denominator_" + unitConversion.uid}>
+        <TextField
+          id={"denominator_" + unitConversion.uid}
+          key={"denominator_" + unitConversion.uid}
+          value={unitConversion.denominator}
+          onChange={onChangeField}
+          fullWidth
+          inputProps={{style: {textAlign: "center"}}}
+        />
+      </Grid>
+      <Grid item xs={2} sm={1} key={"grid_fromUnit_" + unitConversion.uid}>
+        <Typography color="textSecondary" align="center">
+          {unitConversion.fromUnit}
+        </Typography>
+      </Grid>
+      <Grid item xs={3} sm={2} key={"grid_numerator_" + unitConversion.uid}>
+        <TextField
+          id={"numerator_" + unitConversion.uid}
+          key={"numerator_" + unitConversion.uid}
+          value={unitConversion.numerator}
+          onChange={onChangeField}
+          fullWidth
+          inputProps={{style: {textAlign: "center"}}}
+        />
+      </Grid>
+      <Grid item xs={2} sm={1} key={"grid_toUnit_" + unitConversion.uid}>
+        <Typography color="textSecondary" align="center">
+          {unitConversion.toUnit}
+        </Typography>
+      </Grid>
+      <Grid item xs={2} sm={2} key={"grid_deleteRow_" + unitConversion.uid}>
+        <IconButton
+          color="primary"
+          component="span"
+          id={"deleteRow_" + unitConversion.uid}
+          onClick={onDeleteClick}
+        >
+          <DeleteIcon fontSize="small" />
+        </IconButton>
+      </Grid>
+      <Grid item xs={12} key={"grid_divider" + unitConversion.uid}>
+        <Divider />
+      </Grid>
+    </React.Fragment>
+  );
+};
+
+const condition = (authUser: AuthUser) => !!authUser;
+
+export default compose(
+  withEmailVerification,
+  withAuthorization(condition),
+  withFirebase
+)(UnitConversionPage);

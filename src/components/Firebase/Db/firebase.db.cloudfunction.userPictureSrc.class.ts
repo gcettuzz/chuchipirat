@@ -1,6 +1,5 @@
 import Firebase from "../firebase.class";
 import FirebaseDbCloudFunctionSuper, {
-  TriggerCloudFunction,
   CloudFunctionType,
 } from "./firebase.db.cloudfunction.super.class";
 
@@ -20,6 +19,12 @@ export class FirebaseDbCloudFunctionUserPictureSrc extends FirebaseDbCloudFuncti
     return this.firebase.db.collection(
       "_cloudFunctions/waitingArea/user_pictureSrc"
     );
+  }
+  /* =====================================================================
+  // CloudFunction Type zurückgeben
+  // ===================================================================== */
+  getCloudFunctionType(): CloudFunctionType {
+    return CloudFunctionType.userPictureSrc;
   }
 }
 export default FirebaseDbCloudFunctionUserPictureSrc;

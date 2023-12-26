@@ -1,34 +1,48 @@
+import { ERROR_NOT_IMPLEMENTED_YET } from "../../../constants/text";
 import Firebase from "../firebase.class";
 // import Stats from "../../Shared/stats.class";
 import {
-  FirebaseSuper,
+  FirebaseDbSuper,
   ValueObject,
   PrepareDataForDb,
   PrepareDataForApp,
+  Where,
+  OrderBy,
+  UpdateSessionStorageFromDbRead,
 } from "./firebase.db.super.class";
 // import { AuthUser } from "../firebase.class.temp";
-// import { ERROR_PARAMETER_NOT_PASSED } from "../../../constants/text";
+import { ERROR_PARAMETER_NOT_PASSED } from "../../../constants/text";
+import {
+  STORAGE_OBJECT_PROPERTY,
+  SessionStorageHandler,
+  StorageObjectProperty,
+} from "./sessionStorageHandler.class";
+// import { SessionStorageHandlerStats } from "../../SessionStorage/sessionStorageHandler.stats.class";
 // //FIXME: KOMMENTARE LÖSCHEN!
 
-// interface Create {
-//   value: Stats;
-//   authUser: AuthUser;
-// }
-
-export class FirebaseDbStats extends FirebaseSuper {
+export class FirebaseDbStats extends FirebaseDbSuper {
   firebase: Firebase;
+  // sessionStorageHandler: SessionStorageHandlerStats;
   /* =====================================================================
   // Constructor
   // ===================================================================== */
   constructor(firebase: Firebase) {
     super();
     this.firebase = firebase;
+    // this.sessionStorageHandler = new SessionStorageHandlerStats();
   }
   /* =====================================================================
   // Collection holen
   // ===================================================================== */
   getCollection() {
     return this.firebase.db.collection("stats");
+  }
+  /* =====================================================================
+  // Collection-Group holen
+  // ===================================================================== */
+  getCollectionGroup() {
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
+    return this.firebase.db.collectionGroup("none");
   }
   /* =====================================================================
   // Dokument holen
@@ -40,7 +54,7 @@ export class FirebaseDbStats extends FirebaseSuper {
   // Dokumente holen
   // ===================================================================== */
   getDocuments() {
-    // Not implemented
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
@@ -49,8 +63,12 @@ export class FirebaseDbStats extends FirebaseSuper {
     return {
       noEvents: value.noEvents,
       noIngredients: value.noIngredients,
+      noMaterials: value.noMaterials,
       noParticipants: value.noParticipants,
-      noRecipes: value.noRecipes,
+      noRecipesPublic: value.noRecipesPublic,
+      noRecipesPrivate: value.noRecipesPrivate,
+      noRecipesVariants: value.noRecipesVariants,
+      noShoppingLists: value.noShoppingLists,
       noUsers: value.noUsers,
     };
   }
@@ -61,88 +79,20 @@ export class FirebaseDbStats extends FirebaseSuper {
     return {
       noEvents: value.noEvents,
       noIngredients: value.noIngredients,
+      noMaterials: value.noMaterials,
       noParticipants: value.noParticipants,
-      noRecipes: value.noRecipes,
+      noRecipesPublic: value.noRecipesPublic,
+      noRecipesPrivate: value.noRecipesPrivate,
+      noRecipesVariants: value.noRecipesVariants,
       noShoppingLists: value.noShoppingLists,
       noUsers: value.noUsers,
     } as unknown as T;
   }
-  // /* =====================================================================
-  // // Create
-  // // ===================================================================== */
-  // async create({ value, authUser }: Create) {
-  //   let stats = this.structureDataForDb(value);
-  //   const document = this.getDocument();
-
-  //   // Diese Dokument darf es nur einmal geben, nicht überschreiben falls
-  //   // bereits existent
-  //   await document.get().then((snapshot) => {
-  //     if (!snapshot.exists) {
-  //       document.set(stats);
-  //     }
-  //   });
-  //   return stats;
-  // }
-  // /* =====================================================================
-  // // Read
-  // // ===================================================================== */
-  // async read() {
-  //   const document = this.getDocument();
-
-  //   return await document.get().then((snapshot) => {
-  //     return this.structureDataFromDb(snapshot.data() as ValueObject) as Stats;
-  //   });
-  // }
-  // /* =====================================================================
-  // // Read der Collection
-  // // ===================================================================== */
-  // public async readCollection<T extends ValueObject>({
-  //   orderBy,
-  //   where,
-  //   limit,
-  // }: ReadCollection) {
-  //   if (!orderBy || !where || !limit) {
-  //     console.error(ERROR_PARAMETER_NOT_PASSED);
-  //     throw ERROR_PARAMETER_NOT_PASSED;
-  //   }
-
-  //   let result: T[] = [];
-
-  //   const collection = this.getCollection();
-
-  //   return await collection
-  //     .orderBy(orderBy.field, orderBy.sortOrder)
-  //     .where(where.field, where.operator, where.value)
-  //     .limit(limit)
-  //     .get()
-  //     .then((snapshot) => {
-  //       snapshot.forEach((document) => {
-  //         let object = this.prepareDataForApp<T>({
-  //           uid: document.id,
-  //           value: document,
-  //         }) as T;
-  //         result.push(object);
-  //       });
-  //       return result;
-  //     })
-  //     .catch((error) => {
-  //       console.error(error);
-  //       throw error;
-  //     });
-  // }
-  // /* =====================================================================
-  // // Update
-  // // ===================================================================== */
-  // async update({ uid, value, authUser }: Update) {
-  //   const document = this.getDocument();
-
-  //   return document.set(value).then(() => {
-  //     return value;
-  //   });
-  // }
-  // /* =====================================================================
-  // // Delete
-  // // ===================================================================== */
-  // delete() {}
+  /* =====================================================================
+  // Einstellungen für den Session Storage zurückgeben
+  //===================================================================== */
+  getSessionHandlerProperty(): StorageObjectProperty {
+    return STORAGE_OBJECT_PROPERTY.STATS;
+  }
 }
 export default FirebaseDbStats;

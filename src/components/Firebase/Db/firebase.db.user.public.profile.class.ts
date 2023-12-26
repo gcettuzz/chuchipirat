@@ -1,12 +1,17 @@
+import { ERROR_NOT_IMPLEMENTED_YET } from "../../../constants/text";
 import Firebase from "../firebase.class";
 
 import {
-  FirebaseSuper,
+  FirebaseDbSuper,
   ValueObject,
   // ReadCollection,
   PrepareDataForDb,
   PrepareDataForApp,
 } from "./firebase.db.super.class";
+import {
+  STORAGE_OBJECT_PROPERTY,
+  StorageObjectProperty,
+} from "./sessionStorageHandler.class";
 // import { AuthUser } from "../firebase.class.temp";
 // import { ERROR_PARAMETER_NOT_PASSED } from "../../../constants/text";
 
@@ -17,7 +22,7 @@ import {
 //   authUser: AuthUser;
 // }
 
-export class FirebaseDbUserPublicProfile extends FirebaseSuper {
+export class FirebaseDbUserPublicProfile extends FirebaseDbSuper {
   firebase: Firebase;
   /* =====================================================================
   // Constructor
@@ -33,6 +38,14 @@ export class FirebaseDbUserPublicProfile extends FirebaseSuper {
     return this.firebase.db.collection(`users/${uids[0]}/public`);
   }
   /* =====================================================================
+  // Collection-Group holen
+  // ===================================================================== */
+  getCollectionGroup() {
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
+    return this.firebase.db.collectionGroup("none");
+  }
+  /*
+  /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
@@ -42,7 +55,7 @@ export class FirebaseDbUserPublicProfile extends FirebaseSuper {
   // Dokumente holen
   // ===================================================================== */
   getDocuments() {
-    // Not implemented
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
@@ -50,33 +63,22 @@ export class FirebaseDbUserPublicProfile extends FirebaseSuper {
   prepareDataForDb<T extends ValueObject>({ value }: PrepareDataForDb<T>) {
     return {
       displayName: value.displayName,
-      memberSince: this.firebase.timestamp.fromDate(value.memberSince),
-      memberId: value.memberId,
-      motto: value.motto,
-      noComments: value.noComments,
-      noEvents: value.noEvents,
-      noRecipes: value.noRecipes,
-      pictureSrc: value.pictureSrc,
-      pictureSrcFullSize: value.PictureSrcFullSize,
+      memberSince: value.memberSince,
+      // memberSince: this.firebase.timestamp.fromDate(value.memberSince),
+      memberId: value.memberId ? value.memberId : 0,
+      motto: value.motto ? value.motto : "",
+      pictureSrc: value.pictureSrc ? value.pictureSrc : "",
+      stats: {
+        noComments: value.stats.noComments ? value.stats.noComments : 0,
+        noEvents: value.stats.noEvents ? value.stats.noEvents : 0,
+        noRecipesPublic: value.stats.noRecipesPublic
+          ? value.stats.noRecipesPublic
+          : 0,
+        noRecipesPrivate: value.stats.noRecipesPrivate
+          ? value.stats.noRecipesPrivate
+          : 0,
+      },
     };
-    //   authUsers: value.authUsers,
-    //   cooks: value.cooks,
-    //   createdAt: this.firebase.timestamp.fromDate(value.createdAt),
-    //   createdFromDisplayName: value.createdFromDisplayName,
-    //   createdFromUid: value.createdFromUid,
-    //   dates: value.dates,
-    //   lastChangeAt: this.firebase.timestamp.fromDate(value.lastChangeAt),
-    //   lastChangeFromDisplayName: value.lastChangeFromDisplayName,
-    //   lastChangeFromUid: value.lastChangeFromUid,
-    //   location: value.location,
-    //   maxDate: this.firebase.timestamp.fromDate(value.maxDate),
-    //   motto: value.motto,
-    //   name: value.name,
-    //   participants: parseInt(value.participants),
-    //   numberOfDays: value.numberOfDays,
-    //   pictureSrc: value.pictureSrc,
-    //   pictureSrcFullSize: value.pictureSrcFullSize,
-    // };
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
@@ -85,114 +87,23 @@ export class FirebaseDbUserPublicProfile extends FirebaseSuper {
     return {
       uid: uid,
       displayName: value.displayName,
-      memberSince: value.memberSince.toDate(),
+      memberSince: value.memberSince,
+      // memberSince: value.memberSince.toDate(),
       motto: value.motto,
       pictureSrc: value.pictureSrc,
-      pictureSrcFullSize: value.pictureSrcFullSize,
-      noComments: value.noComments,
-      noEvents: value.noEvents,
-      noRecipes: value.noRecipes,
+      stats: {
+        noComments: value.stats.noComments,
+        noEvents: value.stats.noEvents,
+        noRecipesPublic: value.stats.noRecipesPublic,
+        noRecipesPrivate: value.stats.noRecipesPrivate,
+      },
     } as unknown as T;
   }
-
-  // /* =====================================================================
-  // // Create
-  // // ===================================================================== */
-  // public async create({ value, authUser }: Create): Promise<ValueObject> {
-  //   // Felder auf Firebase anpassen
-  //   let publicProfile = this.structureDataForDb(value);
-
-  //   const document = this.getDocument(value.uid);
-
-  //   return await document
-  //     .set(publicProfile)
-  //     .then(() => {
-  //       return this.structureDataFromDb({
-  //         uid: value.uid,
-  //         value: publicProfile,
-  //       });
-  //     })
-  //     .catch((error) => {
-  //       console.error(error);
-  //       throw error;
-  //     });
-  // }
-  // /* =====================================================================
-  // // Read
-  // // ===================================================================== */
-  // public async read(uid: string) {
-  //   const document = this.getDocument(uid);
-
-  //   return await document.get().then((snapshot) => {
-  //     return this.structureDataFromDb({
-  //       uid: uid,
-  //       value: snapshot.data() as ValueObject,
-  //     }) as UserPublicProfile;
-  //   });
-  // }
-  // /* =====================================================================
-  // // Read der Collection
-  // // ===================================================================== */
-  // public async readCollection<T extends ValueObject>({
-  //   uid,
-  //   orderBy,
-  //   where,
-  //   limit,
-  // }: ReadCollection) {
-  //   if (!orderBy || !where || !limit) {
-  //     console.error(ERROR_PARAMETER_NOT_PASSED);
-  //     throw ERROR_PARAMETER_NOT_PASSED;
-  //   }
-
-  //   let result: T[] = [];
-
-  //   const collection = this.getCollection(uid);
-
-  //   return await collection
-  //     .orderBy(orderBy.field, orderBy.sortOrder)
-  //     .where(where.field, where.operator, where.value)
-  //     .limit(limit)
-  //     .get()
-  //     .then((snapshot) => {
-  //       snapshot.forEach((document) => {
-  //         let object = this.prepareDataForApp<T>({
-  //           uid: document.id,
-  //           value: document,
-  //         }) as T;
-  //         result.push(object);
-  //       });
-  //       return result;
-  //     })
-  //     .catch((error) => {
-  //       console.error(error);
-  //       throw error;
-  //     });
-  // }
-
-  // /* =====================================================================
-  // // Update
-  // // ===================================================================== */
-  // public async update({ value, authUser }: Update): Promise<ValueObject> {
-  //   return new Promise((resolve) => resolve(<ValueObject>{}));
-
-  //   // value = FirebaseSuper.setLastChangeFields({
-  //   //   value: value,
-  //   //   authUser: authUser,
-  //   // }) as Event;
-
-  //   // // Felder auf Firebase anpassen
-  //   // let event = this.structureDataForDb(value);
-
-  //   // const document = this.getDocument(value.uid);
-  //   // await document.set(value).catch((error) => {
-  //   //   console.error(error);
-  //   //   throw error;
-  //   // });
-  //   // return value;
-  // }
   /* =====================================================================
-  // Delete
-  // ===================================================================== */
-  // public delete(uid: string) {}
+  // Einstellungen für den Session Storage zurückgeben
+  //===================================================================== */
+  getSessionHandlerProperty(): StorageObjectProperty {
+    return STORAGE_OBJECT_PROPERTY.PROFILE_PUBLIC;
+  }
 }
 export default FirebaseDbUserPublicProfile;

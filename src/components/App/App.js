@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from "react";
+import React, {Suspense, lazy} from "react";
 import {
   BrowserRouter as Router,
   Route,
@@ -28,8 +28,9 @@ import PasswordReset from "../AuthServiceHandler/passwordReset";
 
 import PasswordChange from "../PasswordChange/passwordChange";
 import HomePage from "../Home/home";
-import Event from "../Event/event";
-import Events from "../Event/events";
+import Event from "../Event/Event/event";
+import CreateNewEvent from "../Event/Event/createNewEvent";
+// import Events from "../Event/events";
 import Recipes from "../Recipe/recipes";
 import Users from "../User/users";
 import System from "../Admin/system";
@@ -38,6 +39,10 @@ import FeedDelete from "../Admin/feedDelete";
 import WhereUsed from "../Admin/whereUsed";
 import MergeProducts from "../Admin/mergeProducts";
 import Jobs from "../Admin/executeJob";
+import BuildDbIndices from "../Admin/buildDbIndex";
+
+import OverviewRecipes from "../Admin/overviewRecipes";
+import OverviewEvents from "../Admin/overviewEvents";
 
 import UserPublicProfile from "../User/publicProfile";
 import UserProfile from "../User/userProfile";
@@ -46,23 +51,25 @@ import Units from "../Unit/units";
 import UnitConversion from "../Unit/unitConversion";
 import Products from "../Product/products";
 import Departments from "../Department/departments";
+import requestOverview from "../Request/requestOverview";
 import useStyles from "../../constants/styles";
 import NotFound from "../404/404";
 
 import Temp from "../Temp/temp";
 
 import * as ROUTES from "../../constants/routes";
-import { withAuthentication } from "../Session/index";
+import {withAuthentication} from "../Session/index";
 
-import { MuiThemeProvider, createTheme } from "@material-ui/core/styles";
+import {MuiThemeProvider, createTheme} from "@material-ui/core/styles";
 import red from "@material-ui/core/colors/red";
 import publicProfile from "../User/publicProfile";
-import { useMediaQuery } from "@material-ui/core";
+import {useMediaQuery} from "@material-ui/core";
 import FallbackLoading from "../Shared/fallbackLoading";
+import CustomDialog from "../Shared/customDialog";
 
 // Für nachträglicher Load --> Code Splitting
-const ShoppingList = lazy(() => import("../ShoppingList/shoppingList"));
-const Menuplan = lazy(() => import("../Menuplan/menuplan"));
+const ShoppingList = lazy(() => import("../Event/ShoppingList/shoppingList"));
+const Menuplan = lazy(() => import("../Event/Menuplan/menuplan"));
 const QuantityCalculation = lazy(() =>
   import("../QuantityCalculation/quantityCalculation")
 );
@@ -78,6 +85,8 @@ const App = (props) => {
   /* ------------------------------------------
   // Farbpaletten
   // ------------------------------------------ */
+  //TODO: für Integ anderes Farbschema....
+  //TODO: Farbpalete in anderes File auslagern.....
   const darkPalett = {
     type: "dark",
     primary: {
@@ -117,7 +126,7 @@ const App = (props) => {
   const theme = React.useMemo(
     () =>
       createTheme(
-        prefersDarkMode ? { palette: darkPalett } : { palette: lightPalette }
+        prefersDarkMode ? {palette: darkPalett} : {palette: lightPalette}
       ),
     [prefersDarkMode]
   );
@@ -144,7 +153,7 @@ const App = (props) => {
               path={[
                 ROUTES.RECIPE,
                 ROUTES.RECIPES,
-                ROUTES.EVENTS,
+                ROUTES.CREATE_NEW_EVENT,
                 ROUTES.EVENT,
                 ROUTES.MENUPLAN,
                 ROUTES.QUANTITY_CALCULATION,
@@ -178,7 +187,10 @@ const App = (props) => {
                   path={ROUTES.AUTH_SERVICE_HANDLER}
                   component={AuthServiceHandler}
                 />
-                <Route path={ROUTES.EVENTS} component={Events} />
+                <Route
+                  path={ROUTES.CREATE_NEW_EVENT}
+                  component={CreateNewEvent}
+                />
                 <Route exact path={ROUTES.EVENT} component={Event} />
                 <Route exact path={ROUTES.EVENT_UID} component={Event} />
                 <Route path={ROUTES.RECIPES} component={Recipes} />
@@ -194,13 +206,27 @@ const App = (props) => {
                 />
                 <Route path={ROUTES.PRODUCTS} component={Products} />
                 <Route path={ROUTES.DEPARTMENTS} component={Departments} />
-              <Route exact path={ROUTES.ADMIN_JOBS} component={Jobs} />
+                <Route exact path={ROUTES.SYSTEM_JOBS} component={Jobs} />
                 <Route path={ROUTES.USERS} component={Users} />
                 <Route exact path={ROUTES.SYSTEM} component={System} />
+                <Route
+                  path={ROUTES.REQUEST_OVERVIEW}
+                  component={requestOverview}
+                />
                 <Route
                   exact
                   path={ROUTES.SYSTEM_GLOBAL_SETTINGS}
                   component={GlobalSettings}
+                />
+                <Route
+                  exact
+                  path={ROUTES.SYSTEM_OVERVIEW_RECIPES}
+                  component={OverviewRecipes}
+                />
+                <Route
+                  exact
+                  path={ROUTES.SYSTEM_OVERVIEW_EVENTS}
+                  component={OverviewEvents}
                 />
                 <Route
                   exact
@@ -219,6 +245,11 @@ const App = (props) => {
                 />
                 <Route
                   exact
+                  path={ROUTES.SYSTEM_DB_INDICES}
+                  component={BuildDbIndices}
+                />
+                <Route
+                  exact
                   path={ROUTES.USER_PROFILE}
                   component={UserProfile}
                 />
@@ -231,6 +262,7 @@ const App = (props) => {
                 <Route path={ROUTES.NOT_FOUND} component={NotFound} />
                 <Route exact path={ROUTES.RECIPE} component={Recipe} />
                 <Route exact path={ROUTES.RECIPE_UID} component={Recipe} />
+                <Route exact path={ROUTES.RECIPE_USER_UID} component={Recipe} />
                 <Route
                   exact
                   path={ROUTES.SHOPPINGLIST}
@@ -265,7 +297,7 @@ const App = (props) => {
                 ROUTES.HOME,
                 ROUTES.RECIPE,
                 ROUTES.RECIPES,
-                ROUTES.EVENTS,
+                ROUTES.CREATE_NEW_EVENT,
                 ROUTES.EVENT,
                 ROUTES.MENUPLAN,
                 ROUTES.QUANTITY_CALCULATION,
@@ -284,6 +316,7 @@ const App = (props) => {
           </div>
         </div>
       </Router>
+      <CustomDialog />
     </MuiThemeProvider>
   );
 };

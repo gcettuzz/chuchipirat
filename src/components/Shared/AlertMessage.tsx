@@ -7,7 +7,7 @@ interface AlertMessageProps {
   error?: object;
   severity?: Color;
   messageTitle?: string;
-  body: string;
+  body?: string | JSX.Element;
 }
 
 /* ===================================================================

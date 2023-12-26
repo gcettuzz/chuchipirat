@@ -21,5 +21,11 @@ export class FirebaseDbCloudFunctionRecipeUpdate extends FirebaseDbCloudFunction
       "_cloudFunctions/waitingArea/recipeUpdate"
     );
   }
+  /* =====================================================================
+  // CloudFunction Type zurückgeben
+  // ===================================================================== */
+  getCloudFunctionType(): CloudFunctionType {
+    return CloudFunctionType.recipeTrace;
+  }
 }
 export default FirebaseDbCloudFunctionRecipeUpdate;

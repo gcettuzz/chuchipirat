@@ -2,12 +2,16 @@ import Firebase from "../firebase.class";
 // import UserPublicSearchFields from "../../User/user.public.searchFields.class";
 
 import {
-  FirebaseSuper,
+  FirebaseDbSuper,
   ValueObject,
   // ReadCollection,
   PrepareDataForDb,
   PrepareDataForApp,
 } from "./firebase.db.super.class";
+import {
+  STORAGE_OBJECT_PROPERTY,
+  StorageObjectProperty,
+} from "./sessionStorageHandler.class";
 // import { AuthUser } from "../firebase.class.temp";
 // import { ERROR_PARAMETER_NOT_PASSED } from "../../../constants/text";
 // //FIXME: KOMMENTARE LÖSCHEN!
@@ -17,7 +21,7 @@ import {
 //   authUser: AuthUser;
 // }
 
-export class FirebaseUserPublicSearchFields extends FirebaseSuper {
+export class FirebaseUserPublicSearchFields extends FirebaseDbSuper {
   firebase: Firebase;
   /* ========tsc=============================================================
   // Constructor
@@ -31,6 +35,12 @@ export class FirebaseUserPublicSearchFields extends FirebaseSuper {
   // ===================================================================== */
   getCollection(uids: string[]) {
     return this.firebase.db.collection(`users/${uids[0]}/public`);
+  }
+  /* =====================================================================
+  // Collection-Group holen
+  // ===================================================================== */
+  getCollectionGroup() {
+    return this.firebase.db.collectionGroup("public");
   }
   /* =====================================================================
   // Dokument holen
@@ -58,11 +68,16 @@ export class FirebaseUserPublicSearchFields extends FirebaseSuper {
   // ===================================================================== */
   prepareDataForApp<T extends ValueObject>({ uid, value }: PrepareDataForApp) {
     return {
-      uid: uid,
+      uid: value.uid,
       email: value.email,
     } as unknown as T;
   }
-
+  /* =====================================================================
+  // Einstellungen für den Session Storage zurückgeben
+  //===================================================================== */
+  getSessionHandlerProperty(): StorageObjectProperty {
+    return STORAGE_OBJECT_PROPERTY.NONE;
+  }
   // /* =====================================================================
   // // Create
   // // ===================================================================== */

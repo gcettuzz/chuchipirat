@@ -1,32 +1,62 @@
 import Firebase from "../firebase.class";
 import {
-  FirebaseSuper,
+  FirebaseDbSuper,
   ValueObject,
   PrepareDataForDb,
   PrepareDataForApp,
+  Where,
+  OrderBy,
 } from "./firebase.db.super.class";
 // import { AuthUser } from "../firebase.class.temp";
-// import { ERROR_PARAMETER_NOT_PASSED } from "../../../constants/text";
+import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
+import FirebaseDbEventGroupConfiguration from "./firebase.db.event.groupConfig.class";
+import FirebaseDbEventMenuplan from "./firebase.db.event.menuplan.class";
+import {
+  STORAGE_OBJECT_PROPERTY,
+  StorageObjectProperty,
+} from "./sessionStorageHandler.class";
+import FirebaseDbEventUsedRecipes from "./firebase.db.event.usedRecipes.class";
+import FirebaseDbEventShoppingList from "./firebase.db.event.shoppingList";
+import FirebaseDbEventShoppingListCollection from "./firebase.db.event.shoppingListCollection";
 // //FIXME: KOMMENTARE LÖSCHEN!
 // interface Update {
 //   value: Event;
 //   authUser: AuthUser;
 // }
 
-export class FirebaseDbEvent extends FirebaseSuper {
+export class FirebaseDbEvent extends FirebaseDbSuper {
   firebase: Firebase;
+  groupConfiguration: FirebaseDbEventGroupConfiguration;
+  menuplan: FirebaseDbEventMenuplan;
+  usedRecipes: FirebaseDbEventUsedRecipes;
+  shoppingList: FirebaseDbEventShoppingList;
+  shoppingListCollection: FirebaseDbEventShoppingListCollection;
   /* =====================================================================
   // Constructor
   // ===================================================================== */
   constructor(firebase: Firebase) {
     super();
     this.firebase = firebase;
+    this.groupConfiguration = new FirebaseDbEventGroupConfiguration(firebase);
+    this.menuplan = new FirebaseDbEventMenuplan(firebase);
+    this.usedRecipes = new FirebaseDbEventUsedRecipes(firebase);
+    this.shoppingList = new FirebaseDbEventShoppingList(firebase);
+    this.shoppingListCollection = new FirebaseDbEventShoppingListCollection(
+      firebase
+    );
   }
   /* =====================================================================
   // Collection holen
   // ===================================================================== */
   getCollection() {
     return this.firebase.db.collection("events");
+  }
+  /* =====================================================================
+  // Collection-Group holen
+  // ===================================================================== */
+  getCollectionGroup() {
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
+    return this.firebase.db.collectionGroup("none");
   }
   /* =====================================================================
   // Dokument holen
@@ -43,155 +73,100 @@ export class FirebaseDbEvent extends FirebaseSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForDb<T extends ValueObject>({ value }: PrepareDataForDb<T>) {
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
     return {
       authUsers: value.authUsers,
       cooks: value.cooks,
-      createdAt: this.firebase.timestamp.fromDate(value.createdAt),
-      createdFromDisplayName: value.createdFromDisplayName,
-      createdFromUid: value.createdFromUid,
       dates: value.dates,
-      lastChangeAt: this.firebase.timestamp.fromDate(value.lastChangeAt),
-      lastChangeFromDisplayName: value.lastChangeFromDisplayName,
-      lastChangeFromUid: value.lastChangeFromUid,
+      // dates: value.dates.map((dateSlice: ValueObject) => {
+      //   return {
+      //     uid: dateSlice.uid,
+      //     pos: dateSlice.pos,
+      //     from:
+      //       dateSlice.from instanceof Date
+      //         ? this.firebase.timestamp.fromDate(dateSlice.from)
+      //         : dateSlice.from,
+      //     to:
+      //       dateSlice.to instanceof Date
+      //         ? this.firebase.timestamp.fromDate(dateSlice.to)
+      //         : dateSlice.to,
+      //   };
+      // }),
       location: value.location,
-      maxDate: this.firebase.timestamp.fromDate(value.maxDate),
+      // maxDate: this.firebase.timestamp.fromDate(value.maxDate),
+      maxDate: value.maxDate,
       motto: value.motto,
       name: value.name,
-      participants: parseInt(value.participants),
       numberOfDays: value.numberOfDays,
       pictureSrc: value.pictureSrc,
-      pictureSrcFullSize: value.pictureSrcFullSize,
+      created: value.created,
+      lastChange: value.lastChange,
+      // created: {
+      //   date: this.firebase.timestamp.fromDate(value.created.date),
+      //   fromUid: value.created.fromUid,
+      //   fromDisplayName: value.created.fromDisplayName,
+      // },
+      // lastChange: {
+      //   date: this.firebase.timestamp.fromDate(value.lastChange.date),
+      //   fromUid: value.lastChange.fromUid,
+      //   fromDisplayName: value.lastChange.fromDisplayName,
+      // },
     };
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({ uid, value }: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
     return {
       uid: uid,
       name: value.name,
       motto: value.motto,
       location: value.location,
-      participants: value.participants,
       cooks: value.cooks,
       numberOfDays: value.numberOfDays,
-      dates: value.dates.map((dateSlice: ValueObject) => {
-        return {
-          uid: dateSlice.uid,
-          pos: dateSlice,
-          from: dateSlice.from.toDate(),
-          to: dateSlice.to.toDate(),
-        };
-      }),
-      maxDate: value.maxDate.toDate(),
+      dates: value.dates,
+      // dates: value.dates.map((dateSlice: ValueObject) => {
+      //   return {
+      //     uid: dateSlice.uid,
+      //     pos: dateSlice.pos,
+      //     from:
+      //       dateSlice.from instanceof Date
+      //         ? dateSlice.from
+      //         : dateSlice.from.toDate(),
+      //     to:
+      //       dateSlice.to instanceof Date ? dateSlice.to : dateSlice.to.toDate(),
+      //   };
+      // }),
+      maxDate: value.maxDate,
+      // maxDate:
+      //   value.maxDate instanceof Date ? value.maxDate : value.maxDate.toDate(),
       pictureSrc: value.pictureSrc,
-      pictureSrcFullSize: value.pictureSrcFullSize,
       authUsers: value.authUsers,
-      createdAt: value.createdAt.toDate(),
-      createdFromDisplayName: value.createdFromDisplayName,
-      createdFromUid: value.createdFromUid,
-      lastChangeAt: value.lastChangeAt.toDate(),
-      lastChangeFromDisplayName: value.lastChangeFromDisplayName,
-      lastChangeFromUid: value.lastChangeFromUid,
+      created: value.created,
+      lastChange: value.lastChange,
+      // created: {
+      //   date:
+      //     value.created.date instanceof Date
+      //       ? value.created.date
+      //       : value.created.date.toDate(),
+      //   fromUid: value.created.fromUid,
+      //   fromDisplayName: value.created.fromDisplayName,
+      // },
+      // lastChange: {
+      //   date:
+      //     value.lastChange.date instanceof Date
+      //       ? value.lastChange.date
+      //       : value.lastChange.date.toDate(),
+      //   fromUid: value.lastChange.fromUid,
+      //   fromDisplayName: value.lastChange.fromDisplayName,
+      // },
     } as unknown as T;
   }
-
-  // /* =====================================================================
-  // // Create
-  // // ===================================================================== */
-  // public async create({ value, authUser }: Create): Promise<ValueObject> {
-  //   value = FirebaseSuper.setCreatedFields({
-  //     value: value,
-  //     authUser: authUser,
-  //   });
-  //   // Felder auf Firebase anpassen
-  //   let event = this.structureDataForDb(value);
-
-  //   const collection = this.getCollection();
-
-  //   return await collection
-  //     .add(event)
-  //     .then((docRef) => {
-  //       value.uid = docRef.id;
-  //       return value;
-  //     })
-  //     .catch((error) => {
-  //       console.error(error);
-  //       throw error;
-  //     });
-  // }
-  // /* =====================================================================
-  // // Read
-  // // ===================================================================== */
-  // public async read(uid: string) {
-  //   const document = this.getDocument(uid);
-  //   let event = <Event>{};
-
-  //   return await document.get().then((snapshot) => {
-  //     return this.structureDataFromDb(snapshot.data() as ValueObject) as Event;
-  //   });
-  //   // return event;
-  // }
-  // /* =====================================================================
-  // // Read der Collection
-  // // ===================================================================== */
-  // public async readCollection<T extends ValueObject>({
-  //   orderBy,
-  //   where,
-  //   limit,
-  // }: ReadCollection) {
-  //   if (!orderBy || !where || !limit) {
-  //     console.error(ERROR_PARAMETER_NOT_PASSED);
-  //     throw ERROR_PARAMETER_NOT_PASSED;
-  //   }
-
-  //   let result: T[] = [];
-
-  //   const collection = this.getCollection();
-
-  //   return await collection
-  //     .orderBy(orderBy.field, orderBy.sortOrder)
-  //     .where(where.field, where.operator, where.value)
-  //     .limit(limit)
-  //     .get()
-  //     .then((snapshot) => {
-  //       snapshot.forEach((document) => {
-  //         let object = this.prepareDataForApp<T>({
-  //           uid: document.id,
-  //           value: document,
-  //         }) as T;
-  //         result.push(object);
-  //       });
-  //       return result;
-  //     })
-  //     .catch((error) => {
-  //       console.error(error);
-  //       throw error;
-  //     });
-  // }
-  // /* =====================================================================
-  // // Update
-  // // ===================================================================== */
-  // public async update({ value, authUser }: Update): Promise<ValueObject> {
-  //   value = FirebaseSuper.setLastChangeFields({
-  //     value: value,
-  //     authUser: authUser,
-  //   }) as Event;
-
-  //   // Felder auf Firebase anpassen
-  //   let event = this.structureDataForDb(value);
-
-  //   const document = this.getDocument(value.uid);
-  //   await document.set(value).catch((error) => {
-  //     console.error(error);
-  //     throw error;
-  //   });
-  //   return value;
-  // }
-  // /* =====================================================================
-  // // Delete
-  // // ===================================================================== */
-  // public delete(uid: string) {}
+  /* =====================================================================
+  // Einstellungen für den Session Storage zurückgeben
+  //===================================================================== */
+  getSessionHandlerProperty(): StorageObjectProperty {
+    return STORAGE_OBJECT_PROPERTY.EVENT;
+  }
 }
 export default FirebaseDbEvent;

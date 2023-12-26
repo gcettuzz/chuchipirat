@@ -1,6 +1,8 @@
 export enum FirebaseAnalyticEvent {
   recipeCreated = "recipe_created",
+  recipeVariantCreated = "recipe_variant_created",
   ingredientCreated = "ingredient_created",
+  materialCreated = "material_created",
   recipeSearch = "recipe_search",
   recipeRatingSet = "recipe_rating_set",
   recipeCommentCreated = "recipe_comment_created",
@@ -18,6 +20,8 @@ export enum FirebaseAnalyticEvent {
   departmentCreated = "department_created",
   departmentUpdated = "department_updated",
   shoppingListGenerated = "shopping_list_generated",
+  shoppingListRefreshed = "shopping_list_refreshed",
+  shoppingListDeleted = "shopping_list_deleted",
   menuplanCreated = "menuplan_created",
   menuplanGet = "menuplan_get",
   quantityCalculationCreated = "quantity_calculation_created",

@@ -1,13 +1,17 @@
 import Firebase from "../firebase.class";
 
 import {
-  FirebaseSuper,
+  FirebaseDbSuper,
   ValueObject,
   PrepareDataForDb,
   PrepareDataForApp,
 } from "./firebase.db.super.class";
-
-export class FirebaseDbRecipeComment extends FirebaseSuper {
+import { ERROR_NOT_IMPLEMENTED_YET } from "../../../constants/text";
+import {
+  STORAGE_OBJECT_PROPERTY,
+  StorageObjectProperty,
+} from "./sessionStorageHandler.class";
+export class FirebaseDbRecipeComment extends FirebaseDbSuper {
   firebase: Firebase;
   /* =====================================================================
   // Constructor
@@ -21,6 +25,13 @@ export class FirebaseDbRecipeComment extends FirebaseSuper {
   // ===================================================================== */
   getCollection(uids: string[]) {
     return this.firebase.db.collection(`recipes/${uids[0]}/comments/`);
+  }
+  /* =====================================================================
+  // Collection-Group holen
+  // ===================================================================== */
+  getCollectionGroup() {
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
+    return this.firebase.db.collectionGroup("none");
   }
   /* =====================================================================
   // Dokument holen
@@ -59,9 +70,16 @@ export class FirebaseDbRecipeComment extends FirebaseSuper {
         pictureSrc: value.pictureSrc,
         motto: value.motto,
       },
-      createdAt: value.createdAt.toDate(),
+      createdAt: value.createdAt,
+      // createdAt: value.createdAt.toDate(),
       comment: value.comment,
     } as unknown as T;
+  }
+  /* =====================================================================
+  // Einstellungen für den Session Storage zurückgeben
+  //===================================================================== */
+  getSessionHandlerProperty(): StorageObjectProperty {
+    return STORAGE_OBJECT_PROPERTY.NONE;
   }
 }
 

@@ -12,6 +12,11 @@ export enum CloudFunctionType {
   userMotto = "userMotto",
   userPictureSrc = "userPictureSrc",
   recipeUpdate = "recipeUpdate",
+  recipeDelete = "recipeDelete",
+  recipeTrace = "recipeTrace",
+  recipeReviewMailCommunityLeaders = "recipeReviewMailCommunityLeaders",
+  requestPublishRecipe = "requestPublishRecipe",
+  mailUser = "mailUser",
 }
 
 interface CreateDocumentForCloudFunctionsTrigger {
@@ -31,6 +36,7 @@ interface UpdateLog {
 export abstract class FirebaseDbCloudFunctionSuper {
   abstract firebase: Firebase;
   abstract getCollection(uid?: string): CollectionReference;
+  abstract getCloudFunctionType(): CloudFunctionType;
 
   /* =====================================================================
   // Dokument schreiben
@@ -77,7 +83,7 @@ export abstract class FirebaseDbCloudFunctionSuper {
   /**
    * Cloudfunction triggern
    * @param param0  Objekt mit zu schreibenden Werten für die Cloudfuntions
-   *                 und den authUser
+   *                und den authUser
    * @returns UID des Dokumentes, das den Trigger ausgelöst hat
    */
   triggerCloudFunction({ values, authUser }: TriggerCloudFunction) {
@@ -90,7 +96,7 @@ export abstract class FirebaseDbCloudFunctionSuper {
 
     this.updateLog({
       uid: document.id,
-      cloudFunctionType: CloudFunctionType.recipeUpdate,
+      cloudFunctionType: this.getCloudFunctionType(),
       authUser: authUser,
     });
 

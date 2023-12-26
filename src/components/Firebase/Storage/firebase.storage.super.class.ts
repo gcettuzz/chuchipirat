@@ -6,28 +6,33 @@ interface UploadFile {
   file: File;
   filename: string;
 }
-
-export interface File extends Blob {
-  lastModified: Date;
-  name: string;
-}
 interface GetPictureVariants {
   uid: string;
-  sizes: number[];
+  sizes: ImageSize[];
   oldDownloadUrl: string;
+}
+
+export enum ImageSize {
+  size_50 = 50,
+  size_200 = 200,
+  size_300 = 300,
+  size_500 = 500,
+  size_600 = 600,
+  size_1000 = 1000,
 }
 
 // Suffix von redimensionierten Files
 export const IMAGES_SUFFIX: { [key: string]: ImageSuffix } = {
-  size50: { size: 50, suffix: "_50x50.jpeg" },
-  size200: { size: 200, suffix: "_200x200.jpeg" },
-  size300: { size: 300, suffix: "_300x300.jpeg" },
-  size600: { size: 600, suffix: "_600x600.jpeg" },
-  size1000: { size: 1000, suffix: "_1000x1000.jpeg" },
+  size50: { size: ImageSize.size_50, suffix: "_50x50.jpeg" },
+  size200: { size: ImageSize.size_200, suffix: "_200x200.jpeg" },
+  size300: { size: ImageSize.size_300, suffix: "_300x300.jpeg" },
+  size500: { size: ImageSize.size_500, suffix: "_500x500.jpeg" },
+  size600: { size: ImageSize.size_600, suffix: "_600x600.jpeg" },
+  size1000: { size: ImageSize.size_1000, suffix: "_1000x1000.jpeg" },
 };
 
 interface ImageSuffix {
-  size: number;
+  size: ImageSize;
   suffix: string;
 }
 

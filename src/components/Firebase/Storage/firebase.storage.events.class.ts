@@ -1,9 +1,5 @@
-import { Reference } from "@firebase/storage-types";
 import Firebase from "../firebase.class";
 import FirebaseStorageSuper from "./firebase.storage.super.class";
-// import FirebaseCloudFunctionUserMotto from "./firebase.cloudfunction.userMotto.class";
-// import FirebaseCloudFunctionUserDisplayName from "./firebase.cloudfunction.userDisplayName.class";
-// import FirebaseCloudFunctionUserPictureSrc from "./firebase.cloudfunction.userPictureSrc.class";
 
 export class FirebaseStorageEvents extends FirebaseStorageSuper {
   firebase: Firebase;

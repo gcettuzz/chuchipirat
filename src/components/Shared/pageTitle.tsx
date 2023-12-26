@@ -6,6 +6,14 @@ import useStyles from "../../constants/styles";
 import { ValueObject } from "../Firebase/Db/firebase.db.super.class";
 
 //FIXME:
+/**
+ * PageTitle-Eingenschaften
+ * @param title - Seitentitel
+ * @param smallTitle - Seitentitel klein
+ * @param subTitle - Untertitel
+ * @param pictureSrc - URL für Bild
+ * @param ribbon - JSX-Element -> Ribbon
+ */
 interface PageTitleProps {
   title: string;
   smallTitle?: string;
@@ -14,7 +22,12 @@ interface PageTitleProps {
   ribbon?: ValueObject;
 }
 
-// Seiten Titel
+/* =====================================================================
+/**
+ * Standard Seitentitel
+ * @param object --> PageTitleProps 
+ * @returns JSX-Element
+ */
 const PageTitle = ({
   title,
   smallTitle,
@@ -38,12 +51,11 @@ const PageTitle = ({
       marginTop: "-1.4em",
     };
   }
-
+  document.title = title;
   return (
     <React.Fragment>
-      <Box component="span" display="block" style={boxStyle}>
-        {ribbon && <Ribbon text={ribbon.text} cssProperty={ribbon.class} />}
-      </Box>
+      <Box component="span" display="block" style={boxStyle}></Box>
+      {ribbon && <Ribbon text={ribbon.text} cssProperty={ribbon.class} />}
       <div className={classes.heroContent}>
         {title && (
           <Typography
@@ -51,7 +63,7 @@ const PageTitle = ({
             variant="h2"
             align="center"
             color="textPrimary"
-            gutterBottom
+            // gutterBottom
           >
             {title}
           </Typography>
@@ -70,9 +82,9 @@ const PageTitle = ({
         {subTitle && (
           <Typography
             component="h2"
-            variant="h6"
+            variant="h5"
             align="center"
-            color="textPrimary"
+            color="textSecondary"
             gutterBottom
           >
             {subTitle}

@@ -1,4 +1,18 @@
 /* ===================================================================
+// ============================ Input Fields =========================
+// =================================================================== */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ===================================================================
 // ========================= Navigation Ribbon =======================
 // =================================================================== */
 
@@ -95,7 +109,7 @@
 
 /* Positions */
 .cornerRibon-top {
-  top: 2.5rem;
+  top: 5.5rem;
 }
 .cornerRibon-bottom {
   bottom: 2.5rem;
@@ -174,6 +188,7 @@
   right: 1.5rem;
   -webkit-filter: drop-shadow(0 0.5rem 0.3em rgba(0, 0, 0, 0.5));
   transform: translate3d(0, 0, 0);
+  z-index: 1;
 }
 .cardRibbon::after {
   content: "";

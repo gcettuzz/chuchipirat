@@ -1,13 +1,17 @@
 import Firebase from "../firebase.class";
 
 import {
-  FirebaseSuper,
+  FirebaseDbSuper,
   ValueObject,
   PrepareDataForDb,
   PrepareDataForApp,
 } from "./firebase.db.super.class";
-
-export class FirebaseDbRecipeRating extends FirebaseSuper {
+import { ERROR_NOT_IMPLEMENTED_YET } from "../../../constants/text";
+import {
+  STORAGE_OBJECT_PROPERTY,
+  StorageObjectProperty,
+} from "./sessionStorageHandler.class";
+export class FirebaseDbRecipeRating extends FirebaseDbSuper {
   firebase: Firebase;
   /* =====================================================================
   // Constructor
@@ -23,6 +27,13 @@ export class FirebaseDbRecipeRating extends FirebaseSuper {
     return this.firebase.db.collection(`recipes/${uids[0]}/ratings/`);
   }
   /* =====================================================================
+  // Collection-Group holen
+  // ===================================================================== */
+  getCollectionGroup() {
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
+    return this.firebase.db.collectionGroup("none");
+  }
+  /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
@@ -32,7 +43,7 @@ export class FirebaseDbRecipeRating extends FirebaseSuper {
   // Dokumente holen
   // ===================================================================== */
   getDocuments() {
-    throw "🤪 not implemented";
+    throw "☠️ not implemented";
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
@@ -49,6 +60,12 @@ export class FirebaseDbRecipeRating extends FirebaseSuper {
     return {
       rating: value.rating,
     } as unknown as T;
+  }
+  /* =====================================================================
+  // Einstellungen für den Session Storage zurückgeben
+  //===================================================================== */
+  getSessionHandlerProperty(): StorageObjectProperty {
+    return STORAGE_OBJECT_PROPERTY.NONE;
   }
 }
 

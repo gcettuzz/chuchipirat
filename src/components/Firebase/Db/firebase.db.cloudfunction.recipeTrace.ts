@@ -1,6 +1,5 @@
 import Firebase from "../firebase.class";
 import FirebaseDbCloudFunctionSuper, {
-  TriggerCloudFunction,
   CloudFunctionType,
 } from "./firebase.db.cloudfunction.super.class";
 
@@ -20,6 +19,12 @@ export class FirebaseDbCloudFunctionRecipeTrace extends FirebaseDbCloudFunctionS
     return this.firebase.db.collection(
       "_cloudFunctions/waitingArea/recipeTrace"
     );
+  }
+  /* =====================================================================
+  // CloudFunction Type zurückgeben
+  // ===================================================================== */
+  getCloudFunctionType(): CloudFunctionType {
+    return CloudFunctionType.recipeTrace;
   }
 }
 export default FirebaseDbCloudFunctionRecipeTrace;

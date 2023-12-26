@@ -3,17 +3,21 @@
 import UserPublic from "./user.public.class";
 import Stats, { StatsField } from "../Shared/stats.class";
 import Feed, { FeedType } from "../Shared/feed.class";
-import Role from "../../constants/role";
+import { Role } from "../../constants/roles";
 import { IMAGES_SUFFIX } from "../Firebase/Storage/firebase.storage.super.class";
 
 import Firebase from "../Firebase";
 
-import * as TEXT from "../../constants/text";
+import {
+  USER_NOT_IDENTIFIED_BY_EMAIL as TEXT_USER_NOT_IDENTIFIED_BY_EMAIL,
+  USER_PROFILE_ERROR_DISPLAYNAME_MISSING as TEXT_USER_PROFILE_ERROR_DISPLAYNAME_MISSING,
+  NO_USER_WITH_THIS_EMAIL as TEXT_NO_USER_WITH_THIS_EMAIL,
+} from "../../constants/text";
 import FirebaseAnalyticEvent from "../../constants/firebaseEvent";
 import { AuthUser } from "../Firebase/Authentication/authUser.class";
-import authUser from "../Firebase/__mocks__/authuser.mock";
 import UserPublicProfile from "./user.public.profile.class";
 import UserPublicSearchFields from "./user.public.searchFields.class";
+import { Operator } from "../Firebase/Db/firebase.db.super.class";
 
 /**
  * User Aufbau (kurz)
@@ -72,6 +76,7 @@ interface GetFullProfile {
 interface SaveFullProfile {
   firebase: Firebase;
   userProfile: UserFullProfile;
+  authUser: AuthUser;
 }
 interface UploadPicture {
   firebase: Firebase;
@@ -88,6 +93,7 @@ interface UpdateEmail {
   firebase: Firebase;
   uid: string;
   newEmail: string;
+  authUser: AuthUser;
 }
 
 export default class User {
@@ -190,11 +196,17 @@ export default class User {
       memberSince: new Date(),
       memberId: 0,
       motto: "",
-      pictureSrc: "",
-      pictureSrcFullSize: "",
-      noComments: 0,
-      noEvents: 0,
-      noRecipes: 0,
+      pictureSrc: {
+        smallSize: "",
+        normalSize: "",
+        fullSize: "",
+      },
+      stats: {
+        noComments: 0,
+        noEvents: 0,
+        noRecipesPublic: 0,
+        noRecipesPrivate: 0,
+      },
     };
 
     let userPublicSearchFields: UserPublicSearchFields = {
@@ -237,6 +249,7 @@ export default class User {
           firebase: firebase,
           authUser: authUser,
           feedType: FeedType.userCreated,
+          feedVisibility: Role.basic,
           objectUid: uid,
           objectName: authUser.publicProfile.displayName,
         });
@@ -311,27 +324,28 @@ export default class User {
   /* istanbul ignore next */
   /* DB-Methode wird zur Zeit nicht geprüft */
   static getUidByEmail = async ({ firebase, email }: GetUidByEmail) => {
-    //FIXME:
-    const profileSearchFields = firebase.public_CollectionGroup();
-    let counter = 0;
-    let uid = "";
-    // Person anhand der Emailadresse suchen
-    const snapshot = await profileSearchFields
-      .where("email", "==", email.toLowerCase())
-      .get()
-      .catch((error) => {
-        console.error(error);
-        throw error;
+    let userUid = "";
+    await firebase.user.public.searchFields
+      .readCollectionGroup<UserPublicSearchFields>({
+        where: [
+          {
+            field: "email",
+            operator: Operator.EQ,
+            value: email.toLocaleLowerCase().trim(),
+          },
+        ],
+      })
+      .then((result) => {
+        if (result.length == 1) {
+          userUid = result[0].uid;
+        } else if (result.length == 0) {
+          throw new Error(TEXT_NO_USER_WITH_THIS_EMAIL);
+        } else {
+          // Nicht Eindeutig
+          throw new Error(TEXT_USER_NOT_IDENTIFIED_BY_EMAIL);
+        }
       });
-    snapshot.forEach((obj) => {
-      uid = obj.data().uid;
-      counter++;
-    });
-    if (counter > 1) {
-      // Nicht Eindeutig
-      throw new Error(TEXT.USER_NOT_IDENTIFIED_BY_EMAIL);
-    }
-    return uid;
+    return userUid;
   };
   /* =====================================================================
   // Profile holen
@@ -358,12 +372,13 @@ export default class User {
   /* istanbul ignore next */
   /* DB-Methode wird zur Zeit nicht geprüft */
   static getPublicProfile = async ({ firebase, uid }: GetPublicProfile) => {
-    let publicProfile = <UserPublicProfile>{};
-    console.log("getPublicProfile");
-    firebase.user.public.profile
+    let publicProfile = {} as UserPublicProfile;
+
+    await firebase.user.public.profile
       .read<UserPublicProfile>({ uids: [uid] })
       .then((result) => {
         publicProfile = result;
+        publicProfile.uid = uid;
       })
       .catch((error) => {
         console.error(error);
@@ -401,7 +416,7 @@ export default class User {
   // ===================================================================== */
   static checkUserProfileData(userProfile: UserPublicProfile) {
     if (!userProfile.displayName) {
-      throw new Error(TEXT.USER_PROFILE_ERROR_DISPLAYNAME_MISSING);
+      throw new Error(TEXT_USER_PROFILE_ERROR_DISPLAYNAME_MISSING);
     }
   }
   /* =====================================================================
@@ -413,6 +428,7 @@ export default class User {
   static saveFullProfile = async ({
     firebase,
     userProfile,
+    authUser,
   }: SaveFullProfile) => {
     try {
       User.checkUserProfileData(userProfile);
@@ -453,8 +469,8 @@ export default class User {
         values: {
           displayName: userProfile.displayName,
           motto: userProfile.motto,
-          pictureSrc: userProfile.pictureSrc,
-          pictureSrcFullSize: userProfile.pictureSrcFullSize,
+          // // pictureSrc: userProfile.pictureSrc,
+          // // pictureSrcFullSize: userProfile.pictureSrcFullSize,
         },
         updateChangeFields: false,
       })
@@ -558,8 +574,8 @@ export default class User {
     // });
     // firebase.analytics.logEvent(FirebaseAnalyticEvent.cloudFunctionExecuted);
     return {
-      pictureSrc: userProfile.pictureSrc,
-      pictureSrcFullSize: userProfile.pictureSrcFullSize,
+      // // pictureSrc: userProfile.pictureSrc,
+      // // pictureSrcFullSize: userProfile.pictureSrcFullSize,
     };
   };
   /* =====================================================================
@@ -611,7 +627,12 @@ export default class User {
   // ===================================================================== */
   /* istanbul ignore next */
   /* DB-Methode wird zur Zeit nicht geprüft */
-  static updateEmail = async ({ firebase, uid, newEmail }: UpdateEmail) => {
+  static updateEmail = async ({
+    firebase,
+    uid,
+    newEmail,
+    authUser,
+  }: UpdateEmail) => {
     // Email muss im Profil und in den Searchfiedls angepasst werden
     firebase.user
       .updateFields({

@@ -1,17 +1,24 @@
 import Firebase from "../Firebase/firebase.class";
+import {
+  ChangeRecord,
+  Picture as PictureSrc,
+} from "../Shared/global.interface";
 
 interface IncrementField {
   firebase: Firebase;
   uid: string;
-  field: UserPublicProfileFields;
+  field: UserPublicProfileStatsFields;
   step: number;
 }
 
-export enum UserPublicProfileFields {
-  noRecipes = "noRecipes",
+export enum UserPublicProfileStatsFields {
+  // noRecipes = "noRecipes",
   noComments = "noComments",
   noEvents = "noEvents",
+  noRecipesPublic = "noRecipesPublic",
+  noRecipesPrivate = "noRecipesPrivate",
 }
+type Stats = { [key in UserPublicProfileStatsFields]: number };
 
 /**
  * Öffentliches Profile, wie von jedem*r einsehbar
@@ -22,11 +29,11 @@ export class UserPublicProfile {
   memberSince: Date;
   memberId: number;
   motto: string;
-  pictureSrc: string;
-  pictureSrcFullSize: string;
-  noComments: number;
-  noEvents: number;
-  noRecipes: number;
+  pictureSrc: PictureSrc;
+  stats: Stats;
+  // noComments: number;
+  // noEvents: number;
+  // noRecipes: number;
   /* =====================================================================
   // Constructor
   // ===================================================================== */
@@ -36,13 +43,18 @@ export class UserPublicProfile {
     this.memberSince = new Date(0);
     this.memberId = 0;
     this.motto = "";
-    this.pictureSrc = "";
-    this.pictureSrcFullSize = "";
-    this.noComments = 0;
-    this.noEvents = 0;
-    this.noRecipes = 0;
+    this.pictureSrc = {
+      smallSize: "",
+      normalSize: "",
+      fullSize: "",
+    };
+    this.stats = {
+      noComments: 0,
+      noEvents: 0,
+      noRecipesPublic: 0,
+      noRecipesPrivate: 0,
+    };
   }
-
   /* =====================================================================
   // Zähler für öffentliches Profil hochzählen
   // ===================================================================== */

@@ -1,0 +1,304 @@
+import React from "react";
+import {createPortal} from "react-dom";
+import {DialogType, useCustomDialog} from "./customDialogContext";
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Button,
+  Typography,
+  TextField,
+} from "@material-ui/core";
+
+import WarningIcon from "@material-ui/icons/Warning";
+
+import {
+  CANCEL as TEXT_CANCEL,
+  DELETE as TEXT_DELETE,
+  DIALOG_TITLE_DELETION_CONFIRMATION as TEXT_DIALOG_TITLE_DELETION_CONFIRMATION,
+  DIALOG_SUBTITLE_DELETION_CONFIRMATION as TEXT_DIALOG_SUBTITLE_DELETION_CONFIRMATION,
+  DIALOG_TEXT_DELETION_CONFIRMATION as TEXT_DIALOG_TEXT_DELETION_CONFIRMATION,
+  DIALOG_DELETION_CONFIRMATION_STRING_DOES_NOT_MATCH as TEXT_DIALOG_DELETION_CONFIRMATION_STRING_DOES_NOT_MATCH,
+  REQUIRED as TEXT_REQUIRED,
+} from "../../constants/text";
+import useStyles from "../../constants/styles";
+
+interface FormFieldsState {
+  userInput: string;
+  confirmationString: string;
+  inputMatches: boolean;
+  roundtripDone: boolean;
+}
+
+const FORM_FIELDS_INITIAL_STATE: FormFieldsState = {
+  userInput: "",
+  confirmationString: "",
+  inputMatches: false,
+  roundtripDone: false,
+};
+
+const CustomDialog = () => {
+  const classes = useStyles();
+
+  const {dialogState, onConfirm, onCancel} = useCustomDialog();
+  const portalElement = document.getElementById("portal");
+
+  const [confirmDeletionValidation, setConfirmDeletionValidation] =
+    React.useState({
+      confirmationString: {hasError: false, errorText: ""},
+    });
+  const [validation, setValidation] = React.useState({
+    confirmationString: {hasError: false, errorText: ""},
+  });
+  /* ------------------------------------------
+  // Spezielles Handling für Single-Text-Input
+  // ------------------------------------------ */
+  const [formFields, setFormFields] = React.useState(FORM_FIELDS_INITIAL_STATE);
+  // Initialisierung
+  if (
+    !formFields.roundtripDone &&
+    !formFields.userInput &&
+    dialogState.singleTextInputProperties?.initialValue
+  ) {
+    setFormFields({
+      ...formFields,
+      roundtripDone: true,
+      userInput: dialogState.singleTextInputProperties?.initialValue,
+    });
+  }
+  const onFieldUpdate = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFormFields({
+      ...formFields,
+      [event.target.id]: event.target.value,
+      roundtripDone: true,
+    });
+  };
+  const onOkSingleTextInput = () => {
+    onConfirm(formFields.userInput);
+    setFormFields(FORM_FIELDS_INITIAL_STATE);
+  };
+  const onCancelSingleTextInput = () => {
+    onCancel("");
+    setFormFields(FORM_FIELDS_INITIAL_STATE);
+  };
+  /* ------------------------------------------
+  // Spezielles Handling für Confirm Deletion
+  // ------------------------------------------ */
+  const onConfirmDeletionConfirmationStringUpdate = (
+    // Prüfen ob der Eintrag auch übereinstimmt
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    let confirmationStringValidation = {hasError: false, errorText: ""};
+
+    setFormFields({
+      ...formFields,
+      [event.target.id]: event.target.value,
+      inputMatches: false,
+      roundtripDone: true,
+    });
+
+    if (
+      event.target.value ==
+      dialogState.deletionDialogProperties?.confirmationString
+    ) {
+      // Kurzer Wait - macht einem nochmals klar, das gelöscht wird!
+      setTimeout(function () {
+        setFormFields({
+          ...formFields,
+          [event.target.id]: event.target.value,
+          inputMatches: true,
+          roundtripDone: true,
+        });
+      }, 300);
+    }
+
+    if (!event.target.value) {
+      confirmationStringValidation.hasError = true;
+      confirmationStringValidation.errorText = TEXT_REQUIRED;
+    } else if (event.target.value !== formFields.confirmationString) {
+      confirmationStringValidation.hasError = true;
+      confirmationStringValidation.errorText =
+        TEXT_DIALOG_DELETION_CONFIRMATION_STRING_DOES_NOT_MATCH;
+    }
+    setValidation({
+      ...validation,
+      confirmationString: confirmationStringValidation,
+    });
+  };
+  const onOkConfirmDeletion = () => {
+    clearDialogFields();
+    onConfirm();
+  };
+  const onCancelConfirmDeletion = () => {
+    clearDialogFields();
+    onCancel();
+  };
+
+  const onOptionSelection = (id: number | string) => {
+    onConfirm(id);
+  };
+
+  const clearDialogFields = () => {
+    setFormFields(FORM_FIELDS_INITIAL_STATE);
+    setValidation({confirmationString: {hasError: false, errorText: ""}});
+  };
+
+  const component = dialogState.visible ? (
+    dialogState.dialogType == DialogType.Confirm ? (
+      // Simpler Dialog
+      <Dialog
+        open={dialogState.visible}
+        onClose={onCancel}
+        aria-labelledby="confirm-dialog"
+      >
+        <DialogTitle id="confirm-dialog-title">{dialogState.title}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {dialogState.text}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onCancel} color="primary">
+            {dialogState.buttonTextCancel}
+          </Button>
+          <Button onClick={onConfirm} color="primary" autoFocus>
+            {dialogState.buttonTextConfirm}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    ) : dialogState.dialogType == DialogType.SingleTextInput ? (
+      // Single Text Input Dialog
+      <Dialog open={dialogState.visible} maxWidth="xs" fullWidth>
+        {dialogState.title != "" && (
+          <DialogTitle id="dialogTitle">{dialogState.title}</DialogTitle>
+        )}
+        <DialogContent>
+          <Typography>{dialogState.text}</Typography>
+          <TextField
+            fullWidth
+            id="userInput"
+            name="userInput"
+            label={dialogState.singleTextInputProperties?.textInputLabel}
+            value={formFields.userInput}
+            onChange={onFieldUpdate}
+            multiline={
+              dialogState.singleTextInputProperties?.textInputMultiline
+            }
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={onCancelSingleTextInput}
+            color="primary"
+            variant="outlined"
+          >
+            {dialogState.buttonTextCancel}
+          </Button>
+          <Button
+            onClick={onOkSingleTextInput}
+            color="primary"
+            variant="contained"
+            disabled={!formFields.userInput}
+          >
+            {dialogState.buttonTextConfirm}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    ) : dialogState.dialogType == DialogType.ConfirmDeletion ? (
+      // Löschung bestätigen
+      <Dialog
+        open={dialogState.visible}
+        onClose={onCancel}
+        aria-labelledby="confirm-dialog"
+      >
+        <DialogTitle
+          id="dialogDeletionConfirmation"
+          className={classes.dialogDeletionConfirmationTitle}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <WarningIcon
+              className={classes.dialogDeletionConfirmationWarningIcon}
+            />
+            <span>{TEXT_DIALOG_TITLE_DELETION_CONFIRMATION}</span>
+          </div>
+          <DialogContentText className={classes.dialogDeletionConfirmationText}>
+            {TEXT_DIALOG_SUBTITLE_DELETION_CONFIRMATION}
+          </DialogContentText>
+        </DialogTitle>
+        <DialogContent>
+          {TEXT_DIALOG_TEXT_DELETION_CONFIRMATION}{" "}
+          <strong>
+            {dialogState.deletionDialogProperties?.confirmationString}
+          </strong>
+          <TextField
+            error={confirmDeletionValidation.confirmationString.hasError}
+            margin="dense"
+            id="confirmationString"
+            name="confirmationString"
+            value={formFields.confirmationString}
+            autoFocus
+            required
+            fullWidth
+            onChange={onConfirmDeletionConfirmationStringUpdate}
+            variant="outlined"
+            placeholder={
+              dialogState.deletionDialogProperties?.confirmationString
+            }
+            type="text"
+            helperText={confirmDeletionValidation.confirmationString.errorText}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onCancelConfirmDeletion}>{TEXT_CANCEL}</Button>
+          <Button
+            className={classes.deleteButton}
+            disabled={!formFields.inputMatches}
+            onClick={onOkConfirmDeletion}
+            variant="contained"
+          >
+            {TEXT_DELETE}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    ) : dialogState.dialogType == DialogType.selectOptions ? (
+      <Dialog
+        open={dialogState.visible}
+        onClose={onCancel}
+        aria-labelledby="confirm-dialog"
+      >
+        <DialogTitle id="confirm-dialog-title">{dialogState.title}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {dialogState.text}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          {dialogState.options.map((option) => (
+            <Button
+              key={"button_" + option.key}
+              onClick={() => onOptionSelection(option.key)}
+              color="primary"
+              variant="outlined"
+            >
+              {option.text}
+            </Button>
+          ))}
+          <Button onClick={onCancel} color="primary">
+            {dialogState.buttonTextCancel}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    ) : null
+  ) : null;
+
+  return createPortal(component, portalElement!);
+};
+export default CustomDialog;

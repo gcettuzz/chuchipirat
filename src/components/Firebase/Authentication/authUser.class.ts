@@ -1,4 +1,5 @@
-import Role from "../../../constants/role";
+import Role from "../../../constants/roles";
+import { Picture } from "../../Shared/global.interface";
 // import Firebase from "./firebase.class";
 // import {
 //   DocumentReference,
@@ -39,7 +40,7 @@ import Role from "../../../constants/role";
 export interface AuthUserPublicProfile {
   displayName: string;
   motto: string;
-  pictureSrc: string;
+  pictureSrc: Picture;
 }
 
 export class AuthUser {
@@ -62,7 +63,7 @@ export class AuthUser {
     this.publicProfile = {
       displayName: "",
       motto: "",
-      pictureSrc: "",
+      pictureSrc: { smallSize: "", normalSize: "", fullSize: "" },
     };
   }
 }

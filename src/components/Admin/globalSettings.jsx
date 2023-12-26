@@ -25,7 +25,6 @@ import * as ROLES from "../../constants/roles";
 import GlobalSettings from "./globalSettings.class";
 import useStyles from "../../constants/styles";
 
-import DialogDeletionConfirmation from "../Shared/dialogDeletionConfirmation";
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
 import CustomSnackbar from "../Shared/customSnackbar";

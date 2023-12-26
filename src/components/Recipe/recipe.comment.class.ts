@@ -43,15 +43,15 @@ export class RecipeComment {
   static async getComments({ firebase, recipeUid, lastComment }: GetComments) {
     let comments: RecipeComment[] = [];
 
-    await firebase.recipe.comment
+    await firebase.recipePublic.comment
       .readCollection<RecipeComment>({
         uids: [recipeUid],
         orderBy: { field: "createdAt", sortOrder: SortOrder.desc },
         limit: DEFAULT_VALUES.COMMENT_DISPLAY,
         startAfter: lastComment?.createdAt,
       })
-      .then((result: RecipeComment[]) => {
-        comments = result;
+      .then((result) => {
+        comments = result as RecipeComment[];
       })
       .catch((error) => {
         console.error(error);
@@ -74,12 +74,12 @@ export class RecipeComment {
       user: {
         userUid: authUser.uid,
         displayName: authUser.publicProfile.displayName,
-        pictureSrc: authUser.publicProfile.pictureSrc,
+        pictureSrc: authUser.publicProfile.pictureSrc.normalSize,
         motto: authUser.publicProfile.motto,
       },
     };
 
-    firebase.recipe.comment
+    firebase.recipePublic.comment
       .create<RecipeComment>({
         value: newComment,
         authUser: authUser,

@@ -3,14 +3,22 @@ import ReactDOM from "react-dom";
 import reportWebVitals from "./reportWebVitals";
 
 import App from "../src/components/App/App";
-import Firebase, { FirebaseContext } from "./components/Firebase";
+import Firebase, {FirebaseContext} from "./components/Firebase";
 
 import "typeface-roboto";
+import "@fontsource/roboto-mono";
+
+import {CustomDialogContextProvider} from "./components/Shared/customDialogContext";
+import {NavigationContextProvider} from "./components/Navigation/navigationContext";
 
 ReactDOM.render(
   <React.StrictMode>
     <FirebaseContext.Provider value={new Firebase()}>
-      <App />
+      <CustomDialogContextProvider>
+        <NavigationContextProvider>
+          <App />
+        </NavigationContextProvider>
+      </CustomDialogContextProvider>
     </FirebaseContext.Provider>
   </React.StrictMode>,
   document.getElementById("root")

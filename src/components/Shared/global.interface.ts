@@ -21,3 +21,10 @@ export interface Picture {
   normalSize: string;
   fullSize: string;
 }
+export interface ButtonAction {
+  buttonText: string;
+  onClick: (
+    event: React.MouseEvent<HTMLButtonElement>,
+    value?: { [key: string]: any }
+  ) => void;
+}

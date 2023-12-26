@@ -1,482 +1,213 @@
-import React, { useReducer } from "react";
-import { compose } from "recompose";
-
-import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
-
-import Typography from "@material-ui/core/Typography";
-import TextField from "@material-ui/core/TextField";
-import Button from "@material-ui/core/Button";
-import LinearProgress from "@material-ui/core/LinearProgress";
-import Backdrop from "@material-ui/core/Backdrop";
-import CircularProgress from "@material-ui/core/CircularProgress";
-
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
-import ListItemText from "@material-ui/core/ListItemText";
-import Checkbox from "@material-ui/core/Checkbox";
-
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-
+import * as DEFAULT_VALUES from "../../constants/defaultValues";
 import * as TEXT from "../../constants/text";
-import * as ROLES from "../../constants/roles";
 
-import Feeds from "../Shared/feed.class";
-import useStyles from "../../constants/styles";
+import { FEED_TITLE, FEED_TEXT } from "../../constants/text";
 
-import DialogDeletionConfirmation from "../Shared/dialogDeletionConfirmation";
-import PageTitle from "../Shared/pageTitle";
-import AlertMessage from "../Shared/AlertMessage";
-
-import { withFirebase } from "../Firebase";
-import {
-  AuthUserContext,
-  withAuthorization,
-  withEmailVerification,
-} from "../Session";
-import Feed from "../Shared/feed.class";
-
-/* ===================================================================
-// ======================== globale Funktionen =======================
-// =================================================================== */
-const REDUCER_ACTIONS = {
-  GET_FEEDS_INIT: "FEED_DELETE_GET_FEEDS",
-  GET_FEEDS_SUCCESS: "GET_FEEDS_SUCCESS",
-  FEED_UPDATE_PROPERTIES: "FEED_UPDATE_PROPERTIES",
-  FEED_DELETE_INIT: "FEED_DELETE_INIT",
-  FEED_DELETE_SUCCESS: "FEED_DELETE_SUCCESS",
-  FEED_DELETE_ERROR: "FEED_DELETE_ERROR",
-  FEED_CHECKBOX_UPDATE: "FEED_CHECKBOX_UPDATE",
-  // CLOSE_SNACKBAR: "CLOSE_SNACKBAR",
-  GENERIC_ERROR: "GENERIC_ERROR",
+export const FEED_TYPE = {
+  USER_CREATED: "userCreated",
+  RECIPE_CREATED: "recipeCreated",
+  EVENT_CREATED: "eventCreated",
+  EVENT_COOK_ADDED: "eventCookAdded",
+  MENUPLAN_CREATED: "menuplanCreated",
+  SHOPPINGLIST_CREATED: "shoppingListCreated",
 };
-let tmpFeeds;
 
-const deleteFeedsReducer = (state, action) => {
-  switch (action.type) {
-    case REDUCER_ACTIONS.GET_FEEDS_INIT:
-      return {
-        ...state,
-        isLoading: true,
-      };
-    case REDUCER_ACTIONS.GET_FEEDS_SUCCESS:
-      tmpFeeds = action.payload;
-
-      tmpFeeds = tmpFeeds.map((feed) => ({ ...{ checked: false }, ...feed }));
-
-      return {
-        ...state,
-        feeds: tmpFeeds,
-        isLoading: false,
-        isError: false,
-      };
-    case REDUCER_ACTIONS.FEED_UPDATE_PROPERTIES:
-      return {
-        ...state,
-        properties: { ...state.properties, [action.field]: action.value },
-      };
-    case REDUCER_ACTIONS.FEED_DELETE_INIT:
-      return {
-        ...state,
-        properties: {
-          ...state.properties,
-          isDeleting: true,
-          isDeleted: false,
-        },
-      };
-    case REDUCER_ACTIONS.FEED_DELETE_SUCCESS:
-      return {
-        ...state,
-        properties: {
-          ...state.properties,
-          isDeleting: false,
-          isDeleted: true,
-          // X Feed gelöscht
-          message: TEXT.X_FEEDS_DELETED(action.payload),
-          error: null,
-        },
-      };
-    case REDUCER_ACTIONS.FEED_DELETE_ERROR:
-      return {
-        ...state,
-        properties: {
-          ...state.properties,
-          isDeleting: false,
-          isDeleted: false,
-          error: action.payload,
-        },
-      };
-    case REDUCER_ACTIONS.FEED_CHECKBOX_UPDATE:
-      tmpFeeds = state.feeds;
-
-      let feed = tmpFeeds.find((feed) => feed.uid === action.payload);
-
-      feed.checked = !feed.checked;
-      return {
-        ...state,
-        feeds: tmpFeeds,
-      };
-    case REDUCER_ACTIONS.GENERIC_ERROR:
-      // Allgemeiner Fehler
-      return {
-        ...state,
-        isError: true,
-        error: action.payload,
-      };
-    default:
-      console.error("Unbekannter ActionType: ", action.type);
-      throw new Error();
+export default class Feed {
+  /* ====================================================================
+  // Feed Eintrag erzeugen
+  / ==================================================================== */
+  static createFeedEntry({
+    firebase,
+    authUser,
+    feedType,
+    objectUid,
+    text = "",
+    objectName = "",
+    objectPictureSrc = "",
+  }) {
+    const feedDoc = firebase.feeds().doc();
+    feedDoc.set({
+      createdAt: firebase.timestamp.fromDate(new Date()),
+      userUid: authUser.uid,
+      displayName: authUser.publicProfile.displayName,
+      pictureSrc: authUser.publicProfile.pictureSrc,
+      title: Feed.getTitle(feedType),
+      text: Feed.getText(feedType, text),
+      feedType: feedType,
+      objectUid: objectUid,
+      objectName: objectName,
+      objectPictureSrc: objectPictureSrc,
+    });
   }
-};
+  /* =====================================================================
+  // Neuste X Feed holen
+  // ===================================================================== */
+  static getNewestFeeds = async ({
+    firebase,
+    limitTo = DEFAULT_VALUES.FEEDS_DISPLAY,
+  }) => {
+    let feeds = [];
+    let feed = {};
 
-/* ===================================================================
-// =============================== Page ==============================
-// =================================================================== */
-const FeedDeletePage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <FeedDeleteBase props={props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
-/* ===================================================================
-// =============================== Base ==============================
-// =================================================================== */
-const FeedDeleteBase = ({ props, authUser }) => {
-  const firebase = props.firebase;
-  const classes = useStyles();
+    const feedsRef = firebase.feeds();
 
-  const [deleteFeeds, dispatchDeleteFeeds] = React.useReducer(
-    deleteFeedsReducer,
-    {
-      properties: {
-        isDeleting: false,
-        deletedFeeds: "",
-        daysOffset: 30,
-        noOfEntries: 50,
-      },
-      feeds: [],
-      loading: false,
-      isError: false,
-      error: {},
-    }
-  );
-
-  const [deletFeedsPopUp, setDeletFeedsPopUp] = React.useState({ open: false });
-  /* ------------------------------------------
-  // Delete Feeds Wert setzen
-  // ------------------------------------------ */
-  const onChangeDeleteFeedField = (event) => {
-    dispatchDeleteFeeds({
-      type: REDUCER_ACTIONS.FEED_UPDATE_PROPERTIES,
-      field: event.target.name,
-      value: event.target.value,
-    });
-  };
-  /* ------------------------------------------
-  // Delete Feeds PopUp öffnen
-  // ------------------------------------------ */
-  const onFeedDeletePopUpOpen = () => {
-    setDeletFeedsPopUp({ ...deletFeedsPopUp, open: true });
-  };
-  /* ------------------------------------------
-  // Delete Feeds PopUp Abbrechen
-  // ------------------------------------------ */
-  const onFeedDeleteCancel = () => {
-    setDeletFeedsPopUp({ ...deletFeedsPopUp, open: false });
-  };
-  /* ------------------------------------------
-  // Delete Feeds PopUp Ok
-  // ------------------------------------------ */
-  const onFeedDeleteOk = async () => {
-    dispatchDeleteFeeds({ type: REDUCER_ACTIONS.FEED_DELETE_INIT });
-
-    await Feed.deleteFeeds({
-      firebase: firebase,
-      daysOffset: deleteFeeds.properties.daysOffset,
-      authUser: authUser,
-      traceListener: feedDeleteListener,
-    }).catch((error) => {
-      dispatchDeleteFeeds({
-        type: REDUCER_ACTIONS.GENERIC_ERROR,
-        payload: error,
+    const snapshot = await feedsRef
+      .orderBy("createdAt", "desc")
+      .limit(limitTo)
+      .get()
+      .catch((error) => {
+        console.error(error);
+        throw error;
       });
+
+    snapshot.forEach((obj) => {
+      feed = obj.data();
+      feed.uid = obj.id;
+      // Timestamp umwandeln
+      feed.createdAt = feed.createdAt.toDate();
+      feeds.push(feed);
     });
 
-    setDeletFeedsPopUp({ ...deletFeedsPopUp, open: false });
+    return feeds;
   };
+  /* =====================================================================
+  // Neuste X Feed eines bestimmten Typs holen
+  // ===================================================================== */
+  static getNewestFeedsOfType = async (
+    firebase,
+    limitTo = DEFAULT_VALUES.FEEDS_DISPLAY,
+    feedType
+  ) => {
+    let feeds = [];
+    let feed = {};
 
-  /* ------------------------------------------
-  // Listener für Produkt Trace
-  // ------------------------------------------ */
-  const feedDeleteListener = (snapshot) => {
-    // Werte setzen, wenn durch
-    if (snapshot?.done) {
-      dispatchDeleteFeeds({
-        type: REDUCER_ACTIONS.FEED_DELETE_SUCCESS,
-        payload: snapshot.noOfDeletedDocuments,
-      });
+    if (!firebase || !feedType) {
+      throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
     }
+    const feedsRef = firebase.feeds();
+    const snapshot = await feedsRef
+      .orderBy("createdAt", "desc")
+      .where("feedType", "==", feedType)
+      .limit(limitTo)
+      .get()
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+
+    snapshot.forEach((obj) => {
+      feed = obj.data();
+      feed.uid = obj.id;
+      // Timestamp umwandeln
+      feed.createdAt = feed.createdAt.toDate();
+      feeds.push(feed);
+    });
+
+    return feeds;
   };
-  /* ------------------------------------------
-  // Feeds holen
-  // ------------------------------------------ */
-  const onGetFeeds = () => {
-    dispatchDeleteFeeds({ type: REDUCER_ACTIONS.GET_FEEDS_INIT });
-    Feeds.getNewestFeeds({
-      firebase: firebase,
-      limitTo: deleteFeeds.properties.noOfEntries,
-    })
-      .then((result) => {
-        dispatchDeleteFeeds({
-          type: REDUCER_ACTIONS.GET_FEEDS_SUCCESS,
-          payload: result,
+  /* =====================================================================
+  // Anhand des Feed Typs den Titel bestimmen
+  // ===================================================================== */
+  static getTitle(feedType) {
+    switch (feedType) {
+      case FEED_TYPE.USER_CREATED:
+        return FEED_TITLE.USER_CREATED;
+      case FEED_TYPE.RECIPE_CREATED:
+        return FEED_TITLE.RECIPE_CREATED;
+      case FEED_TYPE.EVENT_CREATED:
+        return FEED_TITLE.EVENT_CREATED;
+      case FEED_TYPE.EVENT_COOK_ADDED:
+        return FEED_TITLE.EVENT_COOK_ADDED;
+      case FEED_TYPE.SHOPPINGLIST_CREATED:
+        return FEED_TITLE.SHOPPINGLIST_CREATED;
+      case FEED_TYPE.MENUPLAN_CREATED:
+        return FEED_TITLE.MENUPLAN_CREATED;
+      default:
+        return "?";
+    }
+  }
+  /* =====================================================================
+  // Anhand des Feed Typs den Text bestimmen
+  // ===================================================================== */
+  static getText(feedType, text) {
+    switch (feedType) {
+      case FEED_TYPE.USER_CREATED:
+        return FEED_TEXT.USER_CREATED;
+      // return "ist neu mit an Bord.";
+      case FEED_TYPE.RECIPE_CREATED:
+        return FEED_TEXT.RECIPE_CREATED(text);
+      // return `hat das Rezept «${text}» erfasst.`;
+      case FEED_TYPE.EVENT_CREATED:
+        return FEED_TEXT.EVENT_CREATED(text);
+      // return `hat den Anlass «${text}» erstellt.`;
+      case FEED_TYPE.EVENT_COOK_ADDED:
+        return FEED_TEXT.EVENT_COOK_ADDED(text);
+      // return `wurde in das Team «${text}» aufgenommen.`;
+      case FEED_TYPE.MENUPLAN_CREATED:
+        return FEED_TEXT.MENUPLAN_CREATED(text);
+      // return `Plant gerade den ${text}`;
+      case FEED_TYPE.SHOPPINGLIST_CREATED:
+        return FEED_TEXT.SHOPPINGLIST_CREATED(text);
+      // return `kauft ${text} ein.`;
+      default:
+        return "?";
+    }
+  }
+  /* =====================================================================
+// Cloud Function deleteFeeds aufrufen
+// ===================================================================== */
+  static deleteFeeds = async ({
+    firebase,
+    daysOffset,
+    authUser,
+    traceListener,
+  }) => {
+    if (!firebase || !daysOffset) {
+      throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
+    }
+    let listener;
+    let docRef = firebase.cloudFunctions_feed_Delete().doc();
+    await docRef
+      .set({
+        daysOffset: parseInt(daysOffset),
+        user: {
+          uid: authUser.uid,
+          displayName: authUser.publicProfile.displayName,
+        },
+        date: firebase.timestamp.fromDate(new Date()),
+      })
+      .then(async () => {
+        await firebase.delay(1);
+      })
+      .then(() => {
+        const unsubscribe = docRef.onSnapshot((snapshot) => {
+          traceListener(snapshot.data());
+          if (snapshot.data()?.done) {
+            // Wenn das Feld DONE vorhanden ist, ist die Cloud-Function durch
+            unsubscribe();
+          }
         });
       })
       .catch((error) => {
-        console.error(error);
-        dispatchDeleteFeeds({
-          type: REDUCER_ACTIONS.GENERIC_FAILURE,
-          error: error,
-        });
+        throw error;
+      });
+    console.log(listener);
+    return listener;
+  };
+  /* =====================================================================
+  // Einzelne Feeds löschen
+  // ===================================================================== */
+  static deleteFeed = async ({ firebase, feedUid }) => {
+    if (!firebase || !feedUid) {
+      throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
+    }
+    let docCollection = firebase.feeds();
+
+    await docCollection
+      .doc(feedUid)
+      .delete()
+      .catch((error) => {
+        throw error;
       });
   };
-  /* ------------------------------------------
-  // Feed-Checkbox markiere / entmarkieren
-  // ------------------------------------------ */
-  const onCheckboxChange = (uid) => {
-    dispatchDeleteFeeds({
-      type: REDUCER_ACTIONS.FEED_CHECKBOX_UPDATE,
-      payload: uid,
-    });
-  };
-  /* ------------------------------------------
-  // markierte Feeds löschen
-  // ------------------------------------------ */
-  const onDeleteSelectiveFeeds = () => {
-    deleteFeeds.feeds.forEach(async (feed) => {
-      if (feed.checked) {
-        await Feed.deleteFeed({ firebase: firebase, feedUid: feed.uid }).catch(
-          (error) => {
-            dispatchDeleteFeeds({
-              type: REDUCER_ACTIONS.GENERIC_ERROR,
-              error: error,
-            });
-          }
-        );
-      }
-    });
-    dispatchDeleteFeeds({
-      type: REDUCER_ACTIONS.GET_FEEDS_SUCCESS,
-      payload: deleteFeeds.feeds.filter((feed) => !feed.checked),
-    });
-  };
-
-  return (
-    <React.Fragment>
-      {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="sm">
-        <Backdrop className={classes.backdrop} open={deleteFeeds.isLoading}>
-          <CircularProgress color="inherit" />
-        </Backdrop>
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <PanelDeleteFeedsByDays
-              properties={deleteFeeds.properties}
-              onChangeField={onChangeDeleteFeedField}
-              onOpenPopUp={onFeedDeletePopUpOpen}
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <PanelDeleteFeedsSelectiv
-              onGetFeeds={onGetFeeds}
-              onCheckboxChange={onCheckboxChange}
-              deleteFeeds={deleteFeeds}
-              onChangeField={onChangeDeleteFeedField}
-              onDeleteSelectiveFeeds={onDeleteSelectiveFeeds}
-            />
-          </Grid>
-        </Grid>
-      </Container>
-      <DialogDeletionConfirmation
-        dialogOpen={deletFeedsPopUp.open}
-        handleOk={onFeedDeleteOk}
-        handleClose={onFeedDeleteCancel}
-        confirmationString={"feeds"}
-      />
-    </React.Fragment>
-  );
-};
-/* ===================================================================
-// ================== Feed Einträge nach Tagen löschen ===============
-// =================================================================== */
-const PanelDeleteFeedsByDays = ({ properties, onChangeField, onOpenPopUp }) => {
-  const classes = useStyles();
-  return (
-    <Card className={classes.card} key={"cardInfo"}>
-      <CardContent className={classes.cardContent} key={"cardContentInfo"}>
-        <Typography gutterBottom={true} variant="h5" component="h2">
-          {TEXT.PANEL_SYSTEM_DELETE_FEED_BY_DAYS}
-        </Typography>
-
-        <TextField
-          id={"daysOffset"}
-          key={"daysOffset"}
-          type="number"
-          InputProps={{ inputProps: { min: 30 } }}
-          label={TEXT.FIELD_FEED_DELETE_AFTER_DAYS}
-          name={"daysOffset"}
-          required
-          value={properties.daysOffset}
-          onChange={onChangeField}
-          fullWidth
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-        {properties.isDeleted && (
-          <AlertMessage severity={"success"} body={properties.message} />
-        )}
-        {properties.error && (
-          <AlertMessage
-            error={properties.error}
-            messageTitle={TEXT.ALERT_TITLE_UUPS}
-          />
-        )}
-        {properties.isDeleting && (
-          <React.Fragment>
-            <br />
-            <LinearProgress />
-          </React.Fragment>
-        )}
-        <Button
-          fullWidth
-          disabled={!properties.daysOffset}
-          variant="contained"
-          color="primary"
-          className={classes.submit}
-          onClick={onOpenPopUp}
-        >
-          {TEXT.BUTTON_DELETE_FEED}
-        </Button>
-      </CardContent>
-    </Card>
-  );
-};
-
-/* ===================================================================
-// =================== Feed Einträge selektiv löschen ================
-// =================================================================== */
-const PanelDeleteFeedsSelectiv = ({
-  deleteFeeds,
-  onCheckboxChange,
-  onGetFeeds,
-  onChangeField,
-  onDeleteSelectiveFeeds,
-}) => {
-  const classes = useStyles();
-
-  return (
-    <Card className={classes.card} key={"cardInfo"}>
-      <CardContent className={classes.cardContent} key={"cardContentInfo"}>
-        <Typography gutterBottom={true} variant="h5" component="h2">
-          {TEXT.PANEL_SYSTEM_DELETE_FEED_SELECTIV}
-        </Typography>
-        <TextField
-          id={"noOfEntries"}
-          key={"noOfEntries"}
-          type="number"
-          label={TEXT.FIELD_FEED_DELETE_NO_OF_ENTRIES}
-          name={"noOfEntries"}
-          required
-          value={deleteFeeds.properties.noOfEntries}
-          onChange={onChangeField}
-          fullWidth
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-        <Button
-          fullWidth
-          variant="outlined"
-          color="primary"
-          className={classes.submit}
-          onClick={onGetFeeds}
-        >
-          {TEXT.BUTTON_GET_FEEDS}
-        </Button>
-        <Button
-          fullWidth
-          disabled={
-            deleteFeeds.feeds.filter((feed) => feed.checked === true).length ===
-            0
-          }
-          variant="contained"
-          color="primary"
-          className={classes.submit}
-          onClick={onDeleteSelectiveFeeds}
-        >
-          {TEXT.BUTTON_DELETE_CHECKED_FEEDS}
-        </Button>
-        {deleteFeeds.feeds.length > 0 && (
-          <List className={classes.root}>
-            {deleteFeeds.feeds.map((feed) => (
-              <ListItem
-                name={feed.uid}
-                key={feed.uid}
-                // dense
-                button
-                onClick={() => onCheckboxChange(feed.uid)}
-              >
-                <ListItemIcon>
-                  <Checkbox
-                    key={feed.uid}
-                    checked={feed.checked}
-                    inputProps={{ "aria-labelledby": feed.uid }}
-                    color="primary"
-                    disableRipple
-                  />
-                </ListItemIcon>
-                <ListItemText
-                  primary={feed.title}
-                  secondary={
-                    <React.Fragment>
-                      <Typography
-                        component="span"
-                        variant="body2"
-                        className={classes.inline}
-                        color="textPrimary"
-                      >
-                        {feed.displayName}
-                      </Typography>
-                      {" - " +
-                        feed.text +
-                        " | " +
-                        feed.createdAt.toLocaleString("de-CH", {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                        })}
-                    </React.Fragment>
-                  }
-                />
-              </ListItem>
-            ))}
-          </List>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
-const condition = (authUser) => !!authUser.roles.includes(ROLES.ADMIN);
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(FeedDeletePage);
+}
