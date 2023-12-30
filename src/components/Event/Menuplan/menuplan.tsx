@@ -4588,6 +4588,7 @@ export const DialogGoods = ({
               ) : (
                 <MaterialAutocomplete
                   componentKey={""}
+                  disabled={false}
                   material={
                     dialogValues.material
                       ? dialogValues.material

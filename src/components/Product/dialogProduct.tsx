@@ -1,4 +1,6 @@
 import React from "react";
+import {compose} from "recompose";
+
 import Grid from "@material-ui/core/Grid";
 
 import Dialog from "@material-ui/core/Dialog";
@@ -24,15 +26,14 @@ import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 
 import Firebase, {withFirebase} from "../Firebase";
-import Product, {Allergen, Diet, DietProperties} from "./product.class";
+import Product, {Allergen, Diet} from "./product.class";
 import AlertMessage from "../Shared/AlertMessage";
 import * as TEXT from "../../constants/text";
 import Department from "../Department/department.class";
 import Unit from "../Unit/unit.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import UnitAutocomplete from "../Unit/unitAutocomplete";
-import {PRODUCTS as ROUTE_PRODUCTS} from "../../constants/routes";
-import Utils from "../Shared/utils.class";
+import {withAuthorization} from "../Session";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
@@ -64,6 +65,7 @@ export const PRODUCT_DIALOG_TYPE = {
 // =================================================================== */
 
 interface DialogProductProps {
+  // Muss nicht übergeben werden, da diese vom Export (ganz unten) versorgt wird
   firebase?: Firebase;
   dialogType: ProductDialog;
   productName: Product["name"];
@@ -124,8 +126,6 @@ const DialogProduct = ({
     } else {
       objectId ? (field = objectId) : (field = "");
     }
-
-    console.log(field, newValue);
 
     switch (field) {
       case "unit_shoppingUnit":
@@ -382,9 +382,6 @@ const DialogProduct = ({
                 options={departments}
                 autoSelect
                 autoHighlight
-                // getOptionSelected={(department) =>
-                //   department.uid === selectedDepartmentUid
-                // }
                 getOptionLabel={(department) => department.name}
                 onChange={(event, newValue, action) => {
                   onChangeField(
@@ -524,4 +521,9 @@ const DialogProduct = ({
     </Dialog>
   );
 };
-export default withFirebase(DialogProduct);
+const condition = (authUser: AuthUser) => !!authUser;
+
+export default compose(
+  withAuthorization(condition),
+  withFirebase
+)(DialogProduct);

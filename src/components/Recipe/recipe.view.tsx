@@ -716,6 +716,7 @@ const RecipeView = ({
                 sm={6}
                 style={{marginTop: "2em", marginBottom: "2em"}}
               >
+                {console.warn(scalingInformation)}
                 <RecipeMaterial
                   recipe={recipe}
                   scaledPortions={scalingInformation.portions}
@@ -1889,7 +1890,7 @@ export const RecipeMaterial = ({
   scaledMaterials,
 }: RecipeMaterialProps) => {
   const classes = useStyles();
-
+  console.log(scaledPortions, scaledMaterials);
   if (scaledPortions === 0) {
     scaledPortions = undefined;
   }
@@ -1980,11 +1981,11 @@ export const RecipeMaterial = ({
                 >
                   {scaledPortions &&
                   scaledMaterials &&
-                  scaledMaterials[counter]?.quantity
-                    ? Number.isNaN(scaledMaterials[counter].quantity) ||
-                      scaledMaterials[counter].quantity == 0
+                  scaledMaterials[materialUid]?.quantity
+                    ? Number.isNaN(scaledMaterials[materialUid].quantity) ||
+                      scaledMaterials[materialUid].quantity == 0
                       ? ""
-                      : scaledMaterials[counter].quantity.toLocaleString(
+                      : scaledMaterials[materialUid].quantity.toLocaleString(
                           "de-CH"
                         )
                     : Number.isNaN(material.quantity) || material.quantity == 0

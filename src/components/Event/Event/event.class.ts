@@ -46,6 +46,12 @@ export enum EventType {
   history = "history",
 }
 
+export enum EventRefDocuments {
+  usedRecipes = 1,
+  shoppingList,
+  materialList,
+}
+
 export interface Cook extends AuthUserPublicProfile {
   uid: string;
 }
@@ -106,33 +112,34 @@ interface GetEvent {
   firebase: Firebase;
   uid: string;
 }
+interface GetEventListener {
+  firebase: Firebase;
+  uid: string;
+  callback: (event: Event) => void;
+}
 interface GetEvents {
   firebase: Firebase;
   userUid: string;
   eventType: EventType;
+}
+interface AddRefDocument {
+  refDocuments: Event["refDocuments"];
+  newDocumentType: EventRefDocuments;
 }
 export default class Event {
   uid: string;
   name: string;
   motto: string;
   location: string;
-  // participants: number;
   cooks: Cook[];
   numberOfDays: number;
   dates: EventDate[];
   maxDate: Date;
   pictureSrc: string;
-  // pictureSrcFullSize: string;
   authUsers: string[];
   created: ChangeRecord;
   lastChange: ChangeRecord;
-
-  // createdAt: Date;
-  // createdFromDisplayName: string;
-  // createdFromUid: string;
-  // lastChangeAt: Date;
-  // lastChangeFromDisplayName: string;
-  // lastChangeFromUid: string;
+  refDocuments?: EventRefDocuments[];
   /* =====================================================================
   // Constructor
   // ===================================================================== */
@@ -141,13 +148,11 @@ export default class Event {
     this.name = "";
     this.motto = "";
     this.location = "";
-    // this.participants = 0;
     this.pictureSrc = "";
     this.cooks = [];
     this.numberOfDays = 0;
     this.dates = [];
     this.maxDate = new Date(0);
-    // this.pictureSrcFullSize = "";
     this.authUsers = [];
     this.created = {date: new Date(0), fromUid: "", fromDisplayName: ""};
     this.lastChange = {date: new Date(0), fromUid: "", fromDisplayName: ""};
@@ -683,6 +688,40 @@ export default class Event {
   };
   // ===================================================================== */
   /**
+   * Listener holen
+   * @param object - Objekt mit Firebase, UID, und Callback-Funktion
+   * @returns listener
+   */
+  static getEventListener = async ({
+    firebase,
+    uid,
+    callback,
+  }: GetEventListener) => {
+    let eventListener = () => {};
+
+    const eventCallback = (event: Event) => {
+      // Menüplan mit UID anreichern
+      event.uid = uid;
+      callback(event);
+    };
+
+    await firebase.event
+      .listen<Event>({
+        uids: [uid],
+        callback: eventCallback,
+      })
+      .then((result) => {
+        eventListener = result;
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+    return eventListener;
+  };
+
+  // ===================================================================== */
+  /**
    * getEventsOfUser: Event einer Person lesen
    * @param firebase Referenz zur DB
    * @param userUid UID des Users
@@ -729,4 +768,18 @@ export default class Event {
 
     return events;
   }
+  // ===================================================================== */
+  /**
+   * Neuer Dokumententyp hinzufügen
+   * @param object - Objekt mit RefDocumentes und neuer Typ zum hinzufügen
+   * @returns angepasstes Array mit RefDocuments
+   */
+  static addRefDocument = ({refDocuments, newDocumentType}: AddRefDocument) => {
+    let updatedDocuments: Event["refDocuments"] = [];
+    if (refDocuments) {
+      updatedDocuments = [...refDocuments];
+    }
+    updatedDocuments.push(newDocumentType);
+    return updatedDocuments;
+  };
 }

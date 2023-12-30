@@ -47,8 +47,12 @@ export default class PdfStyles {
         width: "50%",
         textAlign: "center",
       },
+      tableCol5: {
+        width: "5%",
+        textAlign: "center",
+      },
       tableColQuantity: {
-        width: "10%",
+        width: "40%",
         textAlign: "right",
       },
       tableColUnit: {
@@ -56,7 +60,7 @@ export default class PdfStyles {
         textAlign: "left",
       },
       tableColItem: {
-        width: "30%",
+        width: "60%",
         textAlign: "left",
       },
       tableCell: {

@@ -91,6 +91,8 @@ import FieldValidationError, {
 } from "../../Shared/fieldValidation.error.class";
 import {DialogType, useCustomDialog} from "../../Shared/customDialogContext";
 import ShoppingListCollection from "../ShoppingList/shoppingListCollection.class";
+import MaterialList from "../MaterialList/materialList.class";
+// import MaterialList from "../MaterialList/materialList.class";
 
 /* ===================================================================
 // ============================== Global =============================
@@ -211,6 +213,13 @@ const EventInfoPage = ({
       return;
     }
     eventDate[changedPos[0]] = date;
+
+    // Wenn das Von-Datum gesetzt wurde und das Bis noch initial ist,
+    // dieses Datum auch gleich setzen, damit nicht soweit gescrollt werden muss
+    if (changedPos[0] == "from" && eventDate.to.getFullYear() == 1970) {
+      eventDate.to = date!;
+    }
+
     // Wenn das die letzte Zeile ist, automatisch eine neue einfügen
     if (eventDate.pos == state.event.dates.length) {
       let newDate = Event.createDateEntry();
@@ -218,7 +227,7 @@ const EventInfoPage = ({
       tempDates.push(newDate);
     }
     tempDates = Utils.renumberArray({array: tempDates, field: "pos"});
-
+    console.log(tempDates, eventDate);
     dispatch({
       type: ReducerActions.FIELD_UPDATE,
       payload: {field: "dates", value: tempDates},
@@ -343,6 +352,7 @@ const EventInfoPage = ({
       authUser: authUser,
       localPicture: localPicture ? localPicture : ({} as File),
     })
+      //TODO: hier schauen wie das nacher mit dem bearbeiten geht.
       .then(async (result) => {
         eventUid = result.uid;
         dispatch({type: ReducerActions.SAVE_EVENT_SUCCESS, payload: result});
@@ -352,29 +362,6 @@ const EventInfoPage = ({
           menuplan: Menuplan.factory({
             event: {...state.event, uid: eventUid},
             authUser: authUser,
-          }),
-          firebase: firebase,
-          authUser: authUser,
-        }).catch((error) => {
-          console.error(error);
-          throw error;
-        });
-        // File Used-Recipes erzeugen
-        await UsedRecipes.save({
-          usedRecipes: UsedRecipes.factory({
-            event: {...state.event, uid: eventUid},
-          }),
-          firebase: firebase,
-          authUser: authUser,
-        }).catch((error) => {
-          console.error(error);
-          throw error;
-        });
-
-        // Shoppint-List erzeugen
-        await ShoppingListCollection.saveCollection({
-          shoppingListCollection: ShoppingListCollection.factory({
-            event: {...state.event, uid: eventUid},
           }),
           firebase: firebase,
           authUser: authUser,

@@ -1107,7 +1107,6 @@ const RecipeEdit = ({
   // ContextMenü für Postionen
   // ------------------------------------------ */
   const onPositionMoreClick = (event: React.MouseEvent<HTMLElement>) => {
-    //FIXME:
     // Zwischenspeichern bei welchem Element das Menü auf-
     // gerufen wurde
     let pressedButton = event.currentTarget.id.split("_");

@@ -35,7 +35,7 @@ import {
   SELECT_MENUES as TEXT_SELECT_MENUES,
   WHICH_MENUES_FOR_RECIPE_GENERATION as TEXT_WHICH_MENUES_FOR_RECIPE_GENERATION,
   EXISTING_LISTS as TEXT_EXISTING_LISTS,
-  USED_RECIPES_POSSIBLE_OUT_OF_DATE as TEXT_USED_RECIPES_POSSIBLE_OUT_OF_DATE,
+  LIST_ENTRY_MAYBE_OUT_OF_DATE as TEXT_USED_RECIPES_POSSIBLE_OUT_OF_DATE,
   PLANED_FOR as TEXT_PLANED_FOR,
   FOR_DATIVE as TEXT_FOR_DATIVE,
   SOURCE as TEXT_SOURCE,
@@ -46,6 +46,9 @@ import {
   NAME as TEXT_NAME,
   NEW_LIST as TEXT_NEW_LIST,
   GIVE_THE_NEW_LIST_A_NAME as TEXT_GIVE_THE_NEW_LIST_A_NAME,
+  PLANED_RECIPES as TEXT_PLANED_RECIPES,
+  LIST_ENTRY_MAYBE_OUT_OF_DATE as TEXT_LIST_ENTRY_MAYBE_OUT_OF_DATE,
+  LIST as TEXT_LIST,
 } from "../../../constants/text";
 import * as IMAGE_REPOSITORY from "../../../constants/imageRepository";
 
@@ -103,6 +106,7 @@ import {
 } from "../../Unit/unitConversion.class";
 import {FetchMissingDataProps, FetchMissingDataType} from "../Event/event";
 import unitConversion from "../../Unit/unitConversion";
+import {EventListCard} from "../Event/eventSharedComponents";
 
 /* ===================================================================
 // ============================ Dispatcher ===========================
@@ -191,6 +195,7 @@ interface EventUsedRecipesPageProps {
   unitConversionBasic: UnitConversionBasic | null;
   unitConversionProducts: UnitConversionProducts | null;
   fetchMissingData: ({type, recipeShort}: FetchMissingDataProps) => void;
+  onUsedRecipesUpdate: (usedRecipes: UsedRecipes) => void;
 }
 const EventUsedRecipesPage = ({
   firebase,
@@ -203,6 +208,7 @@ const EventUsedRecipesPage = ({
   unitConversionBasic,
   unitConversionProducts,
   fetchMissingData,
+  onUsedRecipesUpdate,
 }: EventUsedRecipesPageProps) => {
   const classes = useStyles();
 
@@ -275,12 +281,9 @@ const EventUsedRecipesPage = ({
           let newUsedRecipes = {...usedRecipes};
           newUsedRecipes.lists[result.properties.uid] = result;
           newUsedRecipes.noOfLists++;
+          newUsedRecipes.uid = event.uid;
 
-          UsedRecipes.save({
-            usedRecipes: newUsedRecipes,
-            firebase: firebase,
-            authUser: authUser,
-          });
+          onUsedRecipesUpdate(newUsedRecipes);
 
           dispatch({
             type: ReducerActions.SHOW_LOADING,
@@ -309,12 +312,7 @@ const EventUsedRecipesPage = ({
       firebase: firebase,
       authUser: authUser,
     }).then((result) => {
-      UsedRecipes.save({
-        usedRecipes: result,
-        firebase: firebase,
-        authUser: authUser,
-      });
-
+      onUsedRecipesUpdate(result);
       dispatch({
         type: ReducerActions.SHOW_LOADING,
         payload: {isLoading: false},
@@ -349,12 +347,7 @@ const EventUsedRecipesPage = ({
       listUidToDelete: selectedList,
       authUser: authUser,
     });
-
-    UsedRecipes.save({
-      usedRecipes: updatedUsedRecipes,
-      firebase: firebase,
-      authUser: authUser,
-    });
+    onUsedRecipesUpdate(updatedUsedRecipes);
 
     dispatch({
       type: ReducerActions.SET_SELECTED_LIST_ITEM,
@@ -386,19 +379,7 @@ const EventUsedRecipesPage = ({
         newName: userInput.input,
         authUser: authUser,
       });
-      UsedRecipes.save({
-        usedRecipes: updatedUsedRecipes,
-        firebase: firebase,
-        authUser: authUser,
-      });
-
-      dispatch({
-        type: ReducerActions.SET_SELECTED_LIST_ITEM,
-        payload: {
-          uid: "",
-          sortedMenueList: [],
-        },
-      });
+      onUsedRecipesUpdate(updatedUsedRecipes);
     }
   };
   /* ------------------------------------------
@@ -443,9 +424,13 @@ const EventUsedRecipesPage = ({
           </Backdrop>
         </Grid>
         <Grid item xs={12}>
-          <EventUsedRecipesCard
+          <EventListCard
+            cardTitle={TEXT_PLANED_RECIPES}
+            cardDescription={TEXT_USED_RECIPES_MENUE_SELECTION_DESCRIPTION}
+            outOfDateWarnMessage={TEXT_LIST_ENTRY_MAYBE_OUT_OF_DATE(TEXT_LIST)}
             selectedListItem={state.selectedListItem}
-            usedRecipes={usedRecipes}
+            lists={usedRecipes.lists}
+            noOfLists={usedRecipes.noOfLists}
             menuplan={menuplan}
             onShowDialogSelectMenues={onShowDialogSelectMenues}
             onListElementSelect={onListElementSelect}
@@ -482,132 +467,7 @@ const EventUsedRecipesPage = ({
     </React.Fragment>
   );
 };
-/* ===================================================================
-// ======================= Einstellungen-Card ========================
-// =================================================================== */
-interface EventUsedRecipesCardProps {
-  selectedListItem: string | null;
-  usedRecipes: UsedRecipes;
-  menuplan: Menuplan;
-  onShowDialogSelectMenues: () => void;
-  onListElementSelect: (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
-  ) => void;
-  onListElementDelete: (event: React.MouseEvent<HTMLElement>) => void;
-  onListElementEdit: (event: React.MouseEvent<HTMLElement>) => void;
-  onRefreshLists: () => void;
-  onGeneratePrintVersion: () => void;
-}
-const EventUsedRecipesCard = ({
-  selectedListItem,
-  usedRecipes,
-  menuplan,
-  onShowDialogSelectMenues,
-  onListElementSelect,
-  onListElementDelete,
-  onListElementEdit,
-  onRefreshLists,
-  onGeneratePrintVersion,
-}: EventUsedRecipesCardProps) => {
-  return (
-    <Card>
-      <CardHeader
-        title={TEXT_MENUE_SELECTION}
-        subheader={TEXT_USED_RECIPES_MENUE_SELECTION_DESCRIPTION}
-      />
-      <CardContent>
-        {usedRecipes.noOfLists > 0 && (
-          <List>
-            <ListSubheader>{TEXT_EXISTING_LISTS}</ListSubheader>
-            {Object.values(usedRecipes.lists).map((list) => (
-              <ListItem
-                key={"listItem_" + list.properties.uid}
-                id={"listItem_" + list.properties.uid}
-                button
-                selected={selectedListItem == list.properties.uid}
-                onClick={onListElementSelect}
-              >
-                <ListItemText
-                  primary={list.properties.name}
-                  secondary={decodeSelectedMenues({
-                    selectedMenues: list.properties.selectedMenues,
-                    menuplan: menuplan,
-                  })}
-                />
-                <ListItemSecondaryAction>
-                  <IconButton
-                    id={"EditBtn_" + list.properties.uid}
-                    onClick={onListElementEdit}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    id={"DeleteBtn_" + list.properties.uid}
-                    onClick={onListElementDelete}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </ListItemSecondaryAction>
-              </ListItem>
-            ))}
-          </List>
-        )}
 
-        {/* Warnung abgeben, wenn das Änderungsdatum des Menüplan kleiner ist, als der Listen */}
-        {menuplan.lastChange.date > usedRecipes.lastChange.date &&
-          usedRecipes.noOfLists > 0 && (
-            <Grid container>
-              <Grid
-                item
-                xs={1}
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  // alignItems: "center",
-                }}
-              >
-                <ErrorOutlineIcon color="error" />
-              </Grid>
-              <Grid item xs={11}>
-                <Typography color="error">
-                  {TEXT_USED_RECIPES_POSSIBLE_OUT_OF_DATE}
-                </Typography>
-              </Grid>
-            </Grid>
-          )}
-      </CardContent>
-      <CardActions style={{justifyContent: "flex-end"}}>
-        <Button
-          color="primary"
-          variant="outlined"
-          onClick={onShowDialogSelectMenues}
-        >
-          {TEXT_SELECT_MENUES}
-        </Button>
-        {usedRecipes.noOfLists > 0 && (
-          <Button
-            color="primary"
-            variant="outlined"
-            disabled={usedRecipes.noOfLists == 0}
-            onClick={onRefreshLists}
-          >
-            {TEXT_REFRESH}
-          </Button>
-        )}
-        {usedRecipes.noOfLists > 0 && (
-          <Button
-            color="primary"
-            variant="contained"
-            disabled={selectedListItem == null}
-            onClick={onGeneratePrintVersion}
-          >
-            {TEXT_PRINTVERSION}
-          </Button>
-        )}
-      </CardActions>
-    </Card>
-  );
-};
 /* ===================================================================
 // ======================== Rezepte-Übersicht ========================
 // =================================================================== */

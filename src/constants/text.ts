@@ -719,6 +719,8 @@ export const FORM_MEAL_TO_LOWER_THAN_MEAL_TO =
   "«Mahlzeit bis» findet vor «Mahlzeit von» statt.";
 export const FORM_GIVE_MATERIAL = "Bitte Materialname eingeben";
 export const FORM_GIVE_MATERIAL_TYPE = "Bitte Materialtyp wählen";
+export const PLEASE_GIVE_VALUE_FOR_FIELD = (fieldName: string) =>
+  `Bitte ${fieldName} eingeben.`;
 /* =====================================================================
 // User hinzufügen // AddUser
 // ===================================================================== */
@@ -998,8 +1000,8 @@ export const WHICH_MENUES_FOR_RECIPE_GENERATION =
 export const SELECT_DAY = "Tag auswählen";
 export const SELECT_ALL = "Alle auswählen";
 export const EXISTING_LISTS = "Bestehende Listen";
-export const USED_RECIPES_POSSIBLE_OUT_OF_DATE =
-  "Bitte beachte, dass der Menüplan in der Zwischenzeit geändert wurde. Dadurch könnten die angezeigten Rezepte möglicherweise nicht mehr korrekt sein. Bitte wähle Aktualisieren, um die Auswahl neu zu berechnen.";
+export const LIST_ENTRY_MAYBE_OUT_OF_DATE = (listName: string) =>
+  `Bitte beachte, dass der Menüplan in der Zwischenzeit geändert wurde. Dadurch könnten die Werte der angezeigten ${listName} möglicherweise nicht mehr korrekt sein. Bitte wähle Aktualisieren, um die Auswahl neu zu berechnen.`;
 export const USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE =
   "Bitte beachte, dass der Menüplan in der Zwischenzeit geändert wurde. Dadurch könnten die angezeigten Mengen und Produkte möglicherweise nicht mehr korrekt sein. Bitte wähle Aktualisieren, um die Einkaufsliste neu zu generieren.";
 export const PLANED_FOR = "Geplant für";
@@ -1041,9 +1043,12 @@ export const ADD_OR_REPLACE_ARTICLE = (
 export const REPLACE = "Ersetzen";
 export const SUM = "Dazuzählen";
 export const MANUALLY_ADDED_PRODUCTS = "Manuell hinzugefügte Artikel";
-export const KEEP_MANUALLY_ADDED_PRODUCTS =
-  "Diese Einkaufsliste beinhaltet manuell hinzugefügte Artikel. Sollen diese bei der Aktualisierung beibehalten oder sollen sie aus der Liste gelöscht werden?";
+export const KEEP_MANUALLY_ADDED_PRODUCTS = (listName: string) =>
+  `Diese ${listName} beinhaltet manuell hinzugefügte Artikel. Sollen diese bei der Aktualisierung beibehalten oder sollen sie aus der Liste gelöscht werden?`;
 export const KEEP = "Behalten";
+export const MATERIAL_LIST_MENUE_SELECTION_DESCRIPTION =
+  " Hier kannst du bereits generierte Materiallisten anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltete alle Materialien vom Typ «Gebrauchsmaterial» der gewählten Menüs. Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
+export const LIST = "Liste";
 /* =====================================================================
 // Abkürzungen
 // ===================================================================== */

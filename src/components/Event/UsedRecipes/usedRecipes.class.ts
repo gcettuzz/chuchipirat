@@ -95,6 +95,8 @@ export default class UsedRecipes {
    * @returns usedRecipes
    */
   static save = async ({usedRecipes, firebase, authUser}: Save) => {
+    usedRecipes.lastChange = Utils.createChangeRecord(authUser);
+
     firebase.event.usedRecipes
       .set({
         uids: [usedRecipes.uid],
@@ -162,11 +164,7 @@ export default class UsedRecipes {
       uid: Utils.generateUid(5),
       name: name,
       selectedMenues: selectedMenues,
-      generated: {
-        fromDisplayName: authUser.publicProfile.displayName,
-        fromUid: authUser.uid,
-        date: new Date(),
-      },
+      generated: Utils.createChangeRecord(authUser),
     };
 
     const recipeList = UsedRecipes.defineSelectedRecipes({
@@ -265,11 +263,7 @@ export default class UsedRecipes {
 
     delete updatedUsedRecipes.lists[listUidToDelete];
 
-    updatedUsedRecipes.lastChange = {
-      fromDisplayName: authUser.publicProfile.displayName,
-      fromUid: authUser.uid,
-      date: new Date(),
-    };
+    updatedUsedRecipes.lastChange = Utils.createChangeRecord(authUser);
     updatedUsedRecipes.noOfLists--;
 
     return updatedUsedRecipes;
@@ -290,11 +284,7 @@ export default class UsedRecipes {
     let updatedUsedRecipes = _.cloneDeep(usedRecipes) as UsedRecipes;
 
     updatedUsedRecipes.lists[listUidToEdit].properties.name = newName;
-    updatedUsedRecipes.lastChange = {
-      fromDisplayName: authUser.publicProfile.displayName,
-      fromUid: authUser.uid,
-      date: new Date(),
-    };
+    updatedUsedRecipes.lastChange = Utils.createChangeRecord(authUser);
 
     return updatedUsedRecipes;
   };

@@ -18,6 +18,7 @@ import {
 import FirebaseDbEventUsedRecipes from "./firebase.db.event.usedRecipes.class";
 import FirebaseDbEventShoppingList from "./firebase.db.event.shoppingList";
 import FirebaseDbEventShoppingListCollection from "./firebase.db.event.shoppingListCollection";
+import FirebaseDbEventMaterialList from "./firebase.db.event.materialList.class";
 // //FIXME: KOMMENTARE LÖSCHEN!
 // interface Update {
 //   value: Event;
@@ -31,6 +32,7 @@ export class FirebaseDbEvent extends FirebaseDbSuper {
   usedRecipes: FirebaseDbEventUsedRecipes;
   shoppingList: FirebaseDbEventShoppingList;
   shoppingListCollection: FirebaseDbEventShoppingListCollection;
+  materialList: FirebaseDbEventMaterialList;
   /* =====================================================================
   // Constructor
   // ===================================================================== */
@@ -44,6 +46,7 @@ export class FirebaseDbEvent extends FirebaseDbSuper {
     this.shoppingListCollection = new FirebaseDbEventShoppingListCollection(
       firebase
     );
+    this.materialList = new FirebaseDbEventMaterialList(firebase);
   }
   /* =====================================================================
   // Collection holen
@@ -74,26 +77,11 @@ export class FirebaseDbEvent extends FirebaseDbSuper {
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
-    return {
+    let dbObject = {
       authUsers: value.authUsers,
       cooks: value.cooks,
       dates: value.dates,
-      // dates: value.dates.map((dateSlice: ValueObject) => {
-      //   return {
-      //     uid: dateSlice.uid,
-      //     pos: dateSlice.pos,
-      //     from:
-      //       dateSlice.from instanceof Date
-      //         ? this.firebase.timestamp.fromDate(dateSlice.from)
-      //         : dateSlice.from,
-      //     to:
-      //       dateSlice.to instanceof Date
-      //         ? this.firebase.timestamp.fromDate(dateSlice.to)
-      //         : dateSlice.to,
-      //   };
-      // }),
       location: value.location,
-      // maxDate: this.firebase.timestamp.fromDate(value.maxDate),
       maxDate: value.maxDate,
       motto: value.motto,
       name: value.name,
@@ -101,23 +89,19 @@ export class FirebaseDbEvent extends FirebaseDbSuper {
       pictureSrc: value.pictureSrc,
       created: value.created,
       lastChange: value.lastChange,
-      // created: {
-      //   date: this.firebase.timestamp.fromDate(value.created.date),
-      //   fromUid: value.created.fromUid,
-      //   fromDisplayName: value.created.fromDisplayName,
-      // },
-      // lastChange: {
-      //   date: this.firebase.timestamp.fromDate(value.lastChange.date),
-      //   fromUid: value.lastChange.fromUid,
-      //   fromDisplayName: value.lastChange.fromDisplayName,
-      // },
     };
+
+    if (value.hasOwnProperty("refDocuments")) {
+      dbObject["refDocuments"] = value.refDocuments;
+    }
+
+    return dbObject;
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
   prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
-    return {
+    let appObject = {
       uid: uid,
       name: value.name,
       motto: value.motto,
@@ -125,42 +109,18 @@ export class FirebaseDbEvent extends FirebaseDbSuper {
       cooks: value.cooks,
       numberOfDays: value.numberOfDays,
       dates: value.dates,
-      // dates: value.dates.map((dateSlice: ValueObject) => {
-      //   return {
-      //     uid: dateSlice.uid,
-      //     pos: dateSlice.pos,
-      //     from:
-      //       dateSlice.from instanceof Date
-      //         ? dateSlice.from
-      //         : dateSlice.from.toDate(),
-      //     to:
-      //       dateSlice.to instanceof Date ? dateSlice.to : dateSlice.to.toDate(),
-      //   };
-      // }),
       maxDate: value.maxDate,
-      // maxDate:
-      //   value.maxDate instanceof Date ? value.maxDate : value.maxDate.toDate(),
       pictureSrc: value.pictureSrc,
       authUsers: value.authUsers,
       created: value.created,
       lastChange: value.lastChange,
-      // created: {
-      //   date:
-      //     value.created.date instanceof Date
-      //       ? value.created.date
-      //       : value.created.date.toDate(),
-      //   fromUid: value.created.fromUid,
-      //   fromDisplayName: value.created.fromDisplayName,
-      // },
-      // lastChange: {
-      //   date:
-      //     value.lastChange.date instanceof Date
-      //       ? value.lastChange.date
-      //       : value.lastChange.date.toDate(),
-      //   fromUid: value.lastChange.fromUid,
-      //   fromDisplayName: value.lastChange.fromDisplayName,
-      // },
-    } as unknown as T;
+    };
+
+    if (value.hasOwnProperty("refDocuments")) {
+      appObject["refDocuments"] = value.refDocuments;
+    }
+
+    return appObject as unknown as T;
   }
   /* =====================================================================
   // Einstellungen für den Session Storage zurückgeben

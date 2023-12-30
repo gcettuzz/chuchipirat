@@ -21,6 +21,7 @@ export enum StatsField {
   noRecipeVariants = "noRecipesVariants",
   noShoppingLists = "noShoppingLists",
   noParticipants = "noParticipants",
+  noMaterialLists = "noMaterialLists",
 }
 
 interface incrementStat {
@@ -60,8 +61,8 @@ export default class Stats {
   /* istanbul ignore next */
   /* DB-Methode wird zur Zeit nicht geprüft */
 
-  static incrementStat({ firebase, field, value = 1 }: incrementStat) {
-    firebase.stats.incrementField({ uids: [""], field: field, value: value });
+  static incrementStat({firebase, field, value = 1}: incrementStat) {
+    firebase.stats.incrementField({uids: [""], field: field, value: value});
   }
   /* =====================================================================
   // Statistik lesen

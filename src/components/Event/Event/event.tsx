@@ -13,7 +13,7 @@ import {
 
 import useStyles from "../../../constants/styles";
 
-import Event from "./event.class";
+import Event, {EventRefDocuments} from "./event.class";
 import PageTitle from "../../Shared/pageTitle";
 
 import {
@@ -43,24 +43,21 @@ import EventUsedRecipesPage from "../UsedRecipes/usedRecipes";
 import Menuplan from "../Menuplan/menuplan.class";
 import UsedRecipes from "../UsedRecipes/usedRecipes.class";
 import Utils from "../../Shared/utils.class";
-import LocalStorageHandler from "../../Shared/localStorageHandler.class";
 import RecipeShort from "../../Recipe/recipeShort.class";
 import Material from "../../Material/material.class";
 import Product, {Diet} from "../../Product/product.class";
 import CustomSnackbar, {Snackbar} from "../../Shared/customSnackbar";
 import Department from "../../Department/department.class";
-import {convertToObject} from "typescript";
-import {group} from "console";
 import UnitConversion, {
-  ConversionType,
   UnitConversionBasic,
   UnitConversionProducts,
 } from "../../Unit/unitConversion.class";
-import unitConversion from "../../Unit/unitConversion";
 import EventShoppingListPage from "../ShoppingList/shoppingList";
 import ShoppingListCollection from "../ShoppingList/shoppingListCollection.class";
-import {stat} from "fs";
 import ShoppingList from "../ShoppingList/shoppingList.class";
+import EventMaterialListPage from "../MaterialList/materialList";
+import MaterialList from "../MaterialList/materialList.class";
+
 /* ===================================================================
 // ============================== Global =============================
 // =================================================================== */
@@ -143,6 +140,8 @@ enum ReducerActions {
   SHOPPINGLIST_FETCH_INIT,
   SHOPPINGLIST_FETCH_SUCCESS_DATA,
   SHOPPINGLIST_FETCH_SUCCESS_LISTENER,
+  MATERIALLIST_FETCH_INIT,
+  MATERIALLIST_FETCH_SUCCESS,
   RECIPE_FETCH_INIT,
   RECIPE_FETCH_SUCCESS,
   RECIPES_FETCH_SUCCESS,
@@ -176,6 +175,7 @@ type State = {
   usedRecipes: UsedRecipes;
   shoppingListCollection: ShoppingListCollection;
   shoppingList: {value: ShoppingList | null; unsubscribe: (() => void) | null};
+  materialList: MaterialList;
   recipes: Recipes;
   // Rezept-Übersicht
   recipeList: RecipeShort[];
@@ -194,6 +194,7 @@ type State = {
     usedRecipes: boolean;
     shoppingListCollection: boolean;
     shoppingLists: boolean;
+    materialList: boolean;
     recipe: boolean;
     recipes: boolean;
     units: boolean;
@@ -323,6 +324,25 @@ const eventReducer = (state: State, action: DispatchAction): State => {
         shoppingList: {
           ...state.shoppingList,
           unsubscribe: action.payload as () => void,
+        },
+      };
+    case ReducerActions.MATERIALLIST_FETCH_INIT:
+      return {
+        ...state,
+        isLoading: true,
+        loadingComponents: {...state.loadingComponents, materialList: true},
+      };
+    case ReducerActions.MATERIALLIST_FETCH_SUCCESS:
+      return {
+        ...state,
+        materialList: action.payload as MaterialList,
+        isLoading: Utils.deriveIsLoading({
+          ...state.loadingComponents,
+          materialList: false,
+        }),
+        loadingComponents: {
+          ...state.loadingComponents,
+          materialList: false,
         },
       };
     case ReducerActions.RECIPE_FETCH_INIT:
@@ -551,6 +571,7 @@ const INITITIAL_STATE: State = {
   usedRecipes: new UsedRecipes(),
   shoppingListCollection: new ShoppingListCollection(),
   shoppingList: {value: null, unsubscribe: null},
+  materialList: new MaterialList(),
   recipes: {} as Recipes,
   recipeList: [],
   units: [],
@@ -568,6 +589,7 @@ const INITITIAL_STATE: State = {
     usedRecipes: false,
     shoppingListCollection: false,
     shoppingLists: false,
+    materialList: false,
     recipe: false,
     recipes: false,
     units: false,
@@ -594,18 +616,18 @@ const EventBase = ({props, authUser}) => {
   const [activeTab, setActiveTab] = React.useState(EventTabs.menuplan);
   // const [activeTab, setActiveTab] = React.useState(EventTabs.menuplan);
 
-  if (!state.event.uid) {
-    if (props.location.state) {
-      dispatch({
-        type: ReducerActions.EVENT_FETCH_SUCCESS,
-        payload: props.location.state.event,
-      });
-      dispatch({
-        type: ReducerActions.GROUP_CONFIG_FETCH_SUCCESS,
-        payload: props.location.state.groupConfig,
-      });
-    }
-  }
+  // if (!state.event.uid) {
+  //   if (props.location.state) {
+  //     dispatch({
+  //       type: ReducerActions.EVENT_FETCH_SUCCESS,
+  //       payload: props.location.state.event,
+  //     });
+  //     dispatch({
+  //       type: ReducerActions.GROUP_CONFIG_FETCH_SUCCESS,
+  //       payload: props.location.state.groupConfig,
+  //     });
+  //   }
+  // }
   /* ------------------------------------------
   // Daten aus der DB lesen
   // ------------------------------------------ */
@@ -618,22 +640,46 @@ const EventBase = ({props, authUser}) => {
 
   React.useEffect(() => {
     // Event
-    if (!props.location.state?.event) {
+    let unsubscribe: () => void;
+    if (!state.event.uid) {
       dispatch({type: ReducerActions.EVENT_FETCH_INIT, payload: {}});
-      Event.getEvent({
+      Event.getEventListener({
         firebase: firebase,
         uid: eventUid,
-      })
-        .then((result) => {
+        callback: (event) => {
           dispatch({
             type: ReducerActions.EVENT_FETCH_SUCCESS,
-            payload: result,
+            payload: event,
           });
+        },
+      })
+        .then((result) => {
+          unsubscribe = result;
         })
         .catch((error) => {
           dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
         });
     }
+    return function cleanup() {
+      console.warn("unsubscribe event");
+      unsubscribe();
+    };
+
+    //   dispatch({type: ReducerActions.EVENT_FETCH_INIT, payload: {}});
+    //   //TODO: Listener
+    //   Event.getEvent({
+    //     firebase: firebase,
+    //     uid: eventUid,
+    //   })
+    //     .then((result) => {
+    //       dispatch({
+    //         type: ReducerActions.EVENT_FETCH_SUCCESS,
+    //         payload: result,
+    //       });
+    //     })
+    //     .catch((error) => {
+    //       dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+    //     });
   }, []);
   React.useEffect(() => {
     //Group-Config
@@ -692,8 +738,12 @@ const EventBase = ({props, authUser}) => {
   }, []);
   React.useEffect(() => {
     // ShoppingList-Collection
-    let unsubscribe: () => void;
-    if (!state.menuplan.uid) {
+    if (
+      activeTab == EventTabs.shoppingList &&
+      !state.shoppingListCollection.eventUid &&
+      state.event.refDocuments?.includes(EventRefDocuments.shoppingList)
+    ) {
+      let unsubscribe: () => void;
       dispatch({
         type: ReducerActions.SHOPPINGLIST_COLLECTION_FETCH_INIT,
         payload: {},
@@ -714,13 +764,12 @@ const EventBase = ({props, authUser}) => {
         .catch((error) => {
           dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
         });
+      return function cleanup() {
+        console.warn("unsubscribe shoppinglistCollection");
+        unsubscribe();
+      };
     }
-
-    return function cleanup() {
-      console.warn("unsubscribe shoppinglistCollection");
-      unsubscribe();
-    };
-  }, []);
+  }, [activeTab, state.event.refDocuments]);
   React.useEffect(() => {
     // Unit Conversion
     if (
@@ -802,7 +851,11 @@ const EventBase = ({props, authUser}) => {
   }, [activeTab]);
   React.useEffect(() => {
     // Materiale
-    if (activeTab == EventTabs.shoppingList && state.materials.length == 0) {
+    if (
+      (activeTab == EventTabs.shoppingList ||
+        activeTab == EventTabs.materialList) &&
+      state.materials.length == 0
+    ) {
       dispatch({type: ReducerActions.MATERIALS_FETCH_INIT, payload: {}});
 
       Material.getAllMaterials({
@@ -845,6 +898,69 @@ const EventBase = ({props, authUser}) => {
         });
     }
   }, [activeTab]);
+  React.useEffect(() => {
+    // Verwendete Rezepte
+    if (
+      activeTab == EventTabs.usedRecipes &&
+      !state.usedRecipes.uid &&
+      state.event.refDocuments?.includes(EventRefDocuments.usedRecipes)
+    ) {
+      let unsubscribe: () => void;
+      dispatch({type: ReducerActions.USED_RECIPES_FETCH_INIT, payload: {}});
+      UsedRecipes.getUsedRecipesListener({
+        firebase: firebase,
+        uid: eventUid,
+        callback: (usedRecipes) => {
+          dispatch({
+            type: ReducerActions.USED_RECIPES_FETCH_SUCCESS,
+            payload: usedRecipes,
+          });
+        },
+      })
+        .then((result) => {
+          unsubscribe = result;
+        })
+        .catch((error) => {
+          dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+        });
+      return function cleanup() {
+        console.warn("unsubscribe usedRecipes");
+        unsubscribe();
+      };
+    }
+  }, [activeTab, state.event.refDocuments]);
+  React.useEffect(() => {
+    // Materialliste
+    if (
+      activeTab == EventTabs.materialList &&
+      !state.materialList.uid &&
+      state.event.refDocuments?.includes(EventRefDocuments.materialList)
+    ) {
+      let unsubscribe: () => void;
+      dispatch({type: ReducerActions.MATERIALLIST_FETCH_INIT, payload: {}});
+      MaterialList.getMaterialListListener({
+        firebase: firebase,
+        uid: eventUid,
+        callback: (materialList) => {
+          dispatch({
+            type: ReducerActions.MATERIALLIST_FETCH_SUCCESS,
+            payload: materialList,
+          });
+        },
+      })
+        .then((result) => {
+          unsubscribe = result;
+        })
+        .catch((error) => {
+          dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+        });
+      return function cleanup() {
+        console.warn("unsubscribe materialList");
+        unsubscribe();
+      };
+    }
+  }, [activeTab, state.event.refDocuments]);
+
   /* ------------------------------------------
   // Tab-Handling
   // ------------------------------------------ */
@@ -907,6 +1023,62 @@ const EventBase = ({props, authUser}) => {
       eventUid: state.event.uid,
       shoppingListCollection: shoppingListCollection,
       authUser: authUser,
+    }).then(() => {
+      if (!state.event.refDocuments?.includes(EventRefDocuments.shoppingList)) {
+        // Den Event-Updaten mit der Info, dass ein neues Dokument vorhanden ist
+        // dann springt auch der Listener für die Used Recipes an.
+        let updateRefDocuments = Event.addRefDocument({
+          refDocuments: state.event.refDocuments,
+          newDocumentType: EventRefDocuments.shoppingList,
+        });
+        Event.save({
+          firebase: firebase,
+          event: {...state.event, refDocuments: updateRefDocuments},
+          authUser: authUser,
+        });
+      }
+    });
+  };
+  const onUsedRecipesUpdate = (usedRecipes: UsedRecipes) => {
+    UsedRecipes.save({
+      firebase: firebase,
+      usedRecipes: usedRecipes,
+      authUser: authUser,
+    }).then(() => {
+      if (!state.event.refDocuments?.includes(EventRefDocuments.usedRecipes)) {
+        // Den Event-Updaten mit der Info, dass ein neues Dokument vorhanden ist
+        // dann springt auch der Listener für die Used Recipes an.
+        let updateRefDocuments = Event.addRefDocument({
+          refDocuments: state.event.refDocuments,
+          newDocumentType: EventRefDocuments.usedRecipes,
+        });
+        Event.save({
+          firebase: firebase,
+          event: {...state.event, refDocuments: updateRefDocuments},
+          authUser: authUser,
+        });
+      }
+    });
+  };
+  const onMaterialListUpdate = (materialList: MaterialList) => {
+    MaterialList.save({
+      firebase: firebase,
+      materialList: materialList,
+      authUser: authUser,
+    }).then(() => {
+      if (!state.event.refDocuments?.includes(EventRefDocuments.materialList)) {
+        // Den Event-Updaten mit der Info, dass ein neues Dokument vorhanden ist
+        // dann springt auch der Listener für die Used Recipes an.
+        let updateRefDocuments = Event.addRefDocument({
+          refDocuments: state.event.refDocuments,
+          newDocumentType: EventRefDocuments.materialList,
+        });
+        Event.save({
+          firebase: firebase,
+          event: {...state.event, refDocuments: updateRefDocuments},
+          authUser: authUser,
+        });
+      }
     });
   };
   /* ------------------------------------------
@@ -1253,28 +1425,49 @@ const EventBase = ({props, authUser}) => {
               unitConversionBasic={state.unitConversionBasic}
               unitConversionProducts={state.unitConversionProducts}
               fetchMissingData={fetchMissingData}
+              onUsedRecipesUpdate={onUsedRecipesUpdate}
             />
           </Container>
         ) : activeTab == EventTabs.shoppingList ? (
-          <EventShoppingListPage
-            firebase={firebase}
-            authUser={authUser}
-            menuplan={state.menuplan}
-            event={state.event}
-            products={state.products}
-            materials={state.materials}
-            units={state.units}
-            departments={state.departments}
-            recipes={state.recipes}
-            unitConversionBasic={state.unitConversionBasic}
-            unitConversionProducts={state.unitConversionProducts}
-            shoppingListCollection={state.shoppingListCollection}
-            shoppingList={state.shoppingList.value}
-            fetchMissingData={fetchMissingData}
-            onShoppingListUpdate={onShoppingListUpdate}
-            onShoppingCollectionUpdate={onShoppingCollectionUpdate}
-            onMasterdataCreate={onMasterdataCreate}
-          />
+          <Container>
+            <EventShoppingListPage
+              firebase={firebase}
+              authUser={authUser}
+              menuplan={state.menuplan}
+              event={state.event}
+              products={state.products}
+              materials={state.materials}
+              units={state.units}
+              departments={state.departments}
+              recipes={state.recipes}
+              unitConversionBasic={state.unitConversionBasic}
+              unitConversionProducts={state.unitConversionProducts}
+              shoppingListCollection={state.shoppingListCollection}
+              shoppingList={state.shoppingList.value}
+              fetchMissingData={fetchMissingData}
+              onShoppingListUpdate={onShoppingListUpdate}
+              onShoppingCollectionUpdate={onShoppingCollectionUpdate}
+              onMasterdataCreate={onMasterdataCreate}
+            />
+          </Container>
+        ) : activeTab == EventTabs.materialList ? (
+          <Container>
+            <EventMaterialListPage
+              firebase={firebase}
+              authUser={authUser}
+              materialList={state.materialList}
+              event={state.event}
+              groupConfiguration={state.groupConfig}
+              menuplan={state.menuplan}
+              materials={state.materials}
+              recipes={state.recipes}
+              unitConversionBasic={state.unitConversionBasic}
+              unitConversionProducts={state.unitConversionProducts}
+              fetchMissingData={fetchMissingData}
+              onMaterialListUpdate={onMaterialListUpdate}
+              onMasterdataCreate={onMasterdataCreate}
+            />
+          </Container>
         ) : (
           <p>TODO</p>
         )}

@@ -13,19 +13,21 @@ import {RecipeProduct} from "../Recipe/recipe.class";
 import Material, {MaterialType} from "./material.class";
 import Utils from "../Shared/utils.class";
 
-import {MATERIAL, ADD} from "../../constants/text";
+import {MATERIAL, ADD, ITEM_CANT_BE_CHANGED} from "../../constants/text";
 import Product from "../Product/product.class";
 
 interface MaterialAutocompleteProps {
   componentKey: string;
-  material: Material | RecipeProduct;
+  material: Material | RecipeProduct | null;
   materials: Material[];
+  disabled: boolean;
   onChange: (
     event: React.ChangeEvent<HTMLInputElement>,
     newValue: string | Material,
     action: AutocompleteChangeReason,
     objectId: string
   ) => void;
+  error?: {isError: boolean; errorText: string};
 }
 interface filterHelpWithSortRank {
   uid: string;
@@ -47,7 +49,9 @@ const MaterialAutocomplete = ({
   componentKey,
   material,
   materials,
+  disabled,
   onChange,
+  error,
 }: MaterialAutocompleteProps) => {
   const theme = useTheme();
   const breakpointIsXs = useMediaQuery(theme.breakpoints.down("xs"));
@@ -60,12 +64,13 @@ const MaterialAutocomplete = ({
     <Autocomplete
       key={"material_" + componentKey}
       id={"material_" + componentKey}
-      value={material.name}
+      value={material?.name}
       options={materials}
+      disabled={disabled}
       autoSelect
       autoHighlight
       getOptionSelected={(optionMaterial) =>
-        optionMaterial.name === material.name
+        optionMaterial.name === material?.name
       }
       getOptionLabel={(option) => {
         if (typeof option === "string") {
@@ -136,7 +141,19 @@ const MaterialAutocomplete = ({
       renderOption={(option) => option.name}
       freeSolo
       renderInput={(params) => (
-        <TextField {...params} label={MATERIAL} size="small" />
+        <TextField
+          {...params}
+          label={MATERIAL}
+          size="small"
+          error={error?.isError}
+          helperText={
+            error?.isError
+              ? error.errorText
+              : disabled
+              ? ITEM_CANT_BE_CHANGED
+              : ""
+          }
+        />
       )}
     />
   );

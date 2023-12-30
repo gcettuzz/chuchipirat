@@ -188,10 +188,6 @@ export default class ShoppingList {
                   result[menueplan.mealRecipes[mealRecipeUid].recipe.recipeUid],
                 portionsToScale:
                   menueplan.mealRecipes[mealRecipeUid].totalPortions,
-                scalingOptions: {convertUnits: true},
-                unitConversionBasic: unitConversionBasic,
-                unitConversionProducts: unitConversionProducts,
-                products: products,
               });
 
               // Alle skalierten Zutaten hinzufügen

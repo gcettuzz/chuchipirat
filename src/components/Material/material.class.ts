@@ -10,9 +10,9 @@ import Role from "../../constants/roles";
 import Product from "../Product/product.class";
 
 export enum MaterialType {
-  consumable = "consumable",
-  usage = "usage",
-  none = "",
+  none = 0,
+  consumable,
+  usage,
 }
 
 interface CreateMaterialProps {

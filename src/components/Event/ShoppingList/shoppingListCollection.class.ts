@@ -275,17 +275,13 @@ export default class ShoppingListCollection {
           },
           trace: trace,
         };
-
-        await ShoppingListCollection.save({
-          firebase: firebase,
-          eventUid: eventUid,
-          shoppingListCollection: shoppingListCollection,
-          authUser: authUser,
-        });
       });
     });
-    // Neue UID zurückgeben
-    return shoppingList.uid;
+    // Neue UID und Collection
+    return {
+      shoppingListUid: shoppingList.uid,
+      shoppingListCollection: shoppingListCollection,
+    };
   };
   // ===================================================================== */
   /**
@@ -460,11 +456,6 @@ export default class ShoppingListCollection {
         updatedShoppingListCollection.lists[
           shoppingList.uid
         ].properties.generated = Utils.createChangeRecord(authUser);
-
-        console.warn(
-          updatedShoppingListCollection.lists[shoppingList.uid].properties
-            .generated
-        );
 
         firebase.analytics.logEvent(
           FirebaseAnalyticEvent.shoppingListRefreshed

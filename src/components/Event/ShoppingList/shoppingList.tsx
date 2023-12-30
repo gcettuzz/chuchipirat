@@ -7,14 +7,8 @@ import {
   Button,
   Backdrop,
   CircularProgress,
-  Card,
-  CardHeader,
-  CardContent,
-  CardActions,
   Typography,
-  Divider,
   List,
-  ListSubheader,
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
@@ -23,9 +17,6 @@ import {
   Container,
   Checkbox,
   useTheme,
-  Menu,
-  MenuItem,
-  Link,
   Dialog,
   DialogTitle,
   DialogActions,
@@ -36,20 +27,12 @@ import {
 
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
-  MENUE_SELECTION as TEXT_MENUE_SELECTION,
   SHOPPING_LIST_MENUE_SELECTION_DESCRIPTION as TEXT_SHOPPING_LIST_MENUE_SELECTION_DESCRIPTION,
-  PRINTVERSION as TEXT_PRINTVERSION,
-  REFRESH as TEXT_REFRESH,
-  CREATE_NEW_LIST as TEXT_CREATE_NEW_LIST,
   WHICH_MENUES_FOR_RECIPE_GENERATION as TEXT_WHICH_MENUES_FOR_RECIPE_GENERATION,
-  EXISTING_LISTS as TEXT_EXISTING_LISTS,
-  USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE as TEXT_USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE,
   NAME as TEXT_NAME,
   NEW_LIST as TEXT_NEW_LIST,
   GIVE_THE_NEW_SHOPPINGLIST_A_NAME as GIVE_THE_NEW_SHOPPINGLIST_A_NAME,
-  CHANGE as TEXT_CHANGE,
   DELETE as TEXT_DELETE,
-  WHERE_DOES_THIS_PRODUCT_COME_FROM as TEXT_WHERE_DOES_THIS_PRODUCT_COME_FROM,
   ERROR_NO_RECIPES_FOUND as TEXT_ERROR_NO_RECIPES_FOUND,
   ADD_ITEM as TEXT_ADD_ITEM,
   CANCEL as TEXT_CANCEL,
@@ -59,12 +42,7 @@ import {
   WHAT_KIND_OF_ITEM_ARE_YOU_CREATING as TEXT_WHAT_KIND_OF_ITEM_ARE_YOU_CREATING,
   FOOD as TEXT_FOOD,
   MATERIAL as TEXT_MATERIAL,
-  CLOSE as TEXT_CLOSE,
-  WHERE_IS_THIS_PRODUCT_USE as TEXT_WHERE_IS_THIS_PRODUCT_USE,
-  THE_QUANTITY_HAS_BEEN_MANUALY_EDITED as TEXT_THE_QUANTITY_HAS_BEEN_MANUALY_EDITED,
-  ADDED_MANUALY as TEXT_ADDED_MANUALY,
   ARTICLE_ALREADY_ADDED as TEXT_ARTICLE_ALREADY_ADDED,
-  ADD_OR_REPLACE_ARTICLE as TEXT_ADD_OR_REPLACE_ARTICLE,
   REPLACE as TEXT_REPLACE,
   SUM as TEXT_SUM,
   ADD_OR_REPLACE_ARTICLE,
@@ -73,15 +51,12 @@ import {
   KEEP as TEXT_KEEP,
   SHOPPING_LIST as TEXT_SHOPPING_LIST,
   SUFFIX_PDF as TEXT_SUFFIX_PDF,
+  PLEASE_GIVE_VALUE_FOR_FIELD as TEXT_PLEASE_GIVE_VALUE_FOR_FIELD,
+  ITEM as TEXT_ITEM,
+  CHANGE as TEXT_CHANGE,
+  USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE as TEXT_USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE,
 } from "../../../constants/text";
-import {
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  ErrorOutline as ErrorOutlineIcon,
-  MoreVert as MoreVertIcon,
-  CallSplit as CallSplitIcon,
-  Info as InfoIcon,
-} from "@material-ui/icons";
+import {MoreVert as MoreVertIcon} from "@material-ui/icons";
 
 import useStyles from "../../../constants/styles";
 
@@ -89,7 +64,6 @@ import Firebase from "../../Firebase";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import Menuplan, {
   MealRecipe,
-  MealType,
   Menue,
   MenueCoordinates,
 } from "../Menuplan/menuplan.class";
@@ -106,7 +80,6 @@ import {
 import Action from "../../../constants/actions";
 import AlertMessage from "../../Shared/AlertMessage";
 import ShoppingListCollection, {
-  ProductTrace,
   ShoppingListProperties,
   ShoppingListTrace,
 } from "./shoppingListCollection.class";
@@ -127,14 +100,12 @@ import {
   UnitConversionProducts,
 } from "../../Unit/unitConversion.class";
 import Department from "../../Department/department.class";
-import Material, {MaterialType} from "../../Material/material.class";
 import Event from "../Event/event.class";
 import UnitAutocomplete from "../../Unit/unitAutocomplete";
 import ItemAutocomplete, {MaterialItem, ProductItem} from "./itemAutocomplete";
 import Unit from "../../Unit/unit.class";
 import {AutocompleteChangeReason} from "@material-ui/lab";
-import {convertToObject} from "typescript";
-import Recipe, {PositionType, Recipes} from "../../Recipe/recipe.class";
+import Recipe, {Recipes} from "../../Recipe/recipe.class";
 import DialogMaterial, {
   MATERIAL_DIALOG_TYPE,
   MATERIAL_POP_UP_VALUES_INITIAL_STATE,
@@ -156,9 +127,14 @@ import {
   RecipeDrawerData,
 } from "../Menuplan/menuplan";
 import EventGroupConfiguration from "../GroupConfiguration/groupConfiguration.class";
-import recipes from "../../Recipe/recipes";
 import RecipeShort from "../../Recipe/recipeShort.class";
 import ShoppingListPdf from "./shoppingListPdf";
+import {
+  DialogTraceItem,
+  EventListCard,
+  PositionContextMenu,
+} from "../Event/eventSharedComponents";
+import Material from "../../Material/material.class";
 
 /* ===================================================================
 // ============================ Dispatcher ===========================
@@ -411,10 +387,12 @@ const EventShoppingListPage = ({
         firebase: firebase,
         authUser: authUser,
       })
-        .then((result) => {
+        .then(async (result) => {
+          await onShoppingCollectionUpdate(result.shoppingListCollection);
+
           fetchMissingData({
             type: FetchMissingDataType.SHOPPING_LIST,
-            objectUid: result,
+            objectUid: result.shoppingListUid,
           });
           // liste gleich anzeigen!
 
@@ -456,7 +434,7 @@ const EventShoppingListPage = ({
       let userInput = (await customDialog({
         dialogType: DialogType.selectOptions,
         title: TEXT_MANUALLY_ADDED_PRODUCTS,
-        text: TEXT_KEEP_MANUALLY_ADDED_PRODUCTS,
+        text: TEXT_KEEP_MANUALLY_ADDED_PRODUCTS(TEXT_SHOPPING_LIST),
         options: [
           {key: Action.DELETE, text: TEXT_DELETE},
           {key: Action.KEEP, text: TEXT_KEEP},
@@ -624,12 +602,7 @@ const EventShoppingListPage = ({
         newName: userInput.input,
         authUser: authUser,
       });
-      ShoppingListCollection.save({
-        shoppingListCollection: updatedShoppingListCollection,
-        eventUid: event.uid,
-        firebase: firebase,
-        authUser: authUser,
-      });
+      onShoppingCollectionUpdate(updatedShoppingListCollection);
     }
   };
   const onCheckboxClick = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -908,7 +881,7 @@ const EventShoppingListPage = ({
     setTraceItemDialogValues({...traceItemDialogValues, open: false});
   };
   /* ------------------------------------------
-  // Recipe-Drawer-Hanlder
+  // Recipe-Drawer-Handler
   // ------------------------------------------ */
   const onOpenRecipeDrawer = (
     menueUid: Menue["uid"],
@@ -982,9 +955,15 @@ const EventShoppingListPage = ({
           </Backdrop>
         </Grid>
         <Grid item xs={12}>
-          <EventShoppingListCard
+          <EventListCard
+            cardTitle={TEXT_SHOPPING_LIST}
+            cardDescription={TEXT_SHOPPING_LIST_MENUE_SELECTION_DESCRIPTION}
+            outOfDateWarnMessage={
+              TEXT_USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE
+            }
             selectedListItem={state.selectedListItem}
-            shoppingListCollection={shoppingListCollection}
+            lists={shoppingListCollection.lists}
+            noOfLists={shoppingListCollection.noOfLists}
             menuplan={menuplan}
             onShowDialogSelectMenues={onShowDialogSelectMenues}
             onListElementSelect={onListElementSelect}
@@ -1106,142 +1085,142 @@ const EventShoppingListPage = ({
 /* ===================================================================
 // ======================= Einstellungen-Card ========================
 // =================================================================== */
-interface EventShoppingListCardProps {
-  selectedListItem: string | null;
-  shoppingListCollection: ShoppingListCollection;
-  menuplan: Menuplan;
-  onShowDialogSelectMenues: () => void;
-  onListElementSelect: (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
-  ) => void;
-  onListElementDelete: (event: React.MouseEvent<HTMLElement>) => void;
-  onListElementEdit: (event: React.MouseEvent<HTMLElement>) => void;
-  onRefreshLists: () => void;
-  onGeneratePrintVersion: () => void;
-}
-const EventShoppingListCard = ({
-  selectedListItem,
-  shoppingListCollection,
-  menuplan,
-  onShowDialogSelectMenues,
-  onListElementSelect,
-  onListElementDelete,
-  onListElementEdit,
-  onRefreshLists,
-  onGeneratePrintVersion,
-}: EventShoppingListCardProps) => {
-  const classes = useStyles();
+// interface EventShoppingListCardProps {
+//   selectedListItem: string | null;
+//   shoppingListCollection: ShoppingListCollection;
+//   menuplan: Menuplan;
+//   onShowDialogSelectMenues: () => void;
+//   onListElementSelect: (
+//     event: React.MouseEvent<HTMLDivElement, MouseEvent>
+//   ) => void;
+//   onListElementDelete: (event: React.MouseEvent<HTMLElement>) => void;
+//   onListElementEdit: (event: React.MouseEvent<HTMLElement>) => void;
+//   onRefreshLists: () => void;
+//   onGeneratePrintVersion: () => void;
+// }
+// const EventShoppingListCard = ({
+//   selectedListItem,
+//   shoppingListCollection,
+//   menuplan,
+//   onShowDialogSelectMenues,
+//   onListElementSelect,
+//   onListElementDelete,
+//   onListElementEdit,
+//   onRefreshLists,
+//   onGeneratePrintVersion,
+// }: EventShoppingListCardProps) => {
+//   const classes = useStyles();
 
-  return (
-    <Container
-      className={classes.container}
-      component="main"
-      maxWidth="md"
-      key={"ShoppingListContainer"}
-    >
-      <Card>
-        <CardHeader
-          title={TEXT_MENUE_SELECTION}
-          subheader={TEXT_SHOPPING_LIST_MENUE_SELECTION_DESCRIPTION}
-        />
-        <CardContent>
-          {Object.keys(shoppingListCollection.lists).length > 0 && (
-            <List>
-              <ListSubheader>{TEXT_EXISTING_LISTS}</ListSubheader>
-              {Object.values(shoppingListCollection.lists).map((list) => (
-                <ListItem
-                  key={"listItem_" + list?.properties.uid}
-                  id={"listItem_" + list?.properties.uid}
-                  button
-                  selected={selectedListItem == list?.properties.uid}
-                  onClick={onListElementSelect}
-                >
-                  <ListItemText
-                    primary={list?.properties.name}
-                    secondary={
-                      list?.properties.selectedMenues &&
-                      decodeSelectedMenues({
-                        selectedMenues: list?.properties.selectedMenues,
-                        menuplan: menuplan,
-                      })
-                    }
-                  />
-                  <ListItemSecondaryAction>
-                    <IconButton
-                      id={"EditBtn_" + list?.properties.uid}
-                      onClick={onListElementEdit}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      id={"DeleteBtn_" + list?.properties.uid}
-                      onClick={onListElementDelete}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </ListItemSecondaryAction>
-                </ListItem>
-              ))}
-            </List>
-          )}
+//   return (
+//     <Container
+//       className={classes.container}
+//       component="main"
+//       maxWidth="md"
+//       key={"ShoppingListContainer"}
+//     >
+//       <Card>
+//         <CardHeader
+//           title={`${TEXT_SHOPPING_LIST} - ${TEXT_MENUE_SELECTION}`}
+//           subheader={TEXT_SHOPPING_LIST_MENUE_SELECTION_DESCRIPTION}
+//         />
+//         <CardContent>
+//           {Object.keys(shoppingListCollection.lists).length > 0 && (
+//             <List>
+//               <ListSubheader>{TEXT_EXISTING_LISTS}</ListSubheader>
+//               {Object.values(shoppingListCollection.lists).map((list) => (
+//                 <ListItem
+//                   key={"listItem_" + list?.properties.uid}
+//                   id={"listItem_" + list?.properties.uid}
+//                   button
+//                   selected={selectedListItem == list?.properties.uid}
+//                   onClick={onListElementSelect}
+//                 >
+//                   <ListItemText
+//                     primary={list?.properties.name}
+//                     secondary={
+//                       list?.properties.selectedMenues &&
+//                       decodeSelectedMenues({
+//                         selectedMenues: list?.properties.selectedMenues,
+//                         menuplan: menuplan,
+//                       })
+//                     }
+//                   />
+//                   <ListItemSecondaryAction>
+//                     <IconButton
+//                       id={"EditBtn_" + list?.properties.uid}
+//                       onClick={onListElementEdit}
+//                     >
+//                       <EditIcon />
+//                     </IconButton>
+//                     <IconButton
+//                       id={"DeleteBtn_" + list?.properties.uid}
+//                       onClick={onListElementDelete}
+//                     >
+//                       <DeleteIcon />
+//                     </IconButton>
+//                   </ListItemSecondaryAction>
+//                 </ListItem>
+//               ))}
+//             </List>
+//           )}
 
-          {selectedListItem &&
-            shoppingListCollection.lists[selectedListItem!] &&
-            menuplan.lastChange.date >
-              shoppingListCollection.lists[selectedListItem!].properties
-                .generated.date && (
-              <Grid container>
-                <Grid
-                  item
-                  xs={1}
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                  }}
-                >
-                  <ErrorOutlineIcon color="error" />
-                </Grid>
-                <Grid item xs={11}>
-                  <Typography color="error">
-                    {TEXT_USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE}
-                  </Typography>
-                </Grid>
-              </Grid>
-            )}
-        </CardContent>
-        <CardActions style={{justifyContent: "flex-end"}}>
-          <Button
-            color="primary"
-            variant="outlined"
-            onClick={onShowDialogSelectMenues}
-          >
-            {TEXT_CREATE_NEW_LIST}
-          </Button>
-          {shoppingListCollection.noOfLists > 0 && (
-            <Button
-              color="primary"
-              variant="outlined"
-              disabled={shoppingListCollection.noOfLists == 0}
-              onClick={onRefreshLists}
-            >
-              {TEXT_REFRESH}
-            </Button>
-          )}
-          {shoppingListCollection.noOfLists > 0 && (
-            <Button
-              color="primary"
-              variant="contained"
-              disabled={selectedListItem == null}
-              onClick={onGeneratePrintVersion}
-            >
-              {TEXT_PRINTVERSION}
-            </Button>
-          )}
-        </CardActions>
-      </Card>
-    </Container>
-  );
-};
+//           {selectedListItem &&
+//             shoppingListCollection.lists[selectedListItem!] &&
+//             menuplan.lastChange.date >
+//               shoppingListCollection.lists[selectedListItem!].properties
+//                 .generated.date && (
+//               <Grid container>
+//                 <Grid
+//                   item
+//                   xs={1}
+//                   style={{
+//                     display: "flex",
+//                     justifyContent: "center",
+//                   }}
+//                 >
+//                   <ErrorOutlineIcon color="error" />
+//                 </Grid>
+//                 <Grid item xs={11}>
+//                   <Typography color="error">
+//                     {TEXT_USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE}
+//                   </Typography>
+//                 </Grid>
+//               </Grid>
+//             )}
+//         </CardContent>
+//         <CardActions style={{justifyContent: "flex-end"}}>
+//           <Button
+//             color="primary"
+//             variant="outlined"
+//             onClick={onShowDialogSelectMenues}
+//           >
+//             {TEXT_CREATE_NEW_LIST}
+//           </Button>
+//           {shoppingListCollection.noOfLists > 0 && (
+//             <Button
+//               color="primary"
+//               variant="outlined"
+//               disabled={shoppingListCollection.noOfLists == 0}
+//               onClick={onRefreshLists}
+//             >
+//               {TEXT_REFRESH}
+//             </Button>
+//           )}
+//           {shoppingListCollection.noOfLists > 0 && (
+//             <Button
+//               color="primary"
+//               variant="contained"
+//               disabled={selectedListItem == null}
+//               onClick={onGeneratePrintVersion}
+//             >
+//               {TEXT_PRINTVERSION}
+//             </Button>
+//           )}
+//         </CardActions>
+//       </Card>
+//     </Container>
+//   );
+// };
 /* ===================================================================
 // ========================= Einkaufsliste ===========================
 // =================================================================== */
@@ -1420,56 +1399,6 @@ const EventShoppingListList = ({
   );
 };
 /* ===================================================================
-// ========================== Kontext-Menü ===========================
-// =================================================================== */
-interface PositionContextMenuProps {
-  anchorEl: HTMLElement | null;
-  handleMenuClick: (event: React.MouseEvent<HTMLElement>) => void;
-  handleMenuClose: () => void;
-}
-const PositionContextMenu = ({
-  anchorEl,
-  handleMenuClick,
-  handleMenuClose,
-}: PositionContextMenuProps) => {
-  return (
-    <Menu
-      keepMounted
-      id={"positionMenu"}
-      anchorEl={anchorEl}
-      open={Boolean(anchorEl)}
-      onClose={handleMenuClose}
-    >
-      <MenuItem id={"ContextMenuItem_" + Action.EDIT} onClick={handleMenuClick}>
-        <ListItemIcon>
-          <EditIcon fontSize="small" />
-        </ListItemIcon>
-        <Typography variant="inherit">{TEXT_CHANGE}</Typography>
-      </MenuItem>
-      <MenuItem
-        id={"ContextMenuItem_" + Action.TRACE}
-        onClick={handleMenuClick}
-      >
-        <ListItemIcon>
-          <CallSplitIcon fontSize="small" />
-        </ListItemIcon>
-        <Typography variant="inherit">
-          {TEXT_WHERE_DOES_THIS_PRODUCT_COME_FROM}
-        </Typography>
-      </MenuItem>
-      <MenuItem
-        id={"ContextMenuItem_" + Action.DELETE}
-        onClick={handleMenuClick}
-      >
-        <ListItemIcon>
-          <DeleteIcon fontSize="small" />
-        </ListItemIcon>
-        <Typography variant="inherit">{TEXT_DELETE}</Typography>
-      </MenuItem>
-    </Menu>
-  );
-};
-/* ===================================================================
 // ==================== Dialog Artikel hinzufügen ====================
 // =================================================================== */
 interface DialogHandleItemProps {
@@ -1623,7 +1552,7 @@ const DialogHandleItem = ({
     if (!dialogValues.item || !dialogValues.item.uid) {
       setDialogValidation({
         isError: true,
-        errorText: "Bitte Artikel eingeben.",
+        errorText: TEXT_PLEASE_GIVE_VALUE_FOR_FIELD(TEXT_ITEM),
       });
       return;
     }
@@ -1689,7 +1618,7 @@ const DialogHandleItem = ({
                 item={dialogValues.item}
                 materials={materials}
                 products={products}
-                disable={editMode}
+                disabled={editMode}
                 onChange={onChangeItem}
                 error={dialogValidation}
               />
@@ -1727,7 +1656,7 @@ const DialogHandleItem = ({
             {TEXT_CANCEL}
           </Button>
           <Button color="primary" variant="contained" onClick={handleOk}>
-            {TEXT_ADD}
+            {item?.uid ? TEXT_CHANGE : TEXT_ADD}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1753,201 +1682,6 @@ const DialogHandleItem = ({
         authUser={authUser}
       />
     </React.Fragment>
-  );
-};
-/* ===================================================================
-// ================== Dialog Artikel Nachverfolgung ==================
-// =================================================================== */
-interface DialogTraceItem {
-  dialogOpen: boolean;
-  trace: ProductTrace[];
-  menuePlan: Menuplan;
-  sortedMenues: MenueCoordinates[];
-  hasBeenManualyEdited: boolean;
-  handleClose: () => void;
-  onShowRecipe: (menuUid: Menue["uid"], recipeUid: Recipe["uid"]) => void;
-}
-const DialogTraceItem = ({
-  dialogOpen,
-  trace,
-  menuePlan,
-  sortedMenues,
-  hasBeenManualyEdited,
-  handleClose,
-  onShowRecipe,
-}: DialogTraceItem) => {
-  const classes = useStyles();
-  let traceSortedByMenue: ProductTrace[] = [];
-
-  /* ------------------------------------------
-  // Rezept Handler
-  // ------------------------------------------ */
-  const onListItemClick = (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
-  ) => {
-    let pressedButton = event.currentTarget.id.split("_");
-
-    if (pressedButton.length == 4 && pressedButton[3] != "undefined") {
-      onShowRecipe(pressedButton[1], pressedButton[3]);
-    }
-  };
-
-  if (!trace) {
-    return null;
-  } else if (trace && trace.length > 1) {
-    // die Menüs in die richtige Reihenfolge setzen
-    traceSortedByMenue = trace.sort((a, b) => {
-      const indexA = sortedMenues.findIndex(
-        (menue) => menue.menueUid == a.menueUid
-      );
-      const indexB = sortedMenues.findIndex(
-        (menue) => menue.menueUid == b.menueUid
-      );
-
-      return indexA - indexB;
-    });
-  } else {
-    traceSortedByMenue = trace;
-  }
-  return (
-    <Dialog open={dialogOpen} maxWidth="xs" fullWidth style={{zIndex: 500}}>
-      <DialogTitle>{TEXT_WHERE_DOES_THIS_PRODUCT_COME_FROM}</DialogTitle>
-      <DialogContent>
-        <Grid container spacing={2}>
-          {hasBeenManualyEdited && (
-            <React.Fragment>
-              <Grid item xs={2}>
-                <InfoIcon fontSize="small" color="disabled" />
-              </Grid>
-              <Grid xs={10}>
-                <Typography variant="body1">
-                  {TEXT_THE_QUANTITY_HAS_BEEN_MANUALY_EDITED}
-                </Typography>
-              </Grid>
-            </React.Fragment>
-          )}
-          <Grid item xs={12}>
-            <List key={`list_for_trace`}>
-              {sortedMenues.map((menue) => {
-                let traceItems = trace.filter(
-                  (item) => item.menueUid == menue.menueUid
-                );
-                return (
-                  <React.Fragment key={`menue_container_${menue.menueUid}`}>
-                    {traceItems.length > 0 && (
-                      <React.Fragment key={`menue_${menue.menueUid}`}>
-                        <ListSubheader disableGutters>
-                          {menue.menueName && `${menue.menueName}, `}
-                          {`${menue.date.toLocaleString("de-CH", {
-                            weekday: "long",
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          })} - ${menue.mealType.name}`}
-                        </ListSubheader>
-                        {traceItems.map((item, counter) => (
-                          <React.Fragment key={`${item}_${counter}`}>
-                            {item.recipe.uid ? (
-                              // List-Item nur mit Button, wenn auch ein Rezept dahinter steckt
-                              <ListItem
-                                button
-                                onClick={onListItemClick}
-                                id={`listItemButton_${menue.menueUid}_${counter}_${item.recipe.uid}`}
-                                key={`listItemButton_${menue.menueUid}_${counter}_${item.recipe.uid}`}
-                              >
-                                <ListItemText
-                                  primary={
-                                    item.recipe.name
-                                      ? item.recipe.name
-                                      : TEXT_ADDED_MANUALY
-                                  }
-                                  secondary={
-                                    item?.planedPortions &&
-                                    `${item.planedPortions} Portionen`
-                                  }
-                                  id={`listItemTextItem_${menue.menueUid}_${counter}_${item.recipe.uid}`}
-                                  key={`listItemTextItem_${menue.menueUid}_${counter}_${item.recipe.uid}`}
-                                />
-                                <ListItemText
-                                  primary={`${
-                                    Number.isNaN(item.quantity) ||
-                                    item.quantity == 0
-                                      ? ""
-                                      : item.quantity
-                                  } ${item.unit}`}
-                                  className={classes.listItemTextAlignRight}
-                                  id={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
-                                  key={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
-                                />
-                              </ListItem>
-                            ) : (
-                              <ListItem
-                                id={`listItem_${menue.menueUid}_${counter}_${item.recipe.uid}`}
-                                key={`listItem_${menue.menueUid}_${counter}_${item.recipe.uid}`}
-                              >
-                                <ListItemText
-                                  primary={
-                                    item.recipe.name
-                                      ? item.recipe.name
-                                      : TEXT_ADDED_MANUALY
-                                  }
-                                  secondary={
-                                    item?.planedPortions &&
-                                    `${item.planedPortions} Portionen`
-                                  }
-                                  id={`listItemTextItem_${menue.menueUid}_${counter}_${item.recipe.uid}`}
-                                  key={`listItemTextItem_${menue.menueUid}_${counter}_${item.recipe.uid}`}
-                                />
-                                <ListItemText
-                                  primary={`${
-                                    Number.isNaN(item.quantity) ||
-                                    item.quantity == 0
-                                      ? ""
-                                      : item.quantity
-                                  } ${item.unit}`}
-                                  className={classes.listItemTextAlignRight}
-                                  id={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
-                                  key={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
-                                />
-                              </ListItem>
-                            )}
-                          </React.Fragment>
-                        ))}
-                      </React.Fragment>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-              {/* Die manuell hinzugefügten Artikel auflisten */}
-              {trace
-                .filter((item) => item?.manualAdd)
-                .map((item, counter) => (
-                  <ListItem key={`manualItem_${counter}`}>
-                    <ListItemText
-                      primary={TEXT_ADDED_MANUALY}
-                      key={`manualItemTextItem_${counter}`}
-                    />
-                    <ListItemText
-                      primary={`${
-                        Number.isNaN(item.quantity) || item.quantity == 0
-                          ? ""
-                          : item.quantity
-                      } ${item.unit}`}
-                      className={classes.listItemTextAlignRight}
-                      key={`manualItemTextQuantity_${counter}`}
-                    />
-                  </ListItem>
-                ))}
-            </List>
-          </Grid>
-        </Grid>
-      </DialogContent>
-      <DialogActions>
-        <Button color="primary" onClick={handleClose}>
-          {TEXT_CLOSE}
-        </Button>
-      </DialogActions>
-    </Dialog>
   );
 };
 

@@ -51,6 +51,7 @@ interface FormatedShoppingListLine {
 
 interface FormatedShoppingListItem {
   type: LineType.ITEM;
+  checked: boolean;
   quantity: ShoppingListItem["quantity"];
   unit: ShoppingListItem["unit"];
   name: string;
@@ -147,6 +148,7 @@ class FormatedShoppingList {
               left: {
                 type: LineType.ITEM,
                 quantity: item.quantity,
+                checked: item.checked,
                 unit: item.unit,
                 name: item.item.name,
               },
@@ -159,6 +161,7 @@ class FormatedShoppingList {
               this.pages[this.actualPage].list[pageControl.lineCounter];
             lineItem.right = {
               type: LineType.ITEM,
+              checked: item.checked,
               quantity: item.quantity,
               unit: item.unit,
               name: item.item.name,
@@ -275,8 +278,8 @@ const ShoppingListPage = ({
   authUser,
 }: ShoppingListPageProps) => {
   return (
-    <Page key={"page_" + "mealRecipe.uid"} style={styles.body}>
-      <Header text={eventName} uid={"mealRecipe.uid"} />
+    <Page key={"page_" + pageNumber} style={styles.body}>
+      <Header text={eventName} uid={"Header_" + pageNumber} />
       <ShoppingListTitle
         shoppingListName={shoppingListName}
         shoppingListSelectedTimeSlice={shoppingListSelectedTimeSlice}
@@ -284,7 +287,7 @@ const ShoppingListPage = ({
       <ShoppingListList shoppingList={shoppingList} pageNumber={pageNumber} />
 
       <Footer
-        uid={"mealRecipe.uid"}
+        uid={"Footer_" + pageNumber}
         actualDate={actualDate}
         authUser={authUser}
       />
@@ -358,7 +361,17 @@ const ShoppingListList = ({
                 style={styles.tableColQuantity}
                 key={"itemBlockQuantity_Left" + pageNumber + "_" + line}
               >
-                <Text style={styles.tableCell}>
+                <Text
+                  style={
+                    item.left.checked
+                      ? {
+                          ...styles.tableCell,
+                          ...styles.gray,
+                          ...styles.strikeTrough,
+                        }
+                      : styles.tableCell
+                  }
+                >
                   {Number.isNaN(item.left?.quantity) || !item.left?.quantity
                     ? ""
                     : new Intl.NumberFormat("de-CH", {
@@ -370,13 +383,37 @@ const ShoppingListList = ({
                 style={styles.tableColUnit}
                 key={"itemBlockUnit_Left" + pageNumber + "_" + line}
               >
-                <Text style={styles.tableCell}>{item.left?.unit}</Text>
+                <Text
+                  style={
+                    item.left.checked
+                      ? {
+                          ...styles.tableCell,
+                          ...styles.gray,
+                          ...styles.strikeTrough,
+                        }
+                      : styles.tableCell
+                  }
+                >
+                  {item.left?.unit}
+                </Text>
               </View>
               <View
                 style={styles.tableColItem}
                 key={"itemBlockProduct_Left" + pageNumber + "_" + line}
               >
-                <Text style={styles.tableCell}>{item.left?.name}</Text>
+                <Text
+                  style={
+                    item.left.checked
+                      ? {
+                          ...styles.tableCell,
+                          ...styles.gray,
+                          ...styles.strikeTrough,
+                        }
+                      : styles.tableCell
+                  }
+                >
+                  {item.left?.name}
+                </Text>
               </View>
             </React.Fragment>
           )}
@@ -405,7 +442,17 @@ const ShoppingListList = ({
                 style={styles.tableColQuantity}
                 key={"itemBlockQuantity_Right" + pageNumber + "_" + line}
               >
-                <Text style={styles.tableCell}>
+                <Text
+                  style={
+                    item.right.checked
+                      ? {
+                          ...styles.tableCell,
+                          ...styles.gray,
+                          ...styles.strikeTrough,
+                        }
+                      : styles.tableCell
+                  }
+                >
                   {Number.isNaN(item.right?.quantity) || !item.right?.quantity
                     ? ""
                     : new Intl.NumberFormat("de-CH", {
@@ -417,13 +464,37 @@ const ShoppingListList = ({
                 style={styles.tableColUnit}
                 key={"itemBlockUnit_Right" + pageNumber + "_" + line}
               >
-                <Text style={styles.tableCell}>{item.right?.unit}</Text>
+                <Text
+                  style={
+                    item.right.checked
+                      ? {
+                          ...styles.tableCell,
+                          ...styles.gray,
+                          ...styles.strikeTrough,
+                        }
+                      : styles.tableCell
+                  }
+                >
+                  {item.right?.unit}
+                </Text>
               </View>
               <View
                 style={styles.tableColItem}
                 key={"itemBlockProduct_Right" + pageNumber + "_" + line}
               >
-                <Text style={styles.tableCell}>{item.right?.name}</Text>
+                <Text
+                  style={
+                    item.right.checked
+                      ? {
+                          ...styles.tableCell,
+                          ...styles.gray,
+                          ...styles.strikeTrough,
+                        }
+                      : styles.tableCell
+                  }
+                >
+                  {item.right?.name}
+                </Text>
               </View>
             </React.Fragment>
           )}

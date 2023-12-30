@@ -22,7 +22,7 @@ interface ItemAutocompleteProps {
   item: MaterialItem | ProductItem | null;
   materials: Material[];
   products: Product[];
-  disable: boolean;
+  disabled: boolean;
   onChange: (
     event: React.ChangeEvent<HTMLInputElement>,
     newValue: string | MaterialItem | ProductItem | null,
@@ -61,7 +61,7 @@ const ItemAutocomplete = ({
   item,
   materials,
   products,
-  disable,
+  disabled,
   error,
   onChange,
 }: ItemAutocompleteProps) => {
@@ -96,7 +96,7 @@ const ItemAutocomplete = ({
       id={"item_" + componentKey}
       value={item?.name}
       options={items}
-      disabled={disable}
+      disabled={disabled}
       autoSelect
       autoHighlight
       // getOptionSelected={(optionItem) => optionItem.name === item.name}
@@ -181,7 +181,7 @@ const ItemAutocomplete = ({
           helperText={
             error.isError
               ? error.errorText
-              : disable
+              : disabled
               ? ITEM_CANT_BE_CHANGED
               : ""
           }

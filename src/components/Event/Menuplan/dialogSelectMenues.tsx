@@ -97,6 +97,15 @@ export const decodeSelectedMenues = ({
       preRecord.date = date;
     });
   });
+  if (openTimeSlice) {
+    // Konnte im Loop nicht agebschlossen werden
+    timeslice.to = {
+      date: preRecord.date,
+      mealType: menuplan.mealTypes.entries[preRecord.mealType].name,
+    };
+    selectedRange.push(timeslice);
+  }
+
   let displayText = "";
 
   selectedRange.forEach((timeslice, counter) => {

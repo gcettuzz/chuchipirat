@@ -1,4 +1,6 @@
 import React from "react";
+import {compose} from "recompose";
+
 import Grid from "@material-ui/core/Grid";
 
 import Dialog from "@material-ui/core/Dialog";
@@ -18,8 +20,8 @@ import FormLabel from "@material-ui/core/FormLabel";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 
-import Firebase, { withFirebase } from "../Firebase";
-import Material, { MaterialType } from "./material.class";
+import Firebase, {withFirebase} from "../Firebase";
+import Material, {MaterialType} from "./material.class";
 
 import {
   DIALOG_TITLE_MATERIAL_ADD,
@@ -37,9 +39,12 @@ import {
   BUTTON_SAVE,
   BUTTON_CANCEL,
   ERROR_MATERIAL_WITH_THIS_NAME_ALREADY_EXISTS,
+  ERROR_PARAMETER_NOT_PASSED,
 } from "../../constants/text";
 
 import AuthUser from "../Firebase/Authentication/authUser.class";
+import Role from "../../constants/roles";
+import {withAuthorization} from "../Session";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -66,7 +71,7 @@ export const MATERIAL_DIALOG_TYPE = {
 // =================================================================== */
 
 interface DialogMaterialProps {
-  firebase: Firebase;
+  firebase?: Firebase;
   dialogType: MaterialDialog;
   materialName: Material["name"];
   materialUid: Material["uid"];
@@ -99,8 +104,8 @@ const DialogMaterial = ({
     MATERIAL_POP_UP_VALUES_INITIAL_STATE
   );
   const [validation, setValidation] = React.useState({
-    name: { hasError: false, errorText: "" },
-    type: { hasError: false, errorText: "" },
+    name: {hasError: false, errorText: ""},
+    type: {hasError: false, errorText: ""},
   });
 
   /* ------------------------------------------
@@ -146,7 +151,7 @@ const DialogMaterial = ({
   const onChangeRadioButton = (event: React.ChangeEvent<HTMLInputElement>) => {
     setMaterialPopUpValues({
       ...materialPopUpValues,
-      type: (event.target as HTMLInputElement).value as MaterialType,
+      type: parseInt((event.target as HTMLInputElement).value) as MaterialType,
       clear: false,
       firstCall: false,
     });
@@ -172,14 +177,14 @@ const DialogMaterial = ({
           hasError: true,
           errorText: FORM_GIVE_MATERIAL,
         })
-      : (tempValidation.name = { hasError: false, errorText: "" });
+      : (tempValidation.name = {hasError: false, errorText: ""});
 
     materialPopUpValues.type === MaterialType.none
       ? (tempValidation.type = {
           hasError: true,
           errorText: FORM_GIVE_MATERIAL_TYPE,
         })
-      : (tempValidation.type = { hasError: false, errorText: "" });
+      : (tempValidation.type = {hasError: false, errorText: ""});
     if (
       // Nur wenn keine UID
       // sicherstellen, dass nicht zwei Material mit dem selben Namen erfasst werden
@@ -198,10 +203,13 @@ const DialogMaterial = ({
     }
     if (tempValidation.name.hasError || tempValidation.type.hasError) {
       setValidation(tempValidation);
-      setMaterialPopUpValues({ ...materialPopUpValues });
+      setMaterialPopUpValues({...materialPopUpValues});
     } else {
       switch (dialogType) {
         case MATERIAL_DIALOG_TYPE.CREATE:
+          if (!firebase) {
+            throw new Error(ERROR_PARAMETER_NOT_PASSED);
+          }
           //Neues Produkt anlegen
           Material.createMaterial({
             firebase: firebase,
@@ -215,6 +223,7 @@ const DialogMaterial = ({
             });
             handleOk(result);
           });
+
           break;
         case MATERIAL_DIALOG_TYPE.EDIT:
         //TODO:
@@ -356,4 +365,10 @@ const DialogMaterial = ({
     </Dialog>
   );
 };
-export default withFirebase(DialogMaterial);
+
+const condition = (authUser: AuthUser) => !!authUser;
+
+export default compose(
+  withAuthorization(condition),
+  withFirebase
+)(DialogMaterial);
