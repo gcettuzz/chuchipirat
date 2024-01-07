@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Alert } from "@material-ui/lab";
+import {Alert} from "@material-ui/lab";
 
 import Dialog from "@material-ui/core/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle";
@@ -27,7 +27,7 @@ import {
 } from "../../constants/text";
 
 // import useStyles from "../../constants/styles";
-import Firebase, { withFirebase } from "../Firebase";
+import Firebase, {withFirebase} from "../Firebase";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 
 /* ===================================================================
@@ -54,7 +54,7 @@ const DialogAddUser = ({
     error: false,
     errorText: "",
   });
-  const [infoBox, setInfoBox] = React.useState({ visible: false, text: "" });
+  const [infoBox, setInfoBox] = React.useState({visible: false, text: ""});
 
   /* ------------------------------------------
   // OnChange
@@ -68,18 +68,17 @@ const DialogAddUser = ({
   const onSubmit = async () => {
     if (Utils.isEmail(userEmail)) {
       if (userEmail.toLowerCase() == authUser.email) {
-        setInfoBox({ visible: true, text: TEXT_YOU_CANNOT_ADD_YOURSELF });
+        setInfoBox({visible: true, text: TEXT_YOU_CANNOT_ADD_YOURSELF});
         return;
       }
       //UID aus E-Mail-Adresse ermitteln
-      await User.getUidByEmail({ firebase: firebase, email: userEmail })
+      await User.getUidByEmail({firebase: firebase, email: userEmail})
         .then((result) => {
-          console.log("uid ist", result);
           handleAddUser(result);
           setUserEmail("");
         })
         .catch((error) => {
-          setInfoBox({ visible: true, text: error.toString() });
+          setInfoBox({visible: true, text: error.toString()});
         });
     } else {
       setFormValidationState({
@@ -118,7 +117,7 @@ const DialogAddUser = ({
           type="text"
         />
         {infoBox.visible && (
-          <Alert severity="warning" style={{ marginTop: "1rem" }}>
+          <Alert severity="warning" style={{marginTop: "1rem"}}>
             {infoBox.text}
           </Alert>
         )}

@@ -263,8 +263,8 @@ export const SAVE_SUCCESS = "Daten gespeichert.";
 // ===================================================================== */
 export const CREATE_YOUR_EVENT = "Erstelle deinen Anlass";
 export const WHAT_ARE_YOU_UP_TO = "Was hast du vor?";
-export const EVENT_SAVE_SUCCESS = (event) =>
-  `Hipp Hipp Hurra 🎉  Event «${event}» wurde gespeichert.`;
+export const EVENT_SAVE_SUCCESS = (eventName: string) =>
+  `Event «${eventName}» wurde gespeichert.`;
 export const EVENT_NOTHING_UP_TO = "Nichts vor?";
 export const EVENT_PLAN_A_NEW_ONE = "Dann plane deinen nächsten Anlass.";
 export const EVENT_COOK_ADDED_SUCCES = (displayName) =>
@@ -313,6 +313,7 @@ export const ERROR_OVERLAPPING_DATES = (pos: number) =>
   `Die Daten überschneiden sich mit der Position ${pos}`;
 export const EVENT_IS_BEEING_CREATED = (eventName: string) =>
   `${eventName} wird erstellt.`;
+export const EVENT_IS_BEEING_SAVED = "Anlass wird gespeichert.";
 export const IMAGE_IS_BEEING_UPLOADED = "Bild wird hochgeladen.";
 /* =====================================================================
 // Meldungen zur Gruppen-Konfiguration
@@ -659,7 +660,9 @@ export const INTOLERANCES = "Unverträglichkeiten";
 export const PRODUCT_PROPERY = "Produkteigenschaft";
 export const HELPTER_TEXT_RECIPE_SOURCE =
   "Woher hast du das Rezept? URL, Buch, Zeitschrift usw.";
-
+export const DELETE_EVENT = "Anlass löschen";
+// Für DB Errors
+export const DB_DOCUMENT_DELETED = "Dokument wurde gelöscht.";
 /* =====================================================================
 // Texte zum Profil
 // ===================================================================== */
@@ -792,7 +795,7 @@ export const FEED_TEXT = {
 // Texte zum Handling mit Bilder/Images
 // ===================================================================== */
 export const QUESTION_DELETE_IMAGE =
-  "Sicher, dass du das Bild löschen möchtest?";
+  "Sicher, dass du das bestehende Bild löschen möchtest?";
 export const PICTURE_HAS_BEEN_DELETED = "Bild wurde gelöscht.";
 /* =====================================================================
 // Landing Page
@@ -804,7 +807,7 @@ export const LANDING_RECIPES_BLOCK_TEXT =
   "Suche nach den Rezepten, die andere schon gekocht haben. Nicht fündig geworden? Erfasse dein Super-Gericht und die Community wird dir dankbar sein.";
 export const LANDING_MENUPLAN_TITLE = "Einen Menüplan erstellen";
 export const LANDING_MENUPLAN_TEXT =
-  "Plane, wann welches Gericht serviert wird. Definiere wie viele Portionen du kochen möchtest und kombiniere unterschiedliche Rezepte zu einer grossartigen Mahlzeit";
+  "Plane, wann welches Gericht serviert wird. Definiere wie viele Portionen du kochen möchtest und kombiniere unterschiedliche Rezepte zu einer grossartigen Mahlzeit";
 export const LANDING_SCALING_TITLE = "Skalierung";
 export const LANDING_SCALING_TEXT = "...";
 export const LANDING_SHOPPINGLIST_TITLE = "Spare Zeit beim Einkaufen";
@@ -889,7 +892,7 @@ export const SHOPPING_LIST = "Einkaufsliste";
 export const MENUPLAN = "Menüplan";
 export const MATERIAL_LIST = "Materialliste";
 export const EVENT_INFO_SHORT = "Infos zum Anlass";
-export const PLANED_RECIPES = "Eingeplante Rezepte";
+export const PLANED_RECIPES = "Verwendete Rezepte";
 export const SUFFIX_PDF = ".pdf";
 export const FOR_ACCUSATIVE = "Für";
 export const PORTIONS = "Portionen";
@@ -997,6 +1000,10 @@ export const REFRESH = "Aktualisieren";
 export const SELECT_MENUES = "Menüs auswählen";
 export const WHICH_MENUES_FOR_RECIPE_GENERATION =
   "Für welche Menües sollen die Rezepte generiert werden?";
+export const WHICH_MENUES_FOR_SHOPPING_LIST_GENERATION =
+  "Für welche Menües soll die Einkaufsliste generiert werden?";
+export const WHICH_MENUES_FOR_MATERIAL_LIST_GENERATION =
+  "Für welche Menües soll die Materialliste generiert werden?";
 export const SELECT_DAY = "Tag auswählen";
 export const SELECT_ALL = "Alle auswählen";
 export const EXISTING_LISTS = "Bestehende Listen";
@@ -1019,7 +1026,8 @@ export const GIVE_THE_NEW_LIST_A_NAME = "Gib dieser Liste einen Namen.";
 export const GIVE_THE_NEW_SHOPPINGLIST_A_NAME =
   "Gib dieser Einkaufsliste einen Namen.";
 export const CHANGE = "Ändern";
-export const WHERE_DOES_THIS_PRODUCT_COME_FROM = "Woher stammt dieses Produkt?";
+export const WHERE_DOES_THIS_ITEM_COME_FROM = (itemType: string) =>
+  `Woher stammt dieses ${itemType}?`;
 export const CREATE_NEW_LIST = "Neue Liste erstellen";
 export const ADD_ITEM = "Artikel hinzufügen";
 export const ITEM = "Artikel";
@@ -1049,6 +1057,11 @@ export const KEEP = "Behalten";
 export const MATERIAL_LIST_MENUE_SELECTION_DESCRIPTION =
   " Hier kannst du bereits generierte Materiallisten anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltete alle Materialien vom Typ «Gebrauchsmaterial» der gewählten Menüs. Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
 export const LIST = "Liste";
+export const ATTENTION_ABOUT_TO_DELETE_PLANED_DAYS =
+  "Achtung – Geplante Tage werden gelöscht!";
+export const DELETION_AFFECTS_PLANED_DAYS =
+  "Durch die vorgenommene Änderung hast du Tage entfernt, die bereits in der Planung berücksichtigt sind. Wenn du auf «Fortfahren» klickst, werden diese Tage zusammen mit den bereits eingeplanten Rezepten gelöscht.";
+export const PROCEED = "Fortfahren";
 /* =====================================================================
 // Abkürzungen
 // ===================================================================== */

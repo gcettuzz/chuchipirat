@@ -60,6 +60,7 @@ const EventCard = ({event, onCardClick}: EventCardProps) => {
               style={{
                 transform: hover ? "scale(1.05)" : "scale(1)",
                 transition: "0.5s ease",
+                backgroundSize: "contain",
               }}
             />
           </div>

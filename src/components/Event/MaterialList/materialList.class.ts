@@ -19,8 +19,7 @@ import {
   ShoppingListTrace,
 } from "../ShoppingList/shoppingListCollection.class";
 import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
-import {Stats} from "fs";
-import {StatsField} from "../../Shared/stats.class";
+import Stats, {StatsField} from "../../Shared/stats.class";
 
 export interface MaterialListEntry {
   properties: ListProperties;
@@ -49,6 +48,10 @@ interface Save {
   materialList: MaterialList;
   firebase: Firebase;
   authUser: AuthUser;
+}
+interface Delete {
+  eventUid: Event["uid"];
+  firebase: Firebase;
 }
 interface GetMaterialListListener {
   firebase: Firebase;
@@ -158,6 +161,27 @@ export default class MaterialList {
   };
   // ===================================================================== */
   /**
+   * Materialliste löschen (gesamtes Dokument)
+   * @param object - Objekt Event-UID und Firebase
+   * @returns void
+   */
+  static delete = async ({eventUid, firebase}: Delete) => {
+    firebase.event.materialList
+      .delete({uids: [eventUid]})
+      .then(() => {
+        Stats.incrementStat({
+          field: StatsField.noMaterialLists,
+          value: -1,
+          firebase: firebase,
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  };
+  // ===================================================================== */
+  /**
    * Listener für Materialliste holen
    * @param object - Objekt mit Firebase, Eventuid und Callback Funktion
    * @returns void
@@ -174,11 +198,16 @@ export default class MaterialList {
       materialList.uid = uid;
       callback(materialList);
     };
+    const errorCallback = (error: any) => {
+      console.error(error);
+      throw error;
+    };
 
     await firebase.event.materialList
       .listen<MaterialList>({
         uids: [uid],
         callback: materialListCallback,
+        errorCallback: errorCallback,
       })
       .then((result) => {
         materialListListener = result;
@@ -297,6 +326,18 @@ export default class MaterialList {
             }
           );
         });
+      })
+      .then(() => {
+        // Statistik mitführen
+        Stats.incrementStat({
+          firebase: firebase,
+          field: StatsField.noMaterialLists,
+          value: 1,
+        });
+
+        firebase.analytics.logEvent(
+          FirebaseAnalyticEvent.materialListGenerated
+        );
       })
       .catch((error) => {
         console.error(error);
@@ -462,6 +503,14 @@ export default class MaterialList {
         firebase.analytics.logEvent(
           FirebaseAnalyticEvent.materialListRefreshed
         );
+      })
+      .then(() => {
+        // Statistik mitführen
+        Stats.incrementStat({
+          firebase: firebase,
+          field: StatsField.noMaterialLists,
+          value: -1,
+        });
       })
       .catch((error) => {
         console.error(error);

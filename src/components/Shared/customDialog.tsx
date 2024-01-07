@@ -150,7 +150,7 @@ const CustomDialog = () => {
       // Simpler Dialog
       <Dialog
         open={dialogState.visible}
-        onClose={onCancel}
+        onClose={(event, reason) => reason !== "backdropClick" && onCancel()}
         aria-labelledby="confirm-dialog"
       >
         <DialogTitle id="confirm-dialog-title">{dialogState.title}</DialogTitle>
@@ -178,6 +178,7 @@ const CustomDialog = () => {
           <Typography>{dialogState.text}</Typography>
           <TextField
             fullWidth
+            autoFocus
             id="userInput"
             name="userInput"
             label={dialogState.singleTextInputProperties?.textInputLabel}
@@ -259,7 +260,7 @@ const CustomDialog = () => {
         <DialogActions>
           <Button onClick={onCancelConfirmDeletion}>{TEXT_CANCEL}</Button>
           <Button
-            className={classes.deleteButton}
+            className={classes.dialogDeletedeleteButton}
             disabled={!formFields.inputMatches}
             onClick={onOkConfirmDeletion}
             variant="contained"

@@ -1,13 +1,13 @@
 import Firebase from "../firebase.class";
 import FirebaseDbRecipe from "./firebase.db.recipe.class";
 
-import { RecipeType } from "../../Recipe/recipe.class";
+import {RecipeType} from "../../Recipe/recipe.class";
 
-import { ValueObject, PrepareDataForApp } from "./firebase.db.super.class";
+import {ValueObject, PrepareDataForApp} from "./firebase.db.super.class";
 import FirebaseDbRecipeRating from "./firebase.db.recipe.rating.class";
 import FirebaseDbRecipeComment from "./firebase.db.recipe.comment.class";
 
-import { ERROR_NOT_IMPLEMENTED_YET } from "../../../constants/text";
+import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
 import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
@@ -55,9 +55,9 @@ export class FirebaseDbRecipeVariant extends FirebaseDbRecipe {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({ uid, value }: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
     // Die Aufsplittung von Objekt zu Array geschieht in der recipeshort.class
-    value = super.prepareDataForApp({ uid: uid, value: value });
+    value = super.prepareDataForApp({uid: uid, value: value});
     // Schlüssel setzen, dass Variante
     value.type = RecipeType.variant;
     return value as unknown as T;

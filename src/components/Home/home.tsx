@@ -68,23 +68,26 @@ import {
   NavigationValuesContext,
   NavigationObject,
 } from "../Navigation/navigationContext";
+import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
 
 /* ===================================================================
 // ============================ Dispatcher ===========================
 // =================================================================== */
 
 enum ReducerActions {
-  EVENTS_FETCH_INIT = "EVENTS_FETCH_INIT",
-  EVENTS_FETCH_SUCCESS = "EVENTS_FETCH_SUCCESS",
-  PASSED_EVENTS_FETCH_INIT = "PASSED_EVENTS_FETCH_INIT",
-  PASSED_EVENTS_FETCH_SUCCESS = "PASSED_EVENTS_FETCH_SUCCESS",
-  NEWEST_RECIPES_FETCH_INIT = "NEWEST_RECIPES_FETCH_INIT",
-  NEWEST_RECIPES_FETCH_SUCCESS = "NEWEST_RECIPES_FETCH_SUCCESS",
-  FEED_FETCH_INIT = "FEED_FETCH_INIT",
-  FEED_FETCH_SUCCESS = "FEED_FETCH_SUCCESS",
-  STATS_FETCH_INIT = "STATS_FETCH_INIT",
-  STATS_FETCH_SUCCESS = "STATS_FETCH_SUCCESS",
-  GENERIC_ERROR = "GENERIC_ERROR",
+  EVENTS_FETCH_INIT,
+  EVENTS_FETCH_SUCCESS,
+  PASSED_EVENTS_FETCH_INIT,
+  PASSED_EVENTS_FETCH_SUCCESS,
+  NEWEST_RECIPES_FETCH_INIT,
+  NEWEST_RECIPES_FETCH_SUCCESS,
+  FEED_FETCH_INIT,
+  FEED_FETCH_SUCCESS,
+  STATS_FETCH_INIT,
+  STATS_FETCH_SUCCESS,
+  SET_SNACKBAR,
+  CLOSE_SNACKBAR,
+  GENERIC_ERROR,
 }
 type DispatchAction = {
   type: ReducerActions;
@@ -97,6 +100,7 @@ type State = {
   recipes: Feed[];
   feed: Feed[];
   stats: Kpi[];
+  snackbar: Snackbar;
   isLoadingEvents: boolean;
   isLoadingPassedEvents: boolean;
   isLoadingNewestRecipes: boolean;
@@ -112,6 +116,7 @@ const inititialState: State = {
   recipes: [],
   feed: [],
   stats: [],
+  snackbar: {} as Snackbar,
   isLoadingEvents: false,
   isLoadingPassedEvents: false,
   isLoadingNewestRecipes: false,
@@ -178,6 +183,20 @@ const homeReducer = (state: State, action: DispatchAction): State => {
         isLoadingStats: false,
         stats: action.payload as Kpi[],
       };
+    case ReducerActions.SET_SNACKBAR:
+      return {
+        ...state,
+        snackbar: action.payload as Snackbar,
+      };
+    case ReducerActions.CLOSE_SNACKBAR:
+      return {
+        ...state,
+        snackbar: {
+          severity: "success",
+          message: "",
+          open: false,
+        },
+      };
     case ReducerActions.GENERIC_ERROR:
       return {...state, isError: true, error: action.payload};
     default:
@@ -205,6 +224,20 @@ const HomeBase = ({props, authUser}) => {
   const navigationValuesContext = React.useContext(NavigationValuesContext);
 
   const [state, dispatch] = React.useReducer(homeReducer, inititialState);
+
+  // Prüfen ob allenfalls eine Snackbar angezeigt werden soll
+  // --> aus dem Prozess Anlass löschen
+  if (
+    props.location.state &&
+    props.location.state.snackbar &&
+    !state.snackbar.open
+  ) {
+    dispatch({
+      type: ReducerActions.SET_SNACKBAR,
+      payload: props.location.state.snackbar,
+    });
+  }
+
   /* ------------------------------------------
   // Navigation-Handler
   // ------------------------------------------ */
@@ -298,7 +331,6 @@ const HomeBase = ({props, authUser}) => {
 
     Stats.getStats(firebase)
       .then((result) => {
-        console.warn("=== STATS GELESEN ===");
         dispatch({
           type: ReducerActions.STATS_FETCH_SUCCESS,
           payload: result,
@@ -392,6 +424,22 @@ const HomeBase = ({props, authUser}) => {
         });
     }
   };
+  /* ------------------------------------------
+  // Snackback schliessen
+  // ------------------------------------------ */
+  const handleSnackbarClose = (
+    event: React.SyntheticEvent | React.MouseEvent,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    delete props.location.state.snackbar;
+    dispatch({
+      type: ReducerActions.CLOSE_SNACKBAR,
+      payload: {},
+    });
+  };
 
   return (
     <React.Fragment>
@@ -447,6 +495,12 @@ const HomeBase = ({props, authUser}) => {
           </Grid>
         </Grid>
       </Container>
+      <CustomSnackbar
+        message={state.snackbar.message}
+        severity={state.snackbar.severity}
+        snackbarOpen={state.snackbar.open}
+        handleClose={handleSnackbarClose}
+      />
     </React.Fragment>
   );
 };

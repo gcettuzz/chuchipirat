@@ -716,7 +716,6 @@ const RecipeView = ({
                 sm={6}
                 style={{marginTop: "2em", marginBottom: "2em"}}
               >
-                {console.warn(scalingInformation)}
                 <RecipeMaterial
                   recipe={recipe}
                   scaledPortions={scalingInformation.portions}
@@ -956,6 +955,7 @@ const RecipeButtonRow = ({
     hero: true,
     visible:
       (recipe.type === RecipeType.public &&
+        !isEmbedded &&
         (authUser.roles.includes(Role.subAdmin) ||
           authUser.roles.includes(Role.admin))) ||
       (recipe.type === RecipeType.private &&
@@ -1319,7 +1319,7 @@ export const MealPlanPanel = ({
       <CardContent className={classes.cardContent}>
         <List key={"mealsList"}>
           {mealPlan.map((plan, index) => (
-            <React.Fragment>
+            <React.Fragment key={"mealListItemDiv_" + plan.mealPlanRecipe}>
               <ListItem
                 button
                 dense
@@ -1890,7 +1890,6 @@ export const RecipeMaterial = ({
   scaledMaterials,
 }: RecipeMaterialProps) => {
   const classes = useStyles();
-  console.log(scaledPortions, scaledMaterials);
   if (scaledPortions === 0) {
     scaledPortions = undefined;
   }

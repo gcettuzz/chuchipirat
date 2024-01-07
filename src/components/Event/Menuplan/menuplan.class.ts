@@ -15,6 +15,7 @@ import EventGroupConfiguration, {
 import RecipeShort from "../../Recipe/recipeShort.class";
 import Unit from "../../Unit/unit.class";
 import UsedRecipes from "../UsedRecipes/usedRecipes.class";
+import _ from "lodash";
 // export interface Meal {
 //   uid: string;
 //   pos: number;
@@ -156,7 +157,7 @@ interface CreateMealType {
 }
 interface CreateMeal {
   mealType: MealType["uid"];
-  date: Date;
+  date: Date | string;
 }
 interface AddMealType {
   mealType: MealType;
@@ -184,6 +185,10 @@ interface Save {
   menuplan: Menuplan;
   firebase: Firebase;
   authUser: AuthUser;
+}
+interface Delete {
+  eventUid: Event["uid"];
+  firebase: Firebase;
 }
 interface FindMealOfMenu {
   menueUid: Menue["uid"];
@@ -238,6 +243,12 @@ interface RecalculateSinglePortion {
 interface _GetEventDateList {
   event: Event;
 }
+interface AdjustMenuplanWithNewDays {
+  menuplan: Menuplan;
+  existingEvent: Event;
+  newEvent: Event;
+}
+
 export interface MenueCoordinates {
   menueUid: Menue["uid"];
   date: Date;
@@ -371,11 +382,16 @@ export default class Menuplan {
       menuplan.uid = uid;
       callback(menuplan);
     };
+    const errorCallback = (error: any) => {
+      console.error(error);
+      throw error;
+    };
 
     await firebase.event.menuplan
       .listen<Menuplan>({
         uids: [uid],
         callback: menuplanCallback,
+        errorCallback: errorCallback,
       })
       .then((result) => {
         menuplanListener = result;
@@ -392,6 +408,9 @@ export default class Menuplan {
    */
   static save = async ({menuplan, firebase, authUser}: Save) => {
     // Set weil auch gelöschte Werte raus sollen (Update = merge:true)
+
+    menuplan.lastChange = Utils.createChangeRecord(authUser);
+
     firebase.event.menuplan
       .set({
         uids: [menuplan.uid],
@@ -405,6 +424,17 @@ export default class Menuplan {
         console.error(error);
         throw error;
       });
+  };
+  // ===================================================================== */
+  /**
+   * Menüplan löschen (gesamtes Dokument)
+   * @param Object - Event-UID und Firebase
+   */
+  static delete = async ({eventUid, firebase}: Delete) => {
+    firebase.event.menuplan.delete({uids: [eventUid]}).catch((error) => {
+      console.error(error);
+      throw error;
+    });
   };
   // ===================================================================== */
   /**
@@ -549,9 +579,17 @@ export default class Menuplan {
    * @returns object as Meal
    */
   static createMeal = ({mealType, date}: CreateMeal) => {
+    let stringDate: string;
+
+    if (date instanceof Date) {
+      stringDate = Utils.dateAsString(date);
+    } else {
+      stringDate = date;
+    }
+
     return {
       uid: Utils.generateUid(5),
-      date: Utils.dateAsString(date),
+      date: stringDate,
       mealType: mealType,
       menuOrder: [],
     } as Meal;
@@ -639,7 +677,6 @@ export default class Menuplan {
    * @returns
    */
   static createMealRecipe = ({recipe, plan}: CreateMealRecipe) => {
-    console.log(recipe, plan);
     let mealRecipe = {} as MealRecipe;
     mealRecipe.plan = [];
     Object.keys(plan).forEach((intoleranceUid) =>
@@ -1019,10 +1056,101 @@ export default class Menuplan {
     dateRanges.forEach((daterange) => {
       let currentDate = new Date(daterange.from);
       while (currentDate <= daterange.to) {
-        dateList.push(new Date(currentDate));
+        dateList.push(new Date(currentDate.setUTCHours(0, 0, 0, 0)));
         currentDate.setDate(currentDate.getDate() + 1);
       }
     });
     return dateList;
+  };
+  // ===================================================================== */
+  /**
+   * Menuplan anpassen mit neuer Tagesauwahl
+   * Werden die Tage des Anlasses angepasst, muss auch der Menuplan an-
+   * gepasst werden.
+   * @param Object - Objekt mit Menüplan, Event und neuen Tagen
+   * @returns updatedMenuplan
+   */
+  static adjustMenuplanWithNewDays = ({
+    menuplan,
+    existingEvent,
+    newEvent,
+  }: AdjustMenuplanWithNewDays) => {
+    let updatedMenuplan = _.cloneDeep(menuplan) as Menuplan;
+
+    let newDayList = Menuplan._getEventDateList({event: newEvent}).map((date) =>
+      Utils.dateAsString(date)
+    );
+    let oldDayList = Menuplan._getEventDateList({event: existingEvent}).map(
+      (date) => Utils.dateAsString(date)
+    );
+
+    let datesToDelete = oldDayList.filter((date) => !newDayList.includes(date));
+    let datesToDAdd = newDayList.filter((date) => !oldDayList.includes(date));
+
+    updatedMenuplan.dates = newDayList.map(
+      (date) => new Date(new Date(date).setUTCHours(0, 0, 0, 0))
+    );
+
+    let mealsToDelete = Object.values(menuplan.meals).filter(
+      (meal) => !newDayList.includes(meal.date)
+    );
+    let menueUidsToDelete = mealsToDelete.reduce<Meal["uid"][]>(
+      (accumulator, meal) => accumulator.concat(meal.menuOrder),
+      []
+    );
+
+    let mealRecipeUidsToDelete = menueUidsToDelete.reduce<MealRecipe["uid"][]>(
+      (accumulator, menuUid) =>
+        accumulator.concat(menuplan.menues[menuUid].mealRecipeOrder),
+      []
+    );
+
+    let productUidsToDelete = menueUidsToDelete.reduce<
+      MenuplanProduct["uid"][]
+    >(
+      (accumulator, menuUid) =>
+        accumulator.concat(menuplan.menues[menuUid].productOrder),
+      []
+    );
+
+    let materialUidToDelete = menueUidsToDelete.reduce<
+      MenuplanMaterial["uid"][]
+    >(
+      (accumulator, menuUid) =>
+        accumulator.concat(menuplan.menues[menuUid].materialOrder),
+      []
+    );
+
+    let notesToDelete = Object.values(menuplan.notes).filter((note) =>
+      menueUidsToDelete.includes(note.menueUid)
+    );
+
+    mealsToDelete.forEach((meal) => delete updatedMenuplan.meals[meal.uid]);
+    menueUidsToDelete.forEach(
+      (menueUid) => delete updatedMenuplan.menues[menueUid]
+    );
+    mealRecipeUidsToDelete.forEach(
+      (mealRecipeUid) => delete updatedMenuplan.mealRecipes[mealRecipeUid]
+    );
+    productUidsToDelete.forEach(
+      (productUid) => delete updatedMenuplan.products[productUid]
+    );
+    materialUidToDelete.forEach(
+      (materialUid) => delete updatedMenuplan.materials[materialUid]
+    );
+    notesToDelete.forEach((note) => delete updatedMenuplan.notes[note.uid]);
+
+    // Für jeden neuen Tage Malhzeit, und eine Menü erstellen
+    datesToDAdd.forEach((newDay) => {
+      Object.values(updatedMenuplan.mealTypes.entries).forEach((mealType) => {
+        let meal = Menuplan.createMeal({mealType: mealType.uid, date: newDay});
+        updatedMenuplan.meals[meal.uid] = meal;
+        let menu = Menuplan.createMenu();
+        updatedMenuplan.meals[meal.uid].menuOrder.push(menu.uid);
+        updatedMenuplan.menues[menu.uid] = menu;
+      });
+    });
+
+    return updatedMenuplan;
   };
 }

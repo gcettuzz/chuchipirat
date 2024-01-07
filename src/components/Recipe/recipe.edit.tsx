@@ -628,6 +628,7 @@ const RecipeEdit = ({
     ...MATERIAL_POP_UP_VALUES_INITIAL_STATE,
     ...{popUpOpen: false},
   });
+
   const {customDialog} = useCustomDialog();
   /* ------------------------------------------
   // Navigation-Handler
@@ -638,7 +639,6 @@ const RecipeEdit = ({
       object: NavigationObject.usedRecipes,
     });
   }, []);
-
   /* ------------------------------------------
   // Rezept, dass übergeben wurde in eigenen State speichern
   // ------------------------------------------ */
@@ -1004,20 +1004,20 @@ const RecipeEdit = ({
         ) {
           switchEditMode({});
 
-          // Umleiten auf neue URL
-          replace({
-            pathname: `${ROUTES.RECIPE}/${result.created.fromUid}/${result.uid}`,
-            state: {
-              action: Action.VIEW,
-              recipe: result,
-            },
-          });
           dispatch({
             type: ReducerActions.SNACKBAR_SHOW,
             payload: {
               severity: "success",
               message: TEXT.RECIPE_SAVE_SUCCESS,
               open: true,
+            },
+          });
+          // Umleiten auf neue URL
+          replace({
+            pathname: `${ROUTES.RECIPE}/${result.created.fromUid}/${result.uid}`,
+            state: {
+              action: Action.VIEW,
+              recipe: result,
             },
           });
         } else {
@@ -1030,9 +1030,6 @@ const RecipeEdit = ({
               open: true,
             },
           });
-
-          // Der State ist erst nach dem Roundtrip aktuell!
-          switchEditMode({ignoreState: true});
 
           // Meldung auf gleicher Seite anzeigen
           dispatch({
@@ -2523,6 +2520,7 @@ const MaterialPosition = ({
               componentKey={material.uid}
               material={material.material}
               materials={materials}
+              disabled={false}
               onChange={onChangeMaterial}
             />
           </Grid>

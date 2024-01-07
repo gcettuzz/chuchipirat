@@ -213,7 +213,6 @@ const UnitsBase = ({props, authUser}) => {
 
     Unit.getAllUnits({firebase: firebase})
       .then((result) => {
-        console.log(result);
         dispatch({
           type: ReducerActions.UNITS_FETCH_SUCCESS,
           payload: result,

@@ -1,5 +1,5 @@
 import Firebase from "../Firebase/firebase.class";
-import { AuthUser } from "../Firebase/Authentication/authUser.class";
+import {AuthUser} from "../Firebase/Authentication/authUser.class";
 import RequestRecipeReview from "./request.recipeReview.class";
 import {
   STATUS_NAME as TEXT_STATUS_NAME,
@@ -156,12 +156,12 @@ interface NumberStorage {
 export interface Comment {
   comment: string;
   date: Date;
-  user: { uid: string; displayName: string; pictureSrc: string };
+  user: {uid: string; displayName: string; pictureSrc: string};
 }
 
 export interface ChangeLog {
   date: Date;
-  user: { uid: string; displayName: string };
+  user: {uid: string; displayName: string};
   action: RequestAction;
   newValue: Object;
 }
@@ -205,14 +205,14 @@ export default abstract class Request {
     });
 
     await firebasePointer.numberStorage
-      .read<NumberStorage>({ uids: [] })
+      .read<NumberStorage>({uids: []})
       .then((result) => {
         this.number = result.counter + 1;
       })
       .then(async () => {
         // File erstellen
         await firebasePointer.active
-          .create<Request>({ value: this, uids: [], authUser: authUser })
+          .create<Request>({value: this, uids: [], authUser: authUser})
           .then((result) => {
             this.uid = result.uid;
           })
@@ -324,7 +324,7 @@ export default abstract class Request {
         displayName: authUser.publicProfile.displayName,
       },
       action: RequestAction.created,
-      newValue: { status: RequestStatus.created },
+      newValue: {status: RequestStatus.created},
     });
 
     // Daten vorbereiten
@@ -337,7 +337,7 @@ export default abstract class Request {
    * Objekt der Unterklasse generieren.
    * @param param0 - Type des Request von dem ein Objekt generiert werden soll
    */
-  static getRequestObjectByType({ requestType }: GetRequestObjectByType) {
+  static getRequestObjectByType({requestType}: GetRequestObjectByType) {
     switch (requestType) {
       case RequestType.recipeReview:
         return new RequestRecipeReview();
@@ -424,7 +424,7 @@ export default abstract class Request {
    * 💡 Diese Methode für jede Klasse ausgeführt (Vererbung)
    * @param param0 - Objekt mit Firebase-Referenz und authUser
    */
-  async getActiveRequests({ firebase, authUser }: GetActiveRequests) {
+  async getActiveRequests({firebase, authUser}: GetActiveRequests) {
     let requests: Request[] = [];
     // Pointer zu richtigem Verzeichnis holen
     let firebasePointer = this.getRequestFirebasePointer({
@@ -435,7 +435,7 @@ export default abstract class Request {
       await firebasePointer.active
         .readCollection<Request>({
           uids: [],
-          orderBy: { field: "number", sortOrder: SortOrder.asc },
+          orderBy: {field: "number", sortOrder: SortOrder.asc},
           limit: 1000,
         })
         .then((result) => (requests = result));
@@ -443,7 +443,7 @@ export default abstract class Request {
       await firebasePointer.active
         .readCollection<Request>({
           uids: [],
-          orderBy: { field: "number", sortOrder: SortOrder.asc },
+          orderBy: {field: "number", sortOrder: SortOrder.asc},
           limit: 1000,
           where: [
             {
@@ -474,7 +474,6 @@ export default abstract class Request {
         authUser: authUser,
       })
       .then((result) => {
-        console.log(result);
         return result;
       });
   }
@@ -485,7 +484,7 @@ export default abstract class Request {
    * 💡 Diese Methode für jede Klasse ausgeführt (Vererbung).
    * @param param0 - Objekt mit Firebase-Referenz und authUser
    */
-  async getClosedRequests({ firebase, authUser }: GetAllClosedRequests) {
+  async getClosedRequests({firebase, authUser}: GetAllClosedRequests) {
     let requests: Request[] = [];
     // Pointer zu richtigem Verzeichnis holen
     let firebasePointer = this.getRequestFirebasePointer({
@@ -496,7 +495,7 @@ export default abstract class Request {
       await firebasePointer.closed
         .readCollection<Request>({
           uids: [],
-          orderBy: { field: "number", sortOrder: SortOrder.asc },
+          orderBy: {field: "number", sortOrder: SortOrder.asc},
           limit: 1000,
         })
         .then((result) => (requests = result));
@@ -504,7 +503,7 @@ export default abstract class Request {
       await firebasePointer.closed
         .readCollection<Request>({
           uids: [],
-          orderBy: { field: "number", sortOrder: SortOrder.asc },
+          orderBy: {field: "number", sortOrder: SortOrder.asc},
           limit: 1000,
           where: [
             {
@@ -516,7 +515,6 @@ export default abstract class Request {
         })
         .then((result) => (requests = result));
     }
-    console.log(requests);
     return requests;
   }
   // ===================================================================== */
@@ -544,7 +542,7 @@ export default abstract class Request {
       changeLog: request.changeLog,
       action: RequestAction.changeState,
       authUser: authUser,
-      newValue: { status: request.status },
+      newValue: {status: request.status},
     });
 
     firebasePointer.active.updateFields({
@@ -618,7 +616,7 @@ export default abstract class Request {
    * Request mir selber zuweisen
    * @param param0 - AuthUser.
    */
-  static async assignToMe({ request, firebase, authUser }: AssignToMe) {
+  static async assignToMe({request, firebase, authUser}: AssignToMe) {
     let requestWrapper = Request.getRequestObjectByType({
       requestType: request.requestType,
     });
@@ -636,7 +634,7 @@ export default abstract class Request {
       changeLog: request.changeLog,
       action: RequestAction.assign,
       authUser: authUser,
-      newValue: { asignee: request.assignee },
+      newValue: {asignee: request.assignee},
     });
 
     firebasePointer.active.updateFields({
@@ -655,12 +653,7 @@ export default abstract class Request {
    * Kommentar hinzufügen
    * @param object - request, Kommentar, Firebase, AuthUser.
    */
-  static async addComment({
-    request,
-    comment,
-    firebase,
-    authUser,
-  }: AddComment) {
+  static async addComment({request, comment, firebase, authUser}: AddComment) {
     let requestWrapper = Request.getRequestObjectByType({
       requestType: request.requestType,
     });
@@ -680,7 +673,7 @@ export default abstract class Request {
     firebasePointer.active
       .updateFields({
         uids: [request.uid],
-        values: { comments: request.comments },
+        values: {comments: request.comments},
         authUser: authUser,
       })
       .then(() => {
@@ -717,7 +710,7 @@ export default abstract class Request {
    * Aus dem Aktiven Folder herausnehmen und in den Abgeschlossenen verschieben
    * @param object - request der verschoeben werden soll (+firebase und AuthUser).
    */
-  closeRequest({ request, firebase, authUser }: CloseRequest) {
+  closeRequest({request, firebase, authUser}: CloseRequest) {
     let requestWrapper = Request.getRequestObjectByType({
       requestType: request.requestType,
     });
@@ -730,7 +723,7 @@ export default abstract class Request {
       value: request,
       authUser: authUser,
     });
-    firebasePointer.active.delete({ uids: [request.uid] });
+    firebasePointer.active.delete({uids: [request.uid]});
 
     // Log updaten
     let logField = {};

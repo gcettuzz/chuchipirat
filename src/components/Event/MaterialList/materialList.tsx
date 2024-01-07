@@ -24,7 +24,7 @@ import {
 
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
-  WHICH_MENUES_FOR_RECIPE_GENERATION as TEXT_WHICH_MENUES_FOR_RECIPE_GENERATION,
+  WHICH_MENUES_FOR_MATERIAL_LIST_GENERATION as TEXT_WHICH_MENUES_FOR_MATERIAL_LIST_GENERATION,
   SUFFIX_PDF as TEXT_SUFFIX_PDF,
   NAME as TEXT_NAME,
   NEW_LIST as TEXT_NEW_LIST,
@@ -108,7 +108,6 @@ import Recipe, {Recipes} from "../../Recipe/recipe.class";
 import RecipeShort from "../../Recipe/recipeShort.class";
 import MaterialListPdf from "./materialListPdf";
 import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
-import Stats, {StatsField} from "../../Shared/stats.class";
 
 /* ===================================================================
 // ============================ Dispatcher ===========================
@@ -292,7 +291,7 @@ const EventMaterialListPage = ({
   React.useEffect(() => {
     navigationValuesContext?.setNavigationValues({
       action: Action.NONE,
-      object: NavigationObject.usedRecipes,
+      object: NavigationObject.materialList,
     });
   }, []);
 
@@ -342,17 +341,6 @@ const EventMaterialListPage = ({
           updatedMaterialList.lists[result.properties.uid] = result;
           updatedMaterialList.noOfLists++;
           updatedMaterialList.uid = event.uid;
-
-          // Statistik mitführen
-          Stats.incrementStat({
-            firebase: firebase,
-            field: StatsField.noMaterialLists,
-            value: 1,
-          });
-
-          firebase.analytics.logEvent(
-            FirebaseAnalyticEvent.materialListGenerated
-          );
 
           onMaterialListUpdate(updatedMaterialList);
           dispatch({
@@ -409,13 +397,6 @@ const EventMaterialListPage = ({
             list: materialList.lists[state.selectedListItem!].items,
             materialUid: contextMenuSelectedItem.materialUid,
           });
-
-        // Statistik mitführen
-        Stats.incrementStat({
-          firebase: firebase,
-          field: StatsField.noMaterialLists,
-          value: -1,
-        });
 
         firebase.analytics.logEvent(FirebaseAnalyticEvent.materialListDeleted);
 
@@ -745,7 +726,7 @@ const EventMaterialListPage = ({
       </Grid>
       <DialogSelectMenues
         open={dialogSelectMenueData.open}
-        title={TEXT_WHICH_MENUES_FOR_RECIPE_GENERATION}
+        title={TEXT_WHICH_MENUES_FOR_MATERIAL_LIST_GENERATION}
         dates={menuplan.dates}
         preSelectedMenue={{}}
         mealTypes={menuplan.mealTypes}
@@ -756,6 +737,7 @@ const EventMaterialListPage = ({
         onConfirm={onConfirmDialogSelectMenues}
       />
       <PositionContextMenu
+        itemType={TEXT_MATERIAL}
         anchorEl={contextMenuSelectedItem.anchor}
         handleMenuClick={onContextMenuClick}
         handleMenuClose={onCloseContextMenu}

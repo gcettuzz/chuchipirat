@@ -265,7 +265,6 @@ export default class UnitConversion {
         (quantity * conversionRule.numerator) / conversionRule.denominator;
       convertedUnit = conversionRule.toUnit;
     } else {
-      // console.warn("keine umrechnung gefunden", productUid, fromUnit, toUnit);
       return {quantity, fromUnit};
     }
 

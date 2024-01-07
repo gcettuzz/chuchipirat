@@ -19,7 +19,7 @@ export class FormValidatorUtil {
     fieldName: string
   ) {
     return Boolean(
-      formValidation.find((field) => field.fieldName == fieldName)
+      formValidation?.find((field) => field.fieldName == fieldName)
     );
   }
   static getHelperText(
@@ -27,7 +27,7 @@ export class FormValidatorUtil {
     fieldName: string,
     defaultHelpertext: string
   ) {
-    let formField = formValidation.find(
+    let formField = formValidation?.find(
       (field) => field.fieldName == fieldName
     );
 

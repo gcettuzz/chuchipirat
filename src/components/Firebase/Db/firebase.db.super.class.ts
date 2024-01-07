@@ -13,6 +13,8 @@ import {
 
 import _ from "lodash";
 
+import {DB_DOCUMENT_DELETED as TEXT_DB_DOCUMENT_DELETED} from "../../../constants/text";
+
 export interface ValueObject {
   [key: string]: any;
 }
@@ -44,6 +46,7 @@ interface ReadCollectionGroup {
 interface Listen<T> {
   uids?: string[];
   callback: (T) => void;
+  errorCallback: (error: any) => void;
 }
 interface Update<T> {
   uids: string[];
@@ -187,7 +190,6 @@ export abstract class FirebaseDbSuper {
         uid: snapshot.id,
         value: this.convertTimestampValues(snapshot.data() as ValueObject),
       });
-      console.warn("Daten aus der DB gelesen:", document.id);
       // SessionStorage update
       SessionStorageHandler.upsertDocument({
         storageObjectProperty: this.getSessionHandlerProperty(),
@@ -292,7 +294,6 @@ export abstract class FirebaseDbSuper {
     return await queryObject
       .get()
       .then((snapshot) => {
-        console.warn("Daten aus der DB gelesen");
         snapshot.forEach((document) => {
           let object = this.prepareDataForApp<T>({
             uid: document.id,
@@ -378,18 +379,46 @@ export abstract class FirebaseDbSuper {
    * @param param0 - Objekt mit uids ->  Array mit UIDs um zum Dokument
    *                 zu gelangen
    */
-  async listen<T extends ValueObject>({uids, callback}: Listen<T>) {
+  async listen<T extends ValueObject>({
+    uids,
+    callback,
+    errorCallback,
+  }: Listen<T>) {
     const document = this.getDocument(uids);
+    // return document.onSnapshot((snapshot) => {
+    //   try {
+    //     if (!snapshot.exists) {
+    //       // Dokument wurde gelöscht
+    //       throw new Error(TEXT_DB_DOCUMENT_DELETED);
+    //     }
 
-    // let listener = { unsubscribe: () => {}, data: <T>{} };
-
+    //     callback(
+    //       this.prepareDataForApp<T>({
+    //         uid: snapshot.id,
+    //         value: this.convertTimestampValues(snapshot.data() as ValueObject),
+    //       })
+    //     );
+    //   } catch (error) {
+    //     console.error(error);
+    //     throw error;
+    //   }
+    // });
     return document.onSnapshot((snapshot) => {
-      callback(
-        this.prepareDataForApp<T>({
-          uid: snapshot.id,
-          value: this.convertTimestampValues(snapshot.data() as ValueObject),
-        })
-      );
+      if (!snapshot.exists) {
+        if (errorCallback) {
+          errorCallback(TEXT_DB_DOCUMENT_DELETED);
+          return;
+        } else {
+          throw new Error(TEXT_DB_DOCUMENT_DELETED);
+        }
+      }
+
+      const dataForApp = this.prepareDataForApp<T>({
+        uid: snapshot.id,
+        value: this.convertTimestampValues(snapshot.data() as ValueObject),
+      });
+
+      callback(dataForApp);
     });
   }
   // ===================================================================== */
@@ -752,7 +781,8 @@ export abstract class FirebaseDbSuper {
         switch (typeof value) {
           case "object":
             if (value instanceof Date) {
-              value = this.firebase.timestamp.fromDate(value);
+              value = new Date(new Date(value).setUTCHours(0, 0, 0, 0));
+              value = this.firebase.timestamp.fromDate(value as Date);
             } else if (Array.isArray(value)) {
               value.forEach((entry) => this.convertDateValues(entry));
             } else {
@@ -778,14 +808,14 @@ export abstract class FirebaseDbSuper {
     if (typeof values === "object" && values !== null) {
       // Wenn das Objekt bereits der Timestamp ist, hier abfangen
       if (values instanceof this.firebase.timestamp) {
-        values = values.toDate();
+        values = new Date(values.toDate().setUTCHours(0, 0, 0, 0));
       } else {
         // Objekt auseinandernehmen
         Object.entries(values).forEach(([key, value]) => {
           switch (typeof value) {
             case "object":
               if (value instanceof this.firebase.timestamp) {
-                value = value!.toDate();
+                value = new Date(value!.toDate().setUTCHours(0, 0, 0, 0));
               } else if (Array.isArray(value)) {
                 value = value.map((entry) => {
                   return this.convertTimestampValues(entry);

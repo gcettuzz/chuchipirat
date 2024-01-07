@@ -13,20 +13,19 @@ import Event from "../Event/event.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import Firebase from "../../Firebase";
 import Product from "../../Product/product.class";
-import Menuplan, {Meal, Menue} from "../Menuplan/menuplan.class";
+import Menuplan, {Menue} from "../Menuplan/menuplan.class";
 import Recipe from "../../Recipe/recipe.class";
 import ShoppingList, {ShoppingListItem} from "./shoppingList.class";
 import {
-  SingleUnitConversionBasic,
   UnitConversionBasic,
   UnitConversionProducts,
 } from "../../Unit/unitConversion.class";
 import Department from "../../Department/department.class";
 import Material from "../../Material/material.class";
 import _ from "lodash";
-import {de} from "date-fns/locale";
 import Utils from "../../Shared/utils.class";
 import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
+import Stats, {StatsField} from "../../Shared/stats.class";
 
 interface Factory {
   event: Event;
@@ -37,10 +36,15 @@ interface SaveCollection {
   shoppingListCollection: ShoppingListCollection;
 }
 interface GetShoppingListCollection {
+  eventUid: Event["uid"];
   firebase: Firebase;
-  uid: string;
+}
+interface GetShoppingListCollectionListener {
+  eventUid: Event["uid"];
+  firebase: Firebase;
   callback: (shoppingListCollection: ShoppingListCollection) => void;
 }
+
 export interface ShoppingListProperties {
   uid: string;
   name: string;
@@ -118,6 +122,10 @@ interface Save {
   shoppingListCollection: ShoppingListCollection;
   authUser: AuthUser;
 }
+interface Delete {
+  eventUid: Event["uid"];
+  firebase: Firebase;
+}
 
 interface AddTraceEntry {
   trace: ShoppingListTrace;
@@ -187,11 +195,34 @@ export default class ShoppingListCollection {
    * Collection mit Listener holen
    * @returns listener
    */
+  static getShoppingListCollection = async ({
+    eventUid,
+    firebase,
+  }: GetShoppingListCollection) => {
+    let shoppingListColection = {} as ShoppingListCollection;
+    await firebase.event.shoppingListCollection
+      .read<ShoppingListCollection>({uids: [eventUid]})
+      .then((result) => {
+        shoppingListColection = result;
+        shoppingListColection.eventUid = eventUid;
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+    return shoppingListColection;
+  };
+
+  // ===================================================================== */
+  /**
+   * Collection mit Listener holen
+   * @returns listener
+   */
   static getShoppingListCollectionListener = async ({
     firebase,
-    uid,
+    eventUid: uid,
     callback,
-  }: GetShoppingListCollection) => {
+  }: GetShoppingListCollectionListener) => {
     let shoppingListCollectionListener = () => {};
 
     const shoppingListCollectionCallback = (
@@ -201,11 +232,16 @@ export default class ShoppingListCollection {
       shoppingListCollection.eventUid = uid;
       callback(shoppingListCollection);
     };
+    const errorCallback = (error: any) => {
+      console.error(error);
+      throw error;
+    };
 
     await firebase.event.shoppingListCollection
       .listen<ShoppingListCollection>({
         uids: [uid],
         callback: shoppingListCollectionCallback,
+        errorCallback: errorCallback,
       })
       .then((result) => {
         shoppingListCollectionListener = result;
@@ -471,228 +507,7 @@ export default class ShoppingListCollection {
       shoppingListCollection: updatedShoppingListCollection,
     };
   };
-  /* =====================================================================
-  // Nötige Rezepte aus dem Mahlzeiten bestimmen
-  // ===================================================================== */
-  static defineRequiredRecipes = ({
-    menuplan,
-    dateFrom,
-    dateTo,
-    mealFrom,
-    mealTo,
-  }) => {
-    // let allMealRecipes = [];
-    // // Nur Rezepte, die auch eingeplant sind
-    // menuplan.dates.forEach((day) => {
-    //   if (day < dateFrom || day > dateTo) {
-    //     // Nächster Schlaufendurchgang
-    //     return;
-    //   }
-    //   menuplan.meals.forEach((meal) => {
-    //     if (day === dateFrom && meal.pos < mealFrom.pos) {
-    //       return;
-    //     } else if (day === dateTo && meal.pos > mealTo.pos) {
-    //       return;
-    //     }
-    //     // Alle Rezepte dieser Mahlzeit holen
-    //     allMealRecipes = allMealRecipes.concat(
-    //       menuplan.recipes.filter(
-    //         (recipe) =>
-    //           recipe.date.getTime() === day.getTime() &&
-    //           recipe.mealUid === meal.uid
-    //       )
-    //     );
-    //   });
-    // });
-    // return allMealRecipes;
-  };
-  /* =====================================================================
-  // Rezepte der gewählten Periodelesen
-  // ===================================================================== */
-  static getRecipesFromList = async ({firebase, allMealRecipes}) => {
-    // let uids = [];
-    // // ====== Rezepte holen ======
-    // uids = allMealRecipes.map((recipe) => recipe.recipeUid);
-    // // doppelte Rezepte löschen
-    // uids = [...new Set(uids)];
-    // let allRecipes = await Recipe.getMultipleRecipes({
-    //   firebase: firebase,
-    //   uids: uids,
-    // });
-    // return allRecipes;
-  };
-  /* =====================================================================
-  // Einkaufsliste generieren
-  // ===================================================================== */
-  static generateShoppingList = async ({
-    firebase,
-    dateFrom,
-    dateTo,
-    mealFrom,
-    mealTo,
-    convertUnits,
-    menuplan,
-    products,
-    departments,
-    unitConversionBasic,
-    unitConversionProducts,
-  }) => {
-    // let list = [];
-    // let allMealRecipes = [];
-    // let fxQuantity;
-    // let fxUnit;
-    // if (
-    //   !firebase ||
-    //   !dateFrom ||
-    //   !dateTo ||
-    //   !mealFrom ||
-    //   !mealTo ||
-    //   !menuplan ||
-    //   (convertUnits && (!unitConversionBasic || !unitConversionProducts))
-    // ) {
-    //   throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
-    // }
-    // // Rezepte bestimmen
-    // allMealRecipes = ShoppingList.defineRequiredRecipes({
-    //   menuplan: menuplan,
-    //   dateFrom: dateFrom,
-    //   dateTo: dateTo,
-    //   mealFrom: mealFrom,
-    //   mealTo: mealTo,
-    // });
-    // // Rezepte lesen
-    // let allRecipes = await ShoppingList.getRecipesFromList({
-    //   firebase: firebase,
-    //   allMealRecipes: allMealRecipes,
-    // });
-    // // ====== hochrechnen und hinzufügen======
-    // allMealRecipes.forEach((mealRecipe) => {
-    //   let recipe = allRecipes.find(
-    //     (recipe) => recipe.uid === mealRecipe.recipeUid
-    //   );
-    //   // skalieren
-    //   recipe.scaledQuantity = Recipe.scaleIngredients({
-    //     recipe: recipe,
-    //     portionsToScale: mealRecipe.noOfServings,
-    //   });
-    //   recipe.scaledNoOfServings = mealRecipe.noOfServings;
-    //   recipe.scaledIngredients.forEach((ingredient) => {
-    //     let product = products.find(
-    //       (product) => product.uid === ingredient.product.uid
-    //     );
-    //     if (
-    //       convertUnits &&
-    //       product.shoppingUnit !== ingredient.unit &&
-    //       product.shoppingUnit
-    //     ) {
-    //       try {
-    //         // Einheit in Einkaufseinheit umrechnen
-    //         fxQuantity = UnitConversion.convertQuantity({
-    //           quantity: ingredient.quantity,
-    //           product: ingredient.product,
-    //           fromUnit: ingredient.unit,
-    //           toUnit: product.shoppingUnit,
-    //           unitConversionBasic: unitConversionBasic,
-    //           unitConversionProducts: unitConversionProducts,
-    //         });
-    //         fxUnit = product.shoppingUnit;
-    //       } catch (error) {
-    //         console.warn(ingredient.product, error);
-    //         fxQuantity = ingredient.quantity;
-    //         fxUnit = ingredient.unit;
-    //       }
-    //     } else {
-    //       // Keine Umrechnung
-    //       fxQuantity = ingredient.quantity;
-    //       fxUnit = ingredient.unit;
-    //     }
-    //     // hinzufügen;
-    //     list = ShoppingList.addProductToShoppingList({
-    //       list: list,
-    //       quantity: fxQuantity,
-    //       unit: fxUnit,
-    //       productToAdd: ingredient.product,
-    //       products: products,
-    //       departments: departments,
-    //       manualAdded: false,
-    //     });
-    //   });
-    // });
-    // // Einträge alphabetisch sortieren
-    // list.forEach((department) => {
-    //   department.items = Utils.sortArray({
-    //     array: department.items,
-    //     attributeName: "name",
-    //   });
-    // });
-    // return list;
-  };
 
-  /* =====================================================================
-  // Produkt zu Liste hinzufügen
-  // ===================================================================== */
-  static addProductToShoppingList = ({
-    list,
-    productToAdd,
-    quantity,
-    unit,
-    products,
-    departments,
-    manualAdded = false,
-  }) => {
-    // if (!list || !productToAdd || !products || !departments) {
-    //   throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
-    // }
-    // if (!unit) {
-    //   // Kein null!
-    //   unit = "";
-    // }
-    // let product = products.find((product) => product.uid === productToAdd.uid);
-    // if (!product) {
-    //   throw new Error(TEXT.ERROR_PRODUCT_UNKNOWN(productToAdd.name));
-    // }
-    // // Nach der Abteilung suchen
-    // let department = list.find(
-    //   (department) => department.uid === product.departmentUid
-    // );
-    // if (!department) {
-    //   department = {
-    //     uid: product.departmentUid,
-    //     name: product.departmentName,
-    //     pos: departments.find(
-    //       (department) => department.uid === product.departmentUid
-    //     ).pos,
-    //     items: [],
-    //   };
-    //   list.push(department);
-    //   // Abteilungen sortieren
-    //   list = Utils.sortArray({
-    //     array: list,
-    //     attributeName: "pos",
-    //   });
-    // }
-    // // Nach Produkt suchen
-    // let item = department.items.find(
-    //   (item) => item.uid === product.uid && item.unit === unit
-    // );
-    // if (item) {
-    //   // Menge aufrechnen
-    //   item.quantity = item.quantity + quantity;
-    // } else {
-    //   item = {
-    //     checked: false,
-    //     name: product.name,
-    //     uid: product.uid,
-    //     quantity: quantity,
-    //     unit: unit ? unit : "",
-    //   };
-    //   if (manualAdded) {
-    //     item.manualAdded = true;
-    //   }
-    //   department.items.push(item);
-    // }
-    // return list;
-  };
   /* =====================================================================
   // Einkaufsliste speichern
   // ===================================================================== */
@@ -709,6 +524,56 @@ export default class ShoppingListCollection {
         uids: [eventUid],
         value: shoppingListCollection,
         authUser: authUser,
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  };
+  // ===================================================================== */
+  /**
+   * Listen löschen (löscht das gesamte Dokument)
+   * @param object - Objekt Event-UID und Firebase-Referenz
+   * @returns void
+   */
+  static delete = async ({eventUid, firebase}: Delete) => {
+    let counter = 0;
+    // Zuerst Übersicht holen um alle Einkaufslisten einzeln zu löschen
+    await ShoppingListCollection.getShoppingListCollection({
+      eventUid: eventUid,
+      firebase: firebase,
+    })
+      .then((result) => {
+        Object.keys(result.lists).forEach(async (shoppingListUid) => {
+          await ShoppingList.delete({
+            eventUid: eventUid,
+            listUidToDelete: shoppingListUid,
+            firebase: firebase,
+          })
+            .then(() => {
+              counter++;
+            })
+            .catch((error) => {
+              console.error(error);
+              throw error;
+            });
+        });
+      })
+      .then(async () => {
+        // Collection selbst löschen
+        await firebase.event.shoppingListCollection
+          .delete({uids: [eventUid]})
+          .catch((error) => {
+            console.error(error);
+            throw error;
+          });
+      })
+      .then(() => {
+        Stats.incrementStat({
+          field: StatsField.noShoppingLists,
+          value: counter * -1,
+          firebase: firebase,
+        });
       })
       .catch((error) => {
         console.error(error);
@@ -779,93 +644,5 @@ export default class ShoppingListCollection {
     };
 
     return updatedShoppingListCollection;
-  };
-  /* =====================================================================
-  // Postizettel aus DB lesen
-  // ===================================================================== */
-  static getShoppingList = async ({firebase, eventUid}) => {
-    // let shoppingList = {};
-    // if (!firebase || !eventUid) {
-    //   throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
-    // }
-    // const shoppingListDoc = firebase.shoppingList(eventUid);
-    // await shoppingListDoc
-    //   .get()
-    //   .then((snapshot) => {
-    //     if (!snapshot.data()) {
-    //       return;
-    //     }
-    //     shoppingList = snapshot.data();
-    //     //Timestamps umbiegen
-    //     shoppingList.dateFrom = shoppingList.dateFrom.toDate();
-    //     shoppingList.dateTo = shoppingList.dateTo.toDate();
-    //     shoppingList.generatedOn = shoppingList.generatedOn.toDate();
-    //   })
-    //   .catch((error) => {
-    //     console.error(error);
-    //     throw error;
-    //   });
-    // return shoppingList;
-  };
-  /* =====================================================================
-  // Anzahl Artikel in Postizettel ermitteln
-  // ===================================================================== */
-  static countItems = ({shoppingList}) => {
-    // let noItems = 0;
-    // shoppingList.list.forEach((department) => {
-    //   noItems += department.items.length;
-    // });
-    // return noItems;
-  };
-  /* =====================================================================
-  // Anzahl Abteilungen in Postizettel ermitteln
-  // ===================================================================== */
-  static countDepartments = ({shoppingList}) => {
-    // let noDepartment = 0;
-    // // Anzahl Abteilungen zählen
-    // shoppingList.list.forEach((department) => {
-    //   if (department.items.length > 0) {
-    //     noDepartment++;
-    //   }
-    // });
-    // return noDepartment;
-  };
-  /* =====================================================================
-  // Alles Rezepte auslesen, die ein bestimmtes Produkt beinhalten
-  // ===================================================================== */
-  static getRecipesWithItem = ({itemUid, recipes, mealRecipes, meals}) => {
-    // let recipesWithItem = [];
-    // mealRecipes.forEach((mealRecipe) => {
-    //   // Rezept suchen
-    //   let recipe = recipes.find(
-    //     (recipe) => recipe.uid === mealRecipe.recipeUid
-    //   );
-    //   // Prüfen ob Zutat vorkommt
-    //   let foundIngredientsOfRecipe = recipe.ingredients.filter(
-    //     (ingredient) => ingredient.product.uid === itemUid
-    //   );
-    //   if (foundIngredientsOfRecipe.length > 0) {
-    //     // Rezept skalieren
-    //     recipe.scaledIngredients = Recipe.scaleIngredients({
-    //       recipe: recipe,
-    //       portionsToScale: mealRecipe.noOfServings,
-    //     });
-    //     recipe.scaledIngredients.forEach((ingredient) => {
-    //       if (ingredient.product.uid === itemUid) {
-    //         // hinzufügen
-    //         recipesWithItem.push({
-    //           recipeUid: recipe.uid,
-    //           recipeName: recipe.name,
-    //           ingredientQuantity: ingredient.quantity,
-    //           ingredientUnit: ingredient.unit,
-    //           mealDate: mealRecipe.date,
-    //           mealName: meals.find((meal) => meal.uid === mealRecipe.mealUid)
-    //             .name,
-    //         });
-    //       }
-    //     });
-    //   }
-    // });
-    // return recipesWithItem;
   };
 }

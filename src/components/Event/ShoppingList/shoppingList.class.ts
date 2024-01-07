@@ -612,10 +612,15 @@ export default class ShoppingList {
       shoppingList.uid = shoppingListUid;
       callback(shoppingList);
     };
+    const errorCallback = (error: any) => {
+      console.error(error);
+      throw error;
+    };
     await firebase.event.shoppingList
       .listen<Menuplan>({
         uids: [eventUid, shoppingListUid],
         callback: shoppingListCallback,
+        errorCallback: errorCallback,
       })
       .then((result) => {
         shoppingListListener = result;

@@ -18,6 +18,10 @@ interface Save {
   firebase: Firebase;
   authUser: AuthUser;
 }
+interface Delete {
+  eventUid: Event["uid"];
+  firebase: Firebase;
+}
 
 interface GetUsedRecipesListener {
   firebase: Firebase;
@@ -113,6 +117,17 @@ export default class UsedRecipes {
   };
   // ===================================================================== */
   /**
+   * Alle Listen löschen (gesamte Dokument)
+   * @param object - Objekt mit Event-UID und Firebase-Referenz
+   */
+  static delete = async ({eventUid, firebase}: Delete) => {
+    firebase.event.usedRecipes.delete({uids: [eventUid]}).catch((error) => {
+      console.error(error);
+      throw error;
+    });
+  };
+  // ===================================================================== */
+  /**
    * Listener holen
    * @param object - Objekt mit Firebase, UID, und Callback-Funktion
    * @returns listener
@@ -129,11 +144,16 @@ export default class UsedRecipes {
       usedRecipes.uid = uid;
       callback(usedRecipes);
     };
+    const errorCallback = (error: any) => {
+      console.error(error);
+      throw error;
+    };
 
     await firebase.event.usedRecipes
       .listen<UsedRecipes>({
         uids: [uid],
         callback: usedRecipesCallback,
+        errorCallback: errorCallback,
       })
       .then((result) => {
         usedRecipesListener = result;
@@ -250,7 +270,7 @@ export default class UsedRecipes {
 
   // ===================================================================== */
   /**
-   * Neue Liste erstellen
+   * Liste löschen
    * @param object - Objekt mit UsedRecipes und UID die es zu löschen gilt
    * @returns Angepasstes Used Recipes
    */

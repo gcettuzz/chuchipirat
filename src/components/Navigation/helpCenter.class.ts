@@ -22,7 +22,7 @@ export default class HelpCenter {
     let path = actualPath.split("/");
     let subdirectory = "";
     let page = "";
-    console.log(path);
+
     switch (`/${path[1]}`) {
       case ROUTES.HOME:
         subdirectory = "home";
@@ -56,7 +56,7 @@ export default class HelpCenter {
             page = "used%20recipes";
             break;
           case NavigationObject.shoppingList:
-            page = "shoppingList";
+            page = "shoppinglist";
             break;
           case NavigationObject.materialList:
             page = "materiallist";

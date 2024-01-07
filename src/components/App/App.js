@@ -70,9 +70,9 @@ import CustomDialog from "../Shared/customDialog";
 // Für nachträglicher Load --> Code Splitting
 const ShoppingList = lazy(() => import("../Event/ShoppingList/shoppingList"));
 const Menuplan = lazy(() => import("../Event/Menuplan/menuplan"));
-const QuantityCalculation = lazy(() =>
-  import("../QuantityCalculation/quantityCalculation")
-);
+// const QuantityCalculation = lazy(() =>
+//   import("../QuantityCalculation/quantityCalculation")
+// );
 const Recipe = lazy(() => import("../Recipe/recipe"));
 
 const App = (props) => {
@@ -155,9 +155,9 @@ const App = (props) => {
                 ROUTES.RECIPES,
                 ROUTES.CREATE_NEW_EVENT,
                 ROUTES.EVENT,
-                ROUTES.MENUPLAN,
-                ROUTES.QUANTITY_CALCULATION,
-                ROUTES.SHOPPINGLIST,
+                // ROUTES.MENUPLAN,
+                // ROUTES.QUANTITY_CALCULATION,
+                // ROUTES.SHOPPINGLIST,
                 ROUTES.UNITS,
                 ROUTES.UNITCONVERSION,
                 ROUTES.PRODUCTS,
@@ -263,7 +263,7 @@ const App = (props) => {
                 <Route exact path={ROUTES.RECIPE} component={Recipe} />
                 <Route exact path={ROUTES.RECIPE_UID} component={Recipe} />
                 <Route exact path={ROUTES.RECIPE_USER_UID} component={Recipe} />
-                <Route
+                {/* <Route
                   exact
                   path={ROUTES.SHOPPINGLIST}
                   component={ShoppingList}
@@ -272,20 +272,20 @@ const App = (props) => {
                   exact
                   path={ROUTES.SHOPPINGLIST_UID}
                   component={ShoppingList}
-                />
-                f
-                <Route exact path={ROUTES.MENUPLAN} component={Menuplan} />
-                <Route exact path={ROUTES.MENUPLAN_UID} component={Menuplan} />
-                <Route
+                /> */}
+
+                {/* <Route exact path={ROUTES.MENUPLAN} component={Menuplan} />
+                <Route exact path={ROUTES.MENUPLAN_UID} component={Menuplan} /> */}
+                {/* <Route
                   exact
                   path={ROUTES.QUANTITY_CALCULATION}
                   component={QuantityCalculation}
-                />
-                <Route
+                /> */}
+                {/* <Route
                   exact
                   path={ROUTES.QUANTITY_CALCULATION_UID}
                   component={QuantityCalculation}
-                />
+                /> */}
                 <Redirect to="404" />
               </Switch>
             </Suspense>
@@ -299,9 +299,9 @@ const App = (props) => {
                 ROUTES.RECIPES,
                 ROUTES.CREATE_NEW_EVENT,
                 ROUTES.EVENT,
-                ROUTES.MENUPLAN,
-                ROUTES.QUANTITY_CALCULATION,
-                ROUTES.SHOPPINGLIST,
+                // ROUTES.MENUPLAN,
+                // ROUTES.QUANTITY_CALCULATION,
+                // ROUTES.SHOPPINGLIST,
                 ROUTES.UNITS,
                 ROUTES.UNITCONVERSION,
                 ROUTES.PRODUCTS,

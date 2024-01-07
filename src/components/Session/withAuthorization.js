@@ -1,9 +1,9 @@
 import React from "react";
-import { withRouter } from "react-router-dom";
-import { compose } from "recompose";
+import {withRouter} from "react-router-dom";
+import {compose} from "recompose";
 
 import AuthUserContext from "./context";
-import { withFirebase } from "../Firebase";
+import {withFirebase} from "../Firebase";
 import * as ROUTES from "../../constants/routes";
 
 const withAuthorization = (condition) => (Component) => {
@@ -27,7 +27,9 @@ const withAuthorization = (condition) => (Component) => {
       return (
         <AuthUserContext.Consumer>
           {(authUser) =>
-            condition(authUser) ? <Component {...this.props} /> : null
+            condition(authUser) ? (
+              <Component {...this.props} authUser={authUser} />
+            ) : null
           }
         </AuthUserContext.Consumer>
       );

@@ -187,10 +187,18 @@ export const DialogSelectMenues = ({
     });
     return initialValues;
   };
-  // if (!dialogValues && Object.keys(preSelectedMenue).length > 0) {
-  if (!dialogValues) {
+  if (
+    !dialogValues ||
+    (Object.keys(dialogValues).length == 0 &&
+      Object.keys(preSelectedMenue).length > 0)
+  ) {
     initialDialogValues = createInitialValues(menues);
     setDialogValues({...initialDialogValues, ...preSelectedMenue});
+  } else if (
+    Object.values(dialogValues).filter((menue) => menue === true).length == 0 &&
+    Object.keys(preSelectedMenue).length > 0
+  ) {
+    setDialogValues({...dialogValues, ...preSelectedMenue});
   }
   /* ------------------------------------------
   // Select-Menues
@@ -265,9 +273,11 @@ export const DialogSelectMenues = ({
     onConfirm(selectedMenues);
   };
   const onCloseClick = () => {
-    setDialogValues(createInitialValues(menues));
+    // setDialogValues(createInitialValues(menues));
+    setDialogValues(null);
     onClose();
   };
+
   return (
     <Dialog open={open} maxWidth="xl">
       <DialogTitle>{title}</DialogTitle>
@@ -371,7 +381,7 @@ export const DialogSelectMenues = ({
                     mealTypeUid
                   }
                 >
-                  {actualMeal.menuOrder.map((menueUid) => (
+                  {actualMeal.menuOrder?.map((menueUid) => (
                     <FormControlLabel
                       key={
                         "dialogSelectMenueDayFormControllCheckbox_" + menueUid

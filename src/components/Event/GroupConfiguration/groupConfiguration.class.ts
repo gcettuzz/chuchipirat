@@ -2,13 +2,13 @@ import Utils from "../../Shared/utils.class";
 
 import {AuthUser} from "../../Firebase/Authentication/authUser.class";
 import Firebase from "../../Firebase/firebase.class";
-import LocalStorageHandler from "../../Shared/localStorageHandler.class";
 
 import {
   INTOLERANCES as DEFAULT_INTOLERANCES,
   DIETS as DEFAULT_DIETS,
 } from "../../../constants/defaultValues";
 import {ChangeRecord} from "../../Shared/global.interface";
+import Event from "../Event/event.class";
 
 interface GroupConfigObjectStructure<T> {
   entries: {[key: string]: T};
@@ -50,6 +50,10 @@ interface Save {
   firebase: Firebase;
   groupConfig: EventGroupConfiguration;
   authUser: AuthUser;
+}
+interface Delete {
+  eventUid: Event["uid"];
+  firebase: Firebase;
 }
 interface GetGroupConfiguration {
   firebase: Firebase;
@@ -288,6 +292,19 @@ export default class EventGroupConfiguration {
   }
   // ===================================================================== */
   /**
+   * Gruppen-Konfig löschen
+   * @param Object - Event-UID und Firebase
+   */
+  static delete = async ({eventUid, firebase}: Delete) => {
+    firebase.event.groupConfiguration
+      .delete({uids: [eventUid]})
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  };
+  // ===================================================================== */
+  /**
    * GruppenKonfiguration aus der DB lesen
    * @param {firebase, uid}
    */
@@ -296,7 +313,6 @@ export default class EventGroupConfiguration {
     uid,
   }: GetGroupConfiguration) => {
     let groupConfig = <EventGroupConfiguration>{};
-
     await firebase.event.groupConfiguration
       .read<EventGroupConfiguration>({uids: [uid]})
       .then((result) => {
@@ -329,10 +345,16 @@ export default class EventGroupConfiguration {
       callback(groupConfiguration);
     };
 
+    const errorCallback = (error: any) => {
+      console.error(error);
+      throw error;
+    };
+
     await firebase.event.groupConfiguration
       .listen<EventGroupConfiguration>({
         uids: [uid],
         callback: groupConfigurationCalback,
+        errorCallback: errorCallback,
       })
       .then((result) => {
         groupConfigurationListener = result;

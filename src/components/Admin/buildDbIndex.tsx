@@ -1,5 +1,5 @@
-import React, { useContext } from "react";
-import { compose } from "recompose";
+import React, {useContext} from "react";
+import {compose} from "recompose";
 
 import {
   Container,
@@ -19,7 +19,7 @@ import {
 } from "@material-ui/core";
 
 import PageTitle from "../Shared/pageTitle";
-import CustomSnackbar, { Snackbar } from "../Shared/customSnackbar";
+import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
 import AlertMessage from "../Shared/AlertMessage";
 
 import {
@@ -29,7 +29,7 @@ import {
 import useStyles from "../../constants/styles";
 import Role from "../../constants/roles";
 
-import Firebase, { withFirebase } from "../Firebase";
+import Firebase, {withFirebase} from "../Firebase";
 import {
   AuthUserContext,
   withAuthorization,
@@ -53,22 +53,22 @@ enum ReducerActions {
 
 interface IndexQueryResult {
   executed: boolean;
-  error: { text: string; link: string } | null;
+  error: {text: string; link: string} | null;
   resultCounter: number;
 }
 
 const INITITIAL_STATE: State = {
-  indexRecipeVariants: { error: null, resultCounter: 0, executed: false },
-  indexEventUsedRecipes: { error: null, resultCounter: 0, executed: false },
+  indexRecipeVariants: {error: null, resultCounter: 0, executed: false},
+  indexEventUsedRecipes: {error: null, resultCounter: 0, executed: false},
   error: {},
   isError: false,
   isLoading: false,
-  snackbar: { open: false, severity: "success", message: "" },
+  snackbar: {open: false, severity: "success", message: ""},
 };
 
 type DispatchAction = {
   type: ReducerActions;
-  payload: { [key: string]: any };
+  payload: {[key: string]: any};
 };
 type State = {
   indexRecipeVariants: IndexQueryResult;
@@ -86,7 +86,7 @@ enum BuildIndex {
 
 const splitErrorText = (errorText) => {
   if (!errorText) {
-    return { text: "", link: "" };
+    return {text: "", link: ""};
   }
 
   // Verwende die Stringmethode split, um den Text zu teilen
@@ -95,9 +95,9 @@ const splitErrorText = (errorText) => {
   if (parts.length === 2) {
     const previousText = parts[0];
     const url = "https://console.firebase.google.com" + parts[1];
-    return { text: previousText, link: url };
+    return {text: previousText, link: url};
   } else {
-    return { text: "", link: "" };
+    return {text: "", link: ""};
   }
 };
 
@@ -169,10 +169,10 @@ const BuildIndicesPage = (props) => {
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const BuildIndicesBase = ({ props, authUser }) => {
+const BuildIndicesBase = ({props, authUser}) => {
   const firebase: Firebase = props.firebase;
   const classes = useStyles();
-  const { customDialog } = useCustomDialog();
+  const {customDialog} = useCustomDialog();
   const [state, dispatch] = React.useReducer(
     buildIndicesReducer,
     INITITIAL_STATE
@@ -181,7 +181,7 @@ const BuildIndicesBase = ({ props, authUser }) => {
   // Index aufbauen
   // ------------------------------------------ */
   const buildIndex = async (index: BuildIndex) => {
-    let userInput = { valid: false, input: "" } as SingleTextInputResult;
+    let userInput = {valid: false, input: ""} as SingleTextInputResult;
 
     switch (index) {
       case BuildIndex.recipeVariants:
@@ -201,17 +201,16 @@ const BuildIndicesBase = ({ props, authUser }) => {
             .where("variantProperties.originalRecipeUid", "==", userInput.input)
             .get()
             .then((result) => {
-              console.log(result);
               dispatch({
                 type: ReducerActions.UPDATE_INDEX_RECIPE_VARIANTS,
-                payload: { error: null, resultCounter: result.size },
+                payload: {error: null, resultCounter: result.size},
               });
             })
             .catch((error) => {
               console.error(error);
               dispatch({
                 type: ReducerActions.UPDATE_INDEX_RECIPE_VARIANTS,
-                payload: { error: error.toString(), resultCounter: 0 },
+                payload: {error: error.toString(), resultCounter: 0},
               });
             });
         }
@@ -236,14 +235,14 @@ const BuildIndicesBase = ({ props, authUser }) => {
             .then((result) => {
               dispatch({
                 type: ReducerActions.UPDATE_INDEX_EVENT_USED_RECIPES,
-                payload: { error: null, resultCounter: result.size },
+                payload: {error: null, resultCounter: result.size},
               });
             })
             .catch((error) => {
               console.error(error);
               dispatch({
                 type: ReducerActions.UPDATE_INDEX_EVENT_USED_RECIPES,
-                payload: { error: error.toString(), resultCounter: 0 },
+                payload: {error: error.toString(), resultCounter: 0},
               });
             });
         }
@@ -263,7 +262,6 @@ const BuildIndicesBase = ({ props, authUser }) => {
       payload: {},
     });
   };
-  console.log(state);
   return (
     <>
       {/*===== HEADER ===== */}

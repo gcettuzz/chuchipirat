@@ -42,6 +42,10 @@ interface DeleteRecipeType {
   userUid?: string;
   eventUid?: string;
 }
+interface DeleteAllVariants {
+  eventUid: Event["uid"];
+  firebase: Firebase;
+}
 
 interface PublicRecipeRating {
   avgRating: Rating["avgRating"];
@@ -371,7 +375,6 @@ export class RecipeShort {
     if (!userUid) {
       throw Error(ERROR_PARAMETER_NOT_PASSED);
     }
-    console.log(userUid, recipeUid);
     firebase.recipeShortPrivate
       .deleteField({fieldName: recipeUid, uids: [userUid]})
       .catch((error) => {
@@ -410,6 +413,16 @@ export class RecipeShort {
       .catch((error) => {
         throw error;
       });
+  };
+  /* =====================================================================
+  /**
+   * Das gesamte File 000_allRecipes löschen
+   */
+  static deleteOverview = async ({eventUid, firebase}: DeleteAllVariants) => {
+    firebase.recipeShortVariant.delete({uids: [eventUid]}).catch((error) => {
+      console.error(error);
+      throw error;
+    });
   };
 }
 

@@ -180,6 +180,11 @@ interface Delete {
   recipe: Recipe;
   authUser: AuthUser;
 }
+interface DeleteAllVariants {
+  eventUid: Event["uid"];
+  firebase: Firebase;
+  authUser: AuthUser;
+}
 interface UploadPicture {
   firebase: Firebase;
   file: File;
@@ -585,25 +590,24 @@ export default class Recipe {
         recipe: recipeData,
         products: products,
         authUser: authUser,
-      });
+      }).then((result) => (recipe = result));
     } else if (recipe.type === RecipeType.private) {
       await Recipe.savePrivate({
         firebase: firebase,
         recipe: recipeData,
         products: products,
         authUser: authUser,
-      });
+      }).then((result) => (recipe = result));
     } else if (recipe.type === RecipeType.variant) {
       await Recipe.saveVariant({
         firebase: firebase,
         recipe: recipeData,
         products: products,
         authUser: authUser,
-      });
+      }).then((result) => (recipe = result));
     }
     // sicherstellen, dass mindestens eine Postion in Zutaten und Zubereitungsschritte vorhanden ist
     recipe = Recipe.createEmptyListEntries({recipe: recipe});
-
     return recipe;
   }
   /* =====================================================================
@@ -1176,7 +1180,7 @@ export default class Recipe {
         throw error;
       });
     }
-
+    console.log(recipe);
     // 000_allRecipes anpassen
     await RecipeShort.delete({
       firebase: firebase,
@@ -1284,7 +1288,55 @@ export default class Recipe {
       value: -1,
     });
   };
-
+  /* =====================================================================
+  /**
+   * Alle Rezept-Varianten löschen
+   * Wird benötigt, wenn der ganze Event gelöscht wird.
+   */
+  static deleteAllVariants = async ({
+    eventUid,
+    firebase,
+    authUser,
+  }: DeleteAllVariants) => {
+    let counter = 0;
+    // Rezept-Übersicht holen
+    await RecipeShort.getShortRecipesVariant({
+      firebase: firebase,
+      eventUid: eventUid,
+    })
+      .then((result) =>
+        result.forEach(async (recipeVariantShort) => {
+          await Recipe.delete({
+            recipe: {
+              ...new Recipe(),
+              ...recipeVariantShort,
+              variantProperties: {eventUid: eventUid},
+            } as Recipe,
+            firebase: firebase,
+            authUser: authUser,
+          }).then(() => {
+            counter++;
+          });
+        })
+      )
+      .then(async () => {
+        // Rezept-Übersich löschen
+        await RecipeShort.deleteOverview({
+          eventUid: eventUid,
+          firebase: firebase,
+        }).catch((error) => {
+          console.error(error);
+          throw error;
+        });
+      })
+      .then(() => {
+        Stats.incrementStat({
+          field: StatsField.noRecipeVariants,
+          value: counter * -1,
+          firebase: firebase,
+        });
+      });
+  };
   /* =====================================================================
   // leere Materiale entfernen
   // ===================================================================== */
@@ -1546,7 +1598,6 @@ export default class Recipe {
           break;
       }
     });
-
     let documents = (await Promise.all(docRefs)) as {[field: string]: any}[];
 
     documents.forEach((document) => {

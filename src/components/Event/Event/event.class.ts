@@ -35,6 +35,12 @@ import FieldValidationError, {
 } from "../../Shared/fieldValidation.error.class";
 import EventShort from "./eventShort.class";
 import _ from "lodash";
+import Menuplan, {Menue} from "../Menuplan/menuplan.class";
+import ShoppingListCollection from "../ShoppingList/shoppingListCollection.class";
+import Recipe from "../../Recipe/recipe.class";
+import UsedRecipes from "../UsedRecipes/usedRecipes.class";
+import MaterialList from "../MaterialList/materialList.class";
+import EventGroupConfiguration from "../GroupConfiguration/groupConfiguration.class";
 
 export const EVENT_TYPES = {
   TYPE_ACTUAL: "actual",
@@ -50,6 +56,7 @@ export enum EventRefDocuments {
   usedRecipes = 1,
   shoppingList,
   materialList,
+  recipeVariants,
 }
 
 export interface Cook extends AuthUserPublicProfile {
@@ -93,7 +100,12 @@ interface Save {
   firebase: Firebase;
   event: Event;
   authUser: AuthUser;
-  localPicture?: File;
+  localPicture?: File | null;
+}
+interface Delete {
+  event: Event;
+  firebase: Firebase;
+  authUser: AuthUser;
 }
 
 interface UploadPicture {
@@ -106,6 +118,7 @@ interface DeletePicture {
   firebase: Firebase;
   event: Event;
   authUser: AuthUser;
+  updateEventDocument?: boolean;
 }
 
 interface GetEvent {
@@ -125,6 +138,10 @@ interface GetEvents {
 interface AddRefDocument {
   refDocuments: Event["refDocuments"];
   newDocumentType: EventRefDocuments;
+}
+interface CheckIfDeletedDayArePlanned {
+  event: Event;
+  menuplan: Menuplan;
 }
 export default class Event {
   uid: string;
@@ -160,7 +177,7 @@ export default class Event {
   /* =====================================================================
   // Factory
   // ===================================================================== */
-  static factory(authUser?: AuthUser) {
+  static factory(authUser: AuthUser) {
     let event = new Event();
     if (authUser) {
       event.cooks = [
@@ -172,7 +189,7 @@ export default class Event {
     } else {
       event.cooks = [];
     }
-
+    event.created = Utils.createChangeRecord(authUser);
     let emptyDateLine = Event.createDateEntry();
     emptyDateLine.pos = 1;
     event.dates = [emptyDateLine];
@@ -211,7 +228,6 @@ export default class Event {
   // ===================================================================== */
   static checkEventData(event: Event) {
     let formValidation: FormValidationFieldError[] = [];
-
     if (!event.name) {
       formValidation.push({
         priority: 1,
@@ -248,7 +264,6 @@ export default class Event {
         });
       }
       if (date.from > date.to && date.to.getFullYear() != 1970) {
-        console.log(date.from, date.to);
         formValidation.push({
           priority: 3,
           fieldName: "dateFrom_" + date.uid,
@@ -415,6 +430,7 @@ export default class Event {
         throw error;
       });
     }
+    firebase.analytics.logEvent(FirebaseAnalyticEvent.eventCookRemoved);
 
     return event.cooks;
   };
@@ -450,16 +466,31 @@ export default class Event {
           throw error;
         });
     } else {
+      if (localPicture instanceof File) {
+        // Falls ein Bild bereits vorhanden ist, zuerst löschen
+        if (eventData.pictureSrc) {
+          await Event.deletePicture({
+            firebase: firebase,
+            event: event,
+            authUser: authUser,
+          });
+        }
+
+        await Event.uploadPicture({
+          firebase: firebase,
+          event: eventData,
+          file: localPicture,
+          authUser: authUser,
+        }).then((result) => {
+          eventData.pictureSrc = result;
+        });
+      }
+
       await firebase.event
         .update<Event>({
           uids: [event.uid],
           value: eventData,
           authUser: authUser,
-        })
-        .then(() => {
-          // Prüfen ob das Bild geändert wurde....
-          // Bestehendes Bild ersetzen
-          //TODO:
         })
         .catch((error) => {
           console.error(error);
@@ -523,6 +554,8 @@ export default class Event {
       return date.to > max ? date.to : max;
     }, new Date());
 
+    event.maxDate = new Date(event.maxDate.setHours(0, 0, 0, 0));
+
     // Anzahl Tage Total berechnen
     event.numberOfDays = Event.defineEventDuration(event.dates);
 
@@ -550,6 +583,128 @@ export default class Event {
 
     return event;
   }
+  // ===================================================================== */
+  /**
+   * Anlass löschen
+   * @param Object - Objekt mit Event, Firebase, Authuser
+   */
+  static delete = async ({event, firebase, authUser}: Delete) => {
+    if (!event.cooks.find((cook) => cook.uid == authUser.uid)) {
+      return;
+    }
+
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(1);
+      }, 1);
+    })
+      .then(async () => {
+        // Zuerst alle angehörigen Dokumente löschen
+        if (event.refDocuments?.includes(EventRefDocuments.recipeVariants)) {
+          await Recipe.deleteAllVariants({
+            eventUid: event.uid,
+            firebase: firebase,
+            authUser: authUser,
+          });
+        }
+      })
+      .then(async () => {
+        if (event.refDocuments?.includes(EventRefDocuments.usedRecipes)) {
+          await UsedRecipes.delete({
+            eventUid: event.uid,
+            firebase: firebase,
+          }).catch((error) => {
+            console.error(error);
+            throw error;
+          });
+        }
+      })
+      .then(async () => {
+        if (event.refDocuments?.includes(EventRefDocuments.shoppingList)) {
+          await ShoppingListCollection.delete({
+            eventUid: event.uid,
+            firebase: firebase,
+          }).catch((error) => {
+            console.error(error);
+            throw error;
+          });
+        }
+      })
+      .then(async () => {
+        if (event.refDocuments?.includes(EventRefDocuments.materialList)) {
+          await MaterialList.delete({
+            eventUid: event.uid,
+            firebase: firebase,
+          }).catch((error) => {
+            console.error(error);
+            throw error;
+          });
+        }
+      })
+      .then(async () => {
+        await EventGroupConfiguration.delete({
+          eventUid: event.uid,
+          firebase: firebase,
+        }).catch((error) => {
+          console.error(error);
+          throw error;
+        });
+      })
+      .then(async () => {
+        await Menuplan.delete({eventUid: event.uid, firebase: firebase}).catch(
+          (error) => {
+            console.error(error);
+            throw error;
+          }
+        );
+      })
+      .then(async () => {
+        // Feld aus übersicht löschen
+        await EventShort.delete({event: event, firebase: firebase}).catch(
+          (error) => {
+            console.error(error);
+            throw error;
+          }
+        );
+      })
+      .then(async () => {
+        // Statistik anpassen
+        Stats.incrementStat({
+          firebase: firebase,
+          field: StatsField.noEvents,
+          value: -1,
+        });
+      })
+      .then(async () => {
+        // Credits den Köchen wieder enthnehmen
+        event.cooks.forEach((cook) =>
+          UserPublicProfile.incrementField({
+            firebase: firebase,
+            field: UserPublicProfileStatsFields.noEvents,
+            uid: cook.uid,
+            step: -1,
+          })
+        );
+      })
+      .then(async () => {
+        if (event.pictureSrc) {
+          Event.deletePicture({
+            firebase: firebase,
+            event: event,
+            authUser: authUser,
+            updateEventDocument: false,
+          });
+        }
+      })
+      .then(async () => {
+        await firebase.event.delete({uids: [event.uid]}).catch((error) => {
+          console.error(error);
+          throw error;
+        });
+      });
+
+    firebase.analytics.logEvent(FirebaseAnalyticEvent.eventDeleted);
+  };
   /* =====================================================================
   // Dauer des Event bestimmen
   // ===================================================================== */
@@ -642,17 +797,24 @@ export default class Event {
   /* =====================================================================
   // Bild löschen
   // ===================================================================== */
-  static deletePicture = async ({firebase, event, authUser}: DeletePicture) => {
+  static deletePicture = async ({
+    firebase,
+    event,
+    authUser,
+    updateEventDocument = true,
+  }: DeletePicture) => {
     await firebase.fileStore.events
-      .deleteFile(`${event.uid}_${IMAGES_SUFFIX.size500.suffix}`)
+      .deleteFile(`${event.uid}${IMAGES_SUFFIX.size500.suffix}`)
       .then(() => {
         // Event-Doc updaten
-        firebase.event.updateFields({
-          uids: [event.uid],
-          authUser: authUser,
-          values: {pictureSrc: "", lastChange: {}},
-          updateChangeFields: true,
-        });
+        if (updateEventDocument) {
+          firebase.event.updateFields({
+            uids: [event.uid],
+            authUser: authUser,
+            values: {pictureSrc: "", lastChange: {}},
+            updateChangeFields: true,
+          });
+        }
         firebase.analytics.logEvent(FirebaseAnalyticEvent.deletePicture, {
           folder: "events",
         });
@@ -670,17 +832,9 @@ export default class Event {
     await firebase.event
       .read<Event>({uids: [uid]})
       .then((result) => {
-        //   //HACK:
-        //   LocalStorageHandler.setLocalStorageEntry({
-        //     path: "Event",
-        //     value: result,
-        //   });
         event = result;
       })
       .catch((error) => {
-        // event = LocalStorageHandler.getLocalStorageEntry({
-        //   path: "Event",
-        // }) as Event;
         console.error(error);
         throw error;
       });
@@ -705,10 +859,16 @@ export default class Event {
       callback(event);
     };
 
+    const errorCallback = (error: any) => {
+      console.error(error);
+      throw error;
+    };
+
     await firebase.event
       .listen<Event>({
         uids: [uid],
         callback: eventCallback,
+        errorCallback: errorCallback,
       })
       .then((result) => {
         eventListener = result;
@@ -759,7 +919,11 @@ export default class Event {
             operator: Operator.ArrayContains,
             value: userUid,
           },
-          {field: "maxDate", operator: whereOperator, value: new Date()},
+          {
+            field: "maxDate",
+            operator: whereOperator,
+            value: new Date(new Date().setHours(0, 0, 0, 0)),
+          },
         ],
       })
       .then((result) => {
@@ -781,5 +945,48 @@ export default class Event {
     }
     updatedDocuments.push(newDocumentType);
     return updatedDocuments;
+  };
+  // ===================================================================== */
+  /**
+   * Prüfung ob die angepassten Tage (allenfalls gelöscht) - bereits geplante
+   * Tage sind
+   * Anhand der Zeitscheiben, ein Array mit allen Daten erstellen
+   * @param Object - Objekt mit Angepasstem Event und Menüplan
+   * @returns boolean - Hat die Anpassung zur Folge, dass geplante Tage
+   *                    gelöscht werden.
+   */
+  static checkIfDeletedDayArePlanned = ({
+    event,
+    menuplan,
+  }: CheckIfDeletedDayArePlanned) => {
+    let newDayList = Menuplan._getEventDateList({event: event}).map((date) =>
+      Utils.dateAsString(date)
+    );
+    let menuplanDates = menuplan.dates.map((date) => Utils.dateAsString(date));
+
+    let missingDates = menuplanDates.filter(
+      (date) => !newDayList.includes(date)
+    );
+
+    let affectedMeals = Object.values(menuplan.meals).filter((meal) =>
+      missingDates.includes(meal.date)
+    );
+    let affectedMenues: Menue["uid"][] = affectedMeals.reduce<Menue["uid"][]>(
+      (accumulator, meal) => accumulator.concat(meal.menuOrder),
+      []
+    );
+
+    let planedObjects = affectedMenues.reduce<number>(
+      (accumulator, mealUid) => {
+        return (
+          accumulator +
+          menuplan.menues[mealUid].mealRecipeOrder.length +
+          menuplan.menues[mealUid].productOrder.length +
+          menuplan.menues[mealUid].materialOrder.length
+        );
+      },
+      0
+    );
+    return Boolean(planedObjects !== 0);
   };
 }

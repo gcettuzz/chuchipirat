@@ -25,16 +25,6 @@ export enum FeedType {
   none = "none",
 }
 
-//TS_MIGRATION:
-// zu löschen sobal Typescript Migration durch
-// export const FEED_TYPE = {
-//   USER_CREATED: "userCreated",
-//   RECIPE_CREATED: "recipeCreated",
-//   EVENT_CREATED: "eventCreated",
-//   EVENT_COOK_ADDED: "eventCookAdded",
-//   MENUPLAN_CREATED: "menuplanCreated",
-//   SHOPPINGLIST_CREATED: "shoppingListCreated",
-// };
 interface CreateFeedEntry {
   firebase: Firebase;
   authUser: AuthUser;
@@ -54,12 +44,6 @@ interface GetNewestFeeds {
   visibility: Role;
   feedType?: FeedType;
 }
-// interface GetNewestFeedsOfType {
-//   firebase: Firebase;
-//   limitTo: number;
-//   feedType?: FeedType;
-//   visibility: Role;
-// }
 interface CallCloudFunctionDeleteFeeds {
   firebase: Firebase;
   daysOffset: number;
@@ -88,19 +72,6 @@ export default class Feed {
   user: {uid: string; displayName: string; pictureSrc: string};
   created: ChangeRecord;
 
-  // createdAt: Date;
-  // createdFromUid: string;
-  // createdFromDisplayName: string;
-  // objectUserUid: string;
-  // objectUserDisplayName: string;
-  // objectUserPictureSrc: string;
-  // title: string;
-  // text: string;
-  // feedType: FeedType;
-  // objectUid: string;
-  // objectName: string;
-  // objectPictureSrc: string;
-
   /* ====================================================================
   // Constructor
   / ==================================================================== */
@@ -113,18 +84,6 @@ export default class Feed {
     this.sourceObject = {uid: "", name: "", pictureSrc: ""};
     this.user = {uid: "", displayName: "", pictureSrc: ""};
     this.created = {date: new Date(0), fromUid: "", fromDisplayName: ""};
-
-    // this.createdAt = new Date();
-    // this.createdFromUid = "";
-    // this.createdFromDisplayName = "";
-    // this.objectUserUid = "";
-    // this.objectUserDisplayName = "";
-    // this.objectUserPictureSrc = "";
-    // this.title = "";
-    // this.text = "";
-    // this.objectUid = "";
-    // this.objectName = "";
-    // this.objectPictureSrc = "";
   }
 
   /* ====================================================================
@@ -233,90 +192,7 @@ export default class Feed {
       });
 
     return feeds;
-    // const feedsRef = firebase.feeds();
-    // const snapshot = await feedsRef
-    //   .orderBy("createdAt", "desc")
-    //   .limit(limitTo)
-    //   .get()
-    //   .catch((error) => {
-    //     console.error(error);
-    //     throw error;
-    //   });
-    // snapshot.forEach((obj) => {
-    //   feed = obj.data() as Feed;
-    //   feed.uid = obj.id;
-    //   // Timestamp umwandeln
-    //   feed.createdAt = obj.data().createdAt.toDate();
-    //   feeds.push(feed);
-    // });
   };
-  /* =====================================================================
-  // Neuste X Feed eines bestimmten Typs holen
-  // ===================================================================== */
-  /* istanbul ignore next */
-  /* DB-Methode wird zur Zeit nicht geprüft */
-  // static getNewestFeedsOfType = async ({
-  //   firebase,
-  //   limitTo = DEFAULT_VALUES.FEEDS_DISPLAY,
-  //   feedType,
-  //   visibility = Role.basic,
-  // }: GetNewestFeedsOfType) => {
-  //   let feeds: Feed[] = [];
-
-  //   if (!firebase || !visibility) {
-  //     throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
-  //   }
-
-  //   let whereClause = [
-  //     {
-  //       field: "visibility",
-  //       operator: Operator.EQ,
-  //       value: visibility,
-  //     },
-  //   ] as Where[];
-
-  //   feedType &&
-  //     whereClause.push({
-  //       field: "type",
-  //       operator: Operator.EQ,
-  //       value: feedType,
-  //     });
-  //   console.log(whereClause);
-  //   await firebase.feed
-  //     .readCollection<Feed>({
-  //       uids: [""],
-  //       orderBy: { field: "created.date", sortOrder: SortOrder.desc },
-  //       where: whereClause,
-  //       limit: limitTo,
-  //     })
-  //     .then((result) => {
-  //       console.log(result);
-  //       feeds = result;
-  //     })
-  //     .catch((error) => {
-  //       console.error(error);
-  //       throw error;
-  //     });
-
-  //   // const feedsRef = firebase.feeds();
-  //   // const snapshot = await feedsRef
-  //   //   .orderBy("createdAt", "desc")
-  //   //   .where("feedType", "==", feedType)
-  //   //   .limit(limitTo)
-  //   //   .get()
-  //   //   .catch((error) => {
-  //   //     console.error(error);
-  //   //     throw error;
-  //   //   });
-  //   // snapshot.forEach((obj) => {
-  //   //   feed = obj.data() as Feed;
-  //   //   feed.uid = obj.id;
-  //   //   // Timestamp umwandeln
-  //   //   feed.createdAt = obj.data().createdAt.toDate();
-  //   //   feeds.push(feed);
-  //   // });
-  //   return feeds;
-  // };
   // ===================================================================== */
   /**
    * Anhand des Feed Typs den Titel bestimmen

@@ -70,6 +70,7 @@ import Menuplan, {
   GoodsPlanMode,
   MenuplanMaterial,
   MenuplanProduct,
+  MealRecipes,
 } from "./menuplan.class";
 import {AutocompleteChangeReason} from "@material-ui/lab/Autocomplete";
 
@@ -180,7 +181,7 @@ import DialogProduct, {
   PRODUCT_POP_UP_VALUES_INITIAL_STATE,
 } from "../../Product/dialogProduct";
 import Department from "../../Department/department.class";
-import Event from "../Event/event.class";
+import Event, {EventRefDocuments} from "../Event/event.class";
 import {OnUpdateRecipeProps} from "../../Recipe/recipe";
 import {
   DialogType,
@@ -535,12 +536,7 @@ const MenuplanPage = ({
     pdf(<MenuplanPdf event={event} menuplan={menuplan} authUser={authUser} />)
       .toBlob()
       .then((result) => {
-        fileSaver.saveAs(
-          result,
-          // mit ü im Namen, wird das File nicht geöffnet :(
-          "Menueplan " + event.name + TEXT_SUFFIX_PDF
-          // TEXT_MENUPLAN + " " + event.name + TEXT_SUFFIX_PDF
-        );
+        fileSaver.saveAs(result, "Menueplan " + event.name + TEXT_SUFFIX_PDF);
       });
   };
   /* ------------------------------------------
@@ -830,7 +826,6 @@ const MenuplanPage = ({
         recipeShort: recipeShort,
       });
     }
-
     setRecipeDrawerData({
       ...recipeDrawerData,
       open: true,
@@ -855,6 +850,7 @@ const MenuplanPage = ({
         // Variante wird gerade neu erstellt. Noch nicht hochgeben
         // Erst wenn die Variante angelegt wurde.
         recipe = Recipe.createEmptyListEntries({recipe: recipe});
+
         setRecipeDrawerData({
           ...recipeDrawerData,
           recipe: recipe,
@@ -863,6 +859,20 @@ const MenuplanPage = ({
         // Noch nicht weiter hochgeben. Rezept wurde noch nicht gespeichert
         return;
       } else if (recipe.uid !== "" && recipeDrawerData.recipe.uid == "") {
+        if (!event.refDocuments?.includes(EventRefDocuments.recipeVariants)) {
+          // sichern das es auch Rezept-Varianten gibt
+          Event.save({
+            event: {
+              ...event,
+              refDocuments: Event.addRefDocument({
+                refDocuments: event.refDocuments,
+                newDocumentType: EventRefDocuments.recipeVariants,
+              }),
+            },
+            firebase: firebase,
+            authUser: authUser,
+          });
+        }
         // Variante wurde erstellt. jetzt wurde gespeichert
         if (recipeDrawerData.mealPlan.length > 0) {
           // Aus Rezept eine Variante erstellt . Bestehendes in MealRecipe austauschen
@@ -877,18 +887,75 @@ const MenuplanPage = ({
             recipeUid: recipe.uid,
             type: recipe.type,
           };
-
           onMenuplanUpdate({
             mealRecipes: updatedMealRecipes,
           });
         }
+        setDialogSelectMenueData({
+          ...dialogSelectMenueData,
+          selectedRecipe: RecipeShort.createShortRecipeFromRecipe(recipe),
+        });
         setRecipeDrawerData({
           ...recipeDrawerData,
           recipe: recipe,
           editMode: false,
         });
+      } else {
+        if (recipeDrawerData.mealPlan.length > 0) {
+          let updatedMealRecipes = {} as MealRecipes;
+          recipeDrawerData.mealPlan.forEach((mealPlan) => {
+            if (
+              updatedMealRecipes[mealPlan.mealPlanRecipe].recipe.variantName !=
+              recipe.variantProperties?.variantName
+            ) {
+              updatedMealRecipes[mealPlan.mealPlanRecipe] =
+                menuplan.mealRecipes[mealPlan.mealPlanRecipe];
+
+              // Falls der Variantenname angepasst wurde, dies im Menüplan
+              // entsprechen anpassen.
+              updatedMealRecipes[mealPlan.mealPlanRecipe].recipe.variantName =
+                recipe.variantProperties?.variantName;
+            }
+          });
+          if (Object.keys(updatedMealRecipes).length > 0) {
+            // Menüplan anpassen
+            onMenuplanUpdate({
+              ...menuplan,
+              mealRecipes: {...menuplan.mealRecipes, ...updatedMealRecipes},
+            });
+          }
+        }
       }
     } else {
+      if (
+        recipe.type == RecipeType.private &&
+        recipeDrawerData.mealPlan.length > 0
+      ) {
+        // Fall beim privaten Rezept über den Menüplan der Namen
+        // angepasst wurde, muss das hier übernommen werden.
+        let updatedMealRecipes = {} as MealRecipes;
+        recipeDrawerData.mealPlan.forEach((mealPlan) => {
+          if (
+            menuplan.mealRecipes[mealPlan.mealPlanRecipe].recipe.name !=
+            recipe.name
+          ) {
+            updatedMealRecipes[mealPlan.mealPlanRecipe] =
+              menuplan.mealRecipes[mealPlan.mealPlanRecipe];
+
+            // Falls der Variantenname angepasst wurde, dies im Menüplan
+            // entsprechen anpassen.
+            updatedMealRecipes[mealPlan.mealPlanRecipe].recipe.name =
+              recipe.name;
+          }
+        });
+        if (Object.keys(updatedMealRecipes).length > 0) {
+          // Menüplan anpassen
+          onMenuplanUpdate({
+            ...menuplan,
+            mealRecipes: {...menuplan.mealRecipes, ...updatedMealRecipes},
+          });
+        }
+      }
       // Privates Rezept
       // Anzeige umschiessen, falls gerade gespeichert wurde
       let editMode =
@@ -926,6 +993,7 @@ const MenuplanPage = ({
     delete updatedMealRecipes[recipeDrawerData.mealPlan[0].mealPlanRecipe];
 
     onMenuplanUpdate({mealRecipes: updatedMealRecipes});
+
     setRecipeDrawerData(RECIPE_DRAWER_DATA_INITIAL_VALUES);
   };
   /* ------------------------------------------
@@ -1187,8 +1255,8 @@ const MenuplanPage = ({
     setDialogSelectMenueData({
       ...dialogSelectMenueData,
       open: false,
-      menues: {} as DialogSelectMenuesForRecipeDialogValues,
-      selectedRecipe: {} as RecipeShort,
+      // menues: {} as DialogSelectMenuesForRecipeDialogValues,
+      // selectedRecipe: {} as RecipeShort,
     });
   };
   const onDialogSelectMenueContinue = (
@@ -1206,7 +1274,8 @@ const MenuplanPage = ({
     setDialogSelectMenueData({
       ...dialogSelectMenueData,
       open: false,
-      menues: {},
+      menues: {} as DialogSelectMenuesForRecipeDialogValues,
+      // selectedRecipe: {} as RecipeShort,
     });
   };
   /* ------------------------------------------
@@ -1243,8 +1312,6 @@ const MenuplanPage = ({
     let updatedMealRecipes = {...menuplan.mealRecipes};
     let updatedMaterials = {...menuplan.materials};
     let updatedProducts = {...menuplan.products};
-
-    console.log(plan);
 
     if (dialogPlanPortionsData.planedObject == PlanedObject.RECIPE) {
       // Rezept
@@ -1533,24 +1600,14 @@ const MenuplanPage = ({
         <Droppable droppableId="mealTypes" type={DragDropTypes.MEALTYPE}>
           {(provided) => (
             <Container
-              // className={classes.menuplanGrid}
-              // style={{
-              //   display: "grid",
-              //   gridTemplateRows: new String("1fr ").repeat(
-              //     menuplan.mealTypes.order.length + 1
-              //   ),
-              //   gridAutoFlow: "column",
-              // }}
               innerRef={provided.innerRef}
               {...provided.droppableProps}
             >
               <DaysRow
                 dates={menuplan.dates}
                 notes={menuplan.notes}
-                // mealTypes={menuplan.mealTypes}
                 menuplanSettings={menuplanSettings}
                 onSwitchShowDetails={onSwitchShowDetails}
-                // onMenuplanUpdate={onMenuplanUpdate}
                 onMealTypeUpdate={onMealTypeUpdate}
                 onNoteUpdate={onNoteUpdate}
                 onPrint={onPrint}
@@ -2096,7 +2153,7 @@ const MealTypeRow = ({
                 innerRef={provided.innerRef}
                 {...provided.droppableProps}
               >
-                {actualMeal.menuOrder.length > 0 ? (
+                {actualMeal.menuOrder?.length > 0 ? (
                   actualMeal.menuOrder.map((menueUid, index) => (
                     <Draggable
                       draggableId={menueUid}

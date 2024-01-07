@@ -28,7 +28,7 @@ import {
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
   SHOPPING_LIST_MENUE_SELECTION_DESCRIPTION as TEXT_SHOPPING_LIST_MENUE_SELECTION_DESCRIPTION,
-  WHICH_MENUES_FOR_RECIPE_GENERATION as TEXT_WHICH_MENUES_FOR_RECIPE_GENERATION,
+  WHICH_MENUES_FOR_SHOPPING_LIST_GENERATION as TEXT_WHICH_MENUES_FOR_SHOPPING_LIST_GENERATION,
   NAME as TEXT_NAME,
   NEW_LIST as TEXT_NEW_LIST,
   GIVE_THE_NEW_SHOPPINGLIST_A_NAME as GIVE_THE_NEW_SHOPPINGLIST_A_NAME,
@@ -500,7 +500,6 @@ const EventShoppingListPage = ({
     )
       .toBlob()
       .then((result) => {
-        console.log(result);
         fileSaver.saveAs(
           result,
           event.name + " " + TEXT_SHOPPING_LIST + TEXT_SUFFIX_PDF
@@ -1000,7 +999,7 @@ const EventShoppingListPage = ({
       </Grid>
       <DialogSelectMenues
         open={dialogSelectMenueData.open}
-        title={TEXT_WHICH_MENUES_FOR_RECIPE_GENERATION}
+        title={TEXT_WHICH_MENUES_FOR_SHOPPING_LIST_GENERATION}
         dates={menuplan.dates}
         preSelectedMenue={{}}
         mealTypes={menuplan.mealTypes}
@@ -1027,6 +1026,7 @@ const EventShoppingListPage = ({
         onMaterialCreate={onMaterialCreate}
       />
       <PositionContextMenu
+        itemType={TEXT_ITEM}
         anchorEl={contextMenuSelectedItem.anchor}
         handleMenuClick={onContextMenuClick}
         handleMenuClose={onCloseContextMenu}
@@ -1082,145 +1082,6 @@ const EventShoppingListPage = ({
     </React.Fragment>
   );
 };
-/* ===================================================================
-// ======================= Einstellungen-Card ========================
-// =================================================================== */
-// interface EventShoppingListCardProps {
-//   selectedListItem: string | null;
-//   shoppingListCollection: ShoppingListCollection;
-//   menuplan: Menuplan;
-//   onShowDialogSelectMenues: () => void;
-//   onListElementSelect: (
-//     event: React.MouseEvent<HTMLDivElement, MouseEvent>
-//   ) => void;
-//   onListElementDelete: (event: React.MouseEvent<HTMLElement>) => void;
-//   onListElementEdit: (event: React.MouseEvent<HTMLElement>) => void;
-//   onRefreshLists: () => void;
-//   onGeneratePrintVersion: () => void;
-// }
-// const EventShoppingListCard = ({
-//   selectedListItem,
-//   shoppingListCollection,
-//   menuplan,
-//   onShowDialogSelectMenues,
-//   onListElementSelect,
-//   onListElementDelete,
-//   onListElementEdit,
-//   onRefreshLists,
-//   onGeneratePrintVersion,
-// }: EventShoppingListCardProps) => {
-//   const classes = useStyles();
-
-//   return (
-//     <Container
-//       className={classes.container}
-//       component="main"
-//       maxWidth="md"
-//       key={"ShoppingListContainer"}
-//     >
-//       <Card>
-//         <CardHeader
-//           title={`${TEXT_SHOPPING_LIST} - ${TEXT_MENUE_SELECTION}`}
-//           subheader={TEXT_SHOPPING_LIST_MENUE_SELECTION_DESCRIPTION}
-//         />
-//         <CardContent>
-//           {Object.keys(shoppingListCollection.lists).length > 0 && (
-//             <List>
-//               <ListSubheader>{TEXT_EXISTING_LISTS}</ListSubheader>
-//               {Object.values(shoppingListCollection.lists).map((list) => (
-//                 <ListItem
-//                   key={"listItem_" + list?.properties.uid}
-//                   id={"listItem_" + list?.properties.uid}
-//                   button
-//                   selected={selectedListItem == list?.properties.uid}
-//                   onClick={onListElementSelect}
-//                 >
-//                   <ListItemText
-//                     primary={list?.properties.name}
-//                     secondary={
-//                       list?.properties.selectedMenues &&
-//                       decodeSelectedMenues({
-//                         selectedMenues: list?.properties.selectedMenues,
-//                         menuplan: menuplan,
-//                       })
-//                     }
-//                   />
-//                   <ListItemSecondaryAction>
-//                     <IconButton
-//                       id={"EditBtn_" + list?.properties.uid}
-//                       onClick={onListElementEdit}
-//                     >
-//                       <EditIcon />
-//                     </IconButton>
-//                     <IconButton
-//                       id={"DeleteBtn_" + list?.properties.uid}
-//                       onClick={onListElementDelete}
-//                     >
-//                       <DeleteIcon />
-//                     </IconButton>
-//                   </ListItemSecondaryAction>
-//                 </ListItem>
-//               ))}
-//             </List>
-//           )}
-
-//           {selectedListItem &&
-//             shoppingListCollection.lists[selectedListItem!] &&
-//             menuplan.lastChange.date >
-//               shoppingListCollection.lists[selectedListItem!].properties
-//                 .generated.date && (
-//               <Grid container>
-//                 <Grid
-//                   item
-//                   xs={1}
-//                   style={{
-//                     display: "flex",
-//                     justifyContent: "center",
-//                   }}
-//                 >
-//                   <ErrorOutlineIcon color="error" />
-//                 </Grid>
-//                 <Grid item xs={11}>
-//                   <Typography color="error">
-//                     {TEXT_USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE}
-//                   </Typography>
-//                 </Grid>
-//               </Grid>
-//             )}
-//         </CardContent>
-//         <CardActions style={{justifyContent: "flex-end"}}>
-//           <Button
-//             color="primary"
-//             variant="outlined"
-//             onClick={onShowDialogSelectMenues}
-//           >
-//             {TEXT_CREATE_NEW_LIST}
-//           </Button>
-//           {shoppingListCollection.noOfLists > 0 && (
-//             <Button
-//               color="primary"
-//               variant="outlined"
-//               disabled={shoppingListCollection.noOfLists == 0}
-//               onClick={onRefreshLists}
-//             >
-//               {TEXT_REFRESH}
-//             </Button>
-//           )}
-//           {shoppingListCollection.noOfLists > 0 && (
-//             <Button
-//               color="primary"
-//               variant="contained"
-//               disabled={selectedListItem == null}
-//               onClick={onGeneratePrintVersion}
-//             >
-//               {TEXT_PRINTVERSION}
-//             </Button>
-//           )}
-//         </CardActions>
-//       </Card>
-//     </Container>
-//   );
-// };
 /* ===================================================================
 // ========================= Einkaufsliste ===========================
 // =================================================================== */

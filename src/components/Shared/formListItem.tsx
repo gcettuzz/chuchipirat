@@ -95,30 +95,6 @@ export const FormListItem = ({
                 {value}
               </ListItemText>
             )}
-            {/* {isLink && value ? (
-              <ListItemText className={classes.listItemContent}>
-                {typeof onClick !== "function" && typeof value === "string" ? (
-                  <Link href={value}>{Utils.getDomain(value)}</Link>
-                ) : (
-                  <Link
-                    style={{ cursor: "pointer" }}
-                    onClick={() => console.log("open Recipe Drawer")}
-                  >
-                    {value}
-                  </Link>
-                )}
-              </ListItemText>
-            ) : (
-              <ListItemText
-                className={
-                  !displayAsCode
-                    ? classes.listItemContent
-                    : `${classes.listItemContent} ${classes.typographyCode}`
-                }
-                disableTypography={displayAsCode}
-                primary={value}
-              />
-            )} */}
             {secondaryAction && (
               <ListItemSecondaryAction>
                 {secondaryAction}

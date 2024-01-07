@@ -20,8 +20,6 @@ import {
   Avatar,
   ListItemText,
   ListItemSecondaryAction,
-  Backdrop,
-  CircularProgress,
 } from "@material-ui/core";
 import {Alert} from "@material-ui/lab";
 import {
@@ -56,43 +54,33 @@ import {
   DELETE_IMAGE as TEXT_DELETE_IMAGE,
   COVER_PICTURES as TEXT_COVER_PICTURES,
   ADD_LOGO_OR_CAMP_PICTURE_HERE as TEXT_ADD_LOGO_OR_CAMP_PICTURE_HERE,
-  BACK_TO_OVERVIEW as TEXT_BACK_TO_OVERVIEW,
-  CONTINUE as TEXT_CONTIUNE,
-  CONFIRM_CHANGES_ARE_LOST as TEXT_CONFIRM_CHANGES_ARE_LOST,
   KITCHENCREW as TEXT_KITCHENCREW,
   COOKING_IS_COMMUNITY_SPORT as TEXT_COOKING_IS_COMMUNITY_SPORT,
   ADD_COOK_TO_EVENT as TEXT_ADD_COOK_TO_EVENT,
-  ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
   QUESTION_DELETE_IMAGE as TEXT_QUESTION_DELETE_IMAGE,
-  EVENT_IS_BEEING_CREATED as TEXT_EVENT_IS_BEEING_CREATED,
-  IMAGE_IS_BEEING_UPLOADED as TEXT_IMAGE_IS_BEEING_UPLOADED,
   DELETE as TEXT_DELETE,
-  UNSAVED_CHANGES as TEXT_UNSAVED_CHANGES,
-  DISCARD_CHANGES as TEXT_DISCARD_CHANGES,
 } from "../../../constants/text";
 
 import useStyles from "../../../constants/styles";
 import {CARD_PLACEHOLDER_PICTURE} from "../../../constants/defaultValues";
 
 import Event from "./event.class";
-import Menuplan from "../Menuplan/menuplan.class";
-import UsedRecipes from "../UsedRecipes/usedRecipes.class";
 import User from "../../User/user.class";
 
 import Firebase from "../../Firebase";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import Utils from "../../Shared/utils.class";
-import AlertMessage from "../../Shared/AlertMessage";
 import DialogAddUser from "../../User/dialogAddUser";
-import {ButtonAction} from "../../Shared/global.interface";
-import FieldValidationError, {
+import {
   FormValidationFieldError,
   FormValidatorUtil,
 } from "../../Shared/fieldValidation.error.class";
 import {DialogType, useCustomDialog} from "../../Shared/customDialogContext";
-import ShoppingListCollection from "../ShoppingList/shoppingListCollection.class";
-import MaterialList from "../MaterialList/materialList.class";
-// import MaterialList from "../MaterialList/materialList.class";
+import {
+  NavigationObject,
+  NavigationValuesContext,
+} from "../../Navigation/navigationContext";
+import Action from "../../../constants/actions";
 
 /* ===================================================================
 // ============================== Global =============================
@@ -103,162 +91,97 @@ class DeLocalizedUtils extends DateFnsUtils {
   }
 }
 /* ===================================================================
-// ============================ Dispatcher ===========================
-// =================================================================== */
-enum ReducerActions {
-  FIELD_UPDATE = "FIELD_UPDATE",
-  UPLOAD_PICTURE_INIT = "UPLOAD_PICTURE_INIT",
-  UPLOAD_PICTURE_SUCCESS = "UPLOAD_PICTURE_SUCCESS",
-  SAVE_EVENT_INIT = "SAVE_EVENT_INIT",
-  SAVE_EVENT_SUCCESS = "SAVE_EVENT_SUCCESS",
-  GENERIC_ERROR = "GENERIC_ERROR",
-}
-type DispatchAction = {
-  type: ReducerActions;
-  payload: {[key: string]: any};
-};
-type State = {
-  event: Event;
-  isUpLoadingPicture: boolean;
-  isSaving: boolean;
-  isError: boolean;
-  error: object;
-};
-
-const homeReducer = (state: State, action: DispatchAction): State => {
-  switch (action.type) {
-    case ReducerActions.FIELD_UPDATE:
-      return {
-        ...state,
-        event: {...state.event, [action.payload.field]: action.payload.value},
-      };
-    case ReducerActions.UPLOAD_PICTURE_INIT:
-      return {
-        ...state,
-        isUpLoadingPicture: true,
-      };
-    case ReducerActions.UPLOAD_PICTURE_SUCCESS:
-      return {
-        ...state,
-        event: {
-          ...state.event,
-          pictureSrc: action.payload.pictureSrc as string,
-        },
-        isUpLoadingPicture: false,
-      };
-    case ReducerActions.SAVE_EVENT_INIT:
-      return {...state, isSaving: true};
-    case ReducerActions.SAVE_EVENT_SUCCESS:
-      return {...state, isSaving: false, event: action.payload as Event};
-    case ReducerActions.GENERIC_ERROR:
-      return {
-        ...state,
-        isSaving: false,
-        isError: true,
-        error: action.payload,
-      };
-    default:
-      console.error("Unbekannter ActionType: ", action.type);
-      throw new Error();
-  }
-};
-/* ===================================================================
 // ============================ Event-Info ===========================
 // =================================================================== */
 interface EventInfoPageProps {
+  event: Event;
+  localPicture: File | null;
   firebase: Firebase;
   authUser: AuthUser;
-  onConfirm?: ButtonAction;
-  onCancel?: ButtonAction;
+  formValidation: FormValidationFieldError[];
+  onUpdateEvent: (event: Event) => void;
+  onUpdatePicture: (picture: File | null) => void;
+  onError: (error: object) => void;
 }
 const EventInfoPage = ({
+  event,
+  localPicture,
   firebase,
   authUser,
-  onConfirm,
-  onCancel,
+  formValidation,
+  onUpdateEvent,
+  onUpdatePicture,
+  onError,
 }: EventInfoPageProps) => {
+  const navigationValuesContext = React.useContext(NavigationValuesContext);
+
   // Hier damit der AuthUser übergeben werden kann
-  const inititialState: State = {
-    event: Event.factory(authUser),
-    isUpLoadingPicture: false,
-    isSaving: false,
-    isError: false,
-    error: {},
-  };
-  const [state, dispatch] = React.useReducer(homeReducer, inititialState);
-  const [localPicture, setLocalPicture] = React.useState<File | null>(null);
   const [dialogAddUserOpen, setDialogAddUserOpen] = React.useState(false);
-  const classes = useStyles();
-  const [formValidation, setFormValidation] = React.useState<
-    Array<FormValidationFieldError>
-  >([]);
   const {customDialog} = useCustomDialog();
+
+  /* ------------------------------------------
+  // Navigation-Handler
+  // ------------------------------------------ */
+  React.useEffect(() => {
+    navigationValuesContext?.setNavigationValues({
+      action: Action.NONE,
+      object: NavigationObject.eventSettings,
+    });
+  }, []);
 
   /* ------------------------------------------
   // Field-Change
   // ------------------------------------------ */
-  const onFieldUpdate = (event: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch({
-      type: ReducerActions.FIELD_UPDATE,
-      payload: {field: event.target.name, value: event.target.value},
-    });
+  const onFieldUpdate = (actionEvent: React.ChangeEvent<HTMLInputElement>) => {
+    onUpdateEvent({
+      ...event,
+      [actionEvent.target.name]: actionEvent.target.value,
+    } as unknown as Event);
   };
   const onDatePickerUpdate = (date: Date | null, field: string) => {
     let changedPos = field.split("_");
-    let tempDates = [...state.event.dates];
+    let tempDates = [...event.dates];
     let eventDate = tempDates.find(
       (eventDate) => eventDate.uid == changedPos[1]
     );
     if (!eventDate) {
       return;
     }
+    date = new Date(date!.setUTCHours(0, 0, 0, 0));
     eventDate[changedPos[0]] = date;
-
     // Wenn das Von-Datum gesetzt wurde und das Bis noch initial ist,
     // dieses Datum auch gleich setzen, damit nicht soweit gescrollt werden muss
     if (changedPos[0] == "from" && eventDate.to.getFullYear() == 1970) {
-      eventDate.to = date!;
+      eventDate.to = date;
     }
 
     // Wenn das die letzte Zeile ist, automatisch eine neue einfügen
-    if (eventDate.pos == state.event.dates.length) {
+    if (eventDate.pos == event.dates.length) {
       let newDate = Event.createDateEntry();
       newDate.pos = eventDate.pos + 1;
       tempDates.push(newDate);
     }
     tempDates = Utils.renumberArray({array: tempDates, field: "pos"});
-    console.log(tempDates, eventDate);
-    dispatch({
-      type: ReducerActions.FIELD_UPDATE,
-      payload: {field: "dates", value: tempDates},
-    });
+
+    onUpdateEvent({...event, dates: tempDates} as Event);
   };
-  const onDateDeleteClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    let tempDates = state.event.dates.filter(
-      (eventDate) => eventDate.uid != event.currentTarget.id.split("_")[1]
+  const onDateDeleteClick = (
+    actionEvent: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    let tempDates = event.dates.filter(
+      (eventDate) => eventDate.uid != actionEvent.currentTarget.id.split("_")[1]
     );
     tempDates = Utils.renumberArray({array: tempDates, field: "pos"});
-    dispatch({
-      type: ReducerActions.FIELD_UPDATE,
-      payload: {field: "dates", value: tempDates},
-    });
+
+    onUpdateEvent({...event, dates: tempDates} as Event);
   };
   /* ------------------------------------------
   // Bild-Handling
   // ------------------------------------------ */
-  const onImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    let file: File;
-    if (event.target.files && event.target.files[0]) {
-      file = event.target.files?.[0];
-    } else {
-      return;
-    }
-
-    setLocalPicture(file);
-  };
   const onImageDelete = async () => {
-    if (!state.event.uid) {
-      setLocalPicture(null);
+    if (!event.uid || (event.uid && !event.pictureSrc)) {
+      // setLocalPicture(null);
+      onUpdatePicture(null);
     } else {
       const isConfirmed = await customDialog({
         dialogType: DialogType.Confirm,
@@ -272,13 +195,10 @@ const EventInfoPage = ({
 
       Event.deletePicture({
         firebase: firebase,
-        event: state.event,
+        event: event,
         authUser: authUser,
       }).then(() => {
-        dispatch({
-          type: ReducerActions.FIELD_UPDATE,
-          payload: {field: "pictureSrc", value: ""},
-        });
+        onUpdateEvent({...event, pictureSrc: ""} as Event);
       });
     }
   };
@@ -300,20 +220,17 @@ const EventInfoPage = ({
             firebase: firebase,
             authUser: authUser,
             cookPublicProfile: result,
-            event: state.event,
+            event: event,
           }).then((result) => {
-            dispatch({
-              type: ReducerActions.FIELD_UPDATE,
-              payload: {field: "cooks", value: result},
-            });
+            onUpdateEvent({...event, cooks: result} as Event);
           });
         }
       );
     }
     setDialogAddUserOpen(false);
   };
-  const onDeleteCook = (event: React.MouseEvent<HTMLButtonElement>) => {
-    let cookUidToDelete = event.currentTarget.id.split("_")[1];
+  const onDeleteCook = (actionEvent: React.MouseEvent<HTMLButtonElement>) => {
+    let cookUidToDelete = actionEvent.currentTarget.id.split("_")[1];
     if (!cookUidToDelete) {
       return;
     }
@@ -323,127 +240,27 @@ const EventInfoPage = ({
       firebase: firebase,
       authUser: authUser,
       cookUidToRemove: cookUidToDelete,
-      event: state.event,
+      event: event,
     })
       .then((result) => {
-        dispatch({
-          type: ReducerActions.FIELD_UPDATE,
-          payload: {
-            field: "cooks",
-            value: result,
-          },
-        });
+        onUpdateEvent({...event, cooks: result} as Event);
       })
       .catch((error) => {
-        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+        onError(error);
       });
   };
 
-  /* ------------------------------------------
-  // Weiter // Zurück
-  // ------------------------------------------ */
-  const saveEvent = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    dispatch({type: ReducerActions.SAVE_EVENT_INIT, payload: {}});
-    let eventUid: string;
-
-    let result = await Event.save({
-      firebase: firebase,
-      event: state.event,
-      authUser: authUser,
-      localPicture: localPicture ? localPicture : ({} as File),
-    })
-      //TODO: hier schauen wie das nacher mit dem bearbeiten geht.
-      .then(async (result) => {
-        eventUid = result.uid;
-        dispatch({type: ReducerActions.SAVE_EVENT_SUCCESS, payload: result});
-
-        // Menüplan erstellen und speichern.
-        await Menuplan.save({
-          menuplan: Menuplan.factory({
-            event: {...state.event, uid: eventUid},
-            authUser: authUser,
-          }),
-          firebase: firebase,
-          authUser: authUser,
-        }).catch((error) => {
-          console.error(error);
-          throw error;
-        });
-
-        // Es wurde auf OnConfirm geklick... weiter gehts
-        onConfirm?.onClick(event, result);
-      })
-      .catch((error: FieldValidationError) => {
-        console.warn("error!!!", error);
-        if (error.formValidation) {
-          setFormValidation(error.formValidation);
-          // Neuer Fehler // ValidationError im Reducer
-          dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
-          // Zum 1. Fehler-Feld scrollen
-          const element = document.getElementById(
-            error.formValidation[0].fieldName
-          );
-          element && element.scrollIntoView({behavior: "smooth"});
-          return;
-        }
-      });
-    console.warn("ich laufe weiter....");
-  };
-  const cancelCreate = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    if (onCancel?.onClick) {
-      if (state.event != inititialState.event) {
-        const isConfirmed = await customDialog({
-          dialogType: DialogType.Confirm,
-          text: TEXT_CONFIRM_CHANGES_ARE_LOST,
-          title: TEXT_UNSAVED_CHANGES,
-          buttonTextConfirm: TEXT_DISCARD_CHANGES,
-        });
-        if (!isConfirmed) {
-          return;
-        }
-
-        onCancel.onClick(event);
-      } else {
-        onCancel.onClick(event);
-      }
-    }
-  };
   return (
     <React.Fragment>
-      {state.isError && (
-        <Grid item key={"error"} xs={12}>
-          <AlertMessage
-            error={state.error}
-            messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
-          />
-        </Grid>
-      )}
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <Backdrop className={classes.backdrop} open={state.isSaving}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} className={classes.centerCenter}>
-                <CircularProgress color="inherit" />
-              </Grid>
-              <Grid item xs={12} className={classes.centerCenter}>
-                <Typography>
-                  {TEXT_EVENT_IS_BEEING_CREATED(state.event.name)}
-                </Typography>
-              </Grid>
-              {localPicture && (
-                <Grid item xs={12} className={classes.centerCenter}>
-                  <Typography>{TEXT_IMAGE_IS_BEEING_UPLOADED}</Typography>
-                </Grid>
-              )}
-            </Grid>
-          </Backdrop>
           <EventBasicInfoCard
-            event={state.event}
+            event={event}
             formValidation={formValidation}
             onFieldUpdate={onFieldUpdate}
             onDatePickerUpdate={onDatePickerUpdate}
             onDateDeleteClick={onDateDeleteClick}
-            onImageUpload={onImageUpload}
+            onImageUpload={onUpdatePicture}
             onImageDelete={onImageDelete}
             previewPictureUrl={
               localPicture ? URL.createObjectURL(localPicture) : ""
@@ -452,37 +269,12 @@ const EventInfoPage = ({
         </Grid>
         <Grid item xs={12}>
           <EventCookingTeamCard
-            event={state.event}
+            event={event}
             formValidation={formValidation}
             authUser={authUser}
             onAddCook={onOpenDialogAddUserDialog}
             onDeleteCook={onDeleteCook}
           />
-        </Grid>
-        <Grid item xs={12}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} container justifyContent="flex-end">
-              {onCancel && (
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onClick={cancelCreate}
-                >
-                  {onCancel.buttonText}
-                </Button>
-              )}
-              {onConfirm && (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  style={{marginLeft: "1rem"}}
-                  onClick={saveEvent}
-                >
-                  {onConfirm.buttonText}
-                </Button>
-              )}
-            </Grid>
-          </Grid>
         </Grid>
       </Grid>
       <DialogAddUser
@@ -504,7 +296,7 @@ interface EventBasicInfoCardProps {
   onFieldUpdate: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onDatePickerUpdate: (date: Date | null, field: string) => void;
   onDateDeleteClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => {};
+  onImageUpload: (file: File | null) => void;
   onImageDelete: () => void;
   previewPictureUrl: string | null;
 }
@@ -519,6 +311,22 @@ const EventBasicInfoCard = ({
   previewPictureUrl,
 }: EventBasicInfoCardProps) => {
   const classes = useStyles();
+
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const handleFileChange = async (
+    actionEvent: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const selectedFile = actionEvent.target.files?.[0] || null;
+    onImageUpload(selectedFile);
+  };
+
+  const handleChooseImageClick = () => {
+    // Öffne das Dateiauswahlfenster, wenn der Button geklickt wird
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
 
   return (
     <Card className={classes.card}>
@@ -698,32 +506,33 @@ const EventBasicInfoCard = ({
                   className={`${classes.cardMedia} ${classes.backgroundGrey}`}
                   style={{
                     backgroundImage: `url('${
-                      event.pictureSrc
-                        ? event.pictureSrc
-                        : previewPictureUrl
+                      previewPictureUrl
                         ? previewPictureUrl
+                        : event.pictureSrc
+                        ? event.pictureSrc
                         : CARD_PLACEHOLDER_PICTURE()
                     }')`,
                     backgroundPosition: "center",
                     backgroundRepeat: "no-repeat",
-                    backgroundSize: "cover",
+                    backgroundSize: "contain",
                     borderRadius: "4px",
+                    mixBlendMode: "multiply",
                   }}
                 />
               </Grid>
               <Grid item xs={6}>
                 <input
                   accept="image/*"
-                  className={classes.inputFileUpload}
+                  style={{display: "none"}}
                   id="icon-button-file"
                   type="file"
-                  onChange={onImageUpload}
+                  onChange={handleFileChange}
                 />
                 <label htmlFor="icon-button-file">
                   <Button
                     color="primary"
                     startIcon={<AddIcon />}
-                    onChange={onImageUpload}
+                    onChange={handleChooseImageClick}
                     fullWidth
                     component="span"
                   >

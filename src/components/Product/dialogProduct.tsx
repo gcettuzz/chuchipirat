@@ -117,7 +117,6 @@ const DialogProduct = ({
     action?: string,
     objectId?: string
   ) => {
-    console.warn(event.target.id, newValue, action, objectId);
     let value: string | Object;
     let field: string;
 

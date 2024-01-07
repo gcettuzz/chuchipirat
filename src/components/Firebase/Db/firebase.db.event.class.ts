@@ -19,11 +19,6 @@ import FirebaseDbEventUsedRecipes from "./firebase.db.event.usedRecipes.class";
 import FirebaseDbEventShoppingList from "./firebase.db.event.shoppingList";
 import FirebaseDbEventShoppingListCollection from "./firebase.db.event.shoppingListCollection";
 import FirebaseDbEventMaterialList from "./firebase.db.event.materialList.class";
-// //FIXME: KOMMENTARE LÖSCHEN!
-// interface Update {
-//   value: Event;
-//   authUser: AuthUser;
-// }
 
 export class FirebaseDbEvent extends FirebaseDbSuper {
   firebase: Firebase;
@@ -91,7 +86,7 @@ export class FirebaseDbEvent extends FirebaseDbSuper {
       lastChange: value.lastChange,
     };
 
-    if (value.hasOwnProperty("refDocuments")) {
+    if (value.hasOwnProperty("refDocuments") && value["refDocuments"]) {
       dbObject["refDocuments"] = value.refDocuments;
     }
 
@@ -115,7 +110,6 @@ export class FirebaseDbEvent extends FirebaseDbSuper {
       created: value.created,
       lastChange: value.lastChange,
     };
-
     if (value.hasOwnProperty("refDocuments")) {
       appObject["refDocuments"] = value.refDocuments;
     }

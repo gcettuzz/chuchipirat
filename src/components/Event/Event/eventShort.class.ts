@@ -1,5 +1,12 @@
+import {error} from "console";
+import Firebase from "../../Firebase";
 import {ChangeRecord} from "../../Shared/global.interface";
 import Event from "./event.class";
+
+interface Delete {
+  event: Event;
+  firebase: Firebase;
+}
 
 export class EventShort {
   uid: string;
@@ -43,6 +50,22 @@ export class EventShort {
       created: event.created,
     };
   }
+  // ===================================================================== */
+  /**
+   * Eintrag löschen
+   * Anhand der Zeitscheiben, ein Array mit allen Daten erstellen
+   * @param Object - Objekt mit Angepasstem Event und Menüplan
+   * @returns boolean - Hat die Anpassung zur Folge, dass geplante Tage
+   *                    gelöscht werden.
+   */
+  static delete = async ({event, firebase}: Delete) => {
+    firebase.eventShort
+      .deleteField({fieldName: event.uid, uids: []})
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  };
 }
 
 export default EventShort;

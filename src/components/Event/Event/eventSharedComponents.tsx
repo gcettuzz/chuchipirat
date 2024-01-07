@@ -30,9 +30,8 @@ import {
   REFRESH as TEXT_REFRESH,
   NEW_LIST as TEXT_NEW_LIST,
   EXISTING_LISTS as TEXT_EXISTING_LISTS,
-  LIST_ENTRY_MAYBE_OUT_OF_DATE as TEXT_USED_RECIPES_POSSIBLE_OUT_OF_DATE,
   CHANGE as TEXT_CHANGE,
-  WHERE_DOES_THIS_PRODUCT_COME_FROM as TEXT_WHERE_DOES_THIS_PRODUCT_COME_FROM,
+  WHERE_DOES_THIS_ITEM_COME_FROM as TEXT_WHERE_DOES_THIS_ITEM_COME_FROM,
   DELETE as TEXT_DELETE,
   CLOSE as TEXT_CLOSE,
   ADDED_MANUALY as TEXT_ADDED_MANUALY,
@@ -198,11 +197,13 @@ export const EventListCard = ({
 // ========================== Kontext-Menü ===========================
 // =================================================================== */
 interface PositionContextMenuProps {
+  itemType: string;
   anchorEl: HTMLElement | null;
   handleMenuClick: (event: React.MouseEvent<HTMLElement>) => void;
   handleMenuClose: () => void;
 }
 export const PositionContextMenu = ({
+  itemType,
   anchorEl,
   handleMenuClick,
   handleMenuClose,
@@ -229,7 +230,7 @@ export const PositionContextMenu = ({
           <CallSplitIcon fontSize="small" />
         </ListItemIcon>
         <Typography variant="inherit">
-          {TEXT_WHERE_DOES_THIS_PRODUCT_COME_FROM}
+          {TEXT_WHERE_DOES_THIS_ITEM_COME_FROM(itemType)}
         </Typography>
       </MenuItem>
       <MenuItem
@@ -300,7 +301,7 @@ export const DialogTraceItem = ({
   }
   return (
     <Dialog open={dialogOpen} maxWidth="xs" fullWidth style={{zIndex: 500}}>
-      <DialogTitle>{TEXT_WHERE_DOES_THIS_PRODUCT_COME_FROM}</DialogTitle>
+      <DialogTitle>{TEXT_WHERE_DOES_THIS_ITEM_COME_FROM}</DialogTitle>
       <DialogContent>
         <Grid container spacing={2}>
           {hasBeenManualyEdited && (

@@ -1,6 +1,7 @@
 import React from "react";
 import {compose} from "recompose";
 import {useHistory} from "react-router";
+import _ from "lodash";
 
 import {
   Container,
@@ -9,6 +10,9 @@ import {
   Tabs,
   Tab,
   useTheme,
+  Grid,
+  Button,
+  Typography,
 } from "@material-ui/core";
 
 import useStyles from "../../../constants/styles";
@@ -25,7 +29,18 @@ import {
   EVENT_INFO_SHORT as TEXT_EVENT_INFO_SHORT,
   MATERIAL_CREATED as TEXT_MATERIAL_CREATED,
   PRODUCT_CREATED as TEXT_PRODUCT_CREATED,
+  DISCARD_CHANGES as TEXT_DISCARD_CHANGES,
+  SAVE as TEXT_SAVE,
+  DELETION_AFFECTS_PLANED_DAYS as TEXT_DELETION_AFFECTS_PLANED_DAYS,
+  ATTENTION_ABOUT_TO_DELETE_PLANED_DAYS as TEXT_ATTENTION_ABOUT_TO_DELETE_PLANED_DAYS,
+  PROCEED as TEXT_PROCEED,
+  EVENT_SAVE_SUCCESS as TEXT_EVENT_SAVE_SUCCESS,
+  IMAGE_IS_BEEING_UPLOADED as TEXT_IMAGE_IS_BEEING_UPLOADED,
+  EVENT_IS_BEEING_SAVED as TEXT_EVENT_IS_BEEING_SAVED,
+  DELETE_EVENT as TEXT_DELETE_EVENT,
 } from "../../../constants/text";
+
+import {HOME as ROUTE_HOME} from "../../../constants/routes";
 
 import Recipe, {Recipes} from "../../Recipe/recipe.class";
 import Unit from "../../Unit/unit.class";
@@ -57,6 +72,14 @@ import ShoppingListCollection from "../ShoppingList/shoppingListCollection.class
 import ShoppingList from "../ShoppingList/shoppingList.class";
 import EventMaterialListPage from "../MaterialList/materialList";
 import MaterialList from "../MaterialList/materialList.class";
+import EventInfoPage from "./eventInfo";
+import {FormValidationFieldError} from "../../Shared/fieldValidation.error.class";
+import {
+  DialogType,
+  SingleTextInputResult,
+  useCustomDialog,
+} from "../../Shared/customDialogContext";
+import Action from "../../../constants/actions";
 
 /* ===================================================================
 // ============================== Global =============================
@@ -129,6 +152,9 @@ function tabProps(index) {
 enum ReducerActions {
   EVENT_FETCH_INIT,
   EVENT_FETCH_SUCCESS,
+  EVENT_SAVE_INIT,
+  EVENT_SAVE_SUCCESS,
+  EVENT_DELETE_START,
   GROUP_CONFIG_FETCH_INIT,
   GROUP_CONFIG_FETCH_SUCCESS,
   MENUPLAN_FETCH_INIT,
@@ -187,6 +213,7 @@ type State = {
   unitConversionProducts: UnitConversionProducts | null;
   snackbar: Snackbar;
   isLoading: boolean;
+  isSaving: boolean;
   loadingComponents: {
     event: boolean;
     groupConfig: boolean;
@@ -216,6 +243,12 @@ const eventReducer = (state: State, action: DispatchAction): State => {
         isLoading: true,
         loadingComponents: {...state.loadingComponents, event: true},
       };
+    case ReducerActions.EVENT_SAVE_INIT:
+      return {...state, isSaving: true};
+    case ReducerActions.EVENT_SAVE_SUCCESS:
+      return {...state, isSaving: false};
+    case ReducerActions.EVENT_DELETE_START:
+      return {...state, isLoading: true};
     case ReducerActions.GROUP_CONFIG_FETCH_INIT:
       return {
         ...state,
@@ -582,6 +615,7 @@ const INITITIAL_STATE: State = {
   unitConversionBasic: null,
   unitConversionProducts: null,
   isLoading: false,
+  isSaving: false,
   loadingComponents: {
     event: false,
     groupConfig: false,
@@ -601,6 +635,18 @@ const INITITIAL_STATE: State = {
   isError: false,
   error: {},
 };
+
+interface EventDraftState {
+  event: Event;
+  localPicture: File | null;
+  formValidation: FormValidationFieldError[];
+}
+const INTITIAL_STATE_EVENT_DRAF: EventDraftState = {
+  event: new Event(),
+  localPicture: null,
+  formValidation: [],
+};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
@@ -608,12 +654,15 @@ const EventBase = ({props, authUser}) => {
   const firebase = props.firebase as Firebase;
   const {replace} = useHistory();
   const theme = useTheme();
+  const {customDialog} = useCustomDialog();
+  const {push} = useHistory();
 
   const classes = useStyles();
   let eventUid: string = "";
 
   const [state, dispatch] = React.useReducer(eventReducer, INITITIAL_STATE);
   const [activeTab, setActiveTab] = React.useState(EventTabs.menuplan);
+  const [eventDraft, setEventDraft] = React.useState(INTITIAL_STATE_EVENT_DRAF);
   // const [activeTab, setActiveTab] = React.useState(EventTabs.menuplan);
 
   // if (!state.event.uid) {
@@ -661,50 +710,30 @@ const EventBase = ({props, authUser}) => {
         });
     }
     return function cleanup() {
-      console.warn("unsubscribe event");
       unsubscribe();
     };
-
-    //   dispatch({type: ReducerActions.EVENT_FETCH_INIT, payload: {}});
-    //   //TODO: Listener
-    //   Event.getEvent({
-    //     firebase: firebase,
-    //     uid: eventUid,
-    //   })
-    //     .then((result) => {
-    //       dispatch({
-    //         type: ReducerActions.EVENT_FETCH_SUCCESS,
-    //         payload: result,
-    //       });
-    //     })
-    //     .catch((error) => {
-    //       dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
-    //     });
   }, []);
   React.useEffect(() => {
     //Group-Config
     let unsubscribe: () => void;
-    if (!props.location.state?.groupConfig) {
-      dispatch({type: ReducerActions.GROUP_CONFIG_FETCH_INIT, payload: {}});
-      EventGroupConfiguration.getGroupConfigurationListener({
-        firebase: firebase,
-        uid: eventUid,
-        callback: (groupConfigruation) => {
-          dispatch({
-            type: ReducerActions.GROUP_CONFIG_FETCH_SUCCESS,
-            payload: groupConfigruation,
-          });
-        },
-      })
-        .then((result) => {
-          unsubscribe = result;
-        })
-        .catch((error) => {
-          dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+    dispatch({type: ReducerActions.GROUP_CONFIG_FETCH_INIT, payload: {}});
+    EventGroupConfiguration.getGroupConfigurationListener({
+      firebase: firebase,
+      uid: eventUid,
+      callback: (groupConfigruation) => {
+        dispatch({
+          type: ReducerActions.GROUP_CONFIG_FETCH_SUCCESS,
+          payload: groupConfigruation,
         });
-    }
+      },
+    })
+      .then((result) => {
+        unsubscribe = result;
+      })
+      .catch((error) => {
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+      });
     return function cleanup() {
-      console.warn("unsubscribe group-config");
       unsubscribe();
     };
   }, []);
@@ -732,7 +761,6 @@ const EventBase = ({props, authUser}) => {
     }
 
     return function cleanup() {
-      console.warn("unsubscribe menueplan");
       unsubscribe();
     };
   }, []);
@@ -750,7 +778,7 @@ const EventBase = ({props, authUser}) => {
       });
       ShoppingListCollection.getShoppingListCollectionListener({
         firebase: firebase,
-        uid: eventUid,
+        eventUid: eventUid,
         callback: (shoppingListCollection) => {
           dispatch({
             type: ReducerActions.SHOPPINGLIST_COLLECTION_FETCH_SUCCESS,
@@ -765,7 +793,6 @@ const EventBase = ({props, authUser}) => {
           dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
         });
       return function cleanup() {
-        console.warn("unsubscribe shoppinglistCollection");
         unsubscribe();
       };
     }
@@ -924,7 +951,6 @@ const EventBase = ({props, authUser}) => {
           dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
         });
       return function cleanup() {
-        console.warn("unsubscribe usedRecipes");
         unsubscribe();
       };
     }
@@ -955,12 +981,15 @@ const EventBase = ({props, authUser}) => {
           dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
         });
       return function cleanup() {
-        console.warn("unsubscribe materialList");
         unsubscribe();
       };
     }
   }, [activeTab, state.event.refDocuments]);
-
+  React.useEffect(() => {
+    if (activeTab === EventTabs.eventInfo && !eventDraft.event.uid) {
+      setEventDraft(_.cloneDeep({...eventDraft, event: state.event}));
+    }
+  }, [activeTab]);
   /* ------------------------------------------
   // Tab-Handling
   // ------------------------------------------ */
@@ -971,6 +1000,7 @@ const EventBase = ({props, authUser}) => {
   // Change-Handling
   // ------------------------------------------ */
   const onMenuplanUpdate = (menuplan: Menuplan) => {
+    console.log(menuplan);
     Menuplan.save({
       menuplan: menuplan,
       firebase: firebase,
@@ -1006,7 +1036,6 @@ const EventBase = ({props, authUser}) => {
     // });
   };
   const onShoppingListUpdate = (shoppingList: ShoppingList) => {
-    console.warn(shoppingList);
     ShoppingList.save({
       firebase: firebase,
       eventUid: state.event.uid,
@@ -1081,6 +1110,122 @@ const EventBase = ({props, authUser}) => {
       }
     });
   };
+  const onEventUpdate = (event: Event) => {
+    // Der Event hat eine Schatteninstanz im React.State. Dies damit
+    // die Änderungen erst beim Speichern in Kraft tretten.
+    // Hintergrund. Im Schlimmsten Fall werden bei einer Anpassung der
+    // Event-Eckpunkte Tage gelöscht. Dies muss bewusst stattfinden und
+    // kann nicht mit Listener gleich umgesetzt werden. Darum muss die Person
+    // bewusst auf speichern Klicken und der State-Wert des Events wird auf
+    // die DB gespeichert und in den Globalen State übertragen
+    setEventDraft({...eventDraft, event: event});
+  };
+  const onEventSave = async (event: Event) => {
+    dispatch({type: ReducerActions.EVENT_SAVE_INIT, payload: {}});
+    await Event.save({
+      firebase: firebase,
+      event: event,
+      localPicture: eventDraft.localPicture,
+      authUser: authUser,
+    })
+      .then((result) => {
+        setEventDraft({...eventDraft, event: event});
+        dispatch({type: ReducerActions.EVENT_SAVE_SUCCESS, payload: {}});
+      })
+      .catch((error) => {
+        console.error(error);
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+      });
+  };
+  const onEventPictureUpdate = (picture: File | null) => {
+    setEventDraft({
+      ...eventDraft,
+      localPicture: picture,
+    });
+  };
+  /* ------------------------------------------
+  // Handling Einstellungen Event
+  // ------------------------------------------ */
+  const onEventDiscardChanges = () => {
+    setEventDraft(_.cloneDeep({...eventReducer, event: state.event}));
+  };
+  const onEventSaveChanges = async () => {
+    // Prüfen ob die Anzahl Tage unterschiedlich sind,
+    // wenn durch die Änderung Tage gelöscht wurden und
+    // im Menüplan in diesen Tage in den Menüs etwas steht
+    // Warnmeldung ausgeben, dass Daten allefalls gelöscht
+    // werden.
+
+    if (
+      Event.checkIfDeletedDayArePlanned({
+        event: eventDraft.event,
+        menuplan: state.menuplan,
+      })
+    ) {
+      let userInput = (await customDialog({
+        dialogType: DialogType.Confirm,
+        title: TEXT_ATTENTION_ABOUT_TO_DELETE_PLANED_DAYS,
+        text: TEXT_DELETION_AFFECTS_PLANED_DAYS,
+        buttonTextConfirm: TEXT_PROCEED,
+      })) as SingleTextInputResult;
+
+      if (!userInput) {
+        // Abbruch
+        return;
+      }
+    }
+    let updatedMenuplan = Menuplan.adjustMenuplanWithNewDays({
+      menuplan: state.menuplan,
+      newEvent: eventDraft.event,
+      existingEvent: state.event,
+    });
+
+    onMenuplanUpdate(updatedMenuplan);
+    onEventSave(eventDraft.event);
+    dispatch({
+      type: ReducerActions.SNACKBAR_SHOW,
+      payload: {
+        severity: "success",
+        message: TEXT_EVENT_SAVE_SUCCESS(state.event.name),
+      },
+    });
+  };
+  const onEventDelete = async () => {
+    const isConfirmed = await customDialog({
+      dialogType: DialogType.ConfirmDeletion,
+      deletionDialogProperties: {confirmationString: state.event.name},
+    });
+    if (!isConfirmed) {
+      return;
+    }
+    dispatch({type: ReducerActions.EVENT_DELETE_START, payload: {}});
+    await Event.delete({
+      event: state.event,
+      firebase: firebase,
+      authUser: authUser,
+    })
+      .then(() => {
+        // Kurzer Timeout, damit der Session-Storage nachmag
+        setTimeout(function () {
+          push({
+            pathname: ROUTE_HOME,
+            state: {
+              acion: Action.DELETE,
+              object: state.event.uid,
+              snackbar: {
+                open: true,
+                severity: "success",
+                message: `Anlass «${state.event.name}» wurde gelöscht.`,
+              },
+            },
+          });
+        }, 500);
+      })
+      .catch((error) => {
+        console.error(error);
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+      });
+  };
   /* ------------------------------------------
   // Fehlende Daten holen
   // ------------------------------------------ */
@@ -1153,7 +1298,6 @@ const EventBase = ({props, authUser}) => {
 
         Unit.getAllUnits({firebase: firebase})
           .then((result) => {
-            console.warn("=== UNITS GELESEN ===");
             dispatch({
               type: ReducerActions.UNITS_FETCH_SUCCESS,
               payload: result,
@@ -1266,7 +1410,6 @@ const EventBase = ({props, authUser}) => {
       case FetchMissingDataType.SHOPPING_LIST:
         if (state.shoppingList.unsubscribe !== null) {
           // Vorheriger Listener beenden
-          console.warn("unsubscribe shoppinglist");
           state.shoppingList.unsubscribe();
         }
         dispatch({type: ReducerActions.SHOPPINGLIST_FETCH_INIT, payload: {}});
@@ -1329,7 +1472,6 @@ const EventBase = ({props, authUser}) => {
       payload: {},
     });
   };
-  console.log(state);
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}
@@ -1346,8 +1488,29 @@ const EventBase = ({props, authUser}) => {
         component="main"
         maxWidth="xl"
       >
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
-          <CircularProgress color="inherit" />
+        <Backdrop
+          className={classes.backdrop}
+          open={state.isLoading || state.isSaving}
+        >
+          <Grid container spacing={2}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} className={classes.centerCenter}>
+                <CircularProgress color="inherit" />
+              </Grid>
+              {state.isSaving && (
+                <React.Fragment>
+                  <Grid item xs={12} className={classes.centerCenter}>
+                    <Typography>{TEXT_EVENT_IS_BEEING_SAVED}</Typography>
+                  </Grid>
+                  {eventDraft.localPicture && (
+                    <Grid item xs={12} className={classes.centerCenter}>
+                      <Typography>{TEXT_IMAGE_IS_BEEING_UPLOADED}</Typography>
+                    </Grid>
+                  )}
+                </React.Fragment>
+              )}
+            </Grid>
+          </Grid>
         </Backdrop>
         <div className={classes.menuplanTabsContainer}>
           <Tabs
@@ -1469,7 +1632,50 @@ const EventBase = ({props, authUser}) => {
             />
           </Container>
         ) : (
-          <p>TODO</p>
+          <Container>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <EventInfoPage
+                  event={eventDraft.event}
+                  localPicture={eventDraft.localPicture}
+                  formValidation={eventDraft.formValidation}
+                  firebase={firebase}
+                  authUser={authUser}
+                  onUpdateEvent={onEventUpdate}
+                  onError={() => {}}
+                  onUpdatePicture={onEventPictureUpdate}
+                />
+              </Grid>
+              {state.event != eventDraft.event && (
+                <Grid item xs={12} container justifyContent="flex-end">
+                  <Button
+                    className={classes.deleteButton}
+                    variant="outlined"
+                    onClick={onEventDelete}
+                  >
+                    {TEXT_DELETE_EVENT}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    style={{marginLeft: "1rem"}}
+                    onClick={onEventDiscardChanges}
+                  >
+                    {TEXT_DISCARD_CHANGES}
+                  </Button>
+
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    style={{marginLeft: "1rem"}}
+                    onClick={onEventSaveChanges}
+                  >
+                    {TEXT_SAVE}
+                  </Button>
+                </Grid>
+              )}
+            </Grid>
+          </Container>
         )}
       </Container>
       <CustomSnackbar
