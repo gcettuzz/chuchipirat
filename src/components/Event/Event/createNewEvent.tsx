@@ -35,8 +35,8 @@ import Event from "./event.class";
 
 import {
   HOME as ROUTE_HOME,
-  CREATE_NEW_EVENT as ROUTE_CREATE_NEW_EVENT,
   EVENT as ROUTE_EVENT,
+  CREATE_NEW_EVENT as ROUTE_CREATE_NEW_EVENT,
 } from "../../../constants/routes";
 
 import Firebase, {withFirebase} from "../../Firebase";

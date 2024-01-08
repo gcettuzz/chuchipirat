@@ -1578,6 +1578,10 @@ export default class Recipe {
 
     // Trennen zwischen öffentlichen , Privaten, und Varianten
     recipes.forEach((recipe) => {
+      if (recipe.uid.includes("[DELETED]")) {
+        // gelöschte Rezepte ignorieren
+        return;
+      }
       switch (recipe.recipeType) {
         case RecipeType.public:
           docRefs.push(firebase.recipePublic.getDocument([recipe.uid]).get());
@@ -1610,7 +1614,7 @@ export default class Recipe {
         case RecipeType.public:
           recipe = firebase.recipePublic.prepareDataForApp({
             uid: document.id,
-            value: firebase.recipePublic.convertTimestampValues(
+            value: firebase.recipePublic.convertTimestampValuesToDates(
               document.data()
             ),
           });
@@ -1618,7 +1622,7 @@ export default class Recipe {
         case RecipeType.private:
           recipe = firebase.recipePrivate.prepareDataForApp({
             uid: document.id,
-            value: firebase.recipePrivate.convertTimestampValues(
+            value: firebase.recipePrivate.convertTimestampValuesToDates(
               document.data()
             ),
           });
@@ -1626,7 +1630,7 @@ export default class Recipe {
         case RecipeType.variant:
           recipe = firebase.recipeVariant.prepareDataForApp({
             uid: document.id,
-            value: firebase.recipeVariant.convertTimestampValues(
+            value: firebase.recipeVariant.convertTimestampValuesToDates(
               document.data()
             ),
           });

@@ -324,6 +324,7 @@ const EventUsedRecipesPage = ({
   ) => {
     // Menües in der richtigen Reihenfolge aufbauen, damit diese dann auch richtig angezeigt werden
     let selectedListItem = event.currentTarget.id.split("_")[1];
+    console.log("hier");
     dispatch({
       type: ReducerActions.SET_SELECTED_LIST_ITEM,
       payload: {
@@ -406,6 +407,7 @@ const EventUsedRecipesPage = ({
         );
       });
   };
+  console.log(state);
   return (
     <React.Fragment>
       {state.isError && (
@@ -498,22 +500,27 @@ const EventUsedRecipes = ({
           {sortedMenueList.map((menueCoordinate) => {
             return menuplan.menues[
               menueCoordinate.menueUid
-            ].mealRecipeOrder.map((mealRecipeUid) => (
-              <EventUsedMealRecipe
-                recipe={
-                  usedRecipes[
-                    menuplan.mealRecipes[mealRecipeUid].recipe.recipeUid
-                  ]
-                }
-                mealRecipe={menuplan.mealRecipes[mealRecipeUid]}
-                menueCoordinate={menueCoordinate}
-                groupConfiguration={groupConfiguration}
-                products={products}
-                unitConversionBasic={unitConversionBasic}
-                unitConversionProducts={unitConversionProducts}
-                key={"eventUsedRecipe_" + mealRecipeUid}
-              />
-            ));
+            ].mealRecipeOrder.map(
+              (mealRecipeUid) =>
+                !menuplan.mealRecipes[mealRecipeUid].recipe.recipeUid.includes(
+                  "[DELETED]"
+                ) && (
+                  <EventUsedMealRecipe
+                    recipe={
+                      usedRecipes[
+                        menuplan.mealRecipes[mealRecipeUid].recipe.recipeUid
+                      ]
+                    }
+                    mealRecipe={menuplan.mealRecipes[mealRecipeUid]}
+                    menueCoordinate={menueCoordinate}
+                    groupConfiguration={groupConfiguration}
+                    products={products}
+                    unitConversionBasic={unitConversionBasic}
+                    unitConversionProducts={unitConversionProducts}
+                    key={"eventUsedRecipe_" + mealRecipeUid}
+                  />
+                )
+            );
           })}
         </Grid>
       </Grid>
@@ -717,14 +724,10 @@ const EventUsedMealRecipeInfoBlock = ({
   groupConfiguration,
 }: EventUsedMealRecipeInfoBlockProps) => {
   const classes = useStyles();
+  console.log(recipe);
+  console.log(recipe.source);
   return (
-    <Grid
-      item
-      key={"recipeInfoBlockTime" + mealRecipe.uid}
-      xs={12}
-      // alignItems="center"
-      // alignContent="center"
-    >
+    <Grid item key={"recipeInfoBlockTime" + mealRecipe.uid} xs={12}>
       <Container maxWidth="sm">
         <List dense>
           <FormListItem

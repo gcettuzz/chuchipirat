@@ -71,6 +71,7 @@ import Menuplan, {
   MenuplanMaterial,
   MenuplanProduct,
   MealRecipes,
+  MealRecipeDeletedPrefix,
 } from "./menuplan.class";
 import {AutocompleteChangeReason} from "@material-ui/lab/Autocomplete";
 
@@ -2571,7 +2572,9 @@ MenuCardProps) => {
                               onClick={
                                 !mealRecipes[
                                   mealRecipeUid
-                                ]?.recipe.recipeUid.includes("[DELETED")
+                                ]?.recipe.recipeUid.includes(
+                                  MealRecipeDeletedPrefix
+                                )
                                   ? onMealRecipeOpen
                                   : () => {}
                               }
@@ -2587,7 +2590,9 @@ MenuCardProps) => {
                                 primary={
                                   mealRecipes[
                                     mealRecipeUid
-                                  ]?.recipe.recipeUid.includes("[DELETED") ? (
+                                  ]?.recipe.recipeUid.includes(
+                                    MealRecipeDeletedPrefix
+                                  ) ? (
                                     <span
                                       style={{
                                         color: theme.palette.text.secondary,

@@ -11,6 +11,7 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {ShoppingListEntry} from "../../Event/ShoppingList/shoppingListCollection.class";
 export class FirebaseDbEventShoppingListCollection extends FirebaseDbSuper {
   firebase: Firebase;
   /* =====================================================================
@@ -52,10 +53,20 @@ export class FirebaseDbEventShoppingListCollection extends FirebaseDbSuper {
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
+    let usedProducts: string[] = [];
+
+    Object.values(value.lists as ShoppingListEntry).forEach(
+      (list: ShoppingListEntry) =>
+        Object.keys(list.trace).forEach((productUid) =>
+          usedProducts.push(productUid)
+        )
+    );
+
     return {
       lastChange: value.lastChange,
       lists: value.lists,
       noOfLists: value.noOfLists,
+      usedProducts: usedProducts,
     };
   }
   /* =====================================================================

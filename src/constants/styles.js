@@ -394,6 +394,10 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: "yellow",
     whiteSpace: "nowrap",
   },
+  deleteButton: {
+    color: "#C62828",
+    borderColor: "#C62828",
+  },
   /* ------------------------------------------
   // Rezept
   // ------------------------------------------ */
@@ -681,7 +685,7 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(1),
     marginBottom: theme.spacing(1),
   },
-  deleteButton: {
+  dialogDeletedeleteButton: {
     backgroundColor: "#C62828",
     color: "#FFFFFF",
     "&:hover": {

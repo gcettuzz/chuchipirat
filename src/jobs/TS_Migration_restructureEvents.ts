@@ -5,10 +5,12 @@ import AuthUser from "../components/Firebase/Authentication/authUser.class";
 import {ValueObject} from "../components/Firebase/Db/firebase.db.super.class";
 import Firebase from "../components/Firebase/firebase.class";
 import Menuplan, {
+  MealRecipe,
+  MealRecipeDeletedPrefix,
   PlanedDiet,
   PlanedIntolerances,
 } from "../components/Event/Menuplan/menuplan.class";
-import Recipe from "../components/Recipe/recipe.class";
+import Recipe, {RecipeType} from "../components/Recipe/recipe.class";
 import RecipeShort from "../components/Recipe/recipeShort.class";
 import Utils from "../components/Shared/utils.class";
 
@@ -88,7 +90,7 @@ export async function restructureEventDocuments(firebase: Firebase) {
           });
       });
     });
-
+  console.warn("=== Recipes ===");
   console.log(recipes);
 
   // Alle dokumente holen
@@ -98,6 +100,19 @@ export async function restructureEventDocuments(firebase: Firebase) {
     // Zuerst das Event-Dokument
     snapshot.forEach(async (eventDocument) => {
       let eventDocumentData = eventDocument.data();
+
+      eventDocumentData =
+        firebase.event.convertTimestampValuesToDates(eventDocumentData);
+      console.warn("=== Event ===");
+      // Alt-Version speichern!
+      console.log(
+        "type: ",
+        "event",
+        "uid: ",
+        eventDocument.id,
+        "data: ",
+        JSON.stringify(eventDocumentData)
+      );
 
       if (eventDocumentData.hasOwnProperty("createdAt")) {
         let eventDocumentNewStructure = {
@@ -133,45 +148,56 @@ export async function restructureEventDocuments(firebase: Firebase) {
               return (
                 result +
                 Utils.differenceBetweenTwoDates({
-                  dateFrom: currenEntry.from.toDate(),
-                  dateTo: currenEntry.to.toDate(),
+                  dateFrom: currenEntry.from,
+                  dateTo: currenEntry.to,
                 })
               );
             }
           ),
 
-          pictureSrc: eventDocumentData.pictureSrc,
-        };
+          pictureSrc: eventDocumentData?.pictureSrc
+            ? eventDocumentData?.pictureSrc
+            : "",
+        } as Event;
 
         // Event zurückspeichern
-        // let eventDocumentReference = firebase.db.doc(
-        //   `events/${eventDocument.id}`
-        // );
-        // await eventDocumentReference.set(eventDocumentNewStructure);
+        let eventDocumentReference = firebase.db.doc(
+          `events/${eventDocument.id}`
+        );
+        console.log("Speicherung Event ", eventDocument.id);
+        console.log(eventDocumentNewStructure);
+        await eventDocumentReference.set(
+          Object.assign(
+            {},
+            firebase.event.convertDateValuesToTimestamp(
+              _.cloneDeep(eventDocumentNewStructure)
+            )
+          )
+        );
         counter++;
 
-        // für weitere Felder, die Timestamps in umbiegen
-        eventDocumentNewStructure.created.date =
-          eventDocumentNewStructure.created.date.toDate();
-        eventDocumentNewStructure.lastChange.date =
-          eventDocumentNewStructure.lastChange.date.toDate();
+        // für weitere Felder, die Timestamps in Datum umbiegen
+        // eventDocumentNewStructure.created.date =
+        //   eventDocumentNewStructure.created.date.toDate();
+        // eventDocumentNewStructure.lastChange.date =
+        //   eventDocumentNewStructure.lastChange.date.toDate();
 
-        eventDocumentNewStructure.dates = eventDocumentNewStructure.dates.map(
-          (dateRange) => ({
-            pos: dateRange.pos,
-            from: dateRange.from.toDate(),
-            to: dateRange.to.toDate(),
-            uid: dateRange.uid,
-          })
-        );
-        eventDocumentNewStructure.maxDate =
-          eventDocumentNewStructure.maxDate.toDate();
+        // eventDocumentNewStructure.dates = eventDocumentNewStructure.dates.map(
+        //   (dateRange) => ({
+        //     pos: dateRange.pos,
+        //     from: dateRange.from.toDate(),
+        //     to: dateRange.to.toDate(),
+        //     uid: dateRange.uid,
+        //   })
+        // );
+        // eventDocumentNewStructure.maxDate =
+        //   eventDocumentNewStructure.maxDate.toDate();
 
         // Event im 000_allEvents nachführen
         events[eventDocument.id] = EventShort.createShortEventFromEvent(
           eventDocumentNewStructure
         );
-
+        console.warn("=== GroupConfig ===");
         // Group-Config generieren --> neue Dokument. Einfach die Anzahl Portionen übernehmen.
         let groupConfig = EventGroupConfiguration.factory();
         let dietUid = "";
@@ -190,186 +216,265 @@ export async function restructureEventDocuments(firebase: Firebase) {
           }
         });
 
+        groupConfig.created = {
+          fromDisplayName: "Migration",
+          date: new Date(),
+          fromUid: "-",
+        };
+        groupConfig.lastChange = {
+          fromDisplayName: "Migration",
+          date: new Date(),
+          fromUid: "-",
+        };
+
         groupConfig.totalPortions = eventDocumentData.participants;
         groupConfig.portions[dietUid][intorleranceUid] =
           eventDocumentData.participants;
 
-        // let grouConfigDocumentReference = firebase.db.doc(
-        //   `events/${eventDocument.id}/docs/groupConfiguration`
-        // );
-        // await grouConfigDocumentReference.set(groupConfig);
-        // counter++;
+        let grouConfigDocumentReference = firebase.db.doc(
+          `events/${eventDocument.id}/docs/groupConfiguration`
+        );
+
+        let dbObject =
+          firebase.event.groupConfiguration.convertDateValuesToTimestamp(
+            _.cloneDeep(groupConfig)
+          );
+        console.log("Speicherung GroupConfig ", eventDocument.id);
+        console.log(JSON.stringify(groupConfig));
+        await grouConfigDocumentReference
+          .set(Object.assign({}, dbObject))
+          .catch((error) => {
+            console.error(error);
+            throw error;
+          });
+
+        counter++;
+        console.warn("=== Menüplan ===");
 
         // Menüplan migrieren
         let menuplanDocument = firebase.db.doc(
           `events/${eventDocument.id}/docs/menuplan`
         );
 
-        await menuplanDocument.get().then(async (result) => {
-          let menuplanDocumentData = result.data();
+        await menuplanDocument
+          .get()
+          .then(async (result) => {
+            let menuplanDocumentData = result.data();
 
-          if (menuplanDocumentData) {
-            let menuplanNewStructure = Menuplan.factory({
-              event: {...eventDocumentNewStructure, uid: eventDocument.id},
-              authUser: {uid: "", publicProfile: {displayName: ""}} as AuthUser,
-            });
+            menuplanDocumentData =
+              firebase.event.menuplan.convertTimestampValuesToDates(
+                menuplanDocumentData
+              );
 
-            // Mahlzeit-Typen löschen -->
-            menuplanNewStructure.mealTypes = {order: [], entries: {}};
-
-            // Standard Felder setzen
-            menuplanNewStructure.created = {
-              date: menuplanDocumentData.createdAt,
-              fromDisplayName: menuplanDocumentData.createdFromDisplayName,
-              fromUid: menuplanDocumentData.createdFromUid,
-            };
-            menuplanNewStructure.lastChange = {
-              date: menuplanDocumentData.lastChangeAt,
-              fromDisplayName: menuplanDocumentData.lastChangeFromDisplayName,
-              fromUid: menuplanDocumentData.lastChangeFromUid,
-            };
-            menuplanNewStructure.dates = menuplanDocumentData.dates.map(
-              (date) => date.toDate()
+            // Alt-Version speichern!
+            console.log(
+              "type: ",
+              "menuplan",
+              "uid: ",
+              result.id,
+              "data: ",
+              JSON.stringify(menuplanDocumentData)
             );
-            menuplanNewStructure.materials = {
-              entries: {},
-              order: [],
-            } as unknown as Menuplan["materials"];
-            menuplanNewStructure.products = {
-              entries: {},
-              order: [],
-            } as unknown as Menuplan["products"];
-            menuplanNewStructure["usedRecipes"] =
-              menuplanDocumentData.usedRecipes;
 
-            menuplanNewStructure["usedRecipes"] =
-              menuplanDocumentData.usedRecipes;
+            if (menuplanDocumentData) {
+              let menuplanNewStructure = Menuplan.factory({
+                event: {...eventDocumentNewStructure, uid: eventDocument.id},
+                authUser: {
+                  uid: "",
+                  publicProfile: {displayName: ""},
+                } as AuthUser,
+              });
 
-            // Mahlzeitentypen
-            menuplanDocumentData.meals.forEach((meal) => {
-              menuplanNewStructure.mealTypes.order.push(meal.uid);
-              menuplanNewStructure.mealTypes.entries[meal.uid] = {
-                name: meal.name,
-                uid: meal.uid,
+              // Mahlzeit-Typen löschen -->
+              menuplanNewStructure.mealTypes = {order: [], entries: {}};
+
+              // Standard Felder setzen
+              menuplanNewStructure.created = {
+                date: menuplanDocumentData.createdAt,
+                fromDisplayName: menuplanDocumentData.createdFromDisplayName,
+                fromUid: menuplanDocumentData.createdFromUid,
               };
-            });
+              menuplanNewStructure.lastChange = {
+                date: menuplanDocumentData.lastChangeAt,
+                fromDisplayName: menuplanDocumentData.lastChangeFromDisplayName,
+                fromUid: menuplanDocumentData.lastChangeFromUid,
+              };
+              // menuplanNewStructure.dates = menuplanDocumentData.dates.map(
+              //   (date) => date.toDate()
+              // );
+              menuplanNewStructure.materials = {
+                entries: {},
+                order: [],
+              } as unknown as Menuplan["materials"];
+              menuplanNewStructure.products = {
+                entries: {},
+                order: [],
+              } as unknown as Menuplan["products"];
+              menuplanNewStructure["usedRecipes"] =
+                menuplanDocumentData.usedRecipes;
 
-            // Mahlzeiten - Pro Tag und Mahlzeit eine generieren
-            Object.values(menuplanNewStructure.mealTypes.entries).forEach(
-              (mealType) => {
-                menuplanNewStructure.dates.forEach((date) => {
-                  // Mahlzeit erstellen
-                  let meal = Menuplan.createMeal({
-                    mealType: mealType.uid,
-                    date: date,
+              menuplanNewStructure["usedRecipes"] =
+                menuplanDocumentData.usedRecipes;
+
+              // Mahlzeitentypen
+              menuplanDocumentData.meals.forEach((meal) => {
+                menuplanNewStructure.mealTypes.order.push(meal.uid);
+                menuplanNewStructure.mealTypes.entries[meal.uid] = {
+                  name: meal.name,
+                  uid: meal.uid,
+                };
+              });
+
+              // Mahlzeiten - Pro Tag und Mahlzeit eine generieren
+              Object.values(menuplanNewStructure.mealTypes.entries).forEach(
+                (mealType) => {
+                  menuplanNewStructure.dates.forEach((date) => {
+                    // Mahlzeit erstellen
+                    let meal = Menuplan.createMeal({
+                      mealType: mealType.uid,
+                      date: date,
+                    });
+                    menuplanNewStructure.meals[meal.uid] = meal;
+                    // Ein Menü erzeugen und der Mahlzeit hinzufügen
+                    let menu = Menuplan.createMenu();
+                    menuplanNewStructure.meals[meal.uid].menuOrder.push(
+                      menu.uid
+                    );
+                    menuplanNewStructure.menues[menu.uid] = menu;
                   });
-                  menuplanNewStructure.meals[meal.uid] = meal;
-                  // Ein Menü erzeugen und der Mahlzeit hinzufügen
-                  let menu = Menuplan.createMenu();
-                  menuplanNewStructure.meals[meal.uid].menuOrder.push(menu.uid);
-                  menuplanNewStructure.menues[menu.uid] = menu;
-                });
-              }
-            );
-
-            // Rezepte - die Fixe Portion wird für die Planung 1:1 übernommen
-            menuplanDocumentData.recipes.forEach((recipe) => {
-              let mealRecipe = {
-                uid: recipe.uid,
-                recipe: {
-                  createdFromUid: recipes[recipe.recipeUid]?.created.fromUid,
-                  name: recipe.recipeName,
-                  recipeUid: recipe.recipeUid,
-                  type: recipes[recipe.recipeUid]?.type,
-                },
-                totalPortions: recipe.noOfServings,
-                plan: [
-                  {
-                    diet: PlanedDiet.FIX,
-                    intolerance: PlanedIntolerances.FIX,
-                    factor: 1,
-                    totalPortions: recipe.noOfServings,
-                  },
-                ],
-              };
-              menuplanNewStructure.mealRecipes[mealRecipe.uid] = mealRecipe;
-              // Heraussuchen in welches Menü, das muss und in die Order schieben.
-              let meal = Object.values(menuplanNewStructure.meals).find(
-                (meals) => {
-                  if (
-                    meals.date == Utils.dateAsString(recipe.date.toDate()) &&
-                    meals.mealType == recipe.mealUid
-                  ) {
-                    return true;
-                  }
                 }
               );
-              if (!meal) {
-                throw new Error("Meal nicht gefunden");
-              }
-              let menueUid = menuplanNewStructure.meals[meal.uid].menuOrder[0];
 
-              menuplanNewStructure.menues[menueUid].mealRecipeOrder.push(
-                mealRecipe.uid
-              );
-            });
+              // Rezepte - die Fixe Portion wird für die Planung 1:1 übernommen
+              menuplanDocumentData.recipes.forEach((recipe) => {
+                let fullRecipe = recipes[recipe.recipeUid];
+                let mealRecipe = {
+                  uid: recipe.uid,
+                  recipe: {
+                    createdFromUid: fullRecipe.created.fromUid,
+                    name: fullRecipe
+                      ? fullRecipe.name
+                      : `🗑️ Das Rezept «${recipe.recipeName}» wurde gelöscht`,
+                    recipeUid: fullRecipe
+                      ? recipe.recipeUid
+                      : `${MealRecipeDeletedPrefix}${recipe.recipeUid}`,
+                    type: fullRecipe ? fullRecipe?.type : RecipeType.public,
+                  },
+                  totalPortions: recipe.noOfServings,
+                  plan: [
+                    {
+                      diet: PlanedDiet.FIX,
+                      intolerance: PlanedIntolerances.FIX,
+                      factor: 1,
+                      totalPortions: recipe.noOfServings,
+                    },
+                  ],
+                } as MealRecipe;
+                menuplanNewStructure.mealRecipes[mealRecipe.uid] = mealRecipe;
 
-            // Notizen
-            menuplanDocumentData.notes.forEach((note) => {
-              // Wenn nur im Original-Dok Datum und MealUid gefüllt, muss
-              // das entsprechende Menü zuerst gesucht werden.
-              if (note.mealUid) {
+                // Heraussuchen in welches Menü, das muss und in die Order schieben.
+                console.group(recipe.recipeUid);
                 let meal = Object.values(menuplanNewStructure.meals).find(
                   (meals) => {
+                    console.log(meals.date);
+                    console.log(Utils.dateAsString(recipe.date));
+                    console.log(recipe.mealUid);
                     if (
-                      meals.date == Utils.dateAsString(note.date.toDate()) &&
-                      meals.mealType == note.mealUid
+                      meals.date == Utils.dateAsString(recipe.date) &&
+                      meals.mealType == recipe.mealUid
                     ) {
                       return true;
                     }
                   }
                 );
+                console.groupEnd();
+                if (!meal) {
+                  console.log(recipe);
+                  console.log(menuplanDocumentData);
+                  console.log(menuplanNewStructure);
+                  throw new Error("Meal nicht gefunden");
+                }
+                let menueUid =
+                  menuplanNewStructure.meals[meal.uid].menuOrder[0];
 
-                if (meal) {
+                menuplanNewStructure.menues[menueUid].mealRecipeOrder.push(
+                  mealRecipe.uid
+                );
+              });
+
+              // Notizen
+              menuplanDocumentData.notes.forEach((note) => {
+                // Wenn nur im Original-Dok Datum und MealUid gefüllt, muss
+                // das entsprechende Menü zuerst gesucht werden.
+                if (note.mealUid) {
+                  let meal = Object.values(menuplanNewStructure.meals).find(
+                    (meals) => {
+                      if (
+                        meals.date == Utils.dateAsString(note.date) &&
+                        meals.mealType == note.mealUid
+                      ) {
+                        return true;
+                      }
+                    }
+                  );
+
+                  if (meal) {
+                    menuplanNewStructure.notes[note.uid] = {
+                      date: Utils.dateAsString(note.date),
+                      menueUid: meal?.uid,
+                      text: note.text,
+                      uid: note.uid,
+                    };
+                  }
+                } else {
+                  // Kopfnotiz
                   menuplanNewStructure.notes[note.uid] = {
-                    date: Utils.dateAsString(note.date.toDate()),
-                    menueUid: meal?.uid,
+                    date: Utils.dateAsString(note.date),
+                    menueUid: "",
                     text: note.text,
                     uid: note.uid,
                   };
                 }
-              } else {
-                // Kopfnotiz
-                menuplanNewStructure.notes[note.uid] = {
-                  date: Utils.dateAsString(note.date.toDate()),
-                  menueUid: "",
-                  text: note.text,
-                  uid: note.uid,
-                };
-              }
-            });
+              });
 
-            // Dokument zurückschreiben
-            if (menuplanNewStructure.uid == "0AIHHZKcAv6dEinTVXY1") {
               console.log(menuplanNewStructure);
+              console.log(JSON.stringify(menuplanNewStructure));
+              await menuplanDocument.set(
+                Object.assign(
+                  {},
+                  firebase.event.menuplan.convertDateValuesToTimestamp(
+                    _.cloneDeep(menuplanNewStructure)
+                  )
+                )
+              );
+              counter++;
             }
+          })
+          .then(async () => {
+            // Event-Index updaten
+            console.warn("=== ShoppingList ===");
 
-            // Datum in Timestamp umwandeln
-            //@ts-ignore
-            menuplanNewStructure.dates = menuplanNewStructure.dates.map(
-              (date) => firebase.timestamp.fromDate(date)
+            // Danach die eine Einkaufsliste löschen --> werden nicht übernommen
+            let shoppingListDocument = firebase.db.doc(
+              `events/${eventDocument.id}/docs/shoppingList`
             );
-            // await menuplanDocument.set(menuplanNewStructure);
-          }
-        });
-
-        // Danach die eine Einkaufsliste
+            await shoppingListDocument.delete().catch((error) => {
+              // Gab wohl keine ShoppingListe
+              console.log(error);
+            });
+          });
       }
     });
+
+    console.warn("=== 000_allEvents ===");
+
+    let allEventsDocument = firebase.db.doc(`events/000_allEvents`);
+    console.log(events);
+    allEventsDocument.update(
+      Object.assign({}, firebase.event.convertDateValuesToTimestamp(events))
+    );
+    counter++;
   });
-  // Event-Index updaten
-  let allEvents = firebase.db.doc(`events/000_allEvents`);
-  // await allEvents.update(events);
 
   return counter;
 }

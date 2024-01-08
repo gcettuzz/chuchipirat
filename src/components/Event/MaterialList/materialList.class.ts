@@ -4,7 +4,10 @@ import Material, {MaterialType} from "../../Material/material.class";
 import {ChangeRecord} from "../../Shared/global.interface";
 import Utils from "../../Shared/utils.class";
 import Event from "../Event/event.class";
-import Menuplan, {Menue} from "../Menuplan/menuplan.class";
+import Menuplan, {
+  MealRecipeDeletedPrefix,
+  Menue,
+} from "../Menuplan/menuplan.class";
 import _ from "lodash";
 
 import UsedRecipes from "../UsedRecipes/usedRecipes.class";
@@ -266,6 +269,15 @@ export default class MaterialList {
           // Über alle Rezepte dieses Menü loopen
           menueplan.menues[menueUid].mealRecipeOrder.forEach(
             (mealRecipeUid) => {
+              if (
+                menueplan.mealRecipes[mealRecipeUid].recipe.recipeUid.includes(
+                  MealRecipeDeletedPrefix
+                )
+              ) {
+                // gelöschte Rezepte ausschliessen
+                return;
+              }
+
               // Alle Zutaten und Materiale holen
               let scaledMaterials = Recipe.scaleMaterials({
                 recipe:

@@ -92,6 +92,7 @@ export interface PortionPlan {
   factor: number;
   totalPortions: number;
 }
+export const MealRecipeDeletedPrefix = "[DELETED]";
 export interface MealRecipe {
   uid: string;
   recipe: {

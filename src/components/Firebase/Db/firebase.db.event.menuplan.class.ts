@@ -12,7 +12,11 @@ import {
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
 import {RecipeType} from "../../Recipe/recipe.class";
-import {MealRecipe, MealRecipes} from "../../Event/Menuplan/menuplan.class";
+import {
+  MealRecipe,
+  MealRecipeDeletedPrefix,
+  MealRecipes,
+} from "../../Event/Menuplan/menuplan.class";
 
 export class FirebaseDbEventMenuplan extends FirebaseDbSuper {
   firebase: Firebase;
@@ -61,7 +65,7 @@ export class FirebaseDbEventMenuplan extends FirebaseDbSuper {
     let usedRecipes: string[] = [];
 
     Object.values(value.mealRecipes as MealRecipes).forEach((mealRecipe) => {
-      if (!mealRecipe.recipe.recipeUid.includes("[DELETED]")) {
+      if (!mealRecipe.recipe.recipeUid.includes(MealRecipeDeletedPrefix)) {
         if (!usedRecipes.includes(mealRecipe.recipe.recipeUid)) {
           usedRecipes.push(mealRecipe.recipe.recipeUid);
         }

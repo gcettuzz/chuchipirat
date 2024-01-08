@@ -2,7 +2,10 @@ import Department from "../../Department/department.class";
 import Firebase from "../../Firebase";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import Unit from "../../Unit/unit.class";
-import Menuplan, {GoodsPlanMode} from "../Menuplan/menuplan.class";
+import Menuplan, {
+  GoodsPlanMode,
+  MealRecipeDeletedPrefix,
+} from "../Menuplan/menuplan.class";
 import UsedRecipes from "../UsedRecipes/usedRecipes.class";
 import {
   ERROR_NO_RECIPES_FOUND as TEXT_ERROR_NO_RECIPES_FOUND,
@@ -161,17 +164,27 @@ export default class ShoppingList {
       throw new Error(TEXT_ERROR_NO_RECIPES_FOUND);
     }
 
+    console.log(recipeList);
     // Alle Rezepte holen
     await Recipe.getMultipleRecipes({
       firebase: firebase,
       recipes: recipeList,
     })
       .then((result) => {
+        console.log(result);
         // Über gewählte Menüs loopen
         selectedMenues.forEach((menueUid) => {
           // Über alle Rezepte dieses Menü loopen
           menueplan.menues[menueUid].mealRecipeOrder.forEach(
             (mealRecipeUid) => {
+              if (
+                menueplan.mealRecipes[mealRecipeUid].recipe.recipeUid.includes(
+                  MealRecipeDeletedPrefix
+                )
+              ) {
+                return;
+              }
+
               // Alle Zutaten und Materiale holen
               let scaledIngredients = Recipe.scaleIngredients({
                 recipe:

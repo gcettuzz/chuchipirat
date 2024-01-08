@@ -131,7 +131,7 @@ export abstract class FirebaseDbSuper {
   }: Create<T>): Promise<T> {
     value = FirebaseDbSuper.setCreatedFields<T>(value, authUser, force);
 
-    let dbObject = _.cloneDeep(this.convertDateValues(value));
+    let dbObject = _.cloneDeep(this.convertDateValuesToTimestamp(value));
     // Felder auf Firebase anpassen
     dbObject = this.prepareDataForDb({value: dbObject});
 
@@ -142,7 +142,7 @@ export abstract class FirebaseDbSuper {
       .then((docRef) => {
         value = this.prepareDataForApp<T>({
           uid: docRef.id,
-          value: this.convertTimestampValues(dbObject),
+          value: this.convertTimestampValuesToDates(dbObject),
         });
         // Session Storage aufnehmen
         SessionStorageHandler.upsertDocument({
@@ -188,7 +188,9 @@ export abstract class FirebaseDbSuper {
       }
       let values = this.prepareDataForApp<T>({
         uid: snapshot.id,
-        value: this.convertTimestampValues(snapshot.data() as ValueObject),
+        value: this.convertTimestampValuesToDates(
+          snapshot.data() as ValueObject
+        ),
       });
       // SessionStorage update
       SessionStorageHandler.upsertDocument({
@@ -297,7 +299,7 @@ export abstract class FirebaseDbSuper {
         snapshot.forEach((document) => {
           let object = this.prepareDataForApp<T>({
             uid: document.id,
-            value: this.convertTimestampValues(document.data()),
+            value: this.convertTimestampValuesToDates(document.data()),
           }) as T;
           result.push(object);
         });
@@ -358,7 +360,7 @@ export abstract class FirebaseDbSuper {
         snapshot.forEach((document) => {
           let object = this.prepareDataForApp<T>({
             uid: document.id,
-            value: this.convertTimestampValues(document.data()),
+            value: this.convertTimestampValuesToDates(document.data()),
           }) as T;
           result.push(object);
         });
@@ -415,7 +417,9 @@ export abstract class FirebaseDbSuper {
 
       const dataForApp = this.prepareDataForApp<T>({
         uid: snapshot.id,
-        value: this.convertTimestampValues(snapshot.data() as ValueObject),
+        value: this.convertTimestampValuesToDates(
+          snapshot.data() as ValueObject
+        ),
       });
 
       callback(dataForApp);
@@ -438,7 +442,7 @@ export abstract class FirebaseDbSuper {
     value = FirebaseDbSuper.setLastChangeFields(value, authUser) as T;
     // Felder auf Firebase anpassen
     let dbObject = _.cloneDeep(this.prepareDataForDb<T>({value: value}));
-    dbObject = this.convertDateValues(dbObject);
+    dbObject = this.convertDateValuesToTimestamp(dbObject);
 
     const document = this.getDocument(uids);
     return await document
@@ -446,7 +450,7 @@ export abstract class FirebaseDbSuper {
       .then(() => {
         dbObject = this.prepareDataForApp<T>({
           uid: document.id,
-          value: this.convertTimestampValues(dbObject),
+          value: this.convertTimestampValuesToDates(dbObject),
         });
         // Session Storage updaten
         SessionStorageHandler.upsertDocument({
@@ -491,7 +495,7 @@ export abstract class FirebaseDbSuper {
         updateChangeFields
       );
     }
-    values = _.cloneDeep(this.convertDateValues(values));
+    values = _.cloneDeep(this.convertDateValuesToTimestamp(values));
     const document = this.getDocument(uids);
 
     return document
@@ -527,14 +531,14 @@ export abstract class FirebaseDbSuper {
     let dbObject = _.cloneDeep(
       FirebaseDbSuper.setLastChangeFields(value, authUser) as T
     );
-    dbObject = this.convertDateValues(dbObject);
-
+    dbObject = this.convertDateValuesToTimestamp(dbObject);
     const document = this.getDocument(uids);
     dbObject = this.prepareDataForDb<T>({value: dbObject});
+    console.log(dbObject);
     return document
       .set(dbObject)
       .then(() => {
-        dbObject = this.convertTimestampValues(dbObject);
+        dbObject = this.convertTimestampValuesToDates(dbObject);
         dbObject = this.prepareDataForApp({uid: value.uid, value: dbObject});
 
         // Session Storage updaten
@@ -775,7 +779,7 @@ export abstract class FirebaseDbSuper {
    * @returns values- Objekt mit angepassten werten
    */
   // ===================================================================== */
-  convertDateValues(values: any) {
+  convertDateValuesToTimestamp(values: any) {
     if (typeof values === "object" && values !== null) {
       Object.entries(values).forEach(([key, value]) => {
         switch (typeof value) {
@@ -784,9 +788,11 @@ export abstract class FirebaseDbSuper {
               value = new Date(new Date(value).setUTCHours(0, 0, 0, 0));
               value = this.firebase.timestamp.fromDate(value as Date);
             } else if (Array.isArray(value)) {
-              value.forEach((entry) => this.convertDateValues(entry));
+              value.forEach((entry) =>
+                this.convertDateValuesToTimestamp(entry)
+              );
             } else {
-              value = this.convertDateValues(value);
+              value = this.convertDateValuesToTimestamp(value);
             }
             break;
           default:
@@ -804,24 +810,26 @@ export abstract class FirebaseDbSuper {
    * @returns values- Objekt mit angepassten werten
    */
   // ===================================================================== */
-  convertTimestampValues(values: any) {
+  convertTimestampValuesToDates(values: any) {
     if (typeof values === "object" && values !== null) {
       // Wenn das Objekt bereits der Timestamp ist, hier abfangen
       if (values instanceof this.firebase.timestamp) {
-        values = new Date(values.toDate().setUTCHours(0, 0, 0, 0));
+        values = new Date(values.toDate());
+        // values = new Date(values.toDate().setUTCHours(0, 0, 0, 0));
       } else {
         // Objekt auseinandernehmen
         Object.entries(values).forEach(([key, value]) => {
           switch (typeof value) {
             case "object":
               if (value instanceof this.firebase.timestamp) {
-                value = new Date(value!.toDate().setUTCHours(0, 0, 0, 0));
+                value = new Date(value!.toDate());
+                // value = new Date(value!.toDate().setUTCHours(0, 0, 0, 0));
               } else if (Array.isArray(value)) {
                 value = value.map((entry) => {
-                  return this.convertTimestampValues(entry);
+                  return this.convertTimestampValuesToDates(entry);
                 });
               } else {
-                value = this.convertTimestampValues(value);
+                value = this.convertTimestampValuesToDates(value);
               }
               break;
             default:
