@@ -33,6 +33,7 @@ interface CreateFeedEntry {
   objectUid: string;
   objectName: string;
   objectPictureSrc?: string;
+  objectType?: string;
   textElements?: string[];
   objectUserUid?: string;
   objectUserDisplayName?: string;
@@ -68,7 +69,7 @@ export default class Feed {
   text: string;
   type: FeedType;
   visibility: Role;
-  sourceObject: {uid: string; name: string; pictureSrc: string};
+  sourceObject: {uid: string; name: string; pictureSrc: string; type?: string};
   user: {uid: string; displayName: string; pictureSrc: string};
   created: ChangeRecord;
 
@@ -113,6 +114,7 @@ export default class Feed {
     objectUid,
     objectName,
     objectPictureSrc = "",
+    objectType = "",
     textElements = [""],
     objectUserUid = "",
     objectUserDisplayName = "",
@@ -128,6 +130,7 @@ export default class Feed {
         uid: objectUid,
         name: objectName,
         pictureSrc: objectPictureSrc,
+        type: objectType,
       },
       user: objectUserUid
         ? {

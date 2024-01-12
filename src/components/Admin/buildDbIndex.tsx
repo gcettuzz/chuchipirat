@@ -46,6 +46,7 @@ import CustomDialogContext, {
 enum ReducerActions {
   UPDATE_INDEX_RECIPE_VARIANTS = "UPDATE_INDEX_RECIPE_VARIANTS",
   UPDATE_INDEX_EVENT_USED_RECIPES = "UPDATE_INDEX_EVENT_USED_RECIPES",
+  UPDATE_INDEX_ACTIVE_REQUESTS = "UPDATE_INDEX_ACTIVE_REQUESTS",
   GENERIC_ERROR = "GENERIC_ERROR",
   SNACKBAR_CLOSE = "SNACKBAR_CLOSE",
   SNACKBAR_SHOW = "SNACKBAR_SHOW",
@@ -60,6 +61,7 @@ interface IndexQueryResult {
 const INITITIAL_STATE: State = {
   indexRecipeVariants: {error: null, resultCounter: 0, executed: false},
   indexEventUsedRecipes: {error: null, resultCounter: 0, executed: false},
+  indexActiveRequests: {error: null, resultCounter: 0, executed: false},
   error: {},
   isError: false,
   isLoading: false,
@@ -73,6 +75,7 @@ type DispatchAction = {
 type State = {
   indexRecipeVariants: IndexQueryResult;
   indexEventUsedRecipes: IndexQueryResult;
+  indexActiveRequests: IndexQueryResult;
   isLoading: boolean;
   isError: boolean;
   error: object;
@@ -82,6 +85,7 @@ type State = {
 enum BuildIndex {
   recipeVariants,
   eventUsedRecipes,
+  activeRequests,
 }
 
 const splitErrorText = (errorText) => {
@@ -116,6 +120,15 @@ const buildIndicesReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         indexEventUsedRecipes: {
+          error: splitErrorText(action.payload.error),
+          resultCounter: action.payload.resultCounter,
+          executed: true,
+        },
+      };
+    case ReducerActions.UPDATE_INDEX_ACTIVE_REQUESTS:
+      return {
+        ...state,
+        indexActiveRequests: {
           error: splitErrorText(action.payload.error),
           resultCounter: action.payload.resultCounter,
           executed: true,
@@ -247,6 +260,25 @@ const BuildIndicesBase = ({props, authUser}) => {
             });
         }
         break;
+      case BuildIndex.activeRequests:
+        firebase.db
+          .collectionGroup("active")
+          .where("assignee.uid", "==", "")
+          .get()
+          .then((result) => {
+            dispatch({
+              type: ReducerActions.UPDATE_INDEX_ACTIVE_REQUESTS,
+              payload: {error: null, resultCounter: result.size},
+            });
+          })
+          .catch((error) => {
+            console.error(error);
+            dispatch({
+              type: ReducerActions.UPDATE_INDEX_ACTIVE_REQUESTS,
+              payload: {error: error.toString(), resultCounter: 0},
+            });
+          });
+
       default:
     }
   };
@@ -298,6 +330,12 @@ const BuildIndicesBase = ({props, authUser}) => {
                     indexName={"event/${event.uid}/docs"}
                     buildIndexType={BuildIndex.eventUsedRecipes}
                     buildIndexState={state.indexEventUsedRecipes}
+                    onBuildIndex={buildIndex}
+                  />
+                  <ListItemBuildIndex
+                    indexName={"requests/${requestType}/active"}
+                    buildIndexType={BuildIndex.activeRequests}
+                    buildIndexState={state.indexActiveRequests}
                     onBuildIndex={buildIndex}
                   />
                 </List>

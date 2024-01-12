@@ -526,7 +526,7 @@ interface ProductLineUi {
   containsLactose: JSX.Element;
   containsGluten: JSX.Element;
   diet: JSX.Element;
-  usable: boolean;
+  usable: JSX.Element;
 }
 
 const ProductsTable = ({
@@ -614,25 +614,9 @@ const ProductsTable = ({
       label: TEXT.DIET,
       visible: true,
     },
-    // {
-    //   id: "dietProperties.isVegetarian",
-    //   type: TableColumnTypes.checkbox,
-    //   textAlign: ColumnTextAlign.center,
-    //   disablePadding: false,
-    //   label: TEXT.IS_VEGETARIAN,
-    //   visible: true,
-    // },
-    // {
-    //   id: "dietProperties.isVegan",
-    //   type: TableColumnTypes.checkbox,
-    //   textAlign: ColumnTextAlign.center,
-    //   disablePadding: false,
-    //   label: TEXT.IS_VEGAN,
-    //   visible: true,
-    // },
     {
       id: "usable",
-      type: TableColumnTypes.checkbox,
+      type: TableColumnTypes.string,
       textAlign: ColumnTextAlign.center,
       disablePadding: false,
       label: TEXT.FIELD_USABLE,
@@ -728,7 +712,6 @@ const ProductsTable = ({
         name: product.name,
         departmentName: product.department.name,
         shoppingUnit: product.shoppingUnit,
-        usable: product.usable,
         containsLactose: (
           <Checkbox
             checked={product.dietProperties.allergens.includes(
@@ -783,6 +766,15 @@ const ProductsTable = ({
             />
           </RadioGroup>
         ),
+        usable: (
+          <Checkbox
+            id={"checkbox_" + product.uid}
+            disabled={!editMode}
+            checked={product.usable}
+            color="primary"
+            onChange={handleCheckBoxChange}
+          />
+        ),
       };
     });
   };
@@ -813,6 +805,22 @@ const ProductsTable = ({
       }
     }
     setProducts(tempProducts);
+    setFilteredProductsUi(
+      prepareProductsListForUi(filterProducts(tempProducts, searchString))
+    );
+  };
+  const handleCheckBoxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    let pressedCheckbox = event.target.id.split("_");
+    let tempProducts = products;
+    let changedProduct = tempProducts.find(
+      (product) => product.uid === pressedCheckbox[1]
+    );
+    if (!changedProduct) {
+      return;
+    }
+    changedProduct.usable = event.target.checked;
+    setProducts(tempProducts);
+
     setFilteredProductsUi(
       prepareProductsListForUi(filterProducts(tempProducts, searchString))
     );
@@ -926,6 +934,7 @@ const ProductsTable = ({
       prepareProductsListForUi(filterProducts(products, ""))
     );
   }
+  //TODO: usable einbauen wie bei den PRodukten
   return (
     <React.Fragment>
       <Card className={classes.card} key={"requestTablePanel"}>
@@ -944,7 +953,11 @@ const ProductsTable = ({
                 variant="body2"
                 style={{marginTop: "0.5em", marginBottom: "2em"}}
               >
-                {products.length} {TEXT.PANEL_PRODUCTS}
+                {filteredProductsUi.length == products.length
+                  ? `${products.length} ${TEXT.MATERIALS}`
+                  : `${filteredProductsUi.length} ${TEXT.FROM.toLowerCase()} ${
+                      products.length
+                    } ${TEXT.PRODUCTS}`}
               </Typography>
 
               <EnhancedTable
@@ -963,6 +976,7 @@ const ProductsTable = ({
         productUid={productPopUpValues.productUid}
         productName={productPopUpValues.productName}
         productDietProperties={productPopUpValues.dietProperties}
+        productUsable={productPopUpValues.usable}
         products={products}
         dialogOpen={productPopUpValues.popUpOpen}
         handleOk={onPopUpOk}

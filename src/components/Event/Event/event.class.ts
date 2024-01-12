@@ -263,7 +263,10 @@ export default class Event {
           errorObject: date,
         });
       }
-      if (date.from > date.to && date.to.getFullYear() != 1970) {
+      if (
+        date.from.getDate() > date.to.getDate() &&
+        date.to.getFullYear() != 1970
+      ) {
         formValidation.push({
           priority: 3,
           fieldName: "dateFrom_" + date.uid,
@@ -285,8 +288,8 @@ export default class Event {
       event.dates.forEach((innerDate, innerCounter) => {
         if (outerCounter !== innerCounter) {
           if (
-            outerDate.from >= innerDate.from &&
-            outerDate.from <= innerDate.to
+            outerDate.from.getDate() >= innerDate.from.getDate() &&
+            outerDate.from.getDate() <= innerDate.to.getDate()
           ) {
             formValidation.push({
               priority: 3,
@@ -319,6 +322,8 @@ export default class Event {
     });
     // wenn nicht leer, Exception
     if (formValidation.length != 0) {
+      console.log(event);
+      console.log(formValidation);
       throw new FieldValidationError(
         TEXT_ERROR_FORM_VALIDATION,
         formValidation

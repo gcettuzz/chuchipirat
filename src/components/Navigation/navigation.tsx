@@ -42,6 +42,7 @@ import SettingsIcon from "@material-ui/icons/Settings";
 import GroupIcon from "@material-ui/icons/Group";
 import NewReleasesIcon from "@material-ui/icons/NewReleases";
 import DescriptionIcon from "@material-ui/icons/Description";
+import BuildIcon from "@material-ui/icons/Build";
 
 import * as ACTIONS from "../../constants/actions";
 import * as ROUTES from "../../constants/routes";
@@ -342,6 +343,15 @@ const NavigationAuthBase = (props) => {
               <ListItemText
                 primary={TEXT.NAVIGATION_PRODUCTS}
                 onClick={() => push(ROUTES.PRODUCTS)}
+              />
+            </ListItem>
+            <ListItem button key="Materials">
+              <ListItemIcon>
+                <BuildIcon />
+              </ListItemIcon>
+              <ListItemText
+                primary={TEXT.MATERIALS}
+                onClick={() => push(ROUTES.MATERIALS)}
               />
             </ListItem>
           </List>

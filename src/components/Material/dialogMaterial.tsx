@@ -11,6 +11,7 @@ import DialogActions from "@material-ui/core/DialogActions";
 
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
+import Checkbox from "@material-ui/core/Checkbox";
 
 import Radio from "@material-ui/core/Radio";
 import RadioGroup from "@material-ui/core/RadioGroup";
@@ -40,6 +41,7 @@ import {
   BUTTON_CANCEL,
   ERROR_MATERIAL_WITH_THIS_NAME_ALREADY_EXISTS,
   ERROR_PARAMETER_NOT_PASSED,
+  FIELD_USABLE,
 } from "../../constants/text";
 
 import AuthUser from "../Firebase/Authentication/authUser.class";
@@ -53,6 +55,7 @@ export const MATERIAL_POP_UP_VALUES_INITIAL_STATE = {
   uid: "",
   name: "",
   type: MaterialType.none,
+  usable: true,
   clear: false,
   firstCall: true,
 };
@@ -76,6 +79,7 @@ interface DialogMaterialProps {
   materialName: Material["name"];
   materialUid: Material["uid"];
   materialType: Material["type"];
+  materialUsable: Material["usable"];
   materials: Material[];
   dialogOpen: boolean;
   handleOk: (material: Material) => void;
@@ -95,6 +99,7 @@ const DialogMaterial = ({
   materialUid = "",
   materials = [],
   materialType = MaterialType.none,
+  materialUsable,
   dialogOpen,
   handleOk,
   handleClose,
@@ -156,6 +161,12 @@ const DialogMaterial = ({
       firstCall: false,
     });
   };
+  const onChangeCheckbox = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setMaterialPopUpValues({
+      ...materialPopUpValues,
+      usable: event.target.checked,
+    });
+  };
   /* ------------------------------------------
   // PopUp Abbrechen
   // ------------------------------------------ */
@@ -201,6 +212,7 @@ const DialogMaterial = ({
         errorText: ERROR_MATERIAL_WITH_THIS_NAME_ALREADY_EXISTS,
       };
     }
+    console.log("hier", tempValidation);
     if (tempValidation.name.hasError || tempValidation.type.hasError) {
       setValidation(tempValidation);
       setMaterialPopUpValues({...materialPopUpValues});
@@ -226,24 +238,16 @@ const DialogMaterial = ({
 
           break;
         case MATERIAL_DIALOG_TYPE.EDIT:
-        //TODO:
-        // Produkt ändern
-        // Product.editProduct({
-        //   firebase: firebase,
-        //   uid: productPopUpValues.uid,
-        //   name: productPopUpValues.name,
-        //   departmentUid: productPopUpValues.department.uid,
-        //   shoppingUnit: productPopUpValues.shoppingUnit,
-        //   usable: productPopUpValues.usable,
-        //   runCloudFunction: Boolean(productPopUpValues.name != productName),
-        // }).then((result) => {
-        //   setProductPopUpValues({ ...productPopUpValues, uid: result.uid });
-        //   handleOk(result);
-        //   setProductPopUpValues({
-        //     ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
-        //     clear: true,
-        //   });
-        // });
+          let material = new Material();
+          material.uid = materialPopUpValues.uid;
+          material.name = materialPopUpValues.name;
+          material.type = materialPopUpValues.type;
+          material.usable = materialPopUpValues.usable;
+          handleOk(material);
+          setMaterialPopUpValues({
+            ...MATERIAL_POP_UP_VALUES_INITIAL_STATE,
+            clear: true,
+          });
       }
     }
   };
@@ -267,6 +271,7 @@ const DialogMaterial = ({
       uid: materialUid,
       name: materialName.trim(),
       type: materialType,
+      usable: materialUsable,
     });
   }
   return (
@@ -287,19 +292,6 @@ const DialogMaterial = ({
         <DialogContentText>
           {dialogType === MATERIAL_DIALOG_TYPE.CREATE && DIALOG_TEXT_MATERIAL}
         </DialogContentText>
-        {/* {dialogType === MATERIAL_DIALOG_TYPE.EDIT && (
-          <AlertMessage
-            severity="warning"
-            messageTitle={TEXT.ATTENTION}
-            body={
-              <React.Fragment>
-                {TEXT.DIALOG_WARNING_PRODUCT_1}
-                <strong>{TEXT.DIALOG_WARNING_PRODUCT_2}</strong>
-                {TEXT.DIALOG_WARNING_PRODUCT_3}
-              </React.Fragment>
-            }
-          />
-        )} */}
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <TextField
@@ -350,6 +342,21 @@ const DialogMaterial = ({
               {DIALOG_EXPLANATION_MATERIAL_TYPE_USAGE}
             </FormHelperText>
           </Grid>
+          {dialogType == MATERIAL_DIALOG_TYPE.EDIT && (
+            <Grid xs={12}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={materialPopUpValues.usable}
+                    onChange={onChangeCheckbox}
+                    name="usable"
+                    color="primary"
+                  />
+                }
+                label={FIELD_USABLE}
+              />
+            </Grid>
+          )}
         </Grid>
       </DialogContent>
       <DialogActions>

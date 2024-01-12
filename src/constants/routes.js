@@ -52,10 +52,9 @@ export const REQUEST_OVERVIEW_UID = "/requestoverview/:id";
 export const UNITS = "/units";
 export const UNITCONVERSION = "/unitconversion";
 export const PRODUCTS = "/products";
+export const MATERIALS = "/materials";
 export const DEPARTMENTS = "/departments";
 export const NO_AUTH = "/noauth";
-
-export const MATERIALS = "/materials";
 
 //NEXT_FEATURE: Muss Raus
 export const TEMP = "/temp";

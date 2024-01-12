@@ -775,6 +775,17 @@ export default class Recipe {
         field: UserPublicProfileStatsFields.noRecipesPrivate,
         step: 1,
       });
+
+      Feed.createFeedEntry({
+        firebase: firebase,
+        authUser: authUser,
+        feedType: FeedType.recipeCreated,
+        objectUid: recipe.uid,
+        objectName: recipe.name,
+        objectPictureSrc: recipe.pictureSrc,
+        objectType: RecipeType.private,
+        feedVisibility: Role.subAdmin,
+      });
     }
 
     if (
@@ -870,6 +881,16 @@ export default class Recipe {
         field: StatsField.noRecipeVariants,
         value: 1,
       });
+      Feed.createFeedEntry({
+        firebase: firebase,
+        authUser: authUser,
+        feedType: FeedType.recipeCreated,
+        objectUid: recipe.uid,
+        objectName: recipe.name,
+        objectPictureSrc: recipe.pictureSrc,
+        objectType: RecipeType.variant,
+        feedVisibility: Role.subAdmin,
+      });
     }
     return recipe;
   };
@@ -882,11 +903,6 @@ export default class Recipe {
     if (Object.keys(recipe.ingredients.entries).length > 0) {
       recipe.ingredients = Recipe.deleteEmptyIngredients(recipe.ingredients);
     }
-    // if (Object.keys(recipe.preparationSteps.entries).length > 0) {
-    //   recipe.preparationSteps = Recipe.deleteEmptyPreparationSteps(
-    //     recipe.preparationSteps
-    //   );
-    // }
     if (Object.values(recipe.materials.entries).length > 0) {
       recipe.materials = Recipe.deleteEmptyMaterials(recipe.materials);
     }
@@ -963,8 +979,8 @@ export default class Recipe {
         let product = products.find(
           (product) => product.uid === productUid
         ) as Product;
-
-        if (product.dietProperties.allergens.length > 0) {
+        console.log(product);
+        if (product.dietProperties?.allergens?.length > 0) {
           dietProperties.allergens = dietProperties.allergens.concat(
             product.dietProperties.allergens
           );

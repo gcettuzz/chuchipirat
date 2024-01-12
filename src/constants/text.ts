@@ -1062,6 +1062,7 @@ export const ATTENTION_ABOUT_TO_DELETE_PLANED_DAYS =
 export const DELETION_AFFECTS_PLANED_DAYS =
   "Durch die vorgenommene Änderung hast du Tage entfernt, die bereits in der Planung berücksichtigt sind. Wenn du auf «Fortfahren» klickst, werden diese Tage zusammen mit den bereits eingeplanten Rezepten gelöscht.";
 export const PROCEED = "Fortfahren";
+export const MATERIALS = "Materialien";
 /* =====================================================================
 // Abkürzungen
 // ===================================================================== */

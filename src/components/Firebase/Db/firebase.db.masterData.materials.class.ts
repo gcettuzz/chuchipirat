@@ -6,7 +6,7 @@ import {
   PrepareDataForDb,
   PrepareDataForApp,
 } from "./firebase.db.super.class";
-import { ERROR_NOT_IMPLEMENTED_YET } from "../../../constants/text";
+import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
 import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
@@ -48,20 +48,25 @@ export class FirebaseDbMasterDataMaterials extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForDb<T extends ValueObject>({ value }: PrepareDataForDb<T>) {
-    // So kann nur ein Produkt aufs Mal gespeichert werden
-    return {
-      [value.uid]: {
-        name: value.name,
-        type: value.type,
-        usable: value.usable,
-      },
-    };
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
+    // value kommt als Array, damit auch mehrere Materialien angepasst werden können
+
+    let materialsMap = {};
+
+    value.forEach((material) => {
+      materialsMap[material.uid] = {
+        name: material.name,
+        type: material.type,
+        usable: material.usable,
+      };
+    });
+
+    return materialsMap;
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({ uid, value }: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
     // Die Aufsplittung von Objekt zu Array geschieht in der products.class
     return value as unknown as T;
   }

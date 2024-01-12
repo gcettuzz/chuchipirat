@@ -71,6 +71,7 @@ interface DialogProductProps {
   productName: Product["name"];
   productUid: Product["uid"];
   productDietProperties: Product["dietProperties"];
+  productUsable: Product["usable"];
   products: Product[];
   dialogOpen: boolean;
   handleOk: (product: Product) => void;
@@ -89,6 +90,7 @@ const DialogProduct = ({
   productName = "",
   productUid = "",
   productDietProperties,
+  productUsable,
   products = [],
   dialogOpen,
   handleOk,
@@ -180,6 +182,14 @@ const DialogProduct = ({
     setProductPopUpValues({
       ...productPopUpValues,
       dietProperties: dietProperties,
+    });
+  };
+  const onChangeUsableCheckbox = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setProductPopUpValues({
+      ...productPopUpValues,
+      usable: event.target.checked,
     });
   };
 

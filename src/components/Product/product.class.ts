@@ -30,10 +30,11 @@ interface SaveAllProductsProps {
   products: Product[];
   authUser: AuthUser;
 }
-// interface DietProperty {
-//   [key: string]: boolean;
-// }
 
+// ATTENTION:
+// wird dies erweitert, muss auch im Cloud-Function File index
+// die Beschreibung angepasst werden. Sonst funktioniert der
+// Feed-Recap-Newsletter nicht.
 export enum Allergen {
   None,
   Lactose = 1,

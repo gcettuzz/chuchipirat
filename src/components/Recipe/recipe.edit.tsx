@@ -237,6 +237,8 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
       tmpIngredients.entries[action.payload.uid][action.payload.field] =
         action.payload.value;
 
+      // Prüfen ob es das Produkt in der Liste gibt. Sonst hizufügen
+
       // Wenn das die letzte Zutat (also kein Abschnitt) ist, automatisch eine neue einfügen
       if (
         action.payload.uid ==
@@ -1207,6 +1209,7 @@ const RecipeEdit = ({
     });
   };
   const onCreateProductToAdd = (product: Product) => {
+    console.log(product);
     dispatch({
       type: ReducerActions.ON_INGREDIENT_CHANGE,
       payload: {

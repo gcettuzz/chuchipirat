@@ -2,10 +2,10 @@ import {
   CollectionReference,
   DocumentReference,
 } from "@firebase/firestore-types";
-import { ERROR_PARAMETER_NOT_PASSED } from "../../../constants/text";
+import {ERROR_PARAMETER_NOT_PASSED} from "../../../constants/text";
 
 import Firebase from "../firebase.class";
-import { AuthUser } from "../Authentication/authUser.class";
+import {AuthUser} from "../Authentication/authUser.class";
 
 export enum CloudFunctionType {
   userDiplayName = "userDisplayName",
@@ -17,14 +17,15 @@ export enum CloudFunctionType {
   recipeReviewMailCommunityLeaders = "recipeReviewMailCommunityLeaders",
   requestPublishRecipe = "requestPublishRecipe",
   mailUser = "mailUser",
+  dailySummary = "dailySummary",
 }
 
 interface CreateDocumentForCloudFunctionsTrigger {
   document: DocumentReference;
-  values: { [key: string]: any };
+  values: {[key: string]: any};
 }
 export interface TriggerCloudFunction {
-  values: { [key: string]: any };
+  values: {[key: string]: any};
   authUser: AuthUser;
 }
 interface UpdateLog {
@@ -58,7 +59,7 @@ export abstract class FirebaseDbCloudFunctionSuper {
   /* =====================================================================
   // Logfile updaten
   // ===================================================================== */
-  async updateLog({ uid, cloudFunctionType, authUser }: UpdateLog) {
+  async updateLog({uid, cloudFunctionType, authUser}: UpdateLog) {
     const document = this.firebase.db.doc("_cloudFunctions/log");
 
     document
@@ -86,7 +87,7 @@ export abstract class FirebaseDbCloudFunctionSuper {
    *                und den authUser
    * @returns UID des Dokumentes, das den Trigger ausgelöst hat
    */
-  triggerCloudFunction({ values, authUser }: TriggerCloudFunction) {
+  triggerCloudFunction({values, authUser}: TriggerCloudFunction) {
     const document = this.getCollection().doc();
 
     this.createDocumentForCloudFunctionsTrigger({

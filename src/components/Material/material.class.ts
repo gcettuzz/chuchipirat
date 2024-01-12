@@ -9,16 +9,26 @@ import Feed, {FeedType} from "../Shared/feed.class";
 import Role from "../../constants/roles";
 import Product from "../Product/product.class";
 
+// ATTENTION:
+// wird dies erweitert, muss auch im Cloud-Function File index
+// die Beschreibung angepasst werden. Sonst funktioniert der
+// Feed-Recap-Newsletter nicht.
 export enum MaterialType {
   none = 0,
   consumable,
   usage,
 }
 
-interface CreateMaterialProps {
+interface CreateMaterial {
   firebase: Firebase;
   name: string;
   type: MaterialType;
+  authUser: AuthUser;
+}
+
+interface SaveAllMaterials {
+  materials: Material[];
+  firebase: Firebase;
   authUser: AuthUser;
 }
 
@@ -89,7 +99,7 @@ export default class Material {
     name,
     type,
     authUser,
-  }: CreateMaterialProps) => {
+  }: CreateMaterial) => {
     let material = new Material();
 
     material.uid = Utils.generateUid(20);
@@ -98,9 +108,9 @@ export default class Material {
     material.usable = true;
 
     // Dokument updaten mit neuem Produkt
-    firebase.masterdata.materials.update<Material>({
+    firebase.masterdata.materials.update<Array<Material>>({
       uids: [""], // Wird in der Klasse bestimmt
-      value: material,
+      value: [material],
       authUser: authUser,
     });
 
@@ -125,5 +135,25 @@ export default class Material {
     });
 
     return material;
+  };
+  // ===================================================================== */
+  /**
+   * Alle Produkte speichern
+   * @param object - Objekt mit Produkte-Array, Firebase Referenz und Authuser
+   */
+  static saveAllMaterials = async ({
+    firebase,
+    materials,
+    authUser,
+  }: SaveAllMaterials) => {
+    // Dokument updaten mit neuem Produkt
+
+    firebase.masterdata.materials.update<Array<Material>>({
+      uids: [""], // Wird in der Klasse bestimmt
+      value: materials,
+      authUser: authUser,
+    });
+
+    return materials;
   };
 }
