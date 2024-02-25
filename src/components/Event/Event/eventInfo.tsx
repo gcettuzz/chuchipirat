@@ -62,7 +62,7 @@ import {
 } from "../../../constants/text";
 
 import useStyles from "../../../constants/styles";
-import {CARD_PLACEHOLDER_PICTURE} from "../../../constants/defaultValues";
+import {ImageRepository} from "../../../constants/imageRepository";
 
 import Event from "./event.class";
 import User from "../../User/user.class";
@@ -512,7 +512,8 @@ const EventBasicInfoCard = ({
                         ? previewPictureUrl
                         : event.pictureSrc
                         ? event.pictureSrc
-                        : CARD_PLACEHOLDER_PICTURE()
+                        : ImageRepository.getEnviromentRelatedPicture()
+                            .CARD_PLACEHOLDER_MEDIA
                     }')`,
                     backgroundPosition: "center",
                     backgroundRepeat: "no-repeat",

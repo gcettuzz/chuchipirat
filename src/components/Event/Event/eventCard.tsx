@@ -11,8 +11,7 @@ import {
 import {Skeleton} from "@material-ui/lab";
 
 import Event from "./event.class";
-import {CARD_PLACEHOLDER_PICTURE} from "../../../constants/defaultValues";
-
+import {ImageRepository} from "../../../constants/imageRepository";
 interface EventCardProps {
   event: Event;
   onCardClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
@@ -54,7 +53,10 @@ const EventCard = ({event, onCardClick}: EventCardProps) => {
             <CardMedia
               className={classes.cardMedia}
               image={
-                event.pictureSrc ? event.pictureSrc : CARD_PLACEHOLDER_PICTURE()
+                event.pictureSrc
+                  ? event.pictureSrc
+                  : ImageRepository.getEnviromentRelatedPicture()
+                      .CARD_PLACEHOLDER_MEDIA
               }
               title={event.name}
               style={{

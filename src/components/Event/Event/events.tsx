@@ -24,8 +24,6 @@ import {
   CREATE_EVENT as TEXT_CREATE_EVENT,
 } from "../../../constants/text";
 import Event from "./event.class";
-import {CARD_PLACEHOLDER_PICTURE} from "../../../constants/defaultValues";
-
 import useStyles from "../../../constants/styles";
 import AlertMessage from "../../Shared/AlertMessage";
 import {withFirebase} from "../../Firebase/firebaseContext";
@@ -42,6 +40,7 @@ import {
 } from "../../Session/authUserContext";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import {CustomRouterProps} from "../../Shared/global.interface";
+import {ImageRepository} from "../../../constants/imageRepository";
 /* ===================================================================
 // ============================ Dispatcher ===========================
 // =================================================================== */
@@ -240,7 +239,10 @@ const EventsGrid = ({
           <Card className={classes.card} key={"eventCardNew"}>
             <CardMedia
               className={classes.cardMedia}
-              image={CARD_PLACEHOLDER_PICTURE()}
+              image={
+                ImageRepository.getEnviromentRelatedPicture()
+                  .CARD_PLACEHOLDER_MEDIA
+              }
               title={TEXT_CREATE_EVENT}
             />
             <CardContent>

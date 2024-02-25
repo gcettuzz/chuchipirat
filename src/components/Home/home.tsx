@@ -43,7 +43,7 @@ import {
 } from "../../constants/text";
 import * as ROUTES from "../../constants/routes";
 
-import {CARD_PLACEHOLDER_PICTURE} from "../../constants/defaultValues";
+import {ImageRepository} from "../../constants/imageRepository";
 import Event, {EventType} from "../Event/Event/event.class";
 import EventCard, {EventCardLoading} from "../Event/Event/eventCard";
 
@@ -571,7 +571,10 @@ const HomeNextEvents = ({
           <Card className={classes.card} key={"eventCardNew"}>
             <CardMedia
               className={classes.cardMedia}
-              image={CARD_PLACEHOLDER_PICTURE()}
+              image={
+                ImageRepository.getEnviromentRelatedPicture()
+                  .CARD_PLACEHOLDER_MEDIA
+              }
               title={TEXT_CREATE_EVENT}
             />
             <CardContent>
@@ -755,7 +758,8 @@ const HomeNewestRecipes = ({
                     image={
                       recipe.sourceObject.pictureSrc
                         ? recipe.sourceObject.pictureSrc
-                        : CARD_PLACEHOLDER_PICTURE()
+                        : ImageRepository.getEnviromentRelatedPicture()
+                            .CARD_PLACEHOLDER_MEDIA
                     }
                     title={recipe.sourceObject.name}
                     style={{

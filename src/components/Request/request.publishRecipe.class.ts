@@ -2,8 +2,7 @@ import Recipe, {RecipeType} from "../Recipe/recipe.class";
 import MailTemplate from "../../constants/mailTemplates";
 import {Request} from "./internal";
 
-import {CARD_PLACEHOLDER_PICTURE} from "../../constants/defaultValues";
-
+import {ImageRepository} from "../../constants/imageRepository";
 import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 import Feed, {FeedType} from "../Shared/feed.class";
 import Role from "../../constants/roles";
@@ -180,7 +179,7 @@ export class RequestPublishRecipe extends Request {
       uid: requestObject.uid,
       pictureSrc: requestObject.pictureSrc
         ? requestObject.pictureSrc
-        : CARD_PLACEHOLDER_PICTURE(),
+        : ImageRepository.getEnviromentRelatedPicture().CARD_PLACEHOLDER_MEDIA,
     };
   }
   /* =====================================================================

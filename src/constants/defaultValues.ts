@@ -1,7 +1,5 @@
 // Default Werte für jegliche Parameter
 
-import Utils from "../components/Shared/utils.class";
-
 import {
   WITHOUT_INTOLERANCES as TEXT_WITHOUT_INTOLERANCES,
   LACTOSE_INTOLERANCE as TEXT_LACTOSE_INTOLERANCE,
@@ -17,19 +15,6 @@ export const RECIPES_SEARCH = 12;
 
 export const EVENT_PLACEHOLDER_PICTURE =
   "https://firebasestorage.googleapis.com/v0/b/chuchipirat-a99de.appspot.com/o/placeholder.png?alt=media&token=333b62f9-db26-4bdb-96ba-8f6bf95c8d1e";
-
-// ===================================================================== */
-/**
- * Placeholder für Card holen
- * @returns Bild-URL
- */
-export const CARD_PLACEHOLDER_PICTURE = () => {
-  if (Utils.isDevTenant()) {
-    return "https://firebasestorage.googleapis.com/v0/b/chuchipirat-dev.appspot.com/o/defaults%2Fplaceholder.png?alt=media&token=fe2c82ce-5e98-41be-ae98-87a1af3753a3";
-  } else {
-    return "https://firebasestorage.googleapis.com/v0/b/chuchipirat.appspot.com/o/defaults%2Fplaceholder.png?alt=media&token=c5532518-f7d1-4c76-b9ee-f4f93716dd27";
-  }
-};
 
 export const MENUPLAN_MEALS = [
   {name: "Zmorgen", uid: ""},

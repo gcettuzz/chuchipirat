@@ -17,7 +17,7 @@ import {Info as InfoIcon, Add as AddIcon} from "@material-ui/icons";
 
 import {Skeleton, Rating} from "@material-ui/lab";
 import RecipeShort from "./recipeShort.class";
-import {CARD_PLACEHOLDER_PICTURE} from "../../constants/defaultValues";
+import {ImageRepository} from "../../constants/imageRepository";
 import {OnRecipeCardClickProps} from "./recipes";
 import {
   DIET_TYPES as TEXT_DIET_TYPES,
@@ -151,7 +151,8 @@ const RecipeCard = ({
               image={
                 recipe.pictureSrc
                   ? recipe.pictureSrc
-                  : CARD_PLACEHOLDER_PICTURE()
+                  : ImageRepository.getEnviromentRelatedPicture()
+                      .CARD_PLACEHOLDER_MEDIA
               }
               title={recipe.name}
               style={{
