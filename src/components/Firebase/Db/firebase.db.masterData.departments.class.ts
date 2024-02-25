@@ -6,7 +6,7 @@ import {
   PrepareDataForDb,
   PrepareDataForApp,
 } from "./firebase.db.super.class";
-import { ERROR_NOT_IMPLEMENTED_YET } from "../../../constants/text";
+import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
 import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
@@ -48,21 +48,24 @@ export class FirebaseDbMasterDataDepartments extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForDb<T extends ValueObject>({ value }: PrepareDataForDb<T>) {
-    // So kann nur eine Abteilung aufs Mal gespeichert werden
-    return {
-      [value.uid]: {
-        name: value.name,
-        pos: value.pos,
-        usable: value.usable,
-      },
-    };
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
+    const departmentsMap = {};
+
+    value.forEach((department) => {
+      departmentsMap[department.uid] = {
+        name: department.name,
+        pos: department.pos,
+        usable: department.usable,
+      };
+    });
+
+    return departmentsMap;
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({ uid, value }: PrepareDataForApp) {
-    // Die Aufsplittung von Objekt zu Array geschieht in der unit.class
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
+    // Die Aufsplittung von Objekt zu Array geschieht in der department.class
     return value as unknown as T;
   }
   /* =====================================================================

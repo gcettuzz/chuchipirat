@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "recompose";
 
 import Grid from "@material-ui/core/Grid";
 
@@ -21,7 +20,6 @@ import FormLabel from "@material-ui/core/FormLabel";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 
-import Firebase, {withFirebase} from "../Firebase";
 import Material, {MaterialType} from "./material.class";
 
 import {
@@ -41,12 +39,12 @@ import {
   BUTTON_CANCEL,
   ERROR_MATERIAL_WITH_THIS_NAME_ALREADY_EXISTS,
   ERROR_PARAMETER_NOT_PASSED,
-  FIELD_USABLE,
+  USABLE,
 } from "../../constants/text";
 
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import Role from "../../constants/roles";
-import {withAuthorization} from "../Session";
+import Firebase from "../Firebase/firebase.class";
+import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -121,7 +119,7 @@ const DialogMaterial = ({
     newValue?: any,
     objectId?: string
   ) => {
-    let value: string | Object;
+    let value: string | ValueObject | boolean;
     let field: string;
 
     if (event.target.id) {
@@ -181,7 +179,7 @@ const DialogMaterial = ({
   // ------------------------------------------ */
   const onOkClick = () => {
     //  Prüfung Typ und Name gesetzt
-    let tempValidation = validation;
+    const tempValidation = validation;
 
     !materialPopUpValues.name
       ? (tempValidation.name = {
@@ -212,7 +210,6 @@ const DialogMaterial = ({
         errorText: ERROR_MATERIAL_WITH_THIS_NAME_ALREADY_EXISTS,
       };
     }
-    console.log("hier", tempValidation);
     if (tempValidation.name.hasError || tempValidation.type.hasError) {
       setValidation(tempValidation);
       setMaterialPopUpValues({...materialPopUpValues});
@@ -237,8 +234,8 @@ const DialogMaterial = ({
           });
 
           break;
-        case MATERIAL_DIALOG_TYPE.EDIT:
-          let material = new Material();
+        case MATERIAL_DIALOG_TYPE.EDIT: {
+          const material = new Material();
           material.uid = materialPopUpValues.uid;
           material.name = materialPopUpValues.name;
           material.type = materialPopUpValues.type;
@@ -248,13 +245,14 @@ const DialogMaterial = ({
             ...MATERIAL_POP_UP_VALUES_INITIAL_STATE,
             clear: true,
           });
+        }
       }
     }
   };
   /* ------------------------------------------
   // PopUp Ok - schliessen
   // ------------------------------------------ */
-  const onClose = (event: object, reason: string) => {
+  const onClose = (event: ValueObject, reason: string) => {
     if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
       handleClose();
     }
@@ -353,7 +351,7 @@ const DialogMaterial = ({
                     color="primary"
                   />
                 }
-                label={FIELD_USABLE}
+                label={USABLE}
               />
             </Grid>
           )}
@@ -373,9 +371,10 @@ const DialogMaterial = ({
   );
 };
 
-const condition = (authUser: AuthUser) => !!authUser;
+// const condition = (authUser: AuthUser) => !!authUser;
 
-export default compose(
-  withAuthorization(condition),
-  withFirebase
-)(DialogMaterial);
+// export default compose(
+//   withAuthorization(condition),
+//   withFirebase
+// )(DialogMaterial);
+export default DialogMaterial;

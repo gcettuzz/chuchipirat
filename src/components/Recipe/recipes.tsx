@@ -1,6 +1,9 @@
+/* eslint-disable react/prop-types */ // TODO: upgrade to latest eslint tooling
+
 import React from "react";
-import { compose } from "recompose";
-import { useHistory } from "react-router";
+import {compose} from "react-recompose";
+
+import {useHistory} from "react-router";
 
 import CssBaseline from "@material-ui/core/CssBaseline";
 
@@ -24,44 +27,40 @@ import {
   CircularProgress,
 } from "@material-ui/core";
 
-import { ToggleButton, ToggleButtonGroup } from "@material-ui/lab";
+import {ToggleButton, ToggleButtonGroup} from "@material-ui/lab";
 
 import AddIcon from "@material-ui/icons/Add";
 
-import {
-  RECIPE as ROUTE_RECIPE,
-  RECIPES as ROUTE_RECIPES,
-} from "../../constants/routes";
+import {RECIPE as ROUTE_RECIPE} from "../../constants/routes";
 import Action from "../../constants/actions";
 import * as TEXT from "../../constants/text";
 
 import useStyles from "../../constants/styles";
 
 import RecipeShort from "./recipeShort.class";
-import Recipe, { MenuType, RecipeType } from "./recipe.class";
+import {MenuType, RecipeType} from "./recipe.class";
 
 import PageTitle from "../Shared/pageTitle";
-import ButtonRow from "../Shared/buttonRow";
 import SearchPanel from "../Shared/searchPanel";
 
-import RecipeCard, { RecipeCardActions, RecipeCardLoading } from "./recipeCard";
+import RecipeCard, {RecipeCardLoading} from "./recipeCard";
 import AlertMessage from "../Shared/AlertMessage";
-import CustomSnackbar, { Snackbar } from "../Shared/customSnackbar";
+import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
 
-import { Lock as LockIcon, Category as CategoryIcon } from "@material-ui/icons";
+import {Lock as LockIcon, Category as CategoryIcon} from "@material-ui/icons";
 
-import { withFirebase } from "../Firebase";
-import {
-  AuthUserContext,
-  withAuthorization,
-  withEmailVerification,
-} from "../Session";
-// import SessionStorageHandler from "../Shared/sessionStorageHandler.class";
-import { Allergen, Diet } from "../Product/product.class";
+import {withFirebase} from "../Firebase/firebaseContext";
+import {Allergen, Diet} from "../Product/product.class";
 import {
   STORAGE_OBJECT_PROPERTY,
   SessionStorageHandler,
 } from "../Firebase/Db/sessionStorageHandler.class";
+import withEmailVerification from "../Session/withEmailVerification";
+import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import AuthUser from "../Firebase/Authentication/authUser.class";
+import {CustomRouterProps} from "../Shared/global.interface";
+import ScrollDownOnKeyPress from "../Shared/ScrollDownOnKeyPress";
+
 //TODO: alle kommentare löschen
 /* ===================================================================
 // ============================ Dispatcher ===========================
@@ -76,23 +75,21 @@ enum ReducerActions {
 
 type DispatchAction = {
   type: ReducerActions;
-  payload: object | [];
+  payload: any;
 };
 
 type State = {
   recipes: RecipeShort[];
   isLoading: boolean;
   snackbar: Snackbar;
-  isError: boolean;
-  error: object;
+  error: Error | null;
 };
 
 const inititialState: State = {
   recipes: [],
   isLoading: false,
   snackbar: {} as Snackbar,
-  isError: false,
-  error: {},
+  error: null,
 };
 
 interface FilterRecipesProps {
@@ -106,21 +103,18 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoading: true,
-        isError: false,
       };
     case ReducerActions.RECIPES_FETCH_SUCCESS:
       return {
         ...state,
         recipes: action.payload as RecipeShort[],
-        error: {},
+        error: null,
         isLoading: false,
-        isError: false,
       };
     case ReducerActions.RECIPES_FETCH_ERROR:
       return {
         ...state,
         error: action.payload,
-        isError: true,
         isLoading: false,
       };
     case ReducerActions.SET_SNACKBAR:
@@ -151,24 +145,28 @@ export const INITIAL_SEARCH_SETTINGS: SearchSettings = {
   outdoorKitchenSuitable: false,
 };
 
+interface LocationState {
+  snackbar?: Snackbar;
+}
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
 const RecipesPage = (props) => {
   return (
     <AuthUserContext.Consumer>
-      {(authUser) => <RecipesBase props={props} authUser={authUser} />}
+      {(authUser) => <RecipesBase {...props} authUser={authUser} />}
     </AuthUserContext.Consumer>
   );
 };
 /* ===================================================================
-// ============================ Rezept Suche =========================
+// =============================== Base ==============================
 // =================================================================== */
-//FIXME: localstorage über suchergebnisse muss noch angepasst werden!!!!
-const RecipesBase = ({ props, authUser }) => {
+const RecipesBase: React.FC<
+  CustomRouterProps<undefined, LocationState> & {authUser: AuthUser | null}
+> = ({authUser, ...props}) => {
   const firebase = props.firebase;
   const classes = useStyles();
-  const { push } = useHistory();
+  const {push} = useHistory();
 
   const [state, dispatch] = React.useReducer(recipesReducer, inititialState);
   // Prüfen ob allenfalls eine Snackbar angezeigt werden soll
@@ -180,7 +178,7 @@ const RecipesBase = ({ props, authUser }) => {
   ) {
     dispatch({
       type: ReducerActions.SET_SNACKBAR,
-      payload: props.location.state.snackbar,
+      payload: props.location.state.snackbar!,
     });
   }
 
@@ -188,7 +186,11 @@ const RecipesBase = ({ props, authUser }) => {
   // Daten aus der DB lesen
   // ------------------------------------------ */
   React.useEffect(() => {
-    dispatch({ type: ReducerActions.RECIPES_FETCH_INIT, payload: {} });
+    if (!authUser) {
+      return;
+    }
+
+    dispatch({type: ReducerActions.RECIPES_FETCH_INIT, payload: {}});
     RecipeShort.getShortRecipes({
       firebase: firebase,
       authUser: authUser,
@@ -205,26 +207,30 @@ const RecipesBase = ({ props, authUser }) => {
           payload: error,
         });
       });
-  }, []);
+  }, [authUser]);
   React.useEffect(() => {
     // Prüfen ob die Daten aus dem Session-Storage wiederhergestellt werden müssen.
     const history = window.history;
-    const isBackNavigation = history.state && history.state.isBackNavigation;
-    history.replaceState({ isBackNavigation: true }, "");
+    history.replaceState({isBackNavigation: true}, "");
   }, []);
+
+  if (!authUser) {
+    return null;
+  }
+
   /* ------------------------------------------
     // Neues Rezept anlegen
     // ------------------------------------------ */
   const onNewClick = () => {
     push({
       pathname: ROUTE_RECIPE,
-      state: { action: Action.NEW },
+      state: {action: Action.NEW},
     });
   };
   /* ------------------------------------------
   // Klick auf Rezept-Karte
   // ------------------------------------------ */
-  const onCardClick = ({ event, recipe }: OnRecipeCardClickProps) => {
+  const onCardClick = ({recipe}: OnRecipeCardClickProps) => {
     if (!recipe) {
       return;
     }
@@ -258,7 +264,7 @@ const RecipesBase = ({ props, authUser }) => {
     if (reason === "clickaway") {
       return;
     }
-    delete props.location.state.snackbar;
+    delete props.location.state?.snackbar;
     dispatch({
       type: ReducerActions.CLOSE_SNACKBAR,
       payload: {},
@@ -319,7 +325,7 @@ const RecipesBase = ({ props, authUser }) => {
         <Backdrop className={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        {state.isError && (
+        {state.error && (
           <AlertMessage
             error={state.error}
             severity="error"
@@ -335,9 +341,6 @@ const RecipesBase = ({ props, authUser }) => {
           // onSearchSettings={onSearchSettings}
           // searchSettings={searchSettings}
           // onClearSearchString={onClearSearchString}
-          cardActions={[
-            { key: "show", name: TEXT.BUTTON_SHOW, onClick: onCardClick },
-          ]}
           isLoading={state.isLoading}
         />
       </Container>
@@ -347,27 +350,26 @@ const RecipesBase = ({ props, authUser }) => {
         snackbarOpen={state.snackbar.open}
         handleClose={handleSnackbarClose}
       />
+      <ScrollDownOnKeyPress />
     </React.Fragment>
   );
 };
 // /* ===================================================================
 // // ============================ Rezept Suche =========================
 // // =================================================================== */
-
 interface RecipeSearchProps {
   recipes: RecipeShort[];
   // filteredData: RecipeShort[];
   onNewClick: () => void;
-  onCardClick: ({ event, recipe }: OnRecipeCardClickProps) => void;
-  onFabButtonClick?: ({ event, recipe }: OnRecipeCardClickProps) => void;
+  onCardClick: ({event, recipe}: OnRecipeCardClickProps) => void;
+  onFabButtonClick?: ({event, recipe}: OnRecipeCardClickProps) => void;
   // searchSettings: SearchSettings;
   // onSearch: (event) => void;
   // onSearchSettings: (searchSettings: SearchSettings) => void;
   // onClearSearchString: () => void;
-  cardActions: RecipeCardActions[];
   embeddedMode?: boolean;
   fabButtonIcon?: JSX.Element;
-  error?: object;
+  error?: Error | null;
   isLoading?: boolean;
 }
 export interface OnRecipeCardClickProps {
@@ -383,10 +385,9 @@ interface SearchSettings {
   outdoorKitchenSuitable: boolean;
 }
 
-const RecipeSearch = ({
+export const RecipeSearch = ({
   // filteredData = [],
   recipes,
-  error,
   onNewClick: onNewClickSuper,
   onCardClick: onCardClickSuper,
   onFabButtonClick: onFabButtonClickSuper,
@@ -394,7 +395,6 @@ const RecipeSearch = ({
   // onSearch,
   // onSearchSettings,
   // onClearSearchString,
-  cardActions,
   embeddedMode = false,
   fabButtonIcon,
   isLoading = false,
@@ -410,7 +410,7 @@ const RecipeSearch = ({
   const onAdvancedSearchClick = () => {
     // wenn die Erweiterte Suche geschlossen wird, die Einstellungen löschen
     if (searchSettings.showAdvancedSearch) {
-      let searchString = searchSettings.searchString;
+      const searchString = searchSettings.searchString;
       setSearchSettings({
         ...INITIAL_SEARCH_SETTINGS,
         searchString: searchString,
@@ -426,7 +426,7 @@ const RecipeSearch = ({
   const onSearch = (
     event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
   ) => {
-    let newSearchSettings = {
+    const newSearchSettings = {
       ...searchSettings,
       searchString: event.target.value,
     };
@@ -444,7 +444,7 @@ const RecipeSearch = ({
     });
   };
   const onClearSearchString = () => {
-    let newSearchSettings = { ...searchSettings, searchString: "" };
+    const newSearchSettings = {...searchSettings, searchString: ""};
     setSearchSettings(newSearchSettings);
     setFilteredData(recipes);
     SessionStorageHandler.upsertDocument({
@@ -460,7 +460,7 @@ const RecipeSearch = ({
     if (!value) {
       value = Diet.Meat.toString();
     }
-    let newSearchSettings = { ...searchSettings, diet: parseInt(value) };
+    const newSearchSettings = {...searchSettings, diet: parseInt(value)};
     setSearchSettings(newSearchSettings);
     setFilteredData(
       filterRecipes({
@@ -483,7 +483,7 @@ const RecipeSearch = ({
       selectedAllergens.push(0);
     } else {
       // Neuer Wert herausfinden
-      let newValue = parseInt(
+      const newValue = parseInt(
         values.filter(
           (value) => !searchSettings.allergens.includes(parseInt(value))
         )[0]
@@ -500,7 +500,7 @@ const RecipeSearch = ({
         );
       }
     }
-    let newSearchSettings = { ...searchSettings, allergens: selectedAllergens };
+    const newSearchSettings = {...searchSettings, allergens: selectedAllergens};
     setSearchSettings(newSearchSettings);
     setFilteredData(
       filterRecipes({
@@ -515,7 +515,7 @@ const RecipeSearch = ({
     });
   };
   const onSearchSettingMenuTypeUpdate = (
-    event: React.ChangeEvent<{ [key: string]: any }>
+    event: React.ChangeEvent<{[key: string]: any}>
   ) => {
     let selectedMenuTypes: MenuType[] = event.target.value.map(
       (value: string) => parseInt(value)
@@ -536,7 +536,7 @@ const RecipeSearch = ({
     }
 
     selectedMenuTypes.sort();
-    let newSearchSettings = { ...searchSettings, menuTypes: selectedMenuTypes };
+    const newSearchSettings = {...searchSettings, menuTypes: selectedMenuTypes};
     setSearchSettings(newSearchSettings);
     setFilteredData(
       filterRecipes({
@@ -551,7 +551,7 @@ const RecipeSearch = ({
     });
   };
   const onSearchSettingOutdoorKitchenSuitableUpdate = () => {
-    let newSearchSettings = {
+    const newSearchSettings = {
       ...searchSettings,
       outdoorKitchenSuitable: !searchSettings.outdoorKitchenSuitable,
     };
@@ -579,28 +579,26 @@ const RecipeSearch = ({
     });
 
     // Neben dem Event auch recipeShort miteben
-    let selectedRecipe = recipes.find(
+    const selectedRecipe = recipes.find(
       (recipe) => recipe.uid == event.currentTarget.id.split("_")[1]
     );
     if (!selectedRecipe) {
       return;
     }
-    onCardClickSuper({ event: event, recipe: selectedRecipe });
+    onCardClickSuper({event: event, recipe: selectedRecipe});
   };
   const onFabButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    let selectedRecipe = recipes.find(
+    const selectedRecipe = recipes.find(
       (recipe) => recipe.uid == event.currentTarget.id.split("_")[1]
     );
 
     if (!selectedRecipe || !onFabButtonClickSuper) {
       return;
     }
-    onFabButtonClickSuper({ event: event, recipe: selectedRecipe });
+    onFabButtonClickSuper({event: event, recipe: selectedRecipe});
   };
 
-  const onNewClick = (
-    event: React.MouseEvent<HTMLButtonElement> | undefined
-  ) => {
+  const onNewClick = () => {
     // Sucheinstellungen speichern
     SessionStorageHandler.upsertDocument({
       storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
@@ -613,7 +611,7 @@ const RecipeSearch = ({
   /* ------------------------------------------
   // Rezepte filtern
   // ------------------------------------------ */
-  const filterRecipes = ({ searchSettings, recipes }: FilterRecipesProps) => {
+  const filterRecipes = ({searchSettings, recipes}: FilterRecipesProps) => {
     let searchResult = recipes;
     // Zuerst Text filtern
     if (searchSettings.searchString) {
@@ -688,16 +686,16 @@ const RecipeSearch = ({
     filteredData.length == 0
   ) {
     // Schauen ob was im SessionStorage ist
-    let sessionStorage = SessionStorageHandler.getDocument({
+    const sessionStorage = SessionStorageHandler.getDocument({
       storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
       documentUid: "recipes",
     });
 
     if (sessionStorage) {
-      setSearchSettings(sessionStorage);
+      setSearchSettings(sessionStorage as SearchSettings);
       setFilteredData(
         filterRecipes({
-          searchSettings: sessionStorage,
+          searchSettings: sessionStorage as SearchSettings,
           recipes: recipes,
         })
       );
@@ -712,7 +710,7 @@ const RecipeSearch = ({
   }
   return (
     <React.Fragment>
-      <Container maxWidth="md" style={{ marginBottom: "4em" }}>
+      <Container maxWidth="md" style={{marginBottom: "4em"}}>
         <Grid container spacing={2}>
           <Grid item xs={9}>
             <SearchPanel
@@ -735,7 +733,7 @@ const RecipeSearch = ({
 
         <Collapse
           in={searchSettings.showAdvancedSearch}
-          style={{ marginTop: "1em" }}
+          style={{marginTop: "1em"}}
         >
           <Grid container spacing={2}>
             <Grid item xs={4} sm={2} md={2} className={classes.centerCenter}>
@@ -811,8 +809,8 @@ const RecipeSearch = ({
                   onChange={onSearchSettingMenuTypeUpdate}
                   input={<OutlinedInput fullWidth label={TEXT.MENU_TYPE} />}
                   renderValue={(selected) => {
-                    let selectedValues = selected as unknown as string[];
-                    let textArray = selectedValues.map(
+                    const selectedValues = selected as unknown as string[];
+                    const textArray = selectedValues.map(
                       (value) => TEXT.MENU_TYPES[value]
                     ) as string[];
                     return (textArray as string[]).join(", ");
@@ -961,12 +959,11 @@ const RecipeSearch = ({
     </React.Fragment>
   );
 };
-const condition = (authUser) => !!authUser;
+
+const condition = (authUser: AuthUser | null) => !!authUser;
 
 export default compose(
   withEmailVerification,
   withAuthorization(condition),
   withFirebase
 )(RecipesPage);
-
-export { RecipeSearch };

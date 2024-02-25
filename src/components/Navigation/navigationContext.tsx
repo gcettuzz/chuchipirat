@@ -25,12 +25,17 @@ interface NavigationContext {
 export const NavigationValuesContext =
   React.createContext<NavigationContext | null>(null);
 
-export const NavigationContextProvider = ({children}) => {
+interface NavigationContextProviderProps {
+  children: JSX.Element;
+}
+
+export const NavigationContextProvider = ({
+  children,
+}: NavigationContextProviderProps) => {
   const [navigationValues, setNavigationValues] = useState<NavigationValues>({
     object: NavigationObject.none,
     action: Action.NONE,
   });
-
   return (
     <NavigationValuesContext.Provider
       value={{navigationValues, setNavigationValues}}

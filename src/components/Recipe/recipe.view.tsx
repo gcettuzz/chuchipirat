@@ -1,4 +1,4 @@
-import React, {Suspense, lazy} from "react";
+import React from "react";
 import {pdf} from "@react-pdf/renderer";
 import fileSaver from "file-saver";
 import Recipe, {
@@ -34,7 +34,6 @@ import {
   CircularProgress,
   Box,
   useTheme,
-  CardActionArea,
   Link,
   Typography,
   Menu,
@@ -56,7 +55,7 @@ import EditIcon from "@material-ui/icons/Edit";
 
 import * as TEXT from "../../constants/text";
 import * as ROUTES from "../../constants/routes";
-import * as IMAGE_REPOSITORY from "../../constants/imageRepository";
+import {ImageRepository} from "../../constants/imageRepository";
 import RecipePdf from "./recipePdf";
 
 import Role from "../../constants/roles";
@@ -77,13 +76,11 @@ import {
   VeganIcon,
   VegetarianIcon,
 } from "../Shared/icons";
-import Firebase from "../Firebase";
+import Firebase from "../Firebase/firebase.class";
 import DialogScaleRecipe, {OnScale} from "./dialogScaleRecipe";
 import DialogPublishRecipe from "./dialogPublishRecipe";
 // import DialogDeletionConfirmation from "../Shared/dialogDeletionConfirmation";
 import Product, {Allergen, Diet} from "../Product/product.class";
-import FallbackLoading from "../Shared/fallbackLoading";
-import {isEmbedded} from "react-device-detect";
 import RecipeShort from "./recipeShort.class";
 import {
   PlanedMealsRecipe,
@@ -101,8 +98,7 @@ import UnitConversion, {
   UnitConversionBasic,
   UnitConversionProducts,
 } from "../Unit/unitConversion.class";
-import unitConversion from "../Unit/unitConversion";
-import products from "../Product/products";
+import DialogReportError from "./dialogReportError";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
@@ -122,16 +118,14 @@ type State = {
   unitConversionProducts: UnitConversionProducts | null;
   products: Product[];
   isLoading: boolean;
-  isError: boolean;
-  error: object;
+  error: Error | null;
 };
 const inititialState: State = {
   unitConversionBasic: null,
   unitConversionProducts: null,
   products: [],
   isLoading: false,
-  isError: false,
-  error: {},
+  error: null,
 };
 const recipesReducer = (state: State, action: DispatchAction): State => {
   switch (action.type) {
@@ -148,9 +142,8 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.GENERIC_ERROR:
       return {
         ...state,
-        isError: true,
         isLoading: false,
-        error: action.payload ? action.payload : {},
+        error: action.payload as Error,
       };
     default:
       console.error("Unbekannter ActionType: ", action.type);
@@ -161,15 +154,15 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
 export interface OnAddToEvent {
   recipe: RecipeShort;
 }
-interface DocumentProps {
-  title?: string;
-  author?: string;
-  subject?: string;
-  keywords?: string;
-  creator?: string;
-  producer?: string;
-  onRender?: () => any;
-}
+// interface DocumentProps {
+//   title?: string;
+//   author?: string;
+//   subject?: string;
+//   keywords?: string;
+//   creator?: string;
+//   producer?: string;
+//   onRender?: () => any;
+// }
 interface ScalingInformation {
   portions: number;
   ingredients: RecipeObjectStructure<Ingredient>;
@@ -187,18 +180,17 @@ interface RecipeViewProps {
   mealPlan: Array<PlanedMealsRecipe>;
   scaledPortions: number;
   isLoading: boolean;
-  isError: boolean;
-  error: object;
+  error: Error | null;
   isEmbedded?: boolean;
   groupConfiguration?: EventGroupConfiguration;
   /** Alle Funktionalität deaktivieren (Buttons) */
   disableFunctionality?: boolean;
-  switchEditMode: () => void;
+  switchEditMode?: () => void;
   onUpdateRecipe: ({recipe, snackbar}: OnUpdateRecipeProps) => void;
-  onEditRecipeMealPlan: (mealRecipeUid: MealRecipe["uid"]) => void;
+  onEditRecipeMealPlan?: (mealRecipeUid: MealRecipe["uid"]) => void;
   onError?: (error: Error) => void;
-  onAddToEvent: ({recipe}: OnAddToEvent) => void;
-  onRecipeDelete: () => void;
+  onAddToEvent?: ({recipe}: OnAddToEvent) => void;
+  onRecipeDelete?: () => void;
   authUser: AuthUser;
 }
 /** @implements {RecipeViewProps} */
@@ -209,7 +201,6 @@ const RecipeView = ({
   scaledPortions,
   // scaledIngredients,
   isLoading,
-  isError,
   error,
   isEmbedded = false,
   groupConfiguration,
@@ -240,6 +231,10 @@ const RecipeView = ({
     });
   const [publishRecipeDialogOpen, setPublishRecipeDialogOpen] =
     React.useState(false);
+  const [reportErrorDialogOpen, setReportErrorDialogOpen] =
+    React.useState(false);
+
+  document.title = recipe.name;
   /* ------------------------------------------
   // Navigation-Handler
   // ------------------------------------------ */
@@ -258,11 +253,11 @@ const RecipeView = ({
       // let scaledIngredients: Ingredient[] = [];
       // let scaledMaterials: RecipeMaterialPosition[] = [];
 
-      let scaledIngredients = Recipe.scaleIngredients({
+      const scaledIngredients = Recipe.scaleIngredients({
         recipe: recipe,
         portionsToScale: scaledPortions,
       });
-      let scaledMaterials = Recipe.scaleMaterials({
+      const scaledMaterials = Recipe.scaleMaterials({
         recipe: recipe,
         portionsToScale: scaledPortions,
       });
@@ -312,7 +307,7 @@ const RecipeView = ({
     setTagAddDialogOpen(false);
   };
   const onTagDelete = (tagToDelete: string) => {
-    let tags = Recipe.deleteTag({
+    const tags = Recipe.deleteTag({
       tags: recipe.tags,
       tagToDelete: tagToDelete,
     });
@@ -328,7 +323,7 @@ const RecipeView = ({
     });
   };
   const handleTagAddDialogAdd = (tags: string[]) => {
-    let listOfTags = recipe.tags.concat(tags);
+    const listOfTags = recipe.tags.concat(tags);
     Recipe.saveTags({
       firebase: firebase,
       recipe: recipe,
@@ -345,9 +340,10 @@ const RecipeView = ({
   // Rezept zu Event hinzufügen
   // ------------------------------------------ */
   const addToEvent = () => {
-    onAddToEvent({
-      recipe: RecipeShort.createShortRecipeFromRecipe(recipe),
-    });
+    onAddToEvent &&
+      onAddToEvent({
+        recipe: RecipeShort.createShortRecipeFromRecipe(recipe),
+      });
   };
   /* ------------------------------------------
   // Skalierung
@@ -460,16 +456,16 @@ const RecipeView = ({
   const onMealPlanItemClick = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
-    let [prefix, mealPlanRecipeUid] = event.currentTarget.id.split("_");
+    const [, mealPlanRecipeUid] = event.currentTarget.id.split("_");
 
-    let mealPlanRecipe = Object.values(mealPlan).find(
+    const mealPlanRecipe = Object.values(mealPlan).find(
       (plan) => plan.mealPlanRecipe == mealPlanRecipeUid
     );
 
     if (mealPlanRecipe) {
       let scaledIngredients = {} as RecipeObjectStructure<Ingredient>;
       let scaledMaterials = {} as RecipeObjectStructure<RecipeMaterialPosition>;
-      let scaledPortions = mealPlanRecipe.mealPlan.reduce(
+      const scaledPortions = mealPlanRecipe.mealPlan.reduce(
         (runningSum, portion) => runningSum + portion.totalPortions,
         0
       );
@@ -487,7 +483,6 @@ const RecipeView = ({
         portions: scaledPortions,
         ingredients: scaledIngredients,
         materials: scaledMaterials,
-        //FIXME: müsste man irgendwo festsetzen können
         scalingOptions: {convertUnits: true},
       });
     }
@@ -498,7 +493,7 @@ const RecipeView = ({
   const createOwnVariant = () => {
     if (groupConfiguration?.uid) {
       // Wir brauchen den Event um eine Variante zu erstellen!
-      let recipeVariant = Recipe.createRecipeVariant({
+      const recipeVariant = Recipe.createRecipeVariant({
         recipe: recipe,
         eventUid: groupConfiguration.uid,
       });
@@ -510,7 +505,7 @@ const RecipeView = ({
   // Drucken
   // ------------------------------------------ */
   const onPrint = async () => {
-    let pdfRecipeData = {...recipe};
+    const pdfRecipeData = {...recipe};
     pdfRecipeData.ingredients = Recipe.deleteEmptyIngredients(
       recipe.ingredients
     );
@@ -540,7 +535,7 @@ const RecipeView = ({
   };
   const onCreateRecipePublishRequest = async (messageForReview: string) => {
     // File schreiben, der den Request eröffnet (in Review)
-    await Recipe.createRecipeRequest({
+    await Recipe.createRecipePublishRequest({
       firebase: firebase,
       recipe: recipe,
       messageForReview: messageForReview,
@@ -573,6 +568,41 @@ const RecipeView = ({
       },
     });
   };
+  /* ------------------------------------------
+  // Fehler melden
+  // ------------------------------------------ */
+  const onOpenReportErrorRequest = () => {
+    setReportErrorDialogOpen(true);
+  };
+  const onCloseReportErrorDialog = () => {
+    setReportErrorDialogOpen(false);
+  };
+  const onReportErrorRequest = async (messageForReview: string) => {
+    // File schreiben, der den Request eröffnet (in Review)
+    await Recipe.createReportErrorRequest({
+      firebase: firebase,
+      recipe: recipe,
+      messageForReview: messageForReview,
+      authUser: authUser,
+    })
+      .then((requestNo) => {
+        onUpdateRecipe({
+          recipe: recipe,
+          snackbar: {
+            message: TEXT.REPORT_ERROR_RECIPE_REQUEST_CREATED(requestNo),
+            severity: "success",
+            open: true,
+          },
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        onError && onError(error);
+      });
+
+    setReportErrorDialogOpen(false);
+  };
+
   /* ------------------------------------------
   // Rezept löschen
   // ------------------------------------------ */
@@ -614,7 +644,7 @@ const RecipeView = ({
               },
             });
           } else {
-            onRecipeDelete();
+            onRecipeDelete && onRecipeDelete();
           }
         }, 500);
       })
@@ -643,6 +673,7 @@ const RecipeView = ({
           onCreateOwnVariant={createOwnVariant}
           onPrint={onPrint}
           onPublish={onOpenRecipePublishRequest}
+          onReportError={onOpenReportErrorRequest}
           onShowRequest={onShowRequest}
           onDelete={onDeleteRecipe}
           authUser={authUser}
@@ -657,15 +688,14 @@ const RecipeView = ({
           <CircularProgress color="inherit" />
         </Backdrop>
         <Grid container spacing={4} justifyContent="center">
-          {isError ||
-            (state.isError && (
-              <Grid item key={"error"} xs={12}>
-                <AlertMessage
-                  error={isError ? error : state.error}
-                  messageTitle={TEXT.ALERT_TITLE_WAIT_A_MINUTE}
-                />
-              </Grid>
-            ))}
+          {(error || state.error) && (
+            <Grid item key={"error"} xs={12}>
+              <AlertMessage
+                error={error ? error : state.error}
+                messageTitle={TEXT.ALERT_TITLE_WAIT_A_MINUTE}
+              />
+            </Grid>
+          )}
           {mealPlan.length > 0 && groupConfiguration && (
             <Grid item xs={12} sm={6}>
               <MealPlanPanel
@@ -751,6 +781,11 @@ const RecipeView = ({
         handleOk={onCreateRecipePublishRequest}
         handleClose={onCloseRecipePublishRequestDialog}
       />
+      <DialogReportError
+        dialogOpen={reportErrorDialogOpen}
+        handleOk={onReportErrorRequest}
+        handleClose={onCloseReportErrorDialog}
+      />
     </React.Fragment>
   );
 };
@@ -772,7 +807,6 @@ const RecipeHeader = ({
   const [ratingAnchor, setRatingAnchor] = React.useState<null | HTMLElement>(
     null
   );
-  document.title = recipe.name;
   /* ------------------------------------------
   // Menü für eigenes Rating zeigen/schliessen
   // ------------------------------------------ */
@@ -786,7 +820,7 @@ const RecipeHeader = ({
   // Rating anpassen
   // ------------------------------------------ */
   const onUpdateMyRating = (
-    event: React.ChangeEvent<{}>,
+    event: React.ChangeEvent<Record<string, unknown>>,
     value: number | null
   ) => {
     if (value === recipe.rating.myRating || !value) {
@@ -805,7 +839,7 @@ const RecipeHeader = ({
           backgroundImage: `url(${
             recipe.pictureSrc
               ? recipe.pictureSrc
-              : IMAGE_REPOSITORY.getEnviromentRelatedPicture()
+              : ImageRepository.getEnviromentRelatedPicture()
                   .CARD_PLACEHOLDER_MEDIA
           })`,
           backgroundPosition: "center",
@@ -915,6 +949,7 @@ interface RecipeButtonRowProps {
   onCreateOwnVariant: () => void;
   onPrint: () => void;
   onPublish: () => void;
+  onReportError: () => void;
   onShowRequest: () => void;
   onDelete: () => void;
   authUser: AuthUser;
@@ -930,11 +965,12 @@ const RecipeButtonRow = ({
   onCreateOwnVariant,
   onPrint,
   onPublish,
+  onReportError,
   onShowRequest,
   onDelete,
   authUser,
 }: RecipeButtonRowProps) => {
-  let buttons: CustomButton[] = [];
+  const buttons: CustomButton[] = [];
 
   isEmbedded &&
     !isAddedToEvent &&
@@ -956,19 +992,16 @@ const RecipeButtonRow = ({
     visible:
       (recipe.type === RecipeType.public &&
         !isEmbedded &&
-        (authUser.roles.includes(Role.subAdmin) ||
-          authUser.roles.includes(Role.admin))) ||
+        authUser.roles.includes(Role.admin)) ||
       (recipe.type === RecipeType.private &&
         (recipe.created.fromUid === authUser.uid ||
-          authUser.roles.includes(Role.subAdmin) ||
           authUser.roles.includes(Role.admin))) ||
       (recipe.type === RecipeType.variant &&
         (recipe.created.fromUid === authUser.uid ||
-          authUser.roles.includes(Role.subAdmin) ||
           authUser.roles.includes(Role.admin))),
     variant: "outlined",
     color: "primary",
-    onClick: switchEditMode,
+    onClick: switchEditMode!,
   });
 
   buttons.push({
@@ -1018,6 +1051,17 @@ const RecipeButtonRow = ({
 
   !isEmbedded &&
     buttons.push({
+      id: "reportError",
+      hero: true,
+      visible: recipe.type === RecipeType.public,
+      label: TEXT.REPORT_ERROR,
+      variant: "outlined",
+      color: "primary",
+      onClick: onReportError,
+    });
+
+  !isEmbedded &&
+    buttons.push({
       id: "goToRequestOverview",
       hero: true,
       visible:
@@ -1037,8 +1081,7 @@ const RecipeButtonRow = ({
         recipe.created.fromUid === authUser.uid &&
         !isEmbedded) ||
       (recipe.type === RecipeType.public &&
-        (authUser.roles.includes(Role.subAdmin) ||
-          authUser.roles.includes(Role.admin)) &&
+        authUser.roles.includes(Role.admin) &&
         !isEmbedded) ||
       // Wenn Embeded, nur Varianten löschen
       (recipe.type === RecipeType.variant &&
@@ -1945,8 +1988,8 @@ export const RecipeMaterial = ({
           </React.Fragment>
         )}
 
-        {recipe.materials.order.map((materialUid, counter) => {
-          let material = recipe.materials.entries[materialUid];
+        {recipe.materials.order.map((materialUid) => {
+          const material = recipe.materials.entries[materialUid];
           return (
             <React.Fragment key={"material_row_" + materialUid}>
               <Grid
@@ -2020,8 +2063,6 @@ interface RecipeVariantNoteProps {
 }
 
 const RecipeVariantNote = ({recipe}: RecipeVariantNoteProps) => {
-  const classes = useStyles();
-
   return (
     <React.Fragment>
       <Typography

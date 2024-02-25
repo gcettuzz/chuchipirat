@@ -1,6 +1,6 @@
 import * as DEFAULT_VALUES from "../../constants/defaultValues";
 import {ChangeRecord} from "./global.interface";
-import Firebase from "../Firebase";
+import Firebase from "../Firebase/firebase.class";
 import {AuthUser} from "../Firebase/Authentication/authUser.class";
 import Role from "../../constants/roles";
 
@@ -9,8 +9,13 @@ import {
   Operator,
   Where,
 } from "../Firebase/Db/firebase.db.super.class";
-import {FEED_TITLE, FEED_TEXT} from "../../constants/text";
+import {
+  FEED_TITLE as TEXT_FEED_TITLE,
+  FEED_TEXT as TEXT_FEED_TEXT,
+  ERROR_PARAMETER_NOT_PASSED as TEXT_ERROR_PARAMETER_NOT_PASSED,
+} from "../../constants/text";
 
+//ATTENTION: Muss auch im Cloud-Function File nachgeführt werden.
 export enum FeedType {
   userCreated = "userCreated",
   recipeCreated = "recipeCreated",
@@ -42,12 +47,18 @@ interface CreateFeedEntry {
 interface GetNewestFeeds {
   firebase: Firebase;
   limitTo: number;
-  visibility: Role;
+  visibility: Role | "*";
   feedType?: FeedType;
 }
-interface CallCloudFunctionDeleteFeeds {
+interface DeleteFeedsDaysOffset {
   firebase: Firebase;
   daysOffset: number;
+  authUser: AuthUser;
+  callbackDone: (noOfDeletedDocuments: number) => void;
+}
+interface DeleteFeed {
+  feedUid: Feed["uid"];
+  firebase: Firebase;
 }
 // ==================================================================== */
 /**
@@ -120,7 +131,7 @@ export default class Feed {
     objectUserDisplayName = "",
     objectUserPictureSrc = "",
   }: CreateFeedEntry) {
-    let feed: Feed = {
+    const feed: Feed = {
       uid: "",
       title: Feed.getTitle(feedType, textElements),
       text: Feed.getText(feedType, textElements),
@@ -163,14 +174,17 @@ export default class Feed {
     feedType,
   }: GetNewestFeeds) => {
     let feeds: Feed[] = [];
+    let whereClause: Where[] = [];
 
-    let whereClause = [
-      {
-        field: "visibility",
-        operator: Operator.EQ,
-        value: visibility,
-      },
-    ] as Where[];
+    if (visibility != "*") {
+      whereClause = [
+        {
+          field: "visibility",
+          operator: Operator.EQ,
+          value: visibility,
+        },
+      ] as Where[];
+    }
 
     feedType &&
       whereClause.push({
@@ -185,6 +199,7 @@ export default class Feed {
         orderBy: {field: "created.date", sortOrder: SortOrder.desc},
         where: whereClause,
         limit: limitTo,
+        ignoreCache: visibility == "*",
       })
       .then((result) => {
         feeds = result;
@@ -206,21 +221,21 @@ export default class Feed {
   static getTitle(feedType: FeedType, textElement: string[]) {
     switch (feedType) {
       case FeedType.userCreated:
-        return FEED_TITLE.USER_CREATED;
+        return TEXT_FEED_TITLE.USER_CREATED;
       case FeedType.recipeCreated:
-        return FEED_TITLE.RECIPE_CREATED;
+        return TEXT_FEED_TITLE.RECIPE_CREATED;
       case FeedType.recipePublished:
-        return FEED_TITLE.RECIPE_PUBLISHED;
+        return TEXT_FEED_TITLE.RECIPE_PUBLISHED;
       case FeedType.recipeRated:
-        return `${FEED_TITLE.RECIPE_RATED} ${textElement[0]}`;
+        return `${TEXT_FEED_TITLE.RECIPE_RATED} ${textElement[0]}`;
       case FeedType.eventCreated:
-        return FEED_TITLE.EVENT_CREATED;
+        return TEXT_FEED_TITLE.EVENT_CREATED;
       case FeedType.eventCookAdded:
-        return FEED_TITLE.EVENT_COOK_ADDED;
+        return TEXT_FEED_TITLE.EVENT_COOK_ADDED;
       case FeedType.shoppingListCreated:
-        return FEED_TITLE.SHOPPINGLIST_CREATED;
+        return TEXT_FEED_TITLE.SHOPPINGLIST_CREATED;
       case FeedType.menuplanCreated:
-        return FEED_TITLE.MENUPLAN_CREATED;
+        return TEXT_FEED_TITLE.MENUPLAN_CREATED;
       default:
         return "?";
     }
@@ -235,272 +250,95 @@ export default class Feed {
   static getText(feedType: FeedType, textElements: string[]) {
     switch (feedType) {
       case FeedType.userCreated:
-        return FEED_TEXT.USER_CREATED;
+        return TEXT_FEED_TEXT.USER_CREATED;
       // return "ist neu mit an Bord.";
       case FeedType.recipeCreated:
-        return FEED_TEXT.RECIPE_CREATED(textElements);
+        return TEXT_FEED_TEXT.RECIPE_CREATED(textElements);
       case FeedType.recipePublished:
-        return FEED_TEXT.RECIPE_PUBLISHED(textElements);
+        return TEXT_FEED_TEXT.RECIPE_PUBLISHED(textElements);
       // return `hat das Rezept «${text}» erfasst.`;
       case FeedType.recipeRated:
-        return FEED_TEXT.RECIPE_RATED(textElements);
+        return TEXT_FEED_TEXT.RECIPE_RATED(textElements);
       case FeedType.eventCreated:
-        return FEED_TEXT.EVENT_CREATED(textElements);
+        return TEXT_FEED_TEXT.EVENT_CREATED(textElements);
       // return `hat den Anlass «${text}» erstellt.`;
       case FeedType.eventCookAdded:
-        return FEED_TEXT.EVENT_COOK_ADDED(textElements);
+        return TEXT_FEED_TEXT.EVENT_COOK_ADDED(textElements);
       // return `wurde in das Team «${text}» aufgenommen.`;
       case FeedType.menuplanCreated:
-        return FEED_TEXT.MENUPLAN_CREATED(textElements);
+        return TEXT_FEED_TEXT.MENUPLAN_CREATED(textElements);
       // return `Plant gerade den ${text}`;
       case FeedType.shoppingListCreated:
-        return FEED_TEXT.SHOPPINGLIST_CREATED(textElements);
+        return TEXT_FEED_TEXT.SHOPPINGLIST_CREATED(textElements);
       // return `kauft ${text} ein.`;
       default:
         return "?";
     }
   }
-  /* =====================================================================
-  // Cloud Function deleteFeeds aufrufen
   // ===================================================================== */
-  /* istanbul ignore next */
-  /* DB-Methode wird zur Zeit nicht geprüft */
-  static callCloudFunctionDeleteFeeds = ({
+  /**
+   * Cloud Function ausführen, die alle Feed-Einträge löscht, die älter
+   * als X-Tage sind
+   * @param object - Object mit Referenz zu Firebase, Anzahl Offset-Tage
+   *                 AuthUser und Listener-Funktion, die die Löschung
+   *                 überwacht.
+   */
+  static deleteFeedsDaysOffset = async ({
     firebase,
     daysOffset,
-  }: CallCloudFunctionDeleteFeeds) => {
-    //FIXME:
-    // if (!firebase || !daysOffset) {
-    //   throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
-    // }
-    // let deleteFeeds = firebase.functions.httpsCallable("deleteFeeds");
-    // deleteFeeds({ daysoffset: daysOffset })
-    //   .then((result) => {
-    //     // Read result of the Cloud Function.
-    //     return result.data.text;
-    //   })
-    //   .catch((error) => {
-    //     console.error(error);
-    //     throw error;
-    //     // Getting the Error details.
-    //     // var code = error.code;
-    //     // var message = error.message;
-    //     // var details = error.details;
-    //     // ...
-    //   });
+    authUser,
+    callbackDone,
+  }: DeleteFeedsDaysOffset) => {
+    if (!firebase || !daysOffset) {
+      throw new Error(TEXT_ERROR_PARAMETER_NOT_PASSED);
+    }
+    let unsubscribe: () => void;
+    let documentId = "";
+
+    await firebase.cloudFunction.feedsDelete
+      .triggerCloudFunction({
+        values: {daysOffset: daysOffset},
+        authUser: authUser,
+      })
+      .then(async (result) => {
+        documentId = result;
+      })
+      .then(() => {
+        // Melden wenn fertig
+        const callback = (data) => {
+          if (data?.done) {
+            callbackDone(data.noOfDeletedDocuments);
+            unsubscribe();
+          }
+        };
+
+        firebase.cloudFunction.feedsDelete
+          .listen({
+            uids: [documentId],
+            callback: callback,
+          })
+          .then((result) => {
+            unsubscribe = result;
+          });
+      })
+      .catch((error) => {
+        throw error;
+      });
+  };
+
+  // ===================================================================== */
+  /**
+   * Einzelner Feed löschen
+   * @param Object - Feed-UID und Firebase referenz
+   */
+  static deleteFeed = async ({firebase, feedUid}: DeleteFeed) => {
+    if (!firebase || !feedUid) {
+      throw new Error(TEXT_ERROR_PARAMETER_NOT_PASSED);
+    }
+
+    await firebase.feed.delete({uids: [feedUid]}).catch((error) => {
+      console.error(error);
+      throw error;
+    });
   };
 }
-// altes JS Script
-// import * as DEFAULT_VALUES from "../../constants/defaultValues";
-// import * as TEXT from "../../constants/text";
-
-// import { FEED_TITLE, FEED_TEXT } from "../../constants/text";
-
-// export const FEED_TYPE = {
-//   USER_CREATED: "userCreated",
-//   RECIPE_CREATED: "recipeCreated",
-//   EVENT_CREATED: "eventCreated",
-//   EVENT_COOK_ADDED: "eventCookAdded",
-//   MENUPLAN_CREATED: "menuplanCreated",
-//   SHOPPINGLIST_CREATED: "shoppingListCreated",
-// };
-
-// export default class Feed {
-//   /* ====================================================================
-//   // Feed Eintrag erzeugen
-//   / ==================================================================== */
-//   static createFeedEntry({
-//     firebase,
-//     authUser,
-//     feedType,
-//     objectUid,
-//     text = "",
-//     objectName = "",
-//     objectPictureSrc = "",
-//   }) {
-//     const feedDoc = firebase.feeds().doc();
-//     feedDoc.set({
-//       createdAt: firebase.timestamp.fromDate(new Date()),
-//       userUid: authUser.uid,
-//       displayName: authUser.publicProfile.displayName,
-//       pictureSrc: authUser.publicProfile.pictureSrc,
-//       title: Feed.getTitle(feedType),
-//       text: Feed.getText(feedType, text),
-//       feedType: feedType,
-//       objectUid: objectUid,
-//       objectName: objectName,
-//       objectPictureSrc: objectPictureSrc,
-//     });
-//   }
-//   /* =====================================================================
-//   // Neuste X Feed holen
-//   // ===================================================================== */
-//   static getNewestFeeds = async ({
-//     firebase,
-//     limitTo = DEFAULT_VALUES.FEEDS_DISPLAY,
-//   }) => {
-//     let feeds = [];
-//     let feed = {};
-
-//     const feedsRef = firebase.feeds();
-
-//     const snapshot = await feedsRef
-//       .orderBy("createdAt", "desc")
-//       .limit(limitTo)
-//       .get()
-//       .catch((error) => {
-//         console.error(error);
-//         throw error;
-//       });
-
-//     snapshot.forEach((obj) => {
-//       feed = obj.data();
-//       feed.uid = obj.id;
-//       // Timestamp umwandeln
-//       feed.createdAt = feed.createdAt.toDate();
-//       feeds.push(feed);
-//     });
-
-//     return feeds;
-//   };
-//   /* =====================================================================
-//   // Neuste X Feed eines bestimmten Typs holen
-//   // ===================================================================== */
-//   static getNewestFeedsOfType = async (
-//     firebase,
-//     limitTo = DEFAULT_VALUES.FEEDS_DISPLAY,
-//     feedType
-//   ) => {
-//     let feeds = [];
-//     let feed = {};
-
-//     if (!firebase || !feedType) {
-//       throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
-//     }
-//     const feedsRef = firebase.feeds();
-//     const snapshot = await feedsRef
-//       .orderBy("createdAt", "desc")
-//       .where("feedType", "==", feedType)
-//       .limit(limitTo)
-//       .get()
-//       .catch((error) => {
-//         console.error(error);
-//         throw error;
-//       });
-
-//     snapshot.forEach((obj) => {
-//       feed = obj.data();
-//       feed.uid = obj.id;
-//       // Timestamp umwandeln
-//       feed.createdAt = feed.createdAt.toDate();
-//       feeds.push(feed);
-//     });
-
-//     return feeds;
-//   };
-//   /* =====================================================================
-//   // Anhand des Feed Typs den Titel bestimmen
-//   // ===================================================================== */
-//   static getTitle(feedType) {
-//     switch (feedType) {
-//       case FEED_TYPE.USER_CREATED:
-//         return FEED_TITLE.USER_CREATED;
-//       case FEED_TYPE.RECIPE_CREATED:
-//         return FEED_TITLE.RECIPE_CREATED;
-//       case FEED_TYPE.EVENT_CREATED:
-//         return FEED_TITLE.EVENT_CREATED;
-//       case FEED_TYPE.EVENT_COOK_ADDED:
-//         return FEED_TITLE.EVENT_COOK_ADDED;
-//       case FEED_TYPE.SHOPPINGLIST_CREATED:
-//         return FEED_TITLE.SHOPPINGLIST_CREATED;
-//       case FEED_TYPE.MENUPLAN_CREATED:
-//         return FEED_TITLE.MENUPLAN_CREATED;
-//       default:
-//         return "?";
-//     }
-//   }
-//   /* =====================================================================
-//   // Anhand des Feed Typs den Text bestimmen
-//   // ===================================================================== */
-//   static getText(feedType, text) {
-//     switch (feedType) {
-//       case FEED_TYPE.USER_CREATED:
-//         return FEED_TEXT.USER_CREATED;
-//       // return "ist neu mit an Bord.";
-//       case FEED_TYPE.RECIPE_CREATED:
-//         return FEED_TEXT.RECIPE_CREATED(text);
-//       // return `hat das Rezept «${text}» erfasst.`;
-//       case FEED_TYPE.EVENT_CREATED:
-//         return FEED_TEXT.EVENT_CREATED(text);
-//       // return `hat den Anlass «${text}» erstellt.`;
-//       case FEED_TYPE.EVENT_COOK_ADDED:
-//         return FEED_TEXT.EVENT_COOK_ADDED(text);
-//       // return `wurde in das Team «${text}» aufgenommen.`;
-//       case FEED_TYPE.MENUPLAN_CREATED:
-//         return FEED_TEXT.MENUPLAN_CREATED(text);
-//       // return `Plant gerade den ${text}`;
-//       case FEED_TYPE.SHOPPINGLIST_CREATED:
-//         return FEED_TEXT.SHOPPINGLIST_CREATED(text);
-//       // return `kauft ${text} ein.`;
-//       default:
-//         return "?";
-//     }
-//   }
-//   /* =====================================================================
-// // Cloud Function deleteFeeds aufrufen
-// // ===================================================================== */
-//   static deleteFeeds = async ({
-//     firebase,
-//     daysOffset,
-//     authUser,
-//     traceListener,
-//   }) => {
-//     if (!firebase || !daysOffset) {
-//       throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
-//     }
-//     let listener;
-//     let docRef = firebase.cloudFunctions_feed_Delete().doc();
-//     await docRef
-//       .set({
-//         daysOffset: parseInt(daysOffset),
-//         user: {
-//           uid: authUser.uid,
-//           displayName: authUser.publicProfile.displayName,
-//         },
-//         date: firebase.timestamp.fromDate(new Date()),
-//       })
-//       .then(async () => {
-//         await firebase.delay(1);
-//       })
-//       .then(() => {
-//         const unsubscribe = docRef.onSnapshot((snapshot) => {
-//           traceListener(snapshot.data());
-//           if (snapshot.data()?.done) {
-//             // Wenn das Feld DONE vorhanden ist, ist die Cloud-Function durch
-//             unsubscribe();
-//           }
-//         });
-//       })
-//       .catch((error) => {
-//         throw error;
-//       });
-//     console.log(listener);
-//     return listener;
-//   };
-//   /* =====================================================================
-//   // Einzelne Feeds löschen
-//   // ===================================================================== */
-//   static deleteFeed = async ({ firebase, feedUid }) => {
-//     if (!firebase || !feedUid) {
-//       throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
-//     }
-//     let docCollection = firebase.feeds();
-
-//     await docCollection
-//       .doc(feedUid)
-//       .delete()
-//       .catch((error) => {
-//         throw error;
-//       });
-//   };
-// }

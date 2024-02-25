@@ -24,7 +24,6 @@ import {DoneAll as DoneAllIcon} from "@material-ui/icons";
 
 import {
   NO_MENUES_MARKED as TEXT_NO_MENUES_MARKED,
-  DIALOG_CHOOSE_MENUES_TITLE as TEXT_DIALOG_CHOOSE_MENUES_TITLE,
   SELECT_DAY as TEXT_SELECT_DAY,
   SELECT_ALL as TEXT_SELECT_ALL,
   CONTINUE as TEXT_CONTINUE,
@@ -49,8 +48,8 @@ export const decodeSelectedMenues = ({
 }: DecodeSeletedMenues) => {
   // Über den Menüplan in der Reihenfolge loopen und ein Array
   // mit Von-Bis aufbauen.
-  let selectedRange: TimeSlice[] = [];
-  let preRecord = {date: new Date(), mealType: ""};
+  const selectedRange: TimeSlice[] = [];
+  const preRecord = {date: new Date(), mealType: ""};
 
   let timeslice: TimeSlice = {
     from: {date: null, mealType: ""},
@@ -60,7 +59,7 @@ export const decodeSelectedMenues = ({
 
   menuplan.dates.forEach((date) => {
     menuplan.mealTypes.order.forEach((mealTypeUid) => {
-      let meal = Object.values(menuplan.meals).find(
+      const meal = Object.values(menuplan.meals).find(
         (meal) =>
           meal.date == Utils.dateAsString(date) && meal.mealType == mealTypeUid
       );
@@ -180,7 +179,7 @@ export const DialogSelectMenues = ({
   // Initialisierung
   // ------------------------------------------ */
   const createInitialValues = (menues: DialogSelectMenuesProps["menues"]) => {
-    let initialValues = {} as DialogSelectMenuesForRecipeDialogValues;
+    const initialValues = {} as DialogSelectMenuesForRecipeDialogValues;
 
     Object.keys(menues).forEach((menueUid) => {
       initialValues[menueUid] = false;
@@ -205,12 +204,12 @@ export const DialogSelectMenues = ({
   // ------------------------------------------ */
   const selectMenuesOfDay = (event: React.MouseEvent<HTMLButtonElement>) => {
     // Alle Menüs dieses Tages markieren
-    let selectedDate = event.currentTarget.id;
+    const selectedDate = event.currentTarget.id;
     if (!selectedDate) {
       return;
     }
 
-    let newDialogValues = {...dialogValues};
+    const newDialogValues = {...dialogValues};
 
     Object.values(meals).forEach((meal) => {
       if (meal.date == event.currentTarget.id) {
@@ -222,7 +221,7 @@ export const DialogSelectMenues = ({
     setDialogValues(newDialogValues);
   };
   const selectAllMenues = () => {
-    let newDialogValues = {...dialogValues};
+    const newDialogValues = {...dialogValues};
 
     Object.values(meals).forEach((meal) => {
       meal.menuOrder.forEach((menueUid) => {
@@ -235,7 +234,7 @@ export const DialogSelectMenues = ({
   // Change-Event
   // ------------------------------------------ */
   const onFieldUpdate = (event: React.ChangeEvent<HTMLInputElement>) => {
-    let newDialogValues = {...dialogValues};
+    const newDialogValues = {...dialogValues};
     newDialogValues[event.target.id.split("_")[2]] = event.target.checked;
     setDialogValues(newDialogValues);
   };
@@ -262,7 +261,7 @@ export const DialogSelectMenues = ({
     }
 
     // Wir übergeben nur die markierten
-    let selectedMenues = {} as DialogSelectMenuesForRecipeDialogValues;
+    const selectedMenues = {} as DialogSelectMenuesForRecipeDialogValues;
     Object.keys(dialogValues).forEach((menueUid) => {
       if (dialogValues[menueUid] == true) {
         selectedMenues[menueUid] = true;

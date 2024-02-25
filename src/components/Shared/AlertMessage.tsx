@@ -1,10 +1,10 @@
 import React from "react";
-import { Alert, AlertTitle, Color } from "@material-ui/lab";
+import {Alert, AlertTitle, Color} from "@material-ui/lab";
 import FirebaseMessageHandler from "../Firebase/firebaseMessageHandler.class";
 import useStyles from "../../constants/styles";
 
 interface AlertMessageProps {
-  error?: object;
+  error?: Error | null;
   severity?: Color;
   messageTitle?: string;
   body?: string | JSX.Element;

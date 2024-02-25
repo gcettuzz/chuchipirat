@@ -4,14 +4,26 @@ import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
 import Utils from "../../Shared/utils.class";
 
 export interface StorageObjectProperty {
-  durationOfValidity: number;
+  durationOfValidity: number; // in Minuten
   uid: string;
   respectPrefix: boolean; // soll for dem Dokumenten-Namen noch ein Präfix hin?
   excludeFromCaching: boolean; // kein Caching dieser Daten z.B. Menüplan;
 }
 
 export const STORAGE_OBJECT_PROPERTY: {[key: string]: StorageObjectProperty} = {
-  STATS: {
+  STATS_COUNTER: {
+    durationOfValidity: 60,
+    uid: "/stats",
+    respectPrefix: false,
+    excludeFromCaching: false,
+  },
+  STATS_RECIPE_VARIANTS: {
+    durationOfValidity: 60,
+    uid: "/stats",
+    respectPrefix: false,
+    excludeFromCaching: false,
+  },
+  STATS_RECIPES_IN_MENUPLAN: {
     durationOfValidity: 60,
     uid: "/stats",
     respectPrefix: false,
@@ -131,6 +143,12 @@ export const STORAGE_OBJECT_PROPERTY: {[key: string]: StorageObjectProperty} = {
     respectPrefix: false,
     excludeFromCaching: true,
   },
+  USER_SHORT: {
+    durationOfValidity: 0,
+    uid: "",
+    respectPrefix: false,
+    excludeFromCaching: true,
+  },
   NONE: {
     durationOfValidity: 0,
     uid: "",
@@ -230,7 +248,7 @@ export class SessionStorageHandler {
     // wieder einfügen
 
     if (storageObjectProperty.excludeFromCaching) {
-      return null;
+      return;
     }
 
     let sessionStorageValue = SessionStorageHandler.getSessionStorageEntry({
@@ -241,7 +259,7 @@ export class SessionStorageHandler {
       sessionStorageValue = {};
     }
     // Dokument-ID erstellen
-    let documentPrefixUid = SessionStorageHandler.mergeStorageDocumentUid(
+    const documentPrefixUid = SessionStorageHandler.mergeStorageDocumentUid(
       storageObjectProperty,
       documentUid,
       prefix
@@ -274,7 +292,7 @@ export class SessionStorageHandler {
     values,
   }: UpsertDocuments<T>) {
     if (storageObjectProperty.excludeFromCaching) {
-      return null;
+      return;
     }
     // Bestehender Session Storage auslesen
     // prüfen ob es eines mit dieser UID schon gibt
@@ -308,10 +326,10 @@ export class SessionStorageHandler {
   }: UpdateDocumentField<T>) {
     // Dokument lesen
     if (storageObjectProperty.excludeFromCaching) {
-      return null;
+      return;
     }
 
-    let sessionStorageValue = SessionStorageHandler.getSessionStorageEntry({
+    const sessionStorageValue = SessionStorageHandler.getSessionStorageEntry({
       storageObjectProperty: storageObjectProperty,
     });
 
@@ -322,7 +340,7 @@ export class SessionStorageHandler {
     }
 
     // Dokument-ID erstellen
-    let documentPrefixUid = SessionStorageHandler.mergeStorageDocumentUid(
+    const documentPrefixUid = SessionStorageHandler.mergeStorageDocumentUid(
       storageObjectProperty,
       documentUid,
       prefix
@@ -353,27 +371,30 @@ export class SessionStorageHandler {
     storageObjectProperty,
     documentUid,
     prefix,
-  }: GetDocument) {
+  }: GetDocument): T | null {
     if (storageObjectProperty.excludeFromCaching) {
       return null;
     }
-    let sessionStorage = this.getSessionStorageEntry<T>({
+    const sessionStorage = this.getSessionStorageEntry<T>({
       storageObjectProperty: storageObjectProperty,
     });
     // Dokument-ID erstellen
-    let documentPrefixUid = SessionStorageHandler.mergeStorageDocumentUid(
+    const documentPrefixUid = SessionStorageHandler.mergeStorageDocumentUid(
       storageObjectProperty,
       documentUid,
       prefix
     );
     // Gibt es das Dokument im Session Storage
-    if (!sessionStorage || !sessionStorage.hasOwnProperty(documentPrefixUid)) {
+    if (
+      !sessionStorage ||
+      Object.prototype.hasOwnProperty.call(sessionStorage, documentPrefixUid)
+    ) {
       return null;
     }
 
     if (
       new Date().getTime() -
-        new Date(sessionStorage[documentPrefixUid].date).getTime() / 60000 >
+        new Date(sessionStorage[documentPrefixUid]?.date).getTime() / 60000 >
       storageObjectProperty.durationOfValidity
     ) {
       return sessionStorage[documentPrefixUid].value;
@@ -403,7 +424,7 @@ export class SessionStorageHandler {
     }
     let validSessionStorageEntries: T[] = [];
 
-    let sessionStorage = this.getSessionStorageEntry<T>({
+    const sessionStorage = this.getSessionStorageEntry<T>({
       storageObjectProperty: storageObjectProperty,
     });
     // Gibt es das Dokument im Session Storage
@@ -474,7 +495,7 @@ export class SessionStorageHandler {
    * @param object - Objekt mit Einstellungen für diesen Objekttyp und der
    * Dokumenten-UID, Wert der erhöht/reduziert werden soll, Prefix
    */
-  static incrementFieldValue<T>({
+  static incrementFieldValue({
     storageObjectProperty,
     documentUid,
     field,
@@ -483,24 +504,24 @@ export class SessionStorageHandler {
   }: IncrementFieldValue) {
     // Dokument lesen
     if (storageObjectProperty.excludeFromCaching) {
-      return null;
+      return;
     }
-    let sessionStorageValue = SessionStorageHandler.getSessionStorageEntry({
+    const sessionStorageValue = SessionStorageHandler.getSessionStorageEntry({
       storageObjectProperty: storageObjectProperty,
     });
 
-    if (!sessionStorageValue) {
-      // Wenn kein File vorhanden ist, können auch keine
-      // einzelnen Felder angepasst werden
-      return;
-    }
-
     // Dokument-ID erstellen
-    let documentPrefixUid = SessionStorageHandler.mergeStorageDocumentUid(
+    const documentPrefixUid = SessionStorageHandler.mergeStorageDocumentUid(
       storageObjectProperty,
       documentUid,
       prefix
     );
+
+    if (!sessionStorageValue || !sessionStorageValue[documentPrefixUid]) {
+      // Wenn kein File vorhanden ist, können auch keine
+      // einzelnen Felder angepasst werden
+      return;
+    }
 
     // Wert überklatschen
     sessionStorageValue[documentPrefixUid] = {
@@ -529,10 +550,10 @@ export class SessionStorageHandler {
   }: DeleteDocument) {
     // Dokument lesen
     if (storageObjectProperty.excludeFromCaching) {
-      return null;
+      return;
     }
 
-    let sessionStorageValue = SessionStorageHandler.getSessionStorageEntry({
+    const sessionStorageValue = SessionStorageHandler.getSessionStorageEntry({
       storageObjectProperty: storageObjectProperty,
     });
 
@@ -542,7 +563,7 @@ export class SessionStorageHandler {
     }
 
     // Dokument-ID erstellen
-    let documentPrefixUid = SessionStorageHandler.mergeStorageDocumentUid(
+    const documentPrefixUid = SessionStorageHandler.mergeStorageDocumentUid(
       storageObjectProperty,
       documentUid,
       prefix
@@ -569,10 +590,10 @@ export class SessionStorageHandler {
   }: DeleteDocumentField) {
     // Dokument lesen
     if (storageObjectProperty.excludeFromCaching) {
-      return null;
+      return;
     }
 
-    let sessionStorageValue = SessionStorageHandler.getSessionStorageEntry({
+    const sessionStorageValue = SessionStorageHandler.getSessionStorageEntry({
       storageObjectProperty: storageObjectProperty,
     });
 
@@ -582,7 +603,7 @@ export class SessionStorageHandler {
     }
 
     // Dokument-ID erstellen
-    let documentPrefixUid = SessionStorageHandler.mergeStorageDocumentUid(
+    const documentPrefixUid = SessionStorageHandler.mergeStorageDocumentUid(
       storageObjectProperty,
       documentUid,
       prefix
@@ -605,7 +626,9 @@ export class SessionStorageHandler {
   static getSessionStorageEntry = <T extends ValueObject>({
     storageObjectProperty,
   }: GetSessionStorageEntry) => {
-    let sessionStorageValue = sessionStorage.getItem(storageObjectProperty.uid);
+    const sessionStorageValue = sessionStorage.getItem(
+      storageObjectProperty.uid
+    );
     if (sessionStorageValue) {
       return SessionStorageHandler.convertStoredData(
         JSON.parse(sessionStorageValue)

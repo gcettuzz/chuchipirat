@@ -1,7 +1,7 @@
 import React from "react";
 import {useHistory} from "react-router";
+import {compose} from "react-recompose";
 
-import {compose} from "recompose";
 import {
   Container,
   Stepper,
@@ -12,6 +12,10 @@ import {
   Backdrop,
   CircularProgress,
   Typography,
+  Card,
+  CardHeader,
+  CardContent,
+  CardMedia,
 } from "@material-ui/core";
 
 import {
@@ -19,12 +23,18 @@ import {
   WHAT_ARE_YOU_UP_TO as TEXT_WHAT_ARE_YOU_UP_TO,
   EVENT_INFO as TEXT_EVENT_INFO,
   QUANTITY_CALCULATION_INFO as TEXT_QUANTITY_CALCULATION_INFO,
+  COMPLETION as TEXT_COMPLETION,
   CONTINUE as TEXT_CONTIUNE,
   BACK_TO_OVERVIEW as TEXT_BACK_TO_OVERVIEW,
   BACK_TO_EVENT_INFO as TEXT_BACK_TO_EVENT_INFO,
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
   EVENT_IS_BEEING_CREATED as TEXT_EVENT_IS_BEEING_CREATED,
   IMAGE_IS_BEEING_UPLOADED as TEXT_IMAGE_IS_BEEING_UPLOADED,
+  BACK_TO_GROUPCONFIG as TEXT_BACK_TO_GROUPCONFIG,
+  RESUME_INTRODUCTION as TEXT_RESUME_INTRODUCTION,
+  PLEASE_DONATE as TEXT_PLEASE_DONATE,
+  WHY_DONATE as TEXT_WHY_DONATE,
+  THANK_YOU_1000 as TEXT_THANK_YOU_1000,
 } from "../../../constants/text";
 
 import useStyles from "../../../constants/styles";
@@ -36,16 +46,10 @@ import Event from "./event.class";
 import {
   HOME as ROUTE_HOME,
   EVENT as ROUTE_EVENT,
-  CREATE_NEW_EVENT as ROUTE_CREATE_NEW_EVENT,
 } from "../../../constants/routes";
 
-import Firebase, {withFirebase} from "../../Firebase";
-import {
-  AuthUserContext,
-  withAuthorization,
-  withEmailVerification,
-} from "../../Session";
-import AuthUser from "../../Firebase/Authentication/authUser.class";
+import {withFirebase} from "../../Firebase/firebaseContext";
+
 import {
   NavigationValuesContext,
   NavigationObject,
@@ -56,6 +60,16 @@ import Menuplan from "../Menuplan/menuplan.class";
 import FieldValidationError, {
   FormValidationFieldError,
 } from "../../Shared/fieldValidation.error.class";
+import EventGroupConfiguration from "../GroupConfiguration/groupConfiguration.class";
+import withEmailVerification from "../../Session/withEmailVerification";
+import {
+  AuthUserContext,
+  withAuthorization,
+} from "../../Session/authUserContext";
+import AuthUser from "../../Firebase/Authentication/authUser.class";
+import {CustomRouterProps} from "../../Shared/global.interface";
+
+import {twintQrCodeSvg} from "../../Shared/twintQrCode";
 
 /* ===================================================================
 // ============================== Global =============================
@@ -63,12 +77,14 @@ import FieldValidationError, {
 enum WizardSteps {
   info,
   groupConfig,
+  completion,
 }
 /* ===================================================================
 // ============================ Dispatcher ===========================
 // =================================================================== */
 enum ReducerActions {
   SET_EVENT,
+  SET_GROUP_CONFIG,
   FIELD_UPDATE,
   SET_PICTURE,
   UPLOAD_PICTURE_INIT,
@@ -80,33 +96,37 @@ enum ReducerActions {
 }
 type DispatchAction = {
   type: ReducerActions;
-  payload: {[key: string]: any};
+  payload: any;
 };
 type State = {
   event: Event;
+  groupConfig: EventGroupConfiguration;
   localPicture: File | null;
   isLoading: boolean;
   isUpLoadingPicture: boolean;
   isSaving: boolean;
   isError: boolean;
   eventFormValidation: FormValidationFieldError[];
-  error: object;
+  error: Error | null;
 };
 const inititialState: State = {
   event: new Event(),
+  groupConfig: new EventGroupConfiguration(),
   localPicture: null,
   isLoading: false,
   isUpLoadingPicture: false,
   isSaving: false,
   isError: false,
   eventFormValidation: [],
-  error: {},
+  error: null,
 };
 
 const eventReducer = (state: State, action: DispatchAction): State => {
   switch (action.type) {
     case ReducerActions.SET_EVENT:
       return {...state, event: action.payload as Event};
+    case ReducerActions.SET_GROUP_CONFIG:
+      return {...state, groupConfig: action.payload as EventGroupConfiguration};
     case ReducerActions.FIELD_UPDATE:
       return {
         ...state,
@@ -137,7 +157,7 @@ const eventReducer = (state: State, action: DispatchAction): State => {
         ...state,
         isSaving: false,
         isError: true,
-        error: action.payload,
+        error: action.payload as Error,
         eventFormValidation: action.payload
           .formValidation as FormValidationFieldError[],
       };
@@ -146,29 +166,31 @@ const eventReducer = (state: State, action: DispatchAction): State => {
         ...state,
         isSaving: false,
         isError: true,
-        error: action.payload,
+        error: action.payload as Error,
       };
     default:
       console.error("Unbekannter ActionType: ", action.type);
       throw new Error();
   }
 };
+
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
 const CreateEventPage = (props) => {
   return (
     <AuthUserContext.Consumer>
-      {(authUser) => <CreateEventBase props={props} authUser={authUser} />}
+      {(authUser) => <CreateEventBase {...props} authUser={authUser} />}
     </AuthUserContext.Consumer>
   );
 };
-
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const CreateEventBase = ({props, authUser}) => {
-  const firebase = props.firebase as Firebase;
+const CreateEventBase: React.FC<
+  CustomRouterProps & {authUser: AuthUser | null}
+> = ({authUser, ...props}) => {
+  const firebase = props.firebase;
   const classes = useStyles();
   const {push} = useHistory();
 
@@ -180,16 +202,22 @@ const CreateEventBase = ({props, authUser}) => {
   // Navigation-Handler
   // ------------------------------------------ */
   React.useEffect(() => {
-    navigationValuesContext?.setNavigationValues({
-      action: Action.NEW,
-      object: NavigationObject.none,
-    });
-    // Initialier Event erstellen
-    dispatch({
-      type: ReducerActions.SET_EVENT,
-      payload: Event.factory(authUser),
-    });
-  }, []);
+    if (authUser !== null) {
+      navigationValuesContext?.setNavigationValues({
+        action: Action.NEW,
+        object: NavigationObject.none,
+      });
+      // Initialier Event erstellen
+      dispatch({
+        type: ReducerActions.SET_EVENT,
+        payload: Event.factory(authUser),
+      });
+    }
+  }, [authUser]);
+
+  if (!authUser) {
+    return null;
+  }
   /* ------------------------------------------
   // Step-Steuerung
   // ------------------------------------------ */
@@ -213,13 +241,17 @@ const CreateEventBase = ({props, authUser}) => {
   const goToStepInfo = () => {
     setActiveStep(WizardSteps.info);
   };
-  const goToMenuplan = (
+  const goToResume = (
     event: React.MouseEvent<HTMLButtonElement>,
-    value?: {[key: string]: any}
+    value?: any
   ) => {
+    dispatch({type: ReducerActions.SET_GROUP_CONFIG, payload: value});
+    setActiveStep(WizardSteps.completion);
+  };
+  const goToMenuplan = () => {
     push({
       pathname: `${ROUTE_EVENT}/${state.event.uid}`,
-      state: {event: state.event, groupConfig: value},
+      state: {event: state.event, groupConfig: state.groupConfig},
     });
   };
   /* ------------------------------------------
@@ -231,7 +263,7 @@ const CreateEventBase = ({props, authUser}) => {
   const onUpdatePicture = (picture: File | null) => {
     dispatch({type: ReducerActions.SET_PICTURE, payload: picture!});
   };
-  const onEventError = (error: object) => {
+  const onEventError = (error: Error) => {
     dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
   };
   /* ------------------------------------------
@@ -265,7 +297,6 @@ const CreateEventBase = ({props, authUser}) => {
             // Einen Schritt weiter
             goToStepGroup();
           });
-        // Es wurde auf OnConfirm geklick... weiter gehts
       })
       .catch((error: FieldValidationError) => {
         console.error(error);
@@ -314,7 +345,7 @@ const CreateEventBase = ({props, authUser}) => {
           {state.isError && (
             <Grid item key={"error"} xs={12}>
               <AlertMessage
-                error={state.error}
+                error={state.error as Error}
                 messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
               />
             </Grid>
@@ -353,17 +384,25 @@ const CreateEventBase = ({props, authUser}) => {
                 </Button>
               </Grid>
             </React.Fragment>
-          ) : (
-            <Grid item key={"error"} xs={12}>
+          ) : activeStep === WizardSteps.groupConfig ? (
+            <Grid item xs={12}>
               <EventGroupConfigurationPage
                 firebase={firebase}
                 authUser={authUser}
                 event={state.event}
-                onConfirm={{buttonText: TEXT_CONTIUNE, onClick: goToMenuplan}}
+                onConfirm={{buttonText: TEXT_CONTIUNE, onClick: goToResume}}
                 onCancel={{
                   buttonText: TEXT_BACK_TO_EVENT_INFO,
                   onClick: goToStepInfo,
                 }}
+              />
+            </Grid>
+          ) : (
+            <Grid item xs={12}>
+              <CreateEventCompletion
+                event={state.event}
+                onReturn={goToStepGroup}
+                onProceed={goToMenuplan}
               />
             </Grid>
           )}
@@ -372,6 +411,73 @@ const CreateEventBase = ({props, authUser}) => {
     </React.Fragment>
   );
 };
+/* ===================================================================
+// =============================== Resume ============================
+// =================================================================== */
+interface CreateEventCompletionProps {
+  event: Event;
+  onReturn: () => void;
+  onProceed: () => void;
+}
+const CreateEventCompletion = ({
+  event,
+  onProceed,
+  onReturn,
+}: CreateEventCompletionProps) => {
+  const classes = useStyles();
+  return (
+    <Grid container spacing={2}>
+      <Grid item xs={12}>
+        <Card>
+          <CardHeader title={TEXT_COMPLETION} />
+          <CardContent>
+            <Typography>{TEXT_RESUME_INTRODUCTION(event.name)}</Typography>
+            <br />
+            <Typography>
+              <strong>{TEXT_PLEASE_DONATE}</strong>
+              <br />
+              {TEXT_WHY_DONATE}
+              <br />
+              <br />
+              {TEXT_THANK_YOU_1000}
+            </Typography>
+          </CardContent>
+          <CardMedia
+            component="img"
+            title="Twint-QR-Code"
+            className={classes.cardMediaQrCode}
+            src={`data:image/svg+xml;utf8,${encodeURIComponent(
+              twintQrCodeSvg
+            )}`}
+          />
+          <Typography align="center" variant="subtitle1">
+            Wenn du etwas spenden möchtest, nutze bitte Twint.
+          </Typography>
+          <br />
+        </Card>
+      </Grid>
+
+      <Grid item xs={12}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} container justifyContent="flex-end">
+            <Button variant="outlined" color="primary" onClick={onReturn}>
+              {TEXT_BACK_TO_GROUPCONFIG}
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              style={{marginLeft: "1rem"}}
+              onClick={onProceed}
+            >
+              {TEXT_CONTIUNE}
+            </Button>
+          </Grid>
+        </Grid>
+      </Grid>
+    </Grid>
+  );
+};
+
 /* ===================================================================
 // ============================== Stepper ============================
 // =================================================================== */
@@ -387,10 +493,13 @@ const CreateEventStepper = ({activeStep}: CreateEventStepperProps) => {
       <Step key={WizardSteps.groupConfig}>
         <StepLabel>{TEXT_QUANTITY_CALCULATION_INFO}</StepLabel>
       </Step>
+      <Step key={WizardSteps.completion}>
+        <StepLabel>{TEXT_COMPLETION}</StepLabel>
+      </Step>
     </Stepper>
   );
 };
-const condition = (authUser: AuthUser) => !!authUser;
+const condition = (authUser: AuthUser | null) => !!authUser;
 
 export default compose(
   withEmailVerification,

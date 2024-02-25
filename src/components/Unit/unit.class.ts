@@ -1,6 +1,12 @@
 import Utils from "../Shared/utils.class";
-import Firebase from "../Firebase";
+import Firebase from "../Firebase/firebase.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
+import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
+
+interface Constructor {
+  key: Unit["key"];
+  name: Unit["name"];
+}
 
 interface GetAllUnits {
   firebase: Firebase;
@@ -8,8 +14,8 @@ interface GetAllUnits {
 
 interface CreateUnit {
   firebase: Firebase;
-  key: string;
-  name: string;
+  unit: Unit;
+  authUser: AuthUser;
 }
 interface SaveUnits {
   firebase: Firebase;
@@ -18,10 +24,13 @@ interface SaveUnits {
 }
 
 export default class Unit {
+  // HINT: Änderungen müssen auch im Cloud-FX-Type nachgeführt werden
   key: string;
   name: string;
-
-  constructor(key, name) {
+  /* =====================================================================
+  // Constructor
+  // ===================================================================== */
+  constructor({key, name}: Constructor) {
     this.key = key;
     this.name = name;
   }
@@ -32,13 +41,13 @@ export default class Unit {
     let units: Unit[] = [];
 
     await firebase.masterdata.units
-      .read<Object>({uids: []})
+      .read<ValueObject>({uids: []})
       .then((result) => {
         Object.keys(result).forEach((key) => {
           units.push({key: key, name: result[key].name});
         });
       })
-      .catch((error) => {
+      .catch((error: Error) => {
         throw error;
       });
 
@@ -56,5 +65,15 @@ export default class Unit {
       authUser,
     });
     return units;
+  };
+  /* =====================================================================
+  // Neue Einheit anlegen
+  // ===================================================================== */
+  static createUnit = async ({firebase, unit, authUser}: CreateUnit) => {
+    await firebase.masterdata.units.update({
+      uids: [""],
+      value: [unit],
+      authUser: authUser,
+    });
   };
 }

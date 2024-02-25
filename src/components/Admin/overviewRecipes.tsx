@@ -1,6 +1,7 @@
-import React, {useReducer} from "react";
-import {compose} from "recompose";
-import reactRouter, {useHistory} from "react-router";
+import React from "react";
+import {compose} from "react-recompose";
+
+import {useHistory} from "react-router";
 
 import useStyles from "../../constants/styles";
 import Container from "@material-ui/core/Container";
@@ -29,17 +30,16 @@ import RecipeShort from "../Recipe/recipeShort.class";
 import DialogRecipeQuickView from "../Recipe/dialogRecipeQuickView";
 
 import * as TEXT from "../../constants/text";
-import * as ROLES from "../../constants/roles";
+import Role from "../../constants/roles";
 import * as ROUTES from "../../constants/routes";
 import Action from "../../constants/actions";
 
-import Firebase, {withFirebase} from "../Firebase";
-import {
-  AuthUserContext,
-  withAuthorization,
-  withEmailVerification,
-} from "../Session";
 import Recipe, {RecipeType} from "../Recipe/recipe.class";
+import {withFirebase} from "../Firebase/firebaseContext";
+import AuthUser from "../Firebase/Authentication/authUser.class";
+import withEmailVerification from "../Session/withEmailVerification";
+import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {CustomRouterProps} from "../Shared/global.interface";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
@@ -66,7 +66,7 @@ type State = {
   filteredData: recipeOverview[];
   isLoading: boolean;
   isError: boolean;
-  error: object;
+  error: Error | null;
 };
 
 const inititialState: State = {
@@ -75,13 +75,13 @@ const inititialState: State = {
   filteredData: [],
   isLoading: false,
   isError: false,
-  error: {},
+  error: null,
 };
 
-interface OnRowClickProps {
-  event: React.MouseEvent<unknown>;
-  name: string;
-}
+// interface OnRowClickProps {
+//   event: React.MouseEvent<unknown>;
+//   name: string;
+// }
 
 interface DialogQuickViewState {
   dialogOpen: boolean;
@@ -94,8 +94,8 @@ const DIALOG_QUICK_VIEW_INITIAL_STATE: DialogQuickViewState = {
 };
 
 const recipesReducer = (state: State, action: DispatchAction): State => {
-  let field: string;
-  let value: any;
+  // let field: string;
+  // let value: any;
 
   switch (action.type) {
     case ReducerActions.RECIPES_FETCH_INIT:
@@ -122,9 +122,9 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
         ...state,
         isLoading: false,
         isError: true,
-        error: action.payload,
+        error: action.payload as Error,
       };
-    case ReducerActions.FILTER_RECIPE_LIST:
+    case ReducerActions.FILTER_RECIPE_LIST: {
       let tmpList: recipeOverview[] = [];
 
       switch (action.payload.scope) {
@@ -156,6 +156,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
         ...state,
         filteredData: tmpList,
       };
+    }
     default:
       console.error("Unbekannter ActionType: ", action.type);
       throw new Error();
@@ -168,16 +169,17 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
 const OverviewRecipePage = (props) => {
   return (
     <AuthUserContext.Consumer>
-      {(authUser) => <OverviewRecipeBase props={props} authUser={authUser} />}
+      {(authUser) => <OverviewRecipeBase {...props} authUser={authUser} />}
     </AuthUserContext.Consumer>
   );
 };
-
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const OverviewRecipeBase = ({props, authUser}) => {
-  const firebase: Firebase = props.firebase;
+const OverviewRecipeBase: React.FC<
+  CustomRouterProps & {authUser: AuthUser | null}
+> = ({authUser, ...props}) => {
+  const firebase = props.firebase;
 
   const classes = useStyles();
   const {push} = useHistory();
@@ -237,7 +239,7 @@ const OverviewRecipeBase = ({props, authUser}) => {
         firebase: firebase,
       })
         .then((result) => {
-          let tmpTable: recipeOverview[] = result as recipeOverview[];
+          const tmpTable: recipeOverview[] = result as recipeOverview[];
           // Icon setzen
           tmpTable.forEach(
             (recipe) => (recipe.typeIcon = <LockOpenIcon color="disabled" />)
@@ -265,7 +267,7 @@ const OverviewRecipeBase = ({props, authUser}) => {
         firebase: firebase,
       })
         .then((result) => {
-          let tmpTable: recipeOverview[] = result as recipeOverview[];
+          const tmpTable: recipeOverview[] = result as recipeOverview[];
           // Icon setzen
           tmpTable.forEach(
             (recipe) => (recipe.typeIcon = <LockIcon color="disabled" />)
@@ -288,6 +290,9 @@ const OverviewRecipeBase = ({props, authUser}) => {
         });
     }
   }, [radioButtonSelection]);
+  if (!authUser) {
+    return null;
+  }
   /* ------------------------------------------
   // Quick-View Dialog öffnen
   // ------------------------------------------ */
@@ -306,7 +311,7 @@ const OverviewRecipeBase = ({props, authUser}) => {
   /* ------------------------------------------
   // Quick-View Dialog schliessen
   // ------------------------------------------ */
-  const onCloseDialogRecipeQuickView = (event, reason) => {
+  const onCloseDialogRecipeQuickView = () => {
     setDialogQuickView({
       ...dialogQuickView,
       dialogOpen: false,
@@ -385,7 +390,7 @@ const OverviewRecipeBase = ({props, authUser}) => {
       {/*===== HEADER ===== */}
       <PageTitle
         title={TEXT.RECIPES}
-        subTitle={TEXT.PANEL_OVERVIEW_RECIPES_DESCRIPTION}
+        subTitle={TEXT.OVERVIEW_RECIPES_DESCRIPTION}
       />
       {/* ===== BODY ===== */}
       <Container className={classes.container} component="main" maxWidth="md">
@@ -396,7 +401,7 @@ const OverviewRecipeBase = ({props, authUser}) => {
         {state.isError && (
           <Grid item key={"error"} xs={12}>
             <AlertMessage
-              error={state.error}
+              error={state.error!}
               messageTitle={TEXT.ALERT_TITLE_WAIT_A_MINUTE}
             />
           </Grid>
@@ -487,7 +492,7 @@ const RecipesPanel = ({recipes, onRowClick}: RecipesPanelProps) => {
       type: TableColumnTypes.string,
       textAlign: ColumnTextAlign.center,
       disablePadding: false,
-      label: TEXT.COLUMN_UID,
+      label: TEXT.UID,
       visible: false,
     },
     {
@@ -551,7 +556,6 @@ const RecipesPanel = ({recipes, onRowClick}: RecipesPanelProps) => {
           tableData={recipes}
           tableColumns={TABLE_COLUMS}
           keyColum={"uid"}
-          onIconClick={() => {}}
           onRowClick={onRowClick}
         />
       </CardContent>
@@ -559,7 +563,10 @@ const RecipesPanel = ({recipes, onRowClick}: RecipesPanelProps) => {
   );
 };
 
-const condition = (authUser) => !!authUser.roles.includes(ROLES.ADMIN);
+const condition = (authUser: AuthUser | null) =>
+  !!authUser &&
+  (!!authUser.roles.includes(Role.admin) ||
+    !!authUser.roles.includes(Role.communityLeader));
 
 export default compose(
   withEmailVerification,

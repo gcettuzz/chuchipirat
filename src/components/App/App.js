@@ -5,12 +5,7 @@ import {
   Redirect,
   Switch,
 } from "react-router-dom";
-import {
-  BrowserView,
-  MobileView,
-  isBrowser,
-  isMobile,
-} from "react-device-detect";
+import {MobileView} from "react-device-detect";
 
 import CssBaseline from "@material-ui/core/CssBaseline";
 import "./App.css";
@@ -20,127 +15,85 @@ import ScrollToTop from "../Navigation/scrollToTop";
 import GoBackFab from "../Navigation/goBack";
 import Footer from "../Footer/footer";
 import LandingPage from "../Landing/landing";
-import SignUpPage from "../SignUp/signUp";
-import SignInPage from "../SignIn/signIn";
 import AuthServiceHandler from "../AuthServiceHandler/authServiceHandler";
 
-import PasswordReset from "../AuthServiceHandler/passwordReset";
-
-import PasswordChange from "../PasswordChange/passwordChange";
-import HomePage from "../Home/home";
-import Event from "../Event/Event/event";
-import CreateNewEvent from "../Event/Event/createNewEvent";
-// import Events from "../Event/events";
-import Recipes from "../Recipe/recipes";
-import Users from "../User/users";
-import System from "../Admin/system";
-import GlobalSettings from "../Admin/globalSettings";
-import FeedDelete from "../Admin/feedDelete";
-import WhereUsed from "../Admin/whereUsed";
-import MergeProducts from "../Admin/mergeProducts";
-import Jobs from "../Admin/executeJob";
-import BuildDbIndices from "../Admin/buildDbIndex";
-
-import OverviewRecipes from "../Admin/overviewRecipes";
-import OverviewEvents from "../Admin/overviewEvents";
-
-import UserPublicProfile from "../User/publicProfile";
-import UserProfile from "../User/userProfile";
-
-import Units from "../Unit/units";
-import UnitConversion from "../Unit/unitConversion";
-import Products from "../Product/products";
-import Departments from "../Department/departments";
-import requestOverview from "../Request/requestOverview";
+import {MuiThemeProvider, useMediaQuery} from "@material-ui/core";
+import {createTheme} from "@material-ui/core/styles";
 import useStyles from "../../constants/styles";
 import NotFound from "../404/404";
-
-import Temp from "../Temp/temp";
+import FallbackLoading from "../Shared/fallbackLoading";
 
 import * as ROUTES from "../../constants/routes";
-import {withAuthentication} from "../Session/index";
 
-import {MuiThemeProvider, createTheme} from "@material-ui/core/styles";
-import red from "@material-ui/core/colors/red";
-import publicProfile from "../User/publicProfile";
-import {useMediaQuery} from "@material-ui/core";
-import FallbackLoading from "../Shared/fallbackLoading";
 import CustomDialog from "../Shared/customDialog";
-
+import publicProfile from "../User/publicProfile";
+import NoAuthPage from "../Session/noAuth";
+import CustomTheme from "./customTheme.class";
 // Für nachträglicher Load --> Code Splitting
-const ShoppingList = lazy(() => import("../Event/ShoppingList/shoppingList"));
-const Menuplan = lazy(() => import("../Event/Menuplan/menuplan"));
-// const QuantityCalculation = lazy(() =>
-//   import("../QuantityCalculation/quantityCalculation")
-// );
+import SignUpPage from "../SignUp/signUp";
+import SignInPage from "../SignIn/signIn";
+import PasswordReset from "../AuthServiceHandler/passwordReset";
+
+import {withAuthentication} from "../Session/authUserContext";
+
+const PasswordChange = lazy(() => import("../PasswordChange/passwordChange"));
+const Units = lazy(() => import("../Unit/units"));
+const UnitConversion = lazy(() => import("../Unit/unitConversion"));
+const Products = lazy(() => import("../Product/products"));
+const Materials = lazy(() => import("../Material/materials"));
+const Departments = lazy(() => import("../Department/departments"));
+const requestOverview = lazy(() => import("../Request/requestOverview"));
+const HomePage = lazy(() => import("../Home/home"));
+const UserProfile = lazy(() => import("../User/userProfile"));
+const PrivacyPolicyPage = lazy(() => import("./privacyPolicy"));
+const TermOfUsePage = lazy(() => import("./termOfUse"));
+const Temp = lazy(() => import("../Temp/temp"));
+
+const Event = lazy(() => import("../Event/Event/event"));
+const Events = lazy(() => import("../Event/Event/events"));
 const Recipe = lazy(() => import("../Recipe/recipe"));
 
-const App = (props) => {
-  const firebase = props.firebase;
-  let authUser = null;
-  let listener = () => {};
+const CreateNewEvent = lazy(() => import("../Event/Event/createNewEvent"));
+const Recipes = lazy(() => import("../Recipe/recipes"));
+const Users = lazy(() => import("../User/users"));
+const System = lazy(() => import("../Admin/system"));
+const GlobalSettings = lazy(() => import("../Admin/globalSettings"));
+const FeedDelete = lazy(() => import("../Admin/feedDelete"));
+const WhereUsed = lazy(() => import("../Admin/whereUsed"));
+const MergeProducts = lazy(() => import("../Admin/mergeProducts"));
+const ConvertProductToMaterial = lazy(() =>
+  import("../Admin/convertProductToMaterial")
+);
+const Jobs = lazy(() => import("../Admin/executeJob"));
+const BuildDbIndices = lazy(() => import("../Admin/buildDbIndex"));
+const OverviewRecipes = lazy(() => import("../Admin/overviewRecipes"));
+const OverviewEvents = lazy(() => import("../Admin/overviewEvents"));
+
+const App = () => {
+  let listener;
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const classes = useStyles();
-
-  /* ------------------------------------------
-  // Farbpaletten
-  // ------------------------------------------ */
-  //TODO: für Integ anderes Farbschema....
-  //TODO: Farbpalete in anderes File auslagern.....
-  const darkPalett = {
-    type: "dark",
-    primary: {
-      main: "#00bcd4",
-      light: "#fff",
-      dark: "#fff",
-      contrastText: "#000",
-    },
-    secondary: {
-      main: "#c6ff00",
-      light: "#fdff58",
-      dark: "#90cc00",
-      contrastText: "#000",
-    },
-    error: red,
-  };
-  const lightPalette = {
-    type: "light",
-    primary: {
-      main: "#006064",
-      light: "#428e92",
-      dark: "#00363a",
-      contrastText: "#fff",
-    },
-    secondary: {
-      main: "#c6ff00",
-      light: "#fdff58",
-      dark: "#90cc00",
-      contrastText: "#000",
-    },
-    error: red,
-  };
 
   /* ------------------------------------------
   // Theme für App
   // ------------------------------------------ */
   const theme = React.useMemo(
-    () =>
-      createTheme(
-        prefersDarkMode ? {palette: darkPalett} : {palette: lightPalette}
-      ),
+    () => createTheme({palette: CustomTheme.getTheme(prefersDarkMode)}),
     [prefersDarkMode]
   );
 
-  React.useEffect(() => {
-    listener = firebase.auth.onAuthStateChanged((user) => {
-      user ? (authUser = user) : (authUser = null);
-    });
+  // React.useEffect(() => {
+  //   if (firebase && !listener) {
+  //     listener = firebase.auth.onAuthStateChanged((authUser) => {
+  //       authUser ? (authUser = user) : (authUser = null);
+  //     });
+  //     // Return Function = componentWillUmount
+  //     return function cleanup() {
+  //       listener();
+  //     };
+  //   }
+  // }, [firebase]);
 
-    // Return Function = componentWillUmount
-    return function cleanup() {
-      listener();
-    };
-  });
   return (
     <MuiThemeProvider theme={theme}>
       <CssBaseline />
@@ -155,12 +108,14 @@ const App = (props) => {
                 ROUTES.RECIPES,
                 ROUTES.CREATE_NEW_EVENT,
                 ROUTES.EVENT,
+                ROUTES.EVENTS,
                 // ROUTES.MENUPLAN,
                 // ROUTES.QUANTITY_CALCULATION,
                 // ROUTES.SHOPPINGLIST,
                 ROUTES.UNITS,
                 ROUTES.UNITCONVERSION,
                 ROUTES.PRODUCTS,
+                ROUTES.MATERIALS,
                 ROUTES.DEPARTMENTS,
                 ROUTES.SYSTEM,
                 ROUTES.NOT_FOUND,
@@ -177,6 +132,11 @@ const App = (props) => {
                 <Route exact path={ROUTES.LANDING} component={LandingPage} />
                 <Route path={ROUTES.SIGN_IN} component={SignInPage} />
                 <Route path={ROUTES.SIGN_UP} component={SignUpPage} />
+                <Route
+                  path={ROUTES.PRIVACY_POLICY}
+                  component={PrivacyPolicyPage}
+                />
+                <Route path={ROUTES.TERM_OF_USE} component={TermOfUsePage} />
                 <Route path={ROUTES.HOME} component={HomePage} />
                 <Route path={ROUTES.PASSWORD_RESET} component={PasswordReset} />
                 <Route
@@ -191,7 +151,7 @@ const App = (props) => {
                   path={ROUTES.CREATE_NEW_EVENT}
                   component={CreateNewEvent}
                 />
-                <Route exact path={ROUTES.EVENT} component={Event} />
+                <Route path={ROUTES.EVENTS} component={Events} />
                 <Route exact path={ROUTES.EVENT_UID} component={Event} />
                 <Route path={ROUTES.RECIPES} component={Recipes} />
                 <Route
@@ -205,6 +165,7 @@ const App = (props) => {
                   component={UnitConversion}
                 />
                 <Route path={ROUTES.PRODUCTS} component={Products} />
+                <Route path={ROUTES.MATERIALS} component={Materials} />
                 <Route path={ROUTES.DEPARTMENTS} component={Departments} />
                 <Route exact path={ROUTES.SYSTEM_JOBS} component={Jobs} />
                 <Route path={ROUTES.USERS} component={Users} />
@@ -245,6 +206,11 @@ const App = (props) => {
                 />
                 <Route
                   exact
+                  path={ROUTES.SYSTEM_CONVERT_PRODUCT_TO_MATERIAL}
+                  component={ConvertProductToMaterial}
+                />
+                <Route
+                  exact
                   path={ROUTES.SYSTEM_DB_INDICES}
                   component={BuildDbIndices}
                 />
@@ -263,29 +229,7 @@ const App = (props) => {
                 <Route exact path={ROUTES.RECIPE} component={Recipe} />
                 <Route exact path={ROUTES.RECIPE_UID} component={Recipe} />
                 <Route exact path={ROUTES.RECIPE_USER_UID} component={Recipe} />
-                {/* <Route
-                  exact
-                  path={ROUTES.SHOPPINGLIST}
-                  component={ShoppingList}
-                />
-                <Route
-                  exact
-                  path={ROUTES.SHOPPINGLIST_UID}
-                  component={ShoppingList}
-                /> */}
-
-                {/* <Route exact path={ROUTES.MENUPLAN} component={Menuplan} />
-                <Route exact path={ROUTES.MENUPLAN_UID} component={Menuplan} /> */}
-                {/* <Route
-                  exact
-                  path={ROUTES.QUANTITY_CALCULATION}
-                  component={QuantityCalculation}
-                /> */}
-                {/* <Route
-                  exact
-                  path={ROUTES.QUANTITY_CALCULATION_UID}
-                  component={QuantityCalculation}
-                /> */}
+                <Route exact path={ROUTES.NO_AUTH} component={NoAuthPage} />
                 <Redirect to="404" />
               </Switch>
             </Suspense>
@@ -299,12 +243,10 @@ const App = (props) => {
                 ROUTES.RECIPES,
                 ROUTES.CREATE_NEW_EVENT,
                 ROUTES.EVENT,
-                // ROUTES.MENUPLAN,
-                // ROUTES.QUANTITY_CALCULATION,
-                // ROUTES.SHOPPINGLIST,
                 ROUTES.UNITS,
                 ROUTES.UNITCONVERSION,
                 ROUTES.PRODUCTS,
+                ROUTES.MATERIALS,
                 ROUTES.DEPARTMENTS,
                 ROUTES.SIGN_IN,
                 ROUTES.SIGN_UP,

@@ -67,7 +67,7 @@ import {CARD_PLACEHOLDER_PICTURE} from "../../../constants/defaultValues";
 import Event from "./event.class";
 import User from "../../User/user.class";
 
-import Firebase from "../../Firebase";
+import Firebase from "../../Firebase/firebase.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import Utils from "../../Shared/utils.class";
 import DialogAddUser from "../../User/dialogAddUser";
@@ -101,7 +101,7 @@ interface EventInfoPageProps {
   formValidation: FormValidationFieldError[];
   onUpdateEvent: (event: Event) => void;
   onUpdatePicture: (picture: File | null) => void;
-  onError: (error: object) => void;
+  onError?: (error: Error) => void;
 }
 const EventInfoPage = ({
   event,
@@ -139,25 +139,28 @@ const EventInfoPage = ({
     } as unknown as Event);
   };
   const onDatePickerUpdate = (date: Date | null, field: string) => {
-    let changedPos = field.split("_");
+    const changedPos = field.split("_");
     let tempDates = [...event.dates];
-    let eventDate = tempDates.find(
+    const eventDate = tempDates.find(
       (eventDate) => eventDate.uid == changedPos[1]
     );
     if (!eventDate) {
       return;
     }
-    date = new Date(date!.setUTCHours(0, 0, 0, 0));
+    date = new Date(date!.setHours(0, 0, 0, 0));
     eventDate[changedPos[0]] = date;
     // Wenn das Von-Datum gesetzt wurde und das Bis noch initial ist,
     // dieses Datum auch gleich setzen, damit nicht soweit gescrollt werden muss
     if (changedPos[0] == "from" && eventDate.to.getFullYear() == 1970) {
-      eventDate.to = date;
+      eventDate.to = new Date(date);
+      eventDate.to.setHours(23, 59, 59, 0);
+    } else if (changedPos[0] == "to") {
+      eventDate.to.setHours(23, 59, 59, 0);
     }
 
     // Wenn das die letzte Zeile ist, automatisch eine neue einfügen
     if (eventDate.pos == event.dates.length) {
-      let newDate = Event.createDateEntry();
+      const newDate = Event.createDateEntry();
       newDate.pos = eventDate.pos + 1;
       tempDates.push(newDate);
     }
@@ -230,7 +233,7 @@ const EventInfoPage = ({
     setDialogAddUserOpen(false);
   };
   const onDeleteCook = (actionEvent: React.MouseEvent<HTMLButtonElement>) => {
-    let cookUidToDelete = actionEvent.currentTarget.id.split("_")[1];
+    const cookUidToDelete = actionEvent.currentTarget.id.split("_")[1];
     if (!cookUidToDelete) {
       return;
     }
@@ -246,10 +249,9 @@ const EventInfoPage = ({
         onUpdateEvent({...event, cooks: result} as Event);
       })
       .catch((error) => {
-        onError(error);
+        onError && onError(error);
       });
   };
-
   return (
     <React.Fragment>
       <Grid container spacing={2}>
@@ -600,7 +602,6 @@ const EventCookingTeamCard = ({
 }: EventCookingTeamCardProps) => {
   const classesCookingTeam = useStylesCookingTeam();
   const [expanded, setExpanded] = React.useState(false);
-  const classes = useStyles();
 
   const handleExpandClick = () => {
     setExpanded(!expanded);

@@ -1,10 +1,8 @@
 import Utils from "../Shared/utils.class";
 // import * as FIREBASE_EVENTS from "../../constants/firebaseEvents";
-import Firebase from "../Firebase";
+import Firebase from "../Firebase/firebase.class";
 import Unit from "./unit.class";
 import Product from "../Product/product.class";
-
-import {ERROR_UNIT_CONVERSION_NOT_FOUND as TEXT_ERROR_UNIT_CONVERSION_NOT_FOUND} from "../../constants/text";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 
 interface GetAllConversionBasic {
@@ -100,11 +98,11 @@ export default class UnitConversion {
     let conversionData: UnitConversionBasic = {};
 
     await firebase.masterdata.unitConversionBasic
-      .read({uids: []})
+      .read<UnitConversionBasic>({uids: []})
       .then((result) => {
         conversionData = result;
       })
-      .catch((error) => {
+      .catch((error: Error) => {
         console.error(error);
         throw error;
       });
@@ -166,7 +164,7 @@ export default class UnitConversion {
           authUser,
         });
       })
-      .catch((error) => {
+      .catch((error: Error) => {
         console.error(error);
         throw error;
       });
@@ -220,24 +218,13 @@ export default class UnitConversion {
     toUnit,
     unitConversionBasic,
     unitConversionProducts,
-  }: ConvertQuantity) => {
-    let convertedUnit: Unit["key"] = "";
-    let convertedQuantity: number = 0;
-
-    // console.info(
-    //   "quantity",
-    //   quantity,
-    //   "product",
-    //   productUid,
-    //   "fromUnit",
-    //   fromUnit,
-    //   "toUnit",
-    //   toUnit
-    // );
+  }: ConvertQuantity): {convertedQuantity: number; convertedUnit: string} => {
+    let convertedUnit: Unit["key"];
+    let convertedQuantity = 0;
 
     if (toUnit == fromUnit) {
       // Umrechnen
-      return {quantity, toUnit};
+      return {convertedQuantity: quantity, convertedUnit: toUnit};
     }
 
     let conversionRule:
@@ -265,12 +252,15 @@ export default class UnitConversion {
         (quantity * conversionRule.numerator) / conversionRule.denominator;
       convertedUnit = conversionRule.toUnit;
     } else {
-      return {quantity, fromUnit};
+      return {convertedQuantity: quantity, convertedUnit: fromUnit};
     }
 
     if (conversionRule.toUnit === toUnit) {
       // Umrechnen
-      return {convertedQuantity, convertedUnit};
+      return {
+        convertedQuantity: convertedQuantity,
+        convertedUnit: convertedUnit,
+      };
     } else {
       // Die richtige Ziel-Einheit wurde noch nicht gefunden. Nun rekursiv suchen
       return UnitConversion.convertQuantity({

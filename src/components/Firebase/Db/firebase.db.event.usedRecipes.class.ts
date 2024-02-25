@@ -11,6 +11,8 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {UsedRecipeListEntry} from "../../Event/UsedRecipes/usedRecipes.class";
+import {Ingredient, PositionType} from "../../Recipe/recipe.class";
 
 export class FirebaseDbEventUsedRecipes extends FirebaseDbSuper {
   firebase: Firebase;
@@ -51,16 +53,33 @@ export class FirebaseDbEventUsedRecipes extends FirebaseDbSuper {
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
+    const usedProducts: string[] = [];
+
+    Object.values(value.lists as UsedRecipeListEntry).forEach(
+      (list: UsedRecipeListEntry) =>
+        Object.values(list.recipes).forEach((recipe) =>
+          Object.values(recipe.ingredients.entries).forEach((position) => {
+            if (position.posType === PositionType.ingredient) {
+              const ingredient = position as Ingredient;
+              if (!usedProducts.includes(ingredient.product.uid)) {
+                usedProducts.push(ingredient.product.uid);
+              }
+            }
+          })
+        )
+    );
+
     return {
       noOfLists: value.noOfLists,
       lastChange: value.lastChange,
       lists: value.lists,
+      usedProducts: usedProducts,
     };
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
     if (!value) {
       throw new Error("No Values fetched!");
     }

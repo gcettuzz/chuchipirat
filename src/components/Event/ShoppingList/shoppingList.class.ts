@@ -1,11 +1,8 @@
 import Department from "../../Department/department.class";
-import Firebase from "../../Firebase";
+import Firebase from "../../Firebase/firebase.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import Unit from "../../Unit/unit.class";
-import Menuplan, {
-  GoodsPlanMode,
-  MealRecipeDeletedPrefix,
-} from "../Menuplan/menuplan.class";
+import Menuplan, {MealRecipeDeletedPrefix} from "../Menuplan/menuplan.class";
 import UsedRecipes from "../UsedRecipes/usedRecipes.class";
 import {
   ERROR_NO_RECIPES_FOUND as TEXT_ERROR_NO_RECIPES_FOUND,
@@ -13,7 +10,6 @@ import {
 } from "../../../constants/text";
 import Recipe, {
   Ingredient,
-  PositionType,
   RecipeMaterialPosition,
 } from "../../Recipe/recipe.class";
 import Product from "../../Product/product.class";
@@ -31,7 +27,6 @@ import Stats, {StatsField} from "../../Shared/stats.class";
 import Feed, {FeedType} from "../../Shared/feed.class";
 import Role from "../../../constants/roles";
 import _ from "lodash";
-import {Shop} from "@material-ui/icons";
 
 export enum ItemType {
   none = 0,
@@ -157,21 +152,18 @@ export default class ShoppingList {
       menueplan: menueplan,
     });
 
-    let shoppingList = {list: {}, uid: ""} as ShoppingList;
+    const shoppingList = {list: {}, uid: ""} as ShoppingList;
     let trace = {} as ShoppingListTrace;
 
     if (recipeList == undefined || recipeList.length == 0) {
       throw new Error(TEXT_ERROR_NO_RECIPES_FOUND);
     }
-
-    console.log(recipeList);
     // Alle Rezepte holen
     await Recipe.getMultipleRecipes({
       firebase: firebase,
       recipes: recipeList,
     })
       .then((result) => {
-        console.log(result);
         // Über gewählte Menüs loopen
         selectedMenues.forEach((menueUid) => {
           // Über alle Rezepte dieses Menü loopen
@@ -186,7 +178,7 @@ export default class ShoppingList {
               }
 
               // Alle Zutaten und Materiale holen
-              let scaledIngredients = Recipe.scaleIngredients({
+              const scaledIngredients = Recipe.scaleIngredients({
                 recipe:
                   result[menueplan.mealRecipes[mealRecipeUid].recipe.recipeUid],
                 portionsToScale:
@@ -196,7 +188,7 @@ export default class ShoppingList {
                 unitConversionProducts: unitConversionProducts,
                 products: products,
               });
-              let scaledMaterials = Recipe.scaleMaterials({
+              const scaledMaterials = Recipe.scaleMaterials({
                 recipe:
                   result[menueplan.mealRecipes[mealRecipeUid].recipe.recipeUid],
                 portionsToScale:
@@ -206,13 +198,12 @@ export default class ShoppingList {
               // Alle skalierten Zutaten hinzufügen
               Object.values(scaledIngredients).forEach(
                 (ingredient: Ingredient) => {
-                  let product = products.find(
+                  const product = products.find(
                     (product) => product.uid == ingredient.product.uid
                   );
-                  let department = departments.find(
+                  const department = departments.find(
                     (department) => department.uid == product?.department.uid
                   );
-
                   ShoppingList.addItem({
                     shoppingListReference: shoppingList,
                     item: product!,
@@ -242,12 +233,12 @@ export default class ShoppingList {
               Object.values(scaledMaterials).forEach(
                 (recipeMaterial: RecipeMaterialPosition) => {
                   // Prüfen ob ein Verbauchsmaterial
-                  let material = materials.find(
+                  const material = materials.find(
                     (materialRecord) =>
                       materialRecord.uid == recipeMaterial.material.uid
                   );
 
-                  let department = departments.find(
+                  const department = departments.find(
                     // Material geht fix in die Non-Food Abteilung
                     (department) => department.name.toUpperCase() == "NON FOOD"
                   );
@@ -283,12 +274,12 @@ export default class ShoppingList {
           );
           // Produkte // Material aus dem Menü ebenefalls hinzufügen
           menueplan.menues[menueUid].productOrder.forEach((productMenuUid) => {
-            let menuPlanProductEntry = menueplan.products[productMenuUid];
+            const menuPlanProductEntry = menueplan.products[productMenuUid];
 
-            let product = products.find(
+            const product = products.find(
               (product) => product.uid == menuPlanProductEntry.productUid
             );
-            let department = departments.find(
+            const department = departments.find(
               (department) => department.uid == product?.department.uid
             );
 
@@ -313,12 +304,13 @@ export default class ShoppingList {
 
           menueplan.menues[menueUid].materialOrder.forEach(
             (materialMenuUid) => {
-              let menuPlanMaterialEntry = menueplan.materials[materialMenuUid];
+              const menuPlanMaterialEntry =
+                menueplan.materials[materialMenuUid];
 
-              let material = materials.find(
+              const material = materials.find(
                 (material) => material.uid == menuPlanMaterialEntry.materialUid
               );
-              let department = departments.find(
+              const department = departments.find(
                 (department) => department.name.toUpperCase() == "NON FOOD"
               );
 
@@ -373,7 +365,6 @@ export default class ShoppingList {
     if (!item) {
       return;
     }
-
     if (!department) {
       // Lieber falsch zuordnen, als nicht aufführen
       department = {
@@ -383,7 +374,12 @@ export default class ShoppingList {
         usable: true,
       };
     }
-    if (!shoppingListReference.list.hasOwnProperty(department.pos)) {
+    if (
+      !Object.prototype.hasOwnProperty.call(
+        shoppingListReference.list,
+        department.pos
+      )
+    ) {
       // Neue Abteilung hinzufügen
       shoppingListReference.list[department.pos] = {
         departmentUid: department.uid,
@@ -435,7 +431,7 @@ export default class ShoppingList {
     unit,
     itemUid,
   }: DeleteItem) => {
-    let updatedShoppingList = _.cloneDeep(
+    const updatedShoppingList = _.cloneDeep(
       shoppingListReference
     ) as ShoppingList;
 
@@ -554,12 +550,12 @@ export default class ShoppingList {
           shoppingList = result;
 
           // Feed Eintrag
-          let indexList = Object.keys(shoppingList.list);
-          let randomDepartment = shoppingList.list[
+          const indexList = Object.keys(shoppingList.list);
+          const randomDepartment = shoppingList.list[
             indexList[Math.floor(Math.random() * indexList.length)]
           ].items as ShoppingListItem[];
 
-          let randomItem =
+          const randomItem =
             randomDepartment[
               Math.floor(Math.random() * randomDepartment.length)
             ];
@@ -618,31 +614,28 @@ export default class ShoppingList {
     shoppingListUid,
     callback,
   }: GetShoppingListListener) => {
-    let shoppingListListener = () => {};
-
     const shoppingListCallback = (shoppingList: ShoppingList) => {
       // Menüplan mit UID anreichern
       shoppingList.uid = shoppingListUid;
       callback(shoppingList);
     };
-    const errorCallback = (error: any) => {
+    const errorCallback = (error: Error) => {
       console.error(error);
       throw error;
     };
-    await firebase.event.shoppingList
-      .listen<Menuplan>({
+    return await firebase.event.shoppingList
+      .listen<ShoppingList>({
         uids: [eventUid, shoppingListUid],
         callback: shoppingListCallback,
         errorCallback: errorCallback,
       })
       .then((result) => {
-        shoppingListListener = result;
+        return result;
       })
       .catch((error) => {
         console.error(error);
         throw error;
       });
-    return shoppingListListener;
   };
   // ===================================================================== */
   /**

@@ -1,8 +1,4 @@
 import React from "react";
-import {useTheme} from "@material-ui/core/styles";
-
-import useMediaQuery from "@material-ui/core/useMediaQuery";
-
 import TextField from "@material-ui/core/TextField";
 import Autocomplete, {
   AutocompleteChangeReason,
@@ -14,7 +10,6 @@ import Material, {MaterialType} from "./material.class";
 import Utils from "../Shared/utils.class";
 
 import {MATERIAL, ADD, ITEM_CANT_BE_CHANGED} from "../../constants/text";
-import Product from "../Product/product.class";
 
 interface MaterialAutocompleteProps {
   componentKey: string;
@@ -37,8 +32,6 @@ interface filterHelpWithSortRank {
   usable: boolean;
 }
 
-type Item = Product | Material;
-
 // ===================================================================== */
 /**
  * Autocomplete Feld für Material
@@ -53,12 +46,8 @@ const MaterialAutocomplete = ({
   onChange,
   error,
 }: MaterialAutocompleteProps) => {
-  const theme = useTheme();
-  const breakpointIsXs = useMediaQuery(theme.breakpoints.down("xs"));
   // Handler für Zutaten/Produkt hinzufügen
   const filter = createFilterOptions<Material>();
-
-  let items: Item[] = [];
 
   return (
     <Autocomplete
@@ -78,7 +67,7 @@ const MaterialAutocomplete = ({
         }
 
         if (option.name.endsWith(ADD)) {
-          let words = option.name.match('".*"');
+          const words = option.name.match('".*"');
           if (words && words.length >= 0) {
             return words[0].slice(1, -1);
           }
@@ -107,7 +96,7 @@ const MaterialAutocomplete = ({
           !params.inputValue.endsWith(ADD)
         ) {
           // Hinzufügen-Möglichkeit auch als Produkt reinschmuggeln
-          let newMaterial = new Material();
+          const newMaterial = new Material();
           newMaterial.name = `"${params.inputValue}" ${ADD}`;
           filtered.push(newMaterial);
         }

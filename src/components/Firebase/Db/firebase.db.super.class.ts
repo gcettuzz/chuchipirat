@@ -41,12 +41,12 @@ interface ReadCollectionGroup {
   orderBy?: OrderBy;
   limit?: number;
   where?: Where[];
-  ignoreCache?: boolean;
+  // ignoreCache?: boolean;
 }
 interface Listen<T> {
   uids?: string[];
-  callback: (T) => void;
-  errorCallback: (error: any) => void;
+  callback: (value: T) => void;
+  errorCallback: (error: Error) => void;
 }
 interface Update<T> {
   uids: string[];
@@ -169,7 +169,7 @@ export abstract class FirebaseDbSuper {
 
     if (!ignoreCache) {
       // prüfen ob im Session-Storage was ist!
-      let sessionStorageData = SessionStorageHandler.getDocument<T>({
+      const sessionStorageData = SessionStorageHandler.getDocument<T>({
         storageObjectProperty: this.getSessionHandlerProperty(),
         documentUid: document.id,
         prefix: uids ? uids[0] : "",
@@ -186,7 +186,7 @@ export abstract class FirebaseDbSuper {
         // Keine Daten -> Gibt ein leeres Objekt
         return <T>{};
       }
-      let values = this.prepareDataForApp<T>({
+      const values = this.prepareDataForApp<T>({
         uid: snapshot.id,
         value: this.convertTimestampValuesToDates(
           snapshot.data() as ValueObject
@@ -229,9 +229,9 @@ export abstract class FirebaseDbSuper {
    * @param uid - allfällige UID, die nötig sind für das ermitteln des
    *              Dokuments
    */
-  async setRawData<T>({uids, value, authUser}: Set<T>): Promise<void> {
+  async setRawData<T>({uids, value}: Set<T>): Promise<void> {
     const document = this.getDocument(uids);
-    let dbObject = value as object;
+    const dbObject = value as ValueObject;
     return await document.set(dbObject).catch((error) => {
       console.error(error);
       throw error;
@@ -253,11 +253,11 @@ export abstract class FirebaseDbSuper {
     startAfter,
     ignoreCache = false,
   }: ReadCollection) {
-    let result: T[] = [];
+    const result: T[] = [];
 
     if (!ignoreCache) {
       // prüfen ob im Session-Storage was ist!
-      let sessionStorageData = SessionStorageHandler.getDocuments<T>({
+      const sessionStorageData = SessionStorageHandler.getDocuments<T>({
         storageObjectProperty: this.getSessionHandlerProperty(),
         where: where,
         orderBy: orderBy,
@@ -297,7 +297,7 @@ export abstract class FirebaseDbSuper {
       .get()
       .then((snapshot) => {
         snapshot.forEach((document) => {
-          let object = this.prepareDataForApp<T>({
+          const object = this.prepareDataForApp<T>({
             uid: document.id,
             value: this.convertTimestampValuesToDates(document.data()),
           }) as T;
@@ -327,9 +327,8 @@ export abstract class FirebaseDbSuper {
     orderBy,
     limit,
     where,
-    ignoreCache = false,
   }: ReadCollectionGroup) {
-    let result: T[] = [];
+    const result: T[] = [];
     let collectionGroup = this.getCollectionGroup();
 
     if (orderBy) {
@@ -358,7 +357,7 @@ export abstract class FirebaseDbSuper {
       .get()
       .then((snapshot) => {
         snapshot.forEach((document) => {
-          let object = this.prepareDataForApp<T>({
+          const object = this.prepareDataForApp<T>({
             uid: document.id,
             value: this.convertTimestampValuesToDates(document.data()),
           }) as T;
@@ -408,7 +407,7 @@ export abstract class FirebaseDbSuper {
     return document.onSnapshot((snapshot) => {
       if (!snapshot.exists) {
         if (errorCallback) {
-          errorCallback(TEXT_DB_DOCUMENT_DELETED);
+          errorCallback(new Error(TEXT_DB_DOCUMENT_DELETED));
           return;
         } else {
           throw new Error(TEXT_DB_DOCUMENT_DELETED);
@@ -527,14 +526,13 @@ export abstract class FirebaseDbSuper {
     uids,
     value,
     authUser,
-  }: Set<T>): Promise<ValueObject> {
+  }: Set<T>): Promise<T> {
     let dbObject = _.cloneDeep(
       FirebaseDbSuper.setLastChangeFields(value, authUser) as T
     );
     dbObject = this.convertDateValuesToTimestamp(dbObject);
     const document = this.getDocument(uids);
-    dbObject = this.prepareDataForDb<T>({value: dbObject});
-    console.log(dbObject);
+    dbObject = this.prepareDataForDb<T>({value: dbObject}) as T;
     return document
       .set(dbObject)
       .then(() => {
@@ -664,7 +662,7 @@ export abstract class FirebaseDbSuper {
   // =====================================================================
   abstract prepareDataForDb<T extends ValueObject>({
     value,
-  }: PrepareDataForDb<T>): object;
+  }: PrepareDataForDb<T>): ValueObject;
   // =====================================================================
   /**
    * structureDataFromDb: Daten in von DB Struktur in Objekt-Struktur
@@ -738,7 +736,7 @@ export abstract class FirebaseDbSuper {
     authUser: AuthUser,
     force?: boolean
   ) {
-    if (value.hasOwnProperty("created") || force) {
+    if (Object.prototype.hasOwnProperty.call(value, "created") || force) {
       value.created.date = new Date();
       value.created.fromUid = authUser.uid;
       value.created.fromDisplayName = authUser.publicProfile.displayName;
@@ -764,7 +762,7 @@ export abstract class FirebaseDbSuper {
     authUser: AuthUser,
     force?: boolean
   ) {
-    if (value.hasOwnProperty("lastChange") || force) {
+    if (Object.prototype.hasOwnProperty.call(value, "lastChange") || force) {
       value.lastChange.date = new Date();
       value.lastChange.fromUid = authUser.uid;
       value.lastChange.fromDisplayName = authUser.publicProfile.displayName;
@@ -785,7 +783,13 @@ export abstract class FirebaseDbSuper {
         switch (typeof value) {
           case "object":
             if (value instanceof Date) {
-              value = new Date(new Date(value).setUTCHours(0, 0, 0, 0));
+              // if (
+              //   value.getHours() !== 23 ||
+              //   value.getMinutes() !== 59 ||
+              //   value.getSeconds() !== 59
+              // ) {
+              // value = new Date(new Date(value).setUTCHours(0, 0, 0, 0));
+              // }
               value = this.firebase.timestamp.fromDate(value as Date);
             } else if (Array.isArray(value)) {
               value.forEach((entry) =>
@@ -815,15 +819,14 @@ export abstract class FirebaseDbSuper {
       // Wenn das Objekt bereits der Timestamp ist, hier abfangen
       if (values instanceof this.firebase.timestamp) {
         values = new Date(values.toDate());
-        // values = new Date(values.toDate().setUTCHours(0, 0, 0, 0));
       } else {
         // Objekt auseinandernehmen
         Object.entries(values).forEach(([key, value]) => {
           switch (typeof value) {
             case "object":
               if (value instanceof this.firebase.timestamp) {
+                //@ts-expect-error: Mit dem vorigem Check, funktioniert dies.
                 value = new Date(value!.toDate());
-                // value = new Date(value!.toDate().setUTCHours(0, 0, 0, 0));
               } else if (Array.isArray(value)) {
                 value = value.map((entry) => {
                   return this.convertTimestampValuesToDates(entry);

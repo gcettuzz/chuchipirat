@@ -1,5 +1,4 @@
-import React, { useReducer } from "react";
-import useStyles from "../../constants/styles";
+import React from "react";
 
 import OutlinedInput from "@material-ui/core/OutlinedInput";
 import InputLabel from "@material-ui/core/InputLabel";
@@ -27,8 +26,6 @@ const SearchPanel = ({
   onUpdateSearchString,
   onClearSearchString,
 }: SearchPanelProps) => {
-  const classes = useStyles();
-
   return (
     <React.Fragment>
       <FormControl
@@ -53,7 +50,11 @@ const SearchPanel = ({
             <InputAdornment position="end">
               <IconButton
                 aria-label="clear Search Term"
-                onClick={!searchString ? () => {} : onClearSearchString}
+                onClick={() => {
+                  if (searchString) {
+                    onClearSearchString;
+                  }
+                }}
                 edge="end"
                 size="small"
               >

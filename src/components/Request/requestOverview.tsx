@@ -1,39 +1,37 @@
 import React from "react";
-import {compose} from "recompose";
-import {useHistory} from "react-router";
+import {compose} from "react-recompose";
 
-import Container from "@material-ui/core/Container";
+import {
+  Container,
+  Backdrop,
+  CircularProgress,
+  Grid,
+  Card,
+  CardContent,
+  Chip,
+  Typography,
+} from "@material-ui/core";
 
-import Backdrop from "@material-ui/core/Backdrop";
-import CircularProgress from "@material-ui/core/CircularProgress";
+import {ToggleButton, ToggleButtonGroup} from "@material-ui/lab";
 
-import Grid from "@material-ui/core/Grid";
-
-// import IconButton from "@material-ui/core/IconButton";
-
-import Card from "@material-ui/core/Card";
-// import CardHeader from "@material-ui/core/CardHeader";
-import CardContent from "@material-ui/core/CardContent";
-import Chip from "@material-ui/core/Chip";
-import ToggleButton from "@material-ui/lab/ToggleButton";
-import ToggleButtonGroup from "@material-ui/lab/ToggleButtonGroup";
-
-import * as TEXT from "../../constants/text";
-// import * as ROUTES from "../../constants/routes";
+import {
+  REQUESTS as TEXT_REQUESTS,
+  ALERT_TITLE_UUPS as TEXT_ALERT_TITLE_UUPS,
+  UID as TEXT_UID,
+  NUMBER as TEXT_NUMBER,
+  REQUEST_STATUS as TEXT_REQUEST_STATUS,
+  NAME as TEXT_NAME,
+  REQUEST_CREATION_DATE as TEXT_REQUEST_CREATION_DATE,
+  REQUEST_ASSIGNEE_DISPLAYNAME as TEXT_REQUEST_ASSIGNEE_DISPLAYNAME,
+  ACTIVE_REQUESTS as TEXT_ACTIVE_REQUESTS,
+  ALL_REQUESTS as TEXT_ALL_REQUESTS,
+  NO_OPEN_REQUESTS_FOUND as TEXT_NO_OPEN_REQUESTS_FOUND,
+} from "../../constants/text";
 
 import useStyles from "../../constants/styles";
-
 import PageTitle from "../Shared/pageTitle";
 
-import Request, {
-  RequestStatus,
-  RequestAuthor,
-  RequestAssignee,
-  ChangeLog,
-  RequestType,
-  RequestTransition,
-  Comment,
-} from "./request.class";
+import {Request} from "./internal";
 
 import {Snackbar} from "../Shared/customSnackbar";
 import AlertMessage from "../Shared/AlertMessage";
@@ -42,37 +40,40 @@ import EnhancedTable, {
   ColumnTextAlign,
 } from "../Shared/enhancedTable";
 
-import Firebase, {withFirebase} from "../Firebase";
-import {
-  AuthUserContext,
-  withAuthorization,
-  withEmailVerification,
-} from "../Session";
-
-import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
-
-import {TextField, Typography} from "@material-ui/core";
 import DialogRequest from "./dialogRequest";
 import SearchPanel from "../Shared/searchPanel";
-import {request} from "https";
-import AuthUser from "../Firebase/Authentication/authUser.class";
 import {
   NavigationValuesContext,
   NavigationObject,
 } from "../Navigation/navigationContext";
 import Action from "../../constants/actions";
+import withEmailVerification from "../Session/withEmailVerification";
+import {withFirebase} from "../Firebase/firebaseContext";
+import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import AuthUser from "../Firebase/Authentication/authUser.class";
+import {CustomRouterProps} from "../Shared/global.interface";
+import {
+  RECIPE_DRAWER_DATA_INITIAL_VALUES,
+  RecipeDrawer,
+  RecipeDrawerData,
+} from "../Event/Menuplan/menuplan";
+import EventGroupConfiguration from "../Event/GroupConfiguration/groupConfiguration.class";
+import Recipe, {RecipeType, Recipes} from "../Recipe/recipe.class";
+import {RequestStatus, RequestType} from "./request.class";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
 enum ReducerActions {
-  FETCH_INIT = "FETCH_INIT",
-  FETCH_SUCCESS = "FETCH_SUCCESS",
-  FETCH_CLOSED_REQUESTS = "FETCH_CLOSED_REQUESTS",
-  UPDATE_REQUEST_SELECTION = "UPDATE_REQUEST_SELECTION",
-  SNACKBAR_CLOSE = "SNACKBAR_CLOSE",
-  GENERIC_ERROR = "GENERIC_ERROR",
-  UPDATE_SINGLE_REQUEST = "UPDATE_SINGLE_REQUEST",
+  FETCH_INIT,
+  FETCH_SUCCESS,
+  FETCH_CLOSED_REQUESTS,
+  FETCH_RECIPE_INIT,
+  FETCH_RECIPE_SUCCESS,
+  UPDATE_REQUEST_SELECTION,
+  SNACKBAR_CLOSE,
+  GENERIC_ERROR,
+  UPDATE_SINGLE_REQUEST,
 }
 
 type DispatchAction = {
@@ -82,24 +83,24 @@ type DispatchAction = {
 
 type State = {
   requests: Request[];
+  recipes: Recipes;
   activeRequests: Request[];
   closedRequests: Request[];
   isLoading: boolean;
   snackbar: Snackbar;
-  isError: boolean;
   closedRequestsFetched: boolean;
-  error: object;
+  error: Error | null;
 };
 
 const inititialState: State = {
   requests: [],
+  recipes: {},
   activeRequests: [],
   closedRequests: [],
   isLoading: false,
   snackbar: {} as Snackbar,
-  isError: false,
   closedRequestsFetched: false,
-  error: {},
+  error: null,
 };
 
 interface RequestTableProps {
@@ -120,15 +121,15 @@ interface RequestUi {
   uid: string;
   number: number;
   status: JSX.Element;
-  author: RequestAuthor;
-  assignee: RequestAssignee;
-  comments: Comment[];
-  changeLog: ChangeLog[];
-  createDate: Date;
-  resolveDate: Date;
-  requestObject: ValueObject;
-  requestType: RequestType;
-  transitions: RequestTransition[];
+  author: Request["author"];
+  assignee: Request["assignee"];
+  comments: Request["comments"];
+  changeLog: Request["changeLog"];
+  createDate: Request["createDate"];
+  resolveDate: Request["resolveDate"];
+  requestObject: Request["requestObject"];
+  requestType: Request["requestType"];
+  transitions: Request["transitions"];
 }
 
 enum RequestStateFilter {
@@ -141,6 +142,8 @@ interface StatusChipsProps {
 }
 
 const requestReducer = (state: State, action: DispatchAction): State => {
+  let tmpRequests: Request[] = [];
+  let index: number;
   switch (action.type) {
     case ReducerActions.FETCH_INIT:
       // Daten werden geladen
@@ -164,13 +167,20 @@ const requestReducer = (state: State, action: DispatchAction): State => {
         closedRequests: action.payload as Request[],
       };
     case ReducerActions.UPDATE_REQUEST_SELECTION:
-      let tempRequests: Request[] = [];
       action.payload.newStateFilter == RequestStateFilter.All
-        ? (tempRequests = [...state.activeRequests, ...state.closedRequests])
-        : (tempRequests = state.activeRequests);
+        ? (tmpRequests = [...state.activeRequests, ...state.closedRequests])
+        : (tmpRequests = state.activeRequests);
       return {
         ...state,
-        requests: tempRequests,
+        requests: tmpRequests,
+      };
+    case ReducerActions.FETCH_RECIPE_INIT:
+      return {...state, isLoading: true};
+    case ReducerActions.FETCH_RECIPE_SUCCESS:
+      return {
+        ...state,
+        isLoading: false,
+        recipes: {...state.recipes, [action.payload.uid]: action.payload},
       };
     case ReducerActions.SNACKBAR_CLOSE:
       // Snackbar schliessen
@@ -184,12 +194,13 @@ const requestReducer = (state: State, action: DispatchAction): State => {
       };
     case ReducerActions.UPDATE_SINGLE_REQUEST:
       // Einzelner Request anpassen
-      let tmpRequests = state.requests;
-      let request = tmpRequests.find(
-        (request) => request.uid == action.payload.uid
+      tmpRequests = state.requests;
+      index = tmpRequests.findIndex(
+        (request) => request.uid === action.payload.uid
       );
-      request = action.payload as Request;
-
+      if (index !== -1) {
+        tmpRequests[index] = action.payload as Request;
+      }
       return {
         ...state,
         requests: tmpRequests,
@@ -198,8 +209,7 @@ const requestReducer = (state: State, action: DispatchAction): State => {
       // allgemeiner Fehler
       return {
         ...state,
-        isError: true,
-        error: action.payload,
+        error: action.payload as Error,
         isLoading: false,
       };
     default:
@@ -214,17 +224,19 @@ const requestReducer = (state: State, action: DispatchAction): State => {
 const RequestOverviewPage = (props) => {
   return (
     <AuthUserContext.Consumer>
-      {(authUser) => <RequestOverviewBase props={props} authUser={authUser} />}
+      {(authUser) => <RequestOverviewBase {...props} authUser={authUser} />}
     </AuthUserContext.Consumer>
   );
 };
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const RequestOverviewBase = ({props, authUser}) => {
+const RequestOverviewBase: React.FC<
+  CustomRouterProps & {authUser: AuthUser | null}
+> = ({authUser, ...props}) => {
   const firebase = props.firebase;
   const classes = useStyles();
-  const {push} = useHistory();
+
   const navigationValuesContext = React.useContext(NavigationValuesContext);
 
   const [state, dispatch] = React.useReducer(requestReducer, inititialState);
@@ -236,6 +248,9 @@ const RequestOverviewBase = ({props, authUser}) => {
     selectedRequest: {} as Request,
     open: false,
   });
+  const [recipeDrawerData, setRecipeDrawerData] =
+    React.useState<RecipeDrawerData>(RECIPE_DRAWER_DATA_INITIAL_VALUES);
+
   /* ------------------------------------------
   // Navigation-Handler
   // ------------------------------------------ */
@@ -245,21 +260,26 @@ const RequestOverviewBase = ({props, authUser}) => {
       object: NavigationObject.none,
     });
   }, []);
-
   /* ------------------------------------------
   // Daten aus der DB lesen
   // ------------------------------------------ */
   React.useEffect(() => {
+    if (!authUser) {
+      return;
+    }
     dispatch({type: ReducerActions.FETCH_INIT, payload: {}});
 
-    Request.getAllActiveRequests({firebase: firebase, authUser: authUser})
+    Request.getActiveRequests({firebase: firebase, authUser: authUser})
       .then((result) => {
         dispatch({type: ReducerActions.FETCH_SUCCESS, payload: result});
       })
       .catch((error) => {
         dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
       });
-  }, []);
+  }, [authUser]);
+  if (!authUser) {
+    return null;
+  }
 
   /* ------------------------------------------
   // PopUp öffnen
@@ -367,8 +387,7 @@ const RequestOverviewBase = ({props, authUser}) => {
     ) {
       dispatch({type: ReducerActions.FETCH_INIT, payload: {}});
       // die geschlossenen Anträge holen
-      console.info("los");
-      Request.getAllClosedRequests({firebase: firebase, authUser: authUser})
+      Request.getClosedRequests({firebase: firebase, authUser: authUser})
         .then((result) => {
           dispatch({
             type: ReducerActions.FETCH_CLOSED_REQUESTS,
@@ -388,21 +407,58 @@ const RequestOverviewBase = ({props, authUser}) => {
 
     setRequestStateFilter(newStateFilter as RequestStateFilter);
   };
+  /* ------------------------------------------
+  // Recipe-Drawer-Handling
+  // ------------------------------------------ */
+  const onRecipeDrawerOpen = async (recipeUid: string) => {
+    let recipe = new Recipe();
+
+    if (Object.prototype.hasOwnProperty.call(state.recipes, recipeUid)) {
+      recipe = state.recipes[recipeUid];
+    } else {
+      // Rezept muss noch geholt werden
+      dispatch({type: ReducerActions.FETCH_RECIPE_INIT, payload: {}});
+      await Recipe.getRecipe({
+        firebase: firebase,
+        uid: recipeUid,
+        authUser: authUser,
+        userUid: authUser.uid,
+        type:
+          requestPopupValues.selectedRequest.requestType ===
+          RequestType.recipePublish
+            ? RecipeType.private
+            : RecipeType.public,
+      }).then((result) => {
+        dispatch({type: ReducerActions.FETCH_RECIPE_SUCCESS, payload: result});
+        recipe = result;
+      });
+    }
+
+    setRecipeDrawerData({
+      ...recipeDrawerData,
+      recipe: recipe,
+      open: true,
+    });
+  };
+  const onRecipeDrawerClose = () => {
+    setRecipeDrawerData({...recipeDrawerData, open: false});
+  };
+
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}
-      <PageTitle title={TEXT.PAGE_TITLE_REQUEST_OVERVIEW} />
+      <PageTitle title={TEXT_REQUESTS} />
       {/* ===== BODY ===== */}
       <Container className={classes.container} component="main" maxWidth="md">
         <Backdrop className={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
 
-        {state.isError && (
+        {state.error && (
           <AlertMessage
             error={state.error}
             severity="error"
-            messageTitle={TEXT.ALERT_TITLE_UUPS}
+            messageTitle={TEXT_ALERT_TITLE_UUPS}
           />
         )}
 
@@ -424,6 +480,19 @@ const RequestOverviewBase = ({props, authUser}) => {
         handleUpdateStatus={onUpdateStatus}
         handleAssignToMe={onAssignToMe}
         handleAddComment={onAddComment}
+        handleRecipeOpen={onRecipeDrawerOpen}
+      />
+      <RecipeDrawer
+        drawerSettings={recipeDrawerData}
+        recipe={recipeDrawerData.recipe}
+        mealPlan={recipeDrawerData.mealPlan}
+        groupConfiguration={{} as EventGroupConfiguration}
+        scaledPortions={recipeDrawerData.scaledPortions}
+        editMode={false}
+        disableFunctionality={true}
+        firebase={firebase}
+        authUser={authUser}
+        onClose={onRecipeDrawerClose}
       />
     </React.Fragment>
   );
@@ -432,7 +501,6 @@ const RequestOverviewBase = ({props, authUser}) => {
 /* ===================================================================
 // =========================== Produkte Panel ========================
 // =================================================================== */
-
 const RequestTable = ({
   requests,
   onClick,
@@ -446,7 +514,7 @@ const RequestTable = ({
       type: TableColumnTypes.string,
       textAlign: ColumnTextAlign.center,
       disablePadding: false,
-      label: TEXT.COLUMN_UID,
+      label: TEXT_UID,
       visible: false,
     },
     {
@@ -454,7 +522,7 @@ const RequestTable = ({
       type: TableColumnTypes.number,
       textAlign: ColumnTextAlign.center,
       disablePadding: false,
-      label: TEXT.COLUMN_NUMBER,
+      label: TEXT_NUMBER,
       visible: true,
     },
     {
@@ -462,7 +530,7 @@ const RequestTable = ({
       type: TableColumnTypes.string,
       textAlign: ColumnTextAlign.left,
       disablePadding: false,
-      label: TEXT.FIELD_NAME,
+      label: TEXT_NAME,
       visible: true,
     },
     {
@@ -470,7 +538,7 @@ const RequestTable = ({
       type: TableColumnTypes.JSX,
       textAlign: ColumnTextAlign.left,
       disablePadding: false,
-      label: TEXT.REQUEST_STATUS,
+      label: TEXT_REQUEST_STATUS,
       visible: true,
     },
     {
@@ -478,7 +546,7 @@ const RequestTable = ({
       type: TableColumnTypes.date,
       textAlign: ColumnTextAlign.center,
       disablePadding: false,
-      label: TEXT.REQUEST_CREATION_DATE,
+      label: TEXT_REQUEST_CREATION_DATE,
       visible: true,
     },
     {
@@ -486,7 +554,7 @@ const RequestTable = ({
       type: TableColumnTypes.string,
       textAlign: ColumnTextAlign.left,
       disablePadding: false,
-      label: TEXT.REQUEST_ASSIGNEE_DISPLAYNAME,
+      label: TEXT_REQUEST_ASSIGNEE_DISPLAYNAME,
       visible: true,
     },
   ];
@@ -528,7 +596,7 @@ const RequestTable = ({
       filteredRequests = requests;
     }
 
-    let requestui = filteredRequests.map((request) => {
+    const requestui = filteredRequests.map((request) => {
       return {
         ...request,
         status: <StatusChips status={request.status} />,
@@ -572,13 +640,13 @@ const RequestTable = ({
                 value={RequestStateFilter.Active}
                 aria-label="left aligned"
               >
-                {TEXT.ACTIVE_REQUESTS}
+                {TEXT_ACTIVE_REQUESTS}
               </ToggleButton>
               <ToggleButton
                 value={RequestStateFilter.All}
                 aria-label="centered"
               >
-                {TEXT.ALL_REQUESTS}
+                {TEXT_ALL_REQUESTS}
               </ToggleButton>
             </ToggleButtonGroup>
           </Grid>
@@ -588,7 +656,6 @@ const RequestTable = ({
               tableColumns={TABLE_COLUMS}
               keyColum={"number"}
               onRowClick={onClick}
-              onIconClick={() => {}}
             />
             {requestsUi.length == 0 && isLoading == false && !searchString && (
               <Typography
@@ -596,7 +663,7 @@ const RequestTable = ({
                 align="center"
                 style={{marginTop: "2ex"}}
               >
-                {TEXT.NO_OPEN_REQUESTS_FOUND}
+                {TEXT_NO_OPEN_REQUESTS_FOUND}
               </Typography>
             )}
           </Grid>
@@ -605,8 +672,6 @@ const RequestTable = ({
     </Card>
   );
 };
-
-const condition = (authUser: AuthUser) => !!authUser;
 
 // ===================================================================== */
 /**
@@ -630,6 +695,8 @@ export const StatusChips = ({status}: StatusChipsProps) => {
     />
   );
 };
+
+const condition = (authUser: AuthUser | null) => !!authUser;
 
 export default compose(
   withEmailVerification,

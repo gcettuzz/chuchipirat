@@ -1,11 +1,5 @@
 import Firebase from "../firebase.class";
-import {
-  FirebaseDbSuper,
-  ValueObject,
-  PrepareDataForDb,
-  PrepareDataForApp,
-} from "./firebase.db.super.class";
-import FirebaseDbRequestRecipeReview from "./firebase.db.request.recipeReview.class";
+import {FirebaseDbSuper, ValueObject} from "./firebase.db.super.class";
 
 import {
   ERROR_WRONG_DB_CLASS,
@@ -15,22 +9,33 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import FirebaseDbRequestActive from "./firebase.db.request.active.class";
+import FirebaseDbRequestNumberStorage from "./firebase.db.request.numberStorage.class";
+import FirebaseDbRequestClosed from "./firebase.db.request.closed.class";
+import FirebaseDbRequestLog from "./firebase.db.request.log.class";
 
 export class FirebaseDbRequest extends FirebaseDbSuper {
   firebase: Firebase;
-  recipe: FirebaseDbRequestRecipeReview;
+  active: FirebaseDbRequestActive;
+  closed: FirebaseDbRequestClosed;
+  log: FirebaseDbRequestLog;
+  numberStorage: FirebaseDbRequestNumberStorage;
+
   /* =====================================================================
   // Constructor
   // ===================================================================== */
   constructor(firebase: Firebase) {
     super();
     this.firebase = firebase;
-    this.recipe = new FirebaseDbRequestRecipeReview(firebase, this);
+    this.active = new FirebaseDbRequestActive(firebase);
+    this.closed = new FirebaseDbRequestClosed(firebase);
+    this.log = new FirebaseDbRequestLog(firebase);
+    this.numberStorage = new FirebaseDbRequestNumberStorage(firebase);
   }
   /* =====================================================================
   // Collection holen
   // ===================================================================== */
-  getCollection(uids: string[]) {
+  getCollection() {
     throw Error(ERROR_WRONG_DB_CLASS);
     return this.firebase.db.collection("_requests");
   }
@@ -58,13 +63,13 @@ export class FirebaseDbRequest extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForDb<T extends ValueObject>({ value }: PrepareDataForDb<T>) {
+  prepareDataForDb() {
     return {};
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({ uid, value }: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>() {
     return {} as unknown as T;
   }
   /* =====================================================================

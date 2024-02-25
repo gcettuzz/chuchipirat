@@ -52,7 +52,7 @@ export class FirebaseDbMasterDataUnits extends FirebaseDbSuper {
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
     // Value kommt als Array. Umbiegen auf Object
 
-    let unitMap = {};
+    const unitMap = {};
 
     value.forEach((unit: Unit) => {
       unitMap[unit.key] = {name: unit.name};
@@ -62,7 +62,7 @@ export class FirebaseDbMasterDataUnits extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
     // Die Aufsplittung von Objekt zu Array geschieht in der unit.class
     return value as unknown as T;
   }

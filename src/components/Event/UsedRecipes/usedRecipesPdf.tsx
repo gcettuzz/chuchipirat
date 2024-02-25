@@ -1,14 +1,5 @@
 import React from "react";
-import {
-  Document,
-  Page,
-  View,
-  Text,
-  Image,
-  Link,
-  Font,
-} from "@react-pdf/renderer";
-// import Utils from "../Shared/utils.class";
+import {Document, Page, View, Font} from "@react-pdf/renderer";
 import Event from "../Event/event.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import StylesPdf from "../../../constants/stylesRecipePdf";
@@ -16,12 +7,8 @@ import StylesPdf from "../../../constants/stylesRecipePdf";
 import {
   APP_NAME as TEXT_APP_NAME,
   SHOPPING_LIST as TEXT_SHOPPING_LIST,
-  GENERATED_ON as TEXT_GENERATED_ON,
-  GENERATED_FROM as TEXT_GENERATED_FROM,
 } from "../../../constants/text";
 import {UsedRecipeListEntry} from "./usedRecipes.class";
-
-import * as IMAGE_REPOSITORY from "../../../constants/imageRepository";
 
 import {
   RecipeHeader,
@@ -37,7 +24,6 @@ import Menuplan, {
   MenueCoordinates,
 } from "../Menuplan/menuplan.class";
 import Recipe, {RecipeType} from "../../Recipe/recipe.class";
-import unitConversion from "../../Unit/unitConversion";
 import Product from "../../Product/product.class";
 import {
   UnitConversionBasic,
@@ -66,7 +52,7 @@ const UsedRecipesPdf = ({
   unitConversionProducts,
   authUser,
 }: UsedRecipesPdfProps) => {
-  let actualDate = new Date();
+  const actualDate = new Date();
 
   return (
     <Document

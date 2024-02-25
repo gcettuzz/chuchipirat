@@ -55,7 +55,7 @@ export class FirebaseDbMasterDataUnitConversionBasic extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
     // Die Aufsplittung von Objekt zu Array geschieht in der unit.class
     return value as unknown as T;
   }

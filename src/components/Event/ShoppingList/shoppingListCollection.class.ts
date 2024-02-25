@@ -1,17 +1,8 @@
-// import Feed, {FEED_TYPE} from "../../Shared/feed.class";
-// import Stats, {STATS_FIELDS} from "../../Shared/stats.class";
-
-// import * as TEXT from "../../../constants/text";
-// import * as FIREBASE_EVENTS from "../../../constants/firebaseEvents";
-
-// import UnitConversion from "../../Unit/unitConversion.class";
-// import Utils from "../../Shared/utils.class";
-// import Recipe from "../../Recipe/recipe.class";
 import {ChangeRecord} from "../../Shared/global.interface";
 import Unit from "../../Unit/unit.class";
 import Event from "../Event/event.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
-import Firebase from "../../Firebase";
+import Firebase from "../../Firebase/firebase.class";
 import Product from "../../Product/product.class";
 import Menuplan, {Menue} from "../Menuplan/menuplan.class";
 import Recipe from "../../Recipe/recipe.class";
@@ -144,10 +135,12 @@ interface DeleteTraceEntry {
 }
 
 export default class ShoppingListCollection {
+  // HINT: Änderungen müssen auch im Cloud-FX-Type nachgeführt werden
   noOfLists: number;
   lists: {[key: string]: ShoppingListEntry};
   lastChange: ChangeRecord;
   eventUid: Event["uid"];
+  usedProducts?: Product["uid"][];
   /* =====================================================================
   // Konstruktor
   // ===================================================================== */
@@ -162,7 +155,7 @@ export default class ShoppingListCollection {
    * @returns ShoppingListCollection
    */
   static factory = ({event}: Factory) => {
-    let shoppingListCollection = new ShoppingListCollection();
+    const shoppingListCollection = new ShoppingListCollection();
     shoppingListCollection.eventUid = event.uid;
     return shoppingListCollection;
   };
@@ -223,8 +216,6 @@ export default class ShoppingListCollection {
     eventUid: uid,
     callback,
   }: GetShoppingListCollectionListener) => {
-    let shoppingListCollectionListener = () => {};
-
     const shoppingListCollectionCallback = (
       shoppingListCollection: ShoppingListCollection
     ) => {
@@ -232,25 +223,24 @@ export default class ShoppingListCollection {
       shoppingListCollection.eventUid = uid;
       callback(shoppingListCollection);
     };
-    const errorCallback = (error: any) => {
+    const errorCallback = (error: Error) => {
       console.error(error);
       throw error;
     };
 
-    await firebase.event.shoppingListCollection
+    return await firebase.event.shoppingListCollection
       .listen<ShoppingListCollection>({
         uids: [uid],
         callback: shoppingListCollectionCallback,
         errorCallback: errorCallback,
       })
       .then((result) => {
-        shoppingListCollectionListener = result;
+        return result;
       })
       .catch((error) => {
         console.error(error);
         throw error;
       });
-    return shoppingListCollectionListener;
   };
   // ===================================================================== */
   /**
@@ -336,11 +326,11 @@ export default class ShoppingListCollection {
     unit,
     addedManually: addedManualy = false,
   }: AddTraceEntry) => {
-    if (!trace.hasOwnProperty(item.uid)) {
+    if (!Object.prototype.hasOwnProperty.call(trace, item.uid)) {
       trace[item.uid] = [];
     }
 
-    let shoppingListItem: ProductTrace = {
+    const shoppingListItem: ProductTrace = {
       menueUid: menueUid,
       recipe: recipe,
       quantity: quantity,
@@ -365,7 +355,7 @@ export default class ShoppingListCollection {
    */
   static deleteTraceEntry = ({trace, itemUid}: DeleteTraceEntry) => {
     // Gewähltes Produkt ausfiltern
-    let updatedTrace = _.cloneDeep(trace);
+    const updatedTrace = _.cloneDeep(trace);
 
     delete updatedTrace[itemUid];
 
@@ -396,8 +386,8 @@ export default class ShoppingListCollection {
   }: RefreshLists) => {
     // Manuel hinzugefügte Elmente nicht löschen!
     let manuallyAddedItems: ShoppingList["list"];
-    let manuallyAddedItemsTrace = {} as ShoppingListTrace;
-    let updatedShoppingListCollection = _.cloneDeep(
+    const manuallyAddedItemsTrace = {} as ShoppingListTrace;
+    const updatedShoppingListCollection = _.cloneDeep(
       shoppingListCollection
     ) as ShoppingListCollection;
     let updatedTrace = {} as ShoppingListTrace;
@@ -427,8 +417,11 @@ export default class ShoppingListCollection {
             shoppingListCollection.lists[shoppingList.uid].trace[item.item.uid];
         });
       });
-      Object.values(manuallyAddedItemsTrace).forEach((traceItem) => {
-        traceItem = traceItem.filter((item) => item.manualAdd);
+
+      Object.keys(manuallyAddedItemsTrace).forEach((key) => {
+        manuallyAddedItemsTrace[key] = manuallyAddedItemsTrace[key].filter(
+          (item) => item.manualAdd
+        );
       });
     }
 
@@ -455,7 +448,12 @@ export default class ShoppingListCollection {
           Object.entries(manuallyAddedItems).forEach(
             ([departmentKey, department]) => {
               department.items.forEach((item) => {
-                if (!updatedShoppingList.list.hasOwnProperty(departmentKey)) {
+                if (
+                  !Object.prototype.hasOwnProperty.call(
+                    updatedShoppingList.list,
+                    departmentKey
+                  )
+                ) {
                   itemToInsert = undefined;
                   updatedShoppingList.list[departmentKey] = {...department};
                 } else {
@@ -478,9 +476,9 @@ export default class ShoppingListCollection {
             }
           );
           // Trace mit manuellen Einträgen mergen
-          Object.entries(manuallyAddedItemsTrace).forEach(([itemUid, item]) => {
+          Object.entries(manuallyAddedItemsTrace).forEach(([itemUid]) => {
             // Prüfen ob es das im neuen Trace schon gibt.
-            if (!updatedTrace.hasOwnProperty(itemUid)) {
+            if (!Object.prototype.hasOwnProperty.call(updatedTrace, itemUid)) {
               updatedTrace[itemUid] = [];
             }
             updatedTrace[itemUid] = updatedTrace[itemUid].concat(
@@ -593,7 +591,7 @@ export default class ShoppingListCollection {
     listUidToDelete,
     authUser,
   }: DeleteList) => {
-    let updatedShoppingListCollection = _.cloneDeep(
+    const updatedShoppingListCollection = _.cloneDeep(
       shoppingListColection
     ) as ShoppingListCollection;
     delete updatedShoppingListCollection.lists[listUidToDelete];
@@ -631,7 +629,7 @@ export default class ShoppingListCollection {
     newName,
     authUser,
   }: EditListName) => {
-    let updatedShoppingListCollection = _.cloneDeep(
+    const updatedShoppingListCollection = _.cloneDeep(
       shoppingListCollection
     ) as ShoppingListCollection;
 

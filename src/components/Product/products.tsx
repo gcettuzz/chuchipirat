@@ -1,31 +1,53 @@
 import React from "react";
-import {compose} from "recompose";
+import {compose} from "react-recompose";
 
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Container from "@material-ui/core/Container";
 import Grid from "@material-ui/core/Grid";
 import Backdrop from "@material-ui/core/Backdrop";
 import CircularProgress from "@material-ui/core/CircularProgress";
-import Divider from "@material-ui/core/Divider";
 
 import Typography from "@material-ui/core/Typography";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
-import Input from "@material-ui/core/Input";
-import InputLabel from "@material-ui/core/InputLabel";
-import IconButton from "@material-ui/core/IconButton";
-import InputAdornment from "@material-ui/core/InputAdornment";
-
 import {
-  FormControl,
-  FormLabel,
   FormControlLabel,
   RadioGroup,
   Radio,
   Checkbox,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  IconButton,
 } from "@material-ui/core";
 
-import * as TEXT from "../../constants/text";
+import {
+  DEPARTMENT as TEXT_DEPARTMENT,
+  SAVE_SUCCESS as TEXT_SAVE_SUCCESS,
+  PRODUCTS as TEXT_PRODUCTS,
+  NOTHING_WORKS_WITHOUT_US as TEXT_NOTHING_WORKS_WITHOUT_US,
+  ALERT_TITLE_UUPS as TEXT_ALERT_TITLE_UUPS,
+  EDIT as TEXT_EDIT,
+  SAVE as TEXT_SAVE,
+  CANCEL as TEXT_CANCEL,
+  UID as TEXT_UID,
+  PRODUCT as TEXT_PRODUCT,
+  SHOPPING_UNIT as TEXT_SHOPPING_UNIT,
+  HAS_LACTOSE as TEXT_HAS_LACTOSE,
+  HAS_GLUTEN as TEXT_HAS_GLUTEN,
+  DIET as TEXT_DIET,
+  USABLE as TEXT_USABLE,
+  IS_MEAT as TEXT_IS_MEAT,
+  IS_VEGETARIAN as TEXT_IS_VEGETARIAN,
+  IS_VEGAN as TEXT_IS_VEGAN,
+  FROM as TEXT_FROM,
+  NAME as TEXT_NAME,
+  MATERIAL_TYPE_USAGE as TEXT_MATERIAL_TYPE_USAGE,
+  MATERIAL_TYPE_CONSUMABLE as TEXT_MATERIAL_TYPE_CONSUMABLE,
+  CHOOSE_MATERIAL_TYPE as TEXT_CHOOSE_MATERIAL_TYPE,
+  MATERIAL_TYPE as TEXT_MATERIAL_TYPE,
+  PRODUCT_CONVERTED_TO_MATERIAL as TEXT_PRODUCT_CONVERTED_TO_MATERIAL,
+} from "../../constants/text";
 import Roles from "../../constants/roles";
 
 import PageTitle from "../Shared/pageTitle";
@@ -34,11 +56,14 @@ import EnhancedTable, {
   TableColumnTypes,
   ColumnTextAlign,
 } from "../Shared/enhancedTable";
-import DialogProduct, {PRODUCT_DIALOG_TYPE} from "./dialogProduct";
+import DialogProduct, {ProductDialog} from "./dialogProduct";
 import AlertMessage from "../Shared/AlertMessage";
 
-import EditIcon from "@material-ui/icons/Edit";
-import SearchIcon from "@material-ui/icons/Search";
+import {
+  Edit as EditIcon,
+  MoreVert as MoreVertIcon,
+  Cached as CachedIcon,
+} from "@material-ui/icons";
 
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
 import useStyles from "../../constants/styles";
@@ -48,28 +73,35 @@ import Product, {Allergen, Diet} from "./product.class";
 import Unit from "../Unit/unit.class";
 import Department from "../Department/department.class";
 
-import Firebase, {withFirebase} from "../Firebase";
-import {
-  AuthUserContext,
-  withAuthorization,
-  withEmailVerification,
-} from "../Session";
 import AuthUser from "../Firebase/Authentication/authUser.class";
+import Material, {MaterialType} from "../Material/material.class";
+import Role from "../../constants/roles";
+import {
+  DialogType,
+  SingleTextInputResult,
+  useCustomDialog,
+} from "../Shared/customDialogContext";
+import withEmailVerification from "../Session/withEmailVerification";
+import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {withFirebase} from "../Firebase/firebaseContext";
+import {CustomRouterProps} from "../Shared/global.interface";
+
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
 enum ReducerActions {
-  PRODUCTS_FETCH_INIT = "PRODUCTS_FETCH_INIT",
-  PRODUCTS_FETCH_SUCCESS = "PRODUCTS_FETCH_SUCCESS",
-  PRODUCTS_SAVED = "PRODUCTS_SAVED",
+  PRODUCTS_FETCH_INIT,
+  PRODUCTS_FETCH_SUCCESS,
+  PRODUCTS_SAVED,
   // PRODUCTS_FILTER_LIST= "PRODUCTS_FILTER_LIST",
   // PRODUCT_UPDATED= "PRODUCT_UPDATED",
-  DEPARTMENT_FETCH_INIT = "DEPARTMENT_FETCH_INIT",
-  DEPARTMENTS_FETCH_SUCCESS = "DEPARTMENTS_FETCH_SUCCESS",
-  UNITS_FETCH_INIT = "UNITS_FETCH_INIT",
-  UNITS_FETCH_SUCCESS = "UNITS_FETCH_SUCCESS",
-  SNACKBAR_CLOSE = "SNACKBAR_CLOSE",
-  GENERIC_ERROR = "GENERIC_ERROR",
+  PRODUCT_CONVERTED_TO_MATERIAL,
+  DEPARTMENT_FETCH_INIT,
+  DEPARTMENTS_FETCH_SUCCESS,
+  UNITS_FETCH_INIT,
+  UNITS_FETCH_SUCCESS,
+  SNACKBAR_CLOSE,
+  GENERIC_ERROR,
 }
 type DispatchAction = {
   type: ReducerActions;
@@ -79,8 +111,7 @@ type State = {
   products: Product[];
   departments: Department[];
   units: Unit[];
-  isError: boolean;
-  error: object;
+  error: Error | null;
   isLoading: {
     overall: boolean;
     products: boolean;
@@ -94,8 +125,7 @@ const inititialState: State = {
   products: [],
   departments: [],
   units: [],
-  error: {},
-  isError: false,
+  error: null,
   isLoading: {
     overall: false,
     products: false,
@@ -106,6 +136,7 @@ const inititialState: State = {
 };
 
 const productsReducer = (state: State, action: DispatchAction): State => {
+  let products: State["products"] = [];
   switch (action.type) {
     case ReducerActions.PRODUCTS_FETCH_INIT:
       // Daten werden geladen
@@ -135,7 +166,7 @@ const productsReducer = (state: State, action: DispatchAction): State => {
         snackbar: {
           open: true,
           severity: "success",
-          message: TEXT.SAVE_SUCCESS,
+          message: TEXT_SAVE_SUCCESS,
         },
       };
     case ReducerActions.DEPARTMENT_FETCH_INIT:
@@ -199,6 +230,21 @@ const productsReducer = (state: State, action: DispatchAction): State => {
     //     message: TEXT.PRODUCT_EDITED(action.payload.name),
     //   },
     // };
+    case ReducerActions.PRODUCT_CONVERTED_TO_MATERIAL:
+      // Konvertiertes Produkt aus Liste löschen
+      products = state.products.filter(
+        (product) => product.uid !== action.payload.uid
+      );
+
+      return {
+        ...state,
+        products: products,
+        snackbar: {
+          severity: "success",
+          open: true,
+          message: TEXT_PRODUCT_CONVERTED_TO_MATERIAL(action.payload.name),
+        },
+      };
     case ReducerActions.SNACKBAR_CLOSE:
       // Snackbar schliessen
       return {
@@ -213,8 +259,7 @@ const productsReducer = (state: State, action: DispatchAction): State => {
       // allgemeiner Fehler
       return {
         ...state,
-        isError: true,
-        error: action.payload,
+        error: action.payload as Error,
         isLoading: {...state.isLoading, overall: false},
       };
     default:
@@ -246,34 +291,35 @@ const PRODUCT_POPUP_VALUES = {
   productName: "",
   productUid: "",
   department: {name: "", uid: ""},
-  shoppingUnit: "",
+  shoppingUnit: {key: "", name: ""},
   usable: false,
   popUpOpen: false,
   dietProperties: Product.createEmptyDietProperty(),
 };
-
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
 const ProductsPage = (props) => {
   return (
     <AuthUserContext.Consumer>
-      {(authUser) => <ProductsBase props={props} authUser={authUser} />}
+      {(authUser) => <ProductsBase {...props} authUser={authUser} />}
     </AuthUserContext.Consumer>
   );
 };
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const ProductsBase = ({props, authUser}) => {
+const ProductsBase: React.FC<
+  CustomRouterProps & {authUser: AuthUser | null}
+> = ({authUser, ...props}) => {
   const firebase = props.firebase;
   const classes = useStyles();
+  const {customDialog} = useCustomDialog();
 
   const [state, dispatch] = React.useReducer(productsReducer, inititialState);
   const [editMode, setEditMode] = React.useState(false);
   const [saveTrigger, setSaveTrigger] = React.useState(0);
   const [cancelTrigger, setCancelTrigger] = React.useState(0);
-
   /* ------------------------------------------
 	// Daten aus DB holen
 	// ------------------------------------------ */
@@ -348,6 +394,9 @@ const ProductsBase = ({props, authUser}) => {
       }
     }
   }, [editMode]);
+  if (!authUser) {
+    return null;
+  }
   /* ------------------------------------------
 	// Edit Mode wechseln
 	// ------------------------------------------ */
@@ -368,10 +417,6 @@ const ProductsBase = ({props, authUser}) => {
       authUser: authUser,
     })
       .then((result) => {
-        //FIXME: funktioniert nicht richtig.... Einheit muss richtig gespeichert werden
-        // Danach schauen wieso die  Umrechnung im Rezept nicht richtig
-        // funtkioniert.
-        // Werte in State übernehmen, Meldung anzeigen
         dispatch({type: ReducerActions.PRODUCTS_SAVED, payload: result});
       })
       .catch((error) => {
@@ -383,6 +428,39 @@ const ProductsBase = ({props, authUser}) => {
   };
   const onCancel = () => {
     toggleEditMode();
+  };
+  const onConvertProductToMaterial = async (product: Product) => {
+    // Fragen welcher Material-Typ gesetzt werden soll?
+
+    const userInput = (await customDialog({
+      dialogType: DialogType.selectOptions,
+      title: TEXT_MATERIAL_TYPE,
+      text: TEXT_CHOOSE_MATERIAL_TYPE,
+      singleTextInputProperties: {
+        initialValue: "",
+        textInputLabel: TEXT_NAME,
+      },
+      options: [
+        {key: MaterialType.usage, text: TEXT_MATERIAL_TYPE_USAGE},
+        {key: MaterialType.consumable, text: TEXT_MATERIAL_TYPE_CONSUMABLE},
+      ],
+    })) as SingleTextInputResult;
+
+    if (userInput.valid) {
+      // Cloud-FX triggern.
+      Material.createMaterialFromProduct({
+        firebase: firebase,
+        product: {uid: product.uid, name: product.name},
+        newMaterialType: parseInt(userInput.input) as MaterialType,
+        authUser: authUser,
+      }).then(() => {
+        //TODO: snackbar, product aus der liste löschen
+        dispatch({
+          type: ReducerActions.PRODUCT_CONVERTED_TO_MATERIAL,
+          payload: product,
+        });
+      });
+    }
   };
   /* ------------------------------------------
   // Snackback schliessen
@@ -405,8 +483,8 @@ const ProductsBase = ({props, authUser}) => {
       <CssBaseline />
       {/*===== HEADER ===== */}
       <PageTitle
-        title={TEXT.PAGE_TITLE_PRODUCTS}
-        subTitle={TEXT.PAGE_SUBTITLE_PRODUCTS}
+        title={TEXT_PRODUCTS}
+        subTitle={TEXT_NOTHING_WORKS_WITHOUT_US}
       />
       <ProductsButtonRow
         editMode={editMode}
@@ -421,11 +499,11 @@ const ProductsBase = ({props, authUser}) => {
           <CircularProgress color="inherit" />
         </Backdrop>
 
-        {state.isError && (
+        {state.error && (
           <AlertMessage
             error={state.error}
             severity="error"
-            messageTitle={TEXT.ALERT_TITLE_UUPS}
+            messageTitle={TEXT_ALERT_TITLE_UUPS}
           />
         )}
         <ProductsTable
@@ -437,6 +515,8 @@ const ProductsBase = ({props, authUser}) => {
           cancelTrigger={cancelTrigger}
           onSave={onSave}
           onCancel={onCancel}
+          onConvertProductToMaterial={onConvertProductToMaterial}
+          authUser={authUser}
         />
         <CustomSnackbar
           message={state.snackbar.message}
@@ -475,9 +555,8 @@ const ProductsButtonRow = ({
           visible:
             !editMode &&
             (authUser.roles.includes(Roles.communityLeader) ||
-              authUser.roles.includes(Roles.admin) ||
-              authUser.roles.includes(Roles.subAdmin)),
-          label: TEXT.BUTTON_EDIT,
+              authUser.roles.includes(Roles.admin)),
+          label: TEXT_EDIT,
           variant: "contained",
           color: "primary",
           onClick: onEdit,
@@ -486,7 +565,7 @@ const ProductsButtonRow = ({
           id: "save",
           hero: true,
           visible: editMode,
-          label: TEXT.BUTTON_SAVE,
+          label: TEXT_SAVE,
           variant: "contained",
           color: "primary",
           onClick: onSave,
@@ -495,7 +574,7 @@ const ProductsButtonRow = ({
           id: "cancel",
           hero: true,
           visible: editMode,
-          label: TEXT.BUTTON_CANCEL,
+          label: TEXT_CANCEL,
           variant: "outlined",
           color: "primary",
           onClick: onCancel,
@@ -516,6 +595,8 @@ interface ProductsTableProps {
   cancelTrigger: any;
   onSave: (editedProducts: Product[]) => void;
   onCancel: () => void;
+  onConvertProductToMaterial: (product: Product) => void;
+  authUser: AuthUser;
 }
 // Aufbau der UI-Tabelle
 interface ProductLineUi {
@@ -527,6 +608,7 @@ interface ProductLineUi {
   containsGluten: JSX.Element;
   diet: JSX.Element;
   usable: JSX.Element;
+  context: JSX.Element;
 }
 
 const ProductsTable = ({
@@ -538,6 +620,8 @@ const ProductsTable = ({
   cancelTrigger,
   onSave,
   onCancel,
+  onConvertProductToMaterial: onConvertProductToMaterialSuper,
+  authUser,
 }: ProductsTableProps) => {
   const [searchString, setSearchString] = React.useState("");
   const [products, setProducts] = React.useState<Product[]>([]);
@@ -546,7 +630,9 @@ const ProductsTable = ({
   >([]);
   const [productPopUpValues, setProductPopUpValues] =
     React.useState(PRODUCT_POPUP_VALUES);
-
+  const [contextMenuAnchorElement, setContextMenuAnchorElement] =
+    React.useState<HTMLElement | null>(null);
+  const [contextMenuProductUid, setContextMenuProductUid] = React.useState("");
   const classes = useStyles();
   const TABLE_COLUMS = [
     {
@@ -563,7 +649,7 @@ const ProductsTable = ({
       type: TableColumnTypes.string,
       textAlign: ColumnTextAlign.center,
       disablePadding: false,
-      label: TEXT.COLUMN_UID,
+      label: TEXT_UID,
       visible: false,
     },
     {
@@ -571,7 +657,7 @@ const ProductsTable = ({
       type: TableColumnTypes.string,
       textAlign: ColumnTextAlign.left,
       disablePadding: false,
-      label: TEXT.FIELD_PRODUCT,
+      label: TEXT_PRODUCT,
       visible: true,
     },
     {
@@ -579,7 +665,7 @@ const ProductsTable = ({
       type: TableColumnTypes.string,
       textAlign: ColumnTextAlign.left,
       disablePadding: false,
-      label: TEXT.FIELD_DEPARTMENT,
+      label: TEXT_DEPARTMENT,
       visible: true,
     },
     {
@@ -587,7 +673,7 @@ const ProductsTable = ({
       type: TableColumnTypes.string,
       textAlign: ColumnTextAlign.center,
       disablePadding: false,
-      label: TEXT.FIELD_SHOPPING_UNIT,
+      label: TEXT_SHOPPING_UNIT,
       visible: true,
     },
     {
@@ -595,7 +681,7 @@ const ProductsTable = ({
       type: TableColumnTypes.JSX,
       textAlign: ColumnTextAlign.center,
       disablePadding: false,
-      label: TEXT.HAS_LACTOSE,
+      label: TEXT_HAS_LACTOSE,
       visible: true,
     },
     {
@@ -603,7 +689,7 @@ const ProductsTable = ({
       type: TableColumnTypes.JSX,
       textAlign: ColumnTextAlign.center,
       disablePadding: false,
-      label: TEXT.HAS_GLUTEN,
+      label: TEXT_HAS_GLUTEN,
       visible: true,
     },
     {
@@ -611,7 +697,7 @@ const ProductsTable = ({
       type: TableColumnTypes.JSX,
       textAlign: ColumnTextAlign.center,
       disablePadding: false,
-      label: TEXT.DIET,
+      label: TEXT_DIET,
       visible: true,
     },
     {
@@ -619,8 +705,16 @@ const ProductsTable = ({
       type: TableColumnTypes.string,
       textAlign: ColumnTextAlign.center,
       disablePadding: false,
-      label: TEXT.FIELD_USABLE,
+      label: TEXT_USABLE,
       visible: true,
+    },
+    {
+      id: "context",
+      type: TableColumnTypes.JSX,
+      textAlign: ColumnTextAlign.center,
+      disablePadding: false,
+      label: "",
+      visible: editMode,
     },
   ];
   /* ------------------------------------------
@@ -748,21 +842,21 @@ const ProductsTable = ({
               control={
                 <Radio size="small" color="primary" disabled={!editMode} />
               }
-              label={TEXT.IS_MEAT}
+              label={TEXT_IS_MEAT}
             />
             <FormControlLabel
               value={Diet.Vegetarian}
               control={
                 <Radio size="small" color="primary" disabled={!editMode} />
               }
-              label={TEXT.IS_VEGETARIAN}
+              label={TEXT_IS_VEGETARIAN}
             />
             <FormControlLabel
               value={Diet.Vegan}
               control={
                 <Radio size="small" color="primary" disabled={!editMode} />
               }
-              label={TEXT.IS_VEGAN}
+              label={TEXT_IS_VEGAN}
             />
           </RadioGroup>
         ),
@@ -775,6 +869,11 @@ const ProductsTable = ({
             onChange={handleCheckBoxChange}
           />
         ),
+        context: (
+          <IconButton id={"context_" + product.uid} onClick={openContextMenu}>
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
+        ),
       };
     });
   };
@@ -782,16 +881,16 @@ const ProductsTable = ({
   // Checkboxen/RadioButton-Edit
   // ------------------------------------------ */
   const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    let pressedCheckbox = event.target.name.split("_");
+    const pressedCheckbox = event.target.name.split("_");
 
-    let tempProducts = products;
-    let changedProduct = tempProducts.find(
+    const tempProducts = products;
+    const changedProduct = tempProducts.find(
       (product) => product.uid === pressedCheckbox[2]
     );
     if (!changedProduct) {
       return;
     }
-    let changedAllergene = parseInt(pressedCheckbox[1]) as Allergen;
+    const changedAllergene = parseInt(pressedCheckbox[1]) as Allergen;
 
     if (event.target.checked) {
       // Wert hinzufügen
@@ -810,9 +909,9 @@ const ProductsTable = ({
     );
   };
   const handleCheckBoxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    let pressedCheckbox = event.target.id.split("_");
-    let tempProducts = products;
-    let changedProduct = tempProducts.find(
+    const pressedCheckbox = event.target.id.split("_");
+    const tempProducts = products;
+    const changedProduct = tempProducts.find(
       (product) => product.uid === pressedCheckbox[1]
     );
     if (!changedProduct) {
@@ -828,9 +927,9 @@ const ProductsTable = ({
   const handleRadioButtonChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    let pressedRadioButtonGroup = event.target.name.split("_");
-    let tempProducts = products;
-    let changedProduct = tempProducts.find(
+    const pressedRadioButtonGroup = event.target.name.split("_");
+    const tempProducts = products;
+    const changedProduct = tempProducts.find(
       (product) => product.uid === pressedRadioButtonGroup[1]
     );
     if (!changedProduct) {
@@ -842,6 +941,29 @@ const ProductsTable = ({
       prepareProductsListForUi(filterProducts(tempProducts, searchString))
     );
   };
+  /* ------------------------------------------
+	// Context-Menü 
+	// ------------------------------------------ */
+  const openContextMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setContextMenuAnchorElement(event.currentTarget);
+    setContextMenuProductUid(event.currentTarget.id.split("_")[1]);
+  };
+  const closeContextMenu = () => {
+    setContextMenuAnchorElement(null);
+    setContextMenuProductUid("");
+  };
+  const onConvertProductToMaterial = () => {
+    const product = dbProducts.find(
+      (product) => product.uid === contextMenuProductUid
+    );
+    if (!product) {
+      return;
+    }
+    onConvertProductToMaterialSuper(product);
+    setContextMenuAnchorElement(null);
+    setContextMenuProductUid("");
+  };
+
   /* ------------------------------------------
 	// PopUp 
 	// ------------------------------------------ */
@@ -873,7 +995,7 @@ const ProductsTable = ({
         uid: product.department.uid,
         name: product.department.name,
       },
-      shoppingUnit: product.shoppingUnit,
+      shoppingUnit: {key: product.shoppingUnit, name: ""},
       dietProperties: product.dietProperties,
       usable: product.usable,
       popUpOpen: true,
@@ -884,9 +1006,9 @@ const ProductsTable = ({
   };
   const onPopUpOk = (changedProduct: Product) => {
     // angepasstes Produkt updaten
-    let tempProducts = products;
+    const tempProducts = products;
 
-    let index = tempProducts.findIndex(
+    const index = tempProducts.findIndex(
       (product) => product.uid === changedProduct.uid
     );
     if (index === -1) {
@@ -934,7 +1056,7 @@ const ProductsTable = ({
       prepareProductsListForUi(filterProducts(products, ""))
     );
   }
-  //TODO: usable einbauen wie bei den PRodukten
+
   return (
     <React.Fragment>
       <Card className={classes.card} key={"requestTablePanel"}>
@@ -954,25 +1076,39 @@ const ProductsTable = ({
                 style={{marginTop: "0.5em", marginBottom: "2em"}}
               >
                 {filteredProductsUi.length == products.length
-                  ? `${products.length} ${TEXT.MATERIALS}`
-                  : `${filteredProductsUi.length} ${TEXT.FROM.toLowerCase()} ${
+                  ? `${products.length} ${TEXT_PRODUCTS}`
+                  : `${filteredProductsUi.length} ${TEXT_FROM.toLowerCase()} ${
                       products.length
-                    } ${TEXT.PRODUCTS}`}
+                    } ${TEXT_PRODUCTS}`}
               </Typography>
 
               <EnhancedTable
                 tableData={filteredProductsUi}
                 tableColumns={TABLE_COLUMS}
                 keyColum={"uid"}
-                onRowClick={() => {}}
                 onIconClick={openPopUp}
               />
+              <Menu
+                open={Boolean(contextMenuAnchorElement)}
+                keepMounted
+                anchorEl={contextMenuAnchorElement}
+                onClose={closeContextMenu}
+              >
+                <MenuItem onClick={onConvertProductToMaterial}>
+                  <ListItemIcon>
+                    <CachedIcon />
+                  </ListItemIcon>
+                  <Typography variant="inherit" noWrap>
+                    Zu Material umwandeln
+                  </Typography>
+                </MenuItem>
+              </Menu>
             </Grid>
           </Grid>
         </CardContent>
       </Card>
       <DialogProduct
-        dialogType={PRODUCT_DIALOG_TYPE.EDIT}
+        dialogType={ProductDialog.EDIT}
         productUid={productPopUpValues.productUid}
         productName={productPopUpValues.productName}
         productDietProperties={productPopUpValues.dietProperties}
@@ -981,19 +1117,25 @@ const ProductsTable = ({
         dialogOpen={productPopUpValues.popUpOpen}
         handleOk={onPopUpOk}
         handleClose={onPopUpClose}
-        selectedDepartment={departments.find(
-          (department) => department.uid === productPopUpValues.department.uid
-        )}
+        selectedDepartment={
+          departments.find(
+            (department) => department.uid === productPopUpValues.department.uid
+          )!
+        }
         selectedUnit={productPopUpValues.shoppingUnit}
         usable={productPopUpValues.usable}
         departments={departments}
         units={units}
+        authUser={authUser}
       />
     </React.Fragment>
   );
 };
-const condition = (authUser: AuthUser) =>
-  !!authUser.roles.includes(Roles.communityLeader);
+
+const condition = (authUser) =>
+  !!authUser &&
+  (!!authUser.roles.includes(Role.admin) ||
+    !!authUser.roles.includes(Role.communityLeader));
 
 export default compose(
   withEmailVerification,

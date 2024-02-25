@@ -5,7 +5,7 @@ import {
   PrepareDataForDb,
   PrepareDataForApp,
 } from "./firebase.db.super.class";
-import { ERROR_NOT_IMPLEMENTED_YET } from "../../../constants/text";
+import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
 import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
@@ -23,7 +23,7 @@ export class FirebaseDummy extends FirebaseDbSuper {
   // Collection holen
   // ===================================================================== */
   getCollection() {
-    //FIXME:
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
     return this.firebase.db.collection("XYZ");
   }
   /* =====================================================================
@@ -37,7 +37,7 @@ export class FirebaseDummy extends FirebaseDbSuper {
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
-    //FIXME:
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
     return this.firebase.db.doc(`XYU/${uids[0]}`);
   }
   /* =====================================================================
@@ -49,32 +49,14 @@ export class FirebaseDummy extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForDb<T extends ValueObject>({ value }: PrepareDataForDb<T>) {
-    return {};
-    //   authUsers: value.authUsers,
-    //   cooks: value.cooks,
-    //   createdAt: this.firebase.timestamp.fromDate(value.createdAt),
-    //   createdFromDisplayName: value.createdFromDisplayName,
-    //   createdFromUid: value.createdFromUid,
-    //   dates: value.dates,
-    //   lastChangeAt: this.firebase.timestamp.fromDate(value.lastChangeAt),
-    //   lastChangeFromDisplayName: value.lastChangeFromDisplayName,
-    //   lastChangeFromUid: value.lastChangeFromUid,
-    //   location: value.location,
-    //   maxDate: this.firebase.timestamp.fromDate(value.maxDate),
-    //   motto: value.motto,
-    //   name: value.name,
-    //   participants: parseInt(value.participants),
-    //   numberOfDays: value.numberOfDays,
-    //   pictureSrc: value.pictureSrc,
-    //   pictureSrcFullSize: value.pictureSrcFullSize,
-    // };
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
+    return value;
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({ uid, value }: PrepareDataForApp) {
-    return { key: "dummy" } as unknown as T;
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
+    return value as unknown as T;
   }
   /* =====================================================================
   // Einstellungen für den Session Storage zurückgeben

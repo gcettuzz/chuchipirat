@@ -1,9 +1,6 @@
 import Firebase from "../firebase.class";
 
-import {
-  ERROR_NOT_IMPLEMENTED_YET,
-  ERROR_WRONG_DB_CLASS,
-} from "../../../constants/text";
+import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
 import {
   ValueObject,
   PrepareDataForApp,
@@ -27,7 +24,7 @@ export class FirebaseDbEventShort extends FirebaseDbSuper {
   /* =====================================================================
   // Collection holen
   // ===================================================================== */
-  getCollection(uids: string[]) {
+  getCollection() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
     return this.firebase.db.collection("events");
   }
@@ -41,7 +38,7 @@ export class FirebaseDbEventShort extends FirebaseDbSuper {
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
-  getDocument(uids: string[]) {
+  getDocument() {
     return this.firebase.db.doc(`events/000_allEvents`);
   }
   /* =====================================================================
@@ -54,7 +51,7 @@ export class FirebaseDbEventShort extends FirebaseDbSuper {
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
-    let eventShort = {
+    const eventShort = {
       [value.uid]: {
         name: value.name,
         motto: value.motto,
@@ -71,7 +68,7 @@ export class FirebaseDbEventShort extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
     return value as unknown as T;
   }
   /* =====================================================================

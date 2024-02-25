@@ -1,8 +1,5 @@
 import Firebase from "../Firebase/firebase.class";
-import {
-  ChangeRecord,
-  Picture as PictureSrc,
-} from "../Shared/global.interface";
+import {Picture as PictureSrc} from "../Shared/global.interface";
 
 interface IncrementField {
   firebase: Firebase;
@@ -18,7 +15,7 @@ export enum UserPublicProfileStatsFields {
   noRecipesPublic = "noRecipesPublic",
   noRecipesPrivate = "noRecipesPrivate",
 }
-type Stats = { [key in UserPublicProfileStatsFields]: number };
+type Stats = {[key in UserPublicProfileStatsFields]: number};
 
 /**
  * Öffentliches Profile, wie von jedem*r einsehbar

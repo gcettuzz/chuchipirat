@@ -49,7 +49,7 @@ import {MoreVert as MoreVertIcon} from "@material-ui/icons";
 
 import useStyles from "../../../constants/styles";
 
-import Firebase from "../../Firebase";
+import Firebase from "../../Firebase/firebase.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import Event from "../Event/event.class";
 import EventGroupConfiguration from "../GroupConfiguration/groupConfiguration.class";
@@ -94,11 +94,11 @@ import {
   PositionContextMenu,
 } from "../Event/eventSharedComponents";
 import DialogMaterial, {
-  MATERIAL_DIALOG_TYPE,
   MATERIAL_POP_UP_VALUES_INITIAL_STATE,
+  MaterialDialog,
 } from "../../Material/dialogMaterial";
 import MaterialAutocomplete from "../../Material/materialAutocomplete";
-import {AutocompleteChangeReason} from "@material-ui/lab";
+// import {AutocompleteChangeReason} from "@material-ui/lab";
 import {
   RECIPE_DRAWER_DATA_INITIAL_VALUES,
   RecipeDrawer,
@@ -123,7 +123,7 @@ type State = {
   selectedListItem: string | null;
   isError: boolean;
   isLoading: boolean;
-  error: object;
+  error: Error | null;
   snackbar: Snackbar;
 };
 type DispatchAction = {
@@ -134,7 +134,7 @@ const inititialState: State = {
   selectedListItem: null,
   isError: false,
   isLoading: false,
-  error: {},
+  error: null,
   snackbar: {open: false, severity: "success", message: ""},
 };
 interface ContextMenuSeletedItemsProps {
@@ -173,7 +173,7 @@ const usedRecipesReducer = (state: State, action: DispatchAction): State => {
         ...state,
         isError: true,
         isLoading: false,
-        error: action.payload,
+        error: action.payload as Error,
       };
     case ReducerActions.SNACKBAR_SHOW:
       return {
@@ -259,7 +259,8 @@ const EventMaterialListPage = ({
   // ------------------------------------------ */
   if (
     recipeDrawerData.isLoadingData &&
-    recipes.hasOwnProperty(recipeDrawerData.recipe.uid)
+    Object.prototype.hasOwnProperty.call(recipes, recipeDrawerData.recipe.uid)
+    // recipes.hasOwnProperty(recipeDrawerData.recipe.uid)
   ) {
     if (!recipeDrawerData.recipe.name) {
       // Aktualisierte Werte setzen // es wurden erst die Infos aus der
@@ -313,7 +314,7 @@ const EventMaterialListPage = ({
   const onConfirmDialogSelectMenues = async (
     selectedMenues: DialogSelectMenuesForRecipeDialogValues
   ) => {
-    let userInput = (await customDialog({
+    const userInput = (await customDialog({
       dialogType: DialogType.SingleTextInput,
       title: TEXT_NEW_LIST,
       text: TEXT_GIVE_THE_NEW_LIST_A_NAME,
@@ -337,7 +338,7 @@ const EventMaterialListPage = ({
         authUser: authUser,
       })
         .then(async (result) => {
-          let updatedMaterialList = {...materialList};
+          const updatedMaterialList = {...materialList};
           updatedMaterialList.lists[result.properties.uid] = result;
           updatedMaterialList.noOfLists++;
           updatedMaterialList.uid = event.uid;
@@ -360,7 +361,7 @@ const EventMaterialListPage = ({
   // Kontext-Menü-Handler
   // ------------------------------------------ */
   const onOpenContextMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
-    let pressedButton = event.currentTarget.id.split("_");
+    const pressedButton = event.currentTarget.id.split("_");
 
     setContextMenuSelectedItem({
       anchor: event.currentTarget,
@@ -371,10 +372,12 @@ const EventMaterialListPage = ({
     setContextMenuSelectedItem(CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE);
   };
   const onContextMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    let pressedButton = event.currentTarget.id.split("_");
+    const pressedButton = event.currentTarget.id.split("_");
+    let material: Material | undefined;
+    let quantity: number | undefined;
     switch (pressedButton[1]) {
       case Action.EDIT:
-        let material = materials.find(
+        material = materials.find(
           (material) => material.uid == contextMenuSelectedItem.materialUid
         );
 
@@ -382,7 +385,7 @@ const EventMaterialListPage = ({
           return;
         }
 
-        let quantity = materialList?.lists[state.selectedListItem!].items.find(
+        quantity = materialList?.lists[state.selectedListItem!].items.find(
           (material) => material.uid == contextMenuSelectedItem.materialUid
         )?.quantity;
         setHandleMaterialDialogValues({
@@ -401,6 +404,7 @@ const EventMaterialListPage = ({
         firebase.analytics.logEvent(FirebaseAnalyticEvent.materialListDeleted);
 
         onMaterialListUpdate(materialList);
+        break;
       case Action.TRACE:
         setTraceItemDialogValues({
           open: true,
@@ -421,7 +425,7 @@ const EventMaterialListPage = ({
   const onCheckboxClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     // Umschiessen und speichern!
     const pressedCheckbox = event.target.name.split("_");
-    let material = materialList.lists[state.selectedListItem!].items.find(
+    const material = materialList.lists[state.selectedListItem!].items.find(
       (material) => material.uid == pressedCheckbox[1]
     );
     if (!material) {
@@ -443,7 +447,7 @@ const EventMaterialListPage = ({
 
       // Sollen die manuell hinzugefügten Artikel behalten werden.
     ) {
-      let userInput = (await customDialog({
+      const userInput = (await customDialog({
         dialogType: DialogType.selectOptions,
         title: TEXT_MANUALLY_ADDED_PRODUCTS,
         text: TEXT_KEEP_MANUALLY_ADDED_PRODUCTS(TEXT_MATERIAL_LIST),
@@ -484,7 +488,7 @@ const EventMaterialListPage = ({
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
     // Menües in der richtigen Reihenfolge aufbauen, damit diese dann auch richtig angezeigt werden
-    let selectedListItem = event.currentTarget.id.split("_")[1];
+    const selectedListItem = event.currentTarget.id.split("_")[1];
     if (state.selectedListItem == selectedListItem) {
       // Element bereits aktiv
       return;
@@ -498,11 +502,11 @@ const EventMaterialListPage = ({
     });
   };
   const onListElementDelete = (event: React.MouseEvent<HTMLElement>) => {
-    let selectedList = event.currentTarget.id.split("_")[1];
+    const selectedList = event.currentTarget.id.split("_")[1];
     if (!selectedList) {
       return;
     }
-    let updatedMaterialList = MaterialList.deleteList({
+    const updatedMaterialList = MaterialList.deleteList({
       materialList: materialList,
       listUidToDelete: selectedList,
       authUser: authUser,
@@ -517,11 +521,11 @@ const EventMaterialListPage = ({
     });
   };
   const onListElementEdit = async (event: React.MouseEvent<HTMLElement>) => {
-    let selectedList = event.currentTarget.id.split("_")[1];
+    const selectedList = event.currentTarget.id.split("_")[1];
     if (!selectedList) {
       return;
     }
-    let userInput = (await customDialog({
+    const userInput = (await customDialog({
       dialogType: DialogType.SingleTextInput,
       title: "Namen anpassen",
       singleTextInputProperties: {
@@ -530,7 +534,7 @@ const EventMaterialListPage = ({
       },
     })) as SingleTextInputResult;
     if (userInput.valid) {
-      let updatedMaterialList = MaterialList.editListName({
+      const updatedMaterialList = MaterialList.editListName({
         materialList: materialList,
         listUidToEdit: selectedList,
         newName: userInput.input,
@@ -561,7 +565,7 @@ const EventMaterialListPage = ({
         });
     } else {
       // Eintrag ändern
-      let materialInList = materialList.lists[
+      const materialInList = materialList.lists[
         state.selectedListItem!
       ].items.find((materialInList) => materialInList.uid == material.uid);
 
@@ -611,7 +615,7 @@ const EventMaterialListPage = ({
       return;
     }
 
-    if (recipes.hasOwnProperty(recipeUid)) {
+    if (Object.prototype.hasOwnProperty.call(recipes, recipeUid)) {
       recipe = recipes[recipeUid] as Recipe;
       openDrawer = true;
     } else {
@@ -672,7 +676,7 @@ const EventMaterialListPage = ({
       {state.isError && (
         <Grid item key={"error"} xs={12}>
           <AlertMessage
-            error={state.error}
+            error={state.error!}
             messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
           />
         </Grid>
@@ -751,6 +755,7 @@ const EventMaterialListPage = ({
         handleOk={onAddMaterialDialogAdd}
         handleClose={onAddMaterialDialogClose}
         onMaterialCreate={onMaterialCreate}
+        authUser={authUser}
       />
 
       {state.selectedListItem && contextMenuSelectedItem.materialUid && (
@@ -758,11 +763,10 @@ const EventMaterialListPage = ({
         <DialogTraceItem
           dialogOpen={traceItemDialogValues.open}
           trace={
-            materialList.lists[state.selectedListItem!]?.items.find(
+            materialList.lists[state.selectedListItem!]!.items.find(
               (material) => material.uid == contextMenuSelectedItem.materialUid
-            )?.trace!
+            )!.trace!
           }
-          menuePlan={menuplan}
           sortedMenues={traceItemDialogValues.sortedMenues}
           hasBeenManualyEdited={Boolean(
             materialList.lists[state.selectedListItem!]?.items.find(
@@ -785,11 +789,6 @@ const EventMaterialListPage = ({
           firebase={firebase}
           authUser={authUser}
           onClose={onRecipeDrawerClose}
-          onAddToEvent={() => {}}
-          onEditRecipeMealPlan={() => {}}
-          onRecipeUpdate={() => {}}
-          onSwitchEditMode={() => {}}
-          onRecipeDelete={() => {}}
         />
       )}
     </React.Fragment>
@@ -914,6 +913,7 @@ interface DialogHandleMaterialProps {
   quantity: string;
   materials: Material[];
   editMode: boolean;
+  authUser: AuthUser;
   handleOk: ({material, quantity}: OnDialogAddItemOk) => void;
   handleClose: () => void;
   onMaterialCreate: (material: Material) => void;
@@ -936,6 +936,7 @@ const DialogHandleMaterial = ({
   quantity,
   materials,
   editMode,
+  authUser,
   handleOk: handleOkSuper,
   handleClose: handleCloseSuper,
   onMaterialCreate: onMaterialCreateSuper,
@@ -992,9 +993,9 @@ const DialogHandleMaterial = ({
   };
   const onChangeMaterial = async (
     event: React.ChangeEvent<HTMLInputElement>,
-    newValue: string | Material | null,
-    action: AutocompleteChangeReason,
-    objectId: string
+    newValue: string | Material | null
+    // action: AutocompleteChangeReason,
+    // objectId: string
   ) => {
     if (typeof newValue === "string" || !newValue) {
       return;
@@ -1002,7 +1003,7 @@ const DialogHandleMaterial = ({
 
     if (newValue.name.endsWith(TEXT_ADD)) {
       // Begriff "Hinzufügen" und Anführzungszeichen entfernen
-      let materiaName = newValue?.name.match('".*"')![0].slice(1, -1);
+      const materiaName = newValue?.name.match('".*"')![0].slice(1, -1);
 
       // Fenster anzeigen um neues Produkt zu erfassen
       setMaterialAddPopupValues({
@@ -1077,11 +1078,15 @@ const DialogHandleMaterial = ({
       </Dialog>
       <DialogMaterial
         materialName={materialAddPopupValues.name}
+        materialUid={materialAddPopupValues.uid}
+        materialType={materialAddPopupValues.type}
+        materialUsable={materialAddPopupValues.usable}
         materials={materials}
-        dialogType={MATERIAL_DIALOG_TYPE.CREATE}
+        dialogType={MaterialDialog.CREATE}
         dialogOpen={materialAddPopupValues.popUpOpen}
         handleOk={onMaterialCreate}
         handleClose={onCloseDialogMaterial}
+        authUser={authUser}
       />
     </React.Fragment>
   );

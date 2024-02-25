@@ -2,7 +2,6 @@ import Department from "../components/Department/department.class";
 import AuthUser from "../components/Firebase/Authentication/authUser.class";
 import Firebase from "../components/Firebase/firebase.class";
 import Product, {DietProperties} from "../components/Product/product.class";
-import products from "../components/Product/products";
 
 type OldProductStructure = {
   departmentUid: string;
@@ -16,9 +15,9 @@ type ProductWithoutUid = Omit<Product, "uid">;
 
 export async function restructureProducts(firebase: Firebase) {
   let products: {[key: string]: ProductWithoutUid} = {};
-  let newProducts: {[key: string]: OldProductStructure} = {};
-  let departments: {[key: string]: Department} = {};
-  let counter: number = 0;
+  const newProducts: {[key: string]: OldProductStructure} = {};
+  const departments: {[key: string]: Department} = {};
+  let counter = 0;
 
   // alle Produkte
   await firebase.masterdata.products.read({uids: []}).then((result) => {

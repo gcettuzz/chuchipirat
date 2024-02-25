@@ -19,7 +19,6 @@ import {
   ADD_PERSON_TO_TEAM as TEXT_ADD_PERSON_TO_TEAM,
   USER_ADD_BY_EMAIL as TEXT_USER_ADD_BY_EMAIL,
   USER_MUST_BE_REGISTERED as TEXT_USER_MUST_BE_REGISTERED,
-  USER_NOT_IDENTIFIED_BY_EMAIL as TEXT_USER_NOT_IDENTIFIED_BY_EMAIL,
   BUTTON_CANCEL as TEXT_BUTTON_CANCEL,
   BUTTON_ADD as TEXT_BUTTON_ADD,
   EMAIL as TEXT_EMAIL,
@@ -27,8 +26,8 @@ import {
 } from "../../constants/text";
 
 // import useStyles from "../../constants/styles";
-import Firebase, {withFirebase} from "../Firebase";
 import AuthUser from "../Firebase/Authentication/authUser.class";
+import Firebase from "../Firebase/firebase.class";
 
 /* ===================================================================
 // ====================== Pop Up User hinzufügen =====================
@@ -134,4 +133,4 @@ const DialogAddUser = ({
   );
 };
 
-export default withFirebase(DialogAddUser);
+export default DialogAddUser;

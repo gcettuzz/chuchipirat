@@ -22,7 +22,7 @@ export class FirebaseDbRecipeShortPrivate extends FirebaseDbRecipeShort {
   // Collection holen
   // ===================================================================== */
   getCollection(uids: string[]) {
-    return this.firebase.db.collection(`recipes/000_userRecipes/${uids[0]}`);
+    return this.firebase.db.collection(`recipes/private/users/${uids[0]}`);
   }
   /* =====================================================================
   // Collection-Group holen
@@ -36,11 +36,9 @@ export class FirebaseDbRecipeShortPrivate extends FirebaseDbRecipeShort {
   // ===================================================================== */
   getDocument(uids: string[]) {
     if (uids.length === 0) {
-      return this.firebase.db.doc(`recipes/000_userRecipes/`);
+      return this.firebase.db.doc(`recipes/private`);
     } else {
-      return this.firebase.db.doc(
-        `recipes/000_userRecipes/${uids[0]}/000_allRecipes`
-      );
+      return this.firebase.db.doc(`recipes/private/users/${uids[0]}`);
     }
   }
   /* =====================================================================

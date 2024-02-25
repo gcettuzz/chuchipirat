@@ -1,10 +1,9 @@
-import { ERROR_NOT_IMPLEMENTED_YET } from "../../../constants/text";
+import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
 import Firebase from "../firebase.class";
 
 import {
   FirebaseDbSuper,
   ValueObject,
-  // ReadCollection,
   PrepareDataForDb,
   PrepareDataForApp,
 } from "./firebase.db.super.class";
@@ -12,15 +11,6 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
-// import { AuthUser } from "../firebase.class.temp";
-// import { ERROR_PARAMETER_NOT_PASSED } from "../../../constants/text";
-
-// //FIXME: KOMMENTARE LÖSCHEN!
-
-// interface Update {
-//   value: UserPublicProfile;
-//   authUser: AuthUser;
-// }
 
 export class FirebaseDbUserPublicProfile extends FirebaseDbSuper {
   firebase: Firebase;
@@ -41,8 +31,7 @@ export class FirebaseDbUserPublicProfile extends FirebaseDbSuper {
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
-    throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return this.firebase.db.collectionGroup("public");
   }
   /*
   /* =====================================================================
@@ -60,7 +49,7 @@ export class FirebaseDbUserPublicProfile extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForDb<T extends ValueObject>({ value }: PrepareDataForDb<T>) {
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
     return {
       displayName: value.displayName,
       memberSince: value.memberSince,
@@ -83,19 +72,19 @@ export class FirebaseDbUserPublicProfile extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({ uid, value }: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
     return {
       uid: uid,
       displayName: value.displayName,
       memberSince: value.memberSince,
-      // memberSince: value.memberSince.toDate(),
+      memberId: value.memberId,
       motto: value.motto,
       pictureSrc: value.pictureSrc,
       stats: {
-        noComments: value.stats.noComments,
-        noEvents: value.stats.noEvents,
-        noRecipesPublic: value.stats.noRecipesPublic,
-        noRecipesPrivate: value.stats.noRecipesPrivate,
+        noComments: value.stats?.noComments,
+        noEvents: value.stats?.noEvents,
+        noRecipesPublic: value.stats?.noRecipesPublic,
+        noRecipesPrivate: value.stats?.noRecipesPrivate,
       },
     } as unknown as T;
   }

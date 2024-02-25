@@ -1,10 +1,11 @@
 import AuthUser from "../components/Firebase/Authentication/authUser.class";
+import {ValueObject} from "../components/Firebase/Db/firebase.db.super.class";
 import Firebase from "../components/Firebase/firebase.class";
 import Recipe from "../components/Recipe/recipe.class";
 
 export async function rebuildFile000AllRecipes(firebase: Firebase) {
-  let allRecipes: object = {};
-  let counter: number = 0;
+  const allRecipes: ValueObject = {};
+  let counter = 0;
 
   await Recipe.getAllRecipes({
     firebase: firebase,

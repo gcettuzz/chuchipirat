@@ -1,4 +1,4 @@
-import Firebase from "../../Firebase";
+import Firebase from "../../Firebase/firebase.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import Material, {MaterialType} from "../../Material/material.class";
 import {ChangeRecord} from "../../Shared/global.interface";
@@ -12,15 +12,9 @@ import _ from "lodash";
 
 import UsedRecipes from "../UsedRecipes/usedRecipes.class";
 
-import {
-  ERROR_NO_RECIPES_FOUND as TEXT_ERROR_NO_RECIPES_FOUND,
-  ERROR_PARAMETER_NOT_PASSED as TEXT_ERROR_PARAMETER_NOT_PASSED,
-} from "../../../constants/text";
+import {ERROR_NO_RECIPES_FOUND as TEXT_ERROR_NO_RECIPES_FOUND} from "../../../constants/text";
 import Recipe, {RecipeMaterialPosition} from "../../Recipe/recipe.class";
-import {
-  ProductTrace,
-  ShoppingListTrace,
-} from "../ShoppingList/shoppingListCollection.class";
+import {ProductTrace} from "../ShoppingList/shoppingListCollection.class";
 import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
 import Stats, {StatsField} from "../../Shared/stats.class";
 
@@ -194,32 +188,29 @@ export default class MaterialList {
     uid,
     callback,
   }: GetMaterialListListener) => {
-    let materialListListener = () => {};
-
     const materialListCallback = (materialList: MaterialList) => {
       // Menüplan mit UID anreichern
       materialList.uid = uid;
       callback(materialList);
     };
-    const errorCallback = (error: any) => {
+    const errorCallback = (error: Error) => {
       console.error(error);
       throw error;
     };
 
-    await firebase.event.materialList
+    return await firebase.event.materialList
       .listen<MaterialList>({
         uids: [uid],
         callback: materialListCallback,
         errorCallback: errorCallback,
       })
       .then((result) => {
-        materialListListener = result;
+        return result;
       })
       .catch((error) => {
         console.error(error);
         throw error;
       });
-    return materialListListener;
   };
   // ===================================================================== */
   /**
@@ -236,7 +227,7 @@ export default class MaterialList {
     firebase,
     authUser,
   }: CreateNewList) => {
-    let listEntry = {
+    const listEntry = {
       properties: {
         uid: Utils.generateUid(5),
         name: name,
@@ -251,8 +242,6 @@ export default class MaterialList {
       selectedMenues: selectedMenues,
       menueplan: menueplan,
     });
-
-    let trace = {} as ShoppingListTrace;
 
     if (recipeList == undefined || recipeList.length == 0) {
       throw new Error(TEXT_ERROR_NO_RECIPES_FOUND);
@@ -279,7 +268,7 @@ export default class MaterialList {
               }
 
               // Alle Zutaten und Materiale holen
-              let scaledMaterials = Recipe.scaleMaterials({
+              const scaledMaterials = Recipe.scaleMaterials({
                 recipe:
                   result[menueplan.mealRecipes[mealRecipeUid].recipe.recipeUid],
                 portionsToScale:
@@ -290,7 +279,7 @@ export default class MaterialList {
               Object.values(scaledMaterials).forEach(
                 (recipeMaterial: RecipeMaterialPosition) => {
                   // Prüfen ob ein Gebrauchsmaterial
-                  let material = materials.find(
+                  const material = materials.find(
                     (materialRecord) =>
                       materialRecord.uid == recipeMaterial.material.uid
                   );
@@ -321,9 +310,10 @@ export default class MaterialList {
 
           menueplan.menues[menueUid].materialOrder.forEach(
             (materialMenuUid) => {
-              let menuPlanMaterialEntry = menueplan.materials[materialMenuUid];
+              const menuPlanMaterialEntry =
+                menueplan.materials[materialMenuUid];
 
-              let material = materials.find(
+              const material = materials.find(
                 (material) => material.uid == menuPlanMaterialEntry.materialUid
               );
 
@@ -369,7 +359,7 @@ export default class MaterialList {
     listUidToDelete,
     authUser,
   }: DeleteList) => {
-    let updatedMaterialList = _.cloneDeep(materialList) as MaterialList;
+    const updatedMaterialList = _.cloneDeep(materialList) as MaterialList;
 
     delete updatedMaterialList.lists[listUidToDelete];
 
@@ -391,7 +381,7 @@ export default class MaterialList {
     newName,
     authUser,
   }: EditListName) => {
-    let updatedMaterialList = _.cloneDeep(materialList) as MaterialList;
+    const updatedMaterialList = _.cloneDeep(materialList) as MaterialList;
 
     updatedMaterialList.lists[listUidToEdit].properties.name = newName;
     updatedMaterialList.lastChange = Utils.createChangeRecord(authUser);
@@ -416,7 +406,7 @@ export default class MaterialList {
     menueUid = "",
   }: AddItem) => {
     // Prüfen ob es das Material bereits gibt
-    let materialInList = list.find(
+    const materialInList = list.find(
       (materialInList) => materialInList.uid == material.uid
     );
 
@@ -484,8 +474,8 @@ export default class MaterialList {
     authUser,
   }: RefreshLists) => {
     let manuallyAddedItems: MaterialListMaterial[] = [];
-    let updatedMaterialList = _.cloneDeep(materialList) as MaterialList;
-    let listToUpdate = updatedMaterialList.lists[listUidToRefresh];
+    const updatedMaterialList = _.cloneDeep(materialList) as MaterialList;
+    const listToUpdate = updatedMaterialList.lists[listUidToRefresh];
 
     if (keepManuallyAddedItems) {
       manuallyAddedItems = listToUpdate.items.filter((material) =>

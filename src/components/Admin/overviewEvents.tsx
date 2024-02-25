@@ -1,24 +1,20 @@
-import React, { useReducer } from "react";
-import { compose } from "recompose";
-import { useHistory } from "react-router";
+import React from "react";
+import {compose} from "react-recompose";
+// import {useHistory} from "react-router";
 
 import useStyles from "../../constants/styles";
 import Container from "@material-ui/core/Container";
 import Grid from "@material-ui/core/Grid";
-import { Typography } from "@material-ui/core";
 
 import PageTitle from "../Shared/pageTitle";
 
-import * as TEXT from "../../constants/text";
-import * as ROLES from "../../constants/roles";
-import * as ROUTES from "../../constants/routes";
+import Role from "../../constants/roles";
 
-import { withFirebase } from "../Firebase";
-import {
-  AuthUserContext,
-  withAuthorization,
-  withEmailVerification,
-} from "../Session";
+import {withFirebase} from "../Firebase/firebaseContext";
+import AuthUser from "../Firebase/Authentication/authUser.class";
+import withEmailVerification from "../Session/withEmailVerification";
+import {CustomRouterProps} from "../Shared/global.interface";
+import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
 
 /* ===================================================================
 // =============================== Page ==============================
@@ -26,17 +22,20 @@ import {
 const OverviewEventsPage = (props) => {
   return (
     <AuthUserContext.Consumer>
-      {(authUser) => <OverviewEventsBase props={props} authUser={authUser} />}
+      {(authUser) => <OverviewEventsBase {...props} authUser={authUser} />}
     </AuthUserContext.Consumer>
   );
 };
-
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const OverviewEventsBase = ({ props, authUser }) => {
+const OverviewEventsBase: React.FC<
+  CustomRouterProps & {authUser: AuthUser | null}
+> = ({authUser, ...props}) => {
+  const firebase = props.firebase;
+
   const classes = useStyles();
-  const { push } = useHistory();
+  // const {push} = useHistory();
 
   return (
     <React.Fragment>
@@ -55,7 +54,16 @@ const OverviewEventsBase = ({ props, authUser }) => {
   );
 };
 
-const condition = (authUser) => !!authUser.roles.includes(ROLES.ADMIN);
+// const condition = (authUser) => !!authUser.roles.includes(Role.admin);
+
+// export default compose(
+//   withAuthorization(condition),
+//   withFirebase
+// )(OverviewEventsPage);
+const condition = (authUser: AuthUser | null) =>
+  !!authUser &&
+  (!!authUser.roles.includes(Role.admin) ||
+    !!authUser.roles.includes(Role.communityLeader));
 
 export default compose(
   withEmailVerification,

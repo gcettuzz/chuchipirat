@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "recompose";
 
 import Grid from "@material-ui/core/Grid";
 
@@ -25,25 +24,53 @@ import {
 import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 
-import Firebase, {withFirebase} from "../Firebase";
 import Product, {Allergen, Diet} from "./product.class";
 import AlertMessage from "../Shared/AlertMessage";
-import * as TEXT from "../../constants/text";
+import {
+  GIVE_PRODUCT as TEXT_GIVE_PRODUCT,
+  GIVE_DEPARTMENT as TEXT_GIVE_DEPARTMENT,
+  ERROR_PRODUCT_WITH_THIS_NAME_ALREADY_EXISTS as TEXT_ERROR_PRODUCT_WITH_THIS_NAME_ALREADY_EXISTS,
+  ERROR_PARAMETER_NOT_PASSED as TEXT_ERROR_PARAMETER_NOT_PASSED,
+  PRODUCT_ADD as TEXT_PRODUCT_ADD,
+  PRODUCT_EDIT as TEXT_PRODUCT_EDIT,
+  PRODUCT as TEXT_PRODUCT,
+  ATTENTION as TEXT_ATTENTION,
+  WARNING_PRODUCT_1 as TEXT_WARNING_PRODUCT_1,
+  WARNING_PRODUCT_2 as TEXT_WARNING_PRODUCT_2,
+  WARNING_PRODUCT_3 as TEXT_WARNING_PRODUCT_3,
+  DEPARTMENT as TEXT_DEPARTMENT,
+  SHOPPING_UNIT_INFO as TEXT_SHOPPING_UNIT_INFO,
+  USABLE as TEXT_USABLE,
+  INTOLERANCES as TEXT_INTOLERANCES,
+  HAS_LACTOSE as TEXT_HAS_LACTOSE,
+  HAS_GLUTEN as TEXT_HAS_GLUTEN,
+  PRODUCT_PROPERTY as TEXT_PRODUCT_PROPERTY,
+  RECORD_INGREDIENT_WITH_NECCESSARY_INFO as TEXT_RECORD_INGREDIENT_WITH_NECCESSARY_INFO,
+  IS_MEAT as TEXT_IS_MEAT,
+  IS_VEGETARIAN as TEXT_IS_VEGETARIAN,
+  IS_VEGAN as TEXT_IS_VEGAN,
+  DIALOG_INFO_DIET_PROPERTIES as TEXT_INFO_DIET_PROPERTIES,
+  CANCEL as TEXT_CANCEL,
+  OK as TEXT_OK,
+  CREATE as TEXT_CREATE,
+} from "../../constants/text";
 import Department from "../Department/department.class";
 import Unit from "../Unit/unit.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import UnitAutocomplete from "../Unit/unitAutocomplete";
-import {withAuthorization} from "../Session";
+
+import Firebase from "../Firebase/firebase.class";
+import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
 export const PRODUCT_POP_UP_VALUES_INITIAL_STATE = {
   uid: "",
   name: "",
+  shoppingUnit: new Unit({key: "", name: ""}),
   department: new Department(),
-  shoppingUnit: new Unit("", ""),
   dietProperties: {
-    allergens: {containsLactose: false, containsGluten: false},
+    allergens: [] as Allergen[],
     diet: Diet.Meat,
   },
   usable: true,
@@ -71,14 +98,14 @@ interface DialogProductProps {
   productName: Product["name"];
   productUid: Product["uid"];
   productDietProperties: Product["dietProperties"];
-  productUsable: Product["usable"];
+  productUsable?: Product["usable"];
   products: Product[];
   dialogOpen: boolean;
   handleOk: (product: Product) => void;
   handleClose: () => void;
-  selectedDepartment: Department;
-  selectedUnit: Unit;
-  usable: boolean;
+  selectedDepartment?: Department;
+  selectedUnit?: Unit;
+  usable?: boolean;
   departments: Department[];
   units: Unit[];
   authUser: AuthUser;
@@ -90,7 +117,6 @@ const DialogProduct = ({
   productName = "",
   productUid = "",
   productDietProperties,
-  productUsable,
   products = [],
   dialogOpen,
   handleOk,
@@ -119,7 +145,7 @@ const DialogProduct = ({
     action?: string,
     objectId?: string
   ) => {
-    let value: string | Object;
+    let value: string | ValueObject | boolean;
     let field: string;
 
     if (event.target.id) {
@@ -156,14 +182,28 @@ const DialogProduct = ({
     });
   };
   const onChangeDietCheckbox = (event: React.ChangeEvent<HTMLInputElement>) => {
-    let dietProperties = productPopUpValues.dietProperties;
+    const dietProperties = productPopUpValues.dietProperties;
 
     switch (event.target.id) {
       case "dietProperties.allergens.containsLactose":
-        dietProperties.allergens.containsLactose = event.target.checked;
+        if (event.target.checked) {
+          // Hinzufügen
+          dietProperties.allergens.push(Allergen.Lactose);
+        } else {
+          dietProperties.allergens = dietProperties.allergens.filter(
+            (allergen) => allergen != Allergen.Lactose
+          );
+        }
         break;
       case "dietProperties.allergens.containsGluten":
-        dietProperties.allergens.containsGluten = event.target.checked;
+        if (event.target.checked) {
+          // Hinzufügen
+          dietProperties.allergens.push(Allergen.Gluten);
+        } else {
+          dietProperties.allergens = dietProperties.allergens.filter(
+            (allergen) => allergen != Allergen.Gluten
+          );
+        }
         break;
     }
 
@@ -175,7 +215,7 @@ const DialogProduct = ({
   const onChangeDietRadioButton = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    let dietProperties = productPopUpValues.dietProperties;
+    const dietProperties = productPopUpValues.dietProperties;
 
     dietProperties.diet = parseInt(event.target.value);
 
@@ -184,14 +224,14 @@ const DialogProduct = ({
       dietProperties: dietProperties,
     });
   };
-  const onChangeUsableCheckbox = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setProductPopUpValues({
-      ...productPopUpValues,
-      usable: event.target.checked,
-    });
-  };
+  // const onChangeUsableCheckbox = (
+  //   event: React.ChangeEvent<HTMLInputElement>
+  // ) => {
+  //   setProductPopUpValues({
+  //     ...productPopUpValues,
+  //     usable: event.target.checked,
+  //   });
+  // };
 
   /* ------------------------------------------
   // PopUp Abbrechen
@@ -212,7 +252,7 @@ const DialogProduct = ({
     if (!productPopUpValues.name) {
       setValidation({
         ...validation,
-        name: {hasError: true, errorText: TEXT.GIVE_PRODUCT},
+        name: {hasError: true, errorText: TEXT_GIVE_PRODUCT},
       });
       hasError = true;
     }
@@ -221,7 +261,7 @@ const DialogProduct = ({
         ...validation,
         department: {
           hasError: true,
-          errorText: TEXT.FORM_GIVE_DEPARTMENT,
+          errorText: TEXT_GIVE_DEPARTMENT,
         },
       });
       hasError = true;
@@ -240,7 +280,7 @@ const DialogProduct = ({
         ...validation,
         name: {
           hasError: true,
-          errorText: TEXT.ERROR_PRODUCT_WITH_THIS_NAME_ALREADY_EXISTS,
+          errorText: TEXT_ERROR_PRODUCT_WITH_THIS_NAME_ALREADY_EXISTS,
         },
       });
       hasError = true;
@@ -248,11 +288,13 @@ const DialogProduct = ({
     if (hasError) {
       return;
     }
+    const product = new Product();
+
     switch (dialogType) {
       case PRODUCT_DIALOG_TYPE.CREATE:
         if (!firebase) {
           // Firebase fehlt
-          throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
+          throw new Error(TEXT_ERROR_PARAMETER_NOT_PASSED);
         }
         //Neues Produkt anlegen
         Product.createProduct({
@@ -260,6 +302,7 @@ const DialogProduct = ({
           name: productPopUpValues.name,
           departmentUid: productPopUpValues?.department?.uid,
           shoppingUnit: productPopUpValues?.shoppingUnit?.key,
+          dietProperties: productPopUpValues.dietProperties,
           authUser: authUser,
         }).then((result) => {
           setProductPopUpValues({...productPopUpValues, uid: result.uid});
@@ -273,7 +316,6 @@ const DialogProduct = ({
         break;
       case PRODUCT_DIALOG_TYPE.EDIT:
         // PopUp Werte aufbereiten für aufrufende Komponente
-        let product = new Product();
 
         product.uid = productPopUpValues.uid;
         product.name = productPopUpValues.name;
@@ -281,10 +323,14 @@ const DialogProduct = ({
         product.shoppingUnit = productPopUpValues.shoppingUnit.key;
         product.usable = productPopUpValues.usable;
         product.dietProperties.diet = productPopUpValues.dietProperties.diet;
-        if (productPopUpValues.dietProperties.allergens.containsLactose) {
+        if (
+          productPopUpValues.dietProperties.allergens.includes(Allergen.Lactose)
+        ) {
           product.dietProperties.allergens.push(Allergen.Lactose);
         }
-        if (productPopUpValues.dietProperties.allergens.containsGluten) {
+        if (
+          productPopUpValues.dietProperties.allergens.includes(Allergen.Gluten)
+        ) {
           product.dietProperties.allergens.push(Allergen.Gluten);
         }
         handleOk(product);
@@ -297,7 +343,7 @@ const DialogProduct = ({
   /* ------------------------------------------
   // PopUp Ok - schliessen
   // ------------------------------------------ */
-  const onClose = (event: object, reason: string) => {
+  const onClose = (event: ValueObject, reason: string) => {
     if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
       handleClose();
     }
@@ -316,14 +362,9 @@ const DialogProduct = ({
       department: selectedDepartment,
       shoppingUnit: selectedUnit,
       dietProperties: {
-        allergens: {
-          containsGluten: productDietProperties?.allergens.includes(
-            Allergen.Gluten
-          ),
-          containsLactose: productDietProperties?.allergens.includes(
-            Allergen.Lactose
-          ),
-        },
+        allergens: productDietProperties?.allergens
+          ? productDietProperties.allergens
+          : [],
         diet: productDietProperties?.diet
           ? productDietProperties.diet
           : Diet.Meat,
@@ -341,27 +382,28 @@ const DialogProduct = ({
     >
       <DialogTitle id="dialogAddProduct">
         {dialogType === PRODUCT_DIALOG_TYPE.CREATE
-          ? TEXT.DIALOG_TITLE_PRODUCT_ADD
-          : TEXT.DIALOG_TITLE_PRODUCT_EDIT}
+          ? TEXT_PRODUCT_ADD
+          : TEXT_PRODUCT_EDIT}
       </DialogTitle>
 
       <DialogContent>
-        <Alert severity="info">{TEXT.DIALOG_ALERT_TEXT_ADD_PRODUCT}</Alert>
+        <Alert severity="info">
+          {TEXT_RECORD_INGREDIENT_WITH_NECCESSARY_INFO}
+        </Alert>
         <br />
         <DialogContentText>
-          {dialogType === PRODUCT_DIALOG_TYPE.CREATE &&
-            TEXT.DIALOG_TEXT_PRODUCT}
+          {dialogType === PRODUCT_DIALOG_TYPE.CREATE && TEXT_PRODUCT}
         </DialogContentText>
         {dialogType === PRODUCT_DIALOG_TYPE.EDIT &&
           productPopUpValues.showNameWarning && (
             <AlertMessage
               severity="warning"
-              messageTitle={TEXT.ATTENTION}
+              messageTitle={TEXT_ATTENTION}
               body={
                 <React.Fragment>
-                  {TEXT.DIALOG_WARNING_PRODUCT_1}
-                  <strong>{TEXT.DIALOG_WARNING_PRODUCT_2}</strong>
-                  {TEXT.DIALOG_WARNING_PRODUCT_3}
+                  {TEXT_WARNING_PRODUCT_1}
+                  <strong>{TEXT_WARNING_PRODUCT_2}</strong>
+                  {TEXT_WARNING_PRODUCT_3}
                 </React.Fragment>
               }
             />
@@ -377,7 +419,7 @@ const DialogProduct = ({
               required
               fullWidth
               onChange={onChangeField}
-              label={TEXT.FIELD_PRODUCT}
+              label={TEXT_PRODUCT}
               type="text"
               helperText={validation.name.errorText}
               autoFocus
@@ -406,7 +448,7 @@ const DialogProduct = ({
                     error={validation.department.hasError}
                     {...params}
                     required
-                    label={TEXT.FIELD_DEPARTMENT}
+                    label={TEXT_DEPARTMENT}
                     size="small"
                     helperText={validation.department.errorText}
                   />
@@ -422,7 +464,7 @@ const DialogProduct = ({
                 units={units}
                 onChange={onChangeField}
               />
-              <FormHelperText>{TEXT.DIALOG_SHOPPING_UNIT_INFO}</FormHelperText>
+              <FormHelperText>{TEXT_SHOPPING_UNIT_INFO}</FormHelperText>
             </FormControl>
           </Grid>
           {dialogType === PRODUCT_DIALOG_TYPE.EDIT && (
@@ -437,43 +479,41 @@ const DialogProduct = ({
                     color="primary"
                   />
                 }
-                label={TEXT.FIELD_USABLE}
+                label={TEXT_USABLE}
               />
             </Grid>
           )}
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth>
-              <FormLabel component="legend">{TEXT.INTOLERANCES}</FormLabel>
+              <FormLabel component="legend">{TEXT_INTOLERANCES}</FormLabel>
               <FormGroup>
                 <FormControlLabel
                   control={
                     <Checkbox
-                      checked={
-                        productPopUpValues.dietProperties.allergens
-                          .containsLactose
-                      }
+                      checked={productPopUpValues.dietProperties?.allergens?.includes(
+                        Allergen.Lactose
+                      )}
                       onChange={onChangeDietCheckbox}
                       name="dietProperties.allergens.containsLactose"
                       id="dietProperties.allergens.containsLactose"
                       color="primary"
                     />
                   }
-                  label={TEXT.HAS_LACTOSE}
+                  label={TEXT_HAS_LACTOSE}
                 />
                 <FormControlLabel
                   control={
                     <Checkbox
-                      checked={
-                        productPopUpValues.dietProperties.allergens
-                          .containsGluten
-                      }
+                      checked={productPopUpValues.dietProperties?.allergens?.includes(
+                        Allergen.Gluten
+                      )}
                       onChange={onChangeDietCheckbox}
                       name="dietProperties.allergens.containsGluten"
                       id="dietProperties.allergens.containsGluten"
                       color="primary"
                     />
                   }
-                  label={TEXT.HAS_GLUTEN}
+                  label={TEXT_HAS_GLUTEN}
                 />
               </FormGroup>
             </FormControl>
@@ -481,7 +521,9 @@ const DialogProduct = ({
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth>
               <FormGroup>
-                <FormLabel component="legend">{TEXT.PRODUCT_PROPERY}</FormLabel>
+                <FormLabel component="legend">
+                  {TEXT_PRODUCT_PROPERTY}
+                </FormLabel>
                 <RadioGroup
                   aria-label="Diät"
                   name={"radioGroup_Diet"}
@@ -492,17 +534,17 @@ const DialogProduct = ({
                   <FormControlLabel
                     value={Diet.Meat}
                     control={<Radio size="small" color="primary" />}
-                    label={TEXT.IS_MEAT}
+                    label={TEXT_IS_MEAT}
                   />
                   <FormControlLabel
                     value={Diet.Vegetarian}
                     control={<Radio size="small" color="primary" />}
-                    label={TEXT.IS_VEGETARIAN}
+                    label={TEXT_IS_VEGETARIAN}
                   />
                   <FormControlLabel
                     value={Diet.Vegan}
                     control={<Radio size="small" color="primary" />}
-                    label={TEXT.IS_VEGAN}
+                    label={TEXT_IS_VEGAN}
                   />
                 </RadioGroup>
               </FormGroup>
@@ -510,29 +552,21 @@ const DialogProduct = ({
           </Grid>
           {dialogType === ProductDialog.CREATE && (
             <Grid item xs={12}>
-              <FormHelperText>
-                {TEXT.DIALOG_INFO_DIET_PROPERTIES}
-              </FormHelperText>
+              <FormHelperText>{TEXT_INFO_DIET_PROPERTIES}</FormHelperText>
             </Grid>
           )}
         </Grid>
       </DialogContent>
       <DialogActions>
         <Button onClick={onCancelClick} color="primary" variant="outlined">
-          {TEXT.BUTTON_CANCEL}
+          {TEXT_CANCEL}
         </Button>
         <Button onClick={onOkClick} color="primary" variant="contained">
-          {dialogType === PRODUCT_DIALOG_TYPE.CREATE
-            ? TEXT.BUTTON_CREATE
-            : TEXT.BUTTON_OK}
+          {dialogType === PRODUCT_DIALOG_TYPE.CREATE ? TEXT_CREATE : TEXT_OK}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
-const condition = (authUser: AuthUser) => !!authUser;
 
-export default compose(
-  withAuthorization(condition),
-  withFirebase
-)(DialogProduct);
+export default DialogProduct;

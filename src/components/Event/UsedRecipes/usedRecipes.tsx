@@ -4,22 +4,11 @@ import fileSaver from "file-saver";
 
 import {
   Grid,
-  Button,
   Backdrop,
   CircularProgress,
-  Card,
-  CardHeader,
-  CardContent,
-  CardActions,
   Typography,
   Divider,
   List,
-  ListSubheader,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  ListItemIcon,
-  IconButton,
   Container,
   useTheme,
   Box,
@@ -28,14 +17,8 @@ import {
 
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
-  MENUE_SELECTION as TEXT_MENUE_SELECTION,
   USED_RECIPES_MENUE_SELECTION_DESCRIPTION as TEXT_USED_RECIPES_MENUE_SELECTION_DESCRIPTION,
-  PRINTVERSION as TEXT_PRINTVERSION,
-  REFRESH as TEXT_REFRESH,
-  SELECT_MENUES as TEXT_SELECT_MENUES,
   WHICH_MENUES_FOR_RECIPE_GENERATION as TEXT_WHICH_MENUES_FOR_RECIPE_GENERATION,
-  EXISTING_LISTS as TEXT_EXISTING_LISTS,
-  LIST_ENTRY_MAYBE_OUT_OF_DATE as TEXT_USED_RECIPES_POSSIBLE_OUT_OF_DATE,
   PLANED_FOR as TEXT_PLANED_FOR,
   FOR_DATIVE as TEXT_FOR_DATIVE,
   SOURCE as TEXT_SOURCE,
@@ -50,17 +33,11 @@ import {
   LIST_ENTRY_MAYBE_OUT_OF_DATE as TEXT_LIST_ENTRY_MAYBE_OUT_OF_DATE,
   LIST as TEXT_LIST,
 } from "../../../constants/text";
-import * as IMAGE_REPOSITORY from "../../../constants/imageRepository";
-
-import {
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  ErrorOutline as ErrorOutlineIcon,
-} from "@material-ui/icons";
+import {ImageRepository} from "../../../constants/imageRepository";
 
 import useStyles from "../../../constants/styles";
 
-import Firebase from "../../Firebase";
+import Firebase from "../../Firebase/firebase.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import Event from "../Event/event.class";
 import EventGroupConfiguration from "../GroupConfiguration/groupConfiguration.class";
@@ -69,12 +46,9 @@ import AlertMessage from "../../Shared/AlertMessage";
 import {
   DialogSelectMenues,
   DialogSelectMenuesForRecipeDialogValues,
-  decodeSelectedMenues,
 } from "../Menuplan/dialogSelectMenues";
 import Menuplan, {
   MealRecipe,
-  MealType,
-  Menue,
   MenueCoordinates,
 } from "../Menuplan/menuplan.class";
 import {generatePlanedPortionsText} from "../Menuplan/menuplan";
@@ -84,9 +58,8 @@ import {
   SingleTextInputResult,
   useCustomDialog,
 } from "../../Shared/customDialogContext";
-import Recipe, {RecipeIndetifier, RecipeType} from "../../Recipe/recipe.class";
+import Recipe, {RecipeType} from "../../Recipe/recipe.class";
 import Utils from "../../Shared/utils.class";
-import {time} from "console";
 import {FormListItem} from "../../Shared/formListItem";
 import {
   RecipeIngredients,
@@ -105,7 +78,6 @@ import {
   UnitConversionProducts,
 } from "../../Unit/unitConversion.class";
 import {FetchMissingDataProps, FetchMissingDataType} from "../Event/event";
-import unitConversion from "../../Unit/unitConversion";
 import {EventListCard} from "../Event/eventSharedComponents";
 
 /* ===================================================================
@@ -121,9 +93,8 @@ enum ReducerActions {
 type State = {
   selectedListItem: string | null;
   sortedMenueList: MenueCoordinates[];
-  isError: boolean;
   isLoading: boolean;
-  error: object;
+  error: Error | null;
   snackbar: Snackbar;
 };
 type DispatchAction = {
@@ -133,9 +104,8 @@ type DispatchAction = {
 const inititialState: State = {
   selectedListItem: null,
   sortedMenueList: [],
-  isError: false,
   isLoading: false,
-  error: {},
+  error: null,
   snackbar: {open: false, severity: "success", message: ""},
 };
 const usedRecipesReducer = (state: State, action: DispatchAction): State => {
@@ -154,9 +124,8 @@ const usedRecipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.GENERIC_ERROR:
       return {
         ...state,
-        isError: true,
         isLoading: false,
-        error: action.payload,
+        error: action.payload as Error,
       };
     case ReducerActions.SNACKBAR_SHOW:
       return {
@@ -254,7 +223,7 @@ const EventUsedRecipesPage = ({
   const onConfirmDialogSelectMenues = async (
     selectedMenues: DialogSelectMenuesForRecipeDialogValues
   ) => {
-    let userInput = (await customDialog({
+    const userInput = (await customDialog({
       dialogType: DialogType.SingleTextInput,
       title: TEXT_NEW_LIST,
       text: TEXT_GIVE_THE_NEW_LIST_A_NAME,
@@ -278,7 +247,7 @@ const EventUsedRecipesPage = ({
         authUser: authUser,
       })
         .then((result) => {
-          let newUsedRecipes = {...usedRecipes};
+          const newUsedRecipes = {...usedRecipes};
           newUsedRecipes.lists[result.properties.uid] = result;
           newUsedRecipes.noOfLists++;
           newUsedRecipes.uid = event.uid;
@@ -323,8 +292,7 @@ const EventUsedRecipesPage = ({
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
     // Menües in der richtigen Reihenfolge aufbauen, damit diese dann auch richtig angezeigt werden
-    let selectedListItem = event.currentTarget.id.split("_")[1];
-    console.log("hier");
+    const selectedListItem = event.currentTarget.id.split("_")[1];
     dispatch({
       type: ReducerActions.SET_SELECTED_LIST_ITEM,
       payload: {
@@ -338,12 +306,12 @@ const EventUsedRecipesPage = ({
     });
   };
   const onListElementDelete = (event: React.MouseEvent<HTMLElement>) => {
-    let selectedList = event.currentTarget.id.split("_")[1];
+    const selectedList = event.currentTarget.id.split("_")[1];
     if (!selectedList) {
       return;
     }
 
-    let updatedUsedRecipes = UsedRecipes.deleteList({
+    const updatedUsedRecipes = UsedRecipes.deleteList({
       usedRecipes: usedRecipes,
       listUidToDelete: selectedList,
       authUser: authUser,
@@ -359,12 +327,12 @@ const EventUsedRecipesPage = ({
     });
   };
   const onListElementEdit = async (event: React.MouseEvent<HTMLElement>) => {
-    let selectedList = event.currentTarget.id.split("_")[1];
+    const selectedList = event.currentTarget.id.split("_")[1];
     if (!selectedList) {
       return;
     }
 
-    let userInput = (await customDialog({
+    const userInput = (await customDialog({
       dialogType: DialogType.SingleTextInput,
       title: "Namen anpassen",
       singleTextInputProperties: {
@@ -374,7 +342,7 @@ const EventUsedRecipesPage = ({
     })) as SingleTextInputResult;
 
     if (userInput.valid) {
-      let updatedUsedRecipes = UsedRecipes.editListName({
+      const updatedUsedRecipes = UsedRecipes.editListName({
         usedRecipes: usedRecipes,
         listUidToEdit: selectedList,
         newName: userInput.input,
@@ -407,10 +375,9 @@ const EventUsedRecipesPage = ({
         );
       });
   };
-  console.log(state);
   return (
     <React.Fragment>
-      {state.isError && (
+      {state.error && (
         <Grid item key={"error"} xs={12}>
           <AlertMessage
             error={state.error}
@@ -491,7 +458,6 @@ const EventUsedRecipes = ({
   unitConversionBasic,
   unitConversionProducts,
 }: EventUsedRecipesProps) => {
-  const classes = useStyles();
   const theme = useTheme();
   return (
     <Container style={{marginTop: theme.spacing(2)}}>
@@ -549,7 +515,6 @@ const EventUsedMealRecipe = ({
   unitConversionProducts,
 }: EventUsedMealRecipeProps) => {
   const classes = useStyles();
-  const theme = useTheme();
   return (
     <Container
       className={classes.container}
@@ -634,7 +599,7 @@ const EventUsedMealRecipe = ({
             <img
               className={classes.marginCenter}
               src={
-                IMAGE_REPOSITORY.getEnviromentRelatedPicture().DIVIDER_ICON_SRC
+                ImageRepository.getEnviromentRelatedPicture().DIVIDER_ICON_SRC
               }
               alt=""
               width="50px"
@@ -719,13 +684,9 @@ interface EventUsedMealRecipeInfoBlockProps {
 }
 const EventUsedMealRecipeInfoBlock = ({
   recipe,
-  menueCoordinate,
   mealRecipe,
   groupConfiguration,
 }: EventUsedMealRecipeInfoBlockProps) => {
-  const classes = useStyles();
-  console.log(recipe);
-  console.log(recipe.source);
   return (
     <Grid item key={"recipeInfoBlockTime" + mealRecipe.uid} xs={12}>
       <Container maxWidth="sm">
@@ -785,8 +746,6 @@ const EventUsedMealRecipeIngredientBlock = ({
   unitConversionBasic,
   unitConversionProducts,
 }: EventUsedMealRecipeIngredientBlockProps) => {
-  const classes = useStyles();
-
   const scaledIngredients = Recipe.scaleIngredients({
     recipe: recipe,
     portionsToScale: mealRecipe.totalPortions,
@@ -813,7 +772,6 @@ interface EventUsedMealRecipePreparationStepsBlockProps {
 const EventUsedMealRecipePreparationStepsBlock = ({
   recipe,
 }: EventUsedMealRecipePreparationStepsBlockProps) => {
-  const classes = useStyles();
   return <RecipePreparation recipe={recipe} />;
 };
 
@@ -828,8 +786,6 @@ const EventUsedMealRecipeMaterialBlock = ({
   recipe,
   mealRecipe,
 }: EventUsedMealRecipeMaterialBlockProps) => {
-  const classes = useStyles();
-
   const scaledMaterials = Recipe.scaleMaterials({
     recipe: recipe,
     portionsToScale: mealRecipe.totalPortions,

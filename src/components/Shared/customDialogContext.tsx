@@ -25,7 +25,7 @@ const CUSTOM_DIALOG_INITIAL_STATE: State = {
 const CustomDialogContext = React.createContext({
   dialogState: CUSTOM_DIALOG_INITIAL_STATE,
   dispatch: (value: any) => {
-    return;
+    return value;
   },
 });
 
@@ -95,7 +95,13 @@ const reducer = (state: State, action: DispatchAction): State => {
   }
 };
 
-export const CustomDialogContextProvider = ({children}) => {
+interface CustomDialogContextProviderProps {
+  children: JSX.Element;
+}
+
+export const CustomDialogContextProvider = ({
+  children,
+}: CustomDialogContextProviderProps) => {
   const [state, dispatch] = useReducer(reducer, CUSTOM_DIALOG_INITIAL_STATE);
 
   return (
@@ -157,7 +163,7 @@ export const useCustomDialog = () => {
         options: options,
       },
     });
-    return new Promise((res, rej) => {
+    return new Promise((res) => {
       resolveCallback = res;
     });
   };

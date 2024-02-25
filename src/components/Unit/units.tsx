@@ -1,6 +1,5 @@
 import React from "react";
-import {compose} from "recompose";
-
+import {compose} from "react-recompose";
 import CssBaseline from "@material-ui/core/CssBaseline";
 
 import {
@@ -15,8 +14,6 @@ import {
   CircularProgress,
 } from "@material-ui/core";
 
-import {Alert, AlertTitle} from "@material-ui/lab";
-
 import {
   NAME as TEXT_NAME,
   UNIT as TEXT_UNIT,
@@ -28,14 +25,13 @@ import {
   ADD as TEXT_ADD,
   ALERT_TITLE_UUPS as TEXT_ALERT_TITLE_UUPS,
 } from "../../constants/text";
-import * as ROLES from "../../constants/roles";
+import Role from "../../constants/roles";
 
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
 import EnhancedTable, {
   Column,
   ColumnTextAlign,
-  TABLE_COLUMN_TYPES,
   TableColumnTypes,
 } from "../Shared/enhancedTable";
 import DialogCreateUnit from "./dialogCreateUnit";
@@ -45,14 +41,11 @@ import AlertMessage from "../Shared/AlertMessage";
 import useStyles from "../../constants/styles";
 
 import Unit from "./unit.class";
-
-import {withFirebase} from "../Firebase";
-import {
-  AuthUserContext,
-  withAuthorization,
-  withEmailVerification,
-} from "../Session";
+import withEmailVerification from "../Session/withEmailVerification";
+import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {withFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
+import {CustomRouterProps} from "../Shared/global.interface";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -69,25 +62,25 @@ enum ReducerActions {
 
 type State = {
   units: Unit[];
-  error: Object;
+  error: Error | null;
   isError: boolean;
   isLoading: boolean;
   snackbar: Snackbar;
 };
-type DispatchAction = {
+interface DispatchAction {
   type: ReducerActions;
   payload: {[key: string]: any};
-};
+}
 
 const inititialState: State = {
   units: [],
   isLoading: false,
   isError: false,
-  error: {},
+  error: null,
   snackbar: {open: false, severity: "success", message: ""},
 };
 
-const unitsReducer = (state: State, action: DispatchAction) => {
+const unitsReducer = (state: State, action: DispatchAction): State => {
   switch (action.type) {
     case ReducerActions.UNITS_FETCH_INIT:
       // Daten werden geladen
@@ -133,7 +126,7 @@ const unitsReducer = (state: State, action: DispatchAction) => {
       return {
         ...state,
         isError: false,
-        error: {},
+        error: null,
         snackbar: {
           severity: "success",
           message: TEXT_SAVE_SUCCESS,
@@ -145,7 +138,7 @@ const unitsReducer = (state: State, action: DispatchAction) => {
       return {
         ...state,
         isError: true,
-        error: action.payload as object,
+        error: action.payload as Error,
       };
     case ReducerActions.SNACKBAR_CLOSE:
       // Snackbar schliessen
@@ -181,21 +174,24 @@ const TABLE_COLUMS: Column[] = [
     visible: true,
   },
 ];
+
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
 const UnitsPage = (props) => {
   return (
     <AuthUserContext.Consumer>
-      {(authUser) => <UnitsBase props={props} authUser={authUser} />}
+      {(authUser) => <UnitsBase {...props} authUser={authUser} />}
     </AuthUserContext.Consumer>
   );
 };
-
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const UnitsBase = ({props, authUser}) => {
+const UnitsBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
+  authUser,
+  ...props
+}) => {
   const firebase = props.firebase;
   const classes = useStyles();
 
@@ -205,6 +201,7 @@ const UnitsBase = ({props, authUser}) => {
     popUpOpen: false,
   });
   const [editMode, setEditMode] = React.useState(false);
+
   /* ------------------------------------------
   // Daten aus der DB lesen
   // ------------------------------------------ */
@@ -222,11 +219,14 @@ const UnitsBase = ({props, authUser}) => {
         dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
       });
   }, []);
+  if (!authUser) {
+    return null;
+  }
   /* ------------------------------------------
   // onChangeField
   // ------------------------------------------ */
   const onChangeField = (event) => {
-    let unitField = event.target.id.split("_");
+    const unitField = event.target.id.split("_");
 
     dispatch({
       type: ReducerActions.UNITS_ON_CHANGE,
@@ -268,27 +268,27 @@ const UnitsBase = ({props, authUser}) => {
     setUnitCreateValues({...unitCreateValues, popUpOpen: false});
   };
   /* ------------------------------------------
-  // Fehler beim anlegen der Einheit
-  // ------------------------------------------ */
-  const onPopUpError = (error) => {
-    console.error(error);
-    dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
-    setUnitCreateValues({...unitCreateValues, popUpOpen: false});
-  };
-  /* ------------------------------------------
   // Einheit wurde angelegt
   // ------------------------------------------ */
-  const onAddUnit = (key, name) => {
-    // Snackbar
-    dispatch({
-      type: ReducerActions.UNITS_NEW_UNIT_ADDED,
-      payload: {
-        key: key,
-        name: name,
-        snackbarSeverity: "success",
-        snackbarText: TEXT_UNIT_CREATED(key + " - " + name),
-      },
-    });
+  const onAddUnit = (unit: Unit) => {
+    Unit.createUnit({firebase: firebase, unit: unit, authUser: authUser})
+      .then(() => {
+        // Snackbar
+        dispatch({
+          type: ReducerActions.UNITS_NEW_UNIT_ADDED,
+          payload: {
+            key: unit.key,
+            name: unit.name,
+            snackbarSeverity: "success",
+            snackbarText: TEXT_UNIT_CREATED(unit.key + " - " + unit.name),
+          },
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+      });
+
     setUnitCreateValues({...unitCreateValues, popUpOpen: false});
   };
   /* ------------------------------------------
@@ -318,10 +318,7 @@ const UnitsBase = ({props, authUser}) => {
           {
             id: "edit",
             hero: true,
-            visible:
-              !editMode &&
-              (authUser.roles.includes(ROLES.SUB_ADMIN) ||
-                authUser.roles.includes(ROLES.ADMIN)),
+            visible: !editMode && authUser.roles.includes(Role.admin),
             label: TEXT_EDIT,
             variant: "contained",
             color: "primary",
@@ -330,10 +327,7 @@ const UnitsBase = ({props, authUser}) => {
           {
             id: "save",
             hero: true,
-            visible:
-              editMode &&
-              (authUser.roles.includes(ROLES.SUB_ADMIN) ||
-                authUser.roles.includes(ROLES.ADMIN)),
+            visible: editMode && authUser.roles.includes(Role.admin),
             label: TEXT_SAVE,
             variant: "outlined",
             color: "primary",
@@ -342,10 +336,7 @@ const UnitsBase = ({props, authUser}) => {
           {
             id: "add",
             hero: true,
-            visible:
-              editMode &&
-              (authUser.roles.includes(ROLES.SUB_ADMIN) ||
-                authUser.roles.includes(ROLES.ADMIN)),
+            visible: editMode && authUser.roles.includes(Role.admin),
             label: TEXT_ADD,
             variant: "contained",
             color: "primary",
@@ -362,7 +353,7 @@ const UnitsBase = ({props, authUser}) => {
           {state.isError && (
             <Grid item key={"error"} xs={12}>
               <AlertMessage
-                error={state.error}
+                error={state.error as Error}
                 messageTitle={TEXT_ALERT_TITLE_UUPS}
               />
             </Grid>
@@ -378,11 +369,9 @@ const UnitsBase = ({props, authUser}) => {
         </Grid>
       </Container>
       <DialogCreateUnit
-        firebase={firebase}
         dialogOpen={unitCreateValues.popUpOpen}
         handleCreate={onAddUnit}
         handleClose={onPopUpClose}
-        handleError={onPopUpError}
       />
       <CustomSnackbar
         message={state.snackbar.message}
@@ -448,8 +437,6 @@ const TablePanel = ({units, onChangeField, editMode}: TablePanelProps) => {
               tableData={units}
               tableColumns={TABLE_COLUMS}
               keyColum={"key"}
-              onIconClick={() => {}}
-              onRowClick={() => {}}
             />
           )}
         </CardContent>
@@ -458,7 +445,7 @@ const TablePanel = ({units, onChangeField, editMode}: TablePanelProps) => {
   );
 };
 
-const condition = (authUser: AuthUser) => !!authUser;
+const condition = (authUser: AuthUser | null) => !!authUser;
 
 export default compose(
   withEmailVerification,

@@ -5,11 +5,9 @@ import fileSaver from "file-saver";
 import {
   Grid,
   Container,
-  Box,
   Switch,
   Button,
   Card,
-  FormControl,
   FormGroup,
   FormControlLabel,
   Checkbox,
@@ -51,7 +49,6 @@ import {
   Info as InfoIcon,
   Notes as NotesIcon,
   Edit,
-  ContactSupportOutlined,
 } from "@material-ui/icons";
 
 import useStyles from "../../../constants/styles";
@@ -97,7 +94,6 @@ import {
   MATERIAL as TEXT_MATERIAL,
   RECIPES as TEXT_RECIPES,
   RECIPES_DRAWER_TITLE as TEXT_RECIPES_DRAWER_TITLE,
-  CONTINUE as TEXT_CONTINUE,
   MENUE as TEXT_MENUE,
   DIALOG_PLAN_RECIPE_PORTIONS_TITLE as TEXT_DIALOG_PLAN_RECIPE_PORTIONS_TITLE,
   DIALOG_PLAN_GOODS_PORTIONS_TITLE as TEXT_DIALOG_PLAN_GOODS_PORTIONS_TITLE,
@@ -114,7 +110,6 @@ import {
   BACK as TEXT_BACK,
   NO_OF_SERVINGS as TEXT_NO_OF_SERVINGS,
   PLEASE_PROVIDE_VALID_FACTOR as TEXT_PLEASE_PROVIDE_VALID_FACTOR,
-  NO_MENUES_MARKED as TEXT_NO_MENUES_MARKED,
   MISSING_FACTOR as TEXT_MISSING_FACTOR,
   NO_GROUP_SELECTED as TEXT_NO_GROUP_SELECTED,
   NO_PORTIONS_GIVEN as TEXT_NO_PORTIONS_GIVEN,
@@ -128,7 +123,6 @@ import {
   QUANTITY as TEXT_QUANTITY,
   OK as TEXT_OK,
   PRINTVERSION as TEXT_PRINTVERSION,
-  MENUPLAN as TEXT_MENUPLAN,
   SUFFIX_PDF as TEXT_SUFFIX_PDF,
   ALL_MEAL_AND_VALUES_WILL_BE_DELETED as TEXT_ALL_MEAL_AND_VALUES_WILL_BE_DELETED,
   ATTENTION as TEXT_ATTENTION,
@@ -138,7 +132,6 @@ import {
   DIALOG_CHOOSE_MENUES_TITLE as TEXT_DIALOG_CHOOSE_MENUES_TITLE,
 } from "../../../constants/text";
 import {
-  OnMenuplanUpdate,
   FetchMissingDataType,
   FetchMissingDataProps,
   OnMasterdataCreateProps,
@@ -149,12 +142,11 @@ import {
   Droppable,
   Draggable,
   DropResult,
-  DroppableProvided,
   DraggableProvided,
 } from "react-beautiful-dnd";
 import MenuplanPdf from "./menuplanPdf";
 import Utils from "../../Shared/utils.class";
-import Firebase from "../../Firebase";
+import Firebase from "../../Firebase/firebase.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import Action from "../../../constants/actions";
 
@@ -174,16 +166,15 @@ import ProductAutocomplete from "../../Product/productAutocomplete";
 import MaterialAutocomplete from "../../Material/materialAutocomplete";
 import Material from "../../Material/material.class";
 import DialogMaterial, {
-  MATERIAL_DIALOG_TYPE,
   MATERIAL_POP_UP_VALUES_INITIAL_STATE,
+  MaterialDialog,
 } from "../../Material/dialogMaterial";
 import DialogProduct, {
-  PRODUCT_DIALOG_TYPE,
   PRODUCT_POP_UP_VALUES_INITIAL_STATE,
+  ProductDialog,
 } from "../../Product/dialogProduct";
 import Department from "../../Department/department.class";
 import Event, {EventRefDocuments} from "../Event/event.class";
-import {OnUpdateRecipeProps} from "../../Recipe/recipe";
 import {
   DialogType,
   SingleTextInputResult,
@@ -252,7 +243,6 @@ export const generatePlanedPortionsText = ({
   groupConfiguration,
 }: GeneratePlanedPortionsTextProps) => {
   return portionPlan.map((plan, index) => (
-    //@ts-ignore
     <React.Fragment key={"listItem" + uid + "_" + index}>
       {`${plan.factor != 1 ? `${plan.factor} × ` : ``} ${
         plan.diet == PlanedDiet.ALL
@@ -348,7 +338,6 @@ const MenuplanPage = ({
   fetchMissingData,
   onMasterdataCreate,
 }: MenuplanPageProps) => {
-  const classes = useStyles();
   const {customDialog} = useCustomDialog();
   const navigationValuesContext = React.useContext(NavigationValuesContext);
 
@@ -447,22 +436,22 @@ const MenuplanPage = ({
   // Change-Handler
   // ------------------------------------------ */
   const onMealTypeUpdate = async ({action, mealType}: OnMealTypeUpdate) => {
-    let tempMealTypes = {...menuplan.mealTypes};
+    const tempMealTypes = {...menuplan.mealTypes};
     let mealTypes = {} as Menuplan["mealTypes"];
     let meals = {} as Menuplan["meals"];
     let menues = {} as Menuplan["menues"];
     let mealRecipes = {} as Menuplan["mealRecipes"];
     let products = {} as Menuplan["products"];
     let materials = {} as Menuplan["materials"];
-
+    let isConfirmed: boolean;
     switch (action) {
       case Action.DELETE:
-        const isConfirmed = await customDialog({
+        isConfirmed = (await customDialog({
           dialogType: DialogType.Confirm,
           text: TEXT_ALL_MEAL_AND_VALUES_WILL_BE_DELETED,
           title: `⚠️  ${TEXT_ATTENTION}`,
           buttonTextConfirm: TEXT_DELETE,
-        });
+        })) as boolean;
         if (!isConfirmed) {
           return;
         }
@@ -514,13 +503,14 @@ const MenuplanPage = ({
     onMenuplanUpdateSuper({...menuplan, ...valuesToUpdate});
   };
   const onNoteUpdate = ({action, note}: OnNoteUpdate) => {
-    let updatedNotes = {...menuplan.notes};
+    const updatedNotes = {...menuplan.notes};
+    let updatedNote: Note;
     switch (action) {
       case Action.ADD:
         updatedNotes[note.uid] = note;
         break;
       case Action.EDIT:
-        let updatedNote = {...updatedNotes[note.uid]};
+        updatedNote = {...updatedNotes[note.uid]};
         updatedNote.text = note.text;
         updatedNotes[note.uid] = updatedNote;
         break;
@@ -544,7 +534,8 @@ const MenuplanPage = ({
   // Drag & Drop Handler
   // ------------------------------------------ */
   const onDragEnd = (result: DropResult) => {
-    let {destination, source, draggableId, type} = result;
+    const {destination, source, type} = result;
+    let draggableId = result.draggableId;
 
     if (draggableId.includes("_")) {
       draggableId = draggableId.split("_")[1];
@@ -567,9 +558,26 @@ const MenuplanPage = ({
       source.droppableId = source.droppableId.split("_")[0];
     }
 
+    let newMealTypeOrder: MealType["uid"][];
+    let newMealRecipeOrder: Meal["uid"][];
+    let sourceMenue: Menue;
+    let destinationMenue: Menue;
+    let sourceMealRecipeOrder: MealRecipe["uid"][];
+    let destinationMealRecipeOrder: MealRecipe["uid"][];
+    let sourceMeal: Meal;
+    let destinationMeal: Meal;
+    let newMealOrder: Meal["uid"][];
+    let sourceMealMenuOrder: Meal["menuOrder"];
+    let destinationMealMenuOrder: Meal["menuOrder"];
+
+    // let sourceMealProducts: Menue[""]
+    // destinationMealProducts
+    // newMealProductsOrder
+    let sourceMenueProductOrder: Menue["productOrder"];
+    let destinationMenueProductsOrder: Menue["productOrder"];
     switch (type) {
       case DragDropTypes.MEALTYPE:
-        let newMealTypeOrder = Array.from(menuplan.mealTypes.order);
+        newMealTypeOrder = Array.from(menuplan.mealTypes.order);
         newMealTypeOrder.splice(source.index, 1);
         newMealTypeOrder.splice(destination.index, 0, draggableId);
         onMenuplanUpdateSuper({
@@ -581,16 +589,14 @@ const MenuplanPage = ({
         });
         break;
       case DragDropTypes.MEALRECIPE:
-        let sourceMealRecipes = {...menuplan.menues[source.droppableId]};
-        let destinationMealRecipes = {
+        sourceMenue = {...menuplan.menues[source.droppableId]};
+        destinationMenue = {
           ...menuplan.menues[destination.droppableId],
         };
 
         if (source.droppableId === destination.droppableId) {
           // Reihenfolge im gleichen Menü angepasst
-          let newMealRecipeOrder = Array.from(
-            sourceMealRecipes.mealRecipeOrder
-          );
+          newMealRecipeOrder = Array.from(sourceMenue.mealRecipeOrder);
           newMealRecipeOrder.splice(source.index, 1);
           newMealRecipeOrder.splice(destination?.index, 0, draggableId);
 
@@ -598,19 +604,17 @@ const MenuplanPage = ({
             ...menuplan,
             menues: {
               ...menuplan.menues,
-              [sourceMealRecipes.uid]: {
-                ...sourceMealRecipes,
+              [sourceMenue.uid]: {
+                ...sourceMenue,
                 mealRecipeOrder: newMealRecipeOrder,
               },
             },
           });
         } else {
           // In ein anderes Menü verschoben
-          let sourceMealRecipeOrder = Array.from(
-            sourceMealRecipes.mealRecipeOrder
-          );
-          let destinationMealRecipeOrder = Array.from(
-            destinationMealRecipes.mealRecipeOrder
+          sourceMealRecipeOrder = Array.from(sourceMenue.mealRecipeOrder);
+          destinationMealRecipeOrder = Array.from(
+            destinationMenue.mealRecipeOrder
           );
           sourceMealRecipeOrder.splice(source.index, 1);
           destinationMealRecipeOrder.splice(destination.index, 0, draggableId);
@@ -619,12 +623,12 @@ const MenuplanPage = ({
             ...menuplan,
             menues: {
               ...menuplan.menues,
-              [sourceMealRecipes.uid]: {
-                ...sourceMealRecipes,
+              [sourceMenue.uid]: {
+                ...sourceMenue,
                 mealRecipeOrder: sourceMealRecipeOrder,
               },
-              [destinationMealRecipes.uid]: {
-                ...destinationMealRecipes,
+              [destinationMenue.uid]: {
+                ...destinationMenue,
                 mealRecipeOrder: destinationMealRecipeOrder,
               },
             },
@@ -632,12 +636,12 @@ const MenuplanPage = ({
         }
         break;
       case DragDropTypes.MENU:
-        let sourceMeal = {...menuplan.meals[source.droppableId]};
-        let destinationMeal = {...menuplan.meals[destination.droppableId]};
+        sourceMeal = {...menuplan.meals[source.droppableId]};
+        destinationMeal = {...menuplan.meals[destination.droppableId]};
 
         if (source.droppableId === destination.droppableId) {
           // Reihenfolge des gleichen Menü angepasst
-          let newMealOrder = Array.from(sourceMeal.menuOrder);
+          newMealOrder = Array.from(sourceMeal.menuOrder);
           newMealOrder.splice(source.index, 1);
           newMealOrder.splice(destination?.index, 0, draggableId);
 
@@ -653,8 +657,8 @@ const MenuplanPage = ({
           });
         } else {
           // In ein anderes Menü verschoben
-          let sourceMealMenuOrder = Array.from(sourceMeal.menuOrder);
-          let destinationMealMenuOrder = Array.from(destinationMeal.menuOrder);
+          sourceMealMenuOrder = Array.from(sourceMeal.menuOrder);
+          destinationMealMenuOrder = Array.from(destinationMeal.menuOrder);
           sourceMealMenuOrder.splice(source.index, 1);
           destinationMealMenuOrder.splice(destination.index, 0, draggableId);
 
@@ -676,16 +680,12 @@ const MenuplanPage = ({
 
         break;
       case DragDropTypes.PRODUCT:
-        let sourceMealProducts = {...menuplan.menues[source.droppableId]};
-        let destinationMealProducts = {
-          ...menuplan.menues[destination.droppableId],
-        };
+        sourceMenue = {...menuplan.menues[source.droppableId]};
+        destinationMenue = {...menuplan.menues[destination.droppableId]};
 
         if (source.droppableId === destination.droppableId) {
           // Reihenfolge im gleichen Menü angepasst
-          let newMealProductsOrder = Array.from(
-            sourceMealProducts.productOrder
-          );
+          const newMealProductsOrder = Array.from(sourceMenue.productOrder);
           newMealProductsOrder.splice(source.index, 1);
           newMealProductsOrder.splice(destination?.index, 0, draggableId);
 
@@ -693,22 +693,20 @@ const MenuplanPage = ({
             ...menuplan,
             menues: {
               ...menuplan.menues,
-              [sourceMealProducts.uid]: {
-                ...sourceMealProducts,
+              [sourceMenue.uid]: {
+                ...sourceMenue,
                 productOrder: newMealProductsOrder,
               },
             },
           });
         } else {
           // In ein anderes Menü verschoben
-          let sourceMealProductOrder = Array.from(
-            sourceMealProducts.productOrder
+          sourceMenueProductOrder = Array.from(sourceMenue.productOrder);
+          destinationMenueProductsOrder = Array.from(
+            destinationMenue.productOrder
           );
-          let destinationMealProductsOrder = Array.from(
-            destinationMealProducts.productOrder
-          );
-          sourceMealProductOrder.splice(source.index, 1);
-          destinationMealProductsOrder.splice(
+          sourceMenueProductOrder.splice(source.index, 1);
+          destinationMenueProductsOrder.splice(
             destination.index,
             0,
             draggableId
@@ -718,29 +716,25 @@ const MenuplanPage = ({
             ...menuplan,
             menues: {
               ...menuplan.menues,
-              [sourceMealProducts.uid]: {
-                ...sourceMealProducts,
-                productOrder: sourceMealProductOrder,
+              [sourceMenue.uid]: {
+                ...sourceMenue,
+                productOrder: sourceMenueProductOrder,
               },
-              [destinationMealProducts.uid]: {
-                ...destinationMealProducts,
-                productOrder: destinationMealProductsOrder,
+              [destinationMenue.uid]: {
+                ...destinationMenue,
+                productOrder: destinationMenueProductsOrder,
               },
             },
           });
         }
         break;
       case DragDropTypes.MATERIAL:
-        let sourceMealMaterials = {...menuplan.menues[source.droppableId]};
-        let destinationMealMaterials = {
-          ...menuplan.menues[destination.droppableId],
-        };
+        sourceMenue = {...menuplan.menues[source.droppableId]};
+        destinationMenue = {...menuplan.menues[destination.droppableId]};
 
         if (source.droppableId === destination.droppableId) {
           // Reihenfolge im gleichen Menü angepasst
-          let newMealMaterialsOrder = Array.from(
-            sourceMealMaterials.materialOrder
-          );
+          const newMealMaterialsOrder = Array.from(sourceMenue.materialOrder);
           newMealMaterialsOrder.splice(source.index, 1);
           newMealMaterialsOrder.splice(destination?.index, 0, draggableId);
 
@@ -748,19 +742,17 @@ const MenuplanPage = ({
             ...menuplan,
             menues: {
               ...menuplan.menues,
-              [sourceMealMaterials.uid]: {
-                ...sourceMealMaterials,
+              [sourceMenue.uid]: {
+                ...sourceMenue,
                 materialOrder: newMealMaterialsOrder,
               },
             },
           });
         } else {
           // In ein anderes Menü verschoben
-          let sourceMealProductOrder = Array.from(
-            sourceMealMaterials.materialOrder
-          );
-          let destinationMealMaterialsOrder = Array.from(
-            destinationMealMaterials.materialOrder
+          const sourceMealProductOrder = Array.from(sourceMenue.materialOrder);
+          const destinationMealMaterialsOrder = Array.from(
+            destinationMenue.materialOrder
           );
           sourceMealProductOrder.splice(source.index, 1);
           destinationMealMaterialsOrder.splice(
@@ -773,12 +765,12 @@ const MenuplanPage = ({
             ...menuplan,
             menues: {
               ...menuplan.menues,
-              [sourceMealMaterials.uid]: {
-                ...sourceMealMaterials,
+              [sourceMenue.uid]: {
+                ...sourceMenue,
                 materialOrder: sourceMealProductOrder,
               },
-              [destinationMealMaterials.uid]: {
-                ...destinationMealMaterials,
+              [destinationMenue.uid]: {
+                ...destinationMenue,
                 materialOrder: destinationMealMaterialsOrder,
               },
             },
@@ -811,14 +803,11 @@ const MenuplanPage = ({
   const onRecipeDrawerClose = () => {
     setRecipeDrawerData(RECIPE_DRAWER_DATA_INITIAL_VALUES);
   };
-  const onRecipeCardClick = ({
-    event,
-    recipe: recipeShort,
-  }: OnRecipeCardClickProps) => {
+  const onRecipeCardClick = ({recipe: recipeShort}: OnRecipeCardClickProps) => {
     let recipe = new Recipe();
     recipe.uid = recipeShort.uid;
 
-    if (recipes.hasOwnProperty(recipeShort.uid)) {
+    if (Object.prototype.hasOwnProperty.call(recipes, recipeShort.uid)) {
       recipe = recipes[recipeShort.uid] as Recipe;
     } else {
       // Rezept noch nicht vorhanden --> holen
@@ -830,7 +819,10 @@ const MenuplanPage = ({
     setRecipeDrawerData({
       ...recipeDrawerData,
       open: true,
-      isLoadingData: !recipes.hasOwnProperty(recipeShort.uid),
+      isLoadingData: !Object.prototype.hasOwnProperty.call(
+        recipes,
+        recipeShort.uid
+      ),
       recipe: recipe,
       scaledPortions: 0,
     });
@@ -877,7 +869,7 @@ const MenuplanPage = ({
         // Variante wurde erstellt. jetzt wurde gespeichert
         if (recipeDrawerData.mealPlan.length > 0) {
           // Aus Rezept eine Variante erstellt . Bestehendes in MealRecipe austauschen
-          let updatedMealRecipes = {...menuplan.mealRecipes};
+          const updatedMealRecipes = {...menuplan.mealRecipes};
           updatedMealRecipes[
             recipeDrawerData.mealPlan[0].mealPlanRecipe
           ].recipe = {
@@ -903,7 +895,7 @@ const MenuplanPage = ({
         });
       } else {
         if (recipeDrawerData.mealPlan.length > 0) {
-          let updatedMealRecipes = {} as MealRecipes;
+          const updatedMealRecipes = {} as MealRecipes;
           recipeDrawerData.mealPlan.forEach((mealPlan) => {
             if (
               updatedMealRecipes[mealPlan.mealPlanRecipe].recipe.variantName !=
@@ -934,7 +926,7 @@ const MenuplanPage = ({
       ) {
         // Fall beim privaten Rezept über den Menüplan der Namen
         // angepasst wurde, muss das hier übernommen werden.
-        let updatedMealRecipes = {} as MealRecipes;
+        const updatedMealRecipes = {} as MealRecipes;
         recipeDrawerData.mealPlan.forEach((mealPlan) => {
           if (
             menuplan.mealRecipes[mealPlan.mealPlanRecipe].recipe.name !=
@@ -959,7 +951,7 @@ const MenuplanPage = ({
       }
       // Privates Rezept
       // Anzeige umschiessen, falls gerade gespeichert wurde
-      let editMode =
+      const editMode =
         !recipeDrawerData.recipe.uid && recipe.uid != ""
           ? false
           : recipeDrawerData.editMode;
@@ -989,7 +981,7 @@ const MenuplanPage = ({
   };
   const onRecipeDelete = () => {
     // Rezepte auch aus dem Menüplan entfernen
-    let updatedMealRecipes = {...menuplan.mealRecipes};
+    const updatedMealRecipes = {...menuplan.mealRecipes};
 
     delete updatedMealRecipes[recipeDrawerData.mealPlan[0].mealPlanRecipe];
 
@@ -1044,7 +1036,7 @@ const MenuplanPage = ({
     product,
     material,
   }: OnAddGoodToMenuProps) => {
-    let newMenues = {...menuplan.menues};
+    const newMenues = {...menuplan.menues};
 
     let newMaterial: MenuplanMaterial | null = null;
     let newProduct: MenuplanProduct | null = null;
@@ -1078,7 +1070,7 @@ const MenuplanPage = ({
         dialogGoodsData.goodsType === GoodsType.MATERIAL &&
         newMaterial !== null
       ) {
-        let newMaterials = {...menuplan.materials};
+        const newMaterials = {...menuplan.materials};
         newMaterial.planMode = GoodsPlanMode.TOTAL;
         newMaterial.totalQuantity = newMaterial.quantity;
         newMaterials[newMaterial.uid] = newMaterial;
@@ -1097,7 +1089,7 @@ const MenuplanPage = ({
         dialogGoodsData.goodsType === GoodsType.PRODUCT &&
         newProduct !== null
       ) {
-        let newProducts = {...menuplan.products};
+        const newProducts = {...menuplan.products};
 
         newProduct.planMode = GoodsPlanMode.TOTAL;
         newProduct.totalQuantity = newProduct.quantity;
@@ -1172,11 +1164,11 @@ const MenuplanPage = ({
     objectType,
     uid,
   }: EditMenueObjectManipulation) => {
-    let updatedNotes = {...menuplan.notes};
-    let updatedMealRecipes = {...menuplan.mealRecipes};
-    let updateProducts = {...menuplan.products};
-    let updatedMaterials = {...menuplan.materials};
-    let updatedMenues = {...menuplan.menues};
+    const updatedNotes = {...menuplan.notes};
+    const updatedMealRecipes = {...menuplan.mealRecipes};
+    const updateProducts = {...menuplan.products};
+    const updatedMaterials = {...menuplan.materials};
+    const updatedMenues = {...menuplan.menues};
     let menue: Menue | undefined;
     switch (objectType) {
       case MenueEditTypes.NOTE:
@@ -1309,10 +1301,10 @@ const MenuplanPage = ({
   const onDialogPlanPortionsAdd = (plan: {
     [key: Menue["uid"]]: DialogPlanPortionsMealPlanning;
   }) => {
-    let updatedMenues = {...menuplan.menues};
-    let updatedMealRecipes = {...menuplan.mealRecipes};
-    let updatedMaterials = {...menuplan.materials};
-    let updatedProducts = {...menuplan.products};
+    const updatedMenues = {...menuplan.menues};
+    const updatedMealRecipes = {...menuplan.mealRecipes};
+    const updatedMaterials = {...menuplan.materials};
+    const updatedProducts = {...menuplan.products};
 
     if (dialogPlanPortionsData.planedObject == PlanedObject.RECIPE) {
       // Rezept
@@ -1322,7 +1314,7 @@ const MenuplanPage = ({
       ) {
         // Neuer Eintrag
         Object.keys(plan).forEach((menuUid) => {
-          let mealRecipe = Menuplan.createMealRecipe({
+          const mealRecipe = Menuplan.createMealRecipe({
             recipe: dialogSelectMenueData.selectedRecipe,
             plan: plan[menuUid],
           });
@@ -1357,7 +1349,7 @@ const MenuplanPage = ({
     ) {
       // Plan umbiegen
       Object.keys(plan).forEach((menueUid) => {
-        let newProduct = Menuplan.addPlanToGood<MenuplanProduct>({
+        const newProduct = Menuplan.addPlanToGood<MenuplanProduct>({
           // plan muss rausgelöscht werden, sonst wird dieser verdoppelt
           good: {...dialogPlanPortionsData.planedProduct!, plan: []},
           plan: plan[menueUid],
@@ -1377,7 +1369,7 @@ const MenuplanPage = ({
     ) {
       // Plan umbiegen
       Object.keys(plan).forEach((menueUid) => {
-        let newMaterial = Menuplan.addPlanToGood<MenuplanMaterial>({
+        const newMaterial = Menuplan.addPlanToGood<MenuplanMaterial>({
           good: {...dialogPlanPortionsData.planedMaterial!, plan: []},
           plan: plan[menueUid],
         });
@@ -1425,9 +1417,9 @@ const MenuplanPage = ({
   const onMealRecipeOpen = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
-    let [prefix, menuUid, mealRecipeUid] = event.currentTarget.id.split("_");
+    const [, , mealRecipeUid] = event.currentTarget.id.split("_");
     let loadingData = false;
-    let mealPlan: Array<PlanedMealsRecipe> = [];
+    const mealPlan: Array<PlanedMealsRecipe> = [];
 
     let recipe = new Recipe();
     recipe.uid = menuplan.mealRecipes[mealRecipeUid].recipe.recipeUid;
@@ -1444,7 +1436,7 @@ const MenuplanPage = ({
         if (menue != undefined) {
           // Die Mahlzeit suchen, in der das Menü ist
           meal = Object.values(menuplan.meals).find((meal) =>
-            meal.menuOrder.includes(menue?.uid!)
+            meal.menuOrder.includes(menue!.uid!)
           );
         }
         if (meal != undefined && menue != undefined) {
@@ -1477,7 +1469,7 @@ const MenuplanPage = ({
       }
     });
 
-    if (recipes.hasOwnProperty(recipe.uid)) {
+    if (Object.prototype.hasOwnProperty.call(recipes, recipe.uid)) {
       recipe = recipes[recipe.uid] as Recipe;
     } else {
       // Rezept noch nicht vorhanden --> holen
@@ -1511,7 +1503,7 @@ const MenuplanPage = ({
   // Handling Einplanung
   // ------------------------------------------ */
   const onEditRecipeMealPlan = (mealRecipeUid: MealRecipe["uid"]) => {
-    let menue = Menuplan.findMenueOfMealRecipe({
+    const menue = Menuplan.findMenueOfMealRecipe({
       mealRecipeUid: mealRecipeUid,
       menues: menuplan.menues,
     });
@@ -1546,7 +1538,7 @@ const MenuplanPage = ({
     //   });
   };
   const onEditProductPlan = (productUid: MenuplanProduct["uid"]) => {
-    let menue = Menuplan.findMenueOfMealProduct({
+    const menue = Menuplan.findMenueOfMealProduct({
       productUid: productUid,
       menues: menuplan.menues,
     });
@@ -1572,7 +1564,7 @@ const MenuplanPage = ({
     });
   };
   const onEditMaterialPlan = (materialUid: MenuplanProduct["uid"]) => {
-    let menue = Menuplan.findMenueOfMealMaterial({
+    const menue = Menuplan.findMenueOfMealMaterial({
       materialUid: materialUid,
       menues: menuplan.menues,
     });
@@ -1594,9 +1586,8 @@ const MenuplanPage = ({
       material: menuplan.materials[materialUid],
     });
   };
-
   return (
-    <>
+    <React.Fragment>
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="mealTypes" type={DragDropTypes.MEALTYPE}>
           {(provided) => (
@@ -1727,14 +1718,13 @@ const MenuplanPage = ({
         departments={departments}
         productToUpdate={dialogGoodsData.product}
         materialToUpdate={dialogGoodsData.material}
-        firebase={firebase}
         authUser={authUser}
         onCancel={onDialogGoodsCancel}
         onOk={onDialogGoodsOk}
         onMaterialCreate={onMaterialCreate}
         onProductCreate={onProductCreate}
       />
-    </>
+    </React.Fragment>
   );
 };
 /* ===================================================================
@@ -1777,7 +1767,7 @@ const DaysRow = ({
   /* ------------------------------------------
   // Button-Handling
   // ------------------------------------------ */
-  const onAddMeal = async (event: React.MouseEvent<HTMLButtonElement>) => {
+  const onAddMeal = async () => {
     let userInput = {valid: false, input: ""} as SingleTextInputResult;
 
     userInput = (await customDialog({
@@ -1790,7 +1780,7 @@ const DaysRow = ({
     })) as SingleTextInputResult;
 
     if (userInput?.valid && userInput.input != "") {
-      let newMealType = Menuplan.createMealType({
+      const newMealType = Menuplan.createMealType({
         newMealName: userInput.input,
       });
       onMealTypeUpdate({action: Action.ADD, mealType: newMealType});
@@ -1800,7 +1790,7 @@ const DaysRow = ({
   // Kontext-Menü
   // ------------------------------------------ */
   const onContextMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    let selectedDate = Utils.dateAsString(
+    const selectedDate = Utils.dateAsString(
       new Date(event.currentTarget.id.split("_")[1])
     );
 
@@ -1827,7 +1817,7 @@ const DaysRow = ({
   };
   const onModifyNote = async () => {
     // Input holen
-    let userInput = (await customDialog({
+    const userInput = (await customDialog({
       dialogType: DialogType.SingleTextInput,
       title: `${TEXT_NOTE} ${
         contextMenuState.note?.text ? TEXT_EDIT : TEXT_ADD
@@ -1905,7 +1895,7 @@ const DaysRow = ({
       </Container>
 
       {dates.map((date) => {
-        let note = Object.values(notes).find(
+        const note = Object.values(notes).find(
           (note) => note.date == Utils.dateAsString(date) && note.menueUid == ""
         );
         return (
@@ -2041,12 +2031,12 @@ const MealTypeRow = ({
   // Menü-Handling
   // ------------------------------------------ */
   const onCreateMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
-    let newMenu = Menuplan.createMenu();
-    let mealsToUpdate = {...meals};
-    let mealToUpdate = Object.values(mealsToUpdate).find(
+    const newMenu = Menuplan.createMenu();
+    const mealsToUpdate = {...meals};
+    const mealToUpdate = Object.values(mealsToUpdate).find(
       (meal) => meal.uid == event.currentTarget.id.split("_")[1]
     );
-    let menuesToUpdate = {...menues};
+    const menuesToUpdate = {...menues};
 
     if (!mealToUpdate || !menuesToUpdate) {
       return;
@@ -2069,7 +2059,6 @@ const MealTypeRow = ({
     // die in diesem Menü sind
 
     const isConfirmed = await customDialog({
-      //TODO: Test me!
       dialogType: DialogType.Confirm,
       text: TEXT_ALL_RECIPES_AND_VALUES_WILL_BE_DELETED,
       title: `⚠️  ${TEXT_ATTENTION}`,
@@ -2079,11 +2068,11 @@ const MealTypeRow = ({
       return;
     }
 
-    let updatedMealRecipes = {...mealRecipes};
-    let updatedMenues = {...menues};
-    let updatedMeals = {...meals};
-    let updateProducts = {...products};
-    let updateMaterials = {...materials};
+    const updatedMealRecipes = {...mealRecipes};
+    const updatedMenues = {...menues};
+    const updatedMeals = {...meals};
+    const updateProducts = {...products};
+    const updateMaterials = {...materials};
     //
     menues[menueUid].mealRecipeOrder.forEach(
       (recipeUid) => delete updatedMealRecipes[recipeUid]
@@ -2366,7 +2355,6 @@ const MenueCard = ({
   onUpdateMenue,
   onDeleteMenue: onDeleteMenueSuper,
   onMealRecipeOpen,
-  fetchMissingData,
   onAddRecipe: onAddRecipeSuper,
   onAddProduct: onAddProductSuper,
   onAddMaterial: onAddMaterialSuper,
@@ -2379,14 +2367,13 @@ MenuCardProps) => {
   const [contextMenuAnchorElement, setContextMenuAnchorElement] =
     React.useState<HTMLElement | null>(null);
   const [menueName, setMenueName] = React.useState<Menue["name"]>("");
-  const [recipesLoading, setRecipesLoading] = React.useState(false);
   const theme = useTheme();
 
   if (menue.name && !menueName) {
     setMenueName(menue.name);
   }
 
-  let note = Object.values(notes).find((note) => note.menueUid == menue.uid);
+  const note = Object.values(notes).find((note) => note.menueUid == menue.uid);
   /* ------------------------------------------
   // Kontexmenü
   // ------------------------------------------ */
@@ -2425,7 +2412,7 @@ MenuCardProps) => {
   const onEditNote = async () => {
     let userInput = {valid: false, input: ""} as SingleTextInputResult;
 
-    let existingNote = Object.values(notes).find(
+    const existingNote = Object.values(notes).find(
       (note) => note.menueUid == menue.uid
     );
 
@@ -2569,15 +2556,17 @@ MenuCardProps) => {
                                   ? classes.listItemOnDrag
                                   : classes.listItemNoDrag
                               }
-                              onClick={
-                                !mealRecipes[
-                                  mealRecipeUid
-                                ]?.recipe.recipeUid.includes(
-                                  MealRecipeDeletedPrefix
-                                )
-                                  ? onMealRecipeOpen
-                                  : () => {}
-                              }
+                              onClick={(event) => {
+                                if (
+                                  !mealRecipes[
+                                    mealRecipeUid
+                                  ]?.recipe.recipeUid.includes(
+                                    MealRecipeDeletedPrefix
+                                  )
+                                ) {
+                                  onMealRecipeOpen(event);
+                                }
+                              }}
                             >
                               <ListItemText
                                 key={
@@ -2945,10 +2934,8 @@ const RecipeSearchDrawer = ({
           embeddedMode={true}
           fabButtonIcon={<AddIcon />}
           onFabButtonClick={onRecipeSelection}
-          error={{}}
           onNewClick={onNewRecipe}
           onCardClick={onRecipeCardClick}
-          cardActions={[]}
           isLoading={drawerSettings.isLoadingData}
         />
       </Container>
@@ -2969,11 +2956,11 @@ interface RecipeDrawerProps {
   firebase: Firebase;
   authUser: AuthUser;
   onClose: () => void;
-  onAddToEvent: ({recipe}: OnAddToEvent) => void;
-  onEditRecipeMealPlan: (mealRecipeUid: MealRecipe["uid"]) => void;
-  onRecipeUpdate: (recipe: Recipe) => void;
-  onSwitchEditMode: () => void;
-  onRecipeDelete: () => void;
+  onAddToEvent?: ({recipe}: OnAddToEvent) => void;
+  onEditRecipeMealPlan?: (mealRecipeUid: MealRecipe["uid"]) => void;
+  onRecipeUpdate?: (recipe: Recipe) => void;
+  onSwitchEditMode?: () => void;
+  onRecipeDelete?: () => void;
 }
 export const RecipeDrawer = ({
   drawerSettings,
@@ -2993,11 +2980,12 @@ export const RecipeDrawer = ({
   onRecipeUpdate: onRecipeUpdateSuper,
 }: RecipeDrawerProps) => {
   const classes = useStyles();
-  const theme = useTheme();
 
   const onRecipeUpdate = ({recipe}) => {
     // Umbiegen der Signatur
-    onRecipeUpdateSuper(recipe);
+    if (onRecipeUpdateSuper) {
+      onRecipeUpdateSuper(recipe);
+    }
   };
 
   return (
@@ -3009,6 +2997,7 @@ export const RecipeDrawer = ({
       ModalProps={{
         keepMounted: true,
       }}
+      style={{zIndex: 10000}}
     >
       <div>
         <IconButton
@@ -3037,7 +3026,6 @@ export const RecipeDrawer = ({
             isEmbedded={true}
             switchEditMode={onSwitchEditMode}
             onUpdateRecipe={onRecipeUpdate}
-            onError={(error) => {}}
             authUser={authUser}
           />
         ) : (
@@ -3047,8 +3035,7 @@ export const RecipeDrawer = ({
             firebase={firebase}
             isEmbedded={true}
             isLoading={drawerSettings.isLoadingData}
-            isError={false}
-            error={{}}
+            error={null}
             disableFunctionality={disableFunctionality}
             groupConfiguration={groupConfiguration}
             scaledPortions={scaledPortions}
@@ -3057,7 +3044,6 @@ export const RecipeDrawer = ({
             onEditRecipeMealPlan={onEditRecipeMealPlan}
             onAddToEvent={onAddToEvent}
             onRecipeDelete={onRecipeDelete}
-            onError={(error) => {}}
             authUser={authUser}
           />
         )}
@@ -3113,7 +3099,6 @@ const DialogPlanPortions = ({
   open,
   selectedMenues,
   meals,
-  menues,
   mealTypes,
   groupConfiguration,
   planedMealRecipe,
@@ -3182,7 +3167,7 @@ const DialogPlanPortions = ({
     // Zuerst die Alle und Fix Portionen
     Object.keys(plan).forEach((menuUid) => {
       if (plan[menuUid] == null) {
-        let mealPlan = {} as DialogPlanPortionsMealPlanning;
+        const mealPlan = {} as DialogPlanPortionsMealPlanning;
         if (dietButtons[menuUid] == PlanedDiet.FIX) {
           // Fixe-Portionen
           mealPlan[PlanedDiet.FIX] = {
@@ -3268,11 +3253,11 @@ const DialogPlanPortions = ({
   // Feld-Änderungen
   // ------------------------------------------ */
   const onFieldUpdate = (event: React.ChangeEvent<HTMLInputElement>) => {
-    let updatedField = event.target.id.split("_");
-    let factor: string = "";
-    let active: boolean = false;
-    let portions: number = 0;
-    let [prefixField, changedField, menueUid, intoleranceUid] = updatedField;
+    const updatedField = event.target.id.split("_");
+    let factor = "";
+    let active = false;
+    let portions = 0;
+    const [, changedField, menueUid, intoleranceUid] = updatedField;
 
     if (
       !dialogValues.plan ||
@@ -3306,7 +3291,7 @@ const DialogPlanPortions = ({
     }
 
     if (changedField == "active") {
-      let menuePlan = dialogValues.plan[menueUid];
+      const menuePlan = dialogValues.plan[menueUid];
       if (menuePlan === null) {
         return;
       }
@@ -3376,7 +3361,7 @@ const DialogPlanPortions = ({
       // Etwas muss markiert sein.
       return;
     }
-    let [prefix, menuUid, dietUid] = event.currentTarget.id.split("_");
+    const [, menuUid] = event.currentTarget.id.split("_");
 
     setDialogValues({
       ...dialogValues,
@@ -3397,7 +3382,7 @@ const DialogPlanPortions = ({
       return;
     }
 
-    let dialogValidationMessages: FormValidationFieldError[] = [];
+    const dialogValidationMessages: FormValidationFieldError[] = [];
     //Prüfen ob es aktivierte Checkboxen ohne Faktor gibt, dass kann nicht gerechnet werden
     Object.keys(dialogValues.plan).forEach((menueUid) => {
       if (
@@ -3458,10 +3443,10 @@ const DialogPlanPortions = ({
     if (dialogValidationMessages.length == 0) {
       // Zurückmelden, was alles aktiv ist.
       setDialogValidation([]);
-      let selectedPlans = {};
+      const selectedPlans = {};
 
       Object.keys(dialogValues.plan).forEach((menuUid) => {
-        let intolerances = {};
+        const intolerances = {};
         Object.keys(dialogValues.plan![menuUid]!).forEach((intoleraceUid) => {
           if (dialogValues.plan![menuUid]![intoleraceUid].active === true) {
             intolerances[intoleraceUid] =
@@ -3524,14 +3509,22 @@ const DialogPlanPortions = ({
                 />
               </FormGroup>
             )}
-
             {dialogValues.menueList &&
               // Für alle gewählten Menü, den Block aufbauen
               dialogValues.menueList.map((menueUid, counter) => {
-                let meal = Menuplan.findMealOfMenu({
-                  menueUid: menueUid,
-                  meals: meals,
-                });
+                let meal: Meal = {
+                  uid: "",
+                  date: "",
+                  mealType: "",
+                  mealTypeName: "",
+                  menuOrder: [],
+                };
+                if (menueUid !== KEEP_IN_SYNC_KEY) {
+                  meal = Menuplan.findMealOfMenu({
+                    menueUid: menueUid,
+                    meals: meals,
+                  });
+                }
                 return (
                   <React.Fragment
                     key={"dialogPlanPortionsDetailBlock_" + menueUid}
@@ -3562,7 +3555,10 @@ const DialogPlanPortions = ({
                           });
 
                           return (
-                            <Typography variant="subtitle1">
+                            <Typography
+                              variant="subtitle1"
+                              key={"date_" + menueUid + counter}
+                            >
                               <strong>
                                 {`${new Date(meal.date).toLocaleString(
                                   "default",
@@ -3722,7 +3718,7 @@ const DialogPlanPortions = ({
                           {dialogValidation
                             .filter((message) => message.fieldName == menueUid)
                             .map((errorMessage) => (
-                              <Typography color="error">
+                              <Typography color="error" key="errormessage">
                                 {errorMessage.errorMessage}
                               </Typography>
                             ))}
@@ -3776,8 +3772,6 @@ const DialogPlanPortionsMealBlock = ({
   groupConfiguration,
   onFieldUpdate,
 }: DialogPlanPortionsMealBlockProps) => {
-  const classes = useStyles();
-
   return (
     plan &&
     (selectedDietUid == PlanedDiet.FIX ? (
@@ -4056,7 +4050,6 @@ export const DialogEditMenue = ({
   onEditObject,
   onDeleteObject,
 }: DialogEditMenueProps) => {
-  const classes = useStyles();
   const theme = useTheme();
 
   return (
@@ -4094,7 +4087,7 @@ export const DialogEditMenue = ({
               }
             >
               {menue.mealRecipeOrder.map((mealRecipeUid) => (
-                <ListItem>
+                <ListItem key={"listItemMealRecipe_" + mealRecipeUid}>
                   <ListItemText
                     primary={
                       <span>
@@ -4156,7 +4149,7 @@ export const DialogEditMenue = ({
               }
             >
               {menue.productOrder.map((productUid) => (
-                <ListItem>
+                <ListItem key={"listItemProducts_" + productUid}>
                   <ListItemText
                     primary={`${
                       products[productUid]?.totalQuantity > 0
@@ -4223,7 +4216,7 @@ export const DialogEditMenue = ({
               }
             >
               {menue.materialOrder.map((materialUid) => (
-                <ListItem>
+                <ListItem key={"listItemMaterials_" + materialUid}>
                   <ListItemText
                     primary={`${
                       materials[materialUid]?.totalQuantity > 0
@@ -4304,7 +4297,6 @@ interface DialogGoodsProps {
   productToUpdate: MenuplanProduct | null;
   materialToUpdate: MenuplanMaterial | null;
   departments: Department[];
-  firebase: Firebase;
   authUser: AuthUser;
   onCancel: () => void;
   onOk: ({
@@ -4341,7 +4333,6 @@ export const DialogGoods = ({
   productToUpdate,
   materialToUpdate,
   departments,
-  firebase,
   authUser,
   onCancel: onCancelSuper,
   onOk: onOkSuper,
@@ -4370,7 +4361,7 @@ export const DialogGoods = ({
     productToUpdate !== null &&
     !dialogValues.product
   ) {
-    let product = products.find(
+    const product = products.find(
       (product) => product.uid == productToUpdate.productUid
     );
 
@@ -4388,7 +4379,7 @@ export const DialogGoods = ({
     materialToUpdate !== null &&
     !dialogValues.material
   ) {
-    let material = materials.find(
+    const material = materials.find(
       (material) => material.uid == materialToUpdate.materialUid
     );
 
@@ -4441,7 +4432,7 @@ export const DialogGoods = ({
       material = newValue as Material;
       if (typeof material === "object" && material?.name.endsWith(TEXT_ADD)) {
         // Begriff Hinzufügen und Anführzungszeichen entfernen
-        let materialName = material.name.match('".*"')![0].slice(1, -1);
+        const materialName = material.name.match('".*"')![0].slice(1, -1);
 
         // Neues Produkt. PopUp Anzeigen und nicht weiter
         setMaterialAddPopupValues({
@@ -4469,7 +4460,7 @@ export const DialogGoods = ({
       product = newValue as Product;
       if (typeof product === "object" && product.name.endsWith(TEXT_ADD)) {
         // Begriff Hinzufügen und Anführzungszeichen entfernen
-        let productName = product.name.match('".*"')![0].slice(1, -1);
+        const productName = product.name.match('".*"')![0].slice(1, -1);
 
         // Neues Produkt. PopUp Anzeigen und nicht weiter
         setProductAddPopupValues({
@@ -4497,7 +4488,7 @@ export const DialogGoods = ({
         [objectId.slice(0, -1)]: newValue,
       });
     } else if (objectId == "unit_" && newValue) {
-      let newUnit = newValue as Unit;
+      const newUnit = newValue as Unit;
 
       setDialogValues({
         ...dialogValues,
@@ -4709,8 +4700,11 @@ export const DialogGoods = ({
       {/* Dialog um neues Material anzulegen */}
       <DialogMaterial
         materialName={materialAddPopupValues.name}
+        materialUid={materialAddPopupValues.uid}
+        materialType={materialAddPopupValues.type}
+        materialUsable={materialAddPopupValues.usable}
         materials={materials}
-        dialogType={MATERIAL_DIALOG_TYPE.CREATE}
+        dialogType={MaterialDialog.CREATE}
         dialogOpen={materialAddPopupValues.popUpOpen}
         handleOk={onMaterialCreate}
         handleClose={onCloseDialogMaterial}
@@ -4718,7 +4712,10 @@ export const DialogGoods = ({
       />
       <DialogProduct
         productName={productAddPopupValues.name}
-        dialogType={PRODUCT_DIALOG_TYPE.CREATE}
+        productUid={productAddPopupValues.uid}
+        productDietProperties={productAddPopupValues.dietProperties}
+        usable={productAddPopupValues.usable}
+        dialogType={ProductDialog.CREATE}
         dialogOpen={productAddPopupValues.popUpOpen}
         handleOk={onProductCreate}
         handleClose={onCloseDialogProduct}

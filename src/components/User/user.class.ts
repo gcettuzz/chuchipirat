@@ -1,12 +1,10 @@
 // import app from "firebase/app";
 // import Utils from "../Shared/utils.class";
-import UserPublic from "./user.public.class";
-import Stats, { StatsField } from "../Shared/stats.class";
-import Feed, { FeedType } from "../Shared/feed.class";
-import { Role } from "../../constants/roles";
-import { IMAGES_SUFFIX } from "../Firebase/Storage/firebase.storage.super.class";
+// import {StatsField} from "../Shared/stats.class";
+// import Feed, {FeedType} from "../Shared/feed.class";
+import {Role} from "../../constants/roles";
 
-import Firebase from "../Firebase";
+import Firebase from "../Firebase/firebase.class";
 
 import {
   USER_NOT_IDENTIFIED_BY_EMAIL as TEXT_USER_NOT_IDENTIFIED_BY_EMAIL,
@@ -14,10 +12,17 @@ import {
   NO_USER_WITH_THIS_EMAIL as TEXT_NO_USER_WITH_THIS_EMAIL,
 } from "../../constants/text";
 import FirebaseAnalyticEvent from "../../constants/firebaseEvent";
-import { AuthUser } from "../Firebase/Authentication/authUser.class";
+import {AuthUser} from "../Firebase/Authentication/authUser.class";
 import UserPublicProfile from "./user.public.profile.class";
 import UserPublicSearchFields from "./user.public.searchFields.class";
-import { Operator } from "../Firebase/Db/firebase.db.super.class";
+import {Operator, SortOrder} from "../Firebase/Db/firebase.db.super.class";
+import {StatsField} from "../Shared/stats.class";
+import Feed, {FeedType} from "../Shared/feed.class";
+import {Picture} from "../Shared/global.interface";
+import {
+  IMAGES_SUFFIX,
+  ImageSize,
+} from "../Firebase/Storage/firebase.storage.super.class";
 
 /**
  * User Aufbau (kurz)
@@ -33,6 +38,17 @@ export interface UserShort {
   pictureSrc: string;
   motto: string;
 }
+
+export interface UserOverviewStructure {
+  firstName: User["firstName"];
+  lastName: User["lastName"];
+  displayName: UserPublicProfile["displayName"];
+  email: User["email"];
+  memberId: UserPublicProfile["memberId"];
+  memberSince: Date;
+  uid?: User["uid"];
+}
+
 export interface UserFullProfile extends User, UserPublicProfile {}
 /**
  * Schnittstelle für die IncrementPublicProfile
@@ -48,14 +64,10 @@ interface CreateUser {
   firstName: string;
   lastName: string;
   email: string;
-  pictureSrc?: string;
-  emailVerified: boolean;
-  providerData: object[];
-  authUser: AuthUser;
 }
 interface RegisterSignIn {
   firebase: Firebase;
-  uid: string;
+  authUser: AuthUser;
 }
 interface GetUidByEmail {
   firebase: Firebase;
@@ -64,6 +76,13 @@ interface GetUidByEmail {
 interface GetUser {
   firebase: Firebase;
   uid: string;
+}
+interface GetAllUsers {
+  firebase: Firebase;
+}
+
+interface GetUsersOverview {
+  firebase: Firebase;
 }
 interface GetPublicProfile {
   firebase: Firebase;
@@ -77,21 +96,19 @@ interface SaveFullProfile {
   firebase: Firebase;
   userProfile: UserFullProfile;
   authUser: AuthUser;
+  localPicture?: File | null;
 }
 interface UploadPicture {
   firebase: Firebase;
-  file: object;
-  userProfile: UserPublicProfile;
+  file: File;
   authUser: AuthUser;
 }
 interface DeletePicture {
-  uid: string;
   firebase: Firebase;
   authUser: AuthUser;
 }
 interface UpdateEmail {
   firebase: Firebase;
-  uid: string;
   newEmail: string;
   authUser: AuthUser;
 }
@@ -104,6 +121,7 @@ export default class User {
   lastLogin: Date;
   noLogins: number;
   roles: Role[];
+  deactivated?: boolean;
   /* =====================================================================
   // Konstruktor
   // ===================================================================== */
@@ -119,15 +137,8 @@ export default class User {
   /* =====================================================================
     // Objekt erzeugen
     // ===================================================================== */
-  static factory({
-    uid,
-    firstName,
-    lastName,
-    email,
-    lastLogin,
-    noLogins,
-  }: User) {
-    let user = new User();
+  static factory({uid, firstName, lastName, email, lastLogin, noLogins}: User) {
+    const user = new User();
 
     user.uid = uid;
     user.firstName = firstName;
@@ -143,25 +154,23 @@ export default class User {
   // ===================================================================== */
   /* istanbul ignore next */
   /* DB-Methode wird zur Zeit nicht geprüft */
-  static async getAllUsers(firebase: Firebase) {
+  static async getAllUsers({firebase}: GetAllUsers) {
     let userList: User[] = [];
-    //     // await firebase.db.ref("users").once("value", (snapshot) => {
-    //     //   const userObject = snapshot.val();
-    //     //   Object.keys(userObject).forEach((key) => {
-    //     //     let user = new User(
-    //     //       key,
-    //     //       userObject[key].firstName,
-    //     //       userObject[key].lastName,
-    //     //       userObject[key].email,
-    //     //       userObject[key].memberSince,
-    //     //       userObject[key].lastLogin,
-    //     //       userObject[key].noLogins
-    //     //     );
-    //     //     userList.push(user);
-    //     //   });
-    //     // });
-    //     // // Sortieren nach vornamen
-    //     // userList = Utils.sortArrayWithObjectByText({list: userList, attributeName: "firstName"}, );
+
+    await firebase.user
+      .readCollection<User>({
+        uids: [""],
+        orderBy: {field: "firstName", sortOrder: SortOrder.desc},
+        ignoreCache: true,
+      })
+      .then((result) => {
+        userList = result;
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+
     return userList;
   }
   /* =====================================================================
@@ -175,53 +184,42 @@ export default class User {
     firstName,
     lastName,
     email,
-    pictureSrc = "",
-    emailVerified,
-    providerData,
-    authUser,
   }: CreateUser) {
-    let user: User = {
-      uid: uid,
-      firstName: firstName,
-      lastName: lastName,
-      email: email,
-      lastLogin: new Date(),
-      noLogins: 1,
-      roles: [Role.basic],
-    };
+    const user = new User();
+    user.uid = uid;
+    user.firstName = firstName;
+    user.lastName = lastName;
+    user.email = email;
+    user.noLogins = 0;
+    user.roles = [Role.basic];
 
-    let userPublicProfile: UserPublicProfile = {
-      uid: uid,
-      displayName: firstName,
-      memberSince: new Date(),
-      memberId: 0,
-      motto: "",
-      pictureSrc: {
-        smallSize: "",
-        normalSize: "",
-        fullSize: "",
-      },
-      stats: {
-        noComments: 0,
-        noEvents: 0,
-        noRecipesPublic: 0,
-        noRecipesPrivate: 0,
-      },
-    };
+    // wird hier erzeugt. User wurde gerade angelegt. Der AuthUser existiert noch nicht richtig
+    const authUser = new AuthUser();
+    authUser.email = user.email;
+    authUser.uid = user.uid;
+    authUser.firstName = user.firstName;
+    authUser.lastName = user.lastName;
+    authUser.roles = user.roles;
+    authUser.publicProfile.displayName = firstName;
 
-    let userPublicSearchFields: UserPublicSearchFields = {
-      uid: uid,
-      email: email,
-    };
+    const userPublicProfile = new UserPublicProfile();
+    userPublicProfile.uid = uid;
+    userPublicProfile.displayName = firstName;
+    userPublicProfile.memberSince = new Date();
+
+    const userPublicSearchFields = new UserPublicSearchFields();
+    userPublicSearchFields.uid = uid;
+    userPublicSearchFields.email = email;
 
     await firebase.user
-      .create({ value: user, authUser: authUser })
+      .set({uids: [user.uid], value: user, authUser: {} as AuthUser})
       .then(async () => {
         // Öffentliches Profil anlegen
         await firebase.user.public.profile
-          .create<UserPublicProfile>({
+          .set<UserPublicProfile>({
             value: userPublicProfile,
             authUser: authUser,
+            uids: [user.uid],
           })
           .catch((error) => {
             console.error(error);
@@ -230,14 +228,15 @@ export default class User {
       })
       .then(async () => {
         // Durchsuchbare Felder
-        await firebase.user.public.searchFields.create({
+        await firebase.user.public.searchFields.set({
           value: userPublicSearchFields,
           authUser: authUser,
+          uids: [user.uid],
         });
       })
       .then(async () => {
         // Statistik
-        await firebase.stats.incrementField({
+        await firebase.stats.counter.incrementField({
           uids: [""],
           field: StatsField.noUsers,
           value: 1,
@@ -263,6 +262,21 @@ export default class User {
         throw error;
       });
   }
+  /* =====================================================================
+  // Übersicht aller User holen
+  // ===================================================================== */
+  static getUsersOverview = async ({firebase}: GetUsersOverview) => {
+    const userOverview = [] as UserOverviewStructure[];
+
+    await firebase.user.short.read({uids: []}).then((result) => {
+      Object.keys(result).forEach((key) => {
+        userOverview.push({uid: key, ...result[key]});
+      });
+    });
+
+    return userOverview;
+  };
+
   //   /* =====================================================================
   //   // Update User bei Anmeldung durch Social-Login
   //   // ===================================================================== */
@@ -310,20 +324,22 @@ export default class User {
   // ===================================================================== */
   /* istanbul ignore next */
   /* DB-Methode wird zur Zeit nicht geprüft */
-  static registerSignIn({ firebase, uid }: RegisterSignIn) {
-    //FIXME:
-    // const userDoc = firebase.userDocument(uid);
-    // userDoc.update({
-    //   lastLogin: firebase.timestamp.fromDate(new Date()),
-    //   noLogins: firebase.fieldValue.increment(1),
-    // });
+  static registerSignIn({firebase, authUser}: RegisterSignIn) {
+    firebase.user.updateFields({
+      uids: [authUser.uid],
+      values: {
+        lastLogin: firebase.timestamp.fromDate(new Date()),
+        noLogins: firebase.fieldValue.increment(1),
+      },
+      authUser: authUser,
+    });
   }
   /* =====================================================================
   // User anhand der Mailadresse holen
   // ===================================================================== */
   /* istanbul ignore next */
   /* DB-Methode wird zur Zeit nicht geprüft */
-  static getUidByEmail = async ({ firebase, email }: GetUidByEmail) => {
+  static getUidByEmail = async ({firebase, email}: GetUidByEmail) => {
     let userUid = "";
     await firebase.user.public.searchFields
       .readCollectionGroup<UserPublicSearchFields>({
@@ -352,64 +368,66 @@ export default class User {
   // ===================================================================== */
   /* istanbul ignore next */
   /* DB-Methode wird zur Zeit nicht geprüft */
-  static getUser = async ({ firebase, uid }: GetUser) => {
-    let user = <User>{};
-    firebase.user
-      .read({ uids: [uid] })
+  static getUser = async ({firebase, uid}: GetUser) => {
+    return await firebase.user
+      .read({uids: [uid]})
       .then((result) => {
-        user = result as User;
+        return result as User;
       })
       .catch((error) => {
         console.error(error);
         throw error;
       });
-
-    return user;
   };
   /* =====================================================================
   // Öffentliches Profil lesen
   // ===================================================================== */
   /* istanbul ignore next */
   /* DB-Methode wird zur Zeit nicht geprüft */
-  static getPublicProfile = async ({ firebase, uid }: GetPublicProfile) => {
+  static getPublicProfile = async ({firebase, uid}: GetPublicProfile) => {
     let publicProfile = {} as UserPublicProfile;
 
-    await firebase.user.public.profile
-      .read<UserPublicProfile>({ uids: [uid] })
+    return await firebase.user.public.profile
+      .read<UserPublicProfile>({uids: [uid]})
       .then((result) => {
         publicProfile = result;
         publicProfile.uid = uid;
+        return publicProfile;
       })
       .catch((error) => {
         console.error(error);
         throw error;
       });
-    return publicProfile;
   };
   /* =====================================================================
   // Profil und Öffentliches Profil lesen
   // ===================================================================== */
   /* istanbul ignore next */
   /* DB-Methode wird zur Zeit nicht geprüft */
-  static getFullProfile = async ({ firebase, uid }: GetFullProfile) => {
+  static getFullProfile = async ({firebase, uid}: GetFullProfile) => {
     let user = <User>{};
-    let userPublicProfile = <UserPublicProfile>{};
-    let userFullProfile = <UserFullProfile>{};
-    await firebase.user
-      .read<User>({ uids: [uid] })
+    let userPublicProfile: UserPublicProfile;
+    let userFullProfile: UserFullProfile;
+
+    return await firebase.user
+      .read<User>({uids: [uid]})
       .then(async (result) => {
         user = result;
-        await firebase.user.public.profile
-          .read<UserPublicProfile>({ uids: [uid] })
-          .then((result) => {
-            userPublicProfile = result;
-            userFullProfile = { ...user, ...userPublicProfile };
-          });
       })
-      .catch((error) => {
+      .then(async () => {
+        await firebase.user.public.profile
+          .read<UserPublicProfile>({
+            uids: [uid],
+          })
+          .then((result) => (userPublicProfile = result));
+      })
+      .then(() => {
+        userFullProfile = {...userPublicProfile, ...user};
+        return userFullProfile;
+      })
+      .catch((error: Error) => {
         throw error;
       });
-    return userFullProfile;
   };
   /* =====================================================================
   // Daten prüfen
@@ -428,26 +446,40 @@ export default class User {
   static saveFullProfile = async ({
     firebase,
     userProfile,
+    localPicture,
     authUser,
   }: SaveFullProfile) => {
-    try {
-      User.checkUserProfileData(userProfile);
-    } catch (error) {
-      throw error;
-    }
+    let pictureSrc = userProfile.pictureSrc;
 
     // Alte werte holen um zu vergleichen ob die Cloud Function gestartet werden muss
     let actualPublicProfile = <UserPublicProfile>{};
-    firebase.user.public.profile
-      .read<UserPublicProfile>({ uids: [userProfile.uid] })
+    await firebase.user.public.profile
+      .read<UserPublicProfile>({uids: [userProfile.uid]})
       .then((result) => {
         actualPublicProfile = result;
       })
       .catch((error) => {
+        console.error(error);
         throw error;
       });
 
-    firebase.user
+    // Bild hochladen wenn vorhanden
+    if (localPicture instanceof File) {
+      if (userProfile.pictureSrc) {
+        // Vorhandenes Bild löschen
+        await User.deletePicture({firebase: firebase, authUser: authUser});
+      }
+
+      await User.uploadPicture({
+        firebase: firebase,
+        file: localPicture,
+        authUser: authUser,
+      }).then((result) => {
+        pictureSrc = result;
+      });
+    }
+
+    await firebase.user
       .updateFields({
         uids: [userProfile.uid],
         authUser: authUser,
@@ -457,25 +489,25 @@ export default class User {
         },
         updateChangeFields: false,
       })
-      .catch((error) => {
-        console.error(error);
-        throw error;
-      });
-
-    firebase.user.public.profile
-      .updateFields({
-        uids: [userProfile.uid],
-        authUser: authUser,
-        values: {
-          displayName: userProfile.displayName,
-          motto: userProfile.motto,
-          // // pictureSrc: userProfile.pictureSrc,
-          // // pictureSrcFullSize: userProfile.pictureSrcFullSize,
-        },
-        updateChangeFields: false,
+      .then(async () => {
+        // Öffentliche Felder updaten
+        await firebase.user.public.profile
+          .updateFields({
+            uids: [userProfile.uid],
+            authUser: authUser,
+            values: {
+              displayName: userProfile.displayName,
+              motto: userProfile.motto,
+              pictureSrc: pictureSrc,
+            },
+            updateChangeFields: false,
+          })
+          .catch((error) => {
+            console.error(error);
+            throw error;
+          });
       })
       .catch((error) => {
-        console.error(error);
         throw error;
       });
 
@@ -486,10 +518,10 @@ export default class User {
         actualPublicProfile.motto !== userProfile.motto)
     ) {
       if (actualPublicProfile.displayName !== userProfile.displayName) {
-        firebase.cloudFunction.userDisplayName.triggerCloudFunction({
+        firebase.cloudFunction.updateUserDisplayName.triggerCloudFunction({
           values: {
             uid: userProfile.uid,
-            newValue: userProfile.displayName,
+            newDisplayName: userProfile.displayName,
           },
           authUser: authUser,
         });
@@ -511,134 +543,75 @@ export default class User {
   // ===================================================================== */
   /* istanbul ignore next */
   /* DB-Methode wird zur Zeit nicht geprüft */
-  static uploadPicture = async ({
-    firebase,
-    file,
-    userProfile,
-    authUser,
-  }: UploadPicture) => {
-    //FIXME: auf neue Storage-Klasse umbiegen
-    // await firebase
-    //   .uploadPicture({
-    //     file: file,
-    //     filename: authUser.uid,
-    //     folder: firebase.user_folder(),
-    //   })
-    //   .then(async () => {
-    //     // Redimensionierte Varianten holen
-    //     await firebase
-    //       .getPictureVariants({
-    //         folder: firebase.user_folder(),
-    //         uid: authUser.uid,
-    //         sizes: [IMAGES_SUFFIX.size50.size, IMAGES_SUFFIX.size600.size],
-    //         oldDownloadUrl: userProfile.pictureSrc,
-    //       })
-    //       .then((fileVariants) => {
-    //         fileVariants.forEach((fileVariant, counter) => {
-    //           if (fileVariant.size === IMAGES_SUFFIX.size50.size) {
-    //             userProfile.pictureSrc = fileVariant.downloadURL;
-    //           } else if (fileVariant.size === IMAGES_SUFFIX.size600.size) {
-    //             userProfile.pictureSrcFullSize = fileVariant.downloadURL;
-    //           }
-    //         });
-    //       });
-    //   })
-    //   .then(() => {
-    //     firebase.user.public.profile.updateFields({
-    //       uids: [userProfile.uid],
-    //       authUser: authUser,
-    //       values: {
-    //         pictureSrc: userProfile.pictureSrc,
-    //         pictureSrcFullSize: userProfile.pictureSrcFullSize,
-    //       },
-    //       updateChangeFields: false,
-    //     });
-    //   })
-    //   .then(() => {
-    //     // CloudFunction Triggern
-    //     firebase.cloudFunction.userPictureSrc.triggerCloudFunction({
-    //       values: {
-    //         uid: userProfile.uid,
-    //         pictureSrc: userProfile.pictureSrc,
-    //         pictureSrcFullSize: userProfile.pictureSrcFullSize,
-    //       },
-    //       authUser: authUser,
-    //     });
-    //   })
-    //   .catch((error) => {
-    //     throw error;
-    //   });
-    // // Analytik
-    // firebase.analytics.logEvent(FirebaseAnalyticEvent.uploadPicture, {
-    //   folder: "users",
-    // });
-    // firebase.analytics.logEvent(FirebaseAnalyticEvent.cloudFunctionExecuted);
-    return {
-      // // pictureSrc: userProfile.pictureSrc,
-      // // pictureSrcFullSize: userProfile.pictureSrcFullSize,
-    };
+  static uploadPicture = async ({firebase, file, authUser}: UploadPicture) => {
+    const pictureSrc: Picture = {normalSize: "", smallSize: "", fullSize: ""};
+
+    await firebase.fileStore.users
+      .uploadFile({file: file, filename: authUser.uid})
+      .then(async (result) => {
+        // Redimensionierte Varianten holen
+        await firebase.fileStore.users
+          .getPictureVariants({
+            uid: authUser.uid,
+            sizes: [ImageSize.size_600, ImageSize.size_50],
+            oldDownloadUrl: result,
+          })
+          .then((result) => {
+            // Wir wollen nur eine Grösse
+            result.forEach((size) => {
+              if (size.size === ImageSize.size_50) {
+                pictureSrc.smallSize = size.downloadURL;
+              } else if (size.size === ImageSize.size_600) {
+                pictureSrc.normalSize = size.downloadURL;
+              }
+            });
+          });
+      });
+
+    return pictureSrc;
   };
   /* =====================================================================
   // Bild löschen
   // ===================================================================== */
   /* istanbul ignore next */
   /* DB-Methode wird zur Zeit nicht geprüft */
-  static deletePicture = async ({ uid, firebase, authUser }: DeletePicture) => {
-    firebase
-      .deletePicture({
-        folder: firebase.user_folder(),
-        filename: `${authUser.uid}${IMAGES_SUFFIX.size50.suffix}`,
+  static deletePicture = async ({firebase, authUser}: DeletePicture) => {
+    await firebase.fileStore.users
+      .deleteFile(`${authUser.uid}${IMAGES_SUFFIX.size50.suffix}`)
+      .then(async () => {
+        firebase.fileStore.users
+          .deleteFile(`${authUser.uid}${IMAGES_SUFFIX.size600.suffix}`)
+          .catch((error) => {
+            console.error(error);
+            throw error;
+          });
       })
       .catch((error) => {
+        console.error(error);
         throw error;
       });
-    firebase
-      .deletePicture({
-        folder: firebase.user_folder(),
-        filename: `${authUser.uid}${IMAGES_SUFFIX.size600.suffix}`,
-      })
-      .catch((error) => {
-        throw error;
-      });
-    firebase.user.public.profile
-      .updateFields({
-        uids: [authUser.uid],
-        authUser: authUser,
-        values: { pictureSrc: "", pictureSrcFullSize: "" },
-        updateChangeFields: false,
-      })
-      .catch((error) => {
-        throw error;
-      });
+
     // CloudFunction Triggern
     firebase.cloudFunction.userPictureSrc.triggerCloudFunction({
-      values: { uid: uid, pictureSrc: "", pictureSrcFullSize: "" },
+      values: {
+        uid: authUser.uid,
+        pictureSrc: {smallSize: "", normalSize: "", fullSize: ""} as Picture,
+      },
       authUser: authUser,
     });
-
-    // Analytik
-    firebase.analytics.logEvent(FirebaseAnalyticEvent.deletePicture, {
-      folder: "user",
-    });
-    firebase.analytics.logEvent(FirebaseAnalyticEvent.cloudFunctionExecuted);
   };
   /* =====================================================================
   // E-Mailadresse updaten
   // ===================================================================== */
   /* istanbul ignore next */
   /* DB-Methode wird zur Zeit nicht geprüft */
-  static updateEmail = async ({
-    firebase,
-    uid,
-    newEmail,
-    authUser,
-  }: UpdateEmail) => {
+  static updateEmail = async ({firebase, newEmail, authUser}: UpdateEmail) => {
     // Email muss im Profil und in den Searchfiedls angepasst werden
     firebase.user
       .updateFields({
-        uids: [uid],
+        uids: [authUser.uid],
         authUser: authUser,
-        values: { emailvalue: newEmail },
+        values: {emailvalue: newEmail},
         updateChangeFields: false,
       })
       .catch((error) => {
@@ -648,9 +621,9 @@ export default class User {
 
     firebase.user.public.searchFields
       .updateFields({
-        uids: [uid],
+        uids: [authUser.uid],
         authUser: authUser,
-        values: { emailvalue: newEmail },
+        values: {emailvalue: newEmail},
         updateChangeFields: false,
       })
       .catch((error) => {

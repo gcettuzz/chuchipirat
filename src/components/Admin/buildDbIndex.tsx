@@ -1,10 +1,10 @@
-import React, {useContext} from "react";
-import {compose} from "recompose";
+import React from "react";
+import {compose} from "react-recompose";
 
 import {
   Container,
-  Backdrop,
-  CircularProgress,
+  // Backdrop,
+  // CircularProgress,
   Grid,
   List,
   ListItem,
@@ -29,27 +29,32 @@ import {
 import useStyles from "../../constants/styles";
 import Role from "../../constants/roles";
 
-import Firebase, {withFirebase} from "../Firebase";
+import {withFirebase} from "../Firebase/firebaseContext";
 import {
-  AuthUserContext,
-  withAuthorization,
-  withEmailVerification,
-} from "../Session";
-import CustomDialogContext, {
   DialogType,
   useCustomDialog,
   SingleTextInputResult,
 } from "../Shared/customDialogContext";
+import AuthUser from "../Firebase/Authentication/authUser.class";
+import withEmailVerification from "../Session/withEmailVerification";
+import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {CustomRouterProps} from "../Shared/global.interface";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
 enum ReducerActions {
-  UPDATE_INDEX_RECIPE_VARIANTS = "UPDATE_INDEX_RECIPE_VARIANTS",
-  UPDATE_INDEX_EVENT_USED_RECIPES = "UPDATE_INDEX_EVENT_USED_RECIPES",
-  UPDATE_INDEX_ACTIVE_REQUESTS = "UPDATE_INDEX_ACTIVE_REQUESTS",
-  GENERIC_ERROR = "GENERIC_ERROR",
-  SNACKBAR_CLOSE = "SNACKBAR_CLOSE",
-  SNACKBAR_SHOW = "SNACKBAR_SHOW",
+  UPDATE_INDEX_RECIPE_VARIANTS,
+  UPDATE_INDEX_EVENT_USED_RECIPES,
+  UPDATE_INDEX_ACTIVE_REQUESTS_ASIGNEE,
+  UPDATE_INDEX_ACTIVE_REQUESTS_AUTHOR,
+  UPDATE_INDEX_USED_PRODUCTS_RECIPES,
+  UPDATE_INDEX_USED_PRODUCTS_EVENT,
+  UPDATE_INDEX_DISPLAYNAME_RECIPES,
+  UPDATE_INDEX_DISPLAYNAME_EVENT,
+  UPDATE_INDEX_ORIGINAL_RECIPE_UID_RECIPES,
+  GENERIC_ERROR,
+  SNACKBAR_CLOSE,
+  SNACKBAR_SHOW,
 }
 
 interface IndexQueryResult {
@@ -61,8 +66,18 @@ interface IndexQueryResult {
 const INITITIAL_STATE: State = {
   indexRecipeVariants: {error: null, resultCounter: 0, executed: false},
   indexEventUsedRecipes: {error: null, resultCounter: 0, executed: false},
-  indexActiveRequests: {error: null, resultCounter: 0, executed: false},
-  error: {},
+  indexActiveRequestsAsignee: {error: null, resultCounter: 0, executed: false},
+  indexActiveRequestsAuthor: {error: null, resultCounter: 0, executed: false},
+  indexUsedProductsRecipes: {error: null, resultCounter: 0, executed: false},
+  indexUsedProductsEvents: {error: null, resultCounter: 0, executed: false},
+  indexDisplayNameRecipes: {error: null, resultCounter: 0, executed: false},
+  indexDisplayNameEvents: {error: null, resultCounter: 0, executed: false},
+  indexOriginalRecipeUidVariant: {
+    error: null,
+    resultCounter: 0,
+    executed: false,
+  },
+  error: null,
   isError: false,
   isLoading: false,
   snackbar: {open: false, severity: "success", message: ""},
@@ -75,17 +90,29 @@ type DispatchAction = {
 type State = {
   indexRecipeVariants: IndexQueryResult;
   indexEventUsedRecipes: IndexQueryResult;
-  indexActiveRequests: IndexQueryResult;
+  indexActiveRequestsAsignee: IndexQueryResult;
+  indexActiveRequestsAuthor: IndexQueryResult;
+  indexUsedProductsRecipes: IndexQueryResult;
+  indexUsedProductsEvents: IndexQueryResult;
+  indexDisplayNameRecipes: IndexQueryResult;
+  indexDisplayNameEvents: IndexQueryResult;
+  indexOriginalRecipeUidVariant: IndexQueryResult;
   isLoading: boolean;
   isError: boolean;
-  error: object;
+  error: Error | null;
   snackbar: Snackbar;
 };
 
 enum BuildIndex {
   recipeVariants,
   eventUsedRecipes,
-  activeRequests,
+  activeRequestsAsignee,
+  activeRequestsAuthor,
+  usedProductsRecipes,
+  usedProductsEvents,
+  displayNameRecipes,
+  displayNameEvents,
+  oringalRecipeUidRecipeVariant,
 }
 
 const splitErrorText = (errorText) => {
@@ -125,10 +152,65 @@ const buildIndicesReducer = (state: State, action: DispatchAction): State => {
           executed: true,
         },
       };
-    case ReducerActions.UPDATE_INDEX_ACTIVE_REQUESTS:
+    case ReducerActions.UPDATE_INDEX_ACTIVE_REQUESTS_ASIGNEE:
       return {
         ...state,
-        indexActiveRequests: {
+        indexActiveRequestsAsignee: {
+          error: splitErrorText(action.payload.error),
+          resultCounter: action.payload.resultCounter,
+          executed: true,
+        },
+      };
+    case ReducerActions.UPDATE_INDEX_ACTIVE_REQUESTS_AUTHOR:
+      return {
+        ...state,
+        indexActiveRequestsAuthor: {
+          error: splitErrorText(action.payload.error),
+          resultCounter: action.payload.resultCounter,
+          executed: true,
+        },
+      };
+    case ReducerActions.UPDATE_INDEX_USED_PRODUCTS_EVENT:
+      return {
+        ...state,
+        indexUsedProductsEvents: {
+          error: splitErrorText(action.payload.error),
+          resultCounter: action.payload.resultCounter,
+          executed: true,
+        },
+      };
+    case ReducerActions.UPDATE_INDEX_USED_PRODUCTS_RECIPES:
+      return {
+        ...state,
+        indexUsedProductsRecipes: {
+          error: splitErrorText(action.payload.error),
+          resultCounter: action.payload.resultCounter,
+          executed: true,
+        },
+      };
+    case ReducerActions.UPDATE_INDEX_DISPLAYNAME_RECIPES:
+      return {
+        ...state,
+        indexDisplayNameRecipes: {
+          error: splitErrorText(action.payload.error),
+          resultCounter: action.payload.resultCounter,
+          executed: true,
+        },
+      };
+    case ReducerActions.UPDATE_INDEX_DISPLAYNAME_EVENT:
+      return {
+        ...state,
+        indexDisplayNameEvents: {
+          error: splitErrorText(action.payload.error),
+          resultCounter: action.payload.resultCounter,
+          executed: true,
+        },
+      };
+
+    case ReducerActions.UPDATE_INDEX_ORIGINAL_RECIPE_UID_RECIPES:
+      return {
+        ...state,
+        indexOriginalRecipeUidVariant: {
           error: splitErrorText(action.payload.error),
           resultCounter: action.payload.resultCounter,
           executed: true,
@@ -158,38 +240,40 @@ const buildIndicesReducer = (state: State, action: DispatchAction): State => {
         ...state,
         isError: true,
         isLoading: false,
-        error: action.payload ? action.payload : {},
+        error: action.payload as Error,
       };
     default:
       console.error("Unbekannter ActionType: ", action.type);
       throw new Error();
   }
 };
-
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-// Diese Seite hilft um neue Indizes auf der DB zu erstellen
 const BuildIndicesPage = (props) => {
-  const authUser = useContext(AuthUserContext);
-
   return (
     <AuthUserContext.Consumer>
-      {(authUser) => <BuildIndicesBase props={props} authUser={authUser} />}
+      {(authUser) => <BuildIndicesBase {...props} authUser={authUser} />}
     </AuthUserContext.Consumer>
   );
 };
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const BuildIndicesBase = ({props, authUser}) => {
-  const firebase: Firebase = props.firebase;
+const BuildIndicesBase: React.FC<
+  CustomRouterProps & {authUser: AuthUser | null}
+> = ({authUser, ...props}) => {
+  const firebase = props.firebase;
   const classes = useStyles();
   const {customDialog} = useCustomDialog();
   const [state, dispatch] = React.useReducer(
     buildIndicesReducer,
     INITITIAL_STATE
   );
+
+  if (!authUser) {
+    return null;
+  }
   /* ------------------------------------------
   // Index aufbauen
   // ------------------------------------------ */
@@ -260,25 +344,211 @@ const BuildIndicesBase = ({props, authUser}) => {
             });
         }
         break;
-      case BuildIndex.activeRequests:
+      case BuildIndex.activeRequestsAsignee:
         firebase.db
-          .collectionGroup("active")
+          .collection("requests/active/requests")
           .where("assignee.uid", "==", "")
+          .orderBy("number", "asc")
           .get()
           .then((result) => {
             dispatch({
-              type: ReducerActions.UPDATE_INDEX_ACTIVE_REQUESTS,
+              type: ReducerActions.UPDATE_INDEX_ACTIVE_REQUESTS_ASIGNEE,
               payload: {error: null, resultCounter: result.size},
             });
           })
           .catch((error) => {
             console.error(error);
             dispatch({
-              type: ReducerActions.UPDATE_INDEX_ACTIVE_REQUESTS,
+              type: ReducerActions.UPDATE_INDEX_ACTIVE_REQUESTS_ASIGNEE,
               payload: {error: error.toString(), resultCounter: 0},
             });
           });
+        break;
+      case BuildIndex.activeRequestsAuthor:
+        firebase.db
+          .collection("requests/active/requests")
+          .where("author.uid", "==", "")
+          .orderBy("number", "asc")
+          .get()
+          .then((result) => {
+            dispatch({
+              type: ReducerActions.UPDATE_INDEX_ACTIVE_REQUESTS_AUTHOR,
+              payload: {error: null, resultCounter: result.size},
+            });
+          })
+          .catch((error) => {
+            console.error(error);
+            dispatch({
+              type: ReducerActions.UPDATE_INDEX_ACTIVE_REQUESTS_AUTHOR,
+              payload: {error: error.toString(), resultCounter: 0},
+            });
+          });
+        break;
+      case BuildIndex.usedProductsRecipes:
+        userInput = (await customDialog({
+          dialogType: DialogType.SingleTextInput,
+          title: "Product-UID",
+          text: "Gibt eine Produkt-UID an, wonach in der GroupCollection 'usedProducts' gesucht werden soll.",
+          singleTextInputProperties: {
+            initialValue: "XXX",
+            textInputLabel: "Product-UID",
+          },
+        })) as SingleTextInputResult;
 
+        if (userInput?.valid && userInput.input != "") {
+          firebase.db
+            .collectionGroup("recipes")
+            .where("usedProducts", "array-contains", userInput.input)
+            .get()
+            .then((result) => {
+              console.log(result);
+              result.forEach((document) => console.log(document.ref.path));
+              dispatch({
+                type: ReducerActions.UPDATE_INDEX_USED_PRODUCTS_RECIPES,
+                payload: {error: null, resultCounter: result.size},
+              });
+            })
+            .catch((error) => {
+              console.error(error);
+              dispatch({
+                type: ReducerActions.UPDATE_INDEX_USED_PRODUCTS_RECIPES,
+                payload: {error: error.toString(), resultCounter: 0},
+              });
+            });
+        }
+        break;
+      case BuildIndex.usedProductsEvents:
+        userInput = (await customDialog({
+          dialogType: DialogType.SingleTextInput,
+          title: "Product-UID",
+          text: "Gibt eine Produkt-UID an, wonach in der GroupCollection 'docs' gesucht werden soll.",
+          singleTextInputProperties: {
+            initialValue: "VRbxCQCUWA7UC719ky9N",
+            textInputLabel: "Product-UID",
+          },
+        })) as SingleTextInputResult;
+
+        if (userInput?.valid && userInput.input != "") {
+          firebase.db
+            .collectionGroup("docs")
+            .where("usedProducts", "array-contains", userInput.input)
+            .get()
+            .then((result) => {
+              console.log(result);
+              result.forEach((document) => {
+                console.log(document.ref.parent!.parent!.id);
+                console.log(document.ref.path);
+              });
+              dispatch({
+                type: ReducerActions.UPDATE_INDEX_USED_PRODUCTS_EVENT,
+                payload: {error: null, resultCounter: result.size},
+              });
+            })
+            .catch((error) => {
+              console.error(error);
+              dispatch({
+                type: ReducerActions.UPDATE_INDEX_USED_PRODUCTS_EVENT,
+                payload: {error: error.toString(), resultCounter: 0},
+              });
+            });
+        }
+        break;
+      case BuildIndex.displayNameRecipes:
+        userInput = (await customDialog({
+          dialogType: DialogType.SingleTextInput,
+          title: "User-UID",
+          text: "Gibt eine User-UID an, wonach in der GroupCollection 'recipes' gesucht werden soll.",
+          singleTextInputProperties: {
+            initialValue: "tasT02c6mxOWDstBdvwzjbs5Tfc2",
+            textInputLabel: "User-UID",
+          },
+        })) as SingleTextInputResult;
+
+        if (userInput?.valid && userInput.input != "") {
+          firebase.db
+            .collectionGroup("recipes")
+            .where("created.fromUid", "==", userInput.input)
+            .get()
+            .then((result) => {
+              console.log(result);
+              result.forEach((document) => {
+                console.log(document.ref.parent!.parent!.id);
+                console.log(document.ref.path);
+              });
+              dispatch({
+                type: ReducerActions.UPDATE_INDEX_DISPLAYNAME_RECIPES,
+                payload: {error: null, resultCounter: result.size},
+              });
+            })
+            .catch((error) => {
+              console.error(error);
+              dispatch({
+                type: ReducerActions.UPDATE_INDEX_DISPLAYNAME_RECIPES,
+                payload: {error: error.toString(), resultCounter: 0},
+              });
+            });
+        }
+        break;
+      case BuildIndex.displayNameEvents:
+        firebase.db
+          .collectionGroup("docs")
+          .where("created.fromUid", "==", "")
+          .get()
+          .then((result) => {
+            console.log(result);
+            result.forEach((document) => {
+              console.log(document.ref.parent!.parent!.id);
+              console.log(document.ref.path);
+            });
+            dispatch({
+              type: ReducerActions.UPDATE_INDEX_DISPLAYNAME_EVENT,
+              payload: {error: null, resultCounter: result.size},
+            });
+          })
+          .catch((error) => {
+            console.error(error);
+            dispatch({
+              type: ReducerActions.UPDATE_INDEX_DISPLAYNAME_EVENT,
+              payload: {error: error.toString(), resultCounter: 0},
+            });
+          });
+        break;
+      case BuildIndex.oringalRecipeUidRecipeVariant:
+        userInput = (await customDialog({
+          dialogType: DialogType.SingleTextInput,
+          title: "Rezept-UID",
+          text: "Gibt eine Rezept-UID an, wonach in der GroupCollection 'recipes' gesucht werden soll (Original-Rezept einer Variante).",
+          singleTextInputProperties: {
+            initialValue: "659g6KMCUQJJG2lJId9a",
+            textInputLabel: "Rezept-UID",
+          },
+        })) as SingleTextInputResult;
+
+        if (userInput?.valid && userInput.input != "") {
+          firebase.db
+            .collectionGroup("recipes")
+            .where("variantProperties.originalRecipeUid", "==", userInput.input)
+            .get()
+            .then((result) => {
+              console.log(result);
+              result.forEach((document) => {
+                console.log(document.ref.parent!.parent!.id);
+                console.log(document.ref.path);
+              });
+              dispatch({
+                type: ReducerActions.UPDATE_INDEX_ORIGINAL_RECIPE_UID_RECIPES,
+                payload: {error: null, resultCounter: result.size},
+              });
+            })
+            .catch((error) => {
+              console.error(error);
+              dispatch({
+                type: ReducerActions.UPDATE_INDEX_ORIGINAL_RECIPE_UID_RECIPES,
+                payload: {error: error.toString(), resultCounter: 0},
+              });
+            });
+        }
+        break;
       default:
     }
   };
@@ -308,7 +578,7 @@ const BuildIndicesBase = ({props, authUser}) => {
           {state.isError && (
             <Grid item key={"error"} xs={12}>
               <AlertMessage
-                error={state.error}
+                error={state.error as Error}
                 messageTitle={TEXT_ALERT_TITLE_UUPS}
               />
             </Grid>
@@ -321,21 +591,64 @@ const BuildIndicesBase = ({props, authUser}) => {
               >
                 <List>
                   <ListItemBuildIndex
-                    indexName={"event/${event.uid}/recipeVariants"}
+                    indexName={
+                      "[variantProperties.originalRecipeUid] /../recipeVariants/${recipeDoc}"
+                    }
                     buildIndexType={BuildIndex.recipeVariants}
                     buildIndexState={state.indexRecipeVariants}
                     onBuildIndex={buildIndex}
                   />
                   <ListItemBuildIndex
-                    indexName={"event/${event.uid}/docs"}
+                    indexName={"[usedRecipes] /../docs/${anyRelatedEventDoc}"}
                     buildIndexType={BuildIndex.eventUsedRecipes}
                     buildIndexState={state.indexEventUsedRecipes}
                     onBuildIndex={buildIndex}
                   />
                   <ListItemBuildIndex
-                    indexName={"requests/${requestType}/active"}
-                    buildIndexType={BuildIndex.activeRequests}
-                    buildIndexState={state.indexActiveRequests}
+                    indexName={"[assignee.uid] /../active/${requestDocument}"}
+                    buildIndexType={BuildIndex.activeRequestsAsignee}
+                    buildIndexState={state.indexActiveRequestsAsignee}
+                    onBuildIndex={buildIndex}
+                  />
+                  <ListItemBuildIndex
+                    indexName={"[author.uid] /../active/${requestDocument}"}
+                    buildIndexType={BuildIndex.activeRequestsAuthor}
+                    buildIndexState={state.indexActiveRequestsAuthor}
+                    onBuildIndex={buildIndex}
+                  />
+                  <ListItemBuildIndex
+                    indexName={"[usedProducts] /.../recipes/${anyDocument}"}
+                    buildIndexType={BuildIndex.usedProductsRecipes}
+                    buildIndexState={state.indexUsedProductsRecipes}
+                    onBuildIndex={buildIndex}
+                  />
+
+                  <ListItemBuildIndex
+                    indexName={"[usedProducts] /.../docs/${anyDocument}"}
+                    buildIndexType={BuildIndex.usedProductsEvents}
+                    buildIndexState={state.indexUsedProductsEvents}
+                    onBuildIndex={buildIndex}
+                  />
+                  <ListItemBuildIndex
+                    indexName={
+                      "[created.displayName] /.../recipes/${anyDocument}"
+                    }
+                    buildIndexType={BuildIndex.displayNameRecipes}
+                    buildIndexState={state.indexDisplayNameRecipes}
+                    onBuildIndex={buildIndex}
+                  />
+                  <ListItemBuildIndex
+                    indexName={"[created.displayName] /.../docs/${anyDocument}"}
+                    buildIndexType={BuildIndex.displayNameEvents}
+                    buildIndexState={state.indexDisplayNameEvents}
+                    onBuildIndex={buildIndex}
+                  />
+                  <ListItemBuildIndex
+                    indexName={
+                      "[variantProperties.originalRecipeUid] /.../recipes/${anyDocument}"
+                    }
+                    buildIndexType={BuildIndex.oringalRecipeUidRecipeVariant}
+                    buildIndexState={state.indexOriginalRecipeUidVariant}
                     onBuildIndex={buildIndex}
                   />
                 </List>
@@ -369,7 +682,6 @@ const ListItemBuildIndex = ({
   buildIndexState,
   onBuildIndex,
 }: ListItemBuildIndexProps) => {
-  const classes = useStyles();
   return (
     <React.Fragment>
       <ListItem>
@@ -406,7 +718,10 @@ const ListItemBuildIndex = ({
   );
 };
 
-const condition = (authUser) => !!authUser.roles.includes(Role.admin);
+const condition = (authUser: AuthUser | null) =>
+  !!authUser &&
+  (!!authUser.roles?.includes(Role.admin) ||
+    !!authUser.roles?.includes(Role.communityLeader));
 
 export default compose(
   withEmailVerification,

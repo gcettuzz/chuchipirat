@@ -16,11 +16,7 @@ import Recipe, {
   Section,
   RecipeObjectStructure,
 } from "./recipe.class";
-import recipe, {
-  OnUpdateRecipeProps,
-  RecipeDivider,
-  SwitchEditMode,
-} from "./recipe";
+import {OnUpdateRecipeProps, RecipeDivider, SwitchEditMode} from "./recipe";
 
 import {
   Backdrop,
@@ -56,8 +52,6 @@ import {AutocompleteChangeReason} from "@material-ui/lab/Autocomplete";
 
 import AddIcon from "@material-ui/icons/Add";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
-import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
-import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
 import ViewDayIcon from "@material-ui/icons/ViewDay";
 import DeleteIcon from "@material-ui/icons/Delete";
 
@@ -67,11 +61,11 @@ import {FormListItem} from "../Shared/formListItem";
 import ProductAutocomplete from "../Product/productAutocomplete";
 import DialogProduct, {
   PRODUCT_POP_UP_VALUES_INITIAL_STATE,
-  PRODUCT_DIALOG_TYPE,
+  ProductDialog,
 } from "../Product/dialogProduct";
 import {
-  MATERIAL_DIALOG_TYPE,
   MATERIAL_POP_UP_VALUES_INITIAL_STATE,
+  MaterialDialog,
 } from "../Material/dialogMaterial";
 import UnitAutocomplete from "../Unit/unitAutocomplete";
 import MaterialAutocomplete from "../Material/materialAutocomplete";
@@ -85,16 +79,15 @@ import Utils from "../Shared/utils.class";
 import Department from "../Department/department.class";
 import AlertMessage from "../Shared/AlertMessage";
 
-import * as IMAGE_REPOSITORY from "../../constants/imageRepository";
+import {ImageRepository} from "../../constants/imageRepository";
 import * as TEXT from "../../constants/text";
 import * as ROUTES from "../../constants/routes";
 
-import Firebase from "../Firebase";
+import Firebase from "../Firebase/firebase.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import {DialogTagAdd} from "./recipe.view";
 import Material from "../Material/material.class";
 import DialogMaterial from "../Material/dialogMaterial";
-import RecipeShort from "./recipeShort.class";
 import {
   RecipeInfoPanel as RecipeInfoPanelView,
   MealPlanPanel as MealPlanPanelView,
@@ -107,7 +100,6 @@ import {
   Droppable,
   Draggable,
   DropResult,
-  DraggableProvided,
 } from "react-beautiful-dnd";
 import {
   NavigationValuesContext,
@@ -157,8 +149,7 @@ type State = {
   // scaledIngredients: Ingredient[];
   // allRecipes: [],
   isLoading: boolean;
-  isError: boolean;
-  error: object;
+  error: Error | null;
   snackbar: Snackbar;
   // _loadingRecipe: boolean;
   _loadingUnits: boolean;
@@ -179,8 +170,7 @@ const inititialState: State = {
   // scaledIngredients: [],
   // allRecipes: [],
   isLoading: false,
-  isError: false,
-  error: {},
+  error: null,
   snackbar: {open: false, severity: "success", message: ""},
   // _loadingRecipe: false,
   _loadingUnits: false,
@@ -207,7 +197,13 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
   let field: string;
   let value: any;
   let updatedMaterials: Recipe["materials"];
-
+  let tmpIngredients: Recipe["ingredients"];
+  let tempProducts: Product[];
+  let tempProduct: Product | undefined;
+  let preparationStepsToUpdate: Recipe["preparationSteps"];
+  let tmpMaterials: Recipe["materials"];
+  let materials: Material[];
+  let material: Material | undefined;
   switch (action.type) {
     case ReducerActions.SET_RECIPE:
       return {...state, recipe: action.payload.recipe};
@@ -233,7 +229,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
         },
       };
     case ReducerActions.ON_INGREDIENT_CHANGE:
-      let tmpIngredients = {...state.recipe.ingredients};
+      tmpIngredients = {...state.recipe.ingredients};
       tmpIngredients.entries[action.payload.uid][action.payload.field] =
         action.payload.value;
 
@@ -254,7 +250,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
           return result;
         }, "")
       ) {
-        let newObject = Recipe.createEmptyIngredient();
+        const newObject = Recipe.createEmptyIngredient();
         tmpIngredients.entries[newObject.uid] = newObject;
         tmpIngredients.order.push(newObject.uid);
       }
@@ -267,9 +263,9 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
         },
       };
     case ReducerActions.ON_INGREDIENT_DELETE_NAME:
-      let ingredients = state.recipe.ingredients;
-      //TODO: TEST ME
-      Object.values(ingredients.entries).forEach((ingredient) => {
+      tmpIngredients = state.recipe.ingredients;
+
+      Object.values(tmpIngredients.entries).forEach((ingredient) => {
         ingredient = ingredient as Ingredient;
         if (ingredient.uid === action.payload.uid) {
           ingredient.product.name = "";
@@ -281,22 +277,22 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
         ...state,
         recipe: {
           ...state.recipe,
-          ingredients: ingredients,
+          ingredients: tmpIngredients,
         },
       };
     case ReducerActions.ON_INGREDIENT_ADD_NEW_PRODUCT:
       // Das neue Produkt in Produkte speichern (für Dropdown)
-      let products = state.products;
-      let product = products.find(
+      tempProducts = state.products;
+      tempProduct = tempProducts.find(
         (product) => product.uid === action.payload.uid
       );
       // Wenn es das schon gibt, nichts tun
-      if (!product) {
-        products.push(action.payload as Product);
+      if (!tempProduct) {
+        tempProducts.push(action.payload as Product);
       }
       return {
         ...state,
-        products: products,
+        products: tempProducts,
       };
     case ReducerActions.ON_UPDATE_LIST:
       // Zutaten, Zubereitungsschritte oder Material updaten
@@ -308,7 +304,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
         },
       };
     case ReducerActions.ON_PREPARATIONSTEP_CHANGE:
-      let preparationStepsToUpdate = {...state.recipe.preparationSteps};
+      preparationStepsToUpdate = {...state.recipe.preparationSteps};
 
       preparationStepsToUpdate.entries[action.payload.uid][
         action.payload.fieldName
@@ -329,7 +325,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
           return result;
         }, "")
       ) {
-        let newObject = Recipe.createEmptyPreparationStep();
+        const newObject = Recipe.createEmptyPreparationStep();
 
         preparationStepsToUpdate.entries[newObject.uid] = newObject;
         preparationStepsToUpdate.order.push(newObject.uid);
@@ -342,7 +338,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
         },
       };
     case ReducerActions.ON_MATERIAL_CHANGE:
-      let tmpMaterials = {...state.recipe.materials};
+      tmpMaterials = {...state.recipe.materials};
 
       tmpMaterials.entries[action.payload.uid][action.payload.field] =
         action.payload.value;
@@ -352,7 +348,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
         action.payload.uid ===
         state.recipe.materials.order[state.recipe.materials.order.length - 1]
       ) {
-        let newObject = Recipe.createEmptyMaterial();
+        const newObject = Recipe.createEmptyMaterial();
         tmpMaterials.entries[newObject.uid] = newObject;
         tmpMaterials.order.push(newObject.uid);
       }
@@ -367,7 +363,6 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.ON_MATERIAL_DELETE_NAME:
       updatedMaterials = {...state.recipe.materials};
 
-      //TODO: TEST ME
       Object.values(updatedMaterials.entries).forEach((material) => {
         if (material.uid === action.payload.uid) {
           material.material.name = "";
@@ -384,8 +379,8 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
       };
     case ReducerActions.ON_MATERIAL_ADD_NEW_PRODUCT:
       // Das neue Material in Produkte speichern (für Dropdown)
-      let materials = state.materials;
-      let material = materials.find(
+      materials = state.materials;
+      material = materials.find(
         (material) => material.uid === action.payload.uid
       );
       // Wenn es das schon gibt, nichts tun
@@ -400,7 +395,6 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoading: true,
-        isError: false,
         _loadingUnits: true,
       };
     case ReducerActions.UNITS_FETCH_SUCCESS:
@@ -412,7 +406,6 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
           state._loadingDepartments,
           state._loadingMaterials
         ),
-        isError: false,
         units: action.payload as Unit[],
         _loadingUnits: false,
       };
@@ -420,7 +413,6 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoading: true,
-        isError: false,
         _loadingProducts: true,
       };
     case ReducerActions.PRODUCTS_FETCH_SUCCESS:
@@ -432,7 +424,6 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
           state._loadingDepartments,
           state._loadingMaterials
         ),
-        isError: false,
         products: action.payload as Product[],
         _loadingProducts: false,
       };
@@ -440,7 +431,6 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoading: true,
-        isError: false,
         _loadingDepartments: true,
       };
     case ReducerActions.DEPARTMENTS_FETCH_SUCCESS:
@@ -453,7 +443,6 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
           false,
           state._loadingMaterials
         ),
-        isError: false,
         departments: action.payload as Department[],
         _loadingDepartments: false,
       };
@@ -461,7 +450,6 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoading: true,
-        isError: false,
         _loadingMaterials: true,
       };
     case ReducerActions.MATERIALS_FETCH_SUCCESS:
@@ -473,7 +461,6 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
           state._loadingDepartments,
           false
         ),
-        isError: false,
         materials: action.payload as Material[],
         _loadingMaterials: false,
       };
@@ -509,9 +496,8 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.GENERIC_ERROR:
       return {
         ...state,
-        isError: true,
         isLoading: false,
-        error: action.payload ? action.payload : {},
+        error: action.payload as Error,
       };
     case ReducerActions.CLEAR_STATE:
       // Hiermiet wird alles gelöscht!
@@ -585,9 +571,8 @@ interface RecipeEditProps {
   firebase: Firebase;
   isLoading: boolean;
   isEmbedded: boolean; // in einer Drawer eingebetettet, oder so...
-  switchEditMode: ({ignoreState}: SwitchEditMode) => void;
+  switchEditMode?: ({ignoreState}: SwitchEditMode) => void;
   onUpdateRecipe: ({recipe, snackbar}: OnUpdateRecipeProps) => void;
-  onError?: (error: Error) => void;
   authUser: AuthUser;
 }
 interface PositionMenuSelectedItem {
@@ -603,7 +588,6 @@ const RecipeEdit = ({
   isEmbedded,
   switchEditMode,
   onUpdateRecipe,
-  onError,
   authUser,
 }: RecipeEditProps) => {
   const classes = useStyles();
@@ -632,6 +616,12 @@ const RecipeEdit = ({
   });
 
   const {customDialog} = useCustomDialog();
+  if (!state.recipe.name && dbRecipe.name) {
+    document.title = dbRecipe.name;
+  } else {
+    document.title = state.recipe.name;
+  }
+
   /* ------------------------------------------
   // Navigation-Handler
   // ------------------------------------------ */
@@ -815,7 +805,7 @@ const RecipeEdit = ({
       ingredientPos = objectId.split("_");
     }
 
-    let fieldName = ingredientPos[0];
+    const fieldName = ingredientPos[0];
     let ingredientUid = ingredientPos[1];
     if (ingredientUid.includes("-")) {
       ingredientUid = ingredientUid.split("-")[0];
@@ -831,7 +821,7 @@ const RecipeEdit = ({
       product = newValue as Product;
       if (product.name.endsWith(TEXT.ADD)) {
         // Begriff Hinzufügen und Anführzungszeichen entfernen
-        let productName = product.name.match('".*"')![0].slice(1, -1);
+        const productName = product.name.match('".*"')![0].slice(1, -1);
 
         // Neues Produkt. PopUp Anzeigen und nicht weiter
         setProductAddPopupValues({
@@ -876,7 +866,7 @@ const RecipeEdit = ({
   const onChangePreparationStep = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    let prepparationStepPos = event.target.id.split("_");
+    const prepparationStepPos = event.target.id.split("_");
 
     dispatch({
       type: ReducerActions.ON_PREPARATIONSTEP_CHANGE,
@@ -909,7 +899,7 @@ const RecipeEdit = ({
       materialPos = objectId.split("_");
     }
 
-    let fieldName = materialPos[0];
+    const fieldName = materialPos[0];
     let materialUid = materialPos[1];
     if (materialUid.includes("-")) {
       // Falls über Dropdown ausgewählt, kommt noch der präfix -Option-1 zurück
@@ -925,7 +915,7 @@ const RecipeEdit = ({
       material = newValue as Material;
       if (typeof material === "object" && material?.name.endsWith(TEXT.ADD)) {
         // Begriff Hinzufügen und Anführzungszeichen entfernen
-        let materialName = material.name.match('".*"')![0].slice(1, -1);
+        const materialName = material.name.match('".*"')![0].slice(1, -1);
 
         // Neues Produkt. PopUp Anzeigen und nicht weiter
         setMaterialAddPopupValues({
@@ -980,8 +970,6 @@ const RecipeEdit = ({
   // Save // Cancel
   // ------------------------------------------ */
   const onSave = async () => {
-    let recipe = {} as Recipe;
-
     try {
       Recipe.checkRecipeData(state.recipe);
     } catch (error) {
@@ -1004,7 +992,9 @@ const RecipeEdit = ({
           result.type !== RecipeType.variant &&
           !isEmbedded
         ) {
-          switchEditMode({});
+          if (switchEditMode) {
+            switchEditMode({});
+          }
 
           dispatch({
             type: ReducerActions.SNACKBAR_SHOW,
@@ -1065,7 +1055,7 @@ const RecipeEdit = ({
       type: ReducerActions.CLEAR_STATE,
       payload: inititialState,
     });
-    switchEditMode({});
+    switchEditMode && switchEditMode({});
   };
   /* ------------------------------------------
   // Tags
@@ -1077,7 +1067,7 @@ const RecipeEdit = ({
     setTagAddDialogOpen(false);
   };
   const handleTagAddDialogAdd = (tags: string[]) => {
-    let listOfTags = state.recipe.tags.concat(tags);
+    const listOfTags = state.recipe.tags.concat(tags);
 
     dispatch({
       type: ReducerActions.ON_FIELD_CHANGE,
@@ -1090,7 +1080,7 @@ const RecipeEdit = ({
     setTagAddDialogOpen(false);
   };
   const onTagDelete = (tagToDelete: string) => {
-    let listOfTags = Recipe.deleteTag({
+    const listOfTags = Recipe.deleteTag({
       tags: state.recipe.tags,
       tagToDelete: tagToDelete,
     });
@@ -1108,7 +1098,7 @@ const RecipeEdit = ({
   const onPositionMoreClick = (event: React.MouseEvent<HTMLElement>) => {
     // Zwischenspeichern bei welchem Element das Menü auf-
     // gerufen wurde
-    let pressedButton = event.currentTarget.id.split("_");
+    const pressedButton = event.currentTarget.id.split("_");
     // Button-ID-Aufbau
     // 0 = Name des Buttons (moreClick)
     // 1 = Abschnitt in dem er geklickt wurde (ingredients)
@@ -1123,12 +1113,12 @@ const RecipeEdit = ({
     event: React.MouseEvent<HTMLElement>
   ) => {
     let indexToInsert = 0;
-    let pressedButton = event.currentTarget.id.split("_");
+    const pressedButton = event.currentTarget.id.split("_");
     // // 0 = in Welchem Block (Ingredient/PreparationStep/Materials )
     // // 1 = Aktion (Add, Delete)
     // // 2 = UID des Elements
 
-    let entriesToUpdate = {...state.recipe[pressedButton[0]]} as
+    const entriesToUpdate = {...state.recipe[pressedButton[0]]} as
       | RecipeObjectStructure<Ingredient | Section>
       | RecipeObjectStructure<PreparationStep | Section>
       | RecipeObjectStructure<RecipeMaterialPosition | Section>;
@@ -1209,7 +1199,6 @@ const RecipeEdit = ({
     });
   };
   const onCreateProductToAdd = (product: Product) => {
-    console.log(product);
     dispatch({
       type: ReducerActions.ON_INGREDIENT_CHANGE,
       payload: {
@@ -1285,7 +1274,8 @@ const RecipeEdit = ({
   // Drag & Drop Handler
   // ------------------------------------------ */
   const onDragEnd = (result: DropResult) => {
-    let {destination, source, draggableId, type} = result;
+    const {destination, source, type} = result;
+    let draggableId = result.draggableId;
 
     if (draggableId.includes("_")) {
       draggableId = draggableId.split("_")[1];
@@ -1307,9 +1297,13 @@ const RecipeEdit = ({
     if (source.droppableId.includes("_")) {
       source.droppableId = source.droppableId.split("_")[0];
     }
+
+    let newIngredientsOrder: string[];
+    let newPreparationStepsOrder: string[];
+    let newMaterialsOrder: string[];
     switch (type) {
       case DragDropTypes.INGREDIENT:
-        let newIngredientsOrder = [...state.recipe.ingredients.order];
+        newIngredientsOrder = [...state.recipe.ingredients.order];
 
         if (source.droppableId === destination.droppableId) {
           // Reihenfolge in der gleichen Box angepasst
@@ -1325,7 +1319,7 @@ const RecipeEdit = ({
         }
         break;
       case DragDropTypes.PREPARATIONSTEP:
-        let newPreparationStepsOrder = [...state.recipe.preparationSteps.order];
+        newPreparationStepsOrder = [...state.recipe.preparationSteps.order];
         if (source.droppableId === destination.droppableId) {
           // Reihenfolge in der gleichen Box angepasst
           newPreparationStepsOrder.splice(source.index, 1);
@@ -1343,7 +1337,7 @@ const RecipeEdit = ({
         }
         break;
       case DragDropTypes.MATERIAL:
-        let newMaterialsOrder = [...state.recipe.materials.order];
+        newMaterialsOrder = [...state.recipe.materials.order];
         if (source.droppableId === destination.droppableId) {
           // Reihenfolge in der gleichen Box angepasst
           newMaterialsOrder.splice(source.index, 1);
@@ -1380,7 +1374,7 @@ const RecipeEdit = ({
           </Backdrop>
 
           <Grid container spacing={4} justifyContent="center">
-            {state.isError && (
+            {state.error && (
               <Grid item key={"error"} xs={12}>
                 <AlertMessage
                   error={state.error}
@@ -1411,7 +1405,6 @@ const RecipeEdit = ({
                   onTagDelete={onTagDelete}
                   onTagAdd={onTagAdd}
                   onChange={onChangeField}
-                  authUser={authUser}
                 />
               )}
             </Grid>
@@ -1467,8 +1460,12 @@ const RecipeEdit = ({
           // noListEntries={positionMenuSelectedItem.noOfPostitions}
         />
         <DialogProduct
+          firebase={firebase}
           productName={productAddPopupValues.name}
-          dialogType={PRODUCT_DIALOG_TYPE.CREATE}
+          productUid={productAddPopupValues.uid}
+          productDietProperties={productAddPopupValues.dietProperties}
+          productUsable={productAddPopupValues.usable}
+          dialogType={ProductDialog.CREATE}
           dialogOpen={productAddPopupValues.popUpOpen}
           handleOk={onCreateProductToAdd}
           handleClose={onCloseProductToAdd}
@@ -1478,9 +1475,13 @@ const RecipeEdit = ({
           authUser={authUser}
         />
         <DialogMaterial
+          firebase={firebase}
           materialName={materialAddPopupValues.name}
+          materialUid={materialAddPopupValues.uid}
+          materialType={materialAddPopupValues.type}
+          materialUsable={materialAddPopupValues.usable}
           materials={state.materials}
-          dialogType={MATERIAL_DIALOG_TYPE.CREATE}
+          dialogType={MaterialDialog.CREATE}
           dialogOpen={materialAddPopupValues.popUpOpen}
           handleOk={onCreateMaterialToAdd}
           handleClose={onCloseMaterialToAdd}
@@ -1510,7 +1511,7 @@ interface RecipeHeaderProps {
 }
 const RecipeHeader = ({recipe, onChange}: RecipeHeaderProps) => {
   const classes = useStyles();
-  document.title = recipe.name ? recipe.name : TEXT.NEW_RECIPE;
+  // document.title = recipe.name ? recipe.name : TEXT.NEW_RECIPE;
 
   return (
     <React.Fragment>
@@ -1522,7 +1523,7 @@ const RecipeHeader = ({recipe, onChange}: RecipeHeaderProps) => {
           backgroundImage: `url(${
             recipe.pictureSrc
               ? recipe.pictureSrc
-              : IMAGE_REPOSITORY.getEnviromentRelatedPicture()
+              : ImageRepository.getEnviromentRelatedPicture()
                   .CARD_PLACEHOLDER_MEDIA
           })`,
           backgroundPosition: "center",
@@ -1569,7 +1570,6 @@ interface RecipeHeaderVariantProps {
 }
 const RecipeHeaderVariant = ({recipe, onChange}: RecipeHeaderVariantProps) => {
   const classes = useStyles();
-  document.title = recipe.name ? recipe.name : TEXT.NEW_RECIPE;
 
   return (
     <React.Fragment>
@@ -1581,7 +1581,7 @@ const RecipeHeaderVariant = ({recipe, onChange}: RecipeHeaderVariantProps) => {
           backgroundImage: `url(${
             recipe.pictureSrc
               ? recipe.pictureSrc
-              : IMAGE_REPOSITORY.getEnviromentRelatedPicture()
+              : ImageRepository.getEnviromentRelatedPicture()
                   .CARD_PLACEHOLDER_MEDIA
           })`,
           backgroundPosition: "center",
@@ -1679,24 +1679,21 @@ interface RecipeInfoPanelProps {
       | React.ChangeEvent<HTMLInputElement>
       | React.ChangeEvent<{value: unknown}>
   ) => void;
-
-  authUser: AuthUser;
 }
 const RecipeInfoPanel = ({
   recipe,
   onTagDelete,
   onTagAdd,
   onChange,
-  authUser,
 }: RecipeInfoPanelProps) => {
   const classes = useStyles();
 
-  const [tipsAndTagsSectionOpen, setTipsAndTagsSectionOpen] =
-    React.useState(false);
+  // const [tipsAndTagsSectionOpen, setTipsAndTagsSectionOpen] =
+  //   React.useState(false);
 
-  const handleOnTipsAndTagsClick = () => {
-    setTipsAndTagsSectionOpen(!tipsAndTagsSectionOpen);
-  };
+  // const handleOnTipsAndTagsClick = () => {
+  //   setTipsAndTagsSectionOpen(!tipsAndTagsSectionOpen);
+  // };
   const ITEM_HEIGHT = 48;
   const ITEM_PADDING_TOP = 8;
   const MenuProps = {
@@ -1772,8 +1769,8 @@ const RecipeInfoPanel = ({
                 onChange={onChange}
                 input={<Input fullWidth />}
                 renderValue={(selected) => {
-                  let selectedValues = selected as unknown as string[];
-                  let textArray = selectedValues.map(
+                  const selectedValues = selected as unknown as string[];
+                  const textArray = selectedValues.map(
                     (value) => TEXT.MENU_TYPES[value]
                   ) as string[];
                   return (textArray as string[]).join(", ");
@@ -2317,9 +2314,6 @@ const PreparationStepPosition = ({
   onPositionMoreClick,
 }: PreparationStepPositionProps) => {
   const classes = useStyles();
-
-  const theme = useTheme();
-  const breakpointIsXs = useMediaQuery(theme.breakpoints.down("xs"));
 
   return (
     <React.Fragment>

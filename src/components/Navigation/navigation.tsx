@@ -1,8 +1,10 @@
+/* eslint-disable react/prop-types */
 import React from "react";
-import {withRouter, useLocation} from "react-router-dom";
-import {compose} from "recompose";
+import {useLocation} from "react-router-dom";
 import {useMediaQuery} from "@material-ui/core";
 import {useHistory} from "react-router";
+import {compose} from "react-recompose";
+import {withRouter} from "react-router-dom";
 
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -11,7 +13,6 @@ import Typography from "@material-ui/core/Typography";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import useScrollTrigger from "@material-ui/core/useScrollTrigger";
 
-import Avatar from "@material-ui/core/Avatar";
 import Fab from "@material-ui/core/Fab";
 import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import Zoom from "@material-ui/core/Zoom";
@@ -30,7 +31,7 @@ import Drawer from "@material-ui/core/Drawer";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
-// import EventIcon from "@material-ui/icons/Event";
+import EventIcon from "@material-ui/icons/Event";
 import FastfoodIcon from "@material-ui/icons/Fastfood";
 import ListItemText from "@material-ui/core/ListItemText";
 import HelpOutlineIcon from "@material-ui/icons/HelpOutline";
@@ -44,34 +45,34 @@ import NewReleasesIcon from "@material-ui/icons/NewReleases";
 import DescriptionIcon from "@material-ui/icons/Description";
 import BuildIcon from "@material-ui/icons/Build";
 
-import * as ACTIONS from "../../constants/actions";
+import Action from "../../constants/actions";
 import * as ROUTES from "../../constants/routes";
 import * as TEXT from "../../constants/text";
 import * as BUTTONTEXT from "../../constants/buttonText";
-import * as DEFAULT_VALUES from "../../constants/defaultValues";
-import * as LOCAL_STORAGE from "../../constants/localStorage";
-import * as FIREBASE_EVENTS from "../../constants/firebaseEvents";
+// import * as DEFAULT_VALUES from "../../constants/defaultValues";
+import LocalStorageKey from "../../constants/localStorage";
+import FirebaseAnalyticEvent from "../../constants/firebaseEvent";
+// import * as FIREBASE_EVENTS from "../../constants/firebaseEvents";
+// import packageJson from "../../../package.json";
 
 import HelpCenter from "./helpCenter.class";
-import Enviroment from "../Shared/enviroment.class";
 
-import packageJson from "../../../package.json";
+// import packageJson from "../../../package.json";
 import DialogRefreshApp from "./dialogRefreshApp";
 
-import {withFirebase} from "../Firebase/index.js";
-import {AuthUserContext} from "../Session/index";
-import * as ROLES from "../../constants/roles";
 import Role from "../../constants/roles";
 
 import useStyles from "../../constants/styles";
-import {act} from "@testing-library/react";
+
 // import LocalStorageHandler from "../Shared/localStorageHandler.class";
-import {
-  SessionStorageHandler,
-  STORAGE_OBJECT_PROPERTY,
-} from "../Firebase/Db/sessionStorageHandler.class";
-import Environment from "../Shared/enviroment.class";
 import {NavigationValuesContext} from "../Navigation/navigationContext";
+import {BugReport} from "@material-ui/icons";
+// import Utils from "../Shared/utils.class";
+import {AuthUserContext} from "../Session/authUserContext";
+import {withFirebase} from "../Firebase/firebaseContext";
+
+// import Environment from "../Shared/enviroment.class";
+import Utils from "../Shared/utils.class";
 // ===================================================================
 // ============================= Global =============================
 // ===================================================================
@@ -80,7 +81,12 @@ type Anchor = "top" | "left" | "bottom" | "right";
 // ===================================================================
 // ========================== Scroll to Top  =========================
 // ===================================================================
-function ScrollTop(props) {
+interface ScrollTopProps {
+  children: React.ReactElement;
+  window?: () => Window;
+}
+
+function ScrollTop(props: ScrollTopProps) {
   const {children, window} = props;
   const classes = useStyles();
 
@@ -116,15 +122,22 @@ function ScrollTop(props) {
 // ===================================================================
 // ======================= Navigation Komponente =====================
 // ===================================================================
-const NavigationComponent = () => (
-  <div>
-    <AuthUserContext.Consumer>
-      {(authUser) =>
-        authUser ? <NavigationAuth authUser={authUser} /> : <NavigationNoAuth />
-      }
-    </AuthUserContext.Consumer>
-  </div>
-);
+const NavigationComponent = () => {
+  // const authUser = useAuthUser();
+  return (
+    <div>
+      <AuthUserContext.Consumer>
+        {(authUser) =>
+          authUser ? (
+            <NavigationAuth authUser={authUser} />
+          ) : (
+            <NavigationNoAuth />
+          )
+        }
+      </AuthUserContext.Consumer>
+    </div>
+  );
+};
 
 // ===================================================================
 // ==================== Navigation mit Berechtigung ==================
@@ -134,28 +147,101 @@ const NavigationAuthBase = (props) => {
   const classes = useStyles();
   const firebase = props.firebase;
   const authUser = props.authUser;
+
+  // const authUser = useAuthUser();
+  // const firebase = useFirebase();
+
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
+  const navigationValuesContext = React.useContext(NavigationValuesContext);
+  const [showDialogRefreshApp, setShowDialogRefreshApp] = React.useState(false);
+  const [state, setDrawerState] = React.useState({
+    left: false,
+  });
   const open = Boolean(anchorEl);
 
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-  const [showDialogRefreshApp, setShowDialogRefreshApp] = React.useState(false);
 
-  const [loadedVersionIsUpToDate, setLoadedVersionIsUpToDate] =
-    React.useState(false);
-  const navigationValuesContext = React.useContext(NavigationValuesContext);
+  // const [loadedVersionIsUpToDate, setLoadedVersionIsUpToDate] =
+  // React.useState(false);
   /* ------------------------------------------
-  // Aktuelle Version holen
+  // Prüfen ob sich die Version geändert hat
   // ------------------------------------------ */
-  React.useEffect(() => {
-    // Einmal ausführen
-    getActualVersion();
-    // Timer stellen, dass es in 12 Stunden erneut ausgeführt wird (falls kein Refresh stattfindet)
-    const intervalId = setInterval(getActualVersion, 60 * 60 * 12 * 1000); // alle 12 Stunden
+  //FIXME:
+  // type LocalStorageVersion = {
+  //   lastFetchedVersion: string;
+  //   lastCheck: string;
+  // };
 
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, []);
+  // const isVersionUpToDate = async () => {
+  //   console.warn("hier");
+  //   let actualVersion = "";
+  //   let localStorageVersion: LocalStorageVersion | null = null;
+  //   const localStorageVersionString = localStorage.getItem(
+  //     LocalStorageKey.VERSION
+  //   );
+
+  //   if (localStorageVersionString) {
+  //     localStorageVersion = JSON.parse(
+  //       localStorageVersionString
+  //     ) as LocalStorageVersion;
+  //   }
+
+  //   // aktuelles Datum als String - für bessere Vergleichbarkeit
+  //   const today = new Date();
+  //   const todayString = `${String(today.getFullYear())}-${String(
+  //     today.getMonth() + 1
+  //   ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  //   console.log(localStorageVersion);
+  //   if (
+  //     !localStorageVersion ||
+  //     localStorageVersion?.lastCheck !== todayString
+  //   ) {
+  //     console.warn("=== READ VERSION===");
+  //     // Kein Wert oder veraltet
+  //     await Environment.getActualVersion({firebase: firebase})
+  //       .then((result) => {
+  //         actualVersion = result;
+
+  //         // speichern
+  //         localStorage.setItem(
+  //           LocalStorageKey.VERSION,
+  //           JSON.stringify({
+  //             lastCheck: todayString,
+  //             lastFetchedVersion: actualVersion,
+  //           })
+  //         );
+  //       })
+  //       .catch((error) => {
+  //         console.error(error);
+  //       });
+  //   } else {
+  //     actualVersion = localStorageVersion.lastFetchedVersion;
+  //   }
+
+  //   if (actualVersion !== packageJson.version) {
+  //     return false;
+  //   } else {
+  //     return true;
+  //   }
+  // };
+  /* ------------------------------------------
+  Aktuelle Version holen
+  ------------------------------------------ */
+  // React.useEffect(() => {
+  //   // Einmal ausführen
+  //   getActualVersion();
+
+  //   // Timer stellen, dass es in 12 Stunden erneut ausgeführt wird (falls kein Refresh stattfindet)
+  //   const intervalId = setInterval(getActualVersion, 60 * 60 * 12 * 1000); // alle 12 Stunden
+
+  //   return () => {
+  //     clearInterval(intervalId);
+  //   };
+  // }, []);
+
+  if (!authUser) {
+    return null;
+  }
   /* ------------------------------------------
   // Kontextmenü-Handler
   // ------------------------------------------ */
@@ -170,7 +256,7 @@ const NavigationAuthBase = (props) => {
   // Hilfe-Button
   // ------------------------------------------ */
   const handleHelp = () => {
-    let helpPage = HelpCenter.getMatchingHelpPage({
+    const helpPage = HelpCenter.getMatchingHelpPage({
       actualPath: location.pathname,
       navigationObject: navigationValuesContext?.navigationValues.object,
       action: navigationValuesContext?.navigationValues.action,
@@ -184,9 +270,6 @@ const NavigationAuthBase = (props) => {
   /* ------------------------------------------
   // Navigation-Panel
   // ------------------------------------------ */
-  const [state, setDrawerState] = React.useState({
-    left: false,
-  });
 
   const toggleDrawer =
     (anchor: Anchor, open: boolean) =>
@@ -203,19 +286,18 @@ const NavigationAuthBase = (props) => {
     };
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    let pressedButton = event.currentTarget.id.split("_");
+    const pressedButton = event.currentTarget.id.split("_");
 
     switch (pressedButton[0]) {
       case BUTTONTEXT.ACCOUNT:
         push({
-          action: ACTIONS.VIEW,
           pathname: `${ROUTES.USER_PROFILE}/${authUser.uid}`,
-          state: {},
+          state: {action: Action.VIEW},
         });
         break;
       case BUTTONTEXT.SIGNOUT:
         firebase.signOut();
-        localStorage.removeItem(LOCAL_STORAGE.AUTH_USER);
+        localStorage.removeItem(LocalStorageKey.AUTH_USER);
         push({
           pathname: ROUTES.LANDING,
         });
@@ -227,15 +309,15 @@ const NavigationAuthBase = (props) => {
   /* ------------------------------------------
   // Fragen ob Seite refresht werden darf
   // ------------------------------------------ */
-  const onClickUpdateRibon = () => {
-    setShowDialogRefreshApp(true);
-  };
+  // const onClickUpdateRibon = () => {
+  //   setShowDialogRefreshApp(true);
+  // };
   /* ------------------------------------------
   // App auffrischen
   // ------------------------------------------ */
   const onUpdateAppOk = () => {
     // Event auslösen
-    firebase.analytics.logEvent(FIREBASE_EVENTS.APP_FORCED_REFRESH);
+    firebase.analytics.logEvent(FirebaseAnalyticEvent.appForceRefresh);
     window.localStorage.clear();
     window.location.reload();
     setShowDialogRefreshApp(false);
@@ -246,29 +328,6 @@ const NavigationAuthBase = (props) => {
   const onUpdateAppCancel = () => {
     setShowDialogRefreshApp(false);
   };
-  /* ------------------------------------------
-  // Prüfen ob sich die Version geändert hat
-  // ------------------------------------------ */
-  const getActualVersion = async () => {
-    let sessionStorageVersion = "";
-    sessionStorageVersion = SessionStorageHandler.getDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.ENVIROMENT,
-      documentUid: "version",
-    })?.actualVersion;
-
-    await Environment.getActualVersion({firebase: firebase})
-      .then((result) => {
-        if (sessionStorageVersion != "" && sessionStorageVersion != result) {
-          setLoadedVersionIsUpToDate(false);
-        } else {
-          setLoadedVersionIsUpToDate(true);
-        }
-      })
-      .catch((error) => {
-        throw error;
-      });
-  };
-
   const list = (anchor: Anchor) => (
     <div
       className={clsx(classes.navigationList, {
@@ -284,22 +343,22 @@ const NavigationAuthBase = (props) => {
             <FastfoodIcon />
           </ListItemIcon>
           <ListItemText
-            primary={TEXT.NAVIGATION_RECIPES}
+            primary={TEXT.RECIPES}
             onClick={() => push(ROUTES.RECIPES)}
+          />
+        </ListItem>
+        <ListItem button key="Events">
+          <ListItemIcon>
+            <EventIcon />
+          </ListItemIcon>
+          <ListItemText
+            primary={TEXT.EVENTS}
+            onClick={() => push(ROUTES.EVENTS)}
           />
         </ListItem>
       </List>
       <Divider />
       <List>
-        <ListItem button key="Units">
-          <ListItemIcon>
-            <StraightenIcon />
-          </ListItemIcon>
-          <ListItemText
-            primary={TEXT.NAVIGATION_UNITS}
-            onClick={() => push(ROUTES.UNITS)}
-          />
-        </ListItem>
         <ListItem button key="UnitConversion">
           <ListItemIcon>
             <SwapHorizIcon />
@@ -307,16 +366,6 @@ const NavigationAuthBase = (props) => {
           <ListItemText
             primary={TEXT.NAVIGATION_UNIT_CONVERSION}
             onClick={() => push(ROUTES.UNITCONVERSION)}
-          />
-        </ListItem>
-
-        <ListItem button key="departments">
-          <ListItemIcon>
-            <ShoppingCartIcon />
-          </ListItemIcon>
-          <ListItemText
-            primary={TEXT.NAVIGATION_DEPARTMENTS}
-            onClick={() => push(ROUTES.DEPARTMENTS)}
           />
         </ListItem>
       </List>
@@ -354,11 +403,29 @@ const NavigationAuthBase = (props) => {
                 onClick={() => push(ROUTES.MATERIALS)}
               />
             </ListItem>
+            <ListItem button key="departments">
+              <ListItemIcon>
+                <ShoppingCartIcon />
+              </ListItemIcon>
+              <ListItemText
+                primary={TEXT.NAVIGATION_DEPARTMENTS}
+                onClick={() => push(ROUTES.DEPARTMENTS)}
+              />
+            </ListItem>
           </List>
         </React.Fragment>
       )}
-      {authUser.roles.includes(ROLES.ADMIN) && (
+      {authUser.roles.includes(Role.communityLeader) && (
         <React.Fragment>
+          <ListItem button key="Units">
+            <ListItemIcon>
+              <StraightenIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary={TEXT.NAVIGATION_UNITS}
+              onClick={() => push(ROUTES.UNITS)}
+            />
+          </ListItem>
           <Divider />
           <List>
             <ListItem button key="Admin">
@@ -370,15 +437,17 @@ const NavigationAuthBase = (props) => {
                 onClick={() => push(ROUTES.SYSTEM)}
               />
             </ListItem>
-            <ListItem button key="Users">
-              <ListItemIcon>
-                <GroupIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary={TEXT.NAVIGATION_USERS}
-                onClick={() => push(ROUTES.USERS)}
-              />
-            </ListItem>
+            {authUser.roles.includes(Role.admin) && (
+              <ListItem button key="Users">
+                <ListItemIcon>
+                  <GroupIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary={TEXT.NAVIGATION_USERS}
+                  onClick={() => push(ROUTES.USERS)}
+                />
+              </ListItem>
+            )}
           </List>
           <Divider />
         </React.Fragment>
@@ -419,10 +488,13 @@ const NavigationAuthBase = (props) => {
               {TEXT.APP_NAME}
             </Link>
           </Typography>
-          {loadedVersionIsUpToDate ? null : ( // <Ribbon text={"BETA"} />
+          {/* {!isVersionUpToDate ? (
             <UpdateRibbon onClick={onClickUpdateRibon} />
-          )}
-
+          ) : Utils.isTestTenant(window.location.toString()) ? (
+            <TestTenantRibbon />
+          ) : null}
+ */}
+          {Utils.isTestTenant() && <TestTenantRibbon />}
           <div>
             <IconButton
               aria-label="go to Helppage"
@@ -507,10 +579,9 @@ const NavigationAuthBase = (props) => {
 // ================== Navigation ohne Berechtigung ===================
 // ===================================================================
 // Komponente für Navigation ohne Login//Ohne Berechtigunge
-export function NavigationNoAuthBase(props) {
+export function NavigationNoAuthBase() {
   const classes = useStyles();
   const {push} = useHistory();
-
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 
   return (
@@ -535,7 +606,6 @@ export function NavigationNoAuthBase(props) {
               {TEXT.APP_NAME}
             </Link>
           </Typography>
-          {/* <Ribbon text={"BETA"} /> */}
           <div>
             <Typography variant="h6" className={classes.navigationTitle}>
               <Link
@@ -549,7 +619,7 @@ export function NavigationNoAuthBase(props) {
                   })
                 }
               >
-                {TEXT.NAVIGATION_SIGN_IN}
+                {TEXT.SIGN_IN}
               </Link>
             </Typography>
           </div>
@@ -563,12 +633,22 @@ export function NavigationNoAuthBase(props) {
 // =============================== Ribbon ============================
 // =================================================================== */
 interface RibbonProps {
-  text: string;
+  text?: string;
+  icon?: JSX.Element;
 }
-export const Ribbon = ({text}: RibbonProps) => {
-  return <div className="ribbon  ribbon--red">{text}</div>;
+export const Ribbon = ({text, icon}: RibbonProps) => {
+  return (
+    <div className="ribbon  ribbon--red">{text ? text : icon ? icon : ""}</div>
+  );
 };
-export const UpdateRibbon = ({onClick}) => {
+
+export const TestTenantRibbon = () => {
+  return <div className="ribbon  ribbon--yellow">{<BugReport />}</div>;
+};
+interface UpdateRibbonProps {
+  onClick: (event: React.SyntheticEvent) => void;
+}
+export const UpdateRibbon = ({onClick}: UpdateRibbonProps) => {
   return (
     <div className="ribbon  ribbon--purple">
       <Link component="button" color="inherit" onClick={onClick}>
@@ -577,10 +657,15 @@ export const UpdateRibbon = ({onClick}) => {
     </div>
   );
 };
+// const NavigationAuth = compose(withRouter, withFirebase)(NavigationAuthBase);
+// const NavigationNoAuth = compose(
+//   withRouter,
+//   withFirebase
+// )(NavigationNoAuthBase);
+
 const NavigationAuth = compose(withRouter, withFirebase)(NavigationAuthBase);
 const NavigationNoAuth = compose(
   withRouter,
   withFirebase
 )(NavigationNoAuthBase);
-
 export default NavigationComponent;

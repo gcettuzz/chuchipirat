@@ -1,31 +1,34 @@
 import React, {Suspense, lazy} from "react";
-import {compose} from "recompose";
 import {useHistory} from "react-router";
+import {compose} from "react-recompose";
 
-import Firebase, {withFirebase} from "../Firebase";
-import {
-  AuthUserContext,
-  withAuthorization,
-  withEmailVerification,
-} from "../Session";
 import Action from "../../constants/actions";
 import {Container, Divider} from "@material-ui/core";
-import Recipe, {Ingredient, RecipeType, Recipes} from "./recipe.class";
-import RecipeShort from "./recipeShort.class";
+import Recipe, {RecipeType} from "./recipe.class";
 
 import RecipeView from "./recipe.view";
 import FallbackLoading from "../Shared/fallbackLoading";
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
 
+import {RECIPES as ROUTE_RECIPES} from "../../constants/routes";
+import RecipeShort from "./recipeShort.class";
+import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 import {
-  RECIPE as ROUTE_RECIPE,
-  RECIPES as ROUTE_RECIPES,
-} from "../../constants/routes";
+  DialogType,
+  useCustomDialog,
+  SingleTextInputResult,
+} from "../Shared/customDialogContext";
 
-// import SessionStorageHandler, {
-//   SessionStoragePath,
-// } from "../Shared/sessionStorageHandler.class";
-// import { RecipeListSessionStorage } from "./recipes";
+import {
+  PROCEED as TEXT_PROCEED,
+  ARE_YOU_SURE_YOU_WANT_TO_CHANGE as TEXT_ARE_YOU_SURE_YOU_WANT_TO_CHANGE,
+  PUBLIC_RECIPE as TEXT_PUBLIC_RECIPE,
+} from "../../constants/text";
+import AuthUser from "../Firebase/Authentication/authUser.class";
+import withEmailVerification from "../Session/withEmailVerification";
+import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {withFirebase} from "../Firebase/firebaseContext";
+import {CustomRouterProps} from "../Shared/global.interface";
 
 // Lazy Loading
 const RecipeEdit = lazy(() => import("./recipe.edit"));
@@ -44,13 +47,6 @@ enum ReducerActions {
   SNACKBAR_CLOSE = "SNACKBAR_CLOSE",
   SNACKBAR_SHOW = "SNACKBAR_SHOW",
 }
-
-// Struktur des Session Storage, wenn Rezepte zwischengespeichert werden
-// export interface RecipeSessionStorage {
-//   date: Date;
-//   recipes: Recipes;
-// }
-
 export interface OnUpdateRecipeProps {
   recipe: Recipe;
   snackbar?: Snackbar;
@@ -64,8 +60,7 @@ type State = {
   recipe: Recipe;
   isLoading: boolean;
   isLoadingPicture: boolean;
-  isError: boolean;
-  error: object;
+  error: Error | null;
   snackbar: Snackbar;
 };
 
@@ -73,22 +68,23 @@ const inititialState: State = {
   recipe: new Recipe(),
   isLoading: false,
   isLoadingPicture: false,
-  isError: false,
-  error: {},
+  error: null,
   snackbar: {open: false, severity: "success", message: ""},
 };
 export interface SwitchEditMode {
   ignoreState?: boolean;
 }
 const recipeReducer = (state: State, action: DispatchAction): State => {
-  let field: string;
-  let value: any;
+  let tempSnackbar: Snackbar;
+  let tempIngredients: Recipe["ingredients"];
+  let tempPreparationSteps: Recipe["preparationSteps"];
+  let tempMaterials: Recipe["materials"];
+
   switch (action.type) {
     case ReducerActions.RECIPE_FETCH_INIT:
       return {
         ...state,
         isLoading: true,
-        isError: false,
         // _loadingRecipe: true,
       };
     case ReducerActions.RECIPE_FETCH_SUCCESS:
@@ -98,7 +94,6 @@ const recipeReducer = (state: State, action: DispatchAction): State => {
         ...state,
         recipe: action.payload.recipe as Recipe,
         isLoading: false,
-        isError: false,
       };
     case ReducerActions.SET_PROPS:
       // Übergabeparameter setzen
@@ -121,7 +116,7 @@ const recipeReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.RECIPE_UPDATE:
       // Falls das Rezept von einer "Unter"-Seite angepasst wurde
       // erhalten wir hier das Update
-      let tempSnackbar = {...state.snackbar};
+      tempSnackbar = {...state.snackbar};
       if (action.payload.snackbar) {
         tempSnackbar = action.payload.snackbar;
       }
@@ -134,9 +129,9 @@ const recipeReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.RECIPE_CHECK_POSITIONS:
       // Prüfen, dass sicher eine Position vorhanden ist,
       // wenn die letzte nicht leer ist, eine neue einfügen
-      let tempIngredients = {...state.recipe.ingredients};
-      let tempPreparationSteps = {...state.recipe.preparationSteps};
-      let tempMaterials = {...state.recipe.materials};
+      tempIngredients = {...state.recipe.ingredients};
+      tempPreparationSteps = {...state.recipe.preparationSteps};
+      tempMaterials = {...state.recipe.materials};
 
       tempIngredients = Recipe.createEmptyListEntryIngredients(tempIngredients);
       tempPreparationSteps =
@@ -182,46 +177,60 @@ const recipeReducer = (state: State, action: DispatchAction): State => {
       // Allgemeiner Fehler
       return {
         ...state,
-        isError: true,
         isLoading: false,
-        error: action.payload ? action.payload : {},
+        error: action.payload as Error,
       };
     default:
       console.error("Unbekannter ActionType: ", action.type);
       throw new Error();
   }
 };
+
+interface LocationState {
+  action: any;
+  scaledPortions?: string;
+  recipeShort?: RecipeShort;
+  recipe?: Recipe;
+}
+
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
 const RecipePage = (props) => {
   return (
     <AuthUserContext.Consumer>
-      {(authUser) => <RecipeBase props={props} authUser={authUser} />}
+      {(authUser) => <RecipeBase {...props} authUser={authUser} />}
     </AuthUserContext.Consumer>
   );
 };
 /* ===================================================================
-// =============================== Page ==============================
+// =============================== Base ==============================
 // =================================================================== */
-const RecipeBase = ({props, authUser}) => {
-  const firebase: Firebase = props.firebase;
-
-  const {push, replace} = useHistory();
+const RecipeBase: React.FC<
+  CustomRouterProps<undefined, LocationState> & {authUser: AuthUser | null}
+> = ({authUser, ...props}) => {
+  const firebase = props.firebase;
+  const {push} = useHistory();
+  const {customDialog} = useCustomDialog();
 
   let action: Action;
-  let recipeUid: string = "";
+  let recipeUid = "";
   let recipeType: RecipeType;
   let userUid: string;
-  let scaledPortions: number = 0;
+  let scaledPortions = 0;
 
   const [editMode, setEditMode] = React.useState(false);
   const [state, dispatch] = React.useReducer(recipeReducer, inititialState);
 
   if (props.location.state) {
-    action = props.location.state.action;
-    if (props.location.state.hasOwnProperty("scaledPortions")) {
-      scaledPortions = parseInt(props.location.state?.scaledPortions);
+    action = props.location?.state?.action;
+    if (
+      Object.prototype.hasOwnProperty.call(
+        props.location.state,
+        "scaledPortions"
+      )
+    ) {
+      scaledPortions = parseInt(props.location.state!.scaledPortions!);
     } else {
       scaledPortions = 0;
     }
@@ -233,7 +242,7 @@ const RecipeBase = ({props, authUser}) => {
   // ------------------------------------------ */
   React.useEffect(() => {
     if (!recipeUid) {
-      let urlParameter: string[] = props.location.pathname.split("/");
+      const urlParameter: string[] = props.location.pathname.split("/");
       if (urlParameter.length === 2) {
         // Beispiel: /recipe/
         action = Action.NEW;
@@ -276,7 +285,7 @@ const RecipeBase = ({props, authUser}) => {
         // darum wird hier nicht die eigene User-ID übergeben)
         Recipe.getRecipe({
           firebase: firebase,
-          authUser: authUser,
+          authUser: authUser!,
           uid: recipeUid,
           userUid: userUid,
           type: recipeType,
@@ -300,10 +309,14 @@ const RecipeBase = ({props, authUser}) => {
       // }
     }
   }, [action]);
+  if (!authUser) {
+    return null;
+  }
+
   /* ------------------------------------------
   // Edit-Modus umschiessen
   // ------------------------------------------ */
-  const switchEditMode = (
+  const switchEditMode = async (
     {ignoreState}: SwitchEditMode = {ignoreState: false}
   ) => {
     // Wenn der ignoreState true ist, wird nicht geprüft
@@ -321,6 +334,19 @@ const RecipeBase = ({props, authUser}) => {
     // sicherstellen, dass alle Positionen, mindestens 1x vokommen
     dispatch({type: ReducerActions.RECIPE_CHECK_POSITIONS, payload: {}});
 
+    // falls das Rezept öffentlich ist, kurz warnen! (unbeabsichtigte Änderungen verhinern)
+    if (state.recipe.type === RecipeType.public && !editMode) {
+      const userInput = (await customDialog({
+        dialogType: DialogType.Confirm,
+        title: TEXT_PUBLIC_RECIPE,
+        text: TEXT_ARE_YOU_SURE_YOU_WANT_TO_CHANGE,
+        buttonTextConfirm: TEXT_PROCEED,
+      })) as SingleTextInputResult;
+
+      if (!userInput) {
+        return;
+      }
+    }
     setEditMode(!editMode);
   };
   /* ------------------------------------------
@@ -366,7 +392,6 @@ const RecipeBase = ({props, authUser}) => {
           isEmbedded={false}
           switchEditMode={switchEditMode}
           onUpdateRecipe={onUpdateState}
-          onError={onError}
           authUser={authUser}
         />
       ) : (
@@ -376,15 +401,11 @@ const RecipeBase = ({props, authUser}) => {
           firebase={firebase}
           mealPlan={[]}
           isLoading={state.isLoading}
-          isError={state.isError}
           error={state.error}
           switchEditMode={switchEditMode}
           onUpdateRecipe={onUpdateState}
-          onEditRecipeMealPlan={() => {}}
-          onAddToEvent={() => {}}
           onError={onError}
           authUser={authUser}
-          onRecipeDelete={() => {}}
         />
       )}
       <CustomSnackbar
@@ -401,7 +422,7 @@ const RecipeBase = ({props, authUser}) => {
 // ============================= Divider =============================
 // =================================================================== */
 interface RecipeDividerProps {
-  style?: object;
+  style?: ValueObject;
 }
 export const RecipeDivider = ({style}: RecipeDividerProps) => {
   return (
@@ -411,7 +432,11 @@ export const RecipeDivider = ({style}: RecipeDividerProps) => {
   );
 };
 
-const condition = (authUser) => !!authUser;
+// const condition = (authUser) => !!authUser;
+
+// export default compose(withAuthorization(condition), withFirebase)(RecipePage);
+
+const condition = (authUser: AuthUser | null) => !!authUser;
 
 export default compose(
   withEmailVerification,

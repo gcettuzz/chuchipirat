@@ -1,51 +1,79 @@
-import React, { useReducer } from "react";
-import { compose } from "recompose";
-import { useHistory } from "react-router";
+import React from "react";
+import {useHistory} from "react-router";
+import {compose} from "react-recompose";
 
-import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
+import {
+  Container,
+  Grid,
+  IconButton,
+  Card,
+  CardHeader,
+  CardContent,
+  CardActionArea,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+} from "@material-ui/core";
 
-import IconButton from "@material-ui/core/IconButton";
+import {
+  Forward as ForwardIcon,
+  Delete as DeleteIcon,
+  ZoomOutMap as ZoomOutMapIcon,
+  CallMerge as CallMergeIcon,
+  Tune as TuneIcon,
+  Timelapse as TimelapseIcon,
+  ViewList as ViewListIcon,
+  Event as EventIcon,
+  Fastfood as FastfoodIcon,
+  FindInPage as FindInPageIcon,
+  Cached as CachedIcon,
+} from "@material-ui/icons";
 
-import Card from "@material-ui/core/Card";
-import CardHeader from "@material-ui/core/CardHeader";
-import CardContent from "@material-ui/core/CardContent";
-import CardActionArea from "@material-ui/core/CardActionArea";
-
-import List from "@material-ui/core/List";
-import ListItem, { ListItemProps } from "@material-ui/core/ListItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import ListItemText from "@material-ui/core/ListItemText";
-
-import ForwardIcon from "@material-ui/icons/Forward";
-import DeleteIcon from "@material-ui/icons/Delete";
-import ZoomOutMapIcon from "@material-ui/icons/ZoomOutMap";
-import CallMergeIcon from "@material-ui/icons/CallMerge";
-import TuneIcon from "@material-ui/icons/Tune";
-import Timelapse from "@material-ui/icons/Timelapse";
-import ViewListIcon from "@material-ui/icons/ViewList";
-import EventIcon from "@material-ui/icons/Event";
-import FastfoodIcon from "@material-ui/icons/Fastfood";
-import FindInPageIcon from "@material-ui/icons/FindInPage";
-
-import * as TEXT from "../../constants/text";
-import * as ROLES from "../../constants/roles";
-import * as ROUTES from "../../constants/routes";
+import {
+  ADMIN as TEXT_ADMIN,
+  WELCOME_ON_THE_BRIDGE_CAPTAIN as TEXT_WELCOME_ON_THE_BRIDGE_CAPTAIN,
+  GLOBAL_SETTINGS as TEXT_GLOBAL_SETTINGS,
+  SYSTEM_GLOBAL_DESCRIPTION as TEXT_SYSTEM_GLOBAL_DESCRIPTION,
+  DELETE_FEED as TEXT_DELETE_FEED,
+  DELETE_FEED_DESCRIPTION as TEXT_DELETE_FEED_DESCRIPTION,
+  WHERE_USED as TEXT_WHERE_USED,
+  WHERE_USED_DESCRIPTION as TEXT_WHERE_USED_DESCRIPTION,
+  MERGE_PRODUCTS as TEXT_MERGE_PRODUCTS,
+  MERGE_PRODUCT_DESCRIPTION as TEXT_MERGE_PRODUCT_DESCRIPTION,
+  CONVERT_PRODUCT_TO_MATERIAL as TEXT_CONVERT_PRODUCT_TO_MATERIAL,
+  CONVERT_PRODUCT_TO_MATERIAL_DESCRIPTION as TEXT_CONVERT_PRODUCT_TO_MATERIAL_DESCRIPTION,
+  JOBS as TEXT_JOBS,
+  JOBS_DESCRIPTION as TEXT_JOBS_DESCRIPTION,
+  DB_INDICES as TEXT_DB_INDICES,
+  DB_INDICES_DESCRIPTION as TEXT_DB_INDICES_DESCRIPTION,
+  OVERVIEW as TEXT_OVERVIEW,
+  RECIPES as TEXT_RECIPES,
+  EVENTS as TEXT_EVENTS,
+} from "../../constants/text";
+import Role from "../../constants/roles";
+import {
+  SYSTEM_GLOBAL_SETTINGS as ROUTE_SYSTEM_GLOBAL_SETTINGS,
+  SYSTEM_FEED_DELETE as ROUTE_SYSTEM_FEED_DELETE,
+  SYSTEM_WHERE_USED as ROUTE_SYSTEM_WHERE_USED,
+  TEMP as ROUTE_TEMP,
+  SYSTEM_MERGE_PRODUCT as ROUTE_SYSTEM_MERGE_PRODUCT,
+  SYSTEM_CONVERT_PRODUCT_TO_MATERIAL as ROUTE_SYSTEM_CONVERT_PRODUCT_TO_MATERIAL,
+  SYSTEM_JOBS as ROUTES_SYSTEM_JOBS,
+  SYSTEM_DB_INDICES as ROUTE_SYSTEM_DB_INDICES,
+  SYSTEM_OVERVIEW_RECIPES as ROUTE_SYSTEM_OVERVIEW_RECIPES,
+  SYSTEM_OVERVIEW_EVENTS as ROUTE_SYSTEM_OVERVIEW_EVENTS,
+} from "../../constants/routes";
 
 import useStyles from "../../constants/styles";
 
-import AlertMessage from "../Shared/AlertMessage";
 import PageTitle from "../Shared/pageTitle";
-
-import { withFirebase } from "../Firebase";
-import {
-  AuthUserContext,
-  withAuthorization,
-  withEmailVerification,
-} from "../Session";
-
-import { SvgIconComponent } from "@material-ui/icons";
-import { Typography } from "@material-ui/core";
+import withEmailVerification from "../Session/withEmailVerification";
+import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {withFirebase} from "../Firebase/firebaseContext";
+import AuthUser from "../Firebase/Authentication/authUser.class";
+import {CustomRouterProps} from "../Shared/global.interface";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -56,25 +84,30 @@ import { Typography } from "@material-ui/core";
 // =================================================================== */
 const SystemPage = (props) => {
   return (
-    //@ts-ignore
     <AuthUserContext.Consumer>
-      {(authUser) => <SystemBase props={props} authUser={authUser} />}
+      {(authUser) => <SystemBase {...props} authUser={authUser} />}
     </AuthUserContext.Consumer>
   );
 };
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const SystemBase = ({ props, authUser }) => {
+const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
+  authUser,
+}) => {
   const classes = useStyles();
-  const { push } = useHistory();
+  const {push} = useHistory();
+
+  if (!authUser) {
+    return null;
+  }
 
   /* ------------------------------------------
   // Globale Einstelllungen
   // ------------------------------------------ */
   const goToGlobalSettings = () => {
     push({
-      pathname: ROUTES.SYSTEM_GLOBAL_SETTINGS,
+      pathname: ROUTE_SYSTEM_GLOBAL_SETTINGS,
     });
   };
 
@@ -83,15 +116,15 @@ const SystemBase = ({ props, authUser }) => {
   // ------------------------------------------ */
   const goToDeleteFeed = () => {
     push({
-      pathname: ROUTES.SYSTEM_FEED_DELETE,
+      pathname: ROUTE_SYSTEM_FEED_DELETE,
     });
   };
-  /* ------------------------------------------
+  // /* ------------------------------------------
   // Verfolgungsnachweis
   // ------------------------------------------ */
   const goToWhereUsed = () => {
     push({
-      pathname: ROUTES.SYSTEM_WHERE_USED,
+      pathname: ROUTE_SYSTEM_WHERE_USED,
     });
   };
   /* ------------------------------------------
@@ -99,12 +132,21 @@ const SystemBase = ({ props, authUser }) => {
   // ------------------------------------------ */
   const goToMergeProducts = () => {
     push({
-      pathname: ROUTES.SYSTEM_MERGE_PRODUCT,
+      pathname: ROUTE_SYSTEM_MERGE_PRODUCT,
     });
   };
+  /* ------------------------------------------
+  // Produkte umwandeln
+  // ------------------------------------------ */
+  const goToConvertProductToMaterial = () => {
+    push({
+      pathname: ROUTE_SYSTEM_CONVERT_PRODUCT_TO_MATERIAL,
+    });
+  };
+
   const goToTemp = () => {
     push({
-      pathname: ROUTES.TEMP,
+      pathname: ROUTE_TEMP,
     });
   };
   /* ------------------------------------------
@@ -112,44 +154,46 @@ const SystemBase = ({ props, authUser }) => {
   // ------------------------------------------ */
   const goToJobs = () => {
     push({
-      pathname: ROUTES.SYSTEM_JOBS,
+      pathname: ROUTES_SYSTEM_JOBS,
     });
   };
   const goToDbIndices = () => {
     push({
-      pathname: ROUTES.SYSTEM_DB_INDICES,
+      pathname: ROUTE_SYSTEM_DB_INDICES,
     });
   };
 
   const onShowRecipes = () => {
     push({
-      pathname: ROUTES.SYSTEM_OVERVIEW_RECIPES,
+      pathname: ROUTE_SYSTEM_OVERVIEW_RECIPES,
     });
   };
   const onShowEvents = () => {
     push({
-      pathname: ROUTES.SYSTEM_OVERVIEW_EVENTS,
+      pathname: ROUTE_SYSTEM_OVERVIEW_EVENTS,
     });
   };
   return (
     <>
       {/*===== HEADER ===== */}
       <PageTitle
-        title={TEXT.PAGE_TITLE_ADMIN}
-        subTitle={TEXT.PAGE_SUBTITLE_ADMIN}
+        title={TEXT_ADMIN}
+        subTitle={TEXT_WELCOME_ON_THE_BRIDGE_CAPTAIN}
       />
       {/* ===== BODY ===== */}
       <Container className={classes.container} component="main" maxWidth="md">
         <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
-            <AdminTile
-              id={"globalSettings"}
-              text={TEXT.PANEL_SYSTEM_GLOBAL_SETTINGS}
-              description={TEXT.PANEL_SYSTEM_GLOBAL_DESCRIPTION}
-              icon={<TuneIcon />}
-              action={goToGlobalSettings}
-            />
-          </Grid>
+          {authUser.roles.includes(Role.admin) && (
+            <Grid item xs={12} md={6}>
+              <AdminTile
+                id={"globalSettings"}
+                text={TEXT_GLOBAL_SETTINGS}
+                description={TEXT_SYSTEM_GLOBAL_DESCRIPTION}
+                icon={<TuneIcon />}
+                action={goToGlobalSettings}
+              />
+            </Grid>
+          )}
 
           <Grid item xs={12} md={6}>
             <OverviewTile
@@ -159,20 +203,22 @@ const SystemBase = ({ props, authUser }) => {
               icon={<ViewListIcon />}
             />
           </Grid>
+          {authUser.roles.includes(Role.admin) && (
+            <Grid item xs={12} md={6}>
+              <AdminTile
+                id={"deleteFeeds"}
+                text={TEXT_DELETE_FEED}
+                description={TEXT_DELETE_FEED_DESCRIPTION}
+                icon={<DeleteIcon />}
+                action={goToDeleteFeed}
+              />
+            </Grid>
+          )}
           <Grid item xs={12} md={6}>
             <AdminTile
-              id={"deleteFeeds"}
-              text={TEXT.PANEL_SYSTEM_DELETE_FEED}
-              description={TEXT.PANEL_SYSTEM_DELETE_FEED_DESCRIPTION}
-              icon={<DeleteIcon />}
-              action={goToDeleteFeed}
-            />
-          </Grid>
-          <Grid item xs={12} md={6} lg={4}>
-            <AdminTile
               id={"whereUsed"}
-              text={TEXT.PANEL_SYSTEM_WHERE_USED}
-              description={TEXT.PANEL_SYSTEM_WHERE_USED_DESCRIPTION}
+              text={TEXT_WHERE_USED}
+              description={TEXT_WHERE_USED_DESCRIPTION}
               icon={<ZoomOutMapIcon />}
               action={goToWhereUsed}
             />
@@ -180,40 +226,54 @@ const SystemBase = ({ props, authUser }) => {
           <Grid item xs={12} md={6} lg={4}>
             <AdminTile
               id={"merge"}
-              text={TEXT.PANEL_SYTEM_MERGE}
-              description={TEXT.PANEL_SYSTEM_MERGE_DESCRICPTION}
+              text={TEXT_MERGE_PRODUCTS}
+              description={TEXT_MERGE_PRODUCT_DESCRIPTION}
               icon={<CallMergeIcon />}
               action={goToMergeProducts}
             />
           </Grid>
           <Grid item xs={12} md={6} lg={4}>
             <AdminTile
-              id={"jobs"}
-              text={TEXT.PANEL_SYSTEM_JOBS}
-              description={TEXT.PANEL_SYSTEM_JOBS_DESCRIPTION}
-              icon={<Timelapse />}
-              action={goToJobs}
+              id={"convert"}
+              text={TEXT_CONVERT_PRODUCT_TO_MATERIAL}
+              description={TEXT_CONVERT_PRODUCT_TO_MATERIAL_DESCRIPTION}
+              icon={<CachedIcon />}
+              action={goToConvertProductToMaterial}
             />
           </Grid>
-          <Grid item xs={12} md={6} lg={4}>
-            <AdminTile
-              id={"dbIndices"}
-              text={TEXT.DB_INDICES}
-              description={TEXT.DB_INDICES_DESCRIPTION}
-              icon={<FindInPageIcon />}
-              action={goToDbIndices}
-            />
-          </Grid>
-
-          {/* <Grid item xs={12} md={6} lg={4}>
-            <AdminTile
-              id={"merge"}
-              text={"Temp"}
-              // description={TEXT.PANEL_SYSTEM_MERGE_DESCRICPTION}
-              // icon={<CallMergeIcon />}
-              action={goToTemp}
-            />
-          </Grid> */}
+          {authUser.roles.includes(Role.admin) && (
+            <Grid item xs={12} md={6} lg={4}>
+              <AdminTile
+                id={"jobs"}
+                text={TEXT_JOBS}
+                description={TEXT_JOBS_DESCRIPTION}
+                icon={<TimelapseIcon />}
+                action={goToJobs}
+              />
+            </Grid>
+          )}
+          {authUser.roles.includes(Role.admin) && (
+            <Grid item xs={12} md={6} lg={4}>
+              <AdminTile
+                id={"dbIndices"}
+                text={TEXT_DB_INDICES}
+                description={TEXT_DB_INDICES_DESCRIPTION}
+                icon={<FindInPageIcon />}
+                action={goToDbIndices}
+              />
+            </Grid>
+          )}
+          {authUser.roles.includes(Role.admin) && (
+            <Grid item xs={12} md={6} lg={4}>
+              <AdminTile
+                id={"temp"}
+                text={"Temp"}
+                description={""}
+                icon={<CallMergeIcon />}
+                action={goToTemp}
+              />
+            </Grid>
+          )}
         </Grid>
       </Container>
     </>
@@ -222,7 +282,14 @@ const SystemBase = ({ props, authUser }) => {
 /* ===================================================================
 // ============================ Admin Tile  ==========================
 // =================================================================== */
-const AdminTile = ({ id, text, description, icon, action }) => {
+interface AdminTileProps {
+  id: string;
+  text: string;
+  description: string;
+  icon: JSX.Element;
+  action: () => void;
+}
+const AdminTile = ({id, text, description, icon, action}: AdminTileProps) => {
   const classes = useStyles();
 
   return (
@@ -251,7 +318,7 @@ interface OverviewTileProps {
   id: string;
   onShowRecipes: () => void;
   onShowEvents: () => void;
-  icon: object;
+  icon: JSX.Element;
 }
 const OverviewTile = ({
   id,
@@ -264,7 +331,7 @@ const OverviewTile = ({
   return (
     <Card className={classes.card} key={"card_" + id}>
       <CardHeader
-        title={TEXT.PANEL_OVERVIEW}
+        title={TEXT_OVERVIEW}
         action={
           <IconButton aria-label={"admin Card "}>
             {icon ? icon : <ForwardIcon />}
@@ -277,24 +344,23 @@ const OverviewTile = ({
             <ListItemIcon>
               <FastfoodIcon />
             </ListItemIcon>
-            <ListItemText primary={TEXT.RECIPES} onClick={onShowRecipes} />
+            <ListItemText primary={TEXT_RECIPES} onClick={onShowRecipes} />
           </ListItem>
           <ListItem button>
             <ListItemIcon>
               <EventIcon />
             </ListItemIcon>
-            <ListItemText
-              primary={TEXT.NAVIGATION_EVENTS}
-              onClick={onShowEvents}
-            />
+            <ListItemText primary={TEXT_EVENTS} onClick={onShowEvents} />
           </ListItem>
         </List>
       </CardContent>
     </Card>
   );
 };
-
-const condition = (authUser) => !!authUser.roles.includes(ROLES.ADMIN);
+const condition = (authUser) =>
+  !!authUser &&
+  (!!authUser.roles?.includes(Role.admin) ||
+    !!authUser.roles?.includes(Role.communityLeader));
 
 export default compose(
   withEmailVerification,

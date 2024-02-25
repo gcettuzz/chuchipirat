@@ -2,15 +2,7 @@ import React from "react";
 
 import StylesPdf from "../../constants/stylesGeneralPdf";
 
-import {
-  Document,
-  Page,
-  View,
-  Text,
-  Image,
-  Link,
-  Font,
-} from "@react-pdf/renderer";
+import {Text, Image} from "@react-pdf/renderer";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 
 import {
@@ -19,7 +11,7 @@ import {
   GENERATED_FROM as TEXT_GENERATED_FROM,
 } from "../../constants/text";
 
-import * as IMAGE_REPOSITORY from "../../constants/imageRepository";
+import {ImageRepository} from "../../constants/imageRepository";
 /* ===================================================================
 // ============================ Kopfzeile ============================
 // =================================================================== */
@@ -84,7 +76,7 @@ export const Footer = ({uid, actualDate, authUser}: FooterProps) => {
       </Text>
       <Image
         style={styles.footerImage}
-        src={IMAGE_REPOSITORY.getEnviromentRelatedPicture().PDF_FOOTER_IMAGE}
+        src={ImageRepository.getEnviromentRelatedPicture().PDF_FOOTER_IMAGE}
         fixed
       />
     </React.Fragment>

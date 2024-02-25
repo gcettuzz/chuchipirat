@@ -1,7 +1,9 @@
 //💡 Muss gleich heissen wie das Template-Dokument im Firestore
 enum MailTemplate {
-  newRecipeRequest = "NewRecipeRequest",
+  newRecipePublishRequest = "NewRecipePublishRequest",
+  newReportErrorRequest = "NewReportErrorRequest",
   requestRecipePublished = "RequestRecipePublished",
+  requestReportErrorFixed = "RequestReportErrorFixed",
   requestNewComment = "RequestNewComment",
 }
 

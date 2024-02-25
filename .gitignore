@@ -22,6 +22,7 @@
 .env.production.local
 .env.development
 .env.production
+.env.test
 .firebaseerc
 .imageRepository.js
 .temp.jsx

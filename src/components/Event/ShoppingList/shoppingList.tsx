@@ -60,7 +60,7 @@ import {MoreVert as MoreVertIcon} from "@material-ui/icons";
 
 import useStyles from "../../../constants/styles";
 
-import Firebase from "../../Firebase";
+import Firebase from "../../Firebase/firebase.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import Menuplan, {
   MealRecipe,
@@ -80,7 +80,6 @@ import {
 import Action from "../../../constants/actions";
 import AlertMessage from "../../Shared/AlertMessage";
 import ShoppingListCollection, {
-  ShoppingListProperties,
   ShoppingListTrace,
 } from "./shoppingListCollection.class";
 import ShoppingList, {
@@ -104,11 +103,10 @@ import Event from "../Event/event.class";
 import UnitAutocomplete from "../../Unit/unitAutocomplete";
 import ItemAutocomplete, {MaterialItem, ProductItem} from "./itemAutocomplete";
 import Unit from "../../Unit/unit.class";
-import {AutocompleteChangeReason} from "@material-ui/lab";
 import Recipe, {Recipes} from "../../Recipe/recipe.class";
 import DialogMaterial, {
-  MATERIAL_DIALOG_TYPE,
   MATERIAL_POP_UP_VALUES_INITIAL_STATE,
+  MaterialDialog,
 } from "../../Material/dialogMaterial";
 import {
   FetchMissingDataProps,
@@ -117,8 +115,8 @@ import {
   OnMasterdataCreateProps,
 } from "../Event/event";
 import DialogProduct, {
-  PRODUCT_DIALOG_TYPE,
   PRODUCT_POP_UP_VALUES_INITIAL_STATE,
+  ProductDialog,
 } from "../../Product/dialogProduct";
 import Utils from "../../Shared/utils.class";
 import {
@@ -148,9 +146,8 @@ enum ReducerActions {
 }
 type State = {
   selectedListItem: string | null;
-  isError: boolean;
   isLoading: boolean;
-  error: object;
+  error: Error | null;
   snackbar: Snackbar;
 };
 type DispatchAction = {
@@ -159,9 +156,8 @@ type DispatchAction = {
 };
 const inititialState: State = {
   selectedListItem: null,
-  isError: false,
   isLoading: false,
-  error: {},
+  error: null,
   snackbar: {open: false, severity: "success", message: ""},
 };
 interface ContextMenuSeletedItemsProps {
@@ -199,9 +195,8 @@ const usedRecipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.GENERIC_ERROR:
       return {
         ...state,
-        isError: true,
         isLoading: false,
-        error: action.payload,
+        error: action.payload as Error,
       };
     case ReducerActions.SNACKBAR_SHOW:
       return {
@@ -310,7 +305,7 @@ const EventShoppingListPage = ({
   // ------------------------------------------ */
   if (
     recipeDrawerData.isLoadingData &&
-    recipes.hasOwnProperty(recipeDrawerData.recipe.uid)
+    Object.prototype.hasOwnProperty.call(recipes, recipeDrawerData.recipe.uid)
   ) {
     if (!recipeDrawerData.recipe.name) {
       // Aktualisierte Werte setzen // es wurden erst die Infos aus der
@@ -357,7 +352,7 @@ const EventShoppingListPage = ({
   const onConfirmDialogSelectMenues = async (
     selectedMenues: DialogSelectMenuesForRecipeDialogValues
   ) => {
-    let userInput = (await customDialog({
+    const userInput = (await customDialog({
       dialogType: DialogType.SingleTextInput,
       title: TEXT_NEW_LIST,
       text: GIVE_THE_NEW_SHOPPINGLIST_A_NAME,
@@ -428,10 +423,11 @@ const EventShoppingListPage = ({
     let keepManuallyAddedItems = false;
 
     if (
-      shoppingListCollection.lists[shoppingList?.uid!].properties
+      shoppingList &&
+      shoppingListCollection.lists[shoppingList.uid].properties
         .hasManuallyAddedItems
     ) {
-      let userInput = (await customDialog({
+      const userInput = (await customDialog({
         dialogType: DialogType.selectOptions,
         title: TEXT_MANUALLY_ADDED_PRODUCTS,
         text: TEXT_KEEP_MANUALLY_ADDED_PRODUCTS(TEXT_SHOPPING_LIST),
@@ -527,7 +523,7 @@ const EventShoppingListPage = ({
   const onListElementSelect = async (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
-    let selectedListItem = event.currentTarget.id.split("_")[1];
+    const selectedListItem = event.currentTarget.id.split("_")[1];
 
     if (state.selectedListItem == selectedListItem) {
       // Element bereits aktiv
@@ -547,7 +543,7 @@ const EventShoppingListPage = ({
   const onListElementDelete = async (
     actionEvent: React.MouseEvent<HTMLElement>
   ) => {
-    let selectedList = actionEvent.currentTarget.id.split("_")[1];
+    const selectedList = actionEvent.currentTarget.id.split("_")[1];
 
     if (!selectedList) {
       return;
@@ -579,12 +575,12 @@ const EventShoppingListPage = ({
   const onListElementEdit = async (
     actionEvent: React.MouseEvent<HTMLElement>
   ) => {
-    let selectedList = actionEvent.currentTarget.id.split("_")[1];
+    const selectedList = actionEvent.currentTarget.id.split("_")[1];
     if (!selectedList) {
       return;
     }
 
-    let userInput = (await customDialog({
+    const userInput = (await customDialog({
       dialogType: DialogType.SingleTextInput,
       title: "Namen anpassen",
       singleTextInputProperties: {
@@ -595,12 +591,14 @@ const EventShoppingListPage = ({
     })) as SingleTextInputResult;
 
     if (userInput.valid) {
-      let updatedShoppingListCollection = ShoppingListCollection.editListName({
-        shoppingListCollection: shoppingListCollection,
-        listUidToEdit: selectedList,
-        newName: userInput.input,
-        authUser: authUser,
-      });
+      const updatedShoppingListCollection = ShoppingListCollection.editListName(
+        {
+          shoppingListCollection: shoppingListCollection,
+          listUidToEdit: selectedList,
+          newName: userInput.input,
+          authUser: authUser,
+        }
+      );
       onShoppingCollectionUpdate(updatedShoppingListCollection);
     }
   };
@@ -608,7 +606,7 @@ const EventShoppingListPage = ({
     // Umschiessen und speichern!
     const pressedCheckbox = event.target.name.split("_");
 
-    let item = shoppingList!.list[pressedCheckbox[1]].items.find(
+    const item = shoppingList!.list[pressedCheckbox[1]].items.find(
       (item: ShoppingListItem) =>
         item.item.uid == pressedCheckbox[2] && item.unit == pressedCheckbox[3]
     ) as ShoppingListItem;
@@ -619,9 +617,9 @@ const EventShoppingListPage = ({
   // Kontext-Menü-Handler
   // ------------------------------------------ */
   const onOpenContextMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
-    let pressedButton = event.currentTarget.id.split("_");
+    const pressedButton = event.currentTarget.id.split("_");
 
-    let item = shoppingList?.list[parseInt(pressedButton[1])].items.find(
+    const item = shoppingList?.list[parseInt(pressedButton[1])].items.find(
       (item) => item.item.uid == pressedButton[2]
     );
 
@@ -637,12 +635,15 @@ const EventShoppingListPage = ({
     setContextMenuSelectedItem(CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE);
   };
   const onContextMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    let pressedButton = event.currentTarget.id.split("_");
+    const pressedButton = event.currentTarget.id.split("_");
+    let quantity: number | undefined;
+    let item = {} as ProductItem | MaterialItem | undefined;
+    let updatedShoppingList: ShoppingList;
+    let updatedTrace: ShoppingListTrace;
+    let updatedShoppingListCollection: ShoppingListCollection;
     switch (pressedButton[1]) {
       case Action.EDIT:
-        let item = {} as ProductItem | MaterialItem | undefined;
-
-        let quantity = shoppingList?.list[
+        quantity = shoppingList?.list[
           contextMenuSelectedItem.departmentKey
         ].items.find(
           (item) => item.item.uid == contextMenuSelectedItem.productUid
@@ -668,18 +669,18 @@ const EventShoppingListPage = ({
 
         break;
       case Action.DELETE:
-        let updatedShoppingList = ShoppingList.deleteItem({
+        updatedShoppingList = ShoppingList.deleteItem({
           shoppingListReference: shoppingList!,
           departmentKey: contextMenuSelectedItem.departmentKey,
           unit: contextMenuSelectedItem.unit,
           itemUid: contextMenuSelectedItem.productUid,
         });
 
-        let updatedTrace = ShoppingListCollection.deleteTraceEntry({
+        updatedTrace = ShoppingListCollection.deleteTraceEntry({
           trace: shoppingListCollection.lists[state.selectedListItem!].trace,
           itemUid: contextMenuSelectedItem.productUid,
         });
-        let updatedShoppingListCollection = {
+        updatedShoppingListCollection = {
           ...shoppingListCollection,
           lists: {
             ...shoppingListCollection.lists,
@@ -822,13 +823,13 @@ const EventShoppingListPage = ({
         });
       }
       if (trace) {
-        let tempShoppingListCollection = {...shoppingListCollection};
+        const tempShoppingListCollection = {...shoppingListCollection};
         tempShoppingListCollection.lists[state.selectedListItem!].trace = trace;
         onShoppingCollectionUpdate(tempShoppingListCollection);
       }
     } else {
       // Bestehende Position ändern
-      let item = shoppingList?.list[
+      const item = shoppingList?.list[
         contextMenuSelectedItem.departmentKey
       ].items.find(
         (item) =>
@@ -903,7 +904,7 @@ const EventShoppingListPage = ({
       return;
     }
 
-    if (recipes.hasOwnProperty(recipeUid)) {
+    if (Object.prototype.hasOwnProperty.call(recipes, recipeUid)) {
       recipe = recipes[recipeUid] as Recipe;
       openDrawer = true;
     } else {
@@ -936,7 +937,7 @@ const EventShoppingListPage = ({
   };
   return (
     <React.Fragment>
-      {state.isError && (
+      {state.error && (
         <Grid item key={"error"} xs={12}>
           <AlertMessage
             error={state.error}
@@ -981,15 +982,7 @@ const EventShoppingListPage = ({
             </Grid>
             <Grid item xs={12}>
               <EventShoppingListList
-                menueplan={menuplan}
                 shoppingList={shoppingList}
-                shoppingListProperties={
-                  shoppingListCollection.lists[state.selectedListItem]
-                    ?.properties
-                }
-                shoppingListTrace={
-                  shoppingListCollection.lists[state.selectedListItem]?.trace
-                }
                 onCheckboxClick={onCheckboxClick}
                 onOpenContexMenü={onOpenContextMenu}
               />
@@ -1047,7 +1040,6 @@ const EventShoppingListPage = ({
               contextMenuSelectedItem.productUid
             ]
           }
-          menuePlan={menuplan}
           sortedMenues={traceItemDialogValues.sortedMenues}
           hasBeenManualyEdited={Boolean(
             shoppingList!.list[
@@ -1072,11 +1064,6 @@ const EventShoppingListPage = ({
           firebase={firebase}
           authUser={authUser}
           onClose={onRecipeDrawerClose}
-          onAddToEvent={() => {}}
-          onEditRecipeMealPlan={() => {}}
-          onRecipeUpdate={() => {}}
-          onSwitchEditMode={() => {}}
-          onRecipeDelete={() => {}}
         />
       )}
     </React.Fragment>
@@ -1086,18 +1073,12 @@ const EventShoppingListPage = ({
 // ========================= Einkaufsliste ===========================
 // =================================================================== */
 interface EventShoppingListListProps {
-  menueplan: Menuplan;
   shoppingList: ShoppingList;
-  shoppingListProperties: ShoppingListProperties;
-  shoppingListTrace: ShoppingListTrace;
   onCheckboxClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onOpenContexMenü: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 const EventShoppingListList = ({
-  menueplan,
   shoppingList,
-  shoppingListProperties,
-  shoppingListTrace,
   onCheckboxClick,
   onOpenContexMenü,
 }: EventShoppingListListProps) => {
@@ -1308,7 +1289,6 @@ const DialogHandleItem = ({
   onMaterialCreate: onMaterialCreateSuper,
   onProductCreate: onProductCreateSuper,
 }: DialogHandleItemProps) => {
-  const classes = useStyles();
   const {customDialog} = useCustomDialog();
 
   const [dialogValues, setDialogValues] = React.useState(
@@ -1338,9 +1318,7 @@ const DialogHandleItem = ({
   // ------------------------------------------ */
   const onChangeItem = async (
     event: React.ChangeEvent<HTMLInputElement>,
-    newValue: string | MaterialItem | ProductItem | null,
-    action: AutocompleteChangeReason,
-    objectId: string
+    newValue: string | MaterialItem | ProductItem | null
   ) => {
     if (typeof newValue === "string" || !newValue) {
       return;
@@ -1348,7 +1326,7 @@ const DialogHandleItem = ({
 
     if (newValue.name.endsWith(TEXT_ADD)) {
       // Herausfinden ob ein Produkt oder Material angelegt werden soll
-      let userInput = (await customDialog({
+      const userInput = (await customDialog({
         dialogType: DialogType.selectOptions,
         title: TEXT_NEW_ITEM,
         text: TEXT_WHAT_KIND_OF_ITEM_ARE_YOU_CREATING,
@@ -1363,9 +1341,9 @@ const DialogHandleItem = ({
       })) as SingleTextInputResult;
       if (userInput.valid) {
         // Begriff Hinzufügen und Anführzungszeichen entfernen
-        let itemName = newValue?.name.match('".*"')![0].slice(1, -1);
+        const itemName = newValue?.name.match('".*"')![0].slice(1, -1);
 
-        let selectedItemType = parseInt(userInput.input) as ItemType;
+        const selectedItemType = parseInt(userInput.input) as ItemType;
         if (selectedItemType == ItemType.material) {
           // Fenster anzeigen um neues Material zu erfassen
           setMaterialAddPopupValues({
@@ -1394,9 +1372,7 @@ const DialogHandleItem = ({
   };
   const onUnitChange = (
     event: React.ChangeEvent<HTMLInputElement>,
-    newValue: Unit | null,
-    action: AutocompleteChangeReason,
-    objectId: string
+    newValue: Unit | null
   ) => {
     if (newValue) {
       setDialogValues({...dialogValues, unit: newValue.key});
@@ -1434,7 +1410,7 @@ const DialogHandleItem = ({
   // Pop-Up Handler Material/Produkt
   // ------------------------------------------ */
   const onMaterialCreate = (material: Material) => {
-    let item: MaterialItem = {...material, itemType: ItemType.material};
+    const item: MaterialItem = {...material, itemType: ItemType.material};
     setDialogValues({...dialogValues, item: item});
 
     setMaterialAddPopupValues({
@@ -1450,7 +1426,7 @@ const DialogHandleItem = ({
     });
   };
   const onProductCreate = (product: Product) => {
-    let item: ProductItem = {...product, itemType: ItemType.food};
+    const item: ProductItem = {...product, itemType: ItemType.food};
     setDialogValues({...dialogValues, item: item});
 
     setProductAddPopupValues({
@@ -1524,8 +1500,11 @@ const DialogHandleItem = ({
 
       <DialogMaterial
         materialName={materialAddPopupValues.name}
+        materialUid={materialAddPopupValues.uid}
+        materialType={materialAddPopupValues.type}
+        materialUsable={materialAddPopupValues.usable}
         materials={materials}
-        dialogType={MATERIAL_DIALOG_TYPE.CREATE}
+        dialogType={MaterialDialog.CREATE}
         dialogOpen={materialAddPopupValues.popUpOpen}
         handleOk={onMaterialCreate}
         handleClose={onCloseDialogMaterial}
@@ -1533,7 +1512,10 @@ const DialogHandleItem = ({
       />
       <DialogProduct
         productName={productAddPopupValues.name}
-        dialogType={PRODUCT_DIALOG_TYPE.CREATE}
+        productUid={productAddPopupValues.uid}
+        productUsable={productAddPopupValues.usable}
+        productDietProperties={productAddPopupValues.dietProperties}
+        dialogType={ProductDialog.CREATE}
         dialogOpen={productAddPopupValues.popUpOpen}
         handleOk={onProductCreate}
         handleClose={onCloseDialogProduct}

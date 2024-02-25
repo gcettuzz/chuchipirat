@@ -34,15 +34,12 @@ import {
   GROUP_CONFIGURATION_SETTINGS as TEXT_GROUP_CONFIGURATION_SETTINGS,
   GROUP_CONFIGURATION_SETTINGS_DESCRIPTION as TEXT_GROUP_CONFIGURATION_SETTINGS_DESCRIPTION,
   GROUPS as TEXT_GROUPS,
-  ADD_INTOLERANCE as TEXT_ADD_INTOLERANCE,
   ADD_DIET as TEXT_ADD_DIET,
   TOTAL as TEXT_TOTAL,
   PORTIONS as TEXT_PORTIONS,
   RENAME as TEXT_RENAME,
   DELETE as TEXT_DELETE,
   INTOLERANCE as TEXT_INTOLERANCE,
-  CANCEL as TEXT_CANCEL,
-  CREATE as TEXT_CREATE,
   DIET_GROUP as TEXT_DIET_GROUP,
   EDIT as TEXT_EDIT,
   ADD as TEXT_ADD,
@@ -60,12 +57,9 @@ import useStyles from "../../../constants/styles";
 import {ButtonAction} from "../../Shared/global.interface";
 import AlertMessage from "../../Shared/AlertMessage";
 import Event from "../Event/event.class";
-import EventGroupConfiguration, {
-  Diet,
-  Intolerance,
-} from "./groupConfiguration.class";
+import EventGroupConfiguration from "./groupConfiguration.class";
 
-import Firebase from "../../Firebase";
+import Firebase from "../../Firebase/firebase.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import {
   DialogType,
@@ -108,7 +102,7 @@ type State = {
   groupConfig: EventGroupConfiguration;
   isError: boolean;
   isLoading: boolean;
-  error: object;
+  error: Error | null;
   snackbar: Snackbar;
 };
 
@@ -116,7 +110,7 @@ const inititialState: State = {
   groupConfig: EventGroupConfiguration.factory(),
   isError: false,
   isLoading: false,
-  error: {},
+  error: null,
   snackbar: {open: false, severity: "success", message: ""},
 };
 
@@ -137,7 +131,7 @@ const groupConfigurationReducer = (
       return {
         ...state,
         isError: true,
-        error: action.payload,
+        error: action.payload as Error,
       };
     case ReducerActions.UPDATE_GROUP_CONFIG:
       return {
@@ -214,6 +208,12 @@ const EventGroupConfigurationPage = ({
       type: ReducerActions.UPDATE_FIELD,
       payload: {field: "uid", value: event.uid},
     });
+    if (groupConfiguration) {
+      dispatch({
+        type: ReducerActions.UPDATE_GROUP_CONFIG,
+        payload: groupConfiguration,
+      });
+    }
   }
   if (groupConfiguration) {
     if (
@@ -227,6 +227,7 @@ const EventGroupConfigurationPage = ({
       });
     }
   }
+
   /* ------------------------------------------
   // Navigation-Handler
   // ------------------------------------------ */
@@ -244,7 +245,7 @@ const EventGroupConfigurationPage = ({
       firebase: firebase,
       authUser: authUser,
       groupConfig: state.groupConfig,
-    }).then((result) => {
+    }).then(() => {
       onConfirm?.onClick && onConfirm.onClick(event, state.groupConfig);
     });
   };
@@ -301,9 +302,9 @@ const EventGroupConfigurationPage = ({
   // ------------------------------------------ */
   const onPortionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     let updatedGroupConfig = {...state.groupConfig};
-    let changedField = event.target.id.split("_");
-    let changedDiet = changedField[1];
-    let changedIntolerance = changedField[2];
+    const changedField = event.target.id.split("_");
+    const changedDiet = changedField[1];
+    const changedIntolerance = changedField[2];
 
     updatedGroupConfig.portions[changedDiet][changedIntolerance] = Number.isNaN(
       parseInt(event.target.value)
@@ -327,7 +328,7 @@ const EventGroupConfigurationPage = ({
   // Kontex-Menü-Befehle
   // ------------------------------------------ */
   const openIntoleranceContextMenu = (event: React.MouseEvent<HTMLElement>) => {
-    let pressedButton = event.currentTarget.id.split("_");
+    const pressedButton = event.currentTarget.id.split("_");
     setContextMenuSelectedItem({
       dietUid: "",
       intoleranceUid: pressedButton[2],
@@ -335,7 +336,7 @@ const EventGroupConfigurationPage = ({
     setContextMenuAnchorElement(event.currentTarget);
   };
   const openDietContextMenu = (event: React.MouseEvent<HTMLElement>) => {
-    let pressedButton = event.currentTarget.id.split("_");
+    const pressedButton = event.currentTarget.id.split("_");
 
     setContextMenuSelectedItem({
       intoleranceUid: "",
@@ -369,16 +370,16 @@ const EventGroupConfigurationPage = ({
 
     if (userInput.valid && userInput.input != "") {
       if (contextMenuSelectedItem.dietUid) {
-        let diets = {...state.groupConfig.diets};
-        let diet = diets.entries[contextMenuSelectedItem.dietUid];
+        const diets = {...state.groupConfig.diets};
+        const diet = diets.entries[contextMenuSelectedItem.dietUid];
         diet.name = userInput.input;
         dispatch({
           type: ReducerActions.UPDATE_FIELD,
           payload: {field: "diets", value: diets},
         });
       } else if (contextMenuSelectedItem.intoleranceUid) {
-        let updatedIntolerances = {...state.groupConfig.intolerances};
-        let intolerance =
+        const updatedIntolerances = {...state.groupConfig.intolerances};
+        const intolerance =
           updatedIntolerances.entries[contextMenuSelectedItem.intoleranceUid];
         intolerance.name = userInput.input;
         dispatch({
@@ -472,13 +473,12 @@ const EventGroupConfigurationPage = ({
       payload: {},
     });
   };
-
   return (
     <React.Fragment>
       {state.isError && (
         <Grid item key={"error"} xs={12}>
           <AlertMessage
-            error={state.error}
+            error={state.error as Error}
             messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
           />
         </Grid>
@@ -762,7 +762,7 @@ const EventGroupConfigDietColumn = ({
 }: EventGroupConfigDietColumnProps) => {
   const classes = useStyles();
 
-  let gridSize = Math.floor(
+  const gridSize = Math.floor(
     12 / Object.keys(groupConfig.diets.entries).length
   ) as GridSize;
   return (

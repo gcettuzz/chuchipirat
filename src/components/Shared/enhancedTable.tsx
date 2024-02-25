@@ -12,17 +12,9 @@ import Checkbox from "@material-ui/core/Checkbox";
 import Chip from "@material-ui/core/Chip";
 
 import useStyles from "../../constants/styles";
-import {IconButton, TextField, Typography, Link} from "@material-ui/core";
+import {IconButton, Typography, Link} from "@material-ui/core";
 import Utils from "./utils.class";
-
-//TS_MIGRATION: löschen
-export const TABLE_COLUMN_TYPES = {
-  NUMBER: "number",
-  STRING: "string",
-  DATE: "date",
-  BUTTON: "button",
-  CHECKBOX: "checkbox",
-};
+import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 
 export enum TableColumnTypes {
   number = "number",
@@ -51,14 +43,18 @@ export interface Column {
   disablePadding: boolean;
   label: string;
   visible: boolean;
-  iconButton?: object;
+  iconButton?: JSX.Element;
+  monoSpaces?: boolean;
 }
 
 type Order = "asc" | "desc";
 
-function stableSort(array: object[], comparator: (a: any, b: any) => number) {
+function stableSort(
+  array: Record<string, unknown>[],
+  comparator: (a: any, b: any) => number
+) {
   const stabilizedThis = array.map(
-    (el, index) => [el, index] as [object, number]
+    (el, index) => [el, index] as [Record<string, unknown>, number]
   );
   stabilizedThis.sort((a, b) => {
     const order = comparator(a[0], b[0]);
@@ -95,14 +91,14 @@ const getComparator = <Key extends keyof any>(
 // ATTENTION: Wird mit den Icons gearbeitet um einen Eintrag zu ändern,
 // kann immer nur eine Zeile bearbeitet werden.
 interface EnhancedTableProps {
-  tableData: object[];
+  tableData: ValueObject[];
   tableColumns: Column[];
   keyColum: string;
-  onIconClick: (
+  onIconClick?: (
     event: React.MouseEvent<HTMLSpanElement, MouseEvent>,
     row: any
   ) => void;
-  onRowClick: (
+  onRowClick?: (
     event: React.MouseEvent<HTMLTableRowElement, MouseEvent>,
     rowId: string
   ) => void;
@@ -129,7 +125,7 @@ const EnhancedTable = ({
   };
 
   return (
-    <TableContainer>
+    <TableContainer style={{width: "100%"}}>
       <Table
         className={classes.table}
         aria-labelledby="tableTitle"
@@ -174,14 +170,19 @@ const EnhancedTable = ({
 //     iconButton: <EditIcon />
 //   },...
 // id der Spalte entspricht der Zelle im Array
-
+interface EnhancedTableHeadProps {
+  tableColumns: Column[];
+  order: Order;
+  orderBy: string;
+  onRequestSort: (event: React.MouseEvent<unknown>, property: string) => void;
+  rowCount: number;
+}
 const EnhancedTableHead = ({
   tableColumns,
   order,
   orderBy,
-  rowCount,
   onRequestSort,
-}) => {
+}: EnhancedTableHeadProps) => {
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
   };
@@ -228,16 +229,16 @@ EnhancedTableHead.propTypes = {
 // ========================== Tabellenkörper =========================
 // ===================================================================
 interface EnhancedTableBodyProps {
-  tableData: object[];
+  tableData: Record<string, unknown>[];
   tableColumns: Column[];
   keyColum: string;
   order: Order;
   orderBy: string;
-  onIconClick: (
+  onIconClick?: (
     event: React.MouseEvent<HTMLSpanElement, MouseEvent>,
     row: any
   ) => void;
-  onRowClick: (
+  onRowClick?: (
     event: React.MouseEvent<HTMLTableRowElement, MouseEvent>,
     rowKey: string
   ) => void;
@@ -251,17 +252,23 @@ const EnhancedTableBody = ({
   onIconClick,
   onRowClick,
 }: EnhancedTableBodyProps) => {
+  const classes = useStyles();
+
   return (
     <TableBody>
       {stableSort(tableData, getComparator(order, orderBy)).map((row) => {
+        const rowKey = row[keyColumn] as string; // Hier wird der Typ von row[keyColumn] als string angenommen
+
         return (
           <TableRow
             hover
             tabIndex={-1}
-            key={row[keyColumn]}
-            onClick={(event) => onRowClick(event, row[keyColumn])}
+            key={rowKey}
+            onClick={(event) => {
+              onRowClick && onRowClick(event, rowKey);
+            }}
           >
-            {tableColumns.map((column, index) => {
+            {tableColumns.map((column) => {
               let cellValue: any = "";
 
               if (column.id.includes(".")) {
@@ -285,7 +292,15 @@ const EnhancedTableBody = ({
                       </TableCell>
                     );
                   case TableColumnTypes.string:
-                    return (
+                    return column.monoSpaces ? (
+                      <TableCell
+                        align={column.textAlign}
+                        key={row[keyColumn] + "_cell_" + column.id}
+                        className={classes.typographyCode}
+                      >
+                        {cellValue}
+                      </TableCell>
+                    ) : (
                       <TableCell
                         align={column.textAlign}
                         key={row[keyColumn] + "_cell_" + column.id}
@@ -314,7 +329,7 @@ const EnhancedTableBody = ({
                           color="primary"
                           component="span"
                           id={row[keyColumn] + "_button_" + column.id}
-                          onClick={(event) => onIconClick(event, row)}
+                          onClick={(event) => onIconClick!(event, row)}
                         >
                           {column.iconButton}
                         </IconButton>
@@ -328,7 +343,7 @@ const EnhancedTableBody = ({
                       >
                         <Checkbox
                           disabled
-                          checked={row[column.id]}
+                          checked={row[column["id"]] as boolean}
                           color="primary"
                         />
                       </TableCell>

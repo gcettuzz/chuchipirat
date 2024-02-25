@@ -1,6 +1,8 @@
 import Firebase from "../Firebase/firebase.class";
 import {AuthUser} from "../Firebase/Authentication/authUser.class";
-import RequestRecipeReview from "./request.recipeReview.class";
+import {RequestPublishRecipe} from "./internal";
+import {RequestReportError} from "./internal";
+
 import {
   STATUS_NAME as TEXT_STATUS_NAME,
   REQUEST_TYPE as TEXT_REQUEST_TYPE,
@@ -12,7 +14,6 @@ import {
   ValueObject,
 } from "../Firebase/Db/firebase.db.super.class";
 
-import FirebaseDbRequestRecipeReview from "../Firebase/Db/firebase.db.request.recipeReview.class";
 import Role from "../../constants/roles";
 import MailTemplate from "../../constants/mailTemplates";
 
@@ -30,11 +31,6 @@ export interface UpdateStatus {
   firebase: Firebase;
   request: Request;
   nextStatus: RequestStatus;
-  authUser: AuthUser;
-}
-
-interface GetAllActiveRequests {
-  firebase: Firebase;
   authUser: AuthUser;
 }
 
@@ -73,7 +69,7 @@ interface CreateChangeLogEntry {
   action: RequestAction;
   changeLog: ChangeLog[];
   authUser: AuthUser;
-  newValue: Object;
+  newValue: Record<string, unknown>;
 }
 
 export interface TransitionPostFunction {
@@ -108,20 +104,20 @@ export interface GetRequestObjectByType {
   requestType: RequestType;
 }
 
-export interface RequestAuthor {
+export type RequestAuthor = {
   uid: string;
   displayName: string;
   firstName: string;
   lastName: string;
   email: string;
   pictureSrc: string;
-}
+};
 
-export interface RequestAssignee {
+export type RequestAssignee = {
   uid: string;
   displayName: string;
   pictureSrc: string;
-}
+};
 
 export enum RequestAction {
   none = "",
@@ -142,11 +138,12 @@ export enum RequestStatus {
 export interface RequestTransition {
   fromState: RequestStatus | "*";
   toState: RequestStatus;
-  description: String;
+  description: string;
 }
 
 export enum RequestType {
-  recipeReview = "recipeReview",
+  recipePublish = "recipePublish",
+  reportError = "reportError",
 }
 
 interface NumberStorage {
@@ -163,10 +160,10 @@ export interface ChangeLog {
   date: Date;
   user: {uid: string; displayName: string};
   action: RequestAction;
-  newValue: Object;
+  newValue: Record<string, unknown>;
 }
 
-export default abstract class Request {
+export abstract class Request {
   abstract uid: string;
   abstract number: number;
   abstract status: RequestStatus;
@@ -199,19 +196,14 @@ export default abstract class Request {
       authUser: authUser,
     });
 
-    // Pointer zu richtigem Verzeichnis holen
-    let firebasePointer = this.getRequestFirebasePointer({
-      firebase: firebase,
-    });
-
-    await firebasePointer.numberStorage
+    await firebase.request.numberStorage
       .read<NumberStorage>({uids: []})
       .then((result) => {
         this.number = result.counter + 1;
       })
       .then(async () => {
         // File erstellen
-        await firebasePointer.active
+        await firebase.request.active
           .create<Request>({value: this, uids: [], authUser: authUser})
           .then((result) => {
             this.uid = result.uid;
@@ -222,7 +214,7 @@ export default abstract class Request {
       })
       .then(async () => {
         // im Log nummer hochzählen...
-        await firebasePointer.numberStorage
+        await firebase.request.numberStorage
           .incrementField({
             uids: [],
             field: "counter",
@@ -234,7 +226,7 @@ export default abstract class Request {
       })
       .then(async () => {
         // Log-File mit neu erzeugtem Request
-        await firebasePointer.log.update({
+        await firebase.request.log.update({
           uids: [],
           value: {
             uid: this.uid,
@@ -261,6 +253,7 @@ export default abstract class Request {
         });
       })
       .catch((error) => {
+        console.error(error);
         throw error;
       });
     return this.number;
@@ -276,11 +269,38 @@ export default abstract class Request {
    * Postfunction nach einem Übergang.
    * @param param0 - Neuer Status (nach Übergang)
    */
-  abstract transitionPostFunction({
+  static transitionPostFunction = ({
     firebase,
     authUser,
     request,
-  }: TransitionPostFunction): void;
+  }: TransitionPostFunction) => {
+    switch (request.requestType) {
+      case RequestType.recipePublish:
+        RequestPublishRecipe.transitionPostFunction({
+          request: request,
+          firebase: firebase,
+          authUser: authUser,
+        });
+        break;
+      case RequestType.reportError:
+        RequestReportError.transitionPostFunction({
+          request: request,
+          firebase: firebase,
+          authUser: authUser,
+        });
+        break;
+      default:
+        throw new Error("RequestType unbekannt.");
+    }
+
+    if (request.status === RequestStatus.done) {
+      Request.closeRequest({
+        request: request,
+        firebase: firebase,
+        authUser: authUser,
+      });
+    }
+  };
   // ===================================================================== */
   /**
    * RequestObjekt vorbereiten für die Erstellung des Request vorbereiten
@@ -339,8 +359,10 @@ export default abstract class Request {
    */
   static getRequestObjectByType({requestType}: GetRequestObjectByType) {
     switch (requestType) {
-      case RequestType.recipeReview:
-        return new RequestRecipeReview();
+      case RequestType.recipePublish:
+        return new RequestPublishRecipe();
+      case RequestType.reportError:
+        return new RequestReportError();
       default:
         throw new Error("RequestType unbekannt.");
     }
@@ -375,15 +397,7 @@ export default abstract class Request {
    */
   abstract prepareObjectForRequestCreation<T extends ValueObject>({
     requestObject,
-  }: PrepareObjectForRequestCreation<T>): object;
-  // ===================================================================== */
-  /**
-   * Pointer auf richtige Firebaseklasse
-   * @abstract
-   */
-  abstract getRequestFirebasePointer({
-    firebase,
-  }: GetRequestFirebasePointer): FirebaseDbRequestRecipeReview;
+  }: PrepareObjectForRequestCreation<T>): Record<string, unknown>;
   // ===================================================================== */
   /**
    * Mögliche Postfunction nach dem anlegen des Requests
@@ -398,53 +412,28 @@ export default abstract class Request {
 
   // ===================================================================== */
   /**
-   * Alle aktiven Requests holen. Je nachdem ob der User ein Content-Admin ist,
-   * werden nur die eigenen oder alle aktiven Requests geholt.
-   * ℹ️ hier muss für jede neue Klasse die entsprechende Methode ergänzt werden
-   * @param param0 - Objekt mit Firebase-Referenz und authUser
-   */
-  static getAllActiveRequests({
-    firebase,
-    authUser,
-  }: GetAllActiveRequests): Promise<Request[]> {
-    return new RequestRecipeReview()
-      .getActiveRequests({
-        firebase: firebase,
-        authUser: authUser,
-      })
-      .then((result) => {
-        return result;
-      });
-  }
-
-  // ===================================================================== */
-  /**
    * Alle (pro Typ) aktiven Requests holen. Je nachdem ob der User ein
    * Content-Admin ist, werden nur die eigenen oder alle aktiven Requests geholt.
    * 💡 Diese Methode für jede Klasse ausgeführt (Vererbung)
    * @param param0 - Objekt mit Firebase-Referenz und authUser
    */
-  async getActiveRequests({firebase, authUser}: GetActiveRequests) {
+  static async getActiveRequests({firebase, authUser}: GetActiveRequests) {
     let requests: Request[] = [];
-    // Pointer zu richtigem Verzeichnis holen
-    let firebasePointer = this.getRequestFirebasePointer({
-      firebase: firebase,
-    });
 
     if (authUser.roles.includes(Role.communityLeader)) {
-      await firebasePointer.active
+      await firebase.request.active
         .readCollection<Request>({
           uids: [],
           orderBy: {field: "number", sortOrder: SortOrder.asc},
-          limit: 1000,
+          limit: 100,
         })
         .then((result) => (requests = result));
     } else {
-      await firebasePointer.active
+      await firebase.request.active
         .readCollection<Request>({
           uids: [],
           orderBy: {field: "number", sortOrder: SortOrder.asc},
-          limit: 1000,
+          limit: 100,
           where: [
             {
               field: "author.uid",
@@ -459,52 +448,28 @@ export default abstract class Request {
   }
   // ===================================================================== */
   /**
-   * Alle abgeschlossenen Requests holen. Je nachdem ob der User ein
-   * Content-Admin ist, werden nur die eigenen oder alle geschlossenen Requests
-   * geholt. ℹ️ hier muss für jede neue Klasse die entsprechende Methode ergänzt werden
-   * @param Object - Objekt mit Firebase-Referenz und authUser
-   */
-  static getAllClosedRequests({
-    firebase,
-    authUser,
-  }: GetAllClosedRequests): Promise<Request[]> {
-    return new RequestRecipeReview()
-      .getClosedRequests({
-        firebase: firebase,
-        authUser: authUser,
-      })
-      .then((result) => {
-        return result;
-      });
-  }
-  // ===================================================================== */
-  /**
    * Alle geschlossenen Requests holen (dieser Klasse). Je nachdem ob der User ein
    * Content-Admin ist, werden nur die eigenen oder alle aktiven Requests geholt.
    * 💡 Diese Methode für jede Klasse ausgeführt (Vererbung).
    * @param param0 - Objekt mit Firebase-Referenz und authUser
    */
-  async getClosedRequests({firebase, authUser}: GetAllClosedRequests) {
+  static async getClosedRequests({firebase, authUser}: GetAllClosedRequests) {
     let requests: Request[] = [];
-    // Pointer zu richtigem Verzeichnis holen
-    let firebasePointer = this.getRequestFirebasePointer({
-      firebase: firebase,
-    });
 
     if (authUser.roles.includes(Role.communityLeader)) {
-      await firebasePointer.closed
+      await firebase.request.closed
         .readCollection<Request>({
           uids: [],
           orderBy: {field: "number", sortOrder: SortOrder.asc},
-          limit: 1000,
+          limit: 100,
         })
         .then((result) => (requests = result));
     } else {
-      await firebasePointer.closed
+      await firebase.request.closed
         .readCollection<Request>({
           uids: [],
           orderBy: {field: "number", sortOrder: SortOrder.asc},
-          limit: 1000,
+          limit: 100,
           where: [
             {
               field: "author.uid",
@@ -528,14 +493,6 @@ export default abstract class Request {
     nextStatus,
     authUser,
   }: UpdateStatus) {
-    let requestWrapper = Request.getRequestObjectByType({
-      requestType: request.requestType,
-    });
-
-    let firebasePointer = requestWrapper.getRequestFirebasePointer({
-      firebase: firebase,
-    });
-
     request.status = nextStatus;
 
     request.changeLog = Request.createChangeLogEntry({
@@ -545,7 +502,7 @@ export default abstract class Request {
       newValue: {status: request.status},
     });
 
-    firebasePointer.active.updateFields({
+    firebase.request.active.updateFields({
       uids: [request.uid],
       values: {
         status: request.status,
@@ -554,21 +511,22 @@ export default abstract class Request {
       authUser: authUser,
     });
 
-    let logField = {};
+    const logField = {};
     logField[`${request.uid}.status`] = request.status;
 
-    firebasePointer.log.updateFields({
+    firebase.request.log.updateFields({
       uids: [],
       values: logField,
       authUser: authUser,
     });
 
     // PostFunction...
-    requestWrapper.transitionPostFunction({
+    Request.transitionPostFunction({
       request: request,
       firebase: firebase,
       authUser: authUser,
     });
+
     return request;
   }
 
@@ -599,8 +557,10 @@ export default abstract class Request {
   }: GetNextPossibleTransitions) {
     if (status) {
       switch (requestType) {
-        case RequestType.recipeReview:
-          return RequestRecipeReview.getNextPossibleTransitions(status);
+        case RequestType.recipePublish:
+          return RequestPublishRecipe.getNextPossibleTransitions(status);
+        case RequestType.reportError:
+          return RequestReportError.getNextPossibleTransitions(status);
         default:
           return [] as RequestTransition[];
         // throw new Error(
@@ -617,14 +577,6 @@ export default abstract class Request {
    * @param param0 - AuthUser.
    */
   static async assignToMe({request, firebase, authUser}: AssignToMe) {
-    let requestWrapper = Request.getRequestObjectByType({
-      requestType: request.requestType,
-    });
-
-    let firebasePointer = requestWrapper.getRequestFirebasePointer({
-      firebase: firebase,
-    });
-
     request.assignee = {
       displayName: authUser.publicProfile.displayName,
       pictureSrc: authUser.publicProfile.pictureSrc.normalSize,
@@ -637,7 +589,7 @@ export default abstract class Request {
       newValue: {asignee: request.assignee},
     });
 
-    firebasePointer.active.updateFields({
+    firebase.request.active.updateFields({
       uids: [request.uid],
       values: {
         assignee: request.assignee,
@@ -654,13 +606,6 @@ export default abstract class Request {
    * @param object - request, Kommentar, Firebase, AuthUser.
    */
   static async addComment({request, comment, firebase, authUser}: AddComment) {
-    let requestWrapper = Request.getRequestObjectByType({
-      requestType: request.requestType,
-    });
-
-    let firebasePointer = requestWrapper.getRequestFirebasePointer({
-      firebase: firebase,
-    });
     request.comments.push({
       comment: comment,
       date: new Date(),
@@ -670,7 +615,7 @@ export default abstract class Request {
         uid: authUser.uid,
       },
     });
-    firebasePointer.active
+    firebase.request.active
       .updateFields({
         uids: [request.uid],
         values: {comments: request.comments},
@@ -683,13 +628,13 @@ export default abstract class Request {
           firebase.cloudFunction.mailUser.triggerCloudFunction({
             values: {
               templateData: {
-                pictureUrl: request.requestObject.pictureSrc,
+                headerPictureSrc: request.requestObject.pictureSrc,
                 requestNumber: request.number,
                 commentAuthor: authUser.publicProfile.displayName,
                 comment: comment,
               },
               recipientUid:
-                request.author.uid == authUser.uid
+                request.author.uid === authUser.uid
                   ? request.assignee.uid
                   : request.author.uid,
               mailTemplate: MailTemplate.requestNewComment,
@@ -710,29 +655,32 @@ export default abstract class Request {
    * Aus dem Aktiven Folder herausnehmen und in den Abgeschlossenen verschieben
    * @param object - request der verschoeben werden soll (+firebase und AuthUser).
    */
-  closeRequest({request, firebase, authUser}: CloseRequest) {
-    let requestWrapper = Request.getRequestObjectByType({
-      requestType: request.requestType,
-    });
-    let firebasePointer = requestWrapper.getRequestFirebasePointer({
-      firebase: firebase,
-    });
-
-    firebasePointer.closed.set({
-      uids: [request.uid],
-      value: request,
-      authUser: authUser,
-    });
-    firebasePointer.active.delete({uids: [request.uid]});
+  static closeRequest({request, firebase, authUser}: CloseRequest) {
+    firebase.request.closed
+      .set({
+        uids: [request.uid],
+        value: request,
+        authUser: authUser,
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+    firebase.request.active.delete({uids: [request.uid]});
 
     // Log updaten
-    let logField = {};
+    const logField = {};
     logField[`${request.uid}.status`] = request.status;
 
-    firebasePointer.log.updateFields({
-      uids: [],
-      values: logField,
-      authUser: authUser,
-    });
+    firebase.request.log
+      .updateFields({
+        uids: [],
+        values: logField,
+        authUser: authUser,
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
   }
 }

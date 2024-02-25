@@ -19,7 +19,7 @@ export default class HelpCenter {
     navigationObject,
     action,
   }: GetMatchingHelpPage) => {
-    let path = actualPath.split("/");
+    const path = actualPath.split("/");
     let subdirectory = "";
     let page = "";
 
@@ -74,14 +74,35 @@ export default class HelpCenter {
 
         break;
       case ROUTES.PRODUCTS:
-        subdirectory = "admin";
+        subdirectory = "masterdata";
         page = "products";
+        break;
+      case ROUTES.MATERIALS:
+        subdirectory = "masterdata";
+        page = "materials";
         break;
       case ROUTES.REQUEST_OVERVIEW:
         subdirectory = "request";
         page = "requests";
         break;
+      case ROUTES.UNITS:
+        subdirectory = "masterdata";
+        page = "units";
+        break;
+      case ROUTES.UNITCONVERSION:
+        subdirectory = "masterdata";
+        page = "unitconversion";
+        break;
+      case ROUTES.DEPARTMENTS:
+        subdirectory = "masterdata";
+        page = "departments";
+        break;
+      case ROUTES.SYSTEM:
+        subdirectory = "admin";
+        page = "admin";
+        break;
       default:
+        console.info(path[1]);
         subdirectory = "";
     }
 

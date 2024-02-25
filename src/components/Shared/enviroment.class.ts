@@ -1,4 +1,4 @@
-import Firebase from "../Firebase";
+import Firebase from "../Firebase/firebase.class";
 
 interface GetActualVersion {
   firebase: Firebase;

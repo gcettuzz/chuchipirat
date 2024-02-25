@@ -6,18 +6,24 @@ import {ERROR_PARAMETER_NOT_PASSED} from "../../../constants/text";
 
 import Firebase from "../firebase.class";
 import {AuthUser} from "../Authentication/authUser.class";
+import {ValueObject} from "./firebase.db.super.class";
+import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
 
 export enum CloudFunctionType {
-  userDiplayName = "userDisplayName",
-  userMotto = "userMotto",
-  userPictureSrc = "userPictureSrc",
+  userDiplayNameUpdate = "userDisplayNameUpdate",
+  userMottoUpdate = "userMottoUpdate",
+  userPictureSrcUpdate = "userPictureSrcUpdate",
   recipeUpdate = "recipeUpdate",
   recipeDelete = "recipeDelete",
   recipeTrace = "recipeTrace",
+  productUpdate = "productUpdate",
   recipeReviewMailCommunityLeaders = "recipeReviewMailCommunityLeaders",
   requestPublishRecipe = "requestPublishRecipe",
   mailUser = "mailUser",
   dailySummary = "dailySummary",
+  feedsDelete = "feedsDelete",
+  mergeProducts = "mergeProducts",
+  convertProductToMaterial = "convertProductToMaterial",
 }
 
 interface CreateDocumentForCloudFunctionsTrigger {
@@ -33,9 +39,17 @@ interface UpdateLog {
   cloudFunctionType: CloudFunctionType;
   authUser: AuthUser;
 }
+interface UpdateCounter {
+  cloudFunctionType: CloudFunctionType;
+}
+interface Listen<T> {
+  uids: string[];
+  callback: (T) => void;
+}
 
 export abstract class FirebaseDbCloudFunctionSuper {
   abstract firebase: Firebase;
+  abstract getDocument(uids?: string[]): DocumentReference;
   abstract getCollection(uid?: string): CollectionReference;
   abstract getCloudFunctionType(): CloudFunctionType;
 
@@ -78,7 +92,35 @@ export abstract class FirebaseDbCloudFunctionSuper {
       })
       .catch((error) => {
         console.error(error);
+        throw error;
       });
+  }
+  /* =====================================================================
+  // Zähler der Cloud-FX hochzählen
+  // ===================================================================== */
+  updateCounter = async ({cloudFunctionType}: UpdateCounter) => {
+    const document = this.firebase.db.doc("_cloudFunctions/functions");
+
+    document
+      .update({
+        [cloudFunctionType]: this.firebase.fieldValue.increment(1),
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  };
+  // ===================================================================== */
+  /**
+   * Bestimmtes Dokument - überwachen
+   * @param param0  Objekt mit UIDs zu Dokument und Callback Funtion
+   */
+  async listen<T extends ValueObject>({uids, callback}: Listen<T>) {
+    const document = this.getDocument(uids);
+
+    return document.onSnapshot((snapshot) => {
+      callback(snapshot.data());
+    });
   }
   // ===================================================================== */
   /**
@@ -87,12 +129,15 @@ export abstract class FirebaseDbCloudFunctionSuper {
    *                und den authUser
    * @returns UID des Dokumentes, das den Trigger ausgelöst hat
    */
-  triggerCloudFunction({values, authUser}: TriggerCloudFunction) {
+  async triggerCloudFunction({values, authUser}: TriggerCloudFunction) {
     const document = this.getCollection().doc();
 
-    this.createDocumentForCloudFunctionsTrigger({
+    await this.createDocumentForCloudFunctionsTrigger({
       document: document,
       values: values,
+    }).catch((error) => {
+      console.error(error);
+      throw error;
     });
 
     this.updateLog({
@@ -100,6 +145,13 @@ export abstract class FirebaseDbCloudFunctionSuper {
       cloudFunctionType: this.getCloudFunctionType(),
       authUser: authUser,
     });
+    this.updateCounter({cloudFunctionType: this.getCloudFunctionType()});
+    this.firebase.analytics.logEvent(
+      FirebaseAnalyticEvent.cloudFunctionExecuted,
+      {
+        function: this.getCloudFunctionType(),
+      }
+    );
 
     return document.id;
   }

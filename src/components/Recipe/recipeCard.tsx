@@ -13,12 +13,12 @@ import {
   CardActionArea,
   Fab,
 } from "@material-ui/core";
-import { Info as InfoIcon, Add as AddIcon } from "@material-ui/icons";
+import {Info as InfoIcon, Add as AddIcon} from "@material-ui/icons";
 
-import { Skeleton, Rating } from "@material-ui/lab";
+import {Skeleton, Rating} from "@material-ui/lab";
 import RecipeShort from "./recipeShort.class";
-import { CARD_PLACEHOLDER_PICTURE } from "../../constants/defaultValues";
-import { OnRecipeCardClickProps } from "./recipes";
+import {CARD_PLACEHOLDER_PICTURE} from "../../constants/defaultValues";
+import {OnRecipeCardClickProps} from "./recipes";
 import {
   DIET_TYPES as TEXT_DIET_TYPES,
   ALLERGENS_FREE_TYPES as TEXT_ALLERGENS_FREE_TYPES,
@@ -28,8 +28,8 @@ import {
 } from "../../constants/text";
 
 import Utils from "../Shared/utils.class";
-import { Allergen, Diet, DietProperties } from "../Product/product.class";
-import { RecipeType } from "./recipe.class";
+import {Allergen, Diet, DietProperties} from "../Product/product.class";
+import {RecipeType} from "./recipe.class";
 // ===================================================================== */
 /**
  * Aktionen in der Recipe Card
@@ -40,7 +40,7 @@ import { RecipeType } from "./recipe.class";
 export interface RecipeCardActions {
   key: string;
   name: string;
-  onClick: ({ event, recipe }: OnRecipeCardClickProps) => void;
+  onClick: ({event, recipe}: OnRecipeCardClickProps) => void;
 }
 
 // ===================================================================== */
@@ -124,7 +124,7 @@ const RecipeCard = ({
     event.preventDefault();
     onFabButtonClickSuper(event);
   };
-  let infoLine = createInfoLine(recipe.dietProperties);
+  const infoLine = createInfoLine(recipe.dietProperties);
 
   return (
     <Card
@@ -135,10 +135,10 @@ const RecipeCard = ({
       <CardActionArea
         id={"recipeCardActionArea_" + recipe.uid}
         onClick={onCardClick}
-        style={{ height: "100%" }}
+        style={{height: "100%"}}
       >
         <div className={classes.card}>
-          <div style={{ overflow: "hidden" }}>
+          <div style={{overflow: "hidden"}}>
             {ribbon && (
               <CardRibbon
                 cssProperty={ribbon.cssProperty}
@@ -184,10 +184,10 @@ const RecipeCard = ({
           <CardContent className={classes.cardContent}>
             {infoLine ? (
               <Grid container spacing={1}>
-                <Grid item xs={1}>
+                <Grid item xs={2}>
                   <InfoIcon fontSize="small" color="action" />
                 </Grid>
-                <Grid item xs={11}>
+                <Grid item xs={10}>
                   <Typography>{infoLine}</Typography>
                 </Grid>
               </Grid>
@@ -214,7 +214,7 @@ const RecipeCard = ({
                   <Typography
                     variant="body2"
                     color="textSecondary"
-                    style={{ marginLeft: "0.5rem" }}
+                    style={{marginLeft: "0.5rem"}}
                   >
                     {`${recipe.rating.noRatings} ${
                       recipe.rating.noRatings === 1 ? TEXT_VOTE : TEXT_VOTES
@@ -225,7 +225,7 @@ const RecipeCard = ({
               <Grid
                 item
                 xs={2}
-                style={{ display: "flex", justifyContent: "flex-end" }}
+                style={{display: "flex", justifyContent: "flex-end"}}
               >
                 {onFabButtonClickSuper ? (
                   <Fab
@@ -234,7 +234,7 @@ const RecipeCard = ({
                     size="small"
                     color="primary"
                     aria-label="add"
-                    style={{ marginBottom: "1em" }}
+                    style={{marginBottom: "1em"}}
                     onMouseDown={(event) => event.stopPropagation()}
                     onClick={onFabButtonClick}
                   >
@@ -303,7 +303,7 @@ export interface CardRibbonProps {
  * @param Object - Siehe CardRibbonProps
  * @returns JSX.Element
  */
-export const CardRibbon = ({ cssProperty, icon, tooltip }: CardRibbonProps) => {
+export const CardRibbon = ({cssProperty, icon, tooltip}: CardRibbonProps) => {
   return (
     <div className={cssProperty}>
       {tooltip ? (
@@ -311,11 +311,11 @@ export const CardRibbon = ({ cssProperty, icon, tooltip }: CardRibbonProps) => {
           {icon}
         </Tooltip>
       ) : (
-        { icon }
+        {icon}
       )}
     </div>
   );
 };
 
 export default RecipeCard;
-export { RecipeCardLoading };
+export {RecipeCardLoading};

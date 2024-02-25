@@ -1,5 +1,6 @@
 import React from "react";
-import {compose} from "recompose";
+import {compose} from "react-recompose";
+
 import {useHistory} from "react-router";
 import _ from "lodash";
 
@@ -44,12 +45,7 @@ import {HOME as ROUTE_HOME} from "../../../constants/routes";
 
 import Recipe, {Recipes} from "../../Recipe/recipe.class";
 import Unit from "../../Unit/unit.class";
-import Firebase, {withFirebase} from "../../Firebase";
-import {
-  AuthUserContext,
-  withAuthorization,
-  withEmailVerification,
-} from "../../Session";
+
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import EventGroupConfiguration from "../GroupConfiguration/groupConfiguration.class";
 import MenuplanPage from "../Menuplan/menuplan";
@@ -60,7 +56,7 @@ import UsedRecipes from "../UsedRecipes/usedRecipes.class";
 import Utils from "../../Shared/utils.class";
 import RecipeShort from "../../Recipe/recipeShort.class";
 import Material from "../../Material/material.class";
-import Product, {Diet} from "../../Product/product.class";
+import Product from "../../Product/product.class";
 import CustomSnackbar, {Snackbar} from "../../Shared/customSnackbar";
 import Department from "../../Department/department.class";
 import UnitConversion, {
@@ -80,6 +76,14 @@ import {
   useCustomDialog,
 } from "../../Shared/customDialogContext";
 import Action from "../../../constants/actions";
+import {ValueObject} from "../../Firebase/Db/firebase.db.super.class";
+import {withFirebase} from "../../Firebase/firebaseContext";
+import {
+  AuthUserContext,
+  withAuthorization,
+} from "../../Session/authUserContext";
+import {CustomRouterProps} from "../../Shared/global.interface";
+import withEmailVerification from "../../Session/withEmailVerification";
 
 /* ===================================================================
 // ============================== Global =============================
@@ -93,7 +97,7 @@ enum EventTabs {
   eventInfo,
 }
 interface DeriveEventUid {
-  event: Event;
+  event: Event | undefined;
   pathname: string;
 }
 const deriveEventUid = ({event, pathname}: DeriveEventUid) => {
@@ -105,7 +109,7 @@ const deriveEventUid = ({event, pathname}: DeriveEventUid) => {
 };
 export interface OnMenuplanUpdate {
   field: string;
-  value: any;
+  value: ValueObject;
 }
 export interface FetchMissingDataProps {
   type: FetchMissingDataType;
@@ -130,16 +134,7 @@ export enum MasterDataCreateType {
   MATERIAL = "MATERIAL",
   PRODUCT = "PRODUCT",
 }
-/* ===================================================================
-// =============================== Page ==============================
-// =================================================================== */
-const EventPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <EventBase props={props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 function tabProps(index) {
   return {
     id: `scrollable-auto-tab-${index}`,
@@ -231,18 +226,19 @@ type State = {
     unitCoversion: boolean;
   };
   isError: boolean;
-  error: object;
+  error: Error | null;
 };
 
 const eventReducer = (state: State, action: DispatchAction): State => {
   let newRecipes = {} as Recipes;
   switch (action.type) {
-    case ReducerActions.EVENT_FETCH_INIT:
+    case ReducerActions.EVENT_FETCH_INIT: {
       return {
         ...state,
         isLoading: true,
         loadingComponents: {...state.loadingComponents, event: true},
       };
+    }
     case ReducerActions.EVENT_SAVE_INIT:
       return {...state, isSaving: true};
     case ReducerActions.EVENT_SAVE_SUCCESS:
@@ -378,11 +374,11 @@ const eventReducer = (state: State, action: DispatchAction): State => {
           materialList: false,
         },
       };
-    case ReducerActions.RECIPE_FETCH_INIT:
+    case ReducerActions.RECIPE_FETCH_INIT: {
       newRecipes = {...state.recipes};
       // Werte der Recipe-Short zwinschenspeichern damit
       // schon mal was angezeigt wird
-      let tempRecipe = {
+      const tempRecipe = {
         ...new Recipe(),
         uid: action.payload.uid,
         name: action.payload.name,
@@ -395,10 +391,11 @@ const eventReducer = (state: State, action: DispatchAction): State => {
         isLoading: true,
         loadingComponents: {...state.loadingComponents, recipe: true},
       };
-    case ReducerActions.RECIPE_FETCH_SUCCESS:
+    }
+    case ReducerActions.RECIPE_FETCH_SUCCESS: {
       // Einzelnes Rezept aus der DB
       newRecipes = {...state.recipes};
-      let recipe = action.payload as Recipe;
+      const recipe = action.payload as Recipe;
       newRecipes[recipe.uid] = recipe;
 
       return {
@@ -410,6 +407,7 @@ const eventReducer = (state: State, action: DispatchAction): State => {
         }),
         loadingComponents: {...state.loadingComponents, recipe: false},
       };
+    }
     case ReducerActions.RECIPES_FETCH_SUCCESS:
       return {
         ...state,
@@ -500,10 +498,10 @@ const eventReducer = (state: State, action: DispatchAction): State => {
         }),
         loadingComponents: {...state.loadingComponents, departments: false},
       };
-    case ReducerActions.ON_MASTERDATA_CREATE:
-      let memberName = `${action.payload.type.toLowerCase()}s`;
+    case ReducerActions.ON_MASTERDATA_CREATE: {
+      const memberName = `${action.payload.type.toLowerCase()}s`;
       let newValues = state[memberName];
-      let newValue = newValues.find(
+      const newValue = newValues.find(
         (value) => value.uid == action.payload.value.uid
       );
       // Wenn es das schon gibt, nichts tun
@@ -516,13 +514,14 @@ const eventReducer = (state: State, action: DispatchAction): State => {
         });
       }
       return {...state, [memberName]: newValues};
-    case ReducerActions.ON_RECIPE_UPDATE:
-      let newRecipe = action.payload as Recipe;
+    }
+    case ReducerActions.ON_RECIPE_UPDATE: {
+      const newRecipe = action.payload as Recipe;
       let updatedRecipeList = [...state.recipeList];
-      let updatedRecipes = {...state.recipes};
+      const updatedRecipes = {...state.recipes};
       updatedRecipes[newRecipe.uid] = newRecipe;
 
-      let arrayIndex = updatedRecipeList.findIndex(
+      const arrayIndex = updatedRecipeList.findIndex(
         (recipeShort) => recipeShort.uid == newRecipe.uid
       );
 
@@ -546,6 +545,7 @@ const eventReducer = (state: State, action: DispatchAction): State => {
         recipeList: updatedRecipeList,
         recipes: updatedRecipes,
       };
+    }
     case ReducerActions.UNIT_CONVERSION_FETCH_INIT:
       return {
         ...state,
@@ -589,7 +589,7 @@ const eventReducer = (state: State, action: DispatchAction): State => {
         ...state,
         isError: true,
         isLoading: false,
-        error: action.payload ? action.payload : {},
+        error: action.payload as Error,
       };
     default:
       console.error("Unbekannter ActionType: ", action.type);
@@ -633,7 +633,7 @@ const INITITIAL_STATE: State = {
     unitCoversion: false,
   },
   isError: false,
-  error: {},
+  error: null,
 };
 
 interface EventDraftState {
@@ -646,37 +646,37 @@ const INTITIAL_STATE_EVENT_DRAF: EventDraftState = {
   localPicture: null,
   formValidation: [],
 };
-
+interface LocationState {
+  event: Event;
+}
+/* ===================================================================
+// =============================== Page ==============================
+// =================================================================== */
+const EventPage = (props) => {
+  return (
+    <AuthUserContext.Consumer>
+      {(authUser) => <EventBase {...props} authUser={authUser} />}
+    </AuthUserContext.Consumer>
+  );
+};
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const EventBase = ({props, authUser}) => {
-  const firebase = props.firebase as Firebase;
-  const {replace} = useHistory();
+const EventBase: React.FC<
+  CustomRouterProps<undefined, LocationState> & {authUser: AuthUser | null}
+> = ({authUser, ...props}) => {
+  const firebase = props.firebase;
   const theme = useTheme();
   const {customDialog} = useCustomDialog();
   const {push} = useHistory();
 
   const classes = useStyles();
-  let eventUid: string = "";
+  let eventUid = "";
 
   const [state, dispatch] = React.useReducer(eventReducer, INITITIAL_STATE);
   const [activeTab, setActiveTab] = React.useState(EventTabs.menuplan);
   const [eventDraft, setEventDraft] = React.useState(INTITIAL_STATE_EVENT_DRAF);
-  // const [activeTab, setActiveTab] = React.useState(EventTabs.menuplan);
 
-  // if (!state.event.uid) {
-  //   if (props.location.state) {
-  //     dispatch({
-  //       type: ReducerActions.EVENT_FETCH_SUCCESS,
-  //       payload: props.location.state.event,
-  //     });
-  //     dispatch({
-  //       type: ReducerActions.GROUP_CONFIG_FETCH_SUCCESS,
-  //       payload: props.location.state.groupConfig,
-  //     });
-  //   }
-  // }
   /* ------------------------------------------
   // Daten aus der DB lesen
   // ------------------------------------------ */
@@ -689,7 +689,7 @@ const EventBase = ({props, authUser}) => {
 
   React.useEffect(() => {
     // Event
-    let unsubscribe: () => void;
+    let unsubscribe: (() => void) | undefined;
     if (!state.event.uid) {
       dispatch({type: ReducerActions.EVENT_FETCH_INIT, payload: {}});
       Event.getEventListener({
@@ -710,12 +710,12 @@ const EventBase = ({props, authUser}) => {
         });
     }
     return function cleanup() {
-      unsubscribe();
+      unsubscribe && unsubscribe();
     };
   }, []);
   React.useEffect(() => {
     //Group-Config
-    let unsubscribe: () => void;
+    let unsubscribe: (() => void) | undefined;
     dispatch({type: ReducerActions.GROUP_CONFIG_FETCH_INIT, payload: {}});
     EventGroupConfiguration.getGroupConfigurationListener({
       firebase: firebase,
@@ -734,12 +734,12 @@ const EventBase = ({props, authUser}) => {
         dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
       });
     return function cleanup() {
-      unsubscribe();
+      unsubscribe && unsubscribe();
     };
   }, []);
   React.useEffect(() => {
     //Menüplan
-    let unsubscribe: () => void;
+    let unsubscribe: (() => void) | undefined;
     if (!state.menuplan.uid) {
       dispatch({type: ReducerActions.MENUPLAN_FETCH_INIT, payload: {}});
       Menuplan.getMenuplanListener({
@@ -761,7 +761,7 @@ const EventBase = ({props, authUser}) => {
     }
 
     return function cleanup() {
-      unsubscribe();
+      unsubscribe && unsubscribe();
     };
   }, []);
   React.useEffect(() => {
@@ -771,7 +771,7 @@ const EventBase = ({props, authUser}) => {
       !state.shoppingListCollection.eventUid &&
       state.event.refDocuments?.includes(EventRefDocuments.shoppingList)
     ) {
-      let unsubscribe: () => void;
+      let unsubscribe: (() => void) | undefined;
       dispatch({
         type: ReducerActions.SHOPPINGLIST_COLLECTION_FETCH_INIT,
         payload: {},
@@ -793,7 +793,7 @@ const EventBase = ({props, authUser}) => {
           dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
         });
       return function cleanup() {
-        unsubscribe();
+        unsubscribe && unsubscribe();
       };
     }
   }, [activeTab, state.event.refDocuments]);
@@ -809,7 +809,7 @@ const EventBase = ({props, authUser}) => {
 
       UnitConversion.getAllConversionBasic({firebase: firebase})
         .then((result) => {
-          let unitConversionBasic = result;
+          const unitConversionBasic = result;
           UnitConversion.getAllConversionProducts({firebase: firebase}).then(
             (result) => {
               dispatch({
@@ -990,21 +990,26 @@ const EventBase = ({props, authUser}) => {
       setEventDraft(_.cloneDeep({...eventDraft, event: state.event}));
     }
   }, [activeTab]);
+  if (!authUser) {
+    return null;
+  }
   /* ------------------------------------------
   // Tab-Handling
   // ------------------------------------------ */
-  const onTabChange = (event: React.ChangeEvent<{}>, newValue: number) => {
+  const onTabChange = (
+    event: React.ChangeEvent<Record<string, unknown>>,
+    newValue: number
+  ) => {
     setActiveTab(newValue);
   };
   /* ------------------------------------------
   // Change-Handling
   // ------------------------------------------ */
   const onMenuplanUpdate = (menuplan: Menuplan) => {
-    console.log(menuplan);
     Menuplan.save({
       menuplan: menuplan,
       firebase: firebase,
-      authUser: authUser,
+      authUser: authUser as AuthUser,
     });
     // Kein zurückschreiben in den State, da der Listener, das wieder erhält....
   };
@@ -1019,7 +1024,7 @@ const EventBase = ({props, authUser}) => {
     // Alle Portionen im Menüplan neu berechnen und update
     groupConfiguration: EventGroupConfiguration
   ) => {
-    let menuplan = Menuplan.recalculatePortions({
+    const menuplan = Menuplan.recalculatePortions({
       menuplan: state.menuplan,
       groupConfig: groupConfiguration,
     });
@@ -1056,7 +1061,7 @@ const EventBase = ({props, authUser}) => {
       if (!state.event.refDocuments?.includes(EventRefDocuments.shoppingList)) {
         // Den Event-Updaten mit der Info, dass ein neues Dokument vorhanden ist
         // dann springt auch der Listener für die Used Recipes an.
-        let updateRefDocuments = Event.addRefDocument({
+        const updateRefDocuments = Event.addRefDocument({
           refDocuments: state.event.refDocuments,
           newDocumentType: EventRefDocuments.shoppingList,
         });
@@ -1077,7 +1082,7 @@ const EventBase = ({props, authUser}) => {
       if (!state.event.refDocuments?.includes(EventRefDocuments.usedRecipes)) {
         // Den Event-Updaten mit der Info, dass ein neues Dokument vorhanden ist
         // dann springt auch der Listener für die Used Recipes an.
-        let updateRefDocuments = Event.addRefDocument({
+        const updateRefDocuments = Event.addRefDocument({
           refDocuments: state.event.refDocuments,
           newDocumentType: EventRefDocuments.usedRecipes,
         });
@@ -1098,7 +1103,7 @@ const EventBase = ({props, authUser}) => {
       if (!state.event.refDocuments?.includes(EventRefDocuments.materialList)) {
         // Den Event-Updaten mit der Info, dass ein neues Dokument vorhanden ist
         // dann springt auch der Listener für die Used Recipes an.
-        let updateRefDocuments = Event.addRefDocument({
+        const updateRefDocuments = Event.addRefDocument({
           refDocuments: state.event.refDocuments,
           newDocumentType: EventRefDocuments.materialList,
         });
@@ -1128,7 +1133,7 @@ const EventBase = ({props, authUser}) => {
       localPicture: eventDraft.localPicture,
       authUser: authUser,
     })
-      .then((result) => {
+      .then(() => {
         setEventDraft({...eventDraft, event: event});
         dispatch({type: ReducerActions.EVENT_SAVE_SUCCESS, payload: {}});
       })
@@ -1147,7 +1152,7 @@ const EventBase = ({props, authUser}) => {
   // Handling Einstellungen Event
   // ------------------------------------------ */
   const onEventDiscardChanges = () => {
-    setEventDraft(_.cloneDeep({...eventReducer, event: state.event}));
+    setEventDraft(_.cloneDeep({...eventDraft, event: state.event}));
   };
   const onEventSaveChanges = async () => {
     // Prüfen ob die Anzahl Tage unterschiedlich sind,
@@ -1162,7 +1167,7 @@ const EventBase = ({props, authUser}) => {
         menuplan: state.menuplan,
       })
     ) {
-      let userInput = (await customDialog({
+      const userInput = (await customDialog({
         dialogType: DialogType.Confirm,
         title: TEXT_ATTENTION_ABOUT_TO_DELETE_PLANED_DAYS,
         text: TEXT_DELETION_AFFECTS_PLANED_DAYS,
@@ -1174,7 +1179,7 @@ const EventBase = ({props, authUser}) => {
         return;
       }
     }
-    let updatedMenuplan = Menuplan.adjustMenuplanWithNewDays({
+    const updatedMenuplan = Menuplan.adjustMenuplanWithNewDays({
       menuplan: state.menuplan,
       newEvent: eventDraft.event,
       existingEvent: state.event,
@@ -1387,7 +1392,7 @@ const EventBase = ({props, authUser}) => {
         });
         UnitConversion.getAllConversionBasic({firebase: firebase})
           .then((result) => {
-            let unitConversionBasic = result;
+            const unitConversionBasic = result;
             UnitConversion.getAllConversionProducts({firebase: firebase}).then(
               (result) => {
                 dispatch({
@@ -1475,7 +1480,25 @@ const EventBase = ({props, authUser}) => {
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}
-      <PageTitle title={state.event.name} subTitle={state.event.motto} />
+      <PageTitle
+        title={state.event.name}
+        subTitle={state.event.motto}
+        windowTitle={`${state.event.name} | ${
+          activeTab === EventTabs.menuplan
+            ? TEXT_MENUPLAN
+            : activeTab === EventTabs.quantityCalculation
+            ? TEXT_QUANTITY_CALCULATION
+            : activeTab === EventTabs.usedRecipes
+            ? TEXT_PLANED_RECIPES
+            : activeTab === EventTabs.shoppingList
+            ? TEXT_SHOPPING_LIST
+            : activeTab === EventTabs.materialList
+            ? TEXT_MATERIAL_LIST
+            : activeTab === EventTabs.eventInfo
+            ? TEXT_EVENT_INFO_SHORT
+            : ""
+        }`}
+      />
       {/* ===== BODY ===== */}
       <Container
         className={classes.container}
@@ -1642,7 +1665,6 @@ const EventBase = ({props, authUser}) => {
                   firebase={firebase}
                   authUser={authUser}
                   onUpdateEvent={onEventUpdate}
-                  onError={() => {}}
                   onUpdatePicture={onEventPictureUpdate}
                 />
               </Grid>
@@ -1688,7 +1710,7 @@ const EventBase = ({props, authUser}) => {
   );
 };
 
-const condition = (authUser: AuthUser) => !!authUser;
+const condition = (authUser: AuthUser | null) => !!authUser;
 
 export default compose(
   withEmailVerification,

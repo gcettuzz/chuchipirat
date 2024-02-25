@@ -1,6 +1,6 @@
 import Firebase from "../firebase.class";
 
-import { ERROR_NOT_IMPLEMENTED_YET } from "../../../constants/text";
+import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
 import {
   FirebaseDbSuper,
   ValueObject,
@@ -37,7 +37,7 @@ export class FirebaseDbRecipeReviewRequestLog extends FirebaseDbSuper {
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
-  getDocument(uids: string[]) {
+  getDocument() {
     return this.firebase.db.doc(`_review/_log`);
   }
   /* =====================================================================
@@ -49,7 +49,7 @@ export class FirebaseDbRecipeReviewRequestLog extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForDb<T extends ValueObject>({ value }: PrepareDataForDb<T>) {
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
     return {
       [value.uid]: {
         number: value.number,
@@ -62,7 +62,7 @@ export class FirebaseDbRecipeReviewRequestLog extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({ uid, value }: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
     return value as unknown as T;
   }
   /* =====================================================================

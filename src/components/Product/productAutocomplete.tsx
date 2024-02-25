@@ -6,17 +6,18 @@ import Autocomplete, {
   AutocompleteChangeReason,
 } from "@material-ui/lab/Autocomplete";
 
-import { IngredientProduct } from "../Recipe/recipe.class";
-import Product, { DietProperties } from "./product.class";
+import {IngredientProduct} from "../Recipe/recipe.class";
+import Product, {DietProperties} from "./product.class";
 import Department from "../Department/department.class";
 import Unit from "../Unit/unit.class";
 import Utils from "../Shared/utils.class";
-import { ADD, FIELD_INGREDIENT } from "../../constants/text";
+import {ADD, INGREDIENT} from "../../constants/text";
 
 interface ProductAutocompleteProps {
   componentKey: string;
   product: Product | IngredientProduct;
   products: Product[];
+  label?: string;
   onChange: (
     event: React.ChangeEvent<HTMLInputElement>,
     newValue: string | Product,
@@ -50,6 +51,7 @@ const ProductAutocomplete = ({
   componentKey,
   product,
   products,
+  label = INGREDIENT,
   onChange,
 }: ProductAutocompleteProps) => {
   // Handler für Zutaten/Produkt hinzufügen
@@ -70,7 +72,7 @@ const ProductAutocomplete = ({
         }
 
         if (option.name.endsWith(ADD)) {
-          let words = option.name.match('".*"');
+          const words = option.name.match('".*"');
           if (words && words.length >= 0) {
             return words[0].slice(1, -1);
           }
@@ -99,7 +101,7 @@ const ProductAutocomplete = ({
           !params.inputValue.endsWith(ADD)
         ) {
           // Hinzufügen-Möglichkeit auch als Produkt reinschmuggeln
-          let newProduct = new Product();
+          const newProduct = new Product();
           newProduct.name = `"${params.inputValue}" ${ADD}`;
           filtered.push(newProduct);
         }
@@ -117,7 +119,7 @@ const ProductAutocomplete = ({
             sortRank = 100;
           }
 
-          return { ...entry, ...{ sortRank: sortRank } };
+          return {...entry, ...{sortRank: sortRank}};
         }) as filterHelpWithSortRank[];
 
         tempFiltered = Utils.sortArray({
@@ -133,7 +135,7 @@ const ProductAutocomplete = ({
       renderOption={(option) => option.name}
       freeSolo
       renderInput={(params) => (
-        <TextField {...params} label={FIELD_INGREDIENT} size="small" />
+        <TextField {...params} label={label} size="small" />
       )}
     />
   );

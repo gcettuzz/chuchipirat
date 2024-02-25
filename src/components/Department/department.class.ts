@@ -1,9 +1,27 @@
 import Utils from "../Shared/utils.class";
-import * as FIREBASE_EVENTS from "../../constants/firebaseEvents";
-import Firebase from "../Firebase";
+import Firebase from "../Firebase/firebase.class";
+import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
+import AuthUser from "../Firebase/Authentication/authUser.class";
+import FirebaseAnalyticEvent from "../../constants/firebaseEvent";
 
 interface GetAllDepartments {
   firebase: Firebase;
+}
+interface CreateDepartment {
+  firebase: Firebase;
+  name: string;
+  pos: number;
+  authUser: AuthUser;
+}
+interface SetPositionForDepartment {
+  departmentList: Department[];
+  departmentUid: Department["uid"];
+  newPos: Department["pos"];
+}
+interface SaveAllDepartments {
+  firebase: Firebase;
+  authUser: AuthUser;
+  departments: Department[];
 }
 
 export default class Department {
@@ -24,11 +42,11 @@ export default class Department {
   /* =====================================================================
   // Alle Einheiten aus der DB holen
   // ===================================================================== */
-  static async getAllDepartments({ firebase }: GetAllDepartments) {
+  static async getAllDepartments({firebase}: GetAllDepartments) {
     let departments: Department[] = [];
 
     await firebase.masterdata.department
-      .read<Object>({ uids: [] })
+      .read<ValueObject>({uids: []})
       .then((result) => {
         Object.keys(result).forEach((key) => {
           departments.push({
@@ -39,7 +57,7 @@ export default class Department {
           });
         });
       })
-      .catch((error) => {
+      .catch((error: Error) => {
         throw error;
       });
 
@@ -53,69 +71,92 @@ export default class Department {
   /* =====================================================================
   // Abteilung anlegen
   // ===================================================================== */
-  static createDepartment = async ({ firebase, name, pos }) => {
-    // const departmentsDoc = firebase.departments();
-    // let uid = Utils.generateUid(20);
-    // await departmentsDoc
-    //   .update({
-    //     [uid]: { name: name, pos: pos, usable: true },
-    //   })
-    //   .catch((error) => {
-    //     throw error;
-    //   });
-    // // Event auslösen
-    // firebase.analytics.logEvent(FIREBASE_EVENTS.DEPARTMENT_CREATED);
-    // return { uid: uid, name: name, pos: pos, usable: true };
+  static createDepartment = async ({
+    firebase,
+    name,
+    pos,
+    authUser,
+  }: CreateDepartment) => {
+    const department = new Department();
+    department.uid = Utils.generateUid(20);
+    department.name = name;
+    department.pos = pos;
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const {uid: excluded, ...dbDepartment} = department;
+
+    firebase.masterdata.department
+      .updateFields({
+        uids: [],
+        values: {[department.uid]: dbDepartment},
+        authUser: authUser,
+      })
+      .then(() => {
+        firebase.analytics.logEvent(FirebaseAnalyticEvent.departmentCreated);
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+    return department;
   };
   /* =====================================================================
   // Neue Position setzen
   // ===================================================================== */
-  static setPositionForDepartment({ list, departmentUid, newPos }) {
-    // let department = list.find(
-    //   (department) => department.uid === departmentUid
-    // );
-    // list = Department._sortListByPos(list);
-    // // Einträge neu nummerieren --> funtkioniert nur wenn Tabelle sortiert ist
-    // if (department.pos > newPos) {
-    //   // // das was die aktuelle Position hält, muss eins rauf.
-    //   for (let i = newPos; i < department.pos; i++) {
-    //     list[i - 1].pos = i + 1;
-    //   }
-    // } else {
-    //   // department.pos -1 +1 --> -1 für Array Zugriff
-    //   // +1 für den nächsten Eintrag anpassen
-    //   for (let i = department.pos; i < newPos; i++) {
-    //     list[i].pos -= 1;
-    //   }
-    // }
-    // department.pos = newPos;
-    // // sortieren bevor wir abschliessen
-    // return Department._sortListByPos(list);
+  static setPositionForDepartment({
+    departmentList,
+    departmentUid,
+    newPos,
+  }: SetPositionForDepartment) {
+    const department = departmentList.find(
+      (department) => department.uid === departmentUid
+    );
+    if (!department) {
+      return;
+    }
+
+    departmentList = Department._sortListByPos(departmentList);
+    // Einträge neu nummerieren --> funtkioniert nur wenn Tabelle sortiert ist
+    if (department.pos > newPos) {
+      // // das was die aktuelle Position hält, muss eins rauf.
+      for (let i = newPos; i < department.pos; i++) {
+        departmentList[i - 1].pos = i + 1;
+      }
+    } else {
+      // department.pos -1 +1 --> -1 für Array Zugriff
+      // +1 für den nächsten Eintrag anpassen
+      for (let i = department.pos; i < newPos; i++) {
+        departmentList[i].pos -= 1;
+      }
+    }
+    department.pos = newPos;
+    // sortieren bevor wir abschliessen
+    return Department._sortListByPos(departmentList);
   }
   /* =====================================================================
   // Alle Abteilungen speichern
   // ===================================================================== */
-  static saveDepartments = async ({ firebase, departments }) => {
-    // const departmentsDoc = firebase.departments();
-    // var departmentsMap = {};
-    // departments.forEach((department) => {
-    //   departmentsMap[department.uid] = {
-    //     name: department.name,
-    //     pos: department.pos,
-    //     usable: department.usable,
-    //   };
-    // });
-    // await departmentsDoc.update(departmentsMap).catch((error) => {
-    //   throw error;
-    // });
-    // // Analytik
-    // firebase.analytics.logEvent(FIREBASE_EVENTS.DEPARTMENT_UPDATED);
+  static saveAllDepartments = async ({
+    firebase,
+    authUser,
+    departments,
+  }: SaveAllDepartments) => {
+    firebase.masterdata.department
+      .update<Array<Department>>({
+        uids: [""],
+        value: departments,
+        authUser: authUser,
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
   };
   /* =====================================================================
   // PRIVATE: sortieren nach Position
   // ===================================================================== */
   // Liste nach Position sortieren
-  static _sortListByPos(list) {
-    // return list.sort((a, b) => (a.pos > b.pos ? 1 : -1));
+  static _sortListByPos(list: Department[]) {
+    return list.sort((a, b) => (a.pos > b.pos ? 1 : -1));
   }
 }

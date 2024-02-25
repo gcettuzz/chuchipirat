@@ -8,16 +8,28 @@ import Divider from "@material-ui/core/Divider";
 
 import useStyles from "../../constants/styles";
 
-import * as TEXT from "../../constants/text";
+import {
+  TERM_OF_USE as TEXT_TERM_OF_USE,
+  APP_NAME as TEXT_APP_NAME,
+  FOOTER_CREATED_WITH_JOY_OF_LIFE as TEXT_FOOTER_CREATED_WITH_JOY_OF_LIFE,
+  VERSION as TEXT_VERSION,
+  FOOTER_QUESTIONS_SUGGESTIONS as TEXT_FOOTER_QUESTIONS_SUGGESTIONS,
+  PRIVACY_POLICY as TEXT_PRIVACY_POLICY,
+} from "../../constants/text";
 import * as DEFAULT_VALUES from "../../constants/defaultValues";
-import * as IMAGE_REPOSITORY from "../../constants/imageRepository";
-import {Container, IconButton} from "@material-ui/core";
+import {ImageRepository} from "../../constants/imageRepository";
+import {
+  TERM_OF_USE as ROUTE_TERM_OF_USE,
+  PRIVACY_POLICY as ROUTE_PRIVACY_POLICY,
+} from "../../constants/routes";
+import {IconButton} from "@material-ui/core";
 import {Instagram as IconInstagram} from "@material-ui/icons";
-
-const packageJson = require("../../../package.json");
+import packageJson from "../../../package.json";
+import {useHistory} from "react-router";
 
 const Footer = () => {
   const classes = useStyles();
+  const {push} = useHistory();
 
   const onOpenInstagram = () => {
     window.open(DEFAULT_VALUES.INSTAGRAM_URL, "_blank");
@@ -36,9 +48,7 @@ const Footer = () => {
         <Grid item container justifyContent="center" xs={2}>
           <img
             className={classes.marginCenter}
-            src={
-              IMAGE_REPOSITORY.getEnviromentRelatedPicture().DIVIDER_ICON_SRC
-            }
+            src={ImageRepository.getEnviromentRelatedPicture().DIVIDER_ICON_SRC}
             alt=""
             // align="center"
             width="50px"
@@ -54,7 +64,7 @@ const Footer = () => {
 
         <Grid item xs={12}>
           <Typography variant="h6" align="center" gutterBottom>
-            {TEXT.APP_NAME}
+            {TEXT_APP_NAME}
           </Typography>
 
           <Typography
@@ -63,11 +73,11 @@ const Footer = () => {
             align="center"
             gutterBottom
           >
-            {TEXT.FOOTER_CREATED_WITH_JOY_OF_LIFE.part1}
+            {TEXT_FOOTER_CREATED_WITH_JOY_OF_LIFE.part1}
             <Link href="https://jubla.ch">
-              {TEXT.FOOTER_CREATED_WITH_JOY_OF_LIFE.linkText}
+              {TEXT_FOOTER_CREATED_WITH_JOY_OF_LIFE.linkText}
             </Link>
-            {TEXT.FOOTER_CREATED_WITH_JOY_OF_LIFE.part2}
+            {TEXT_FOOTER_CREATED_WITH_JOY_OF_LIFE.part2}
           </Typography>
           <Typography
             variant="body2"
@@ -76,7 +86,7 @@ const Footer = () => {
             component="p"
             gutterBottom
           >
-            {TEXT.VERSION}{" "}
+            {TEXT_VERSION}{" "}
             <Link href="https://github.com/gcettuzz/chuchipirat">
               {packageJson.version}
             </Link>
@@ -87,25 +97,46 @@ const Footer = () => {
             align="center"
             gutterBottom
           >
-            <strong>{TEXT.FOOTER_QUESTIONS_SUGGESTIONS.TITLE}</strong> <br />
-            {TEXT.FOOTER_QUESTIONS_SUGGESTIONS.CONTACTHERE}{" "}
+            <strong>{TEXT_FOOTER_QUESTIONS_SUGGESTIONS.TITLE}</strong> <br />
+            {TEXT_FOOTER_QUESTIONS_SUGGESTIONS.CONTACTHERE}{" "}
             <Link href={`mailto:${DEFAULT_VALUES.MAILADDRESS}`}>
               {DEFAULT_VALUES.MAILADDRESS}
             </Link>
             <br />
-            {TEXT.FOOTER_QUESTIONS_SUGGESTIONS.OR_LOOK_HERE}
+            {TEXT_FOOTER_QUESTIONS_SUGGESTIONS.OR_LOOK_HERE}
             <Link
               href={DEFAULT_VALUES.HELPCENTER_URL}
               target="_blank"
               rel="noopener"
             >
-              {TEXT.FOOTER_QUESTIONS_SUGGESTIONS.HELPCENTER}
-            </Link>{" "}
-            {TEXT.FOOTER_QUESTIONS_SUGGESTIONS.OVER}
+              {TEXT_FOOTER_QUESTIONS_SUGGESTIONS.HELPCENTER}
+            </Link>
+            {TEXT_FOOTER_QUESTIONS_SUGGESTIONS.OVER}
+            <br />
+            <br />
+            <Link
+              onClick={() => {
+                push({pathname: ROUTE_TERM_OF_USE});
+              }}
+            >
+              {TEXT_TERM_OF_USE}
+            </Link>
+            {" | "}
+            <Link
+              onClick={() => {
+                push({pathname: ROUTE_PRIVACY_POLICY});
+              }}
+            >
+              {TEXT_PRIVACY_POLICY}
+            </Link>
           </Typography>
         </Grid>
         <Grid>
-          <IconButton size="small" onClick={onOpenInstagram}>
+          <IconButton
+            size="small"
+            onClick={onOpenInstagram}
+            aria-label="Instagramm"
+          >
             <IconInstagram />
           </IconButton>
         </Grid>
@@ -126,13 +157,11 @@ export const Copyright = () => {
       <Typography variant="body2" color="textSecondary" align="center">
         {"Copyright © "}
         <Link color="inherit" href="https://chuchipirat.ch/">
-          {TEXT.APP_NAME}
+          {TEXT_APP_NAME}
         </Link>{" "}
         {new Date().getFullYear()}
         {"."}
       </Typography>
-
-      {/* FIXME: Datenschutzrichtlinien */}
     </React.Fragment>
   );
 };

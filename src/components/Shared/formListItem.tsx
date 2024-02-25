@@ -1,7 +1,6 @@
 import React from "react";
 import useStyles from "../../constants/styles";
 
-import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
@@ -10,12 +9,9 @@ import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import Divider from "@material-ui/core/Divider";
 
 import TextField from "@material-ui/core/TextField";
-import Link from "@material-ui/core/Link";
-
-import Utils from "./utils.class";
 
 interface FormListItemProps {
-  value: string | number | JSX.Element | JSX.Element[];
+  value: string | number | Date | JSX.Element | JSX.Element[];
   id: string;
   label: string;
   icon?: JSX.Element;
@@ -90,6 +86,12 @@ export const FormListItem = ({
                 disableTypography={displayAsCode}
                 primary={value}
               />
+            ) : value instanceof Date ? (
+              <ListItemText className={classes.listItemContent}>
+                {value.toLocaleString("de-CH", {
+                  dateStyle: "medium",
+                })}
+              </ListItemText>
             ) : (
               <ListItemText className={classes.listItemContent}>
                 {value}
@@ -103,7 +105,7 @@ export const FormListItem = ({
           </React.Fragment>
         )}
       </ListItem>
-      {!editMode && withDivider && <Divider />}
+      {!editMode && withDivider && <Divider variant="inset" component="li" />}
     </React.Fragment>
   );
 };

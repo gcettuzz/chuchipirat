@@ -27,7 +27,7 @@ export class FormValidatorUtil {
     fieldName: string,
     defaultHelpertext: string
   ) {
-    let formField = formValidation?.find(
+    const formField = formValidation?.find(
       (field) => field.fieldName == fieldName
     );
 

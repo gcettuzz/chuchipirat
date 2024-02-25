@@ -30,7 +30,9 @@ export class FirebaseDbRecipeVariant extends FirebaseDbRecipe {
   // Collection holen
   // ===================================================================== */
   getCollection(uids: string[]) {
-    return this.firebase.db.collection(`events/${uids[0]}/recipeVariants`);
+    return this.firebase.db.collection(
+      `recipes/variants/events/${uids[0]}/recipes`
+    );
   }
   /* =====================================================================
   // Collection-Group holen
@@ -43,7 +45,9 @@ export class FirebaseDbRecipeVariant extends FirebaseDbRecipe {
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
-    return this.firebase.db.doc(`events/${uids[0]}/recipeVariants/${uids[1]}`);
+    return this.firebase.db.doc(
+      `recipes/variants/events/${uids[0]}/recipes/${uids[1]}`
+    );
   }
   /* =====================================================================
   // Dokumente holen

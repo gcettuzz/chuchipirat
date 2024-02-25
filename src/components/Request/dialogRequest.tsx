@@ -9,12 +9,10 @@ import DialogActions from "@material-ui/core/DialogActions";
 import Button from "@material-ui/core/Button";
 import Divider from "@material-ui/core/Divider";
 import Typography from "@material-ui/core/Typography";
-import Grid from "@material-ui/core/Grid";
 
 import TextField from "@material-ui/core/TextField";
 import {
   Link,
-  Chip,
   Avatar,
   List,
   ListItem,
@@ -31,7 +29,6 @@ import {
   REQUEST_OBJECT_LABEL as TEXT_REQUEST_OBJECT_LABEL,
   REQUEST_STATUS as TEXT_REQUEST_STATUS,
   REQUEST_NEXT_POSSIBLE_TRANSITION_LABEL as TEXT_REQUEST_NEXT_POSSIBLE_TRANSITION_LABEL,
-  REQUEST_NEXT_POSSIBLES_TRANSITIONS_LABEL as TEXT_REQUEST_NEXT_POSSIBLES_TRANSITIONS_LABEL,
   REQUEST_CREATION_DATE as TEXT_REQUEST_CREATION_DATE,
   REQUEST_AUTHOR_DISPLAYNAME as TEXT_REQUEST_AUTHOR_DISPLAYNAME,
   REQUEST_ASSIGNEE_DISPLAYNAME as TEXT_REQUEST_ASSIGNEE_DISPLAYNAME,
@@ -39,7 +36,7 @@ import {
   // REQUEST_CONTINUE_WITH as TEXT_REQUEST_CONTINUE_WITH,
   BUTTON_CANCEL as TEXT_BUTTON_CANCEL,
   BUTTON_CLOSE as TEXT_BUTTON_CLOSE,
-  PANEL_COMMENTS as TEXT_PANEL_COMMENTS,
+  COMMENTS as TEXT_COMMENTS,
   FIELD_YOUR_COMMENT as TEXT_FIELD_YOUR_COMMENT,
   BUTTON_ADD_COMMENT as TEXT_BUTTON_ADD_COMMENT,
   UID as TEXT_UID,
@@ -48,8 +45,8 @@ import {
 import {USER_PUBLIC_PROFILE as ROUTES_USER_PUBLIC_PROFILE} from "../../constants/routes";
 import Action from "../../constants/actions";
 
-import Request, {RequestStatus} from "./request.class";
-import Firebase from "../Firebase";
+import {RequestStatus} from "./request.class";
+import {Request} from "./internal";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import Role from "../../constants/roles";
 import {StatusChips} from "./requestOverview";
@@ -69,6 +66,7 @@ interface DialogRequestProps {
   handleUpdateStatus: (nextStatus: RequestStatus) => void;
   handleAssignToMe: () => void;
   handleAddComment: (newComment: string) => void;
+  handleRecipeOpen: (uid: string) => void;
 }
 
 const DialogRequest = ({
@@ -79,6 +77,7 @@ const DialogRequest = ({
   handleUpdateStatus,
   handleAssignToMe,
   handleAddComment,
+  handleRecipeOpen,
 }: DialogRequestProps) => {
   const classes = useStyles();
   const {push} = useHistory();
@@ -155,14 +154,13 @@ const DialogRequest = ({
             />
           )}
           {/* Request Name */}
-          {/* TODO: Drawer öffnen.*/}
           <FormListItem
             key={"RequestName"}
             id={"RequestName"}
             value={
               <Link
                 style={{cursor: "pointer"}}
-                onClick={() => console.log("open Recipe Drawer")}
+                onClick={() => handleRecipeOpen(request.requestObject?.uid)}
               >
                 {request.requestObject?.name}
               </Link>
@@ -188,7 +186,11 @@ const DialogRequest = ({
                     status: request.status,
                     requestType: request.requestType,
                   })?.map((possibleTransition, counter) => (
-                    <React.Fragment>
+                    <React.Fragment
+                      key={
+                        "transition_" + possibleTransition.description + counter
+                      }
+                    >
                       {counter > 0 && " | "}
                       <Link
                         key={`transitionLink_${counter}`}
@@ -284,7 +286,7 @@ const DialogRequest = ({
         {request?.comments?.length > 0 && (
           <React.Fragment>
             <Typography variant="subtitle1" style={{marginTop: "4ex"}}>
-              {TEXT_PANEL_COMMENTS}
+              {TEXT_COMMENTS}
             </Typography>
             <List>
               {request.comments.map((comment, counter) => (

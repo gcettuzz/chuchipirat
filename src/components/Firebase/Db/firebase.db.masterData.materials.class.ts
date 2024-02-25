@@ -51,7 +51,7 @@ export class FirebaseDbMasterDataMaterials extends FirebaseDbSuper {
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
     // value kommt als Array, damit auch mehrere Materialien angepasst werden können
 
-    let materialsMap = {};
+    const materialsMap = {};
 
     value.forEach((material) => {
       materialsMap[material.uid] = {
@@ -66,7 +66,7 @@ export class FirebaseDbMasterDataMaterials extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
     // Die Aufsplittung von Objekt zu Array geschieht in der products.class
     return value as unknown as T;
   }

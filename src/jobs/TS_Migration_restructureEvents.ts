@@ -10,7 +10,7 @@ import Menuplan, {
   PlanedDiet,
   PlanedIntolerances,
 } from "../components/Event/Menuplan/menuplan.class";
-import Recipe, {RecipeType} from "../components/Recipe/recipe.class";
+import {RecipeType} from "../components/Recipe/recipe.class";
 import RecipeShort from "../components/Recipe/recipeShort.class";
 import Utils from "../components/Shared/utils.class";
 
@@ -20,7 +20,6 @@ import {
   MEAT as TEXT_MEAT,
   WITHOUT_INTOLERANCES as TEXT_WITHOUT_INTOLERANCES,
 } from "../constants/text";
-
 // Alte Struktur
 
 // authUsers: value.authUsers,
@@ -63,10 +62,15 @@ import {
 //   fromDisplayName: value.lastChange.fromDisplayName,
 // },
 
-export async function restructureEventDocuments(firebase: Firebase) {
+export async function restructureEventDocuments(
+  firebase: Firebase,
+  authUser: AuthUser
+) {
   let recipes: {[key: string]: RecipeShort} = {};
-  let events: {[key: string]: EventShort} = {};
-  let counter: number = 0;
+  const events: {[key: string]: EventShort} = {};
+  let counter = 0;
+  let eventCounter = 0;
+  let portionsCounter = 0;
 
   // alle 000_recipes_all auslesen
   await firebase.recipeShortPublic
@@ -94,13 +98,13 @@ export async function restructureEventDocuments(firebase: Firebase) {
   console.log(recipes);
 
   // Alle dokumente holen
-  let collection = firebase.db.collection("events");
+  const collection = firebase.db.collection("events");
 
   await collection.get().then((snapshot) => {
     // Zuerst das Event-Dokument
     snapshot.forEach(async (eventDocument) => {
       let eventDocumentData = eventDocument.data();
-
+      eventCounter++;
       eventDocumentData =
         firebase.event.convertTimestampValuesToDates(eventDocumentData);
       console.warn("=== Event ===");
@@ -114,8 +118,10 @@ export async function restructureEventDocuments(firebase: Firebase) {
         JSON.stringify(eventDocumentData)
       );
 
-      if (eventDocumentData.hasOwnProperty("createdAt")) {
-        let eventDocumentNewStructure = {
+      if (
+        Object.prototype.hasOwnProperty.call(eventDocumentData, "createdAt")
+      ) {
+        const eventDocumentNewStructure = {
           uid: eventDocument.id,
           authUsers: eventDocumentData.authUsers,
           cooks: eventDocumentData.cooks.map((cook) => ({
@@ -161,7 +167,7 @@ export async function restructureEventDocuments(firebase: Firebase) {
         } as Event;
 
         // Event zurückspeichern
-        let eventDocumentReference = firebase.db.doc(
+        const eventDocumentReference = firebase.db.doc(
           `events/${eventDocument.id}`
         );
         console.log("Speicherung Event ", eventDocument.id);
@@ -199,7 +205,7 @@ export async function restructureEventDocuments(firebase: Firebase) {
         );
         console.warn("=== GroupConfig ===");
         // Group-Config generieren --> neue Dokument. Einfach die Anzahl Portionen übernehmen.
-        let groupConfig = EventGroupConfiguration.factory();
+        const groupConfig = EventGroupConfiguration.factory();
         let dietUid = "";
         let intorleranceUid = "";
         // Im Feld ohne Intoleranzen // Alle den Wert der Teilnehmen (alte Struktur setzen)
@@ -231,11 +237,11 @@ export async function restructureEventDocuments(firebase: Firebase) {
         groupConfig.portions[dietUid][intorleranceUid] =
           eventDocumentData.participants;
 
-        let grouConfigDocumentReference = firebase.db.doc(
+        const grouConfigDocumentReference = firebase.db.doc(
           `events/${eventDocument.id}/docs/groupConfiguration`
         );
 
-        let dbObject =
+        const dbObject =
           firebase.event.groupConfiguration.convertDateValuesToTimestamp(
             _.cloneDeep(groupConfig)
           );
@@ -247,12 +253,12 @@ export async function restructureEventDocuments(firebase: Firebase) {
             console.error(error);
             throw error;
           });
-
+        portionsCounter = groupConfig.totalPortions;
         counter++;
         console.warn("=== Menüplan ===");
 
         // Menüplan migrieren
-        let menuplanDocument = firebase.db.doc(
+        const menuplanDocument = firebase.db.doc(
           `events/${eventDocument.id}/docs/menuplan`
         );
 
@@ -277,7 +283,7 @@ export async function restructureEventDocuments(firebase: Firebase) {
             );
 
             if (menuplanDocumentData) {
-              let menuplanNewStructure = Menuplan.factory({
+              const menuplanNewStructure = Menuplan.factory({
                 event: {...eventDocumentNewStructure, uid: eventDocument.id},
                 authUser: {
                   uid: "",
@@ -330,13 +336,13 @@ export async function restructureEventDocuments(firebase: Firebase) {
                 (mealType) => {
                   menuplanNewStructure.dates.forEach((date) => {
                     // Mahlzeit erstellen
-                    let meal = Menuplan.createMeal({
+                    const meal = Menuplan.createMeal({
                       mealType: mealType.uid,
                       date: date,
                     });
                     menuplanNewStructure.meals[meal.uid] = meal;
                     // Ein Menü erzeugen und der Mahlzeit hinzufügen
-                    let menu = Menuplan.createMenu();
+                    const menu = Menuplan.createMenu();
                     menuplanNewStructure.meals[meal.uid].menuOrder.push(
                       menu.uid
                     );
@@ -347,8 +353,8 @@ export async function restructureEventDocuments(firebase: Firebase) {
 
               // Rezepte - die Fixe Portion wird für die Planung 1:1 übernommen
               menuplanDocumentData.recipes.forEach((recipe) => {
-                let fullRecipe = recipes[recipe.recipeUid];
-                let mealRecipe = {
+                const fullRecipe = recipes[recipe.recipeUid];
+                const mealRecipe = {
                   uid: recipe.uid,
                   recipe: {
                     createdFromUid: fullRecipe.created.fromUid,
@@ -374,7 +380,7 @@ export async function restructureEventDocuments(firebase: Firebase) {
 
                 // Heraussuchen in welches Menü, das muss und in die Order schieben.
                 console.group(recipe.recipeUid);
-                let meal = Object.values(menuplanNewStructure.meals).find(
+                const meal = Object.values(menuplanNewStructure.meals).find(
                   (meals) => {
                     console.log(meals.date);
                     console.log(Utils.dateAsString(recipe.date));
@@ -394,7 +400,7 @@ export async function restructureEventDocuments(firebase: Firebase) {
                   console.log(menuplanNewStructure);
                   throw new Error("Meal nicht gefunden");
                 }
-                let menueUid =
+                const menueUid =
                   menuplanNewStructure.meals[meal.uid].menuOrder[0];
 
                 menuplanNewStructure.menues[menueUid].mealRecipeOrder.push(
@@ -407,7 +413,7 @@ export async function restructureEventDocuments(firebase: Firebase) {
                 // Wenn nur im Original-Dok Datum und MealUid gefüllt, muss
                 // das entsprechende Menü zuerst gesucht werden.
                 if (note.mealUid) {
-                  let meal = Object.values(menuplanNewStructure.meals).find(
+                  const meal = Object.values(menuplanNewStructure.meals).find(
                     (meals) => {
                       if (
                         meals.date == Utils.dateAsString(note.date) &&
@@ -455,7 +461,7 @@ export async function restructureEventDocuments(firebase: Firebase) {
             console.warn("=== ShoppingList ===");
 
             // Danach die eine Einkaufsliste löschen --> werden nicht übernommen
-            let shoppingListDocument = firebase.db.doc(
+            const shoppingListDocument = firebase.db.doc(
               `events/${eventDocument.id}/docs/shoppingList`
             );
             await shoppingListDocument.delete().catch((error) => {
@@ -468,8 +474,18 @@ export async function restructureEventDocuments(firebase: Firebase) {
 
     console.warn("=== 000_allEvents ===");
 
-    let allEventsDocument = firebase.db.doc(`events/000_allEvents`);
+    const allEventsDocument = firebase.db.doc(`events/000_allEvents`);
     console.log(events);
+
+    firebase.stats.updateFields({
+      uids: [""],
+      values: {
+        noParticipants: portionsCounter,
+        noEvents: eventCounter,
+      },
+      authUser: authUser,
+    });
+
     allEventsDocument.update(
       Object.assign({}, firebase.event.convertDateValuesToTimestamp(events))
     );

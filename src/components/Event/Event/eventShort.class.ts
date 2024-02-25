@@ -1,5 +1,4 @@
-import {error} from "console";
-import Firebase from "../../Firebase";
+import Firebase from "../../Firebase/firebase.class";
 import {ChangeRecord} from "../../Shared/global.interface";
 import Event from "./event.class";
 

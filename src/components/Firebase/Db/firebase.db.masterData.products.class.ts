@@ -12,12 +12,6 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
-// //FIXME: KOMMENTARE LÖSCHEN!
-
-// interface Create {
-//   value: Stats;
-//   authUser: AuthUser;
-// }
 
 export class FirebaseDbMasterDataProducts extends FirebaseDbSuper {
   firebase: Firebase;
@@ -59,11 +53,11 @@ export class FirebaseDbMasterDataProducts extends FirebaseDbSuper {
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
     // value kommt als Array, damit auch mehrere Produkte angepasst werden können
 
-    let productsMap = {};
+    const productsMap = {};
 
     value.forEach((product) => {
       // Allergene nur speichern, wenn auch welche vorhanden
-      let dietProperties = product.dietProperties;
+      const dietProperties = product.dietProperties;
       if (product.dietProperties.allergens.length == 0) {
         delete dietProperties.allergens;
       }
@@ -82,7 +76,7 @@ export class FirebaseDbMasterDataProducts extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
     // Die Aufsplittung von Objekt zu Array geschieht in der products.class
 
     // Allergene hinzufügen, falls nicht vorhanden

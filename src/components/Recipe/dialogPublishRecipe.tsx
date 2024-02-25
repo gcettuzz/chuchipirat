@@ -7,11 +7,21 @@ import DialogActions from "@material-ui/core/DialogActions";
 
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
-import useStyles from "../../constants/styles";
-import { Alert, AlertTitle } from "@material-ui/lab";
 import CheckBoxOutlinedIcon from "@material-ui/icons/CheckBoxOutlined";
 
-import * as TEXT from "../../constants/text";
+import {
+  PUBLISH_RECIPE as TEXT_PUBLISH_RECIPE,
+  PUBLISH_RECIPE_RULES_PART1 as TEXT_PUBLISH_RECIPE_RULES_PART1,
+  PUBLISH_RECIPE_RULES_BULLET_LIST as TEXT_PUBLISH_RECIPE_RULES_BULLET_LIST,
+  PUBLISH_RECIPE_RULES_PART2 as TEXT_PUBLISH_RECIPE_RULES_PART2,
+  PUBLISH_RECIPE_RULES_PART3 as TEXT_PUBLISH_RECIPE_RULES_PART3,
+  PUBLISH_RECIPE_RULES_PART4 as TEXT_PUBLISH_RECIPE_RULES_PART4,
+  PUBLISH_RECIPE_RULES_PART5 as TEXT_PUBLISH_RECIPE_RULES_PART5,
+  PUBLISH_RECIPE_RULES_PART6 as TEXT_PUBLISH_RECIPE_RULES_PART6,
+  MESSAGE_TO_REVIEW as TEXT_MESSAGE_TO_REVIEW,
+  CANCEL as TEXT_CANCEL,
+  SEND_RECIPE_TO_REVIEW as TEXT_SEND_RECIPE_TO_REVIEW,
+} from "../../constants/text";
 import {
   List,
   ListItem,
@@ -43,8 +53,6 @@ const DialogPublishRecipe = ({
     initial: true,
   });
 
-  const classes = useStyles();
-
   /* ------------------------------------------
   // Change Ereignis Felder
   // ------------------------------------------ */
@@ -61,7 +69,7 @@ const DialogPublishRecipe = ({
   // PopUp Ok
   // ------------------------------------------ */
   const onOkClick = () => {
-    setFormFields({ ...formFields, initial: true });
+    setFormFields({...formFields, initial: true});
     handleOk(formFields.messageForReview);
   };
   /* ------------------------------------------
@@ -75,15 +83,17 @@ const DialogPublishRecipe = ({
     <Dialog
       open={dialogOpen}
       onClose={handleClose}
-      aria-labelledby="dialogScaleRecipe"
+      aria-labelledby="dialogPublishRecipeRequest"
       fullWidth={true}
       maxWidth="sm"
     >
-      <DialogTitle id="dialogScaleRecipe">{TEXT.PUBLISH_RECIPE}</DialogTitle>
+      <DialogTitle id="dialogPublishRecipeRequestTitle">
+        {TEXT_PUBLISH_RECIPE}
+      </DialogTitle>
       <DialogContent>
-        <Typography>{TEXT.PUBLISH_RECIPE_RULES_PART1}</Typography>
+        <Typography>{TEXT_PUBLISH_RECIPE_RULES_PART1}</Typography>
         <List dense>
-          {TEXT.PUBLISH_RECIPE_RULES_BULLET_LIST.split("•").map(
+          {TEXT_PUBLISH_RECIPE_RULES_BULLET_LIST.split("•").map(
             (bulletPoint, counter) => (
               <ListItem key={"listitem_" + counter}>
                 <ListItemIcon>
@@ -94,13 +104,13 @@ const DialogPublishRecipe = ({
             )
           )}
         </List>
-        <Typography>{TEXT.PUBLISH_RECIPE_RULES_PART2}</Typography>
+        <Typography>{TEXT_PUBLISH_RECIPE_RULES_PART2}</Typography>
         <br />
-        <Typography>{TEXT.PUBLISH_RECIPE_RULES_PART3}</Typography>
-        <Typography>{TEXT.PUBLISH_RECIPE_RULES_PART4}</Typography>
+        <Typography>{TEXT_PUBLISH_RECIPE_RULES_PART3}</Typography>
+        <Typography>{TEXT_PUBLISH_RECIPE_RULES_PART4}</Typography>
         <br />
-        <Typography>{TEXT.PUBLISH_RECIPE_RULES_PART5}</Typography>
-        <Typography>{TEXT.PUBLISH_RECIPE_RULES_PART6}</Typography>
+        <Typography>{TEXT_PUBLISH_RECIPE_RULES_PART5}</Typography>
+        <Typography>{TEXT_PUBLISH_RECIPE_RULES_PART6}</Typography>
         <br />
         <TextField
           margin="dense"
@@ -113,15 +123,15 @@ const DialogPublishRecipe = ({
           maxRows={10}
           onChange={onChangeField}
           variant="outlined"
-          label={TEXT.MESSAGE_TO_REVIEW}
+          label={TEXT_MESSAGE_TO_REVIEW}
         />
       </DialogContent>
       <DialogActions>
         <Button onClick={onCancelClick} variant="outlined">
-          {TEXT.BUTTON_CANCEL}
+          {TEXT_CANCEL}
         </Button>
         <Button onClick={onOkClick} variant="contained" color="primary">
-          {TEXT.SEND_RECIPE_TO_REVIEW}
+          {TEXT_SEND_RECIPE_TO_REVIEW}
         </Button>
       </DialogActions>
     </Dialog>

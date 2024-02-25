@@ -92,7 +92,6 @@ const ButtonRow = ({buttons, buttonGroup, splitButtons}: ButtonRowProps) => {
   // ------------------------------------------ */
   const [vertMoreAnchor, setVertMoreAnchor] =
     React.useState<null | HTMLElement>(null);
-  const vertMoreMenuOpen = Boolean(vertMoreAnchor);
 
   const handleVertMoreClick = (event: React.MouseEvent<HTMLElement>) => {
     setVertMoreAnchor(event.currentTarget);
@@ -107,9 +106,9 @@ const ButtonRow = ({buttons, buttonGroup, splitButtons}: ButtonRowProps) => {
 
   // hat das Array Buttons mehr Buttons als die Screen-Breite zulässt
   // werden diese in einem Menü zusammengefasst.
-  let isXSBreakPoint = useMediaQuery(theme.breakpoints.down("xs"));
-  let isSMBreakPoint = useMediaQuery(theme.breakpoints.down("sm"));
-  let isMdBreakPoint = useMediaQuery(theme.breakpoints.down("md"));
+  const isXSBreakPoint = useMediaQuery(theme.breakpoints.down("xs"));
+  const isSMBreakPoint = useMediaQuery(theme.breakpoints.down("sm"));
+  const isMdBreakPoint = useMediaQuery(theme.breakpoints.down("md"));
   if (isXSBreakPoint && buttons.length > 1) {
     noOfVisibleButtons = 2;
   } else if (isSMBreakPoint && buttons.length > 3) {
@@ -131,6 +130,7 @@ const ButtonRow = ({buttons, buttonGroup, splitButtons}: ButtonRowProps) => {
             {button.visible && (
               <Button
                 className={button.hero ? classes.heroButton : classes.button}
+                aria-label={button.label}
                 id={button.id}
                 key={button.id}
                 variant={button.variant}

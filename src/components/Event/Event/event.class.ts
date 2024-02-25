@@ -6,7 +6,6 @@ import {
   IMAGES_SUFFIX,
   ImageSize,
 } from "../../Firebase/Storage/firebase.storage.super.class";
-// import * as TEXT from "../../constants/text";
 import {
   ERROR_EVENT_NAME_CANT_BE_EMPTY as TEXT_ERROR_EVENT_NAME_CANT_BE_EMPTY,
   ERROR_EVENT_MUST_HAVE_MIN_ONE_COOK as TEXT_ERROR_EVENT_MUST_HAVE_MIN_ONE_COOK,
@@ -16,7 +15,6 @@ import {
   ERROR_FROM_DATE_BIGGER_THAN_TO_DATE as TEXT_ERROR_FROM_DATE_BIGGER_THAN_TO_DATE,
   ERROR_OVERLAPPING_DATES as TEXT_ERROR_OVERLAPPING_DATES,
 } from "../../../constants/text";
-import * as DEFAULT_VALUES from "../../../constants/defaultValues";
 
 import {
   AuthUser,
@@ -27,7 +25,11 @@ import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
 import UserPublicProfile, {
   UserPublicProfileStatsFields,
 } from "../../User/user.public.profile.class";
-import {Operator, SortOrder} from "../../Firebase/Db/firebase.db.super.class";
+import {
+  Operator,
+  SortOrder,
+  ValueObject,
+} from "../../Firebase/Db/firebase.db.super.class";
 import Role from "../../../constants/roles";
 import {ChangeRecord} from "../../Shared/global.interface";
 import FieldValidationError, {
@@ -70,23 +72,15 @@ export interface EventDate {
   to: Date;
 }
 interface AddEmptyEntry {
-  array: object[];
+  array: ValueObject[];
   pos: number;
-  emptyObject: object;
+  emptyObject: ValueObject;
   renumberByField: string;
 }
-interface DeleteEntry {
-  array: {[key: string]: any}[];
-  fieldValue: string | number | boolean;
-  fieldName: string;
-  emptyObject: object;
-  renumberByField: string;
-}
-//FIXME:
 interface AddCookToEvent {
   firebase: Firebase;
   authUser: AuthUser;
-  cookPublicProfile: any;
+  cookPublicProfile: UserPublicProfile;
   event: Event;
 }
 interface RemoveCookFromEvent {
@@ -135,6 +129,10 @@ interface GetEvents {
   userUid: string;
   eventType: EventType;
 }
+interface GetAllEvents {
+  firebase: Firebase;
+  userUid: string;
+}
 interface AddRefDocument {
   refDocuments: Event["refDocuments"];
   newDocumentType: EventRefDocuments;
@@ -178,7 +176,7 @@ export default class Event {
   // Factory
   // ===================================================================== */
   static factory(authUser: AuthUser) {
-    let event = new Event();
+    const event = new Event();
     if (authUser) {
       event.cooks = [
         {
@@ -190,7 +188,7 @@ export default class Event {
       event.cooks = [];
     }
     event.created = Utils.createChangeRecord(authUser);
-    let emptyDateLine = Event.createDateEntry();
+    const emptyDateLine = Event.createDateEntry();
     emptyDateLine.pos = 1;
     event.dates = [emptyDateLine];
     return event;
@@ -227,7 +225,7 @@ export default class Event {
   // Daten prüfen
   // ===================================================================== */
   static checkEventData(event: Event) {
-    let formValidation: FormValidationFieldError[] = [];
+    const formValidation: FormValidationFieldError[] = [];
     if (!event.name) {
       formValidation.push({
         priority: 1,
@@ -245,7 +243,7 @@ export default class Event {
     }
 
     // Prüfen ob Von- und Bis-Datum konsistent
-    event.dates.forEach((date, counter) => {
+    event.dates.forEach((date) => {
       if (date.from.getTime() == new Date(0).getTime()) {
         formValidation.push({
           priority: 2,
@@ -322,8 +320,6 @@ export default class Event {
     });
     // wenn nicht leer, Exception
     if (formValidation.length != 0) {
-      console.log(event);
-      console.log(formValidation);
       throw new FieldValidationError(
         TEXT_ERROR_FORM_VALIDATION,
         formValidation
@@ -333,21 +329,21 @@ export default class Event {
   /* =====================================================================
   // Eintrag in Array löschen
   // ===================================================================== */
-  static deleteEntry({
-    array,
-    fieldValue,
-    fieldName,
-    emptyObject,
-    renumberByField,
-  }: DeleteEntry) {
-    array = array.filter((entry) => entry[fieldName] !== fieldValue);
+  // static deleteEntry({
+  //   array,
+  //   fieldValue,
+  //   fieldName,
+  //   emptyObject,
+  //   renumberByField,
+  // }: DeleteEntry) {
+  //   array = array.filter((entry) => entry[fieldName] !== fieldValue);
 
-    if (array.length === 0) {
-      array.push(emptyObject);
-    }
-    array = Utils.renumberArray({array: array, field: renumberByField});
-    return array;
-  }
+  //   if (array.length === 0) {
+  //     array.push(emptyObject);
+  //   }
+  //   array = Utils.renumberArray({array: array, field: renumberByField});
+  //   return array;
+  // }
   /* =====================================================================
   // Person/Koch hinzufügen
   // ===================================================================== */
@@ -395,7 +391,7 @@ export default class Event {
         objectPictureSrc: event.pictureSrc,
         objectUserUid: cookPublicProfile.uid,
         objectUserDisplayName: cookPublicProfile.displayName,
-        objectUserPictureSrc: cookPublicProfile.pictureSrc,
+        objectUserPictureSrc: cookPublicProfile.pictureSrc.normalSize,
       });
       firebase.analytics.logEvent(FirebaseAnalyticEvent.eventCookAdded);
     }
@@ -574,16 +570,6 @@ export default class Event {
       field: "pos",
     });
 
-    // Bild URL kopieren falls nicht auf eigenem Server
-    // if (
-    //   (!event.pictureSrc.includes("firebasestorage.googleapis") &&
-    //     !event.pictureSrc.includes("chuchipirat") &&
-    //     !event.pictureSrc) ||
-    //   !event.pictureSrcFullSize
-    // ) {
-    //   event.pictureSrcFullSize = event.pictureSrc;
-    // }
-
     event.authUsers = this.getAuthUsersFromCooks(event.cooks);
 
     return event;
@@ -715,7 +701,7 @@ export default class Event {
   // ===================================================================== */
   static defineEventDuration(dates: Event["dates"]) {
     return dates.reduce((result, dateSlice) => {
-      let difference = Utils.differenceBetweenTwoDates({
+      const difference = Utils.differenceBetweenTwoDates({
         dateFrom: dateSlice.from,
         dateTo: dateSlice.to,
       });
@@ -731,7 +717,7 @@ export default class Event {
   // Bild in Firebase Storage hochladen
   // ===================================================================== */
   static getAuthUsersFromCooks(cooks: Cook[]) {
-    let authUsers: string[] = [];
+    const authUsers: string[] = [];
     // Berechtigte Users in Array speicher
     cooks.forEach((cook) => authUsers.push(cook.uid));
     return authUsers;
@@ -786,12 +772,6 @@ export default class Event {
           updateChangeFields: true,
         });
       })
-      .then(() => {
-        // Analytik
-        firebase.analytics.logEvent(FirebaseAnalyticEvent.uploadPicture, {
-          folder: "events",
-        });
-      })
       .catch((error) => {
         console.error(error);
         throw error;
@@ -820,9 +800,6 @@ export default class Event {
             updateChangeFields: true,
           });
         }
-        firebase.analytics.logEvent(FirebaseAnalyticEvent.deletePicture, {
-          folder: "events",
-        });
       })
       .catch((error) => {
         throw error;
@@ -856,7 +833,7 @@ export default class Event {
     uid,
     callback,
   }: GetEventListener) => {
-    let eventListener = () => {};
+    let eventListener: (() => void) | undefined;
 
     const eventCallback = (event: Event) => {
       // Menüplan mit UID anreichern
@@ -864,7 +841,7 @@ export default class Event {
       callback(event);
     };
 
-    const errorCallback = (error: any) => {
+    const errorCallback = (error: Error) => {
       console.error(error);
       throw error;
     };
@@ -876,7 +853,7 @@ export default class Event {
         errorCallback: errorCallback,
       })
       .then((result) => {
-        eventListener = result;
+        return (eventListener = result);
       })
       .catch((error) => {
         console.error(error);
@@ -933,6 +910,39 @@ export default class Event {
       })
       .then((result) => {
         events = result as Event[];
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+
+    return events;
+  }
+  // ===================================================================== */
+  /**
+   * Alle Events einer Person holen
+   * @param firebase Referenz zur DB
+   * @param userUid UID des Users
+   * @param eventType Type der Events, die gelesen werden sollen (siehe enum EventType )
+   */
+  // ===================================================================== */
+  static async getAllEventsOfUser({firebase, userUid}: GetAllEvents) {
+    let events: Event[] = [];
+
+    await firebase.event
+      .readCollection<Event>({
+        uids: [""],
+        orderBy: {field: "maxDate", sortOrder: SortOrder.asc},
+        where: [
+          {
+            field: "authUsers",
+            operator: Operator.ArrayContains,
+            value: userUid,
+          },
+        ],
+      })
+      .then((result) => {
+        events = result as Event[];
       });
 
     return events;
@@ -964,24 +974,26 @@ export default class Event {
     event,
     menuplan,
   }: CheckIfDeletedDayArePlanned) => {
-    let newDayList = Menuplan._getEventDateList({event: event}).map((date) =>
+    const newDayList = Menuplan._getEventDateList({event: event}).map((date) =>
       Utils.dateAsString(date)
     );
-    let menuplanDates = menuplan.dates.map((date) => Utils.dateAsString(date));
+    const menuplanDates = menuplan.dates.map((date) =>
+      Utils.dateAsString(date)
+    );
 
-    let missingDates = menuplanDates.filter(
+    const missingDates = menuplanDates.filter(
       (date) => !newDayList.includes(date)
     );
 
-    let affectedMeals = Object.values(menuplan.meals).filter((meal) =>
+    const affectedMeals = Object.values(menuplan.meals).filter((meal) =>
       missingDates.includes(meal.date)
     );
-    let affectedMenues: Menue["uid"][] = affectedMeals.reduce<Menue["uid"][]>(
+    const affectedMenues: Menue["uid"][] = affectedMeals.reduce<Menue["uid"][]>(
       (accumulator, meal) => accumulator.concat(meal.menuOrder),
       []
     );
 
-    let planedObjects = affectedMenues.reduce<number>(
+    const planedObjects = affectedMenues.reduce<number>(
       (accumulator, mealUid) => {
         return (
           accumulator +

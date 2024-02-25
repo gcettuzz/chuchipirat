@@ -33,15 +33,11 @@ import {
 } from "../../constants/text";
 import Product from "../Product/product.class";
 import Unit from "./unit.class";
-import Firebase from "../Firebase";
+import Firebase from "../Firebase/firebase.class";
 import UnitConversion, {
   SingleUnitConversionBasic,
   SingleUnitConversionProduct,
-  UnitConversionProducts,
 } from "./unitConversion.class";
-import unitConversion from "./unitConversion";
-
-//FIXME:!
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -90,17 +86,15 @@ interface DialogCreateUnitConversionProps {
   unitConversionType: UnitConversionType;
   handleCreate: (unitConversion: UnitConversion) => void;
   handleClose: () => void;
-  handleError: (error: object) => void;
+  handleError: (error: Error) => void;
 }
 const DialogCreateUnitConversion = ({
-  firebase,
   units,
   products,
   dialogOpen,
   unitConversionType,
   handleCreate,
   handleClose,
-  handleError,
 }: DialogCreateUnitConversionProps) => {
   const classes = useStyles();
 
@@ -116,12 +110,10 @@ const DialogCreateUnitConversion = ({
   // ------------------------------------------ */
   const onChangeField = (
     event: React.ChangeEvent<HTMLInputElement>,
-    newValue?: any,
-    action?: string,
-    objectId?: string
+    newValue?: any
   ) => {
-    let value: string | Object;
-    let field = event.target.id.split("-")[0];
+    let value: string | Record<string, unknown>;
+    const field = event.target.id.split("-")[0];
 
     switch (field) {
       // Textfield und Autocomplete sind unterschiedlich
@@ -212,7 +204,7 @@ const DialogCreateUnitConversion = ({
   // ------------------------------------------ */
   const isInputValid = () => {
     let hasError = false;
-    let validationCheck = validation;
+    const validationCheck = validation;
 
     // Prüfung ob Werte gesetzt
     if (
@@ -327,12 +319,10 @@ const DialogCreateUnitConversion = ({
                   autoSelect
                   autoHighlight
                   getOptionLabel={(product) => product.name}
-                  onChange={(event, newValue, action) => {
+                  onChange={(event, newValue) => {
                     onChangeField(
                       event as React.ChangeEvent<HTMLInputElement>,
-                      newValue,
-                      action,
-                      "product"
+                      newValue
                     );
                   }}
                   renderInput={(params) => (
@@ -370,12 +360,10 @@ const DialogCreateUnitConversion = ({
                 autoSelect
                 autoHighlight
                 getOptionLabel={(unit) => unit.key}
-                onChange={(event, newValue, action) => {
+                onChange={(event, newValue) => {
                   onChangeField(
                     event as React.ChangeEvent<HTMLInputElement>,
-                    newValue,
-                    action,
-                    "fromUnit"
+                    newValue
                   );
                 }}
                 renderInput={(params) => (
@@ -412,12 +400,10 @@ const DialogCreateUnitConversion = ({
                 autoSelect
                 autoHighlight
                 getOptionLabel={(unit) => unit.key}
-                onChange={(event, newValue, action) => {
+                onChange={(event, newValue) => {
                   onChangeField(
                     event as React.ChangeEvent<HTMLInputElement>,
-                    newValue,
-                    action,
-                    "toUnit"
+                    newValue
                   );
                 }}
                 renderInput={(params) => (

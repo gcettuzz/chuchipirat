@@ -1,6 +1,5 @@
 import Utils from "../Shared/utils.class";
-import Stats, {StatsField, STATS_FIELDS} from "../Shared/stats.class";
-import * as FIREBASE_EVENTS from "../../constants/firebaseEvents";
+import Stats, {StatsField} from "../Shared/stats.class";
 import * as TEXT from "../../constants/text";
 
 import Feed, {FeedType} from "../Shared/feed.class";
@@ -8,9 +7,10 @@ import Role from "../../constants/roles";
 
 import Department from "../Department/department.class";
 import Unit from "../Unit/unit.class";
-import Firebase from "../Firebase";
+import Firebase from "../Firebase/firebase.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import FirebaseAnalyticEvent from "../../constants/firebaseEvent";
+import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 
 interface GetAllProducts {
   firebase: Firebase;
@@ -24,11 +24,26 @@ interface CreateProduct {
   departmentUid: string;
   shoppingUnit: string;
   authUser: AuthUser;
+  dietProperties: DietProperties;
 }
 interface SaveAllProductsProps {
   firebase: Firebase;
   products: Product[];
   authUser: AuthUser;
+}
+export interface MergeProductsCallbackDocument {
+  date: Date;
+  documentList: {document: string; name: string}[];
+  done: boolean;
+  productToReplace: {uid: string; name: string};
+  productToReplaceWith: {uid: string; name: string};
+}
+interface MergeProducts {
+  firebase: Firebase;
+  authUser: AuthUser;
+  productToReplace: {uid: string; name: string};
+  productToReplaceWith: {uid: string; name: string};
+  callbackDone: (document: MergeProductsCallbackDocument) => void;
 }
 
 // ATTENTION:
@@ -58,9 +73,11 @@ type ProductDepartment = {
 };
 
 export default class Product {
+  // HINT: Änderungen müssen auch im Cloud-FX-Type nachgeführt werden
   uid: string;
   name: string;
   department: ProductDepartment;
+  departmentUid?: Department["uid"];
   // department: ProductDepartment;
   shoppingUnit: Unit["key"];
   dietProperties: DietProperties;
@@ -86,12 +103,6 @@ export default class Product {
       diet: Diet.Meat,
     };
   }
-  // static factory(productId) {
-  //   let product = new Product();
-  //   product.productId = productId;
-  //   product.readInfos();
-  //   return product;
-  // }
   // =====================================================================
   /**
    * Alle Produkte aus der DB holen -->
@@ -121,7 +132,7 @@ export default class Product {
 
     // Produkte holen
     await firebase.masterdata.products
-      .read<Object>({uids: []})
+      .read<ValueObject>({uids: []})
       .then((result) => {
         Object.entries(result).forEach(([key, value]) => {
           if (onlyUsable === true && value.usable === false) {
@@ -131,7 +142,7 @@ export default class Product {
           // Department dazulesen....
           department = {uid: value.departmentUid, name: ""};
           if (withDepartmentName) {
-            let lookUpDepartment = departments.find(
+            const lookUpDepartment = departments.find(
               (department) => department.uid === value.departmentUid
             );
 
@@ -178,10 +189,11 @@ export default class Product {
     name,
     departmentUid,
     shoppingUnit,
+    dietProperties,
     authUser,
   }: CreateProduct) => {
-    let product = new Product();
-    let department = new Department();
+    const product = new Product();
+    const department = new Department();
 
     department.uid = departmentUid;
 
@@ -189,6 +201,7 @@ export default class Product {
     product.name = name.trim();
     product.department = department;
     product.shoppingUnit = shoppingUnit ? shoppingUnit : "";
+    product.dietProperties = dietProperties;
     product.usable = true;
 
     // Dokument updaten mit neuem Produkt
@@ -229,6 +242,36 @@ export default class Product {
     authUser,
   }: SaveAllProductsProps) => {
     // Dokument updaten mit neuem Produkt
+    let triggerCloudFx = false;
+    const changedProducts = [] as Product[];
+    // TODO: altes File holen und vergleichen. für die geänderten Produkte muss die Cloud-FX ausgelöst werden
+    Product.getAllProducts({
+      firebase: firebase,
+      onlyUsable: false,
+      withDepartmentName: false,
+    })
+      .then((result) => {
+        products.forEach((product) => {
+          const dbProduct = result.find(
+            (dbProduct) => dbProduct.uid === product.uid
+          );
+
+          if (
+            dbProduct &&
+            (dbProduct.name != product.name ||
+              dbProduct.dietProperties != product.dietProperties)
+          ) {
+            // Das Produkt hat eine Änderung erfahren, die über alle
+            // Dokumente nachgeführt werden muss
+            triggerCloudFx = true;
+            changedProducts.push(product);
+          }
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
 
     firebase.masterdata.products.update<Array<Product>>({
       uids: [""], // Wird in der Klasse bestimmt
@@ -236,59 +279,21 @@ export default class Product {
       authUser: authUser,
     });
 
+    if (triggerCloudFx) {
+      firebase.cloudFunction.productUpdate.triggerCloudFunction({
+        values: changedProducts,
+        authUser: authUser,
+      });
+    }
+
     return products;
   };
 
   /* =====================================================================
-  // Produkt anpassen
-  // ===================================================================== */
-  static editProduct = async ({
-    firebase,
-    uid,
-    name,
-    departmentUid,
-    shoppingUnit,
-    usable,
-    runCloudFunction,
-  }) => {
-    //FIXME:
-    let product = new Product();
-    // // Dokument updaten mit neuem Produkt
-    // await firebase
-    //   .products()
-    //   .update({
-    //     [uid]: {
-    //       name: name.trim(),
-    //       departmentUid: departmentUid,
-    //       shoppingUnit: shoppingUnit,
-    //       usable: usable,
-    //     },
-    //   })
-    //   .catch((error) => {
-    //     console.error(error);
-    //     throw error;
-    //   });
-    // if (runCloudFunction) {
-    //   firebase.createTriggerDocForCloudFunctions({
-    //     docRef: firebase.cloudFunctions_productUpdate().doc(),
-    //     uid: uid,
-    //     newValue: name,
-    //   });
-    //   firebase.analytics.logEvent(FIREBASE_EVENTS.CLOUD_FUNCTION_EXECUTED);
-    // }
-    // let product = new Product({
-    //   uid: uid,
-    //   name: name.trim(),
-    //   departmentUid: departmentUid,
-    //   shoppingUnit: shoppingUnit,
-    //   usable: usable,
-    // });
-    return product;
-  };
-  /* =====================================================================
   // Produkt tracen
   // ===================================================================== */
   static traceProduct = async ({firebase, uid, traceListener}) => {
+    console.log(firebase, uid, traceListener);
     // if (!firebase || !uid) {
     //   throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
     // }
@@ -317,57 +322,59 @@ export default class Product {
     // firebase.analytics.logEvent(FIREBASE_EVENTS.CLOUD_FUNCTION_EXECUTED);
     // return listener;
   };
-  /* =====================================================================
-    // Produkte mergen
-    // ===================================================================== */
+  // =====================================================================
+  /**
+   * Zwei Produkte mergen
+   * Über eine Cloud-Function werden zwei Produkte zusammengeführt und
+   * in allen relevanten Dokumenten wird das nachgeführt
+   * @param Objekt - Referenz auf Firebase, AuthUser, Produkt zu erstetzen,
+   *                 Ersatz-Produkt, Callback wenn Cloud-FX fertig.
+   * @returns Liste der Produkte
+   */
   static mergeProducts = async ({
     firebase,
-    productA,
-    productB,
     authUser,
-    traceListener,
-  }) => {
-    //   if (!firebase || !productA || !productB) {
-    //     throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
-    //   }
-    //   let listener;
-    //   let docRef = firebase.cloudFunctions_mergeProducts().doc();
-    //   await docRef
-    //     .set({
-    //       productA: {
-    //         uid: productA.uid,
-    //         name: productA.name,
-    //         departmentUid: productA.departmentUid,
-    //         // departmentName: "",
-    //       },
-    //       productB: {
-    //         uid: productB.uid,
-    //         name: productB.name,
-    //         departmentUid: productB.departmentUid,
-    //         // departmentName: "",
-    //       },
-    //       user: {
-    //         uid: authUser.uid,
-    //         displayName: authUser.publicProfile.displayName,
-    //       },
-    //       date: firebase.timestamp.fromDate(new Date()),
-    //     })
-    //     .then(async () => {
-    //       await firebase.delay(1);
-    //     })
-    //     .then(() => {
-    //       const unsubscribe = docRef.onSnapshot((snapshot) => {
-    //         traceListener(snapshot.data());
-    //         if (snapshot.data()?.done) {
-    //           // Wenn das Feld DONE vorhanden ist, ist die Cloud-Function durch
-    //           unsubscribe();
-    //         }
-    //       });
-    //     })
-    //     .catch((error) => {
-    //       throw error;
-    //     });
-    //   firebase.analytics.logEvent(FIREBASE_EVENTS.CLOUD_FUNCTION_EXECUTED);
-    //   return listener;
+    productToReplace,
+    productToReplaceWith,
+    callbackDone,
+  }: MergeProducts) => {
+    if (!firebase || !productToReplace || !productToReplaceWith) {
+      throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
+    }
+    let unsubscribe: () => void;
+    let documentId = "";
+
+    firebase.cloudFunction.mergeProducts
+      .triggerCloudFunction({
+        values: {
+          productToReplace: productToReplace,
+          productToReplaceWith: productToReplaceWith,
+        },
+        authUser: authUser,
+      })
+      .then((result) => {
+        documentId = result;
+      })
+      .then(() => {
+        // Melden wenn fertig
+        const callback = (data) => {
+          if (data?.done) {
+            callbackDone(data);
+            unsubscribe();
+          }
+        };
+
+        firebase.cloudFunction.mergeProducts
+          .listen({
+            uids: [documentId],
+            callback: callback,
+          })
+          .then((result) => {
+            unsubscribe = result;
+          });
+      })
+      .catch((error) => {
+        throw error;
+      });
   };
 }

@@ -1,15 +1,6 @@
 import * as TEXT from "../../constants/text";
 import Firebase from "../Firebase/firebase.class";
-
-// TS_MIGRATION:
-export const STATS_FIELDS = {
-  // USERS: "noUsers",
-  // EVENTS: "noEvents",
-  // INGREDIENTS: "noIngredients",
-  // RECIPES: "noRecipes",
-  SHOPPING_LIST: "noShoppingLists",
-  // PARTICIPANTS: "noParticipants",
-};
+import Recipe from "../Recipe/recipe.class";
 
 export enum StatsField {
   noUsers = "noUsers",
@@ -27,6 +18,11 @@ export enum StatsField {
 interface incrementStat {
   firebase: Firebase;
   field: StatsField;
+  value: number;
+}
+interface IncrementRecipeVariantCounter {
+  firebase: Firebase;
+  recipeUid: Recipe["uid"];
   value: number;
 }
 export interface Kpi {
@@ -60,9 +56,12 @@ export default class Stats {
   // ===================================================================== */
   /* istanbul ignore next */
   /* DB-Methode wird zur Zeit nicht geprüft */
-
   static incrementStat({firebase, field, value = 1}: incrementStat) {
-    firebase.stats.incrementField({uids: [""], field: field, value: value});
+    firebase.stats.counter.incrementField({
+      uids: [""],
+      field: field,
+      value: value,
+    });
   }
   /* =====================================================================
   // Statistik lesen
@@ -72,7 +71,7 @@ export default class Stats {
   static getStats = async (firebase: Firebase) => {
     const stats: Kpi[] = [];
 
-    await firebase.stats
+    await firebase.stats.counter
       .read<Stats>({})
       .then((result) => {
         Object.keys(result).forEach((key) =>
@@ -112,6 +111,57 @@ export default class Stats {
         return TEXT.HOME_STATS_CAPTIONS.MATERIALS;
       case StatsField.noRecipeVariants:
         return TEXT.HOME_STATS_CAPTIONS.RECIPES_VARIANTS;
+      default:
+        return "";
     }
+  };
+  /* =====================================================================
+  // Statistik Verwendete Rezepte in Menüplan
+  // ===================================================================== */
+  // Holt die Statistik, welches Rezept wie oft in einem Menüplan ein-
+  // geplant wurde. Die Statistik, wird jede Nacht aktualisert mit den Menü-
+  // plänen, die gestern den letzten Tag ihrere Einplanung hatten.
+  static getRecipeInMenuplanStats = async (firebase: Firebase) => {
+    firebase.stats.recipesInMenuplan
+      .read({uids: []})
+      .then((result) => {
+        return result;
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  };
+  /* =====================================================================
+  // Statistik anzahl erstellte Varianten eines Originalrezeptes
+  // ===================================================================== */
+  // Holt die Statistik, welches von welchem Rezept wie oft eine Variante
+  // erstellt wurde.
+  static getRecipeVariants = async (firebase: Firebase) => {
+    firebase.stats.recipeVariants
+      .read({uids: []})
+      .then((result) => {
+        return result;
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  };
+  /* =====================================================================
+  // Zähler für Anzahl Variante pro Rezept hochzählen
+  // ===================================================================== */
+  // Holt die Statistik, welches von welchem Rezept wie oft eine Variante
+  // erstellt wurde.
+  static incrementRecipeVariantCounter = async ({
+    firebase,
+    recipeUid,
+    value,
+  }: IncrementRecipeVariantCounter) => {
+    firebase.stats.recipeVariants.incrementField({
+      uids: [""],
+      field: recipeUid,
+      value: value,
+    });
   };
 }

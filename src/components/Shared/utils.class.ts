@@ -1,7 +1,6 @@
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import {SortOrder} from "../Firebase/Db/firebase.db.super.class";
 import {ChangeRecord} from "./global.interface";
-
 /**
  * Schnittstelle für Utils.insertArrayElementAtPosition
  * @param array - Array das geändert werden soll
@@ -64,13 +63,19 @@ export interface SortArrayWithObjectByDate {
   array: {[key: string]: any}[];
   attributeName: string;
 }
-interface DateAsString {
-  date: Date;
+// interface DateAsString {
+//   date: Date;
+// }
+
+interface ConvertArrayToObject<T> {
+  array: T[];
+  keyName: keyof T;
 }
 
-interface ConvertArrayToObject {
-  array: object[];
-  keyName: string;
+export enum Tenant {
+  development,
+  test,
+  production,
 }
 
 export default class Utils {
@@ -107,7 +112,7 @@ export default class Utils {
   // Prüfen ob gültige URL
   // ===================================================================== */
   static isUrl(url: string) {
-    let regexp = new RegExp(
+    const regexp = new RegExp(
       "^(https?:\\/\\/)?" + // protocol
         "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" + // domain name
         "((\\d{1,3}\\.){3}\\d{1,3}))" + // OR ip (v4) address
@@ -141,7 +146,7 @@ export default class Utils {
     newElement,
   }: InsertArrayElementAtPosition<T>) {
     let listPartPreInsert: T[] = [];
-    let listNewElement: T[] = [];
+    const listNewElement: T[] = [];
     let listPartAfterInsert: T[] = [];
 
     listPartPreInsert = array.slice(0, indexToInsert + 1);
@@ -166,9 +171,9 @@ export default class Utils {
     if (indexToMoveDown !== 0) {
       listPartPreMove = array.slice(0, indexToMoveDown);
     }
-    let listElementSwapDown: T = array[indexToMoveDown];
-    let listElementSwapUp: T = array[indexToMoveDown + 1];
-    let listPartRest: T[] = array.slice(indexToMoveDown + 2);
+    const listElementSwapDown: T = array[indexToMoveDown];
+    const listElementSwapUp: T = array[indexToMoveDown + 1];
+    const listPartRest: T[] = array.slice(indexToMoveDown + 2);
 
     return listPartPreMove.concat(
       listElementSwapUp,
@@ -185,9 +190,9 @@ export default class Utils {
       return array;
     }
 
-    let listPartPreMove: T[] = array.slice(0, indexToMoveUp - 1);
-    let listElementSwapUp: T = array[indexToMoveUp];
-    let listElementSwapDown: T = array[indexToMoveUp - 1];
+    const listPartPreMove: T[] = array.slice(0, indexToMoveUp - 1);
+    const listElementSwapUp: T = array[indexToMoveUp];
+    const listElementSwapDown: T = array[indexToMoveUp - 1];
 
     let listPartRest: T[] = [];
     if (indexToMoveUp !== array.length) {
@@ -214,7 +219,7 @@ export default class Utils {
     dateTo,
   }: DifferenceBetweenTwoDates) {
     if (dateFrom.getTime() > dateTo.getTime()) {
-      return;
+      return 0;
     }
     const differenceTime = Math.abs(dateTo.getTime() - dateFrom.getTime());
     const differenceDays =
@@ -227,9 +232,9 @@ export default class Utils {
   // ===================================================================== */
   static generateUid(length: number) {
     let result = "";
-    let characters =
+    const characters =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let charactersLength = characters.length;
+    const charactersLength = characters.length;
     for (let i = 0; i < length; i++) {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
@@ -240,7 +245,7 @@ export default class Utils {
   // ===================================================================== */
   static getFileSuffix(filename: string) {
     if (!filename.includes(".")) {
-      return;
+      return "";
     }
     return filename.split(".")?.pop()?.toLowerCase();
   }
@@ -258,12 +263,12 @@ export default class Utils {
     attributeName,
     sortOrder = SortOrder.asc,
   }: SortArray<T>) {
-    let nameHierarchy = attributeName.split(".");
+    const nameHierarchy = attributeName.split(".");
 
     if (sortOrder == SortOrder.asc) {
       array.sort(function (aOriginal, bOriginal) {
-        let nameA: any;
-        let nameB: any;
+        let nameA: string;
+        let nameB: string;
         let aValue: any;
         let bValue: any;
 
@@ -345,14 +350,58 @@ export default class Utils {
   }
   // ===================================================================== */
   /**
+   * Prüfung ob wir uns in der Produktion befinden
+   * @returns true/false ob wir in der Produktion sind
+   */
+  static isProdTenant() {
+    if (!process.env.NODE_ENV || process.env.NODE_ENV === "production") {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  // ===================================================================== */
+  /**
    * Prüfung ob wir uns in der Entwicklung befinden
    * @returns true/false ob wir in der Entwicklung sind
    */
-  static isDevelopmentEnviroment() {
+  static isDevTenant() {
     if (!process.env.NODE_ENV || process.env.NODE_ENV === "development") {
       return true;
     } else {
       return false;
+    }
+  }
+  // ===================================================================== */
+  /**
+   * Prüfung ob wir uns in der Testumgebung befinden
+   * @returns true/false ob wir in der Entwicklung sind
+   */
+  static isTestTenant() {
+    if (!process.env.NODE_ENV || process.env.NODE_ENV === "test") {
+      return true;
+    } else {
+      return false;
+    }
+    // const parsedUrl = url.parse(urlString);
+    // if (parsedUrl.hostname && parsedUrl.hostname.includes("test")) {
+    //   return true;
+    // } else {
+    //   return false;
+    // }
+  }
+  // ===================================================================== */
+  /**
+   * System bestimmen
+   * @returns Systemtyp
+   */
+  static getTenant(): Tenant {
+    if (Utils.isProdTenant()) {
+      return Tenant.production;
+    } else if (Utils.isTestTenant()) {
+      return Tenant.test;
+    } else {
+      return Tenant.development;
     }
   }
   // ===================================================================== */
@@ -374,7 +423,7 @@ export default class Utils {
   static dateAsString = (date: Date) => {
     let month = "" + (date.getMonth() + 1);
     let day = "" + date.getDate();
-    let year = "" + date.getFullYear();
+    const year = "" + date.getFullYear();
 
     if (month.length < 2) month = "0" + month;
     if (day.length < 2) day = "0" + day;
@@ -387,9 +436,16 @@ export default class Utils {
    * @param object Objekt
    * @result Wie soll das Feld heissen, das den Key, Wert des Objekts speichert?
    */
-  static convertObjectToArray = (object: object, idName: string) => {
+  static convertObjectToArray = (
+    object: Record<string, unknown>,
+    idName: string
+  ) => {
     return Object.keys(object).map((key) => {
-      return {[idName]: key, ...object[key]};
+      const entry: Record<string, unknown> = {
+        [idName]: key,
+        ...(object[key] as Record<string, unknown>),
+      };
+      return entry;
     });
   };
   // ===================================================================== */
@@ -399,12 +455,15 @@ export default class Utils {
    * @param keyField Name des Feldes, dass zum Schlüssel wird
    * @result Objekt
    */
-  static convertArrayToObject = ({array, keyName}: ConvertArrayToObject) => {
-    let newObject = {} as object;
+  static convertArrayToObject = <T>({
+    array,
+    keyName,
+  }: ConvertArrayToObject<T>) => {
+    const newObject = {} as Record<string, T>;
 
     array.forEach((entry) => {
-      newObject[entry[keyName]] = entry;
-      delete newObject[entry[keyName]][keyName];
+      newObject[entry[keyName] as string] = entry;
+      delete newObject[entry[keyName] as string][keyName];
     });
 
     return newObject;

@@ -90,7 +90,7 @@ const CustomDialog = () => {
     // Prüfen ob der Eintrag auch übereinstimmt
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    let confirmationStringValidation = {hasError: false, errorText: ""};
+    const confirmationStringValidation = {hasError: false, errorText: ""};
 
     setFormFields({
       ...formFields,

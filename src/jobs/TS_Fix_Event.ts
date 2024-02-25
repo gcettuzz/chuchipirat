@@ -1,4 +1,4 @@
-import Firebase from "../components/Firebase";
+import Firebase from "../components/Firebase/firebase.class";
 
 interface FixEventDocuments {
   firebase: Firebase;
@@ -16,7 +16,7 @@ export async function fixEventDocuments({
   if (event) {
     // let event = JSON.parse(eventJSON);
     // Event zurückspeichern
-    let eventDocumentReference = firebase.db.doc(`events/${eventUid}`);
+    const eventDocumentReference = firebase.db.doc(`events/${eventUid}`);
     console.log(event);
     await eventDocumentReference.set(
       firebase.event.convertDateValuesToTimestamp(event)
@@ -26,7 +26,9 @@ export async function fixEventDocuments({
   if (menuplan) {
     // let menuplan = JSON.parse(menuplanJSON);
     // Menüplan migrieren
-    let menuplanDocument = firebase.db.doc(`events/${eventUid}/docs/menuplan`);
+    const menuplanDocument = firebase.db.doc(
+      `events/${eventUid}/docs/menuplan`
+    );
     console.log(menuplan);
     await menuplanDocument.set(
       firebase.event.menuplan.convertDateValuesToTimestamp(menuplan)

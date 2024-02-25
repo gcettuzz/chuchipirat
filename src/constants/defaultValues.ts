@@ -24,7 +24,7 @@ export const EVENT_PLACEHOLDER_PICTURE =
  * @returns Bild-URL
  */
 export const CARD_PLACEHOLDER_PICTURE = () => {
-  if (Utils.isDevelopmentEnviroment()) {
+  if (Utils.isDevTenant()) {
     return "https://firebasestorage.googleapis.com/v0/b/chuchipirat-dev.appspot.com/o/defaults%2Fplaceholder.png?alt=media&token=fe2c82ce-5e98-41be-ae98-87a1af3753a3";
   } else {
     return "https://firebasestorage.googleapis.com/v0/b/chuchipirat.appspot.com/o/defaults%2Fplaceholder.png?alt=media&token=c5532518-f7d1-4c76-b9ee-f4f93716dd27";
@@ -44,7 +44,7 @@ export const MENUPLAN_NO_OF_COLUMS_X_LARGE = 11;
 
 export const MENUPLAN_NO_OF_COLUMS_PRINT = 4;
 
-export const HELPCENTER_URL = "https://help.chuchipirat.ch/";
+export const HELPCENTER_URL = "https://help.chuchipirat.ch";
 
 export const MAILADDRESS = "hallo@chuchipirat.ch";
 

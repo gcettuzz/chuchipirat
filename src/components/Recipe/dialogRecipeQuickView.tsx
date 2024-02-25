@@ -1,5 +1,4 @@
-import React, { useReducer } from "react";
-import { useHistory } from "react-router";
+import React from "react";
 import useStyles from "../../constants/styles";
 
 import Button from "@material-ui/core/Button";
@@ -11,21 +10,11 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogActions from "@material-ui/core/DialogActions";
 import CardMedia from "@material-ui/core/CardMedia";
 
-// import Slide from "@material-ui/core/Slide";
-// import { TransitionProps } from "@material-ui/core/transitions";
-
-import * as TEXT from "../../constants/text";
-
-import Firebase, { withFirebase } from "../Firebase";
-import {
-  AuthUserContext,
-  withAuthorization,
-  withEmailVerification,
-} from "../Session";
+import Firebase from "../Firebase";
 import RecipeShort from "./recipeShort.class";
-import recipe from "./recipe";
 import Recipe from "./recipe.class";
-import { DialogContent } from "@material-ui/core";
+import {DialogContent} from "@material-ui/core";
+import AuthUser from "../Firebase/Authentication/authUser.class";
 
 export interface DialogQuickViewActions {
   key: string;
@@ -46,7 +35,7 @@ interface DialogRecipeQuickViewProps {
   dialogOpen: boolean;
   handleClose: (event, reason) => void;
   dialogActions: DialogQuickViewActions[];
-  authUser: any;
+  authUser: AuthUser;
 }
 
 const DialogRecipeQuickView = ({
@@ -75,6 +64,7 @@ const DialogRecipeQuickView = ({
       uid: recipeShort.uid,
       userUid: recipeShort.created.fromUid,
       type: recipeShort.type,
+      authUser: authUser,
     }).then((result) => {
       setRecipe(result);
       setIsLoading(false);
@@ -104,10 +94,7 @@ const DialogRecipeQuickView = ({
         />
       )}
       <DialogTitle id="simple-dialog-title">{recipeShort.name}</DialogTitle>
-      <DialogContent>
-        {recipe.source}
-        //TODO: Inhalt definieren
-      </DialogContent>
+      <DialogContent>{recipe.source}</DialogContent>
       <DialogActions>
         {dialogActions.map((action) => (
           <Button

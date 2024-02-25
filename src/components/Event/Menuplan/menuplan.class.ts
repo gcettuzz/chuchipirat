@@ -3,8 +3,7 @@ import * as DEFAULT_VALUES from "../../../constants/defaultValues";
 import {ChangeRecord} from "../../Shared/global.interface";
 import Event from "../Event/event.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
-import Firebase from "../../Firebase";
-import LocalStorageHandler from "../../Shared/localStorageHandler.class";
+import Firebase from "../../Firebase/firebase.class";
 import Recipe, {RecipeType} from "../../Recipe/recipe.class";
 import Product from "../../Product/product.class";
 import Material from "../../Material/material.class";
@@ -14,29 +13,7 @@ import EventGroupConfiguration, {
 } from "../GroupConfiguration/groupConfiguration.class";
 import RecipeShort from "../../Recipe/recipeShort.class";
 import Unit from "../../Unit/unit.class";
-import UsedRecipes from "../UsedRecipes/usedRecipes.class";
 import _ from "lodash";
-// export interface Meal {
-//   uid: string;
-//   pos: number;
-//   name: string;
-// }
-
-// meal (pro Typ/Tag 1)
-// uid: (eindeutige uid, datum, mealtypeuid), order Menu
-// TODO: dass muss automatisch erzeugt werden für alle! jeweils schon in der Factory
-
-// menu (mehrere pro meal möglich)
-//   uid: {uid (neue eindeutige UID), name}
-// recipeOrder,
-// materialOrder
-// productOrder
-
-// recipes
-//  |- uid: {eindeutige UID, recipeuid, einplanung(Mengen)}
-
-// gleiches mit material und Products
-
 interface MenuplanObjectStructure<T> {
   entries: {[key: string]: T};
   order: string[];
@@ -263,6 +240,7 @@ interface SortSelectedMenues {
   menuplan: Menuplan;
 }
 export default class Menuplan {
+  // HINT: Änderungen müssen auch im Cloud-FX-Type nachgeführt werden
   uid: string;
   dates: Date[];
   // meals: Meal[];
@@ -275,6 +253,8 @@ export default class Menuplan {
   lastChange: ChangeRecord;
   materials: Materials;
   products: Products;
+  usedRecipes?: Recipe["uid"][];
+  usedProducts?: Product["uid"][];
 
   /* =====================================================================
    // Konstruktor
@@ -295,41 +275,13 @@ export default class Menuplan {
     this.created = {date: new Date(0), fromUid: "", fromDisplayName: ""};
     this.lastChange = {date: new Date(0), fromUid: "", fromDisplayName: ""};
   }
-  /* =====================================================================
-   // Factory
-   // ===================================================================== */
-  // static factory({
-  //   dates,
-  //   meals,
-  //   notes,
-  //   recipes,
-  //   createdAt,
-  //   createdFromUid,
-  //   createdFromDisplayName,
-  //   lastChangeAt,
-  //   lastChangeFromUid,
-  //   lastChangeFromDisplayName,
-  // }: Menuplan) {
-  //   let menuplan = new Menuplan();
-  //   menuplan.dates = dates;
-  //   menuplan.meals = meals;
-  //   menuplan.notes = notes;
-  //   menuplan.recipes = recipes;
-  //   menuplan.createdAt = createdAt;
-  //   menuplan.createdFromUid = createdFromUid;
-  //   menuplan.createdFromDisplayName = createdFromDisplayName;
-  //   menuplan.lastChangeAt = lastChangeAt;
-  //   menuplan.lastChangeFromUid = lastChangeFromUid;
-  //   menuplan.lastChangeFromDisplayName = lastChangeFromDisplayName;
-  //   return menuplan;
-  // }
 
   // ===================================================================== */
   /**
    * Menüplan erstellen anhand eines Events
    */
   static factory = ({event, authUser}: Factory) => {
-    let menuplan = new Menuplan();
+    const menuplan = new Menuplan();
 
     menuplan.uid = event.uid;
 
@@ -344,7 +296,7 @@ export default class Menuplan {
 
     // Mahlzeiten generieren (aus Default)
     DEFAULT_VALUES.MENUPLAN_MEALS.forEach((mealType) => {
-      let mealTypeUid = Utils.generateUid(5);
+      const mealTypeUid = Utils.generateUid(5);
       mealType.uid = mealTypeUid;
       menuplan.mealTypes.order.push(mealTypeUid);
       menuplan.mealTypes.entries[mealTypeUid] = mealType;
@@ -354,10 +306,10 @@ export default class Menuplan {
     Object.values(menuplan.mealTypes.entries).forEach((mealType) => {
       menuplan.dates.forEach((date) => {
         // Mahlzeit erstellen
-        let meal = Menuplan.createMeal({mealType: mealType.uid, date: date});
+        const meal = Menuplan.createMeal({mealType: mealType.uid, date: date});
         menuplan.meals[meal.uid] = meal;
         // Ein Menü erzeugen und der Mahlzeit hinzufügen
-        let menu = Menuplan.createMenu();
+        const menu = Menuplan.createMenu();
         menuplan.meals[meal.uid].menuOrder.push(menu.uid);
         menuplan.menues[menu.uid] = menu;
       });
@@ -376,32 +328,29 @@ export default class Menuplan {
     uid,
     callback,
   }: GetMenuplan) => {
-    let menuplanListener = () => {};
-
     const menuplanCallback = (menuplan: Menuplan) => {
       // Menüplan mit UID anreichern
       menuplan.uid = uid;
       callback(menuplan);
     };
-    const errorCallback = (error: any) => {
+    const errorCallback = (error: Error) => {
       console.error(error);
       throw error;
     };
 
-    await firebase.event.menuplan
+    return await firebase.event.menuplan
       .listen<Menuplan>({
         uids: [uid],
         callback: menuplanCallback,
         errorCallback: errorCallback,
       })
       .then((result) => {
-        menuplanListener = result;
+        return result;
       })
       .catch((error) => {
         console.error(error);
         throw error;
       });
-    return menuplanListener;
   };
   // ===================================================================== */
   /**
@@ -465,9 +414,9 @@ export default class Menuplan {
     menues,
     dates,
   }: AddMealType) => {
-    let newMealTypes = {...mealTypes};
-    let newMeals = {...meals};
-    let newMenues = {...menues};
+    const newMealTypes = {...mealTypes};
+    const newMeals = {...meals};
+    const newMenues = {...menues};
 
     // Mahlzeit in Übersicht aufnehmen
     newMealTypes.entries[mealType.uid] = mealType;
@@ -476,10 +425,10 @@ export default class Menuplan {
     // Für jeden Tag eine Mahlzeit erstellen und Menü einfügen
     dates.forEach((date) => {
       // Mahlzeit erstellen
-      let meal = Menuplan.createMeal({mealType: mealType.uid, date: date});
+      const meal = Menuplan.createMeal({mealType: mealType.uid, date: date});
       newMeals[meal.uid] = meal;
       // Ein Menü erzeugen und der Mahlzeit hinzufügen
-      let menu = Menuplan.createMenu();
+      const menu = Menuplan.createMenu();
       newMeals[meal.uid].menuOrder.push(menu.uid);
       newMenues[menu.uid] = menu;
     });
@@ -511,12 +460,12 @@ export default class Menuplan {
         materials: materials,
       };
     }
-    let newMealTypes = {...mealTypes};
-    let newMeals = {...meals};
-    let newMenues = {...menues};
-    let newMealRecipes = {...mealRecipes};
-    let newProducts = {...products};
-    let newMaterials = {...materials};
+    const newMealTypes = {...mealTypes};
+    const newMeals = {...meals};
+    const newMenues = {...menues};
+    const newMealRecipes = {...mealRecipes};
+    const newProducts = {...products};
+    const newMaterials = {...materials};
 
     // Mahlzeittyp löschen
     newMealTypes.order = mealTypes.order.filter(
@@ -616,16 +565,18 @@ export default class Menuplan {
    * @returns meal - Mahlzeit
    */
   static findMealOfMenu = ({menueUid, meals}: FindMealOfMenu) => {
-    let mealUid = Object.keys(meals).find((mealUid) => {
-      if (
-        meals[mealUid].menuOrder.find(
-          (menuUidInMeal) => menuUidInMeal == menueUid
-        )
-      ) {
-        return mealUid;
+    let foundMealUid = "";
+    Object.keys(meals).forEach((mealUid) => {
+      if (meals[mealUid].menuOrder.includes(menueUid)) {
+        foundMealUid = mealUid;
       }
     });
-    return meals[mealUid as string];
+
+    if (!foundMealUid) {
+      throw Error(`No Meal found for Menu ${menueUid}`);
+    }
+
+    return meals[foundMealUid as string];
   };
   // ===================================================================== */
   /**
@@ -637,7 +588,7 @@ export default class Menuplan {
     mealRecipeUid,
     menues,
   }: FindMenueOfMealRecipe) => {
-    let menue = Object.values(menues).find((menue) =>
+    const menue = Object.values(menues).find((menue) =>
       menue.mealRecipeOrder.includes(mealRecipeUid)
     );
     return menue;
@@ -652,7 +603,7 @@ export default class Menuplan {
     productUid,
     menues,
   }: FindMenueOfMealProduct) => {
-    let menue = Object.values(menues).find((menue) =>
+    const menue = Object.values(menues).find((menue) =>
       menue.productOrder.includes(productUid)
     );
     return menue;
@@ -667,7 +618,7 @@ export default class Menuplan {
     materialUid,
     menues,
   }: FindMenueOfMealMaterial) => {
-    let menue = Object.values(menues).find((menue) =>
+    const menue = Object.values(menues).find((menue) =>
       menue.materialOrder.includes(materialUid)
     );
     return menue;
@@ -678,7 +629,7 @@ export default class Menuplan {
    * @returns
    */
   static createMealRecipe = ({recipe, plan}: CreateMealRecipe) => {
-    let mealRecipe = {} as MealRecipe;
+    const mealRecipe = {} as MealRecipe;
     mealRecipe.plan = [];
     Object.keys(plan).forEach((intoleranceUid) =>
       mealRecipe.plan.push({
@@ -718,7 +669,7 @@ export default class Menuplan {
    * @returns Material
    */
   static createMaterial = () => {
-    let material = {} as MenuplanMaterial;
+    const material = {} as MenuplanMaterial;
 
     material.uid = Utils.generateUid(5);
     material.materialName = "";
@@ -760,7 +711,7 @@ export default class Menuplan {
    * @returns Produkt
    */
   static createProduct = () => {
-    let product = {} as MenuplanProduct;
+    const product = {} as MenuplanProduct;
 
     product.uid = Utils.generateUid(5);
     product.productName = "";
@@ -867,12 +818,12 @@ export default class Menuplan {
    * @returns Array mit MenueUid in der richtigen Reihenfolge
    */
   static sortSelectedMenues = ({menueList, menuplan}: SortSelectedMenues) => {
-    let result: MenueCoordinates[] = [];
+    const result: MenueCoordinates[] = [];
 
     menuplan.dates.forEach((date) => {
-      let dateAsString = Utils.dateAsString(date);
+      const dateAsString = Utils.dateAsString(date);
       menuplan.mealTypes.order.forEach((mealTypeUid) => {
-        let meal = Object.values(menuplan.meals).find(
+        const meal = Object.values(menuplan.meals).find(
           (meal) => meal.date == dateAsString && meal.mealType == mealTypeUid
         );
         if (meal) {
@@ -963,106 +914,6 @@ export default class Menuplan {
 
     return portionPlan;
   };
-
-  // /* =====================================================================
-  // // Neue Notiz anlegen
-  // // ===================================================================== */
-  // static createNote = ({ date, mealUid, type, text }) => {
-  //   return {
-  //     uid: Utils.generateUid(5),
-  //     type: type,
-  //     text: text,
-  //     date: date,
-  //     mealUid: mealUid,
-  //   };
-  // };
-  // /* =====================================================================
-  // // Neues (Menüplan-) Rezept anlegen
-  // // ===================================================================== */
-  // static createMealRecipe = ({
-  //   date,
-  //   mealUid,
-  //   recipeUid,
-  //   recipeName,
-  //   pictureSrc,
-  //   noOfServings,
-  // }) => {
-  //   return {
-  //     uid: Utils.generateUid(5),
-  //     date: date,
-  //     mealUid: mealUid,
-  //     recipeUid: recipeUid,
-  //     recipeName: recipeName,
-  //     pictureSrc: pictureSrc,
-  //     noOfServings: noOfServings,
-  //   };
-  // };
-  // /* =====================================================================
-  // // Mahlzeit Position hoch schieben
-  // // ===================================================================== */
-  // static moveMealUp = ({ meals, meal }) => {
-  //   meals = Utils.moveArrayElementUp({
-  //     array: meals,
-  //     indexToMoveUp: meal.pos - 1,
-  //   });
-  //   meals = Utils.renumberArray({ array: meals, field: "pos" });
-  //   return meals;
-  // };
-  // /* =====================================================================
-  // // Mahlzeit Position runter schieben
-  // // ===================================================================== */
-  // static moveMealDown = ({ meals, meal }) => {
-  //   meals = Utils.moveArrayElementDown({
-  //     array: meals,
-  //     indexToMoveDown: meal.pos - 1,
-  //   });
-  //   meals = Utils.renumberArray({ array: meals, field: "pos" });
-  //   return meals;
-  // };
-  // /* =====================================================================
-  // // Mahlzeit in Plan hinzufügen
-  // // ===================================================================== */
-  // // static addMealToPlan = ({ plan, meal }) => {
-  // //   plan.forEach((day) => {
-  // //     day.meals.push({ mealUid: meal.uid, recipes: [], notes: [] });
-  // //   });
-  // //   return plan;
-  // // };
-  // /* =====================================================================
-  // // Notiz in Plan hinzufügen
-  // // ===================================================================== */
-  // // static addNoteToPlan = ({ plan, note, headNote, mealDate, mealUid }) => {
-  // //   let day = plan.find((day) => day.date.getTime() === mealDate.getTime());
-  // //   if (headNote) {
-  // //     day.headNotes.push(note);
-  // //   } else {
-  // //     let meal = day.meals.find((meal) => meal.mealUid === mealUid);
-  // //     meal.notes.push(note);
-  // //   }
-  // //   return plan;
-  // // };
-  // /* =====================================================================
-  // // PRIVAT: Liste mit Tagen generieren
-  // // ===================================================================== */
-  // ===================================================================== */
-  /**
-   * Datumsliste generieren
-   * Anhand der Zeitscheiben, ein Array mit allen Daten erstellen
-   * @param {event}
-   */
-  static _getEventDateList = ({event}: _GetEventDateList) => {
-    let dateList: Date[] = [];
-
-    let dateRanges = Event.deleteEmptyDates(event.dates);
-    dateRanges.forEach((daterange) => {
-      let currentDate = new Date(daterange.from);
-      while (currentDate <= daterange.to) {
-        dateList.push(new Date(currentDate.setUTCHours(0, 0, 0, 0)));
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-    });
-    return dateList;
-  };
   // ===================================================================== */
   /**
    * Menuplan anpassen mit neuer Tagesauwahl
@@ -1076,37 +927,36 @@ export default class Menuplan {
     existingEvent,
     newEvent,
   }: AdjustMenuplanWithNewDays) => {
-    let updatedMenuplan = _.cloneDeep(menuplan) as Menuplan;
+    const updatedMenuplan = _.cloneDeep(menuplan) as Menuplan;
 
-    let newDayList = Menuplan._getEventDateList({event: newEvent}).map((date) =>
-      Utils.dateAsString(date)
-    );
-    let oldDayList = Menuplan._getEventDateList({event: existingEvent}).map(
+    const newDayList = Menuplan._getEventDateList({event: newEvent}).map(
       (date) => Utils.dateAsString(date)
     );
-
-    let datesToDelete = oldDayList.filter((date) => !newDayList.includes(date));
-    let datesToDAdd = newDayList.filter((date) => !oldDayList.includes(date));
+    const oldDayList = Menuplan._getEventDateList({event: existingEvent}).map(
+      (date) => Utils.dateAsString(date)
+    );
+    const datesToDAdd = newDayList.filter((date) => !oldDayList.includes(date));
 
     updatedMenuplan.dates = newDayList.map(
       (date) => new Date(new Date(date).setUTCHours(0, 0, 0, 0))
     );
-
-    let mealsToDelete = Object.values(menuplan.meals).filter(
+    const mealsToDelete = Object.values(menuplan.meals).filter(
       (meal) => !newDayList.includes(meal.date)
     );
-    let menueUidsToDelete = mealsToDelete.reduce<Meal["uid"][]>(
+    const menueUidsToDelete = mealsToDelete.reduce<Meal["uid"][]>(
       (accumulator, meal) => accumulator.concat(meal.menuOrder),
       []
     );
 
-    let mealRecipeUidsToDelete = menueUidsToDelete.reduce<MealRecipe["uid"][]>(
+    const mealRecipeUidsToDelete = menueUidsToDelete.reduce<
+      MealRecipe["uid"][]
+    >(
       (accumulator, menuUid) =>
         accumulator.concat(menuplan.menues[menuUid].mealRecipeOrder),
       []
     );
 
-    let productUidsToDelete = menueUidsToDelete.reduce<
+    const productUidsToDelete = menueUidsToDelete.reduce<
       MenuplanProduct["uid"][]
     >(
       (accumulator, menuUid) =>
@@ -1114,7 +964,7 @@ export default class Menuplan {
       []
     );
 
-    let materialUidToDelete = menueUidsToDelete.reduce<
+    const materialUidToDelete = menueUidsToDelete.reduce<
       MenuplanMaterial["uid"][]
     >(
       (accumulator, menuUid) =>
@@ -1122,7 +972,7 @@ export default class Menuplan {
       []
     );
 
-    let notesToDelete = Object.values(menuplan.notes).filter((note) =>
+    const notesToDelete = Object.values(menuplan.notes).filter((note) =>
       menueUidsToDelete.includes(note.menueUid)
     );
 
@@ -1144,14 +994,37 @@ export default class Menuplan {
     // Für jeden neuen Tage Malhzeit, und eine Menü erstellen
     datesToDAdd.forEach((newDay) => {
       Object.values(updatedMenuplan.mealTypes.entries).forEach((mealType) => {
-        let meal = Menuplan.createMeal({mealType: mealType.uid, date: newDay});
+        const meal = Menuplan.createMeal({
+          mealType: mealType.uid,
+          date: newDay,
+        });
         updatedMenuplan.meals[meal.uid] = meal;
-        let menu = Menuplan.createMenu();
+        const menu = Menuplan.createMenu();
         updatedMenuplan.meals[meal.uid].menuOrder.push(menu.uid);
         updatedMenuplan.menues[menu.uid] = menu;
       });
     });
-
     return updatedMenuplan;
+  };
+  /* =====================================================================
+  // PRIVAT: 
+  // ===================================================================== */
+  /**
+   * Datumsliste generieren
+   * Anhand der Zeitscheiben, ein Array mit allen Daten erstellen
+   * @param {event}
+   */
+  static _getEventDateList = ({event}: _GetEventDateList) => {
+    const dateList: Date[] = [];
+
+    const dateRanges = Event.deleteEmptyDates(event.dates);
+    dateRanges.forEach((daterange) => {
+      const currentDate = new Date(daterange.from);
+      while (currentDate <= daterange.to) {
+        dateList.push(new Date(currentDate.setHours(0, 0, 0, 0)));
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    });
+    return dateList;
   };
 }

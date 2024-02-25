@@ -8,7 +8,6 @@ import {
 import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
 import {
   STORAGE_OBJECT_PROPERTY,
-  SessionStorageHandler,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
 

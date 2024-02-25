@@ -25,7 +25,7 @@ input[type="number"] {
   text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.15);
   letter-spacing: -2px;
   display: block;
-  width: 4rem;
+  width: 3rem;
   height: 4rem;
   background: linear-gradient(to bottom, #999999 0%, #cccccc 100%);
   color: white;
@@ -41,9 +41,9 @@ input[type="number"] {
   content: "";
   width: 0;
   height: 0;
-  border-right: 2rem solid transparent;
-  border-left: 2rem solid transparent;
-  border-top: 1.5rem solid #cccccc;
+  border-right: 1.5rem solid transparent;
+  border-left: 1.5rem solid transparent;
+  border-top: 1.5rem ;
   position: absolute;
   top: 4rem;
   left: 0;
@@ -86,10 +86,11 @@ input[type="number"] {
 .ribbon--purple {
   background: linear-gradient(to bottom, #5c3292 0%, #7e3794 100%);
 }
-
 .ribbon--purple:after {
   border-top: 1.5rem solid #7e3794;
 }
+
+
 
 /* ===================================================================
 // =========================== Corner Ribbon =========================

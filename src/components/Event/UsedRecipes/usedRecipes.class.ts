@@ -1,6 +1,6 @@
-import Firebase from "../../Firebase";
+import Firebase from "../../Firebase/firebase.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
-import Recipe, {RecipeIndetifier, RecipeType} from "../../Recipe/recipe.class";
+import Recipe, {RecipeIndetifier} from "../../Recipe/recipe.class";
 import {ChangeRecord} from "../../Shared/global.interface";
 import Utils from "../../Shared/utils.class";
 import Event from "../Event/event.class";
@@ -88,7 +88,7 @@ export default class UsedRecipes {
    * @returns usedRecipes
    */
   static factory({event}: Factory) {
-    let usedRecipes = new UsedRecipes();
+    const usedRecipes = new UsedRecipes();
     usedRecipes.uid = event.uid;
     return usedRecipes;
   }
@@ -137,32 +137,29 @@ export default class UsedRecipes {
     uid,
     callback,
   }: GetUsedRecipesListener) => {
-    let usedRecipesListener = () => {};
-
     const usedRecipesCallback = (usedRecipes: UsedRecipes) => {
       // Menüplan mit UID anreichern
       usedRecipes.uid = uid;
       callback(usedRecipes);
     };
-    const errorCallback = (error: any) => {
+    const errorCallback = (error: Error) => {
       console.error(error);
       throw error;
     };
 
-    await firebase.event.usedRecipes
+    return await firebase.event.usedRecipes
       .listen<UsedRecipes>({
         uids: [uid],
         callback: usedRecipesCallback,
         errorCallback: errorCallback,
       })
       .then((result) => {
-        usedRecipesListener = result;
+        return result;
       })
       .catch((error) => {
         console.error(error);
         throw error;
       });
-    return usedRecipesListener;
   };
   // ===================================================================== */
   /**
@@ -178,7 +175,7 @@ export default class UsedRecipes {
     firebase,
     authUser,
   }: CreateNewList) => {
-    let listEntry = {} as UsedRecipeListEntry;
+    const listEntry = {} as UsedRecipeListEntry;
 
     listEntry.properties = {
       uid: Utils.generateUid(5),
@@ -225,7 +222,7 @@ export default class UsedRecipes {
     authUser,
   }: RefreshLists) => {
     let recipeList: RecipeIndetifier[] = [];
-    let usedRecipesPerList: {[key: string]: RecipeIndetifier[]} = {};
+    const usedRecipesPerList: {[key: string]: RecipeIndetifier[]} = {};
     // Für alle Listen die die Rezepte neu sammeln.
     Object.values(usedRecipes.lists).forEach((list) => {
       // Alle Rezepte hiervon zusammensammeln
@@ -279,7 +276,7 @@ export default class UsedRecipes {
     listUidToDelete,
     authUser,
   }: DeleteList) => {
-    let updatedUsedRecipes = _.cloneDeep(usedRecipes) as UsedRecipes;
+    const updatedUsedRecipes = _.cloneDeep(usedRecipes) as UsedRecipes;
 
     delete updatedUsedRecipes.lists[listUidToDelete];
 
@@ -301,7 +298,7 @@ export default class UsedRecipes {
     newName,
     authUser,
   }: EditListName) => {
-    let updatedUsedRecipes = _.cloneDeep(usedRecipes) as UsedRecipes;
+    const updatedUsedRecipes = _.cloneDeep(usedRecipes) as UsedRecipes;
 
     updatedUsedRecipes.lists[listUidToEdit].properties.name = newName;
     updatedUsedRecipes.lastChange = Utils.createChangeRecord(authUser);
@@ -318,7 +315,7 @@ export default class UsedRecipes {
     menueplan,
     selectedMenues,
   }: _DefineSelectedRecipes) => {
-    let usedRecipesList: RecipeIndetifier[] = [];
+    const usedRecipesList: RecipeIndetifier[] = [];
 
     selectedMenues.forEach((menueUid) => {
       menueplan.menues[menueUid].mealRecipeOrder.forEach((mealRecipeUid) => {

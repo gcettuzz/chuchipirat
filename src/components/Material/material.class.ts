@@ -1,13 +1,16 @@
-import Firebase from "../Firebase";
+import Firebase from "../Firebase/firebase.class";
 import FirebaseAnalyticEvent from "../../constants/firebaseEvent";
 
 import AuthUser from "../Firebase/Authentication/authUser.class";
 
 import Utils from "../Shared/utils.class";
-import Stats, {StatsField, STATS_FIELDS} from "../Shared/stats.class";
+import Stats, {StatsField} from "../Shared/stats.class";
 import Feed, {FeedType} from "../Shared/feed.class";
 import Role from "../../constants/roles";
+import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 import Product from "../Product/product.class";
+
+import {ERROR_PARAMETER_NOT_PASSED as TEXT_ERROR_PARAMETER_NOT_PASSED} from "../../constants/text";
 
 // ATTENTION:
 // wird dies erweitert, muss auch im Cloud-Function File index
@@ -24,6 +27,21 @@ interface CreateMaterial {
   name: string;
   type: MaterialType;
   authUser: AuthUser;
+}
+export interface ConvertProductToMaterialCallbackDocument {
+  date: Date;
+  documentList: {document: string; name: string}[];
+  done: boolean;
+  product: {uid: string; name: string};
+  type: MaterialType;
+}
+
+interface CreateMaterialFromProduct {
+  firebase: Firebase;
+  product: {uid: Product["uid"]; name: Product["name"]};
+  newMaterialType: MaterialType;
+  authUser: AuthUser;
+  callbackDone?: (document: ConvertProductToMaterialCallbackDocument) => void;
 }
 
 interface SaveAllMaterials {
@@ -64,7 +82,7 @@ export default class Material {
 
     // Produkte holen
     await firebase.masterdata.materials
-      .read<Object>({uids: []})
+      .read<ValueObject>({uids: []})
       .then((result) => {
         Object.entries(result).forEach(([key, value]) => {
           if (onlyUsable === true && value.usable === false) {
@@ -100,7 +118,7 @@ export default class Material {
     type,
     authUser,
   }: CreateMaterial) => {
-    let material = new Material();
+    const material = new Material();
 
     material.uid = Utils.generateUid(20);
     material.name = name.trim();
@@ -135,6 +153,61 @@ export default class Material {
     });
 
     return material;
+  };
+  // =====================================================================
+  /**
+   * Aus einem Produkt ein Material erstellen -->
+   * Cloud-FX triggern, die das Produkt umwandelt.
+   * auszufiltern.
+   * @param Objekt nach Interface GetAllMaterials
+   * @returns void
+   */
+  static createMaterialFromProduct = async ({
+    firebase,
+    product,
+    newMaterialType,
+    authUser,
+    callbackDone,
+  }: CreateMaterialFromProduct) => {
+    if (!firebase || !product || !newMaterialType) {
+      throw new Error(TEXT_ERROR_PARAMETER_NOT_PASSED);
+    }
+    let unsubscribe: () => void;
+    let documentId = "";
+
+    firebase.cloudFunction.convertProductToMaterial
+      .triggerCloudFunction({
+        values: {product: product, materialType: newMaterialType},
+        authUser: authUser,
+      })
+      .then((result) => {
+        documentId = result;
+      })
+      .then(() => {
+        if (!callbackDone) {
+          return;
+        }
+        // Melden wenn fertig
+        const callback = (data) => {
+          if (data?.done) {
+            callbackDone(data);
+            unsubscribe();
+          }
+        };
+
+        firebase.cloudFunction.convertProductToMaterial
+          .listen({
+            uids: [documentId],
+            callback: callback,
+          })
+          .then((result) => {
+            unsubscribe = result;
+          });
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
   };
   // ===================================================================== */
   /**

@@ -1,9 +1,9 @@
 import Firebase from "../firebase.class";
 import FirebaseDbRecipeShort from "./firebase.db.recipeShort.class";
 
-import { ERROR_NOT_IMPLEMENTED_YET } from "../../../constants/text";
-import { ValueObject, PrepareDataForApp } from "./firebase.db.super.class";
-import { RecipeType } from "../../Recipe/recipe.class";
+import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
+import {ValueObject, PrepareDataForApp} from "./firebase.db.super.class";
+import {RecipeType} from "../../Recipe/recipe.class";
 import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
@@ -22,7 +22,9 @@ export class FirebaseDbRecipeShortVariant extends FirebaseDbRecipeShort {
   // Collection holen
   // ===================================================================== */
   getCollection(uids: string[]) {
-    return this.firebase.db.collection(`events/${uids[0]}/recipeVariants/}`);
+    return this.firebase.db.collection(
+      `recipes/variants/events/${uids[0]}/recipes/}`
+    );
   }
   /* =====================================================================
   // Collection-Group holen
@@ -35,9 +37,7 @@ export class FirebaseDbRecipeShortVariant extends FirebaseDbRecipeShort {
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
-    return this.firebase.db.doc(
-      `events/${uids[0]}/recipeVariants/000_allRecipes`
-    );
+    return this.firebase.db.doc(`recipes/variants/events/${uids[0]}`);
   }
   /* =====================================================================
   // Dokumente holen
@@ -48,9 +48,9 @@ export class FirebaseDbRecipeShortVariant extends FirebaseDbRecipeShort {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({ uid, value }: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
     // Die Aufsplittung von Objekt zu Array geschieht in der recipeshort.class
-    value = super.prepareDataForApp({ uid: uid, value: value });
+    value = super.prepareDataForApp({uid: uid, value: value});
     // Schlüssel setzen, dass privat
     Object.keys(value).forEach((recipeUid) => {
       value[recipeUid].type = RecipeType.variant;

@@ -1,12 +1,12 @@
 import React from "react";
-import { Color } from "@material-ui/lab";
+import {Color} from "@material-ui/lab";
 import MuiAlert from "@material-ui/lab/Alert";
 import Snackbar from "@material-ui/core/Snackbar";
 import Fade from "@material-ui/core/Fade";
 
 import useStyles from "../../constants/styles";
 
-export const SNACKBAR_INITIAL_STATE_VALUES = {
+export const SNACKBAR_INITIAL_STATE_VALUES: Snackbar = {
   open: false,
   severity: "success",
   message: "",

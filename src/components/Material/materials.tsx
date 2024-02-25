@@ -1,32 +1,20 @@
 import React from "react";
-import {compose} from "recompose";
+import {compose} from "react-recompose";
 
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Container from "@material-ui/core/Container";
 import Grid from "@material-ui/core/Grid";
 import Backdrop from "@material-ui/core/Backdrop";
 import CircularProgress from "@material-ui/core/CircularProgress";
-import Divider from "@material-ui/core/Divider";
 
 import Typography from "@material-ui/core/Typography";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
-import Input from "@material-ui/core/Input";
-import InputLabel from "@material-ui/core/InputLabel";
-import IconButton from "@material-ui/core/IconButton";
-import InputAdornment from "@material-ui/core/InputAdornment";
 
-import {
-  FormControl,
-  FormLabel,
-  FormControlLabel,
-  RadioGroup,
-  Radio,
-  Checkbox,
-} from "@material-ui/core";
+import {FormControlLabel, RadioGroup, Radio, Checkbox} from "@material-ui/core";
 
 import * as TEXT from "../../constants/text";
-import Roles from "../../constants/roles";
+import Roles, {Role} from "../../constants/roles";
 
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
@@ -34,27 +22,21 @@ import EnhancedTable, {
   TableColumnTypes,
   ColumnTextAlign,
 } from "../Shared/enhancedTable";
-import DialogMaterial, {MATERIAL_DIALOG_TYPE} from "./dialogMaterial";
+import DialogMaterial, {MaterialDialog} from "./dialogMaterial";
 import AlertMessage from "../Shared/AlertMessage";
 
 import EditIcon from "@material-ui/icons/Edit";
-import SearchIcon from "@material-ui/icons/Search";
 
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
 import useStyles from "../../constants/styles";
 import SearchPanel from "../Shared/searchPanel";
 
-import Unit from "../Unit/unit.class";
-import Department from "../Department/department.class";
-
-import Firebase, {withFirebase} from "../Firebase";
-import {
-  AuthUserContext,
-  withAuthorization,
-  withEmailVerification,
-} from "../Session";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import Material, {MaterialType} from "./material.class";
+import {withFirebase} from "../Firebase/firebaseContext";
+import withEmailVerification from "../Session/withEmailVerification";
+import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {CustomRouterProps} from "../Shared/global.interface";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
@@ -71,16 +53,14 @@ type DispatchAction = {
 };
 type State = {
   materials: Material[];
-  isError: boolean;
-  error: object;
+  error: Error | null;
   isLoading: boolean;
   snackbar: Snackbar;
 };
 
 const inititialState: State = {
   materials: [],
-  error: {},
-  isError: false,
+  error: null,
   isLoading: false,
   snackbar: {open: false, severity: "success", message: ""},
 };
@@ -124,8 +104,7 @@ const materialsReducer = (state: State, action: DispatchAction): State => {
       // allgemeiner Fehler
       return {
         ...state,
-        isError: true,
-        error: action.payload,
+        error: action.payload as Error,
         isLoading: false,
       };
     default:
@@ -145,17 +124,19 @@ const MATERIAL_POPUP_VALUES = {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const ProductsPage = (props) => {
+const MaterialPage = (props) => {
   return (
     <AuthUserContext.Consumer>
-      {(authUser) => <ProductsBase props={props} authUser={authUser} />}
+      {(authUser) => <MaterialBase {...props} authUser={authUser} />}
     </AuthUserContext.Consumer>
   );
 };
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const ProductsBase = ({props, authUser}) => {
+const MaterialBase: React.FC<
+  CustomRouterProps & {authUser: AuthUser | null}
+> = ({authUser, ...props}) => {
   const firebase = props.firebase;
   const classes = useStyles();
 
@@ -163,7 +144,6 @@ const ProductsBase = ({props, authUser}) => {
   const [editMode, setEditMode] = React.useState(false);
   const [saveTrigger, setSaveTrigger] = React.useState(0);
   const [cancelTrigger, setCancelTrigger] = React.useState(0);
-
   /* ------------------------------------------
 	// Daten aus DB holen
 	// ------------------------------------------ */
@@ -190,6 +170,9 @@ const ProductsBase = ({props, authUser}) => {
         });
       });
   }, []);
+  if (!authUser) {
+    return null;
+  }
   /* ------------------------------------------
 	// Edit Mode wechseln
 	// ------------------------------------------ */
@@ -259,7 +242,7 @@ const ProductsBase = ({props, authUser}) => {
           <CircularProgress color="inherit" />
         </Backdrop>
 
-        {state.isError && (
+        {state.error && (
           <AlertMessage
             error={state.error}
             severity="error"
@@ -273,6 +256,7 @@ const ProductsBase = ({props, authUser}) => {
           cancelTrigger={cancelTrigger}
           onSave={onSave}
           onCancel={onCancel}
+          authUser={authUser}
         />
         <CustomSnackbar
           message={state.snackbar.message}
@@ -311,8 +295,7 @@ const MaterialsButtonRow = ({
           visible:
             !editMode &&
             (authUser.roles.includes(Roles.communityLeader) ||
-              authUser.roles.includes(Roles.admin) ||
-              authUser.roles.includes(Roles.subAdmin)),
+              authUser.roles.includes(Roles.admin)),
           label: TEXT.BUTTON_EDIT,
           variant: "contained",
           color: "primary",
@@ -341,7 +324,7 @@ const MaterialsButtonRow = ({
   );
 };
 /* ===================================================================
-// =========================== Produkte Panel ========================
+// =========================== Material Panel ========================
 // =================================================================== */
 interface MaterialsTableProps {
   dbMaterials: Material[];
@@ -350,6 +333,7 @@ interface MaterialsTableProps {
   cancelTrigger: any;
   onSave: (editedMaterials: Material[]) => void;
   onCancel: () => void;
+  authUser: AuthUser;
 }
 // Aufbau der UI-Tabelle
 interface MaterialLineUi {
@@ -366,6 +350,7 @@ const MaterialsTable = ({
   cancelTrigger,
   onSave,
   onCancel,
+  authUser,
 }: MaterialsTableProps) => {
   const [searchString, setSearchString] = React.useState("");
   const [materials, setMaterials] = React.useState<Material[]>([]);
@@ -392,7 +377,7 @@ const MaterialsTable = ({
       type: TableColumnTypes.string,
       textAlign: ColumnTextAlign.center,
       disablePadding: false,
-      label: TEXT.COLUMN_UID,
+      label: TEXT.UID,
       visible: false,
     },
     {
@@ -416,7 +401,7 @@ const MaterialsTable = ({
       type: TableColumnTypes.string,
       textAlign: ColumnTextAlign.center,
       disablePadding: false,
-      label: TEXT.FIELD_USABLE,
+      label: TEXT.USABLE,
       visible: true,
     },
   ];
@@ -538,9 +523,9 @@ const MaterialsTable = ({
   const handleRadioButtonChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    let pressedRadioButtonGroup = event.target.name.split("_");
-    let tempMaterials = materials;
-    let changedMaterial = tempMaterials.find(
+    const pressedRadioButtonGroup = event.target.name.split("_");
+    const tempMaterials = materials;
+    const changedMaterial = tempMaterials.find(
       (material) => material.uid === pressedRadioButtonGroup[1]
     );
     if (!changedMaterial) {
@@ -553,9 +538,9 @@ const MaterialsTable = ({
     );
   };
   const handleCheckBoxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    let pressedCheckbox = event.target.id.split("_");
-    let tempMaterials = materials;
-    let changedMaterial = tempMaterials.find(
+    const pressedCheckbox = event.target.id.split("_");
+    const tempMaterials = materials;
+    const changedMaterial = tempMaterials.find(
       (material) => material.uid === pressedCheckbox[1]
     );
     if (!changedMaterial) {
@@ -604,10 +589,9 @@ const MaterialsTable = ({
   };
   const onPopUpOk = (changedMaterial: Material) => {
     // angepasstes Produkt updaten
-    console.log(changedMaterial);
-    let tempMaterials = materials;
+    const tempMaterials = materials;
 
-    let index = tempMaterials.findIndex(
+    const index = tempMaterials.findIndex(
       (material) => material.uid === changedMaterial.uid
     );
     if (index === -1) {
@@ -639,7 +623,7 @@ const MaterialsTable = ({
       prepareMaterialsListForUi(filterMaterials(materials, ""))
     );
   }
-  console.log(filteredMaterialsUi.length, materials.length);
+
   return (
     <React.Fragment>
       <Card className={classes.card} key={"requestTablePanel"}>
@@ -669,7 +653,6 @@ const MaterialsTable = ({
                 tableData={filteredMaterialsUi}
                 tableColumns={TABLE_COLUMS}
                 keyColum={"uid"}
-                onRowClick={() => {}}
                 onIconClick={openPopUp}
               />
             </Grid>
@@ -677,7 +660,7 @@ const MaterialsTable = ({
         </CardContent>
       </Card>
       <DialogMaterial
-        dialogType={MATERIAL_DIALOG_TYPE.EDIT}
+        dialogType={MaterialDialog.EDIT}
         materialUid={materialPopUpValues.materialUid}
         materialName={materialPopUpValues.materialName}
         materialType={materialPopUpValues.materialType}
@@ -686,15 +669,19 @@ const MaterialsTable = ({
         dialogOpen={materialPopUpValues.popUpOpen}
         handleOk={onPopUpOk}
         handleClose={onPopUpClose}
+        authUser={authUser}
       />
     </React.Fragment>
   );
 };
-const condition = (authUser: AuthUser) =>
-  !!authUser.roles.includes(Roles.communityLeader);
+
+const condition = (authUser) =>
+  !!authUser &&
+  (!!authUser.roles.includes(Role.admin) ||
+    !!authUser.roles.includes(Role.communityLeader));
 
 export default compose(
   withEmailVerification,
   withAuthorization(condition),
   withFirebase
-)(ProductsPage);
+)(MaterialPage);

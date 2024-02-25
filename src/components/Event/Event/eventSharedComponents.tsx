@@ -251,7 +251,6 @@ export const PositionContextMenu = ({
 interface DialogTraceItem {
   dialogOpen: boolean;
   trace: ProductTrace[];
-  menuePlan: Menuplan;
   sortedMenues: MenueCoordinates[];
   hasBeenManualyEdited: boolean;
   handleClose: () => void;
@@ -260,14 +259,13 @@ interface DialogTraceItem {
 export const DialogTraceItem = ({
   dialogOpen,
   trace,
-  menuePlan,
   sortedMenues,
   hasBeenManualyEdited,
   handleClose,
   onShowRecipe,
 }: DialogTraceItem) => {
   const classes = useStyles();
-  let traceSortedByMenue: ProductTrace[] = [];
+  // let traceSortedByMenue: ProductTrace[] = [];
 
   /* ------------------------------------------
   // Rezept Handler
@@ -275,30 +273,30 @@ export const DialogTraceItem = ({
   const onListItemClick = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
-    let pressedButton = event.currentTarget.id.split("_");
+    const pressedButton = event.currentTarget.id.split("_");
 
     if (pressedButton.length == 4 && pressedButton[3] != "undefined") {
       onShowRecipe(pressedButton[1], pressedButton[3]);
     }
   };
 
-  if (!trace) {
-    return null;
-  } else if (trace && trace.length > 1) {
-    // die Menüs in die richtige Reihenfolge setzen
-    traceSortedByMenue = trace.sort((a, b) => {
-      const indexA = sortedMenues.findIndex(
-        (menue) => menue.menueUid == a.menueUid
-      );
-      const indexB = sortedMenues.findIndex(
-        (menue) => menue.menueUid == b.menueUid
-      );
+  // if (!trace) {
+  //   return null;
+  // } else if (trace && trace.length > 1) {
+  //   // die Menüs in die richtige Reihenfolge setzen
+  //   traceSortedByMenue = trace.sort((a, b) => {
+  //     const indexA = sortedMenues.findIndex(
+  //       (menue) => menue.menueUid == a.menueUid
+  //     );
+  //     const indexB = sortedMenues.findIndex(
+  //       (menue) => menue.menueUid == b.menueUid
+  //     );
 
-      return indexA - indexB;
-    });
-  } else {
-    traceSortedByMenue = trace;
-  }
+  //     return indexA - indexB;
+  //   });
+  // } else {
+  //   traceSortedByMenue = trace;
+  // }
   return (
     <Dialog open={dialogOpen} maxWidth="xs" fullWidth style={{zIndex: 500}}>
       <DialogTitle>{TEXT_WHERE_DOES_THIS_ITEM_COME_FROM}</DialogTitle>
@@ -319,7 +317,7 @@ export const DialogTraceItem = ({
           <Grid item xs={12}>
             <List key={`list_for_trace`}>
               {sortedMenues.map((menue) => {
-                let traceItems = trace.filter(
+                const traceItems = trace.filter(
                   (item) => item.menueUid == menue.menueUid
                 );
                 return (

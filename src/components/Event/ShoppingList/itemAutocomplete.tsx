@@ -1,15 +1,10 @@
 import React from "react";
-import {useTheme} from "@material-ui/core/styles";
-
-import useMediaQuery from "@material-ui/core/useMediaQuery";
-
 import TextField from "@material-ui/core/TextField";
 import Autocomplete, {
   AutocompleteChangeReason,
   createFilterOptions,
 } from "@material-ui/lab/Autocomplete";
 
-import {RecipeProduct} from "../../Recipe/recipe.class";
 import Material, {MaterialType} from "../../Material/material.class";
 import Utils from "../../Shared/utils.class";
 
@@ -65,8 +60,6 @@ const ItemAutocomplete = ({
   error,
   onChange,
 }: ItemAutocompleteProps) => {
-  const theme = useTheme();
-  const breakpointIsXs = useMediaQuery(theme.breakpoints.down("xs"));
   // Handler für Zutaten/Produkt hinzufügen
   const filter = createFilterOptions<MaterialItem | ProductItem>();
 
@@ -75,17 +68,17 @@ const ItemAutocomplete = ({
   );
 
   if (items.length == 0) {
-    let tempProducts: ProductItem[] = products.map((product) => ({
+    const tempProducts: ProductItem[] = products.map((product) => ({
       ...product,
       itemType: ItemType.food,
     }));
-    let tempMaterials: MaterialItem[] = materials.map((material) => ({
+    const tempMaterials: MaterialItem[] = materials.map((material) => ({
       ...material,
       itemType: ItemType.material,
     }));
 
     // Ein Array mit beiden Elementen drin
-    let tempItems = [...tempProducts, ...tempMaterials];
+    const tempItems = [...tempProducts, ...tempMaterials];
     Utils.sortArray({array: items, attributeName: "name"});
     setItems(tempItems);
   }
@@ -100,14 +93,14 @@ const ItemAutocomplete = ({
       autoSelect
       autoHighlight
       // getOptionSelected={(optionItem) => optionItem.name === item.name}
-      getOptionSelected={(option, value) => option.name === item?.name}
+      getOptionSelected={(option) => option.name === item?.name}
       getOptionLabel={(option) => {
         if (typeof option === "string") {
           return option;
         }
 
         if (option.name.endsWith(ADD)) {
-          let words = option.name.match('".*"');
+          const words = option.name.match('".*"');
           if (words && words.length >= 0) {
             return words[0].slice(1, -1);
           }
@@ -135,7 +128,7 @@ const ItemAutocomplete = ({
           !params.inputValue.endsWith(ADD)
         ) {
           // Hinzufügen-Möglichkeit auch als Produkt reinschmuggeln
-          let newMaterial: MaterialItem = {
+          const newMaterial: MaterialItem = {
             ...new Material(),
             itemType: ItemType.material,
           };

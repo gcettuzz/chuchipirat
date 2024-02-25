@@ -28,7 +28,7 @@ const MaterialListPdf = ({
   eventName,
   authUser,
 }: MaterialListPdfProps) => {
-  let actualDate = new Date();
+  const actualDate = new Date();
 
   return (
     <Document

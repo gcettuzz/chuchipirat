@@ -1,4 +1,3 @@
-import {UserShort} from "../User/user.class";
 import Firebase from "../Firebase/firebase.class";
 import {AuthUser} from "../Firebase/Authentication/authUser.class";
 import Feed, {FeedType} from "../Shared/feed.class";
@@ -45,14 +44,14 @@ export class RecipeRating {
    * @returns Bewertung des angegebenen Users
    */
   static async getUserRating({firebase, recipeUid, userUid}: GetRatingOfUser) {
-    let recipeUserRating: number = 0;
+    let recipeUserRating = 0;
 
     await firebase.recipePublic.rating
       .read<RecipeRating>({uids: [recipeUid, userUid]})
       .then((result) => {
         recipeUserRating = result.rating;
       })
-      .catch((error) => {
+      .catch(() => {
         // Kein Dokument vorhanden
         recipeUserRating = 0;
       });
@@ -71,7 +70,7 @@ export class RecipeRating {
     newRating,
     authUser,
   }: UpdateUserRating) {
-    let userRating: RecipeRating = {rating: newRating};
+    const userRating: RecipeRating = {rating: newRating};
 
     await firebase.recipePublic.rating
       .update({

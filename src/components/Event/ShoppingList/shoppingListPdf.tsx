@@ -1,13 +1,5 @@
 import React from "react";
-import {
-  Document,
-  Page,
-  View,
-  Text,
-  Image,
-  Link,
-  Font,
-} from "@react-pdf/renderer";
+import {Document, Page, View, Text, Font} from "@react-pdf/renderer";
 // import Utils from "../Shared/utils.class";
 import Event from "../Event/event.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
@@ -77,11 +69,11 @@ class FormatedShoppingList {
     this.pages = [];
     this.actualPage = 0;
     // Einträge zählen
-    let noItems = ShoppingList.countItems({shoppingList: shoppingList});
-    let noDepartmentes = Object.keys(shoppingList.list).length;
+    const noItems = ShoppingList.countItems({shoppingList: shoppingList});
+    const noDepartmentes = Object.keys(shoppingList.list).length;
 
     // Anzahl Zeilen bestimmen (inkl. Leerzeilen)
-    let noEntries = noItems + noDepartmentes + (noDepartmentes - 1);
+    const noEntries = noItems + noDepartmentes + (noDepartmentes - 1);
     // 2 Spalten = 1/2 sovile Zeilen
     let noLines = Math.round(noEntries / 2);
 
@@ -142,6 +134,7 @@ class FormatedShoppingList {
       this.updatePageControl(pageControl);
       department.items.forEach((item) => {
         pageControl = this.pages[this.actualPage].pageControl;
+        let lineItem: FormatedShoppingListLine;
         switch (pageControl.actualColum) {
           case Column.LEFT:
             this.pages[this.actualPage].list.push({
@@ -157,7 +150,7 @@ class FormatedShoppingList {
             pageControl.lineCounter++;
             break;
           case Column.RIGHT:
-            let lineItem =
+            lineItem =
               this.pages[this.actualPage].list[pageControl.lineCounter];
             lineItem.right = {
               type: LineType.ITEM,
@@ -229,8 +222,8 @@ const ShoppingListPdf = ({
   eventName,
   authUser,
 }: ShoppingListPdfProps) => {
-  let actualDate = new Date();
-  let formatedShoppingList = new FormatedShoppingList(shoppingList);
+  const actualDate = new Date();
+  const formatedShoppingList = new FormatedShoppingList(shoppingList);
 
   return (
     <Document

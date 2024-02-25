@@ -6,7 +6,7 @@ import {
   PrepareDataForDb,
   PrepareDataForApp,
 } from "./firebase.db.super.class";
-import { ERROR_NOT_IMPLEMENTED_YET } from "../../../constants/text";
+import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
 import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
@@ -24,7 +24,9 @@ export class FirebaseDbRecipeRating extends FirebaseDbSuper {
   // Collection holen
   // ===================================================================== */
   getCollection(uids: string[]) {
-    return this.firebase.db.collection(`recipes/${uids[0]}/ratings/`);
+    return this.firebase.db.collection(
+      `recipes/public/recipes/${uids[0]}/ratings/`
+    );
   }
   /* =====================================================================
   // Collection-Group holen
@@ -37,7 +39,9 @@ export class FirebaseDbRecipeRating extends FirebaseDbSuper {
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
-    return this.firebase.db.doc(`recipes/${uids[0]}/ratings/${uids[1]}`);
+    return this.firebase.db.doc(
+      `recipes/public/recipes/${uids[0]}/ratings/${uids[1]}`
+    );
   }
   /* =====================================================================
   // Dokumente holen
@@ -48,7 +52,7 @@ export class FirebaseDbRecipeRating extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForDb<T extends ValueObject>({ value }: PrepareDataForDb<T>) {
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
     return {
       rating: value.rating,
     };
@@ -56,7 +60,7 @@ export class FirebaseDbRecipeRating extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({ uid, value }: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
     return {
       rating: value.rating,
     } as unknown as T;

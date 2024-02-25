@@ -104,7 +104,7 @@ export class RecipeShort {
    */
   static createShortRecipeFromRecipe(recipe: Recipe): RecipeShort {
     //ATTENTION: muss auch im File rebuildFile000AllRecipes angepasst werden
-    let recipeShort = {
+    const recipeShort = {
       uid: recipe.uid,
       name: recipe.name,
       source: recipe.source,
@@ -207,7 +207,8 @@ export class RecipeShort {
       .read<RecipeShort>({uids: [userUid]})
       .then((result) => {
         recipesShort = this.moveDbDateFromObjectToArray(result);
-      });
+      })
+      .catch((error) => console.error(error));
 
     recipesShort = Utils.sortArray({
       array: recipesShort,
@@ -289,10 +290,10 @@ export class RecipeShort {
    *                 jedes Attribut = 1 Rezept
    */
   static moveDbDateFromObjectToArray = (object: ValueObject) => {
-    let recipesShort: RecipeShort[] = [];
+    const recipesShort: RecipeShort[] = [];
 
     Object.keys(object).forEach((key) => {
-      let recipeShort = {
+      const recipeShort = {
         uid: key,
         name: object[key].name,
         source: object[key].source,

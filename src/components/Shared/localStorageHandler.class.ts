@@ -1,4 +1,4 @@
-import { ValueObject } from "../Firebase/Db/firebase.db.super.class";
+import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 
 interface GetLocalStorageEntryProps {
   path: string;
@@ -37,7 +37,7 @@ export default class LocalStorageHandler {
   static getLocalStorageEntry = <T extends ValueObject>({
     path,
   }: GetLocalStorageEntryProps) => {
-    let localStorageValue = localStorage.getItem(path);
+    const localStorageValue = localStorage.getItem(path);
     if (localStorageValue) {
       return JSON.parse(localStorageValue) as T;
     }
@@ -75,7 +75,7 @@ export default class LocalStorageHandler {
   /**
    * Delete local storage entry of
    */
-  static deleteLocalStorageEntry = ({ path }: DeleteLocalStorageEntry) => {
+  static deleteLocalStorageEntry = ({path}: DeleteLocalStorageEntry) => {
     localStorage.removeItem(path);
   };
 }

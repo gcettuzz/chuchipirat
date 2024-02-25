@@ -1,5 +1,5 @@
 import React from "react";
-import {compose} from "recompose";
+import {compose} from "react-recompose";
 
 import CssBaseline from "@material-ui/core/CssBaseline";
 
@@ -21,9 +21,6 @@ import {
 import DeleteIcon from "@material-ui/icons/Delete";
 
 import {
-  UNIT_CONVERSION_BASIC_CREATED as TEXT_UNIT_CONVERSION_BASIC_CREATED,
-  UNIT_CONVERSION_PRODUCT_CREATED as TEXT_UNIT_CONVERSION_PRODUCT_CREATED,
-  ENTRY_DELETED as TEXT_ENTRY_DELETED,
   SAVE_SUCCESS as TEXT_SAVE_SUCCESS,
   UID as TEXT_UID,
   DENOMINATOR as TEXT_DENOMINATOR,
@@ -41,20 +38,18 @@ import {
   PRODUCT_SPECIFIC as TEXT_PRODUCT_SPECIFIC,
   ALERT_TITLE_UUPS as TEXT_ALERT_TITLE_UUPS,
 } from "../../constants/text";
-import * as ROLES from "../../constants/roles";
+import Role from "../../constants/roles";
 
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
 import EnhancedTable, {
   Column,
   ColumnTextAlign,
-  TABLE_COLUMN_TYPES,
   TableColumnTypes,
 } from "../Shared/enhancedTable";
 import AlertMessage from "../Shared/AlertMessage";
 
 import DialogCreateUnitConversion, {
-  HandleCreateProps,
   UnitConversionType,
 } from "./dialogCreateUnitConversion";
 
@@ -65,14 +60,12 @@ import Unit from "./unit.class";
 import UnitConversion from "./unitConversion.class";
 import Product from "../Product/product.class";
 
-import {withFirebase} from "../Firebase";
-import {
-  AuthUserContext,
-  withAuthorization,
-  withEmailVerification,
-} from "../Session";
 import Utils from "../Shared/utils.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
+import withEmailVerification from "../Session/withEmailVerification";
+import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {withFirebase} from "../Firebase/firebaseContext";
+import {CustomRouterProps} from "../Shared/global.interface";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -107,8 +100,7 @@ type State = {
   unitConversionProduct: UnitConversion[];
   products: Product[];
   units: Unit[];
-  error: object;
-  isError: boolean;
+  error: Error | null;
   isLoading: isLoading;
   snackbar: Snackbar;
 };
@@ -122,8 +114,7 @@ const inititialState: State = {
   unitConversionProduct: [],
   products: [],
   units: [],
-  error: {},
-  isError: false,
+  error: null,
   isLoading: {
     overall: false,
     products: false,
@@ -134,7 +125,7 @@ const inititialState: State = {
   snackbar: {open: false, severity: "success", message: ""},
 };
 
-const unitConversionReducer = (state: State, action: DispatchAction) => {
+const unitConversionReducer = (state: State, action: DispatchAction): State => {
   switch (action.type) {
     case ReducerActions.FETCH_INIT:
       // Daten werden geladen
@@ -192,7 +183,6 @@ const unitConversionReducer = (state: State, action: DispatchAction) => {
       return {
         ...state,
         units: action.payload as Unit[],
-        isError: false,
         isLoading: {
           ...state.isLoading,
           overall: deriveIsLoading(state.isLoading, "units", false),
@@ -223,23 +213,23 @@ const unitConversionReducer = (state: State, action: DispatchAction) => {
           }
         ) as UnitConversion[],
       };
-    case ReducerActions.NEW_UNIT_CONVERSION_BASIC:
+    case ReducerActions.NEW_UNIT_CONVERSION_BASIC: {
       // Neue Umrechnung wurde erfasst
-      let tempUnitConversionBasic = [...state.unitConversionBasic];
+      const tempUnitConversionBasic = [...state.unitConversionBasic];
       tempUnitConversionBasic.push(action.payload as UnitConversion);
       return {
         ...state,
         unitConversionBasic: tempUnitConversionBasic,
-        isError: false,
       };
-    case ReducerActions.NEW_UNIT_CONVERSION_PRODUCT:
-      let tempUnitConversionProduct = [...state.unitConversionProduct];
+    }
+    case ReducerActions.NEW_UNIT_CONVERSION_PRODUCT: {
+      const tempUnitConversionProduct = [...state.unitConversionProduct];
       tempUnitConversionProduct.push(action.payload as UnitConversion);
       return {
         ...state,
         unitConversionProduct: tempUnitConversionProduct,
-        isError: false,
       };
+    }
     case ReducerActions.DELETE_BASIC_UNIT_CONVERSION:
       // Einzelne Unit Conversion wurde gelöscht
       return {
@@ -262,7 +252,6 @@ const unitConversionReducer = (state: State, action: DispatchAction) => {
       // Alles  gepeichert
       return {
         ...state,
-        isError: false,
         snackbar: {
           severity: "success",
           message: TEXT_SAVE_SUCCESS,
@@ -283,8 +272,7 @@ const unitConversionReducer = (state: State, action: DispatchAction) => {
       // allgemeiner Fehler
       return {
         ...state,
-        isError: true,
-        error: action.payload,
+        error: action.payload as Error,
       };
     default:
       console.error("Unbekannter ActionType: ", action.type);
@@ -406,21 +394,22 @@ const PRODUCT_TABLE_COLUMS: Column[] = [
     visible: true,
   },
 ];
-
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
 const UnitConversionPage = (props) => {
   return (
     <AuthUserContext.Consumer>
-      {(authUser) => <UnitConversionBase props={props} authUser={authUser} />}
+      {(authUser) => <UnitConversionBase {...props} authUser={authUser} />}
     </AuthUserContext.Consumer>
   );
 };
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const UnitConversionBase = ({props, authUser}) => {
+const UnitConversionBase: React.FC<
+  CustomRouterProps & {authUser: AuthUser | null}
+> = ({authUser, ...props}) => {
   const firebase = props.firebase;
   const classes = useStyles();
 
@@ -436,6 +425,7 @@ const UnitConversionBase = ({props, authUser}) => {
     });
   const [editMode, setEditMode] = React.useState(false);
   const [tabValue, setTabValue] = React.useState(0);
+
   /* ------------------------------------------
 	// Daten aus der db holen
 	// ------------------------------------------ */
@@ -449,7 +439,7 @@ const UnitConversionBase = ({props, authUser}) => {
     UnitConversion.getAllConversionBasic({firebase: firebase}).then(
       (result) => {
         // Die Werte werden als Array benötigt, damit die Tabelle damit umgehen kann
-        let unitConversionBasic = Utils.convertObjectToArray(result, "uid");
+        const unitConversionBasic = Utils.convertObjectToArray(result, "uid");
         dispatch({
           type: ReducerActions.UNIT_CONVERSION_BASIC_FETCH_SUCCESS,
           payload: unitConversionBasic,
@@ -459,7 +449,7 @@ const UnitConversionBase = ({props, authUser}) => {
     // Umrechnungen Produkte holen
     UnitConversion.getAllConversionProducts({firebase: firebase}).then(
       (result) => {
-        let unitConversionBasicProducts = Utils.convertObjectToArray(
+        const unitConversionBasicProducts = Utils.convertObjectToArray(
           result,
           "uid"
         );
@@ -501,12 +491,9 @@ const UnitConversionBase = ({props, authUser}) => {
         });
         Unit.getAllUnits({firebase: firebase})
           .then((result) => {
-            let units = Utils.convertObjectToArray(result, "key");
-            // result.map((unit) => unit.key);
-
             dispatch({
               type: ReducerActions.UNITS_FETCH_SUCCESS,
-              payload: units,
+              payload: result,
             });
           })
           .catch((error) => {
@@ -518,6 +505,9 @@ const UnitConversionBase = ({props, authUser}) => {
       }
     }
   }, [editMode]);
+  if (!authUser) {
+    return null;
+  }
   /* ------------------------------------------
 	// Edit Mode wechsel
 	// ------------------------------------------ */
@@ -527,7 +517,10 @@ const UnitConversionBase = ({props, authUser}) => {
   /* ------------------------------------------
 	// Tab wechseln
 	// ------------------------------------------ */
-  const onTabChange = (event: React.ChangeEvent<{}>, newValue: number) => {
+  const onTabChange = (
+    event: React.ChangeEvent<Record<string, unknown>>,
+    newValue: number
+  ) => {
     setTabValue(newValue);
   };
   /* ------------------------------------------
@@ -565,7 +558,7 @@ const UnitConversionBase = ({props, authUser}) => {
   /* ------------------------------------------
 	// Fehler beim anlegen der Einheit
 	// ------------------------------------------ */
-  const onPopUpError = (error: object) => {
+  const onPopUpError = (error: Error) => {
     dispatch({
       type: ReducerActions.GENERIC_ERROR,
       payload: error,
@@ -579,8 +572,6 @@ const UnitConversionBase = ({props, authUser}) => {
 	// Einheit wurde angelegt
 	// ------------------------------------------ */
   const onAddUnitConversion = (unitConversion: UnitConversion) => {
-    let newUid = Object.keys(unitConversion)[0];
-
     switch (unitConversionCreateValues.unitConversionType) {
       case UnitConversionType.BASIC:
         dispatch({
@@ -644,7 +635,7 @@ const UnitConversionBase = ({props, authUser}) => {
   const onChangeEditTableField = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    let unitConversionField = event.target.id.split("_");
+    const unitConversionField = event.target.id.split("_");
     switch (tabValue) {
       case 0:
         dispatch({
@@ -674,7 +665,7 @@ const UnitConversionBase = ({props, authUser}) => {
 	// Eintrag aus Tabelle löschen
 	// ------------------------------------------ */
   const onTableRowDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
-    let pressedButton = event.currentTarget.id.split("_");
+    const pressedButton = event.currentTarget.id.split("_");
     switch (tabValue) {
       case 0:
         dispatch({
@@ -707,10 +698,7 @@ const UnitConversionBase = ({props, authUser}) => {
           {
             id: "edit",
             hero: true,
-            visible:
-              !editMode &&
-              (authUser.roles.includes(ROLES.SUB_ADMIN) ||
-                authUser.roles.includes(ROLES.ADMIN)),
+            visible: !editMode && authUser.roles.includes(Role.admin),
             label: TEXT_EDIT,
             variant: "contained",
             color: "primary",
@@ -719,10 +707,7 @@ const UnitConversionBase = ({props, authUser}) => {
           {
             id: "save",
             hero: true,
-            visible:
-              editMode &&
-              (authUser.roles.includes(ROLES.SUB_ADMIN) ||
-                authUser.roles.includes(ROLES.ADMIN)),
+            visible: editMode && authUser.roles.includes(Role.admin),
             label: TEXT_SAVE,
             variant: "contained",
             color: "primary",
@@ -731,10 +716,7 @@ const UnitConversionBase = ({props, authUser}) => {
           {
             id: "add",
             hero: true,
-            visible:
-              (authUser.roles.includes(ROLES.SUB_ADMIN) ||
-                authUser.roles.includes(ROLES.ADMIN)) &&
-              editMode,
+            visible: authUser.roles.includes(Role.admin) && editMode,
             label: TEXT_ADD,
             variant: "outlined",
             color: "primary",
@@ -765,7 +747,7 @@ const UnitConversionBase = ({props, authUser}) => {
             </Tabs>
           </Grid>
 
-          {state.isError && (
+          {state.error && (
             <Grid item key={"error"} xs={12}>
               <AlertMessage
                 error={state.error}
@@ -882,8 +864,6 @@ const BasicConversionPanel = ({
             tableData={unitConversions}
             tableColumns={BASIC_TABLE_COLUMS}
             keyColum={"uid"}
-            onIconClick={() => {}}
-            onRowClick={() => {}}
           />
         )}
       </CardContent>
@@ -903,7 +883,6 @@ const BasicConversionEditRow = ({
   onChangeField,
   onDeleteClick,
 }: BasicConversionEditRowProps) => {
-  const classes = useStyles();
   return (
     <React.Fragment>
       {/* Überschriften */}
@@ -1019,8 +998,6 @@ const ProductConversionPanel = ({
             tableData={unitConversions}
             tableColumns={PRODUCT_TABLE_COLUMS}
             keyColum={"uid"}
-            onIconClick={() => {}}
-            onRowClick={() => {}}
           />
         )}
       </CardContent>
@@ -1040,7 +1017,6 @@ const ProductConversionEditRow = ({
   onChangeField,
   onDeleteClick,
 }: ProductConversionEditRowProps) => {
-  const classes = useStyles();
   return (
     <React.Fragment>
       <Grid item xs={12} sm={4} key={"grid_productName_" + unitConversion.uid}>
@@ -1095,7 +1071,7 @@ const ProductConversionEditRow = ({
   );
 };
 
-const condition = (authUser: AuthUser) => !!authUser;
+const condition = (authUser: AuthUser | null) => !!authUser;
 
 export default compose(
   withEmailVerification,

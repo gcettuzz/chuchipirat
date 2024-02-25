@@ -1,11 +1,9 @@
 import React from "react";
 
-import Box from "@material-ui/core/Box";
 import Typography from "@material-ui/core/Typography";
 import useStyles from "../../constants/styles";
-import { ValueObject } from "../Firebase/Db/firebase.db.super.class";
+import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 
-//FIXME:
 /**
  * PageTitle-Eingenschaften
  * @param title - Seitentitel
@@ -15,10 +13,10 @@ import { ValueObject } from "../Firebase/Db/firebase.db.super.class";
  * @param ribbon - JSX-Element -> Ribbon
  */
 interface PageTitleProps {
-  title: string;
+  title?: string;
   smallTitle?: string;
   subTitle?: string;
-  pictureSrc?: string;
+  windowTitle?: string;
   ribbon?: ValueObject;
 }
 
@@ -32,29 +30,21 @@ const PageTitle = ({
   title,
   smallTitle,
   subTitle,
-  pictureSrc,
+  windowTitle,
   ribbon,
 }: PageTitleProps) => {
   const classes = useStyles();
 
-  let boxStyle = {};
-  if (pictureSrc) {
-    boxStyle = {
-      position: "sticky",
-      overflow: "hidden",
-      height: "25em",
-      backgroundImage: `url(${pictureSrc})`,
-      backgroundPosition: "center center",
-      backgroundRepeat: "no-repeat",
-      backgroundSize: "cover",
-      verticalAlign: "middle",
-      marginTop: "-1.4em",
-    };
-  }
-  document.title = title;
+  document.title = windowTitle
+    ? windowTitle
+    : title
+    ? title
+    : smallTitle
+    ? smallTitle
+    : "";
+
   return (
     <React.Fragment>
-      <Box component="span" display="block" style={boxStyle}></Box>
       {ribbon && <Ribbon text={ribbon.text} cssProperty={ribbon.class} />}
       <div className={classes.heroContent}>
         {title && (
@@ -63,7 +53,6 @@ const PageTitle = ({
             variant="h2"
             align="center"
             color="textPrimary"
-            // gutterBottom
           >
             {title}
           </Typography>
@@ -98,7 +87,11 @@ const PageTitle = ({
 /* ===================================================================
 // ============================== Ribbon =============================
 // =================================================================== */
-export const Ribbon = ({ text, cssProperty }) => {
+interface RibbonProps {
+  text: string;
+  cssProperty: string;
+}
+export const Ribbon = ({text, cssProperty}: RibbonProps) => {
   return <div className={cssProperty}>{text}</div>;
 };
 export default PageTitle;

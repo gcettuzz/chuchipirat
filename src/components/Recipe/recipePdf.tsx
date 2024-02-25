@@ -1,18 +1,9 @@
 import React from "react";
-import {
-  Document,
-  Page,
-  View,
-  Text,
-  Image,
-  Link,
-  Font,
-} from "@react-pdf/renderer";
+import {Document, Page, View, Text, Link, Font} from "@react-pdf/renderer";
 import Utils from "../Shared/utils.class";
 
 import StylesPdf from "../../constants/stylesRecipePdf";
 import * as TEXT from "../../constants/text";
-import * as IMAGE_REPOSITORY from "../../constants/imageRepository";
 import Recipe, {
   Ingredient,
   PositionType,
@@ -43,7 +34,7 @@ const RecipePdf = ({
   scaledMaterials,
   authUser,
 }: RecipePdfProps) => {
-  let actualDate = new Date();
+  const actualDate = new Date();
   return (
     <Document
       author={authUser.publicProfile.displayName}
@@ -593,7 +584,7 @@ export const RecipeMaterial = ({
         )}
         {/*===== Material =====*/}
         {materials.order.map((materialUid, counter) => {
-          let material = materials.entries[materialUid];
+          const material = materials.entries[materialUid];
           let quantity: number;
 
           scaledPortions
@@ -666,7 +657,10 @@ export const RecipeMaterial = ({
 /* ===================================================================
 // ========================== Hinweis Rezept =========================
 // =================================================================== */
-export const RecipeNote = ({recipe}) => {
+interface RecipeNoteProps {
+  recipe: Recipe;
+}
+export const RecipeNote = ({recipe}: RecipeNoteProps) => {
   return (
     <React.Fragment>
       <View style={styles.table}>
@@ -688,7 +682,10 @@ export const RecipeNote = ({recipe}) => {
 /* ===================================================================
 // ========================= Varianten Notiz  ========================
 // =================================================================== */
-export const RecipeVariantNote = ({recipe}) => {
+interface RecipeVariantNoteProps {
+  recipe: Recipe;
+}
+export const RecipeVariantNote = ({recipe}: RecipeVariantNoteProps) => {
   return (
     <React.Fragment>
       <View style={styles.table}>
@@ -701,7 +698,7 @@ export const RecipeVariantNote = ({recipe}) => {
             key={"recipeNoteVariantText_" + recipe.uid}
           >
             <Text style={styles.tableCell}>
-              {recipe.variantProperties.note}
+              {recipe?.variantProperties?.note}
             </Text>
           </View>
         </View>

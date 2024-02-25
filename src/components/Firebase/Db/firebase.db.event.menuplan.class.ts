@@ -11,11 +11,10 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
-import {RecipeType} from "../../Recipe/recipe.class";
 import {
-  MealRecipe,
   MealRecipeDeletedPrefix,
   MealRecipes,
+  Products,
 } from "../../Event/Menuplan/menuplan.class";
 
 export class FirebaseDbEventMenuplan extends FirebaseDbSuper {
@@ -62,13 +61,19 @@ export class FirebaseDbEventMenuplan extends FirebaseDbSuper {
     // in der App selbst ist diese Information bereits in den MealRecipes.
     // Das finden (Select - Where) funktioniert jedoch nur mit einem solchen
     // Array.
-    let usedRecipes: string[] = [];
+    const usedRecipes: string[] = [];
+    const usedProducts: string[] = [];
 
     Object.values(value.mealRecipes as MealRecipes).forEach((mealRecipe) => {
       if (!mealRecipe.recipe.recipeUid.includes(MealRecipeDeletedPrefix)) {
         if (!usedRecipes.includes(mealRecipe.recipe.recipeUid)) {
           usedRecipes.push(mealRecipe.recipe.recipeUid);
         }
+      }
+    });
+    Object.values(value.products as Products).forEach((menuProduct) => {
+      if (!usedProducts.includes(menuProduct.productUid)) {
+        usedProducts.push(menuProduct.productUid);
       }
     });
 
@@ -81,37 +86,21 @@ export class FirebaseDbEventMenuplan extends FirebaseDbSuper {
       menues: value.menues,
       materials: value.materials,
       products: value.products,
-      // diets: value.diets,
-      // intolerances: value.intolerances,
-      // portions: value.portions,
-      // totals: value.totals,
       created: value.created,
       lastChange: value.lastChange,
       usedRecipes: usedRecipes,
-      // created: {
-      //   date: this.firebase.timestamp.fromDate(value.created.date),
-      //   fromUid: value.created.fromUid,
-      //   fromDisplayName: value.created.fromDisplayName,
-      // },
-      // lastChange: {
-      //   date: this.firebase.timestamp.fromDate(value.lastChange.date),
-      //   fromUid: value.lastChange.fromUid,
-      //   fromDisplayName: value.lastChange.fromDisplayName,
-      // },
+      usedProducts: usedProducts,
     };
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
     if (!value) {
       throw new Error("No Values fetched!");
     }
     return {
       dates: value.dates,
-      // dates: value?.dates.map((timestamp) =>
-      //   timestamp instanceof Date ? timestamp : timestamp.toDate()
-      // ),
       mealTypes: value.mealTypes,
       notes: value?.notes ? value.notes : {},
       meals: value?.meals ? value.meals : {},
@@ -121,22 +110,6 @@ export class FirebaseDbEventMenuplan extends FirebaseDbSuper {
       products: value?.products ? value.products : {},
       created: value.created,
       lastChange: value.lastChange,
-      // created: {
-      //   date:
-      //     value.created.date instanceof Date
-      //       ? value.created.date
-      //       : value.created.date.toDate(),
-      //   fromUid: value.created.fromUid,
-      //   fromDisplayName: value.created.fromDisplayName,
-      // },
-      // lastChange: {
-      //   date:
-      //     value.lastChange.date instanceof Date
-      //       ? value.lastChange.date
-      //       : value.lastChange.date.toDate(),
-      //   fromUid: value.lastChange.fromUid,
-      //   fromDisplayName: value.lastChange.fromDisplayName,
-      // },
     } as unknown as T;
   }
   /* =====================================================================

@@ -9,7 +9,6 @@ import DialogActions from "@material-ui/core/DialogActions";
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
 
-import Unit from "./unit.class";
 import {
   GIVE_UNIT as TEXT_GIVE_UNIT,
   UNIT_CREATE as TEXT_UNIT_CREATE,
@@ -19,6 +18,7 @@ import {
   CANCEL as TEXT_CANCEL,
   CREATE as TEXT_CREATE,
 } from "../../constants/text";
+import Unit from "./unit.class";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -30,13 +30,16 @@ export const UNIT_ADD_INITIAL_STATE = {
 /* ===================================================================
 // ===================== Pop Up Einheit hinzufügen ===================
 // =================================================================== */
+interface DialogCreateUnitProps {
+  dialogOpen: boolean;
+  handleCreate: (unit: Unit) => void;
+  handleClose: () => void;
+}
 const DialogCreateUnit = ({
-  firebase,
   dialogOpen,
   handleCreate,
   handleClose,
-  handleError,
-}) => {
+}: DialogCreateUnitProps) => {
   const [formFields, setFormFields] = React.useState(UNIT_ADD_INITIAL_STATE);
 
   const [validation, setValidation] = React.useState({
@@ -48,7 +51,7 @@ const DialogCreateUnit = ({
   // Change Ereignis Felder
   // ------------------------------------------ */
   const onChangeField = (event: React.ChangeEvent<HTMLInputElement>) => {
-    let field = event.target.id.split("-")[0];
+    const field = event.target.id.split("-")[0];
 
     setFormFields({
       ...formFields,
@@ -82,7 +85,7 @@ const DialogCreateUnit = ({
     if (hasError) {
       return;
     }
-    handleCreate(formFields.key, formFields.name);
+    handleCreate({key: formFields.key, name: formFields.name});
     setFormFields(UNIT_ADD_INITIAL_STATE);
   };
   /* ------------------------------------------

@@ -1,7 +1,7 @@
 import React from "react";
 import {useTheme} from "@material-ui/core/styles";
+import {compose} from "react-recompose";
 
-import {compose} from "recompose";
 import {useHistory} from "react-router";
 
 import {
@@ -47,12 +47,7 @@ import {CARD_PLACEHOLDER_PICTURE} from "../../constants/defaultValues";
 import Event, {EventType} from "../Event/Event/event.class";
 import EventCard, {EventCardLoading} from "../Event/Event/eventCard";
 
-import {withFirebase} from "../Firebase";
-import {
-  AuthUserContext,
-  withAuthorization,
-  withEmailVerification,
-} from "../Session";
+import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import Feed, {FeedType} from "../Shared/feed.class";
 import {RecipeCardLoading} from "../Recipe/recipeCard";
@@ -69,7 +64,9 @@ import {
   NavigationObject,
 } from "../Navigation/navigationContext";
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
-
+import {withFirebase} from "../Firebase/firebaseContext";
+import withEmailVerification from "../Session/withEmailVerification";
+import {CustomRouterProps} from "../Shared/global.interface";
 /* ===================================================================
 // ============================ Dispatcher ===========================
 // =================================================================== */
@@ -91,7 +88,7 @@ enum ReducerActions {
 }
 type DispatchAction = {
   type: ReducerActions;
-  payload: object | [];
+  payload: any;
 };
 
 type State = {
@@ -106,8 +103,7 @@ type State = {
   isLoadingNewestRecipes: boolean;
   isLoadingFeed: boolean;
   isLoadingStats: boolean;
-  isError: boolean;
-  error: object;
+  error: Error | null;
 };
 
 const inititialState: State = {
@@ -122,8 +118,7 @@ const inititialState: State = {
   isLoadingNewestRecipes: false,
   isLoadingFeed: false,
   isLoadingStats: false,
-  isError: false,
-  error: {},
+  error: null,
 };
 
 const homeReducer = (state: State, action: DispatchAction): State => {
@@ -198,43 +193,49 @@ const homeReducer = (state: State, action: DispatchAction): State => {
         },
       };
     case ReducerActions.GENERIC_ERROR:
-      return {...state, isError: true, error: action.payload};
+      return {...state, error: action.payload as Error};
     default:
       console.error("Unbekannter ActionType: ", action.type);
       throw new Error();
   }
 };
+interface LocationState {
+  snackbar?: Snackbar;
+}
+
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
 const HomePage = (props) => {
   return (
     <AuthUserContext.Consumer>
-      {(authUser) => <HomeBase props={props} authUser={authUser} />}
+      {(authUser) => <HomeBase {...props} authUser={authUser} />}
     </AuthUserContext.Consumer>
   );
 };
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const HomeBase = ({props, authUser}) => {
+const HomeBase: React.FC<
+  CustomRouterProps<undefined, LocationState> & {authUser: AuthUser | null}
+> = ({authUser, ...props}) => {
   const firebase = props.firebase;
+
   const classes = useStyles();
   const {push} = useHistory();
+
   const navigationValuesContext = React.useContext(NavigationValuesContext);
-
   const [state, dispatch] = React.useReducer(homeReducer, inititialState);
-
   // Prüfen ob allenfalls eine Snackbar angezeigt werden soll
   // --> aus dem Prozess Anlass löschen
   if (
     props.location.state &&
-    props.location.state.snackbar &&
+    props.location.state?.["snackbar"] &&
     !state.snackbar.open
   ) {
     dispatch({
       type: ReducerActions.SET_SNACKBAR,
-      payload: props.location.state.snackbar,
+      payload: props.location.state?.["snackbar"],
     });
   }
 
@@ -252,6 +253,9 @@ const HomeBase = ({props, authUser}) => {
   // Daten aus der DB lesen
   // ------------------------------------------ */
   React.useEffect(() => {
+    if (!authUser) {
+      return;
+    }
     dispatch({type: ReducerActions.EVENTS_FETCH_INIT, payload: {}});
 
     Event.getEventsOfUser({
@@ -268,24 +272,7 @@ const HomeBase = ({props, authUser}) => {
       .catch((error) =>
         dispatch({type: ReducerActions.GENERIC_ERROR, payload: error})
       );
-  }, []);
-  const onShowPassedEvents = () => {
-    dispatch({type: ReducerActions.PASSED_EVENTS_FETCH_INIT, payload: {}});
-    Event.getEventsOfUser({
-      firebase: firebase,
-      userUid: authUser.uid,
-      eventType: EventType.history,
-    })
-      .then((result) => {
-        dispatch({
-          type: ReducerActions.PASSED_EVENTS_FETCH_SUCCESS,
-          payload: result,
-        });
-      })
-      .catch((error) =>
-        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error})
-      );
-  };
+  }, [authUser]);
   React.useEffect(() => {
     //Neuster freigegebene Rezepte
     dispatch({type: ReducerActions.NEWEST_RECIPES_FETCH_INIT, payload: {}});
@@ -340,6 +327,28 @@ const HomeBase = ({props, authUser}) => {
         dispatch({type: ReducerActions.GENERIC_ERROR, payload: error})
       );
   }, []);
+
+  if (!authUser) {
+    return null;
+  }
+
+  const onShowPassedEvents = () => {
+    dispatch({type: ReducerActions.PASSED_EVENTS_FETCH_INIT, payload: {}});
+    Event.getEventsOfUser({
+      firebase: firebase,
+      userUid: authUser.uid,
+      eventType: EventType.history,
+    })
+      .then((result) => {
+        dispatch({
+          type: ReducerActions.PASSED_EVENTS_FETCH_SUCCESS,
+          payload: result,
+        });
+      })
+      .catch((error) =>
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error})
+      );
+  };
   /* ------------------------------------------
   // Objekte öffnen
   // ------------------------------------------ */
@@ -366,14 +375,14 @@ const HomeBase = ({props, authUser}) => {
       },
     });
   };
-  const onCreateNewEvent = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const onCreateNewEvent = () => {
     push({
       pathname: `${ROUTES.CREATE_NEW_EVENT}`,
     });
   };
   const onRecipeClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    let recipeUid = event.currentTarget.name.split("_")[1];
-    let recipe = state.recipes.find(
+    const recipeUid = event.currentTarget.name.split("_")[1];
+    const recipe = state.recipes.find(
       (recipe) => recipe.sourceObject.uid == recipeUid
     );
 
@@ -394,7 +403,7 @@ const HomeBase = ({props, authUser}) => {
     });
   };
   const onFeedEntryCllick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    let feedEntry = state.feed.find(
+    const feedEntry = state.feed.find(
       (feedEntry) => feedEntry.uid == event.currentTarget.id.split("_")[1]
     );
     if (!feedEntry) {
@@ -434,7 +443,7 @@ const HomeBase = ({props, authUser}) => {
     if (reason === "clickaway") {
       return;
     }
-    delete props.location.state.snackbar;
+    delete props.location.state?.snackbar;
     dispatch({
       type: ReducerActions.CLOSE_SNACKBAR,
       payload: {},
@@ -446,7 +455,7 @@ const HomeBase = ({props, authUser}) => {
       <HomeHeader authUser={authUser} />
       <Container className={classes.container} component="main" maxWidth="md">
         <Grid container spacing={2} justifyContent="center">
-          {state.isError && (
+          {state.error && (
             <Grid item key={"error"} xs={12}>
               <AlertMessage
                 error={state.error}
@@ -511,8 +520,6 @@ interface HomeHeaderProps {
   authUser: AuthUser;
 }
 const HomeHeader = ({authUser}: HomeHeaderProps) => {
-  const classes = useStyles();
-
   return (
     <PageTitle
       title={TEXT_PAGE_TITLE_HOME(authUser.publicProfile.displayName)}
@@ -909,7 +916,7 @@ const HomeStats = ({stats, isLoadingStats}: HomeStatsProps) => {
   );
 };
 
-const condition = (authUser) => !!authUser;
+const condition = (authUser: AuthUser | null) => !!authUser;
 
 export default compose(
   withEmailVerification,

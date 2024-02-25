@@ -1,16 +1,12 @@
 import Firebase from "../firebase.class";
 import FirebaseDbRecipe from "./firebase.db.recipe.class";
 
-import { RecipeType } from "../../Recipe/recipe.class";
+import {RecipeType} from "../../Recipe/recipe.class";
 
 import FirebaseDbRecipeRating from "./firebase.db.recipe.rating.class";
 import FirebaseDbRecipeComment from "./firebase.db.recipe.comment.class";
-import {
-  ValueObject,
-  PrepareDataForDb,
-  PrepareDataForApp,
-} from "./firebase.db.super.class";
-import { ERROR_NOT_IMPLEMENTED_YET } from "../../../constants/text";
+import {ValueObject, PrepareDataForApp} from "./firebase.db.super.class";
+import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
 import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
@@ -33,7 +29,9 @@ export class FirebaseDbRecipePrivate extends FirebaseDbRecipe {
   // Collection holen
   // ===================================================================== */
   getCollection(uids: string[]) {
-    return this.firebase.db.collection(`recipes/000_userRecipes/${uids[0]}`);
+    return this.firebase.db.collection(
+      `recipes/private/users/${uids[0]}/recipes`
+    );
   }
   /* =====================================================================
   // Collection-Group holen
@@ -48,10 +46,10 @@ export class FirebaseDbRecipePrivate extends FirebaseDbRecipe {
   getDocument(uids: string[]) {
     if (uids.length !== 0) {
       return this.firebase.db.doc(
-        `recipes/000_userRecipes/${uids[0]}/${uids[1]}`
+        `recipes/private/users/${uids[0]}/recipes/${uids[1]}`
       );
     } else {
-      return this.firebase.db.doc(`recipes/000_userRecipes`);
+      return this.firebase.db.doc(`recipes/private`);
     }
   }
   /* =====================================================================
@@ -64,9 +62,9 @@ export class FirebaseDbRecipePrivate extends FirebaseDbRecipe {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({ uid, value }: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
     // Die Aufsplittung von Objekt zu Array geschieht in der recipeshort.class
-    value = super.prepareDataForApp({ uid: uid, value: value });
+    value = super.prepareDataForApp({uid: uid, value: value});
     // Schlüssel setzen, dass privat
     value.type = RecipeType.private;
     return value as unknown as T;

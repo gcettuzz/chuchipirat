@@ -1,22 +1,10 @@
 import React from "react";
-import {
-  Document,
-  Page,
-  View,
-  Text,
-  Image,
-  Link,
-  Font,
-} from "@react-pdf/renderer";
+import {Document, Page, View, Text, Font} from "@react-pdf/renderer";
 import Utils from "../../Shared/utils.class";
-import * as IMAGE_REPOSITORY from "../../../constants/imageRepository";
 import {MENUPLAN_NO_OF_COLUMS_PRINT as DEFAULT_MENUPLAN_NO_OF_COLUMS_PRINT} from "../../../constants/defaultValues";
 import {
-  APP_NAME as TEXT_APP_NAME,
   MENUPLAN as TEXT_MENUPLAN,
-  EXPORTED_FROM as TEXT_EXPORTED_FROM,
-  EXPORTED_ON as TEXT_EXPORTED_ON,
-  VARIANT as TEXT_VARIANT,
+  APP_NAME as TEXT_APP_NAME,
 } from "../../../constants/text";
 
 import StylesPdf from "../../../constants/stylesMenuplanPdf";
@@ -36,10 +24,10 @@ interface MenuplanPdfProps {
 }
 
 const MenuplanPdf = ({event, menuplan, authUser}: MenuplanPdfProps) => {
-  let actualDate = new Date();
+  const actualDate = new Date();
   // Array erstellen, das dem Aufbau des PDF entspricht
   //  Eine Seite hat 5 Spalten (1 die Mahlzeiten, 4 die Daten)
-  let splitedDates: (Date | null)[][] = [];
+  const splitedDates: (Date | null)[][] = [];
   let datesOfPage: (Date | null)[] = [];
 
   menuplan.dates.forEach((day) => {
@@ -64,13 +52,15 @@ const MenuplanPdf = ({event, menuplan, authUser}: MenuplanPdfProps) => {
     // Angefangene Seite aufnehmen
     splitedDates.push(datesOfPage);
   }
+
   return (
+    //@ts-expect-error: Bug im Eslint
     <Document
-    // author={authUser.publicProfile.displayName}
-    // creator={TEXT_APP_NAME}
-    // keywords={event.name + " " + TEXT_MENUPLAN}
-    // subject={TEXT_MENUPLAN + " " + event.name}
-    // title={TEXT_MENUPLAN + " " + event.name}
+      author={authUser.publicProfile.displayName}
+      creator={TEXT_APP_NAME}
+      keywords={event.name + " " + TEXT_MENUPLAN}
+      subject={TEXT_MENUPLAN + " " + event.name}
+      title={TEXT_MENUPLAN + " " + event.name}
     >
       {splitedDates.map((datesOfPage, pageCounter) => (
         <MenuplanPage
@@ -124,6 +114,7 @@ const MenuplanPage = ({
         {menuplan.mealTypes.order.map((mealTypeUid, mealTypeCounter) => {
           return (
             <MenuplanMealRow
+              key={"menuplanRow_" + mealTypeUid + "_" + mealTypeCounter}
               mealType={menuplan.mealTypes.entries[mealTypeUid]}
               meals={menuplan.meals}
               menues={menuplan.menues}
@@ -143,9 +134,6 @@ const MenuplanPage = ({
 /* ===================================================================
 // ============================== Titel ==============================
 // =================================================================== */
-interface MenuplanTitleProps {
-  event: Event;
-}
 const MenuplanTitle = () => {
   return (
     <React.Fragment>
@@ -155,65 +143,6 @@ const MenuplanTitle = () => {
     </React.Fragment>
   );
 };
-/* ===================================================================
-// ============================ Fusszeile ============================
-// =================================================================== */
-// interface MenuplanFooterProps {
-//   eventUid: Event["uid"];
-//   actualDate: Date;
-//   authUser: AuthUser;
-// }
-// const MenuplanFooter = ({
-//   eventUid,
-//   actualDate,
-//   authUser,
-// }: MenuplanFooterProps) => {
-//   return (
-//     <React.Fragment>
-//       {/*===== Fusszeile =====*/}
-//       <Text
-//         key={"pageFooter_generatedOn_" + eventUid}
-//         style={styles.printedOn}
-//         fixed
-//       >
-//         {TEXT_EXPORTED_ON}
-//         {actualDate.toLocaleString("de-CH", {
-//           year: "numeric",
-//           month: "2-digit",
-//           day: "2-digit",
-//           hour: "2-digit",
-//           minute: "2-digit",
-//         })}
-//       </Text>
-//       <Text
-//         key={"pageFooter_printedFrom" + eventUid}
-//         style={styles.printedFrom}
-//         fixed
-//       >
-//         {TEXT_EXPORTED_FROM}
-//         {authUser.publicProfile.displayName}
-//       </Text>
-//       <Text
-//         key={"pageFooter_pages_" + eventUid}
-//         style={styles.pageNumber}
-//         render={({pageNumber, totalPages}) => `${pageNumber} / ${totalPages}`}
-//         fixed
-//       />
-//       <Text
-//         key={"pageFooter_appName_" + eventUid}
-//         style={styles.chuchipirat}
-//         fixed
-//       >
-//         {TEXT_APP_NAME}
-//       </Text>
-//       <Image
-//         style={styles.footerImage}
-//         src={IMAGE_REPOSITORY.getEnviromentRelatedPicture().PDF_FOOTER_IMAGE}
-//         fixed
-//       />
-//     </React.Fragment>
-//   );
-// };
 /* ===================================================================
 // =========================== Datumsreihe ===========================
 // =================================================================== */
@@ -380,8 +309,6 @@ const MenuplanMealRow = ({
         </Text>
       </View>
       {/* Menües */}
-      {/* TODO: Eine View dann über Menüs loopen, dann über Rezepte */}
-
       {datesOfPage.map((day, dayCounter) => {
         // Die Mahlzeit holen dieses Datum
         if (day != null) {
@@ -446,7 +373,7 @@ const MenuplanMealRow = ({
                   note = undefined;
                 }
                 return (
-                  <React.Fragment>
+                  <React.Fragment key={"menue" + menuUid}>
                     <Text
                       style={{
                         ...styles.body,
@@ -462,6 +389,7 @@ const MenuplanMealRow = ({
                     {menues[menuUid].mealRecipeOrder.map(
                       (recipeUid, recipeCounter) => (
                         <Text
+                          key={"recipe_" + recipeUid}
                           style={
                             recipeCounter + 1 ==
                             menues[menuUid].mealRecipeOrder.length

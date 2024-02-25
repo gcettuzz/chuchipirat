@@ -1,0 +1,116 @@
+import Firebase from "../firebase.class";
+import {
+  ValueObject,
+  PrepareDataForDb,
+  PrepareDataForApp,
+  FirebaseDbSuper,
+  // FirebaseDbSuper,
+} from "./firebase.db.super.class";
+import {
+  ERROR_WRONG_DB_CLASS,
+  ERROR_NOT_IMPLEMENTED_YET,
+} from "../../../constants/text";
+import {
+  STORAGE_OBJECT_PROPERTY,
+  StorageObjectProperty,
+} from "./sessionStorageHandler.class";
+import {ChangeLog, Comment} from "../../Request/request.class";
+
+export class FirebaseDbRequestActive extends FirebaseDbSuper {
+  firebase: Firebase;
+
+  /* =====================================================================
+  // Constructor
+  // ===================================================================== */
+  constructor(firebase: Firebase) {
+    super();
+    this.firebase = firebase;
+  }
+  /* =====================================================================
+  // Collection holen
+  // ===================================================================== */
+  getCollection() {
+    return this.firebase.db.collection("requests/active/requests");
+  }
+  /* =====================================================================
+  // Collection-Group holen
+  // ===================================================================== */
+  getCollectionGroup() {
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
+    return this.firebase.db.collectionGroup("none");
+  }
+  /* =====================================================================
+  // Dokument holen
+  // ===================================================================== */
+  getDocument(uids: string[]) {
+    return this.firebase.db.doc(`requests/active/requests/${uids[0]}`);
+  }
+  /* =====================================================================
+  // Dokumente holen
+  // ===================================================================== */
+  getDocuments() {
+    throw Error(ERROR_WRONG_DB_CLASS);
+    // Not implemented
+  }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
+    const changeLog = value.changeLog.map((entry: ChangeLog) => {
+      return {
+        date: entry.date,
+        user: {uid: entry.user.uid, displayName: entry.user.displayName},
+        action: entry.action,
+      };
+    });
+
+    const comments = value.comments.map((comment: Comment) => {
+      return {
+        ...comment,
+        date: comment.date,
+      };
+    });
+    let resolveDate: Date = new Date();
+    value.resolveDate
+      ? (resolveDate = value.resolveDate)
+      : (resolveDate = new Date("9999-12-31"));
+
+    return {
+      number: value.number,
+      status: value.status,
+      createDate: value.createDate,
+      resolveDate: resolveDate,
+      requestObject: value.requestObject,
+      requestType: value.requestType,
+      author: value.author,
+      assignee: value.assignee,
+      comments: comments,
+      changeLog: changeLog,
+    };
+  }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
+    return {
+      uid: uid,
+      number: value.number,
+      status: value.status,
+      createDate: value.createDate,
+      resolveDate: value.resolveDate,
+      requestObject: value.requestObject,
+      requestType: value.requestType,
+      author: value.author,
+      assignee: value.assignee,
+      comments: value?.comments ? value?.comments : [],
+      changeLog: value.changeLog ? value.changeLog : [],
+    } as unknown as T;
+  }
+  /* =====================================================================
+  // Einstellungen für den Session Storage zurückgeben
+  //===================================================================== */
+  getSessionHandlerProperty(): StorageObjectProperty {
+    return STORAGE_OBJECT_PROPERTY.NONE;
+  }
+}
+export default FirebaseDbRequestActive;

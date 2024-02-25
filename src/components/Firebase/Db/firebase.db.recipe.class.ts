@@ -70,7 +70,7 @@ export class FirebaseDbRecipe extends FirebaseDbSuper {
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
     // Für die DB braucht es ein Array mit UsedProduct (für diverse Suchen)
     // da dies nur auf der DB benötigt wird, wird das auch nur hier generiert
-    let usedProducts: string[] = [];
+    const usedProducts: string[] = [];
 
     Object.values(
       value.ingredients.entries as RecipeObjectStructure<Ingredient>["entries"]
@@ -80,7 +80,7 @@ export class FirebaseDbRecipe extends FirebaseDbSuper {
       }
     });
 
-    let recipe = {
+    const recipe = {
       ingredients: value.ingredients,
       name: value.name,
       note: value.note,
@@ -120,7 +120,7 @@ export class FirebaseDbRecipe extends FirebaseDbSuper {
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
   prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
-    let recipe = {
+    const recipe = {
       uid: uid,
       name: value.name,
       portions: value.portions,

@@ -1,6 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import Firebase from "../firebase.class";
-import {AuthUser} from "../Authentication/authUser.class";
-import {ChangeRecord} from "../../Shared/global.interface";
 
 import {
   ERROR_WRONG_DB_CLASS,
@@ -13,7 +12,6 @@ import {
   PrepareDataForDb,
   PrepareDataForApp,
 } from "./firebase.db.super.class";
-import {error} from "console";
 import {RecipeType} from "../../Recipe/recipe.class";
 import {
   STORAGE_OBJECT_PROPERTY,
@@ -60,7 +58,7 @@ export class FirebaseDbRecipeShort extends FirebaseDbSuper {
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
-    let recipeShort = {
+    const recipeShort = {
       [value.uid]: {
         name: value.name,
         source: value.source,

@@ -9,6 +9,7 @@ import {
 } from "../../../constants/defaultValues";
 import {ChangeRecord} from "../../Shared/global.interface";
 import Event from "../Event/event.class";
+import Stats, {StatsField} from "../../Shared/stats.class";
 
 interface GroupConfigObjectStructure<T> {
   entries: {[key: string]: T};
@@ -104,10 +105,10 @@ export default class EventGroupConfiguration {
    * @returns Group-Config
    */
   static factory() {
-    let groupConfig = new EventGroupConfiguration();
+    const groupConfig = new EventGroupConfiguration();
 
     DEFAULT_DIETS.forEach((diet) => {
-      let dietUid = Utils.generateUid(5);
+      const dietUid = Utils.generateUid(5);
       groupConfig.diets.entries[dietUid] = {
         uid: dietUid,
         name: diet,
@@ -117,7 +118,7 @@ export default class EventGroupConfiguration {
     });
 
     DEFAULT_INTOLERANCES.forEach((intolerance) => {
-      let intoleranceUid = Utils.generateUid(5);
+      const intoleranceUid = Utils.generateUid(5);
       groupConfig.intolerances.entries[intoleranceUid] = {
         uid: intoleranceUid,
         name: intolerance,
@@ -127,7 +128,7 @@ export default class EventGroupConfiguration {
     });
     // Portionen aufbauen
     groupConfig.diets.order.forEach((dietUid) => {
-      let intolerancePortions = {} as IntolerancePortions;
+      const intolerancePortions = {} as IntolerancePortions;
       groupConfig.intolerances.order.forEach((intoleranceUid) => {
         intolerancePortions[intoleranceUid] = 0;
       });
@@ -144,7 +145,7 @@ export default class EventGroupConfiguration {
    * @returns Unverträglichkeiten-Array mit neuer Unverträglichkeit
    */
   static addIntolerance({groupConfig, intoleranceName}: AddIntoleranceProps) {
-    let newIntolerance: Intolerance = {
+    const newIntolerance: Intolerance = {
       uid: Utils.generateUid(5),
       name: intoleranceName,
       totalPortions: 0,
@@ -193,7 +194,7 @@ export default class EventGroupConfiguration {
    * @returns Diät-Array mit neuer Gruppe
    */
   static addDietGroup({groupConfig, dietGroupName}: AddDietGroupProps) {
-    let newDiet: Diet = {
+    const newDiet: Diet = {
       uid: Utils.generateUid(5),
       name: dietGroupName,
       totalPortions: 0,
@@ -202,7 +203,7 @@ export default class EventGroupConfiguration {
     groupConfig.diets.entries[newDiet.uid] = newDiet;
     groupConfig.diets.order.push(newDiet.uid);
 
-    let intolerancePortions = {} as IntolerancePortions;
+    const intolerancePortions = {} as IntolerancePortions;
     groupConfig.intolerances.order.forEach((intoleranceUid) => {
       intolerancePortions[intoleranceUid] = 0;
     });
@@ -267,6 +268,8 @@ export default class EventGroupConfiguration {
    * @param {firebase, event, authUser}
    */
   static async save({firebase, groupConfig, authUser}: Save) {
+    let newDocument = false;
+    let newPortions = 0;
     if (!groupConfig.created.fromUid) {
       // Wird soeben neu erstellt.
       groupConfig.created = {
@@ -274,6 +277,21 @@ export default class EventGroupConfiguration {
         fromDisplayName: authUser.publicProfile.displayName,
         date: new Date(),
       };
+      newDocument = true;
+    }
+
+    if (newDocument) {
+      newPortions = groupConfig.totalPortions;
+    } else {
+      // Alte Grösse holen
+      await EventGroupConfiguration.getGroupConfiguration({
+        firebase: firebase,
+        uid: groupConfig.uid,
+      })
+        .then((result) => {
+          newPortions = groupConfig.totalPortions - result.totalPortions;
+        })
+        .catch((error) => console.error(error));
     }
 
     await firebase.event.groupConfiguration
@@ -289,6 +307,13 @@ export default class EventGroupConfiguration {
         console.error(error);
         throw error;
       });
+
+    // Statistik aufzählen
+    Stats.incrementStat({
+      firebase: firebase,
+      field: StatsField.noParticipants,
+      value: newPortions,
+    });
   }
   // ===================================================================== */
   /**
@@ -335,7 +360,7 @@ export default class EventGroupConfiguration {
     uid,
     callback,
   }: GetGroupConfigurationListener) => {
-    let groupConfigurationListener = () => {};
+    let groupConfigurationListener: (() => void) | undefined;
 
     const groupConfigurationCalback = (
       groupConfiguration: EventGroupConfiguration
@@ -345,7 +370,7 @@ export default class EventGroupConfiguration {
       callback(groupConfiguration);
     };
 
-    const errorCallback = (error: any) => {
+    const errorCallback = (error: Error) => {
       console.error(error);
       throw error;
     };

@@ -9,11 +9,9 @@
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.60",
     "@material-ui/pickers": "^3.2.10",
-    "@react-pdf/renderer": "^1.6.14",
-    "@testing-library/jest-dom": "^5.11.9",
+    "@react-pdf/renderer": "^1.6.17",
     "@testing-library/react": "^11.2.5",
     "@testing-library/user-event": "^12.7.0",
-    "@types/jest": "^27.4.0",
     "@types/node": "^17.0.8",
     "@types/react": "^17.0.38",
     "@types/react-beautiful-dnd": "^13.1.4",
@@ -27,10 +25,10 @@
     "react-beautiful-dnd": "^13.1.1",
     "react-device-detect": "^2.1.2",
     "react-dom": "^17.0.1",
+    "react-recompose": "^0.33.0",
     "react-router": "^5.2.0",
-    "react-router-dom": "^5.2.0",
+    "react-router-dom": "^5.3.4",
     "react-scripts": "4.0.2",
-    "recompose": "^0.30.0",
     "source-map-explorer": "^2.5.2",
     "typeface-roboto": "^1.1.13",
     "typescript": "^4.5.4",
@@ -40,14 +38,13 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test  --coverage --watchAll",
     "eject": "react-scripts eject",
-    "analyze": "source-map-explorer 'build/static/js/*.js'"
+    "analyze": "source-map-explorer 'build/static/js/*.js'",
+    "lint": "eslint --ext .ts ."
   },
   "eslintConfig": {
     "extends": [
-      "react-app",
-      "react-app/jest"
+      "react-app"
     ]
   },
   "browserslist": {
@@ -65,5 +62,13 @@
   "resolutions": {
     "@types/react": "17.0.14",
     "@types/react-dom": "17.0.14"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.202",
+    "@types/react-router-dom": "^5.3.3",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint-plugin-react": "^7.33.2",
+    "react-error-overlay": "6.0.9"
   }
 }

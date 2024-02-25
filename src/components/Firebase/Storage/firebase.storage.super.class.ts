@@ -1,6 +1,7 @@
 import Firebase from "../firebase.class";
 import Utils from "../../Shared/utils.class";
-import { ERROR_PARAMETER_NOT_PASSED } from "../../../constants/text";
+import {ERROR_PARAMETER_NOT_PASSED} from "../../../constants/text";
+import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
 
 interface UploadFile {
   file: File;
@@ -22,13 +23,13 @@ export enum ImageSize {
 }
 
 // Suffix von redimensionierten Files
-export const IMAGES_SUFFIX: { [key: string]: ImageSuffix } = {
-  size50: { size: ImageSize.size_50, suffix: "_50x50.jpeg" },
-  size200: { size: ImageSize.size_200, suffix: "_200x200.jpeg" },
-  size300: { size: ImageSize.size_300, suffix: "_300x300.jpeg" },
-  size500: { size: ImageSize.size_500, suffix: "_500x500.jpeg" },
-  size600: { size: ImageSize.size_600, suffix: "_600x600.jpeg" },
-  size1000: { size: ImageSize.size_1000, suffix: "_1000x1000.jpeg" },
+export const IMAGES_SUFFIX: {[key: string]: ImageSuffix} = {
+  size50: {size: ImageSize.size_50, suffix: "_50x50.jpeg"},
+  size200: {size: ImageSize.size_200, suffix: "_200x200.jpeg"},
+  size300: {size: ImageSize.size_300, suffix: "_300x300.jpeg"},
+  size500: {size: ImageSize.size_500, suffix: "_500x500.jpeg"},
+  size600: {size: ImageSize.size_600, suffix: "_600x600.jpeg"},
+  size1000: {size: ImageSize.size_1000, suffix: "_1000x1000.jpeg"},
 };
 
 interface ImageSuffix {
@@ -53,26 +54,31 @@ export abstract class FirebaseStorageSuper {
   /**
    * Datei hochladen
    */
-  uploadFile({ file, filename }: UploadFile): Promise<string> {
-    let suffix = Utils.getFileSuffix(file.name);
+  uploadFile({file, filename}: UploadFile): Promise<string> {
+    const suffix = Utils.getFileSuffix(file.name);
     filename = filename + "." + suffix;
 
-    let storageRef = this.firebase.storage.ref();
-    let folder = this.getFolder();
+    const storageRef = this.firebase.storage.ref();
+    const folder = this.getFolder();
 
     // aktuell werden nur Bilder hochgeladen
-    let metadata = {
+    const metadata = {
       contentType: "image/jpeg",
     };
 
+    this.firebase.analytics.logEvent(FirebaseAnalyticEvent.uploadPicture, {
+      folder: this.getFolder(),
+    });
+
     return new Promise((resolve, reject) => {
-      let uploadTask = storageRef.child(folder + filename).put(file, metadata);
+      const uploadTask = storageRef
+        .child(folder + filename)
+        .put(file, metadata);
 
       uploadTask.on(
         "state_changed",
         function (snapshot) {
-          let progress =
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.info("File wird hochgeladen:", snapshot.metadata.name);
         },
         function error(error) {
           console.error(error);
@@ -101,8 +107,8 @@ export abstract class FirebaseStorageSuper {
   }: GetPictureVariants) {
     let counter = 0;
     let fileFound = false;
-    let fileVariants: { size: number; downloadURL: string }[] = [];
-    let docRefs: Promise<string>[] = [];
+    const fileVariants: {size: number; downloadURL: string}[] = [];
+    const docRefs: Promise<string>[] = [];
     let downloadUrls: any[] = [];
 
     // Info: die oldDownloadUrl muss auch der ersten Size entsprechen
@@ -112,10 +118,10 @@ export abstract class FirebaseStorageSuper {
       throw new Error(ERROR_PARAMETER_NOT_PASSED);
     }
 
-    let folder = this.getFolder();
+    const folder = this.getFolder();
 
     // Warten bis das erste Bild vorhanden ist
-    let checkFile = `${folder}${uid}${this.getImageFileSuffix(sizes[0])}`;
+    const checkFile = `${folder}${uid}${this.getImageFileSuffix(sizes[0])}`;
 
     do {
       await this.firebase.storage
@@ -151,11 +157,11 @@ export abstract class FirebaseStorageSuper {
     downloadUrls = await Promise.all(docRefs);
 
     downloadUrls.forEach((downloadURL) => {
-      let sizeType = Object.values(IMAGES_SUFFIX).find((sizeType) =>
+      const sizeType = Object.values(IMAGES_SUFFIX).find((sizeType) =>
         downloadURL.includes(sizeType.suffix)
       );
       if (sizeType) {
-        fileVariants.push({ size: sizeType.size, downloadURL: downloadURL });
+        fileVariants.push({size: sizeType.size, downloadURL: downloadURL});
       }
     });
     return fileVariants;
@@ -171,6 +177,11 @@ export abstract class FirebaseStorageSuper {
     this.firebase.storage
       .ref(`${this.getFolder()}${filename}`)
       .delete()
+      .then(() => {
+        this.firebase.analytics.logEvent(FirebaseAnalyticEvent.deletePicture, {
+          folder: this.getFolder(),
+        });
+      })
       .catch((error) => {
         throw error;
       });
@@ -184,8 +195,7 @@ export abstract class FirebaseStorageSuper {
    * @param size: geforderte Grösse
    */
   getImageFileSuffix(size: number): string {
-    let suffix;
-    suffix = Object.values(IMAGES_SUFFIX).find(
+    const suffix = Object.values(IMAGES_SUFFIX).find(
       (sizeType) => sizeType.size === size
     )?.suffix;
 

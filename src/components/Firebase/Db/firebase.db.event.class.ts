@@ -4,8 +4,6 @@ import {
   ValueObject,
   PrepareDataForDb,
   PrepareDataForApp,
-  Where,
-  OrderBy,
 } from "./firebase.db.super.class";
 // import { AuthUser } from "../firebase.class.temp";
 import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
@@ -17,7 +15,7 @@ import {
 } from "./sessionStorageHandler.class";
 import FirebaseDbEventUsedRecipes from "./firebase.db.event.usedRecipes.class";
 import FirebaseDbEventShoppingList from "./firebase.db.event.shoppingList";
-import FirebaseDbEventShoppingListCollection from "./firebase.db.event.shoppingListCollection";
+import FirebaseDbEventShoppingListCollection from "./firebase.db.event.shoppingListCollection.class";
 import FirebaseDbEventMaterialList from "./firebase.db.event.materialList.class";
 
 export class FirebaseDbEvent extends FirebaseDbSuper {
@@ -72,7 +70,7 @@ export class FirebaseDbEvent extends FirebaseDbSuper {
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
-    let dbObject = {
+    const dbObject = {
       authUsers: value.authUsers,
       cooks: value.cooks,
       dates: value.dates,
@@ -86,7 +84,10 @@ export class FirebaseDbEvent extends FirebaseDbSuper {
       lastChange: value.lastChange,
     };
 
-    if (value.hasOwnProperty("refDocuments") && value["refDocuments"]) {
+    if (
+      Object.prototype.hasOwnProperty.call(value, "refDocuments") &&
+      value["refDocuments"]
+    ) {
       dbObject["refDocuments"] = value.refDocuments;
     }
 
@@ -96,7 +97,7 @@ export class FirebaseDbEvent extends FirebaseDbSuper {
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
   prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
-    let appObject = {
+    const appObject = {
       uid: uid,
       name: value.name,
       motto: value.motto,
@@ -110,7 +111,7 @@ export class FirebaseDbEvent extends FirebaseDbSuper {
       created: value.created,
       lastChange: value.lastChange,
     };
-    if (value.hasOwnProperty("refDocuments")) {
+    if (Object.prototype.hasOwnProperty.call(value, "refDocuments")) {
       appObject["refDocuments"] = value.refDocuments;
     }
 
