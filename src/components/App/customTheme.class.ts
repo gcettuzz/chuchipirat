@@ -1,5 +1,5 @@
 import {PaletteColorOptions} from "@material-ui/core";
-import Utils, {Tenant} from "../Shared/utils.class";
+import Utils, {Enviroment} from "../Shared/utils.class";
 import red from "@material-ui/core/colors/red";
 
 interface CustomColorPalette {
@@ -11,9 +11,9 @@ interface CustomColorPalette {
 
 export default class CustomTheme {
   static getTheme = (prefersDarkMode: boolean): CustomColorPalette => {
-    switch (Utils.getTenant()) {
-      case Tenant.production:
-      case Tenant.development:
+    switch (Utils.getEnviroment()) {
+      case Enviroment.production:
+      case Enviroment.development:
         if (prefersDarkMode) {
           return {
             type: "dark",
@@ -49,15 +49,15 @@ export default class CustomTheme {
             error: red,
           };
         }
-      case Tenant.test:
+      case Enviroment.test:
         if (prefersDarkMode) {
           return {
             type: "dark",
             primary: {
-              main: "#ce93d8",
-              light: "#d7a8df",
-              dark: "#906697",
-              contrastText: "#000",
+              main: "#AB47BC",
+              light: "#E1BEE7",
+              dark: "#9C27B0",
+              contrastText: "#fff",
             },
             secondary: {
               main: "#c6ff00",

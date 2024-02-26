@@ -52,7 +52,7 @@ const LandingPage = () => {
   if (authUser) {
     push({pathname: ROUTE_HOME});
   }
-
+  console.log("Enviroment:", process.env.REACT_APP_ENVIROMENT);
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}

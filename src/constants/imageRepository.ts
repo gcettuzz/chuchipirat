@@ -21,7 +21,7 @@ export class ImageRepository {
     switch (process.env.REACT_APP_ENVIROMENT) {
       case "PRD":
         return LANDING_PAGE_PICTURES_PRODUCTION;
-      case "TEST":
+      case "TST":
         return LANDING_PAGE_PICTURES_TEST;
       case "DEV":
         return LANDING_PAGE_PICTURES_DEVELOPMENT;

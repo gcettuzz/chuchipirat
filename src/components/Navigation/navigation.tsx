@@ -49,25 +49,18 @@ import Action from "../../constants/actions";
 import * as ROUTES from "../../constants/routes";
 import * as TEXT from "../../constants/text";
 import * as BUTTONTEXT from "../../constants/buttonText";
-// import * as DEFAULT_VALUES from "../../constants/defaultValues";
 import LocalStorageKey from "../../constants/localStorage";
 import FirebaseAnalyticEvent from "../../constants/firebaseEvent";
-// import * as FIREBASE_EVENTS from "../../constants/firebaseEvents";
-// import packageJson from "../../../package.json";
 
 import HelpCenter from "./helpCenter.class";
 
-// import packageJson from "../../../package.json";
 import DialogRefreshApp from "./dialogRefreshApp";
 
 import Role from "../../constants/roles";
 
 import useStyles from "../../constants/styles";
 
-// import LocalStorageHandler from "../Shared/localStorageHandler.class";
 import {NavigationValuesContext} from "../Navigation/navigationContext";
-import {BugReport} from "@material-ui/icons";
-// import Utils from "../Shared/utils.class";
 import {AuthUserContext} from "../Session/authUserContext";
 import {withFirebase} from "../Firebase/firebaseContext";
 
@@ -488,13 +481,13 @@ const NavigationAuthBase = (props) => {
               {TEXT.APP_NAME}
             </Link>
           </Typography>
+          {Utils.isTestEnviroment() ? <TestTenantRibbon /> : null}
           {/* {!isVersionUpToDate ? (
             <UpdateRibbon onClick={onClickUpdateRibon} />
           ) : Utils.isTestTenant(window.location.toString()) ? (
             <TestTenantRibbon />
           ) : null}
  */}
-          {Utils.isTestTenant() && <TestTenantRibbon />}
           <div>
             <IconButton
               aria-label="go to Helppage"
@@ -606,6 +599,7 @@ export function NavigationNoAuthBase() {
               {TEXT.APP_NAME}
             </Link>
           </Typography>
+          {Utils.isTestEnviroment() ? <TestTenantRibbon /> : null}
           <div>
             <Typography variant="h6" className={classes.navigationTitle}>
               <Link
@@ -643,7 +637,7 @@ export const Ribbon = ({text, icon}: RibbonProps) => {
 };
 
 export const TestTenantRibbon = () => {
-  return <div className="ribbon  ribbon--yellow">{<BugReport />}</div>;
+  return <div className="ribbon  ribbon--yellow">TEST</div>;
 };
 interface UpdateRibbonProps {
   onClick: (event: React.SyntheticEvent) => void;

@@ -82,18 +82,6 @@ const App = () => {
     [prefersDarkMode]
   );
 
-  // React.useEffect(() => {
-  //   if (firebase && !listener) {
-  //     listener = firebase.auth.onAuthStateChanged((authUser) => {
-  //       authUser ? (authUser = user) : (authUser = null);
-  //     });
-  //     // Return Function = componentWillUmount
-  //     return function cleanup() {
-  //       listener();
-  //     };
-  //   }
-  // }, [firebase]);
-
   return (
     <MuiThemeProvider theme={theme}>
       <CssBaseline />

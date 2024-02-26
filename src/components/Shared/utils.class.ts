@@ -72,7 +72,7 @@ interface ConvertArrayToObject<T> {
   keyName: keyof T;
 }
 
-export enum Tenant {
+export enum Enviroment {
   development,
   test,
   production,
@@ -353,8 +353,8 @@ export default class Utils {
    * Prüfung ob wir uns in der Produktion befinden
    * @returns true/false ob wir in der Produktion sind
    */
-  static isProdTenant() {
-    if (!process.env.NODE_ENV || process.env.NODE_ENV === "production") {
+  static isProductionEnviroment() {
+    if (!process.env.NODE_ENV || process.env.REACT_APP_ENVIROMENT === "PRD") {
       return true;
     } else {
       return false;
@@ -365,8 +365,8 @@ export default class Utils {
    * Prüfung ob wir uns in der Entwicklung befinden
    * @returns true/false ob wir in der Entwicklung sind
    */
-  static isDevTenant() {
-    if (!process.env.NODE_ENV || process.env.NODE_ENV === "development") {
+  static isDevEnviroment() {
+    if (!process.env.NODE_ENV || process.env.REACT_APP_ENVIROMENT === "DEV") {
       return true;
     } else {
       return false;
@@ -377,31 +377,25 @@ export default class Utils {
    * Prüfung ob wir uns in der Testumgebung befinden
    * @returns true/false ob wir in der Entwicklung sind
    */
-  static isTestTenant() {
-    if (!process.env.NODE_ENV || process.env.NODE_ENV === "test") {
+  static isTestEnviroment() {
+    if (!process.env.NODE_ENV || process.env.REACT_APP_ENVIROMENT === "TST") {
       return true;
     } else {
       return false;
     }
-    // const parsedUrl = url.parse(urlString);
-    // if (parsedUrl.hostname && parsedUrl.hostname.includes("test")) {
-    //   return true;
-    // } else {
-    //   return false;
-    // }
   }
   // ===================================================================== */
   /**
    * System bestimmen
    * @returns Systemtyp
    */
-  static getTenant(): Tenant {
-    if (Utils.isProdTenant()) {
-      return Tenant.production;
-    } else if (Utils.isTestTenant()) {
-      return Tenant.test;
+  static getEnviroment(): Enviroment {
+    if (Utils.isProductionEnviroment()) {
+      return Enviroment.production;
+    } else if (Utils.isTestEnviroment()) {
+      return Enviroment.test;
     } else {
-      return Tenant.development;
+      return Enviroment.development;
     }
   }
   // ===================================================================== */

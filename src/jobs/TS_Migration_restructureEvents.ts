@@ -10,7 +10,7 @@ import Menuplan, {
   PlanedDiet,
   PlanedIntolerances,
 } from "../components/Event/Menuplan/menuplan.class";
-import {RecipeType} from "../components/Recipe/recipe.class";
+import Recipe, {RecipeType} from "../components/Recipe/recipe.class";
 import RecipeShort from "../components/Recipe/recipeShort.class";
 import Utils from "../components/Shared/utils.class";
 
@@ -68,6 +68,7 @@ export async function restructureEventDocuments(
 ) {
   let recipes: {[key: string]: RecipeShort} = {};
   const events: {[key: string]: EventShort} = {};
+  const statsRecipesInMenuplan: {[key: Recipe["uid"]]: number} = {};
   let counter = 0;
   let eventCounter = 0;
   let portionsCounter = 0;
@@ -406,6 +407,18 @@ export async function restructureEventDocuments(
                 menuplanNewStructure.menues[menueUid].mealRecipeOrder.push(
                   mealRecipe.uid
                 );
+                // Statistik mitführen
+                if (
+                  Object.prototype.hasOwnProperty.call(
+                    statsRecipesInMenuplan,
+                    recipe.recipeUid
+                  )
+                ) {
+                  statsRecipesInMenuplan[recipe.recipeUid] =
+                    statsRecipesInMenuplan[recipe.recipeUid] + 1;
+                } else {
+                  statsRecipesInMenuplan[recipe.recipeUid] = 1;
+                }
               });
 
               // Notizen
@@ -491,6 +504,12 @@ export async function restructureEventDocuments(
     );
     counter++;
   });
+
+  firebase.db
+    .collection("stats")
+    .doc("recipesInMenuplan")
+    .set(statsRecipesInMenuplan)
+    .catch((error) => console.error(error));
 
   return counter;
 }

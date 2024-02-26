@@ -803,6 +803,7 @@ const RecipeHeader = ({
   onSetRating,
 }: RecipeHeaderProps) => {
   const classes = useStyles();
+  const theme = useTheme();
 
   const [ratingAnchor, setRatingAnchor] = React.useState<null | HTMLElement>(
     null
@@ -835,7 +836,10 @@ const RecipeHeader = ({
         maxWidth="md"
         className={classes.recipeHeader}
         style={{
+          display: "flex",
           position: "relative",
+          paddingLeft: theme.spacing(5),
+          paddingRight: theme.spacing(5),
           backgroundImage: `url(${
             recipe.pictureSrc
               ? recipe.pictureSrc

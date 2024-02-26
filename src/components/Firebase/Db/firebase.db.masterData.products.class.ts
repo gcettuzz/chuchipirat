@@ -12,6 +12,7 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {Diet} from "../../Product/product.class";
 
 export class FirebaseDbMasterDataProducts extends FirebaseDbSuper {
   firebase: Firebase;
@@ -83,10 +84,20 @@ export class FirebaseDbMasterDataProducts extends FirebaseDbSuper {
     // Feld wird in prepareDataForDB gelöscht, damit keine leeren Felder
     // gespeichert werden. Hier muss es wieder hinzugefügt werden
     Object.keys(value).map((key) => {
-      if (!value[key].dietProperties.allergens) {
+      if (!Object.prototype.hasOwnProperty.call(value[key], "dietProperties")) {
+        value[key].dietProperties = {allergens: [], diet: Diet.Meat};
+      } else if (
+        !Object.prototype.hasOwnProperty.call(
+          value[key].dietProperties,
+          "allergens"
+        )
+      ) {
         value[key].dietProperties.allergens = [];
+      } else if (
+        !Object.prototype.hasOwnProperty.call(value[key].dietProperties, "diet")
+      ) {
+        value[key].dietProperties.diet = Diet.Meat;
       }
-      value[key].department = {uid: value[key].departmentUid, name: ""};
     });
     return value as unknown as T;
   }

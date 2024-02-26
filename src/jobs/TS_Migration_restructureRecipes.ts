@@ -137,6 +137,7 @@ export async function restructureRecipeDocuments(firebase: Firebase) {
               },
         };
 
+        console.log(document.id, documentNewStructure);
         documentNewStructure.dietProperties = Recipe.defineDietProperties({
           recipe: documentNewStructure as unknown as Recipe,
           products: products,
@@ -163,8 +164,8 @@ export async function restructureRecipeDocuments(firebase: Firebase) {
           .collection(
             `recipes/private/users/${documentNewStructure.created.fromUid}/recipes`
           )
-          .doc(documentData.id)
-          .set(documentData)
+          .doc(document.id)
+          .set(documentNewStructure)
           .then(() => {
             document.ref.delete();
           });
@@ -176,6 +177,12 @@ export async function restructureRecipeDocuments(firebase: Firebase) {
       .collection("recipes")
       .doc("private")
       .set({userWithPrivateRecipes: userUidWithPrivateRecipes});
+
+    // Statistik
+    firebase.db
+      .collection("stats")
+      .doc("counter")
+      .update({noRecipesPrivate: counter});
 
     Object.entries(userRecipesIndex).forEach(([key, value]) => {
       firebase.db.collection(`recipes/private/users`).doc(key).set(value);

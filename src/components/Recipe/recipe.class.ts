@@ -969,13 +969,13 @@ export default class Recipe {
           (product) => product.uid === productUid
         ) as Product;
 
-        if (product.dietProperties?.allergens?.length > 0) {
+        if (product?.dietProperties?.allergens?.length > 0) {
           dietProperties.allergens = dietProperties.allergens.concat(
             product.dietProperties.allergens
           );
         }
 
-        if (dietProperties.diet > product.dietProperties.diet) {
+        if (dietProperties?.diet > product.dietProperties.diet) {
           dietProperties.diet = product.dietProperties.diet;
         }
       }
