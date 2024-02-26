@@ -65,6 +65,7 @@ type State = {
   privateRecipes: recipeOverview[];
   filteredData: recipeOverview[];
   isLoading: boolean;
+  partialLoading: {privateRecipe: boolean; publicRecipe: boolean};
   isError: boolean;
   error: Error | null;
 };
@@ -74,6 +75,7 @@ const inititialState: State = {
   privateRecipes: [],
   filteredData: [],
   isLoading: false,
+  partialLoading: {privateRecipe: false, publicRecipe: false},
   isError: false,
   error: null,
 };
@@ -102,20 +104,34 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoading: true,
+        partialLoading: {privateRecipe: true, publicRecipe: true},
       };
     case ReducerActions.PUBLIC_RECIPES_FETCH_SUCCESS:
       return {
         ...state,
         publicRecipes: action.payload as recipeOverview[],
         filteredData: action.payload as recipeOverview[],
-        isLoading: false,
+        isLoading: Object.values({
+          ...state.partialLoading,
+          ...{publicRecipe: false},
+        }).every((value) => value === true),
+        partialLoading: {
+          privateRecipe: state.partialLoading.privateRecipe,
+          publicRecipe: false,
+        },
       };
     case ReducerActions.PRIVATE_RECIPES_FETCH_SUCCESS:
       return {
         ...state,
         privateRecipes: action.payload as recipeOverview[],
-        // filteredData: action.payload as RecipeShort[],
-        isLoading: false,
+        isLoading: Object.values({
+          ...state.partialLoading,
+          ...{privateRecipe: false},
+        }).every((value) => value === true),
+        partialLoading: {
+          privateRecipe: false,
+          publicRecipe: state.partialLoading.publicRecipe,
+        },
       };
     case ReducerActions.GENERIC_ERROR:
       return {

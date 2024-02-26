@@ -221,8 +221,7 @@ const UsersBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
   if (!authUser) {
     return null;
   }
-  console.log(state);
-  console.log(dialogValues);
+
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}
