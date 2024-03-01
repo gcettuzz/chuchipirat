@@ -16,7 +16,7 @@ import {
 
 import Role from "../../constants/roles";
 import MailTemplate from "../../constants/mailTemplates";
-
+import _ from "lodash";
 export interface GetActiveRequests {
   firebase: Firebase;
   authUser: AuthUser;
@@ -618,7 +618,7 @@ export abstract class Request {
     firebase.request.active
       .updateFields({
         uids: [request.uid],
-        values: {comments: request.comments},
+        values: {comments: _.cloneDeep(request.comments)},
         authUser: authUser,
       })
       .then(() => {

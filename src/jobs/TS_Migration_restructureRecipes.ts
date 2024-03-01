@@ -10,6 +10,9 @@ import Recipe, {
 } from "../components/Recipe/recipe.class";
 import RecipeShort from "../components/Recipe/recipeShort.class";
 import User from "../components/User/user.class";
+import UserPublicProfile, {
+  UserPublicProfileStatsFields,
+} from "../components/User/user.public.profile.class";
 
 interface UserRecipe {
   [key: User["uid"]]: {[key: RecipeShort["uid"]]: RecipeShort};
@@ -186,6 +189,14 @@ export async function restructureRecipeDocuments(firebase: Firebase) {
 
     Object.entries(userRecipesIndex).forEach(([key, value]) => {
       firebase.db.collection(`recipes/private/users`).doc(key).set(value);
+
+      // Statistik für User mitführen.
+      UserPublicProfile.incrementField({
+        firebase: firebase,
+        uid: key,
+        field: UserPublicProfileStatsFields.noRecipesPrivate,
+        step: Object.keys(value).length,
+      }).catch((error) => console.error(error));
     });
   });
   return counter;

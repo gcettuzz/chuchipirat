@@ -62,6 +62,12 @@ import {PrivacyPolicyText} from "../App/privacyPolicy";
 import {TermOfUseText} from "../App/termOfUse";
 import Firebase from "../Firebase/firebase.class";
 import {AuthUserContext} from "../Session/authUserContext";
+import Utils from "../Shared/utils.class";
+import {
+  DialogType,
+  SingleTextInputResult,
+  useCustomDialog,
+} from "../Shared/customDialogContext";
 
 // ===================================================================
 // ======================== globale Funktionen =======================
@@ -85,6 +91,7 @@ type State = {
   error: FirebaseError | null;
   showPassword: boolean;
   signUpAllowed: boolean;
+  allowUserCreatePassword: string;
 };
 
 const inititialState: State = {
@@ -92,6 +99,7 @@ const inititialState: State = {
   error: null,
   showPassword: false,
   signUpAllowed: false,
+  allowUserCreatePassword: "",
 };
 type DispatchAction = {
   type: ReducerActions;
@@ -111,7 +119,8 @@ const signUpReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.SET_SIGN_UP_ALLOWED:
       return {
         ...state,
-        signUpAllowed: action.payload.value,
+        signUpAllowed: action.payload.allowSignUp,
+        allowUserCreatePassword: action.payload.allowUserCreatePassword,
       };
     case ReducerActions.GENERIC_ERROR:
       return {...state, error: action.payload as FirebaseError};
@@ -144,12 +153,12 @@ const SignUpBase: React.FC<CustomRouterProps> = (props) => {
   const classes = useStyles();
   const [state, dispatch] = React.useReducer(signUpReducer, inititialState);
   const {push} = useHistory();
+  const {customDialog} = useCustomDialog();
 
   const [smallPrintDialogs, setSmallPrintDialogs] = React.useState({
     termOfUse: false,
     privacyPolicy: false,
   });
-
   /* ------------------------------------------
   // Einstellungen holen
   // ------------------------------------------ */
@@ -157,7 +166,7 @@ const SignUpBase: React.FC<CustomRouterProps> = (props) => {
     GlobalSettings.getGlobalSettings({firebase}).then((result) => {
       dispatch({
         type: ReducerActions.SET_SIGN_UP_ALLOWED,
-        payload: {value: result},
+        payload: result,
       });
     });
   }, []);
@@ -173,7 +182,31 @@ const SignUpBase: React.FC<CustomRouterProps> = (props) => {
   /* ------------------------------------------
   // Anmelden
   // ------------------------------------------ */
-  const onSignUp = () => {
+  const onSignUp = async () => {
+    // in der Integration prüfen ob man darf
+    // nicht die sicherste Variante aber für die kurze Periode ok.
+    if (Utils.isTestEnviroment()) {
+      const userInput = (await customDialog({
+        dialogType: DialogType.SingleTextInput,
+        title: "Bitte gib den erhaltenen Code ein:",
+        text: "Mit der Anleitung, wie du testen kannst, hast du einen Code erhalten. Bitte gibt diesen Code hier ein.",
+        singleTextInputProperties: {
+          initialValue: "",
+          textInputLabel: "Code",
+        },
+      })) as SingleTextInputResult;
+
+      if (!userInput.valid) {
+        return;
+      } else if (btoa(userInput.input) !== state.allowUserCreatePassword) {
+        dispatch({
+          type: ReducerActions.GENERIC_ERROR,
+          payload: {message: "Codewort falsch"},
+        });
+        return;
+      }
+    }
+
     firebase
       .createUserWithEmailAndPassword({
         email: state.signUpData.email,

@@ -103,14 +103,14 @@ const Footer = () => {
               {DEFAULT_VALUES.MAILADDRESS}
             </Link>
             <br />
-            {TEXT_FOOTER_QUESTIONS_SUGGESTIONS.OR_LOOK_HERE}
+            {TEXT_FOOTER_QUESTIONS_SUGGESTIONS.OR_LOOK_HERE}{" "}
             <Link
               href={DEFAULT_VALUES.HELPCENTER_URL}
               target="_blank"
               rel="noopener"
             >
               {TEXT_FOOTER_QUESTIONS_SUGGESTIONS.HELPCENTER}
-            </Link>
+            </Link>{" "}
             {TEXT_FOOTER_QUESTIONS_SUGGESTIONS.OVER}
             <br />
             <br />

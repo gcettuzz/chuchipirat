@@ -511,6 +511,7 @@ const useStyles = makeStyles((theme) => ({
   /* ------------------------------------------
   // Menüplan
   // ------------------------------------------ */
+
   menuplanTabsContainer: {
     display: "flex",
     justifyContent: "center",
@@ -521,13 +522,17 @@ const useStyles = makeStyles((theme) => ({
   },
   menuplanRow: {
     display: "flex",
+    padding: 0,
   },
   menuplanItem: {
     flexGrow: 1,
     flexBasis: 0,
     padding: theme.spacing(1),
-    minWidth: "330px",
     paddingBottom: theme.spacing(2),
+    minWidth: "330px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "stretch",
   },
   cardMealType: {
     position: "relative",
@@ -582,6 +587,7 @@ const useStyles = makeStyles((theme) => ({
     position: "relative",
     // height: "100%",
     display: "flex",
+    flex: 1,
     flexDirection: "column",
     marginBottom: theme.spacing(1),
   },

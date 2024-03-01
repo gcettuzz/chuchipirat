@@ -33,6 +33,7 @@ import {
   Tooltip,
   Divider,
   ListItemText,
+  CssBaseline,
 } from "@material-ui/core";
 import {alpha} from "@material-ui/core/styles/colorManipulator";
 
@@ -1588,6 +1589,7 @@ const MenuplanPage = ({
   };
   return (
     <React.Fragment>
+      <CssBaseline />
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="mealTypes" type={DragDropTypes.MEALTYPE}>
           {(provided) => (
@@ -1650,6 +1652,7 @@ const MenuplanPage = ({
         onRecipeCardClick={onRecipeCardClick}
         onRecipeSelection={onRecipeSelection}
         onNewRecipe={onNewRecipe}
+        authUser={authUser}
       />
       {/* Rezept-Drawer */}
       <RecipeDrawer
@@ -1758,6 +1761,7 @@ const DaysRow = ({
   onPrint,
 }: DaysRowProps) => {
   const classes = useStyles();
+  const theme = useTheme();
   const {customDialog} = useCustomDialog();
   const [contextMenuAnchorElement, setContextMenuAnchorElement] =
     React.useState<HTMLElement | null>(null);
@@ -1852,15 +1856,17 @@ const DaysRow = ({
   };
 
   return (
-    <Container className={classes.menuplanRow}>
+    <Container className={classes.menuplanRow} style={{display: "flex"}}>
       <Container
         className={classes.menuplanItem}
         style={{
+          display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          display: "flex",
           flexWrap: "nowrap",
           justifyContent: "center",
+          padding: theme.spacing(1),
+          paddingBottom: theme.spacing(2),
         }}
       >
         <FormGroup style={{marginBottom: "1em"}}>
@@ -1902,6 +1908,11 @@ const DaysRow = ({
           <Container
             className={classes.menuplanItem}
             key={"dayCardContainer_" + date}
+            style={{
+              display: "flex",
+              padding: theme.spacing(1),
+              paddingBottom: theme.spacing(2),
+            }}
           >
             <Card
               key={"date_card_" + date}
@@ -2025,6 +2036,7 @@ const MealTypeRow = ({
   onNoteUpdate,
 }: MealTypeRowProps) => {
   const classes = useStyles();
+  const theme = useTheme();
   const {customDialog} = useCustomDialog();
 
   /* ------------------------------------------
@@ -2107,8 +2119,16 @@ const MealTypeRow = ({
       className={classes.menuplanRow}
       innerRef={draggableProvided.innerRef}
       {...draggableProvided.draggableProps}
+      style={{display: "flex"}}
     >
-      <Container className={classes.menuplanItem}>
+      <Container
+        className={classes.menuplanItem}
+        style={{
+          display: "flex",
+          padding: theme.spacing(1),
+          paddingBottom: theme.spacing(2),
+        }}
+      >
         <MealTypeCard
           mealType={mealType}
           onMealTypeUpdate={onMealTypeUpdate}
@@ -2134,6 +2154,11 @@ const MealTypeRow = ({
             {(provided) => (
               <Container
                 className={classes.menuplanItem}
+                style={{
+                  display: "flex",
+                  padding: theme.spacing(1),
+                  paddingBottom: theme.spacing(2),
+                }}
                 key={
                   "mealCardContainer_" +
                   Utils.dateAsString(date) +
@@ -2175,8 +2200,14 @@ const MealTypeRow = ({
                   ))
                 ) : (
                   // Kein Menü vorhanden - MenuCard erstellen.....
-                  <Container className={classes.emptyMealBox}>
-                    <Container className={classes.centerCenter}>
+                  <Container
+                    className={classes.emptyMealBox}
+                    style={{display: "flex"}}
+                  >
+                    <Container
+                      className={classes.centerCenter}
+                      style={{display: "flex"}}
+                    >
                       <Button
                         id={"onCreateMenu_" + actualMeal.uid}
                         onClick={onCreateMenu}
@@ -2890,6 +2921,7 @@ MenuCardProps) => {
 interface RecipeSearchDrawerProps {
   drawerSettings: DrawerSettings;
   recipes: RecipeShort[];
+  authUser: AuthUser;
   onClose: () => void;
   onRecipeCardClick: ({event, recipe}: OnRecipeCardClickProps) => void;
   onRecipeSelection: ({recipe}: OnRecipeSelection) => void;
@@ -2902,6 +2934,7 @@ const RecipeSearchDrawer = ({
   onRecipeCardClick,
   onRecipeSelection,
   onNewRecipe,
+  authUser,
 }: RecipeSearchDrawerProps) => {
   const classes = useStyles();
 
@@ -2937,6 +2970,7 @@ const RecipeSearchDrawer = ({
           onNewClick={onNewRecipe}
           onCardClick={onRecipeCardClick}
           isLoading={drawerSettings.isLoadingData}
+          authUser={authUser}
         />
       </Container>
     </Drawer>
@@ -2997,7 +3031,6 @@ export const RecipeDrawer = ({
       ModalProps={{
         keepMounted: true,
       }}
-      style={{zIndex: 10000}}
     >
       <div>
         <IconButton

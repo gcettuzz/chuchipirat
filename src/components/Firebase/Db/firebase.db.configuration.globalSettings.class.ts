@@ -26,7 +26,7 @@ export class FirebaseDbConfigurationGlobalSettings extends FirebaseDbSuper {
   /* =====================================================================
   // Collection holen
   // ===================================================================== */
-  getCollection(uids: string[]) {
+  getCollection() {
     return this.firebase.db.collection("_configuration");
   }
   /* =====================================================================
@@ -39,7 +39,7 @@ export class FirebaseDbConfigurationGlobalSettings extends FirebaseDbSuper {
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
-  getDocument(uids: string[]) {
+  getDocument() {
     return this.firebase.db.doc(`_configuration/globalSettings`);
   }
   /* =====================================================================
@@ -55,13 +55,17 @@ export class FirebaseDbConfigurationGlobalSettings extends FirebaseDbSuper {
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
     return {
       allowSignUp: value.allowSignUp,
+      allowUserCreatePassword: value.allowUserCreatePassword,
     };
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
-    return {allowSignUp: value.allowSignUp} as unknown as T;
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
+    return {
+      allowSignUp: value.allowSignUp,
+      allowUserCreatePassword: value.allowUserCreatePassword,
+    } as unknown as T;
   }
   /* =====================================================================
   // Einstellungen für den Session Storage zurückgeben

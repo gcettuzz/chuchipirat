@@ -1,7 +1,6 @@
 import Firebase from "../firebase.class";
-import FirebaseStorageEvents, {
-  FirebaseStorageUsers,
-} from "./firebase.storage.users.class";
+import FirebaseStorageUsers from "./firebase.storage.users.class";
+import FirebaseStorageEvents from "./firebase.storage.events.class";
 
 export class FirebaseStorage {
   events: FirebaseStorageEvents;

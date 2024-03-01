@@ -203,7 +203,6 @@ const UsersBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
             type: ReducerActions.USER_FULL_PROFILE_FETCH_SUCCESS,
             payload: result,
           });
-          console.log(result);
           setDialogValues({...dialogValues, selectedUser: result, open: true});
         }
       );

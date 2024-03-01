@@ -54,7 +54,6 @@ const MenuplanPdf = ({event, menuplan, authUser}: MenuplanPdfProps) => {
   }
 
   return (
-    //@ts-expect-error: Bug im Eslint
     <Document
       author={authUser.publicProfile.displayName}
       creator={TEXT_APP_NAME}
@@ -455,7 +454,7 @@ Font.register({
       fontWeight: 100,
     },
     {
-      src: "http://fonts.gstatic.com/s/roboto/v15/T1xnudodhcgwXCmZQ490TPesZW2xOQ-xsNqO47m55DA.ttf",
+      src: "https://fonts.gstatic.com/s/roboto/v15/T1xnudodhcgwXCmZQ490TPesZW2xOQ-xsNqO47m55DA.ttf",
       fontStyle: "italic",
       fontWeight: 100,
     },

@@ -17,12 +17,5 @@ export class FirebaseStorageUsers extends FirebaseStorageSuper {
   getFolder() {
     return "users/";
   }
-  /* =====================================================================
-  // Datei
-  // ===================================================================== */
-  // getFile(filename:string):Reference  {
-  //   // return this.firebase.storage.ref(`${this.getFolder()}${filename}`);
-  //   //  return this.firebase.storage.ref("a");
-  // }
 }
 export default FirebaseStorageUsers;

@@ -21,6 +21,7 @@ import {
   ListItemText,
   ListItemAvatar,
   Avatar,
+  Link,
 } from "@material-ui/core";
 
 import {Skeleton} from "@material-ui/lab";
@@ -480,6 +481,21 @@ const HomeBase: React.FC<
             />
           </Grid>
           <Grid item xs={12}>
+            <Divider style={{marginBottom: "2rem"}} />
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="h5" align="center" gutterBottom>
+              Testing
+            </Typography>
+            <Typography variant="h5" align="center" gutterBottom>
+              <Link
+                href="https://help.chuchipirat.ch/known_errors"
+                target="_blank"
+              >
+                --» Aktuell bekannte Fehler «--
+              </Link>
+            </Typography>
+            <br />
             <Divider style={{marginBottom: "2rem"}} />
           </Grid>
           <Grid item xs={12} md={4}>

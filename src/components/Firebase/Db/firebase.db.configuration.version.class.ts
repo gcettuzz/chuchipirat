@@ -10,7 +10,7 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
-export class FirebaseEnviroment extends FirebaseDbSuper {
+export class FirebaseDbConfigurationVersion extends FirebaseDbSuper {
   firebase: Firebase;
   /* =====================================================================
   // Constructor
@@ -23,7 +23,7 @@ export class FirebaseEnviroment extends FirebaseDbSuper {
   // Collection holen
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("_environment");
+    return this.firebase.db.collection("_configuration");
   }
   /* =====================================================================
   // Collection-Group holen
@@ -35,8 +35,8 @@ export class FirebaseEnviroment extends FirebaseDbSuper {
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
-  getDocument(uids: string[]) {
-    return this.firebase.db.doc(`_environment/${uids[0]}`);
+  getDocument() {
+    return this.firebase.db.doc(`_configuration/version`);
   }
   /* =====================================================================
   // Dokumente holen
@@ -53,14 +53,14 @@ export class FirebaseEnviroment extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
     return value as unknown as T;
   }
   /* =====================================================================
   // Einstellungen für den Session Storage zurückgeben
   //===================================================================== */
   getSessionHandlerProperty(): StorageObjectProperty {
-    return STORAGE_OBJECT_PROPERTY.ENVIROMENT;
+    return STORAGE_OBJECT_PROPERTY.VERSION;
   }
 }
-export default FirebaseEnviroment;
+export default FirebaseDbConfigurationVersion;

@@ -1013,6 +1013,9 @@ const RecipeEdit = ({
             },
           });
         } else {
+          if (switchEditMode) {
+            switchEditMode({});
+          }
           // Angepasstes Rezept Hochgeben und in den Read-Modus wechseln
           onUpdateRecipe({
             recipe: result,
@@ -1103,6 +1106,7 @@ const RecipeEdit = ({
     // 0 = Name des Buttons (moreClick)
     // 1 = Abschnitt in dem er geklickt wurde (ingredients)
     // 2 = UID der Position
+
     setPositionMenuSelectedItem({
       type: pressedButton[1] as RecipeBlock,
       uid: pressedButton[2],
@@ -1519,6 +1523,7 @@ const RecipeHeader = ({recipe, onChange}: RecipeHeaderProps) => {
         maxWidth="md"
         className={classes.recipeHeader}
         style={{
+          display: "flex",
           position: "relative",
           backgroundImage: `url(${
             recipe.pictureSrc
@@ -1577,6 +1582,7 @@ const RecipeHeaderVariant = ({recipe, onChange}: RecipeHeaderVariantProps) => {
         maxWidth="md"
         className={classes.recipeHeader}
         style={{
+          display: "flex",
           position: "relative",
           backgroundImage: `url(${
             recipe.pictureSrc
@@ -1989,7 +1995,11 @@ const RecipeIngredients = ({
                             />
                           ) : (
                             <IngredientPosition
-                              position={counter + 1}
+                              position={Recipe.definePostionSectionAdjusted({
+                                uid: ingredientUid,
+                                entries: recipe.ingredients.entries,
+                                order: recipe.ingredients.order,
+                              })}
                               key={ingredientUid}
                               ingredient={
                                 recipe.ingredients.entries[
@@ -2274,7 +2284,11 @@ const RecipePreparationSteps = ({
                               // Zubereitungsschritt
                               <PreparationStepPosition
                                 key={preparationStepUid}
-                                position={mapCounter + 1}
+                                position={Recipe.definePostionSectionAdjusted({
+                                  uid: preparationStepUid,
+                                  entries: recipe.preparationSteps.entries,
+                                  order: recipe.preparationSteps.order,
+                                })}
                                 preparationStep={
                                   recipe.preparationSteps.entries[
                                     preparationStepUid
@@ -2630,15 +2644,17 @@ const PositionMoreClickContextMenu = ({
         </ListItemIcon>
         <Typography variant="inherit">{TEXT.TOOLTIP_ADD_POS}</Typography>
       </MenuItem>
-      <MenuItem
-        id={recipeBlock + "_" + Action.NEWSECTION + "_" + uid}
-        onClick={handleMenuClick}
-      >
-        <ListItemIcon>
-          <ViewDayIcon fontSize="small" />
-        </ListItemIcon>
-        <Typography variant="inherit">{TEXT.TOOLTIP_ADD_SECTION}</Typography>
-      </MenuItem>
+      {recipeBlock !== RecipeBlock.materials && (
+        <MenuItem
+          id={recipeBlock + "_" + Action.NEWSECTION + "_" + uid}
+          onClick={handleMenuClick}
+        >
+          <ListItemIcon>
+            <ViewDayIcon fontSize="small" />
+          </ListItemIcon>
+          <Typography variant="inherit">{TEXT.TOOLTIP_ADD_SECTION}</Typography>
+        </MenuItem>
+      )}
       <MenuItem
         id={recipeBlock + "_" + Action.DELETE + "_" + uid}
         onClick={handleMenuClick}

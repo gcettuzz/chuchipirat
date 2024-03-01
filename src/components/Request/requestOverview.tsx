@@ -418,11 +418,13 @@ const RequestOverviewBase: React.FC<
     } else {
       // Rezept muss noch geholt werden
       dispatch({type: ReducerActions.FETCH_RECIPE_INIT, payload: {}});
+
       await Recipe.getRecipe({
         firebase: firebase,
         uid: recipeUid,
         authUser: authUser,
-        userUid: authUser.uid,
+        // Das Rezept muss vom Author des Requests stammen.
+        userUid: requestPopupValues.selectedRequest.author.uid,
         type:
           requestPopupValues.selectedRequest.requestType ===
           RequestType.recipePublish
@@ -472,16 +474,6 @@ const RequestOverviewBase: React.FC<
           />
         </Grid>
       </Container>
-      <DialogRequest
-        request={requestPopupValues.selectedRequest}
-        dialogOpen={requestPopupValues.open}
-        authUser={authUser}
-        handleClose={onPopUpClose}
-        handleUpdateStatus={onUpdateStatus}
-        handleAssignToMe={onAssignToMe}
-        handleAddComment={onAddComment}
-        handleRecipeOpen={onRecipeDrawerOpen}
-      />
       <RecipeDrawer
         drawerSettings={recipeDrawerData}
         recipe={recipeDrawerData.recipe}
@@ -493,6 +485,17 @@ const RequestOverviewBase: React.FC<
         firebase={firebase}
         authUser={authUser}
         onClose={onRecipeDrawerClose}
+      />
+
+      <DialogRequest
+        request={requestPopupValues.selectedRequest}
+        dialogOpen={requestPopupValues.open}
+        authUser={authUser}
+        handleClose={onPopUpClose}
+        handleUpdateStatus={onUpdateStatus}
+        handleAssignToMe={onAssignToMe}
+        handleAddComment={onAddComment}
+        handleRecipeOpen={onRecipeDrawerOpen}
       />
     </React.Fragment>
   );

@@ -653,6 +653,7 @@ const RecipeView = ({
         return;
       });
   };
+
   return (
     <React.Fragment>
       <RecipeHeader
@@ -1814,7 +1815,7 @@ export const RecipeIngredients = ({
                         color="textPrimary"
                         component="div"
                       >
-                        {ingredient.product.name}
+                        {ingredient.product?.name}
                         {ingredient.detail && (
                           <Box display="inline" color="text.secondary">
                             {`, ${ingredient.detail}`}
@@ -1904,7 +1905,17 @@ export const RecipePreparation = ({recipe}: RecipePreparationProps) => {
                     className={classes.topCenter}
                     xs={1}
                   >
-                    <Typography color="textSecondary">{counter + 1}</Typography>
+                    {/* Wenn kein Text, dann ist es wahrscheinlich die letzte Position
+                       --> nicht anzeigen! */}
+                    {preparationStep.step && (
+                      <Typography color="textSecondary">
+                        {Recipe.definePostionSectionAdjusted({
+                          uid: preparationStepUid,
+                          entries: recipe.preparationSteps.entries,
+                          order: recipe.preparationSteps.order,
+                        })}
+                      </Typography>
+                    )}
                   </Grid>
                   <Grid
                     item
@@ -2034,9 +2045,10 @@ export const RecipeMaterial = ({
                       : scaledMaterials[materialUid].quantity.toLocaleString(
                           "de-CH"
                         )
-                    : Number.isNaN(material.quantity) || material.quantity == 0
+                    : Number.isNaN(material?.quantity) ||
+                      material?.quantity == 0
                     ? ""
-                    : material.quantity.toLocaleString("de-CH")}
+                    : material?.quantity.toLocaleString("de-CH")}
                 </Typography>
               </Grid>
               <Grid
@@ -2049,7 +2061,7 @@ export const RecipeMaterial = ({
                   key={"ingredient_name_" + materialUid}
                   color="textPrimary"
                 >
-                  {material.material.name}
+                  {material?.material?.name}
                 </Typography>
               </Grid>
             </React.Fragment>

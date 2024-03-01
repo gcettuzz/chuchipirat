@@ -38,7 +38,7 @@ const useStyles = makeStyles({
     },
   },
   subListItem: {
-    fontSize: "0.9rem",
+    // fontSize: "0.9rem",
     fontWeight: "normal",
     paddingBottom: "0.5rem",
 
@@ -248,7 +248,7 @@ export const PrivacyPolicyText = () => {
           <br />
           Diese Datenschutzerklärung kann sich aufgrund gesetzlicher Neuerungen
           oder Änderungen der Webapp chuchipirat ändern. Die jeweils aktuelle
-          Datenschutzerklärung findest du jederzeit auf
+          Datenschutzerklärung findest du jederzeit auf&nbsp;
           <Link onClick={() => push({pathname: ROUTE_PRIVACY_POLICY})}>
             chuchipirat.ch/privacypolicy
           </Link>

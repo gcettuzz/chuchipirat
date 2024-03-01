@@ -261,10 +261,7 @@ export default class Event {
           errorObject: date,
         });
       }
-      if (
-        date.from.getDate() > date.to.getDate() &&
-        date.to.getFullYear() != 1970
-      ) {
+      if (date.from > date.to && date.to.getFullYear() != 1970) {
         formValidation.push({
           priority: 3,
           fieldName: "dateFrom_" + date.uid,
@@ -286,8 +283,8 @@ export default class Event {
       event.dates.forEach((innerDate, innerCounter) => {
         if (outerCounter !== innerCounter) {
           if (
-            outerDate.from.getDate() >= innerDate.from.getDate() &&
-            outerDate.from.getDate() <= innerDate.to.getDate()
+            outerDate.from >= innerDate.from &&
+            outerDate.from <= innerDate.to
           ) {
             formValidation.push({
               priority: 3,
@@ -444,7 +441,7 @@ export default class Event {
     eventData.dates = Event.deleteEmptyDates(eventData.dates);
     eventData = Event.prepareSave(eventData);
     Event.checkEventData(eventData);
-
+    console.log(localPicture);
     if (!eventData.uid) {
       newEvent = true;
       await firebase.event
@@ -747,11 +744,12 @@ export default class Event {
   static async uploadPicture({firebase, file, event, authUser}: UploadPicture) {
     let pictureSrc = "";
     // const eventDoc = firebase.eventDoc(event.uid);
-
+    console.log(file);
     await firebase.fileStore.events
       .uploadFile({file: file, filename: event.uid})
       .then(async (result) => {
         // Redimensionierte Varianten holen
+        console.log(result);
         await firebase.fileStore.events
           .getPictureVariants({
             uid: event.uid,

@@ -400,9 +400,7 @@ const EventMaterialListPage = ({
             list: materialList.lists[state.selectedListItem!].items,
             materialUid: contextMenuSelectedItem.materialUid,
           });
-
         firebase.analytics.logEvent(FirebaseAnalyticEvent.materialListDeleted);
-
         onMaterialListUpdate(materialList);
         break;
       case Action.TRACE:
@@ -415,9 +413,11 @@ const EventMaterialListPage = ({
             menuplan: menuplan,
           }),
         });
+        setContextMenuSelectedItem({...contextMenuSelectedItem, anchor: null});
+        return;
         break;
     }
-    setContextMenuSelectedItem({...contextMenuSelectedItem, anchor: null});
+    setContextMenuSelectedItem(CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE);
   };
   /* ------------------------------------------
   // List-Einträge-Handling
@@ -506,6 +506,7 @@ const EventMaterialListPage = ({
     if (!selectedList) {
       return;
     }
+
     const updatedMaterialList = MaterialList.deleteList({
       materialList: materialList,
       listUidToDelete: selectedList,
@@ -756,6 +757,7 @@ const EventMaterialListPage = ({
         handleClose={onAddMaterialDialogClose}
         onMaterialCreate={onMaterialCreate}
         authUser={authUser}
+        firebase={firebase}
       />
 
       {state.selectedListItem && contextMenuSelectedItem.materialUid && (
@@ -914,6 +916,7 @@ interface DialogHandleMaterialProps {
   materials: Material[];
   editMode: boolean;
   authUser: AuthUser;
+  firebase: Firebase;
   handleOk: ({material, quantity}: OnDialogAddItemOk) => void;
   handleClose: () => void;
   onMaterialCreate: (material: Material) => void;
@@ -937,6 +940,7 @@ const DialogHandleMaterial = ({
   materials,
   editMode,
   authUser,
+  firebase,
   handleOk: handleOkSuper,
   handleClose: handleCloseSuper,
   onMaterialCreate: onMaterialCreateSuper,
@@ -1087,6 +1091,7 @@ const DialogHandleMaterial = ({
         handleOk={onMaterialCreate}
         handleClose={onCloseDialogMaterial}
         authUser={authUser}
+        firebase={firebase}
       />
     </React.Fragment>
   );
