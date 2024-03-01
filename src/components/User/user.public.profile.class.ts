@@ -14,6 +14,7 @@ export enum UserPublicProfileStatsFields {
   noEvents = "noEvents",
   noRecipesPublic = "noRecipesPublic",
   noRecipesPrivate = "noRecipesPrivate",
+  noFoundBungs = "noFoundBugs",
 }
 type Stats = {[key in UserPublicProfileStatsFields]: number};
 
@@ -50,6 +51,7 @@ export class UserPublicProfile {
       noEvents: 0,
       noRecipesPublic: 0,
       noRecipesPrivate: 0,
+      noFoundBugs: 0,
     };
   }
   /* =====================================================================
@@ -63,9 +65,10 @@ export class UserPublicProfile {
     field,
     step,
   }: IncrementField) => {
+    // TEST ME!
     firebase.user.public.profile.incrementField({
       uids: [uid],
-      field: field,
+      field: `stats.${field}`,
       value: step,
     });
   };

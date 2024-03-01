@@ -113,6 +113,7 @@ const DialogRequest = ({
       aria-labelledby="dialog Request"
       fullWidth={true}
       maxWidth="sm"
+      style={{zIndex: 500}}
     >
       <DialogTitle
         className={classes.dialogHeaderWithPicture}

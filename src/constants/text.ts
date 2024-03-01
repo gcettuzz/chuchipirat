@@ -47,7 +47,7 @@ export const BUTTON_REGISTER = "";
 export const CREATE_ACCOUNT = "Account erstellen";
 export const BUTTON_LOAD_OLDER_COMMENTS = "... ältere Kommentare laden ....";
 export const BUTTON_SAVE_COMMENT = "Kommentar speichern";
-export const BUTTON_CREATE_RECIPE = "Neues Rezept anlegen";
+export const CREATE_RECIPE = "Neues Rezept anlegen";
 export const BUTTON_LOAD_MORE_RECIPES = "Weitere Rezepte laden";
 export const BUTTON_SHOPPINGLIST = "Postizettel";
 export const BUTTON_PRINTVERSION = "Druckversion";
@@ -71,8 +71,7 @@ export const BUTTON_CLOSE = "Schliessen";
 /* =====================================================================
 // Seiten Titel und Untertitel
 // ===================================================================== */
-export const PAGE_TITLE_RECIPES = "Rezepte";
-export const PAGE_SUBTITLE_RECIPES = "Finde deine Lieblingsrezpte.";
+export const FIND_YOUR_FAVORITE_RECIPES = "Finde deine Lieblingsrezpte.";
 export const COME_IN = "Hereinspaziert";
 export const WE_NEED_SOME_DETAILS_ABOUT_YOU =
   "Wir brauchen noch 2, 3 Dinge von dir...";
@@ -251,8 +250,8 @@ export const TOOLTIP_ADD_SECTION = "Neuer Abschnitt einfügen";
 export const TOOLTIP_DEL_POS = "Position löschen";
 export const TOOLTIP_MOVE_POS_UP = "Position nach oben verschieben";
 export const TOOLTIP_MOVE_POS_DOWN = "Position nach unten verschieben";
-export const TOOLTIP_PRIVATE_RECIPE = "Privates Rezept";
-export const TOOLTIP_VARIANT_RECIPE = "Rezeptvariante";
+export const PRIVATE_RECIPE = "Privates Rezept";
+export const VARIANT_RECIPE = "Rezeptvariante";
 /* =====================================================================
 // UX Writing
 // ===================================================================== */
@@ -659,11 +658,11 @@ export const PUBLISH_RECIPE_RULES_PART1 =
   "Damit das Rezept öffentlich geschaltet werden kann, wird es von den Community-Leader*innen geprüft. Mit dieser Prüfung wird sichergestellt, dass Rezepte einem gewissen Standard entsprechen, sodass sich die anderen Anwender*mit gutem Gewissen von der Rezeptdatenbank bedienen können. " +
   "Damit ein Rezept veröffentlicht wird, müssen diese Punkte erfüllt sein:";
 export const PUBLISH_RECIPE_RULES_BULLET_LIST =
-  "Die Quelle des Rezeptes muss angegeben sein." +
-  "•Die Quelle muss von einer bekannten Rezeptplattform (Betty Bossi, Swissmilk usw.) oder von einem Kochbuch stammen." +
-  "•Die Zubereitungsschritte müssen logisch aufgebaut und verständlich sein." +
-  "•Die verwendeten Mengen entsprechen einer Normalportion." +
-  "•Dieses Rezept gibt es in der öffentlichen Rezeptsammlung noch nicht.";
+  "Quellenangabe erforderlich: Das Rezept muss eine genaue Quellenangabe haben, vorzugsweise von bekannten Plattformen wie Betty Bossi, Swissmilk usw. oder aus einem Kochbuch." +
+  "•Klare Zubereitungsschritte: Die Anleitung muss logisch strukturiert und einfach verständlich sein." +
+  "•Flexible Mengenangaben: Die Zubereitungsschritte sollten keine festen Mengenangaben enthalten, um eine problemlose Anpassung der Portionen zu ermöglichen." +
+  "•Gepflegte Rezeptattribute: Alle relevanten Attribute wie Menütyp und Dauer müssen sorgfältig gepflegt sein." +
+  "•Einzigartiges Rezept: Das Rezept sollte bisher nicht in der öffentlichen Sammlung vorhanden sein.";
 export const PUBLISH_RECIPE_RULES_PART2 =
   "Falls bei der Prüfung Fragen aufkommen, würde sich die entsprechende Person bei dir per Mail melden. Falls du willst, kannst du der prüfenden Person eine Nachricht mit dem Rezept zukommen lassen. ";
 export const PUBLISH_RECIPE_RULES_PART3 = "Bitte beachte:";
@@ -929,6 +928,7 @@ export const MEAL = "Mahlzeit";
 export const NOTE = "Notiz";
 export const RECIPE = "Rezept";
 export const RECIPES = "Rezepte";
+export const RECIPETYPE = "Rezepttyp";
 export const CONSIDER_INTOLERANCES = "Unverträglichkeit berücksichtigen";
 export const RESTRICTIONS = "Einschränkungen";
 export const NEW_RECIPE = "Neues Rezept";
@@ -951,6 +951,7 @@ export const PREPARATION = "Zubereitung";
 export const MATERIAL = "Material";
 export const MATERIAL_TYPE = "Materialtyp";
 export const OUTDOOR_KITCHEN_SUITABLE = "Geeigent für Outdoor-Küche";
+export const SHOW_ONLY_MY_RECIPES = "Nur meine Rezepte anzeigen";
 export const MATERIAL_TYPE_CONSUMABLE = "Verbrauchsmaterial";
 export const MATERIAL_TYPE_USAGE = "Gebrauchsmaterial";
 export const ORIGINAL_QUANTITIES = "Original Mengen";
@@ -1122,6 +1123,8 @@ export const USERS = "Users";
 export const MEMBER_ID = "Member-ID";
 export const MEMBER_SINCE = "Mit dabei seit";
 export const ROLES = "Rolen";
+export const PUBLIC = "Öffentlich";
+export const PRIVATE = "Privat";
 export const PUBLIC_RECIPE = "Öffentliches Rezept";
 export const ARE_YOU_SURE_YOU_WANT_TO_CHANGE =
   "Bist du sicher, dass du dieses Objekt ändern willst?";

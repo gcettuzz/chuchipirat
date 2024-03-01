@@ -17,12 +17,5 @@ export class FirebaseStorageEvents extends FirebaseStorageSuper {
   getFolder() {
     return "events/";
   }
-  /* =====================================================================
-  // Datei
-  // ===================================================================== */
-  // getFile(filename:string):Reference  {
-  //   // return this.firebase.storage.ref(`${this.getFolder()}${filename}`);
-  //   //  return this.firebase.storage.ref("a");
-  // }
 }
 export default FirebaseStorageEvents;

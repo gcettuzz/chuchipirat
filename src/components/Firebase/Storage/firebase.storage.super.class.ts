@@ -85,6 +85,7 @@ export abstract class FirebaseStorageSuper {
           reject();
         },
         function complete() {
+          console.log(`File ${filename} hochgeladen`);
           uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
             resolve(downloadURL);
           });

@@ -31,16 +31,16 @@ export default class HelpCenter {
       case ROUTES.RECIPE:
         subdirectory = "recipe";
         if (action == Action.VIEW) {
-          page = "recipe%20structure";
+          page = "structure";
         } else if (action == Action.EDIT) {
-          page = "recipe%20create,%20change";
+          page = "create_edit";
         } else {
           page = "recipe";
         }
         break;
       case ROUTES.RECIPES:
         subdirectory = "recipe";
-        page = "recipes%20overview";
+        page = "overview";
         break;
       case ROUTES.EVENT:
         subdirectory = "event";
@@ -53,7 +53,7 @@ export default class HelpCenter {
             page = "groupconfiguration";
             break;
           case NavigationObject.usedRecipes:
-            page = "used%20recipes";
+            page = "used_recipes";
             break;
           case NavigationObject.shoppingList:
             page = "shoppinglist";
@@ -62,11 +62,11 @@ export default class HelpCenter {
             page = "materiallist";
             break;
           case NavigationObject.eventSettings:
-            page = "event%20settings";
+            page = "settings";
             break;
           default:
             if (action == Action.NEW) {
-              page = "event%20create";
+              page = "create";
             } else {
               page = "event";
             }

@@ -163,6 +163,11 @@ interface DefineDietProperties {
   recipe: Recipe;
   products: Product[];
 }
+interface DefinePostionSectionAdjusted {
+  uid: string;
+  order: string[];
+  entries: {[key: string]: {posType: PositionType}};
+}
 interface SaveTags {
   firebase: Firebase;
   recipe: Recipe;
@@ -455,14 +460,16 @@ export default class Recipe {
       const material = Recipe.createEmptyMaterial();
       materials.entries[material.uid] = material;
       materials.order.push(material.uid);
-    } else if (
-      materials.entries[materials.order[materials.order.length - 1]].material
-        .uid
-    ) {
-      // leere Position am Schluss
-      const material = Recipe.createEmptyMaterial();
-      materials.entries[material.uid] = material;
-      materials.order.push(material.uid);
+    } else {
+      const lastEntry =
+        materials.entries[materials.order[materials.order.length - 1]];
+
+      if (lastEntry && lastEntry.material.uid) {
+        // leere Position am Schluss
+        const material = Recipe.createEmptyMaterial();
+        materials.entries[material.uid] = material;
+        materials.order.push(material.uid);
+      }
     }
     return materials;
   }
@@ -988,6 +995,28 @@ export default class Recipe {
     return dietProperties;
   }
   /* =====================================================================
+  // Position definieren, und dabei die vorhergehenden Sektion ingnorieren
+  // ===================================================================== */
+  static definePostionSectionAdjusted({
+    uid,
+    entries,
+    order,
+  }: DefinePostionSectionAdjusted) {
+    let positionCounter = 0;
+
+    for (let i = 0; i < order.length; i++) {
+      if (entries[order[i]].posType !== PositionType.section) {
+        positionCounter++;
+      }
+
+      if (order[i] == uid) {
+        return positionCounter;
+      }
+    }
+
+    return positionCounter;
+  }
+  /* =====================================================================
   // Genutzte Produkte sammeln (damit diese auch wieder gefunden werden)
   // ===================================================================== */
   // static getUsedProducts(ingredients: Ingredient[]) {
@@ -1501,6 +1530,8 @@ export default class Recipe {
             recipeUid: recipe.uid,
             userUid: authUser.uid,
           });
+
+          recipe = Recipe.createEmptyListEntries({recipe: recipe});
         })
         .catch(() => {
           // User hat kein Rating abgegeben. Voll ok!
@@ -1515,6 +1546,7 @@ export default class Recipe {
             throw Error(TEXT.ERROR_RECIPE_UNKNOWN(uid));
           }
           recipe = result;
+          recipe = Recipe.createEmptyListEntries({recipe: recipe});
         });
     } else if (type === RecipeType.variant) {
       await firebase.recipeVariant
@@ -1524,13 +1556,12 @@ export default class Recipe {
             throw Error(TEXT.ERROR_RECIPE_UNKNOWN(uid));
           }
           recipe = result;
+          recipe = Recipe.createEmptyListEntries({recipe: recipe});
         })
         .catch((error) => console.error(error));
     } else {
       throw Error(TEXT.ERROR_RECIPE_UNKNOWN(uid));
     }
-
-    recipe = Recipe.createEmptyListEntries({recipe: recipe});
 
     return recipe;
   };

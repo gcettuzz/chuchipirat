@@ -155,9 +155,9 @@ export const STORAGE_OBJECT_PROPERTY: {[key: string]: StorageObjectProperty} = {
     respectPrefix: false,
     excludeFromCaching: true,
   },
-  ENVIROMENT: {
+  VERSION: {
     durationOfValidity: 720, // 12 Stunden
-    uid: "/enviroment",
+    uid: "/configuration",
     respectPrefix: false,
     excludeFromCaching: false,
   },

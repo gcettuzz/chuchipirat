@@ -555,8 +555,8 @@ const ProfileCard = ({
         <CardMedia
           className={classes.cardMedia}
           image={
-            userProfile.pictureSrc.fullSize
-              ? userProfile.pictureSrc.fullSize
+            userProfile.pictureSrc.normalSize
+              ? userProfile.pictureSrc.normalSize
               : previewPictureUrl
               ? previewPictureUrl
               : ImageRepository.getEnviromentRelatedPicture()
@@ -588,7 +588,7 @@ const ProfileCard = ({
                   <PhotoCameraIcon />
                 </Fab>
               </label>
-              {userProfile.pictureSrc.fullSize && (
+              {userProfile.pictureSrc.normalSize && (
                 <Fab
                   component="span"
                   size="small"

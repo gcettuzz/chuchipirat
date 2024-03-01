@@ -33,7 +33,34 @@ import AddIcon from "@material-ui/icons/Add";
 
 import {RECIPE as ROUTE_RECIPE} from "../../constants/routes";
 import Action from "../../constants/actions";
-import * as TEXT from "../../constants/text";
+import {
+  ALL as TEXT_ALL,
+  PUBLIC as TEXT_PUBLIC,
+  PRIVATE as TEXT_PRIVATE,
+  VARIANT as TEXT_VARIANT,
+  ADVANCED_SEARCH as TEXT_ADVANCED_SEARCH,
+  RECIPE as TEXT_RECIPE,
+  RECIPES as TEXT_RECIPES,
+  RESTRICTIONS as TEXT_RESTRICTIONS,
+  FIND_YOUR_FAVORITE_RECIPES as TEXT_FIND_YOUR_FAVORITE_RECIPES,
+  ALERT_TITLE_UUPS as TEXT_ALERT_TITLE_UUPS,
+  CONSIDER_INTOLERANCES as TEXT_CONSIDER_INTOLERANCES,
+  NONE_RESTRICTION as TEXT_NONE_RESTRICTION,
+  LACTOSE as TEXT_LACTOSE,
+  GLUTEN as TEXT_GLUTEN,
+  IS_VEGAN as TEXT_IS_VEGAN,
+  IS_VEGETARIAN as TEXT_IS_VEGETARIAN,
+  RECIPETYPE as TEXT_RECIPETYPE,
+  CREATE_RECIPE as TEXT_CREATE_RECIPE,
+  PRIVATE_RECIPE as TEXT_PRIVATE_RECIPE,
+  VARIANT_RECIPE as TEXT_VARIANT_RECIPE,
+  NO_RECIPE_FOUND as TEXT_NO_RECIPE_FOUND,
+  CREATE_A_NEW_ONE as TEXT_CREATE_A_NEW_ONE,
+  MENU_TYPE as TEXT_MENU_TYPE,
+  MENU_TYPES as TEXT_MENU_TYPES,
+  OUTDOOR_KITCHEN_SUITABLE as TEXT_OUTDOOR_KITCHEN_SUITABLE,
+  SHOW_ONLY_MY_RECIPES as TEXT_SHOW_ONLY_MY_RECIPES,
+} from "../../constants/text";
 
 import useStyles from "../../constants/styles";
 
@@ -142,7 +169,9 @@ export const INITIAL_SEARCH_SETTINGS: SearchSettings = {
   allergens: [0],
   diet: Diet.Meat,
   menuTypes: [],
+  recipeType: "all",
   outdoorKitchenSuitable: false,
+  showOnlyMyRecipes: false,
 };
 
 interface LocationState {
@@ -317,8 +346,8 @@ const RecipesBase: React.FC<
       <CssBaseline />
       {/*===== HEADER ===== */}
       <PageTitle
-        title={TEXT.PAGE_TITLE_RECIPES}
-        subTitle={TEXT.PAGE_SUBTITLE_RECIPES}
+        title={TEXT_RECIPES}
+        subTitle={TEXT_FIND_YOUR_FAVORITE_RECIPES}
       />
       {/* ===== BODY ===== */}
       <Container className={classes.container} component="main" maxWidth="lg">
@@ -329,7 +358,7 @@ const RecipesBase: React.FC<
           <AlertMessage
             error={state.error}
             severity="error"
-            messageTitle={TEXT.ALERT_TITLE_UUPS}
+            messageTitle={TEXT_ALERT_TITLE_UUPS}
           />
         )}
         <RecipeSearch
@@ -342,6 +371,7 @@ const RecipesBase: React.FC<
           // searchSettings={searchSettings}
           // onClearSearchString={onClearSearchString}
           isLoading={state.isLoading}
+          authUser={authUser}
         />
       </Container>
       <CustomSnackbar
@@ -371,6 +401,7 @@ interface RecipeSearchProps {
   fabButtonIcon?: JSX.Element;
   error?: Error | null;
   isLoading?: boolean;
+  authUser: AuthUser;
 }
 export interface OnRecipeCardClickProps {
   event: React.MouseEvent<HTMLButtonElement>;
@@ -383,6 +414,8 @@ interface SearchSettings {
   diet: Diet;
   menuTypes: MenuType[];
   outdoorKitchenSuitable: boolean;
+  recipeType: RecipeType | "all";
+  showOnlyMyRecipes: boolean;
 }
 
 export const RecipeSearch = ({
@@ -398,6 +431,7 @@ export const RecipeSearch = ({
   embeddedMode = false,
   fabButtonIcon,
   isLoading = false,
+  authUser,
 }: RecipeSearchProps) => {
   const classes = useStyles();
   const [searchSettings, setSearchSettings] = React.useState<SearchSettings>(
@@ -568,6 +602,46 @@ export const RecipeSearch = ({
       value: newSearchSettings,
     });
   };
+  const onSearchSettingRecipeTypeUpdate = (
+    event: React.MouseEvent<HTMLElement>,
+    value: SearchSettings["recipeType"]
+  ) => {
+    if (!value) {
+      value = "all";
+    }
+    const newSearchSettings = {...searchSettings, recipeType: value};
+    setSearchSettings(newSearchSettings);
+
+    setFilteredData(
+      filterRecipes({
+        searchSettings: newSearchSettings,
+        recipes: recipes,
+      })
+    );
+    SessionStorageHandler.upsertDocument({
+      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
+      documentUid: "recipes",
+      value: newSearchSettings,
+    });
+  };
+  const onSearchSettingShowOnlyMyRecipesUpdate = () => {
+    const newSearchSettings: SearchSettings = {
+      ...searchSettings,
+      showOnlyMyRecipes: !searchSettings.outdoorKitchenSuitable,
+    };
+    setSearchSettings(newSearchSettings);
+    setFilteredData(
+      filterRecipes({
+        searchSettings: newSearchSettings,
+        recipes: recipes,
+      })
+    );
+    SessionStorageHandler.upsertDocument({
+      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
+      documentUid: "recipes",
+      value: newSearchSettings,
+    });
+  };
   /* ------------------------------------------
   // Card-Aktionen
   // ------------------------------------------ */
@@ -662,6 +736,19 @@ export const RecipeSearch = ({
         (recipe) => recipe.outdoorKitchenSuitable
       );
     }
+
+    // Rezepttypen
+    if (searchSettings.recipeType !== "all") {
+      searchResult = searchResult.filter(
+        (recipe) => recipe.type == searchSettings.recipeType
+      );
+    }
+    if (searchSettings.showOnlyMyRecipes) {
+      searchResult = searchResult.filter(
+        (recipe) => recipe.created.fromUid == authUser.uid
+      );
+    }
+
     return searchResult;
   };
   /* ------------------------------------------
@@ -721,12 +808,12 @@ export const RecipeSearch = ({
           </Grid>
           <Grid item xs={3} className={classes.centerCenter}>
             <Button color="primary" onClick={onAdvancedSearchClick}>
-              {TEXT.ADVANCED_SEARCH}
+              {TEXT_ADVANCED_SEARCH}
             </Button>
           </Grid>
           <Grid item xs={12}>
             <Typography variant="subtitle2">{`${filteredData.length} ${
-              filteredData.length != 1 ? TEXT.RECIPES : TEXT.RECIPE
+              filteredData.length != 1 ? TEXT_RECIPES : TEXT_RECIPE
             }`}</Typography>
           </Grid>
         </Grid>
@@ -737,7 +824,7 @@ export const RecipeSearch = ({
         >
           <Grid container spacing={2}>
             <Grid item xs={4} sm={2} md={2} className={classes.centerCenter}>
-              <Typography variant="body2">{TEXT.RESTRICTIONS}</Typography>
+              <Typography variant="body2">{TEXT_RESTRICTIONS}</Typography>
             </Grid>
             <Grid item xs={8} sm={4} md={3}>
               <ToggleButtonGroup
@@ -755,19 +842,19 @@ export const RecipeSearch = ({
                   value={Diet.Meat}
                   aria-label="Keine"
                 >
-                  {TEXT.NONE_RESTRICTION}
+                  {TEXT_NONE_RESTRICTION}
                 </ToggleButton>
                 <ToggleButton value={Diet.Vegetarian} aria-label="Vegetarisch">
-                  {TEXT.IS_VEGETARIAN}
+                  {TEXT_IS_VEGETARIAN}
                 </ToggleButton>
                 <ToggleButton value={Diet.Vegan} aria-label="Vegan">
-                  {TEXT.IS_VEGAN}
+                  {TEXT_IS_VEGAN}
                 </ToggleButton>
               </ToggleButtonGroup>
             </Grid>
             <Grid item xs={4} sm={2} md={2} className={classes.centerCenter}>
               <Typography variant="body2">
-                {TEXT.CONSIDER_INTOLERANCES}
+                {TEXT_CONSIDER_INTOLERANCES}
               </Typography>
             </Grid>
             <Grid item xs={8} sm={4} md={3}>
@@ -781,13 +868,13 @@ export const RecipeSearch = ({
                 key="allergens"
               >
                 <ToggleButton value={0} aria-label="Keine">
-                  {TEXT.NONE_RESTRICTION}
+                  {TEXT_NONE_RESTRICTION}
                 </ToggleButton>
                 <ToggleButton value={Allergen.Lactose} aria-label="Laktose">
-                  {TEXT.LACTOSE}
+                  {TEXT_LACTOSE}
                 </ToggleButton>
                 <ToggleButton value={Allergen.Gluten} aria-label="Laktose">
-                  {TEXT.GLUTEN}
+                  {TEXT_GLUTEN}
                 </ToggleButton>
               </ToggleButtonGroup>
             </Grid>
@@ -798,7 +885,7 @@ export const RecipeSearch = ({
                 fullWidth
                 size="small"
               >
-                <InputLabel id="menuTypesLabel">{TEXT.MENU_TYPE}</InputLabel>
+                <InputLabel id="menuTypesLabel">{TEXT_MENU_TYPE}</InputLabel>
                 <Select
                   labelId="menuTypesLabel"
                   id="menuTypes"
@@ -807,11 +894,11 @@ export const RecipeSearch = ({
                   multiple
                   value={searchSettings.menuTypes}
                   onChange={onSearchSettingMenuTypeUpdate}
-                  input={<OutlinedInput fullWidth label={TEXT.MENU_TYPE} />}
+                  input={<OutlinedInput fullWidth label={TEXT_MENU_TYPE} />}
                   renderValue={(selected) => {
                     const selectedValues = selected as unknown as string[];
                     const textArray = selectedValues.map(
-                      (value) => TEXT.MENU_TYPES[value]
+                      (value) => TEXT_MENU_TYPES[value]
                     ) as string[];
                     return (textArray as string[]).join(", ");
                   }}
@@ -830,7 +917,7 @@ export const RecipeSearch = ({
                             }
                             color="primary"
                           />
-                          <ListItemText primary={TEXT.MENU_TYPES[menuType]} />
+                          <ListItemText primary={TEXT_MENU_TYPES[menuType]} />
                         </MenuItem>
                       )
                   )}
@@ -838,7 +925,7 @@ export const RecipeSearch = ({
               </FormControl>
             </Grid>
             {/* Ideal für Outdoorküche */}
-            <Grid item xs={12} sm={12} md={4}>
+            <Grid item xs={12} sm={12} md={3}>
               <FormControl
                 className={classes.formControl}
                 fullWidth
@@ -850,7 +937,67 @@ export const RecipeSearch = ({
                   control={<Switch color="primary" />}
                   label={
                     <Typography variant="body2">
-                      {TEXT.OUTDOOR_KITCHEN_SUITABLE}
+                      {TEXT_OUTDOOR_KITCHEN_SUITABLE}
+                    </Typography>
+                  }
+                  labelPlacement="start"
+                />
+              </FormControl>
+            </Grid>
+            {/* Rezept-Typ */}
+            <Grid item xs={4} sm={1} md={1} className={classes.centerCenter}>
+              <Typography variant="body2">{TEXT_RECIPETYPE}</Typography>
+            </Grid>
+            <Grid item xs={8} sm={4} md={4}>
+              <ToggleButtonGroup
+                value={searchSettings.recipeType}
+                exclusive
+                onChange={onSearchSettingRecipeTypeUpdate}
+                size="small"
+                aria-label="Diät"
+                // color="primary"
+                id="recipeType"
+                key="recipeType"
+              >
+                <ToggleButton color="primary" value={"all"} aria-label="Alle">
+                  {TEXT_ALL}
+                </ToggleButton>
+                <ToggleButton
+                  color="primary"
+                  value={RecipeType.public}
+                  aria-label="öffentlich"
+                >
+                  {TEXT_PUBLIC}
+                </ToggleButton>
+                <ToggleButton value={RecipeType.private} aria-label="Privat">
+                  {TEXT_PRIVATE}
+                </ToggleButton>
+                {embeddedMode && (
+                  // in der allgemeinen Rezeptübersicht mach dieser Button keinen Sinn
+                  <ToggleButton
+                    value={RecipeType.variant}
+                    aria-label="Variante"
+                  >
+                    {TEXT_VARIANT}
+                  </ToggleButton>
+                )}
+              </ToggleButtonGroup>
+            </Grid>
+
+            {/* Nur Meine Rezept anzeigen */}
+            <Grid item xs={12} sm={12} md={3}>
+              <FormControl
+                className={classes.formControl}
+                fullWidth
+                size="small"
+              >
+                <FormControlLabel
+                  value={searchSettings.showOnlyMyRecipes}
+                  onChange={onSearchSettingShowOnlyMyRecipesUpdate}
+                  control={<Switch color="primary" />}
+                  label={
+                    <Typography variant="body2">
+                      {TEXT_SHOW_ONLY_MY_RECIPES}
                     </Typography>
                   }
                   labelPlacement="start"
@@ -869,7 +1016,7 @@ export const RecipeSearch = ({
               color={"primary"}
               onClick={onNewClick}
             >
-              {TEXT.BUTTON_CREATE_RECIPE}
+              {TEXT_CREATE_RECIPE}
             </Button>
           </Grid>
         </Grid>
@@ -908,13 +1055,13 @@ export const RecipeSearch = ({
                   ribbon={
                     recipe.type === RecipeType.private
                       ? {
-                          tooltip: TEXT.TOOLTIP_PRIVATE_RECIPE,
+                          tooltip: TEXT_PRIVATE_RECIPE,
                           cssProperty: "cardRibbon  cardRibbon--red",
                           icon: <LockIcon fontSize="small" />,
                         }
                       : recipe.type === RecipeType.variant
                       ? {
-                          tooltip: TEXT.TOOLTIP_VARIANT_RECIPE,
+                          tooltip: TEXT_VARIANT_RECIPE,
                           cssProperty: "cardRibbon  cardRibbon--purple",
                           icon: <CategoryIcon fontSize="small" />,
                         }
@@ -934,11 +1081,11 @@ export const RecipeSearch = ({
                   color="textSecondary"
                   paragraph
                 >
-                  {TEXT.NO_RECIPE_FOUND}
+                  {TEXT_NO_RECIPE_FOUND}
                 </Typography>
 
                 <Typography align="center" paragraph>
-                  {TEXT.CREATE_A_NEW_ONE}
+                  {TEXT_CREATE_A_NEW_ONE}
                 </Typography>
                 <Grid container spacing={2} justifyContent="center">
                   <Grid item>

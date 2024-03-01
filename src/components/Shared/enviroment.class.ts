@@ -14,8 +14,8 @@ interface GetActualVersion {
  */ export default class Environment {
   static getActualVersion = async ({firebase}: GetActualVersion) => {
     let actualVersion = "";
-    await firebase.enviroment
-      .read({uids: ["version"]})
+    await firebase.configuration.version
+      .read({uids: []})
       .then((result) => {
         actualVersion = result.actualVersion;
       })

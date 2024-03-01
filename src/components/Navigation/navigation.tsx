@@ -374,7 +374,7 @@ const NavigationAuthBase = (props) => {
           />
         </ListItem>
       </List>
-      {authUser.roles.includes(Role.communityLeader) && (
+      {authUser.roles?.includes(Role.communityLeader) && (
         <React.Fragment>
           <Divider />
           <List>
@@ -408,7 +408,7 @@ const NavigationAuthBase = (props) => {
           </List>
         </React.Fragment>
       )}
-      {authUser.roles.includes(Role.communityLeader) && (
+      {authUser.roles?.includes(Role.communityLeader) && (
         <React.Fragment>
           <ListItem button key="Units">
             <ListItemIcon>
@@ -430,7 +430,7 @@ const NavigationAuthBase = (props) => {
                 onClick={() => push(ROUTES.SYSTEM)}
               />
             </ListItem>
-            {authUser.roles.includes(Role.admin) && (
+            {authUser.roles?.includes(Role.admin) && (
               <ListItem button key="Users">
                 <ListItemIcon>
                   <GroupIcon />

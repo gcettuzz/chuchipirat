@@ -11,8 +11,6 @@ import FirebaseDbRecipeShortPublic from "./Db/firebase.db.recipeShort.public.cla
 import FirebaseDbRecipeShortPrivate from "./Db/firebase.db.recipeShort.private.class";
 import FirebaseDbRecipeShortVariant from "./Db/firebase.db.recipeShort.variant.class";
 
-import FirebaseEnviroment from "./Db/firebase.db.enviroment.class";
-
 import {FirebaseDbRequest} from "./Db/firebase.db.request.class";
 
 import FirebaseDbStats from "./Db/firebase.db.stats.class";
@@ -104,7 +102,6 @@ export default class Firebase {
   feed: FirebaseDbFeed;
   stats: FirebaseDbStats;
   masterdata: FirebaseDbMasterData;
-  enviroment: FirebaseEnviroment;
   configuration: FirebaseDbConfiguration;
   cloudFunction: FirebaseDbCloudFunction;
   mailbox: FirebaseDbMailbox;
@@ -141,7 +138,6 @@ export default class Firebase {
     this.stats = new FirebaseDbStats(this);
     this.masterdata = new FirebaseDbMasterData(this);
 
-    this.enviroment = new FirebaseEnviroment(this);
     // this.cloudFunctionRecipeTrace =
     //   new FirebaseDbCloudfunctionWaitingareaRecipetrace(this);
     this.configuration = new FirebaseDbConfiguration(this);

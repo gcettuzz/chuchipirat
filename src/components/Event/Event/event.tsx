@@ -1010,6 +1010,9 @@ const EventBase: React.FC<
       menuplan: menuplan,
       firebase: firebase,
       authUser: authUser as AuthUser,
+    }).catch((error) => {
+      console.error(error);
+      dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
     });
     // Kein zurückschreiben in den State, da der Listener, das wieder erhält....
   };

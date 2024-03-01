@@ -15,9 +15,11 @@ import {
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
 import {FirebaseDbConfigurationGlobalSettings} from "./firebase.db.configuration.globalSettings.class";
+import FirebaseDbConfigurationVersion from "./firebase.db.configuration.version.class";
 export class FirebaseDbConfiguration extends FirebaseDbSuper {
   firebase: Firebase;
   globalSettings: FirebaseDbConfigurationGlobalSettings;
+  version: FirebaseDbConfigurationVersion;
   /* =====================================================================
   // Constructor
   // ===================================================================== */
@@ -25,11 +27,12 @@ export class FirebaseDbConfiguration extends FirebaseDbSuper {
     super();
     this.firebase = firebase;
     this.globalSettings = new FirebaseDbConfigurationGlobalSettings(firebase);
+    this.version = new FirebaseDbConfigurationVersion(firebase);
   }
   /* =====================================================================
   // Collection holen
   // ===================================================================== */
-  getCollection(uids: string[]) {
+  getCollection() {
     return this.firebase.db.collection("_configuration");
   }
   /* =====================================================================
@@ -42,7 +45,7 @@ export class FirebaseDbConfiguration extends FirebaseDbSuper {
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
-  getDocument(uids: string[]) {
+  getDocument() {
     throw Error(ERROR_WRONG_DB_CLASS);
     return this.firebase.db.doc(``);
   }

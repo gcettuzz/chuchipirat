@@ -132,7 +132,6 @@ const recipeReducer = (state: State, action: DispatchAction): State => {
       tempIngredients = {...state.recipe.ingredients};
       tempPreparationSteps = {...state.recipe.preparationSteps};
       tempMaterials = {...state.recipe.materials};
-
       tempIngredients = Recipe.createEmptyListEntryIngredients(tempIngredients);
       tempPreparationSteps =
         Recipe.createEmptyListEntryPreparationSteps(tempPreparationSteps);

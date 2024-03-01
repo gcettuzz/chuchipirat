@@ -338,6 +338,11 @@ export const DialogSelectMenues = ({
           <Container
             className={classes.dialogSelectMenueRow}
             key={"dialogSelectMenueDayCardContainerMealType_row_" + mealTypeUid}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr",
+              gridAutoFlow: "column",
+            }}
           >
             <Container
               className={classes.dialogSelectMenueItem}

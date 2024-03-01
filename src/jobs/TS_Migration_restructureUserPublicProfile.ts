@@ -48,51 +48,56 @@ export async function restructureUserPublicProfile(firebase: Firebase) {
         .then(async (snapshot) => {
           const oldPublicUserProfile = snapshot.data() as ValueObject;
 
-          const newPublicUserProfile = <UserPublicProfile>{};
+          if (
+            !Object.prototype.hasOwnProperty.call(oldPublicUserProfile, "stats")
+          ) {
+            const newPublicUserProfile = <UserPublicProfile>{};
 
-          newPublicUserProfile.pictureSrc = {
-            smallSize: "",
-            normalSize: "",
-            fullSize: "",
-          };
-          newPublicUserProfile.stats = {
-            noComments: 0,
-            noEvents: 0,
-            noRecipesPublic: 0,
-            noRecipesPrivate: 0,
-          };
+            newPublicUserProfile.pictureSrc = {
+              smallSize: "",
+              normalSize: "",
+              fullSize: "",
+            };
+            newPublicUserProfile.stats = {
+              noComments: 0,
+              noEvents: 0,
+              noRecipesPublic: 0,
+              noRecipesPrivate: 0,
+            };
 
-          newPublicUserProfile.uid = user.id;
-          newPublicUserProfile.displayName = oldPublicUserProfile.displayName;
-          newPublicUserProfile.memberSince =
-            oldPublicUserProfile.memberSince.toDate();
-          newPublicUserProfile.memberId = oldPublicUserProfile?.memberId;
+            newPublicUserProfile.uid = user.id;
+            newPublicUserProfile.displayName = oldPublicUserProfile.displayName;
+            newPublicUserProfile.memberSince =
+              oldPublicUserProfile.memberSince.toDate();
+            newPublicUserProfile.memberId = oldPublicUserProfile?.memberId;
+            newPublicUserProfile.motto = oldPublicUserProfile.motto;
+            newPublicUserProfile.pictureSrc.fullSize =
+              oldPublicUserProfile?.pictureSrcFullSize;
+            newPublicUserProfile.pictureSrc.normalSize =
+              oldPublicUserProfile?.pictureSrcFullSize;
+            newPublicUserProfile.pictureSrc.smallSize =
+              oldPublicUserProfile?.pictureSrc;
 
-          newPublicUserProfile.pictureSrc.fullSize =
-            oldPublicUserProfile?.pictureSrcFullSize;
-          newPublicUserProfile.pictureSrc.normalSize =
-            oldPublicUserProfile?.pictureSrcFullSize;
-          newPublicUserProfile.pictureSrc.smallSize =
-            oldPublicUserProfile?.pictureSrc;
+            // Stats setzen....
+            newPublicUserProfile.stats.noComments =
+              oldPublicUserProfile?.noComments;
 
-          // Stats setzen....
-          newPublicUserProfile.stats.noComments =
-            oldPublicUserProfile?.noComments;
+            newPublicUserProfile.stats.noEvents =
+              oldPublicUserProfile?.noEvents;
+            newPublicUserProfile.stats.noRecipesPrivate = privateRecipes.filter(
+              (recipe) => recipe.created.fromUid === user.id
+            ).length;
 
-          newPublicUserProfile.stats.noEvents = oldPublicUserProfile?.noEvents;
-          newPublicUserProfile.stats.noRecipesPrivate = privateRecipes.filter(
-            (recipe) => recipe.created.fromUid === user.id
-          ).length;
+            newPublicUserProfile.stats.noRecipesPublic = publicRecipes.filter(
+              (recipe) => recipe.created.fromUid === user.id
+            ).length;
 
-          newPublicUserProfile.stats.noRecipesPublic = publicRecipes.filter(
-            (recipe) => recipe.created.fromUid === user.id
-          ).length;
-
-          firebase.user.public.profile.set({
-            uids: [user.id],
-            value: newPublicUserProfile,
-            authUser: {} as AuthUser,
-          });
+            firebase.user.public.profile.set({
+              uids: [user.id],
+              value: newPublicUserProfile,
+              authUser: {} as AuthUser,
+            });
+          }
         })
         .catch((error) => {
           console.error(error);
