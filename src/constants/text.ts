@@ -904,6 +904,8 @@ export const FIREBASE_MESSAGES = {
     "Dieser Vorgang ist sensibel und erfordert eine aktuelle Authentifizierung. Melde dich erneut an, bevor du diese Anfrage erneut versuchst.",
   TOO_MANY_REQUESTS:
     "Der Zugriff auf dieses Konto wurde aufgrund vieler fehlgeschlagener Anmeldeversuche vorübergehend deaktiviert. Du kannst das Konto entsperren, indem du dein Passwort zurücksetzt, oder du kannst es später erneut versuchen.",
+  INTERNAL_ERROR:
+    "Fehler bei der Anmeldung: Die eingegebenen Anmeldeinformationen sind ungültig.",
 };
 /* =====================================================================
 // Texte zum Admin-Bereich 

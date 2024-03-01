@@ -63,6 +63,7 @@ export async function restructureUserPublicProfile(firebase: Firebase) {
               noEvents: 0,
               noRecipesPublic: 0,
               noRecipesPrivate: 0,
+              noFoundBugs: 0,
             };
 
             newPublicUserProfile.uid = user.id;

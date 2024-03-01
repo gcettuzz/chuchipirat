@@ -138,7 +138,7 @@ const SignInPage: React.FC<CustomRouterProps> = ({...props}) => {
 
         // Kurz warten, damit der Auth-Context nach mag
         await new Promise(function (resolve) {
-          setTimeout(resolve, 2500);
+          setTimeout(resolve, 2000);
         });
 
         push({pathname: ROUTE_HOME});
@@ -175,7 +175,7 @@ const SignInPage: React.FC<CustomRouterProps> = ({...props}) => {
                 severity={"error"}
                 messageTitle={TEXT_ALERT_TITLE_UUPS}
                 body={
-                  state.error.code! === AuthMessages.WRONG_PASSWORD ? (
+                  state.error.code! === AuthMessages.INTERNAL_ERROR ? (
                     <ForgotPasswordLink />
                   ) : (
                     ""

@@ -31,11 +31,13 @@ import {
 } from "../Shared/customSnackbar";
 import {
   Backdrop,
+  Button,
   Card,
   CardContent,
   CircularProgress,
   Container,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   Grid,
@@ -536,6 +538,12 @@ const DialogUser = ({
             label={TEXT_ROLES}
           />
         </List>
+        <Button color="primary">Txt</Button>
+        <Button color="primary">Txt</Button>
+        <Button color="primary">Txt</Button>
+        <Button color="primary">Txt</Button>
+        <Button color="primary">Txt</Button>
+        <Button color="primary">Txt</Button>
       </DialogContent>
     </Dialog>
   );
