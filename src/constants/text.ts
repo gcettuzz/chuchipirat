@@ -329,6 +329,15 @@ export const PLEASE_DONATE = "Spende erwünscht";
 export const WHY_DONATE =
   "Unser Team arbeitet ehrenamtlich, um die App kostenlos anzubieten. Wir sind auf Spenden angewiesen, um die laufenden Kosten zu decken. Wenn dir die App gefällt und dein Anlassbudget es zulässt, unterstütze uns gerne mit einer Spende von Fr. 5.00. Dein Beitrag hilft, das Angebot weiterhin kostenlos anbieten zu können sowie die App am Laufen zu halten und weiter zu verbessern.";
 export const THANK_YOU_1000 = "Merci 1000";
+export const ROLE_TYPES = {
+  admin: "Admin",
+  basic: "Basic",
+  communityLeader: "Community-Leader*in",
+};
+export const ROLES_UPDATED_SUCCSESSFULLY = "Berechtigung wurde aktualisiert";
+export const YOU_CANT_UPDATE_YOUR_OWN_AUTHORIZATION =
+  "Du kannst deine eigene Berechtigung nicht anpassen.";
+
 /* =====================================================================
 // Meldungen zur Gruppen-Konfiguration
 // ===================================================================== */
@@ -1044,6 +1053,7 @@ export const RECIPE_WIHOUT_PORTIONPLAN =
   "Dieses Rezept besitzt keine Einplanung";
 export const AND = "und";
 export const SAVE = "Speichern";
+export const OPEN = "Öffnen";
 export const MENUE_SELECTION = "Auswahl Menüs";
 export const USED_RECIPES_MENUE_SELECTION_DESCRIPTION =
   "Hier kannst du bereits generierte Listen anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltete alle verwendeten Rezepte der gewählten Menüs. Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
@@ -1130,6 +1140,13 @@ export const PRIVATE = "Privat";
 export const PUBLIC_RECIPE = "Öffentliches Rezept";
 export const ARE_YOU_SURE_YOU_WANT_TO_CHANGE =
   "Bist du sicher, dass du dieses Objekt ändern willst?";
+export const EDIT_AUTHORIZATION = "Berechtigung bearbeiten";
+export const EDIT_AUTHORIZATION_DESCRIPTION =
+  "Alle darunterliegenden Berechtigungen werden automatisch mit vergeben.";
+export const RE_SIGN_IN_REQUIRED = "Neu-Anmeldung nötig";
+export const RE_SIGN_IN_REQUIRED_AFTER_ROLES_ASSIGNMENT =
+  "Die vergebenen Rechte sind erst nach einer erneuten Anmeldung aktiv.";
+
 /* =====================================================================
 // Abkürzungen
 // ===================================================================== */

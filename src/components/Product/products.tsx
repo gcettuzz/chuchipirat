@@ -788,8 +788,8 @@ const ProductsTable = ({
       filteredProducts = products.filter(
         (product) =>
           product.name.toLowerCase().includes(searchString) ||
-          product.department.name.toLowerCase().includes(searchString) ||
-          product.shoppingUnit.toLowerCase().includes(searchString)
+          product?.department?.name.toLowerCase().includes(searchString) ||
+          product?.shoppingUnit?.toLowerCase().includes(searchString)
       );
     } else {
       filteredProducts = products;

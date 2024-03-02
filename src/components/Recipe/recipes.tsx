@@ -686,70 +686,79 @@ export const RecipeSearch = ({
   // Rezepte filtern
   // ------------------------------------------ */
   const filterRecipes = ({searchSettings, recipes}: FilterRecipesProps) => {
-    let searchResult = recipes;
-    // Zuerst Text filtern
-    if (searchSettings.searchString) {
-      searchResult = searchResult.filter(
-        (recipe) =>
-          recipe.name
-            .toLowerCase()
-            .includes(searchSettings.searchString.toLowerCase()) ||
-          recipe.tags.filter(
-            (tag) =>
-              tag
-                .toLowerCase()
-                .includes(searchSettings.searchString.toLocaleLowerCase()) ||
-              recipe.variantName
-                ?.toLowerCase()
-                .includes(searchSettings.searchString.toLocaleLowerCase())
-          ).length > 0
-      );
-    }
+    return recipes.filter((recipe) => {
+      // Zuerst prüfen ob Text stimmt
+      if (
+        searchSettings.searchString &&
+        !recipe.name
+          .toLowerCase()
+          .includes(searchSettings.searchString.toLowerCase()) &&
+        recipe.tags.filter(
+          (tag) =>
+            tag
+              .toLowerCase()
+              .includes(searchSettings.searchString.toLocaleLowerCase()) ||
+            recipe.variantName
+              ?.toLowerCase()
+              .includes(searchSettings.searchString.toLocaleLowerCase())
+        ).length == 0
+      ) {
+        return false;
+      }
 
-    // Diät aufiltern
-    if (searchSettings.diet != Diet.Meat) {
-      searchResult = searchResult.filter(
-        (recipe) => recipe.dietProperties?.diet === searchSettings.diet
-      );
-    }
-    // Allergene ausfiltern
-    if (!searchSettings.allergens.includes(Allergen.None)) {
-      searchSettings.allergens.forEach((allergen) => {
-        searchResult = searchResult.filter(
-          (recipe) => !recipe.dietProperties.allergens.includes(allergen)
-        );
-      });
-    }
+      // prüfen ob Diät passt
+      if (
+        searchSettings.diet != Diet.Meat &&
+        recipe.dietProperties?.diet !== searchSettings.diet
+      ) {
+        return false;
+      }
 
-    // Menütypen ausfiltern
-    if (searchSettings.menuTypes.length > 0) {
-      searchResult = searchResult.filter((recipe) =>
-        // Some --> eines der gewählten Filterkriterien muss im Rezept vorkommen
-        searchSettings.menuTypes.some((menuType) =>
+      // prüfen ob Allergie passt
+      if (
+        !searchSettings.allergens.includes(Allergen.None) &&
+        searchSettings.allergens.filter((allergen) =>
+          recipe.dietProperties.allergens.includes(allergen)
+        ).length > 0
+      ) {
+        return false;
+      }
+
+      // prüfen ob Menütypen passen
+      if (
+        searchSettings.menuTypes.length > 0 &&
+        searchSettings.menuTypes.filter((menuType) =>
           recipe.menuTypes.includes(menuType)
-        )
-      );
-    }
-    // Geeignet für Outdoorküche
-    if (searchSettings.outdoorKitchenSuitable) {
-      searchResult = searchResult.filter(
-        (recipe) => recipe.outdoorKitchenSuitable
-      );
-    }
+        ).length == 0
+      ) {
+        return false;
+      }
 
-    // Rezepttypen
-    if (searchSettings.recipeType !== "all") {
-      searchResult = searchResult.filter(
-        (recipe) => recipe.type == searchSettings.recipeType
-      );
-    }
-    if (searchSettings.showOnlyMyRecipes) {
-      searchResult = searchResult.filter(
-        (recipe) => recipe.created.fromUid == authUser.uid
-      );
-    }
+      // prüfen ob Outdoorküche
+      if (
+        recipe.outdoorKitchenSuitable !== searchSettings.outdoorKitchenSuitable
+      ) {
+        return false;
+      }
 
-    return searchResult;
+      // prüfen über Rezept-Typ
+      if (
+        searchSettings.recipeType !== "all" &&
+        recipe.type !== searchSettings.recipeType
+      ) {
+        return false;
+      }
+
+      if (
+        searchSettings.showOnlyMyRecipes &&
+        recipe.created.fromUid !== authUser.uid
+      ) {
+        return false;
+      }
+
+      // Das Rezept hat allen Anforderungen entsprochen
+      return true;
+    });
   };
   /* ------------------------------------------
   // Select Menü - für Menütyp

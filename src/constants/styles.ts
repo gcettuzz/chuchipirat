@@ -402,6 +402,9 @@ const useStyles = makeStyles((theme) => ({
     color: "#C62828",
     borderColor: "#C62828",
   },
+  dataGridDisabled: {
+    color: theme.palette.text.disabled,
+  },
   /* ------------------------------------------
   // Rezept
   // ------------------------------------------ */

@@ -79,7 +79,8 @@ const config = {
 
 export default class Firebase {
   emailAuthProvider: any;
-  auth: any;
+  auth: app.auth.Auth;
+  // auth2: app.auth.Auth;
   db: app.firestore.Firestore;
   analytics: app.analytics.Analytics;
   performance: app.performance.Performance;
@@ -269,8 +270,8 @@ export default class Firebase {
   // Email Verifizierung versenden 
   // ===================================================================== */
   sendEmailVerification = () => {
-    return this.auth.currentUser.sendEmailVerification({
-      url: process.env.REACT_APP_CONFIRMATION_EMAIL_REDIRECT,
+    return this.auth.currentUser!.sendEmailVerification({
+      url: process.env.REACT_APP_CONFIRMATION_EMAIL_REDIRECT!,
     });
   };
   /* =====================================================================
@@ -295,7 +296,7 @@ export default class Firebase {
     password,
   }: ReauthenticateWithCredential): Promise<app.auth.UserCredential> => {
     const credential = this.emailAuthProvider.credential(email, password);
-    return this.auth.currentUser.reauthenticateWithCredential(credential);
+    return this.auth.currentUser!.reauthenticateWithCredential(credential);
   };
   // Abmelden
   signOut = () => {
@@ -303,7 +304,7 @@ export default class Firebase {
   };
   // E-Mail ändern
   emailChange = (email: string): Promise<void> => {
-    return this.auth.currentUser.updateEmail(email);
+    return this.auth.currentUser!.updateEmail(email);
   };
   // Passwort zurücksetzen
   passwordReset = (email: string): Promise<void> => {
@@ -316,7 +317,7 @@ export default class Firebase {
    */
   passwordUpdate = ({password}: PasswordUpdate): Promise<void> => {
     this.analytics.logEvent(FirebaseAnalyticEvent.userChangedPassword);
-    return this.auth.currentUser.updatePassword(password);
+    return this.auth.currentUser!.updatePassword(password);
   };
   /* =====================================================================
   /**

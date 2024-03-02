@@ -55,7 +55,7 @@ export class FirebaseDbUser extends FirebaseDbSuper {
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
-    return {
+    const dbUser = {
       email: value.email,
       firstName: value.firstName,
       lastLogin: value.lastLogin,
@@ -63,6 +63,12 @@ export class FirebaseDbUser extends FirebaseDbSuper {
       noLogins: value.noLogins,
       roles: value.roles,
     };
+
+    if (Object.prototype.hasOwnProperty.call(value, "disabled")) {
+      dbUser["disabled"] = value.disabled;
+    }
+
+    return dbUser;
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
@@ -77,6 +83,7 @@ export class FirebaseDbUser extends FirebaseDbSuper {
       // lastLogin: value.lastLogin.toDate(),
       noLogins: value.noLogins,
       roles: value.roles,
+      disabled: value?.disabled ? value.disabled : false,
     } as unknown as T;
   }
   /* =====================================================================

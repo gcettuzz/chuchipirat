@@ -47,6 +47,7 @@ export interface UserOverviewStructure {
   memberId: UserPublicProfile["memberId"];
   memberSince: Date;
   uid?: User["uid"];
+  disabled?: User["disabled"];
 }
 
 export interface UserFullProfile extends User, UserPublicProfile {}
@@ -112,6 +113,18 @@ interface UpdateEmail {
   newEmail: string;
   authUser: AuthUser;
 }
+interface UpdateRoles {
+  firebase: Firebase;
+  userUid: User["uid"];
+  newRoles: User["roles"];
+  authUser: AuthUser;
+}
+// interface SetDisabled {
+//   firebase: Firebase;
+//   userUid: User["uid"];
+//   disabled: boolean;
+//   authUser: AuthUser;
+// }
 
 export default class User {
   uid: string;
@@ -121,7 +134,7 @@ export default class User {
   lastLogin: Date;
   noLogins: number;
   roles: Role[];
-  deactivated?: boolean;
+  disabled?: boolean;
   /* =====================================================================
   // Konstruktor
   // ===================================================================== */
@@ -632,4 +645,48 @@ export default class User {
       });
     firebase.analytics.logEvent(FirebaseAnalyticEvent.userChangedEmail);
   };
+  /* =====================================================================
+  // Berechtigungen aktualiseiren
+  // ===================================================================== */
+  static updateRoles = async ({
+    firebase,
+    userUid,
+    newRoles,
+    authUser,
+  }: UpdateRoles) => {
+    firebase.user
+      .updateFields({
+        uids: [userUid],
+        values: {roles: newRoles},
+        authUser: authUser,
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  };
+  /* =====================================================================
+  // User aktiv/oder inaktiv schalten
+  // ===================================================================== */
+  // static setDisabledState = async ({
+  //   firebase,
+  //   userUid,
+  //   disabled,
+  //   authUser,
+  // }: SetDisabled) => {
+  //   firebase.auth
+  //     .updateUser(userUid, {disabled: disabled})
+  //     .then(() => {
+  //       // Auf dem Datensatz nachführen
+  //       firebase.user.updateFields({
+  //         uids: [userUid],
+  //         values: {disabled: disabled},
+  //         authUser: authUser,
+  //       });
+  //     })
+  //     .catch((error) => {
+  //       console.error(error);
+  //       throw error;
+  //     });
+  // };
 }

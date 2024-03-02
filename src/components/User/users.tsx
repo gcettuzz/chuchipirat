@@ -15,9 +15,19 @@ import {
   MEMBER_SINCE as TEXT_MEMBER_SINCE,
   MOTTO as TEXT_MOTTO,
   ROLES as TEXT_ROLES,
+  OPEN as TEXT_OPEN,
+  EDIT_AUTHORIZATION as TEXT_EDIT_AUTHORIZATION,
+  EDIT_AUTHORIZATION_DESCRIPTION as TEXT_EDIT_AUTHORIZATION_DESCRIPTION,
+  RE_SIGN_IN_REQUIRED as TEXT_RE_SIGN_IN_REQUIRED,
+  RE_SIGN_IN_REQUIRED_AFTER_ROLES_ASSIGNMENT as TEXT_RE_SIGN_IN_REQUIRED_AFTER_ROLES_ASSIGNMENT,
+  ROLE_TYPES as TEXT_ROLE_TYPES,
+  CANCEL as TEXT_CANCEL,
+  SAVE as TEXT_SAVE,
+  ROLES_UPDATED_SUCCSESSFULLY as TEXT_ROLES_UPDATED_SUCCSESSFULLY,
+  YOU_CANT_UPDATE_YOUR_OWN_AUTHORIZATION as TEXT_YOU_CANT_UPDATE_YOUR_OWN_AUTHORIZATION,
 } from "../../constants/text";
 
-import {Edit as EditIcon} from "@material-ui/icons";
+import {OpenInNew as OpenInNewIcon} from "@material-ui/icons";
 
 import PageTitle from "../Shared/pageTitle";
 
@@ -25,7 +35,7 @@ import User, {UserFullProfile, UserOverviewStructure} from "../User/user.class";
 
 import Role from "../../constants/roles";
 import useStyles from "../../constants/styles";
-import {
+import CustomSnackbar, {
   SNACKBAR_INITIAL_STATE_VALUES,
   Snackbar,
 } from "../Shared/customSnackbar";
@@ -40,16 +50,23 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
+  FormLabel,
   Grid,
+  IconButton,
   List,
+  Switch,
   Typography,
+  useTheme,
 } from "@material-ui/core";
 import AlertMessage from "../Shared/AlertMessage";
-import EnhancedTable, {
-  Column,
-  ColumnTextAlign,
-  TableColumnTypes,
-} from "../Shared/enhancedTable";
+// import EnhancedTable, {
+//   Column,
+//   ColumnTextAlign,
+//   TableColumnTypes,
+// } from "../Shared/enhancedTable";
 import SearchPanel from "../Shared/searchPanel";
 
 import {ImageRepository} from "../../constants/imageRepository";
@@ -59,6 +76,13 @@ import withEmailVerification from "../Session/withEmailVerification";
 import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
 import {withFirebase} from "../Firebase/firebaseContext";
 import {CustomRouterProps} from "../Shared/global.interface";
+import {
+  DataGrid,
+  GridColDef,
+  GridValueFormatterParams,
+  deDE,
+} from "@mui/x-data-grid";
+import {Alert, AlertTitle} from "@material-ui/lab";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -68,6 +92,8 @@ enum ReducerActions {
   USERS_FETCH_SUCCESS,
   USER_FULL_PROFILE_FETCH_INIT,
   USER_FULL_PROFILE_FETCH_SUCCESS,
+  USER_UPDATE,
+  SNACKBAR_SET,
   SNACKBAR_CLOSE,
   GENERIC_ERROR,
 }
@@ -93,6 +119,8 @@ const inititialState: State = {
 };
 
 const usersReducer = (state: State, action: DispatchAction): State => {
+  let tempUsers: State["users"] = [];
+  let index: number;
   switch (action.type) {
     case ReducerActions.USERS_FETCH_INIT:
       return {
@@ -116,6 +144,25 @@ const usersReducer = (state: State, action: DispatchAction): State => {
           [action.payload.uid]: action.payload,
         },
       };
+    case ReducerActions.USER_UPDATE:
+      tempUsers = state.users;
+      index = state.users.findIndex((user) => user?.uid === action.payload.uid);
+
+      if (index < 0) {
+        return state;
+      }
+
+      tempUsers[index] = {...tempUsers[index], ...action.payload};
+
+      return {
+        ...state,
+        users: tempUsers,
+      };
+    case ReducerActions.SNACKBAR_SET:
+      return {
+        ...state,
+        snackbar: action.payload as Snackbar,
+      };
     case ReducerActions.SNACKBAR_CLOSE:
       // Snackbar schliessen
       return {
@@ -138,7 +185,10 @@ const usersReducer = (state: State, action: DispatchAction): State => {
       throw new Error();
   }
 };
-
+const ROLE_DIALOG_INITIAL_STATE = {
+  open: false,
+  userUid: "" as User["uid"],
+};
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
@@ -164,6 +214,7 @@ const UsersBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
     selectedUser: {} as UserFullProfile,
     open: false,
   });
+  const [roleDialog, setRoleDialog] = React.useState(ROLE_DIALOG_INITIAL_STATE);
   /* ------------------------------------------
 	// Daten aus DB holen
 	// ------------------------------------------ */
@@ -186,20 +237,28 @@ const UsersBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
       });
   }, []);
   /* ------------------------------------------
-  // PopUp-Handling
+  // User-Profil-PopUp-Handling
   // ------------------------------------------ */
-  const onOpenDialog = async (
-    event: React.MouseEvent<HTMLSpanElement, MouseEvent>,
-    user: UserOverviewStructure
-  ) => {
+  const onOpenDialog = async (userUid: User["uid"]) => {
+    console.log(userUid);
+
+    if (!userUid) {
+      return;
+    }
+
+    // const onOpenDialog = async (
+    //   event: React.MouseEvent<HTMLSpanElement, MouseEvent>,
+    //   user: UserOverviewStructure
+    // ) => {
+
     // Prüfen ob wir dieses Profil bereits gelesen haben.
 
-    if (!Object.prototype.hasOwnProperty.call(state.userProfiles, user.uid)) {
+    if (!Object.prototype.hasOwnProperty.call(state.userProfiles, userUid)) {
       dispatch({
         type: ReducerActions.USER_FULL_PROFILE_FETCH_INIT,
         payload: {},
       });
-      await User.getFullProfile({firebase: firebase, uid: user.uid!}).then(
+      await User.getFullProfile({firebase: firebase, uid: userUid}).then(
         (result) => {
           dispatch({
             type: ReducerActions.USER_FULL_PROFILE_FETCH_SUCCESS,
@@ -211,7 +270,7 @@ const UsersBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
     } else {
       setDialogValues({
         ...dialogValues,
-        selectedUser: state.userProfiles[user.uid!],
+        selectedUser: state.userProfiles[userUid],
         open: true,
       });
     }
@@ -222,6 +281,54 @@ const UsersBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
   if (!authUser) {
     return null;
   }
+  /* ------------------------------------------
+  // Berechtigungen-PopUp-Handling
+  // ------------------------------------------ */
+  const onDialogEditRolesClose = () => {
+    setRoleDialog(ROLE_DIALOG_INITIAL_STATE);
+  };
+  const onDialogEditRolesUpdate = (newRoles: User["roles"]) => {
+    console.log(newRoles);
+
+    User.updateRoles({
+      firebase: firebase,
+      userUid: dialogValues.selectedUser.uid,
+      newRoles: newRoles,
+      authUser: authUser,
+    })
+      .then(() => {
+        dispatch({
+          type: ReducerActions.SNACKBAR_SET,
+          payload: {
+            severity: "success",
+            message: TEXT_ROLES_UPDATED_SUCCSESSFULLY,
+            open: true,
+          },
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+      });
+
+    setRoleDialog(ROLE_DIALOG_INITIAL_STATE);
+  };
+  const showRoleDialog = (userUid: User["uid"]) => {
+    setRoleDialog({open: true, userUid: userUid});
+  };
+
+  /* ------------------------------------------
+  // Snackbar
+  // ------------------------------------------ */
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    dispatch({
+      type: ReducerActions.SNACKBAR_CLOSE,
+      payload: {},
+    });
+  };
 
   return (
     <React.Fragment>
@@ -247,10 +354,28 @@ const UsersBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
 
         <UsersTable dbUsers={state.users} onUserSelect={onOpenDialog} />
       </Container>
+      <CustomSnackbar
+        message={state.snackbar.message}
+        severity={state.snackbar.severity}
+        snackbarOpen={state.snackbar.open}
+        handleClose={handleSnackbarClose}
+      />
+      <DialogEditRoles
+        open={roleDialog.open}
+        roles={dialogValues.selectedUser.roles}
+        userUid={dialogValues.selectedUser.uid}
+        authUser={authUser}
+        handleClose={onDialogEditRolesClose}
+        handleUpdate={onDialogEditRolesUpdate}
+      />
+
       <DialogUser
         dialogOpen={dialogValues.open}
         handleClose={onDialogClose}
         userFullProfile={dialogValues.selectedUser}
+        // onDeactivateUser={deactivateUser}
+        // onResetPassword={resetPassword}
+        onEditRoles={showRoleDialog}
       />
     </React.Fragment>
   );
@@ -261,8 +386,9 @@ const UsersBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
 interface UsersTableProps {
   dbUsers: UserOverviewStructure[];
   onUserSelect: (
-    event: React.MouseEvent<HTMLSpanElement, MouseEvent>,
-    user: UserOverviewStructure
+    userUid: User["uid"]
+    // event: React.MouseEvent<HTMLSpanElement, MouseEvent>,
+    // user: UserOverviewStructure
   ) => void;
 }
 
@@ -273,75 +399,153 @@ const UsersTable = ({dbUsers, onUserSelect}: UsersTableProps) => {
     UserOverviewStructure[]
   >([]);
   const classes = useStyles();
+  const theme = useTheme();
 
-  const TABLE_COLUMS: Column[] = [
+  const DATA_GRID_COLUMNS: GridColDef[] = [
     {
-      id: "edit",
-      type: TableColumnTypes.button,
-      textAlign: ColumnTextAlign.center,
-      disablePadding: false,
-      visible: true,
-      label: "",
-      iconButton: <EditIcon fontSize="small" />,
+      field: "edit",
+      headerName: TEXT_OPEN,
+      sortable: false,
+      renderCell: (params) => {
+        const onClick = () => {
+          onUserSelect(params.id as string);
+        };
+
+        return (
+          <IconButton
+            aria-label="open User"
+            style={{margin: theme.spacing(1)}}
+            size="small"
+            onClick={onClick}
+          >
+            <OpenInNewIcon fontSize="inherit" />
+          </IconButton>
+        );
+      },
+    },
+
+    {
+      field: "uid",
+      headerName: TEXT_UID,
+      editable: false,
+      width: 270,
+      cellClassName: () => `super-app ${classes.typographyCode}`,
     },
     {
-      id: "uid",
-      type: TableColumnTypes.string,
-      textAlign: ColumnTextAlign.center,
-      disablePadding: false,
-      label: TEXT_UID,
-      visible: false,
-      monoSpaces: true,
+      field: "displayName",
+      headerName: TEXT_DISPLAYNAME,
+      editable: false,
+      width: 150,
     },
     {
-      id: "displayName",
-      type: TableColumnTypes.string,
-      textAlign: ColumnTextAlign.left,
-      disablePadding: false,
-      label: TEXT_DISPLAYNAME,
-      visible: true,
+      field: "firstName",
+      headerName: TEXT_FIRSTNAME,
+      editable: false,
+      width: 150,
     },
     {
-      id: "firstName",
-      type: TableColumnTypes.string,
-      textAlign: ColumnTextAlign.left,
-      disablePadding: false,
-      label: TEXT_FIRSTNAME,
-      visible: true,
+      field: "lastName",
+      headerName: TEXT_LASTNAME,
+      editable: false,
+      width: 150,
     },
     {
-      id: "lastName",
-      type: TableColumnTypes.string,
-      textAlign: ColumnTextAlign.left,
-      disablePadding: false,
-      label: TEXT_LASTNAME,
-      visible: true,
+      field: "email",
+      headerName: TEXT_EMAIL,
+      editable: false,
+      width: 350,
     },
     {
-      id: "email",
-      type: TableColumnTypes.string,
-      textAlign: ColumnTextAlign.left,
-      disablePadding: false,
-      label: TEXT_EMAIL,
-      visible: true,
+      field: "memberId",
+      headerName: TEXT_MEMBER_ID,
+      editable: false,
+      width: 150,
     },
     {
-      id: "memberId",
-      type: TableColumnTypes.number,
-      textAlign: ColumnTextAlign.center,
-      disablePadding: false,
-      label: TEXT_MEMBER_ID,
-      visible: true,
-    },
-    {
-      id: "memberSince",
-      type: TableColumnTypes.date,
-      textAlign: ColumnTextAlign.center,
-      disablePadding: false,
-      label: TEXT_MEMBER_SINCE,
-      visible: true,
+      field: "memberSince",
+      headerName: TEXT_MEMBER_SINCE,
+      editable: false,
+      width: 150,
+      valueFormatter: (params: GridValueFormatterParams) => {
+        if (params.value && params.value instanceof Date) {
+          return params.value.toLocaleString("de-CH", {
+            dateStyle: "medium",
+          });
+        } else {
+          return "";
+        }
+      },
     },
   ];
+
+  // const TABLE_COLUMS: Column[] = [
+  //   {
+  //     id: "edit",
+  //     type: TableColumnTypes.button,
+  //     textAlign: ColumnTextAlign.center,
+  //     disablePadding: false,
+  //     visible: true,
+  //     label: "",
+  //     iconButton: <EditIcon fontSize="small" />,
+  //   },
+  //   {
+  //     id: "uid",
+  //     type: TableColumnTypes.string,
+  //     textAlign: ColumnTextAlign.center,
+  //     disablePadding: false,
+  //     label: TEXT_UID,
+  //     visible: false,
+  //     monoSpaces: true,
+  //   },
+  //   {
+  //     id: "displayName",
+  //     type: TableColumnTypes.string,
+  //     textAlign: ColumnTextAlign.left,
+  //     disablePadding: false,
+  //     label: TEXT_DISPLAYNAME,
+  //     visible: true,
+  //   },
+  //   {
+  //     id: "firstName",
+  //     type: TableColumnTypes.string,
+  //     textAlign: ColumnTextAlign.left,
+  //     disablePadding: false,
+  //     label: TEXT_FIRSTNAME,
+  //     visible: true,
+  //   },
+  //   {
+  //     id: "lastName",
+  //     type: TableColumnTypes.string,
+  //     textAlign: ColumnTextAlign.left,
+  //     disablePadding: false,
+  //     label: TEXT_LASTNAME,
+  //     visible: true,
+  //   },
+  //   {
+  //     id: "email",
+  //     type: TableColumnTypes.string,
+  //     textAlign: ColumnTextAlign.left,
+  //     disablePadding: false,
+  //     label: TEXT_EMAIL,
+  //     visible: true,
+  //   },
+  //   {
+  //     id: "memberId",
+  //     type: TableColumnTypes.number,
+  //     textAlign: ColumnTextAlign.center,
+  //     disablePadding: false,
+  //     label: TEXT_MEMBER_ID,
+  //     visible: true,
+  //   },
+  //   {
+  //     id: "memberSince",
+  //     type: TableColumnTypes.date,
+  //     textAlign: ColumnTextAlign.center,
+  //     disablePadding: false,
+  //     label: TEXT_MEMBER_SINCE,
+  //     visible: true,
+  //   },
+  // ];
 
   /* ------------------------------------------
   // Suche
@@ -416,16 +620,26 @@ const UsersTable = ({dbUsers, onUserSelect}: UsersTableProps) => {
                     users.length
                   } ${TEXT_USERS}`}
             </Typography>
-
-            <EnhancedTable
-              tableData={filteredUsersUi}
-              tableColumns={TABLE_COLUMS}
-              keyColum={"uid"}
-              //TODO: werte auslesen, darstellung wie bei REquest.
-              // möglichkeit geben pw, zurückzusetzen, user deaktivieren,
-              // Rollen vergeben.
-              onIconClick={onUserSelect}
-            />
+          </Grid>
+          <Grid item xs={12}>
+            <div style={{display: "flex", height: "100%"}}>
+              <div style={{flexGrow: 1}}>
+                <DataGrid
+                  autoHeight
+                  rows={filteredUsersUi}
+                  columns={DATA_GRID_COLUMNS}
+                  getRowId={(row) => row.uid}
+                  localeText={deDE.props.MuiDataGrid.localeText}
+                  getRowClassName={(params) => {
+                    if (params.row?.disabled) {
+                      return `super-app ${classes.dataGridDisabled}`;
+                    } else {
+                      `super-app-theme`;
+                    }
+                  }}
+                />
+              </div>
+            </div>
           </Grid>
         </Grid>
       </CardContent>
@@ -440,14 +654,20 @@ interface DialogUserProps {
   dialogOpen: boolean;
   userFullProfile: UserFullProfile;
   handleClose: () => void;
+  // onResetPassword: (userUid: User["uid"]) => void;
+  // onDeactivateUser: (userUid: User["uid"]) => void;
+  onEditRoles: (userUid: User["uid"]) => void;
 }
 const DialogUser = ({
   dialogOpen,
   userFullProfile,
   handleClose,
+  // onResetPassword,
+  // onDeactivateUser,
+  onEditRoles,
 }: DialogUserProps) => {
   const classes = useStyles();
-
+  const theme = useTheme();
   return (
     <Dialog
       open={dialogOpen}
@@ -481,7 +701,7 @@ const DialogUser = ({
         </Typography>
       </DialogTitle>
       <DialogContent style={{overflow: "unset"}}>
-        <List>
+        <List style={{marginBottom: theme.spacing(2)}}>
           <FormListItem
             key={"displayName"}
             id={"displayName"}
@@ -538,13 +758,200 @@ const DialogUser = ({
             label={TEXT_ROLES}
           />
         </List>
-        <Button color="primary">Txt</Button>
-        <Button color="primary">Txt</Button>
-        <Button color="primary">Txt</Button>
-        <Button color="primary">Txt</Button>
-        <Button color="primary">Txt</Button>
-        <Button color="primary">Txt</Button>
+        <Button
+          onClick={() => onEditRoles(userFullProfile.uid)}
+          color="primary"
+        >
+          {TEXT_EDIT_AUTHORIZATION}
+        </Button>
       </DialogContent>
+      <DialogActions>
+        {/* <Button
+          onClick={() => onResetPassword(userFullProfile.uid)}
+          color="primary"
+        >
+          Password-zurücksetzen
+        </Button> */}
+        {/* <Button
+          onClick={() => onEditRoles(userFullProfile.uid)}
+          color="primary"
+        >
+          {TEXT_EDIT_AUTHORIZATION}
+        </Button> */}
+        {/* <Button
+          onClick={() => onDeactivateUser(userFullProfile.uid)}
+          color="primary"
+        >
+          User deaktivieren
+        </Button> */}
+      </DialogActions>
+    </Dialog>
+  );
+};
+/* ===================================================================
+// ============================ Rollen ==========================
+// =================================================================== */
+interface DialogEditRolesProps {
+  open: boolean;
+  roles: User["roles"];
+  userUid: User["uid"];
+  authUser: AuthUser;
+  handleClose: () => void;
+  handleUpdate: (roles: User["roles"]) => void;
+}
+const ROLE_SELECTION_INITIAL_STATE = {
+  basic: false,
+  communityLeader: false,
+  admin: false,
+  roundtripDone: false,
+};
+
+const DialogEditRoles = ({
+  open,
+  roles,
+  userUid,
+  authUser,
+  handleClose,
+  handleUpdate,
+}: DialogEditRolesProps) => {
+  const theme = useTheme();
+  const [roleSelection, setRoleSelection] = React.useState(
+    ROLE_SELECTION_INITIAL_STATE
+  );
+  /* ------------------------------------------
+	// Switch-Handling
+	// ------------------------------------------ */
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const tempRoleSelection = roleSelection;
+
+    // Logik abbilden, dass die unterliegenden Berechtigungen mitvergeben werden
+    switch (event.target.name) {
+      case "basic":
+        tempRoleSelection.basic = event.target.checked;
+        tempRoleSelection.communityLeader = false;
+        tempRoleSelection.admin = false;
+        break;
+      case "communityLeader":
+        tempRoleSelection.basic = true;
+        tempRoleSelection.communityLeader = event.target.checked;
+        tempRoleSelection.admin = false;
+        break;
+      case "admin":
+        tempRoleSelection.admin = event.target.checked;
+        tempRoleSelection.communityLeader = event.target.checked
+          ? true
+          : tempRoleSelection.communityLeader;
+        break;
+    }
+
+    setRoleSelection({
+      ...roleSelection,
+      // [event.target.name]: event.target.checked,
+    });
+  };
+  /* ------------------------------------------
+	// Werte übernehmen
+	// ------------------------------------------ */
+  const updateAuthentification = () => {
+    const newRoles: User["roles"] = [];
+    Object.entries(roleSelection).forEach(([key, value]) => {
+      if (value && key !== "roundtripDone") newRoles.push(key as Role);
+    });
+    handleUpdate(newRoles);
+  };
+  /* ------------------------------------------
+	// Initiale Werte übernehmen
+	// ------------------------------------------ */
+  if (
+    roleSelection === ROLE_SELECTION_INITIAL_STATE &&
+    !roleSelection.roundtripDone &&
+    roles?.length > 0
+  ) {
+    // Die Rollen des Users übernehmen
+    const tempRoleSelection = roleSelection;
+    roles.forEach((role) => (tempRoleSelection[role] = true));
+    tempRoleSelection.roundtripDone = true;
+    setRoleSelection(tempRoleSelection);
+  }
+
+  return (
+    <Dialog open={open} onClose={handleClose}>
+      <DialogTitle>{TEXT_EDIT_AUTHORIZATION}</DialogTitle>
+      <DialogContent>
+        <Grid container spacing={2}>
+          <Grid xs={12} item>
+            <Typography>{TEXT_EDIT_AUTHORIZATION_DESCRIPTION}</Typography>
+          </Grid>
+          <Grid xs={12} item>
+            {userUid === authUser.uid ? (
+              <Alert severity="warning" style={{marginTop: theme.spacing(1)}}>
+                {TEXT_YOU_CANT_UPDATE_YOUR_OWN_AUTHORIZATION}
+              </Alert>
+            ) : (
+              <Alert severity="info" style={{marginTop: theme.spacing(1)}}>
+                <AlertTitle>{TEXT_RE_SIGN_IN_REQUIRED}</AlertTitle>
+                {TEXT_RE_SIGN_IN_REQUIRED_AFTER_ROLES_ASSIGNMENT}
+              </Alert>
+            )}
+          </Grid>
+          <Grid xs={12} item>
+            <FormControl component="fieldset">
+              <FormLabel component="legend">Berechtigungen</FormLabel>
+              <FormGroup>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      color="primary"
+                      checked={roleSelection.basic}
+                      onChange={handleChange}
+                      name="basic"
+                      disabled
+                    />
+                  }
+                  label={TEXT_ROLE_TYPES.basic}
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      color="primary"
+                      checked={roleSelection.communityLeader}
+                      onChange={handleChange}
+                      name="communityLeader"
+                      disabled={userUid === authUser.uid}
+                    />
+                  }
+                  label={TEXT_ROLE_TYPES.communityLeader}
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      color="primary"
+                      checked={roleSelection.admin}
+                      onChange={handleChange}
+                      name="admin"
+                      disabled={userUid === authUser.uid}
+                    />
+                  }
+                  label={TEXT_ROLE_TYPES.admin}
+                />
+              </FormGroup>
+            </FormControl>
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleClose} color="primary" variant="outlined">
+          {TEXT_CANCEL}
+        </Button>
+        <Button
+          onClick={updateAuthentification}
+          color="primary"
+          variant="outlined"
+          disabled={userUid === authUser.uid}
+        >
+          {TEXT_SAVE}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };
