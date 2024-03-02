@@ -87,6 +87,7 @@ import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import {CustomRouterProps} from "../Shared/global.interface";
 import ScrollDownOnKeyPress from "../Shared/ScrollDownOnKeyPress";
+import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 
 //TODO: alle kommentare löschen
 /* ===================================================================
@@ -237,19 +238,14 @@ const RecipesBase: React.FC<
         });
       });
   }, [authUser]);
-  React.useEffect(() => {
-    // Prüfen ob die Daten aus dem Session-Storage wiederhergestellt werden müssen.
-    const history = window.history;
-    history.replaceState({isBackNavigation: true}, "");
-  }, []);
 
   if (!authUser) {
     return null;
   }
 
   /* ------------------------------------------
-    // Neues Rezept anlegen
-    // ------------------------------------------ */
+ // Neues Rezept anlegen
+ // ------------------------------------------ */
   const onNewClick = () => {
     push({
       pathname: ROUTE_RECIPE,
@@ -389,14 +385,9 @@ const RecipesBase: React.FC<
 // // =================================================================== */
 interface RecipeSearchProps {
   recipes: RecipeShort[];
-  // filteredData: RecipeShort[];
   onNewClick: () => void;
   onCardClick: ({event, recipe}: OnRecipeCardClickProps) => void;
   onFabButtonClick?: ({event, recipe}: OnRecipeCardClickProps) => void;
-  // searchSettings: SearchSettings;
-  // onSearch: (event) => void;
-  // onSearchSettings: (searchSettings: SearchSettings) => void;
-  // onClearSearchString: () => void;
   embeddedMode?: boolean;
   fabButtonIcon?: JSX.Element;
   error?: Error | null;
@@ -419,15 +410,10 @@ interface SearchSettings {
 }
 
 export const RecipeSearch = ({
-  // filteredData = [],
   recipes,
   onNewClick: onNewClickSuper,
   onCardClick: onCardClickSuper,
   onFabButtonClick: onFabButtonClickSuper,
-  // searchSettings,
-  // onSearch,
-  // onSearchSettings,
-  // onClearSearchString,
   embeddedMode = false,
   fabButtonIcon,
   isLoading = false,
@@ -438,6 +424,7 @@ export const RecipeSearch = ({
     INITIAL_SEARCH_SETTINGS
   );
   const [filteredData, setFilteredData] = React.useState([] as RecipeShort[]);
+
   /* ------------------------------------------
   // Update der Sucheigenschaften
   // ------------------------------------------ */
@@ -450,6 +437,15 @@ export const RecipeSearch = ({
         searchString: searchString,
         showAdvancedSearch: false,
       });
+
+      SessionStorageHandler.deleteDocument({
+        storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
+        documentUid: "searchSettings",
+        prefix: "",
+      });
+
+      // Die Daten wieder alle anzeigen....
+      setFilteredData(recipes);
     } else {
       setSearchSettings({
         ...searchSettings,
@@ -471,21 +467,11 @@ export const RecipeSearch = ({
         recipes: recipes,
       })
     );
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-      value: newSearchSettings,
-    });
   };
   const onClearSearchString = () => {
     const newSearchSettings = {...searchSettings, searchString: ""};
     setSearchSettings(newSearchSettings);
     setFilteredData(recipes);
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-      value: newSearchSettings,
-    });
   };
   const onSearchSettingDietUpdate = (
     event: React.MouseEvent<HTMLElement>,
@@ -502,11 +488,6 @@ export const RecipeSearch = ({
         recipes: recipes,
       })
     );
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-      value: newSearchSettings,
-    });
   };
   const onSearchSettingAllergensUpdate = (
     event: React.MouseEvent<HTMLElement>,
@@ -542,11 +523,6 @@ export const RecipeSearch = ({
         recipes: recipes,
       })
     );
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-      value: newSearchSettings,
-    });
   };
   const onSearchSettingMenuTypeUpdate = (
     event: React.ChangeEvent<{[key: string]: any}>
@@ -578,11 +554,6 @@ export const RecipeSearch = ({
         recipes: recipes,
       })
     );
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-      value: newSearchSettings,
-    });
   };
   const onSearchSettingOutdoorKitchenSuitableUpdate = () => {
     const newSearchSettings = {
@@ -596,11 +567,6 @@ export const RecipeSearch = ({
         recipes: recipes,
       })
     );
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-      value: newSearchSettings,
-    });
   };
   const onSearchSettingRecipeTypeUpdate = (
     event: React.MouseEvent<HTMLElement>,
@@ -618,16 +584,11 @@ export const RecipeSearch = ({
         recipes: recipes,
       })
     );
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-      value: newSearchSettings,
-    });
   };
   const onSearchSettingShowOnlyMyRecipesUpdate = () => {
     const newSearchSettings: SearchSettings = {
       ...searchSettings,
-      showOnlyMyRecipes: !searchSettings.outdoorKitchenSuitable,
+      showOnlyMyRecipes: !searchSettings.showOnlyMyRecipes,
     };
     setSearchSettings(newSearchSettings);
     setFilteredData(
@@ -636,11 +597,6 @@ export const RecipeSearch = ({
         recipes: recipes,
       })
     );
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-      value: newSearchSettings,
-    });
   };
   /* ------------------------------------------
   // Card-Aktionen
@@ -648,7 +604,7 @@ export const RecipeSearch = ({
   const onCardClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     SessionStorageHandler.upsertDocument({
       storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
+      documentUid: "searchSettings",
       value: searchSettings,
     });
 
@@ -676,7 +632,7 @@ export const RecipeSearch = ({
     // Sucheinstellungen speichern
     SessionStorageHandler.upsertDocument({
       storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
+      documentUid: "searchSettings",
       value: searchSettings,
     });
 
@@ -782,11 +738,14 @@ export const RecipeSearch = ({
     filteredData.length == 0
   ) {
     // Schauen ob was im SessionStorage ist
-    const sessionStorage = SessionStorageHandler.getDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-    });
+    let sessionStorage: ValueObject | null = null;
 
+    if (!embeddedMode) {
+      sessionStorage = SessionStorageHandler.getDocument({
+        storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
+        documentUid: "searchSettings",
+      });
+    }
     if (sessionStorage) {
       setSearchSettings(sessionStorage as SearchSettings);
       setFilteredData(
@@ -941,7 +900,7 @@ export const RecipeSearch = ({
                 size="small"
               >
                 <FormControlLabel
-                  value={searchSettings.outdoorKitchenSuitable}
+                  checked={searchSettings.outdoorKitchenSuitable}
                   onChange={onSearchSettingOutdoorKitchenSuitableUpdate}
                   control={<Switch color="primary" />}
                   label={
@@ -1001,7 +960,7 @@ export const RecipeSearch = ({
                 size="small"
               >
                 <FormControlLabel
-                  value={searchSettings.showOnlyMyRecipes}
+                  checked={searchSettings.showOnlyMyRecipes}
                   onChange={onSearchSettingShowOnlyMyRecipesUpdate}
                   control={<Switch color="primary" />}
                   label={

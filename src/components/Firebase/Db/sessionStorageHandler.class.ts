@@ -384,10 +384,11 @@ export class SessionStorageHandler {
       documentUid,
       prefix
     );
+
     // Gibt es das Dokument im Session Storage
     if (
       !sessionStorage ||
-      Object.prototype.hasOwnProperty.call(sessionStorage, documentPrefixUid)
+      !Object.prototype.hasOwnProperty.call(sessionStorage, documentPrefixUid)
     ) {
       return null;
     }
