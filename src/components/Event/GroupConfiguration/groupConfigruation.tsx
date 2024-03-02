@@ -1,7 +1,6 @@
 import React from "react";
 
 import {
-  // Container,
   Grid,
   Button,
   Backdrop,
@@ -598,86 +597,92 @@ const EventGroupConfigurationCard = ({
   const classes = useStyles();
 
   return (
-    <Card>
-      <CardHeader
-        title={TEXT_GROUP_CONFIGURATION_SETTINGS}
-        subheader={TEXT_GROUP_CONFIGURATION_SETTINGS_DESCRIPTION}
-      />
-      <CardContent>
-        <Grid container spacing={2}>
-          <Grid item xs={3}>
-            <EventGroupConfigLeadColumn
-              groupConfig={groupConfig}
-              onAddIntolerance={() =>
-                onAddItem(GroupConfigDimension.intolerance)
-              }
-            />
-          </Grid>
-          <Grid item xs={5}>
-            <EventGroupConfigDietColumn
-              groupConfig={groupConfig}
-              openDietContextMenu={openDietContextMenu}
-              onFieldChange={onPortionChange}
-            />
-          </Grid>
-          <Grid item xs={1} style={{justifyContent: "center"}}>
-            <Grid
-              container
-              direction="column"
-              justifyContent="center"
-              alignItems="center"
-            >
-              <Grid item className={classes.itemGroupConfigurationRow}>
-                <Tooltip title={TEXT_ADD_DIET}>
-                  <IconButton
-                    aria-label="Diät hinzufügen"
-                    color="primary"
-                    onClick={() => onAddItem(GroupConfigDimension.diet)}
-                  >
-                    <AddIcon />
-                  </IconButton>
-                </Tooltip>
-              </Grid>
-            </Grid>
-            <div
-              style={{
-                marginTop: "1rem",
-                width: "100%",
-                height: "100%",
-                display: "flex",
-                justifyContent: "center",
-              }}
-            >
-              <Divider
-                orientation="vertical"
-                flexItem
-                style={{height: "80%", display: "flex"}}
+    <div style={{overflowX: "scroll", minWidth: "750px"}}>
+      <Card>
+        <CardHeader
+          title={TEXT_GROUP_CONFIGURATION_SETTINGS}
+          subheader={TEXT_GROUP_CONFIGURATION_SETTINGS_DESCRIPTION}
+        />
+        <CardContent>
+          <Grid container spacing={2}>
+            <Grid item xs={3}>
+              <EventGroupConfigLeadColumn
+                groupConfig={groupConfig}
+                onAddIntolerance={() =>
+                  onAddItem(GroupConfigDimension.intolerance)
+                }
               />
-            </div>
+            </Grid>
+            <Grid item xs={5}>
+              <EventGroupConfigDietColumn
+                groupConfig={groupConfig}
+                openDietContextMenu={openDietContextMenu}
+                onFieldChange={onPortionChange}
+              />
+            </Grid>
+            <Grid item xs={1} style={{justifyContent: "center"}}>
+              <Grid
+                container
+                direction="column"
+                justifyContent="center"
+                alignItems="center"
+              >
+                <Grid item className={classes.itemGroupConfigurationRow}>
+                  <Tooltip title={TEXT_ADD_DIET}>
+                    <IconButton
+                      aria-label="Diät hinzufügen"
+                      color="primary"
+                      onClick={() => onAddItem(GroupConfigDimension.diet)}
+                    >
+                      <AddIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Grid>
+              </Grid>
+              <div
+                style={{
+                  marginTop: "1rem",
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <Divider
+                  orientation="vertical"
+                  flexItem
+                  style={{height: "80%", display: "flex"}}
+                />
+              </div>
+            </Grid>
+            <Grid item xs={2}>
+              <EventGroupConfigTotalColumn
+                groupConfig={groupConfig}
+                openIntoleranceContextMenu={openIntoleranceContextMenu}
+              />
+            </Grid>
           </Grid>
-          <Grid item xs={2}>
-            <EventGroupConfigTotalColumn
-              groupConfig={groupConfig}
-              openIntoleranceContextMenu={openIntoleranceContextMenu}
-            />
-          </Grid>
-        </Grid>
-      </CardContent>
-      {showUpdateConfigButtons && (
-        <CardActions style={{justifyContent: "flex-end"}}>
-          <Button color="primary" variant="outlined" onClick={onDiscardChanges}>
-            {TEXT_DISCARD_CHANGES}
-          </Button>
-          <Button
-            color="primary"
-            variant="contained"
-            onClick={onRecalculatePortions}
-          >
-            {TEXT_SAVE} {TEXT_AND} {TEXT_RECALCULATE_PORTIONS}
-          </Button>
-        </CardActions>
-      )}
-    </Card>
+        </CardContent>
+        {showUpdateConfigButtons && (
+          <CardActions style={{justifyContent: "flex-end"}}>
+            <Button
+              color="primary"
+              variant="outlined"
+              onClick={onDiscardChanges}
+            >
+              {TEXT_DISCARD_CHANGES}
+            </Button>
+            <Button
+              color="primary"
+              variant="contained"
+              onClick={onRecalculatePortions}
+            >
+              {TEXT_SAVE} {TEXT_AND} {TEXT_RECALCULATE_PORTIONS}
+            </Button>
+          </CardActions>
+        )}
+      </Card>
+    </div>
   );
 };
 /* ===================================================================

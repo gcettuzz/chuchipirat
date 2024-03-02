@@ -79,8 +79,7 @@ const config = {
 
 export default class Firebase {
   emailAuthProvider: any;
-  auth: app.auth.Auth;
-  // auth2: app.auth.Auth;
+  auth: any;
   db: app.firestore.Firestore;
   analytics: app.analytics.Analytics;
   performance: app.performance.Performance;
@@ -317,7 +316,7 @@ export default class Firebase {
    */
   passwordUpdate = ({password}: PasswordUpdate): Promise<void> => {
     this.analytics.logEvent(FirebaseAnalyticEvent.userChangedPassword);
-    return this.auth.currentUser!.updatePassword(password);
+    return this.auth.currentUser.updatePassword(password);
   };
   /* =====================================================================
   /**
