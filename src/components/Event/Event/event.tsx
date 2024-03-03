@@ -1030,18 +1030,13 @@ const EventBase: React.FC<
     const menuplan = Menuplan.recalculatePortions({
       menuplan: state.menuplan,
       groupConfig: groupConfiguration,
+      firebase: firebase,
     });
 
     // neuer Menüplan speichern
     onMenuplanUpdate(menuplan);
 
     // Kein zurückschreiben in den State, da der Listener, das wieder erhält....
-
-    // // neue GroupConfig in State aufnehmen
-    // dispatch({
-    //   type: ReducerActions.GROUP_CONFIG_FETCH_SUCCESS,
-    //   payload: groupConfiguration,
-    // });
   };
   const onShoppingListUpdate = (shoppingList: ShoppingList) => {
     ShoppingList.save({

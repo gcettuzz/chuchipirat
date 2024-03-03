@@ -13,6 +13,7 @@ export enum FirebaseAnalyticEvent {
   eventGetHistory = "event_get_history",
   eventCookAdded = "event_cook_added",
   eventCookRemoved = "event_cook_removed",
+  eventGroupConifgRecalculated = "event_groupConfig_recalculated",
   userCreated = "user_created",
   userChangedEmail = "user_changed_email",
   userChangedPassword = "user_changed_password",
