@@ -1602,7 +1602,7 @@ export const RecipeIngredients = ({
           {TEXT.ORIGINAL}
           {"  "}
           <Box fontWeight="fontWeightBold" display="inline">
-            {recipe.portions}
+            {recipe?.portions}
           </Box>
           {"  "}
           {TEXT.PORTIONS}
@@ -1855,7 +1855,7 @@ export const RecipePreparation = ({recipe}: RecipePreparationProps) => {
         {TEXT.PREPARATION}
       </Typography>
       <Grid container spacing={2}>
-        {recipe.preparationSteps.order.map((preparationStepUid, counter) => {
+        {recipe?.preparationSteps.order.map((preparationStepUid, counter) => {
           let preparationStep: PreparationStep;
           let section: Section;
           if (

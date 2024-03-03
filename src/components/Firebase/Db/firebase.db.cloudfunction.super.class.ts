@@ -15,7 +15,7 @@ export enum CloudFunctionType {
   userPictureSrcUpdate = "userPictureSrcUpdate",
   recipeUpdate = "recipeUpdate",
   recipeDelete = "recipeDelete",
-  recipeTrace = "recipeTrace",
+  objectTrace = "objectTrace",
   productUpdate = "productUpdate",
   recipeReviewMailCommunityLeaders = "recipeReviewMailCommunityLeaders",
   requestPublishRecipe = "requestPublishRecipe",

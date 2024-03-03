@@ -12,7 +12,12 @@ import {
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
 import {UsedRecipeListEntry} from "../../Event/UsedRecipes/usedRecipes.class";
-import {Ingredient, PositionType} from "../../Recipe/recipe.class";
+import {
+  Ingredient,
+  PositionType,
+  RecipeMaterialPosition,
+  RecipeObjectStructure,
+} from "../../Recipe/recipe.class";
 
 export class FirebaseDbEventUsedRecipes extends FirebaseDbSuper {
   firebase: Firebase;
@@ -54,10 +59,12 @@ export class FirebaseDbEventUsedRecipes extends FirebaseDbSuper {
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
     const usedProducts: string[] = [];
+    const usedMaterials: string[] = [];
 
     Object.values(value.lists as UsedRecipeListEntry).forEach(
       (list: UsedRecipeListEntry) =>
-        Object.values(list.recipes).forEach((recipe) =>
+        Object.values(list.recipes).forEach((recipe) => {
+          // Produkte sammelnd
           Object.values(recipe.ingredients.entries).forEach((position) => {
             if (position.posType === PositionType.ingredient) {
               const ingredient = position as Ingredient;
@@ -65,8 +72,17 @@ export class FirebaseDbEventUsedRecipes extends FirebaseDbSuper {
                 usedProducts.push(ingredient.product.uid);
               }
             }
-          })
-        )
+          });
+          // Material sammeln
+          Object.values(
+            recipe.materials
+              .entries as RecipeObjectStructure<RecipeMaterialPosition>["entries"]
+          ).forEach((position) => {
+            if (!usedMaterials.includes(position.material.uid)) {
+              usedMaterials.push(position.material.uid);
+            }
+          });
+        })
     );
 
     return {
@@ -74,6 +90,7 @@ export class FirebaseDbEventUsedRecipes extends FirebaseDbSuper {
       lastChange: value.lastChange,
       lists: value.lists,
       usedProducts: usedProducts,
+      usedMaterials: usedMaterials,
     };
   }
   /* =====================================================================

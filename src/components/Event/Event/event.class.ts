@@ -441,7 +441,7 @@ export default class Event {
     eventData.dates = Event.deleteEmptyDates(eventData.dates);
     eventData = Event.prepareSave(eventData);
     Event.checkEventData(eventData);
-    console.log(localPicture);
+
     if (!eventData.uid) {
       newEvent = true;
       await firebase.event
@@ -744,12 +744,11 @@ export default class Event {
   static async uploadPicture({firebase, file, event, authUser}: UploadPicture) {
     let pictureSrc = "";
     // const eventDoc = firebase.eventDoc(event.uid);
-    console.log(file);
+
     await firebase.fileStore.events
       .uploadFile({file: file, filename: event.uid})
       .then(async (result) => {
         // Redimensionierte Varianten holen
-        console.log(result);
         await firebase.fileStore.events
           .getPictureVariants({
             uid: event.uid,

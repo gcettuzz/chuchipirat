@@ -12,6 +12,7 @@ import {
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
 import {ShoppingListEntry} from "../../Event/ShoppingList/shoppingListCollection.class";
+import {ItemType} from "../../Event/ShoppingList/shoppingList.class";
 export class FirebaseDbEventShoppingListCollection extends FirebaseDbSuper {
   firebase: Firebase;
   /* =====================================================================
@@ -54,12 +55,17 @@ export class FirebaseDbEventShoppingListCollection extends FirebaseDbSuper {
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
     const usedProducts: string[] = [];
+    const usedMaterials: string[] = [];
 
     Object.values(value.lists as ShoppingListEntry).forEach(
       (list: ShoppingListEntry) =>
-        Object.keys(list.trace).forEach((productUid) =>
-          usedProducts.push(productUid)
-        )
+        Object.entries(list.trace).forEach(([key, value]) => {
+          if (value[0].itemType == ItemType.food) {
+            usedProducts.push(key);
+          } else if (value[0].itemType == ItemType.material) {
+            usedMaterials.push(key);
+          }
+        })
     );
 
     return {
@@ -67,6 +73,7 @@ export class FirebaseDbEventShoppingListCollection extends FirebaseDbSuper {
       lists: value.lists,
       noOfLists: value.noOfLists,
       usedProducts: usedProducts,
+      usedMaterials: usedMaterials,
     };
   }
   /* =====================================================================

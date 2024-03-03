@@ -25,6 +25,7 @@ interface ItemAutocompleteProps {
     objectId: string
   ) => void;
   error: {isError: boolean; errorText: string};
+  allowCreateNewItem?: boolean;
 }
 interface filterHelpWithSortRank {
   uid: string;
@@ -58,6 +59,7 @@ const ItemAutocomplete = ({
   products,
   disabled,
   error,
+  allowCreateNewItem = true,
   onChange,
 }: ItemAutocompleteProps) => {
   // Handler für Zutaten/Produkt hinzufügen
@@ -67,7 +69,7 @@ const ItemAutocomplete = ({
     []
   );
 
-  if (items.length == 0) {
+  if (items.length == 0 && materials.length > 0 && products.length > 0) {
     const tempProducts: ProductItem[] = products.map((product) => ({
       ...product,
       itemType: ItemType.food,
@@ -76,7 +78,6 @@ const ItemAutocomplete = ({
       ...material,
       itemType: ItemType.material,
     }));
-
     // Ein Array mit beiden Elementen drin
     const tempItems = [...tempProducts, ...tempMaterials];
     Utils.sortArray({array: items, attributeName: "name"});
@@ -127,14 +128,16 @@ const ItemAutocomplete = ({
           ) === undefined &&
           !params.inputValue.endsWith(ADD)
         ) {
-          // Hinzufügen-Möglichkeit auch als Produkt reinschmuggeln
-          const newMaterial: MaterialItem = {
-            ...new Material(),
-            itemType: ItemType.material,
-          };
+          if (allowCreateNewItem) {
+            // Hinzufügen-Möglichkeit auch als Produkt reinschmuggeln
+            const newMaterial: MaterialItem = {
+              ...new Material(),
+              itemType: ItemType.material,
+            };
 
-          newMaterial.name = `"${params.inputValue}" ${ADD}`;
-          filtered.push(newMaterial);
+            newMaterial.name = `"${params.inputValue}" ${ADD}`;
+            filtered.push(newMaterial);
+          }
         }
         // So sortieren, dass Zutaten, die mit den gleichen Zeichen beginnen
         // vorher angezeigt werden (Salz vor Erdnüsse, gesalzen)

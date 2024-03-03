@@ -112,8 +112,8 @@ export const PAGE_SUBTITLE_SHOPPING_LIST = "";
 export const HELLO_NAME = (name: string) => `Hoi ${name}`;
 export const SHOW_US_WHO_YOU_ARE = "Zeig uns wer Du bist.";
 export const REAUTHENTICATE_DIALOG_TITLE = "Ausweis bitte...";
-export const PAGE_TITLE_ADMIN_WHERE_USED = "Trace";
-export const PAGE_SUBTITLE_ADMIN_WHERE_USED = "Wo bist du?";
+export const TRACE = "Trace";
+export const WHERE_ARE_YOUR = "Wo bist du?";
 export const TIME_TO_CLEAN_UP = "Zeit aufzuräumen";
 export const PAGE_TITLE_GLOBAL_SETTINGS = "Globale Einstellungen";
 export const REQUESTS = "Anfragen";
@@ -337,7 +337,6 @@ export const ROLE_TYPES = {
 export const ROLES_UPDATED_SUCCSESSFULLY = "Berechtigung wurde aktualisiert";
 export const YOU_CANT_UPDATE_YOUR_OWN_AUTHORIZATION =
   "Du kannst deine eigene Berechtigung nicht anpassen.";
-
 /* =====================================================================
 // Meldungen zur Gruppen-Konfiguration
 // ===================================================================== */
@@ -393,6 +392,7 @@ export const PRIVATE_RECIPES = "private Rezepte";
 export const MESSAGE_TO_REVIEW = "Nachricht für Review-Person";
 export const THANK_YOU_FOR_YOUR_RATING = "Danke für deine Bewertung";
 export const NEWEST_RECIPES = "Die neusten Rezepte";
+export const START_TRACE = "Trace starten";
 /* =====================================================================
 // Meldungen zum Produkt
 // ===================================================================== */
@@ -552,7 +552,7 @@ export const CONVERT_PRODUCT_TO_MATERIAL_EXPLANATION =
 export const MERGE_PRODUCT_A = "Produkt A";
 export const MERGE_PRODUCT_B = "Produkt B";
 export const CHANGED_DOCUMENTS = "Geänderte Dokumente";
-
+export const FOUND_DOCUMENTS = "Gefundene Dokumente";
 export const MERGE_ERROR_SAME_PRODUCTS =
   "Produkt A und Produkt B sind identisch. Ein Zusammenführen macht daher keinen Sinn.";
 export const GLOBAL_SETTINGS_ALLOW_SIGNUP_LABEL = "Neu-Anmeldung ermöglichen";
@@ -1052,6 +1052,7 @@ export const PORTIONS_RECALCULATED =
 export const RECIPE_WIHOUT_PORTIONPLAN =
   "Dieses Rezept besitzt keine Einplanung";
 export const AND = "und";
+export const OR = " oder";
 export const SAVE = "Speichern";
 export const OPEN = "Öffnen";
 export const MENUE_SELECTION = "Auswahl Menüs";

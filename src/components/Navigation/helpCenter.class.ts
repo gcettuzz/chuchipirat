@@ -99,7 +99,11 @@ export default class HelpCenter {
         break;
       case ROUTES.SYSTEM:
         subdirectory = "admin";
-        page = "admin";
+        page = "system";
+        break;
+      case ROUTES.SYSTEM_WHERE_USED:
+        subdirectory = "admin";
+        page = "where_used";
         break;
       default:
         console.info(path[1]);

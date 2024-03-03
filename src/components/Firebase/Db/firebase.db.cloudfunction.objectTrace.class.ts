@@ -3,7 +3,7 @@ import FirebaseDbCloudFunctionSuper, {
   CloudFunctionType,
 } from "./firebase.db.cloudfunction.super.class";
 
-export class FirebaseDbCloudFunctionRecipeTrace extends FirebaseDbCloudFunctionSuper {
+export class FirebaseDbCloudFunctionObjectTrace extends FirebaseDbCloudFunctionSuper {
   firebase: Firebase;
   /* =====================================================================
   // Constructor
@@ -17,20 +17,20 @@ export class FirebaseDbCloudFunctionRecipeTrace extends FirebaseDbCloudFunctionS
   // ===================================================================== */
   getDocument(uids: string[]) {
     return this.firebase.db.doc(
-      `_cloudFunctions/functions/recipeTrace/${uids[0]}`
+      `_cloudFunctions/functions/objectTrace/${uids[0]}`
     );
   }
   /* =====================================================================
   // Trigger für CloudFunction
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("_cloudFunctions/functions/recipeTrace");
+    return this.firebase.db.collection("_cloudFunctions/functions/objectTrace");
   }
   /* =====================================================================
   // CloudFunction Type zurückgeben
   // ===================================================================== */
   getCloudFunctionType(): CloudFunctionType {
-    return CloudFunctionType.recipeTrace;
+    return CloudFunctionType.objectTrace;
   }
 }
-export default FirebaseDbCloudFunctionRecipeTrace;
+export default FirebaseDbCloudFunctionObjectTrace;

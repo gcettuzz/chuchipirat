@@ -11,8 +11,8 @@ import {
   List,
   Container,
   useTheme,
-  Box,
   Link,
+  Box,
 } from "@material-ui/core";
 
 import {
@@ -470,7 +470,10 @@ const EventUsedRecipes = ({
               (mealRecipeUid) =>
                 !menuplan.mealRecipes[mealRecipeUid].recipe.recipeUid.includes(
                   "[DELETED]"
-                ) && (
+                ) &&
+                usedRecipes[
+                  menuplan.mealRecipes[mealRecipeUid].recipe.recipeUid
+                ] && (
                   <EventUsedMealRecipe
                     recipe={
                       usedRecipes[

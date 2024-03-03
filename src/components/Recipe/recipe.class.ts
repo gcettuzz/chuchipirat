@@ -35,6 +35,7 @@ import UnitConversion, {
   UnitConversionBasic,
   UnitConversionProducts,
 } from "../Unit/unitConversion.class";
+import Material from "../Material/material.class";
 
 export interface RecipeObjectStructure<T> {
   entries: {[key: string]: T};
@@ -303,7 +304,8 @@ export default class Recipe {
   menuTypes: MenuType[];
   outdoorKitchenSuitable: boolean;
   rating: Rating;
-  usedProducts: string[];
+  usedProducts?: Product["uid"][];
+  usedMaterials?: Material["uid"][];
   isInReview?: boolean;
   created: ChangeRecord;
   lastChange: ChangeRecord;
@@ -1831,7 +1833,7 @@ export default class Recipe {
   }: Scale) => {
     const scaledIngredients = {} as RecipeObjectStructure<Ingredient>;
 
-    Object.values(recipe.ingredients.entries).forEach((ingredient) => {
+    Object.values(recipe?.ingredients.entries).forEach((ingredient) => {
       if (ingredient.posType == PositionType.ingredient) {
         ingredient = ingredient as Ingredient;
 

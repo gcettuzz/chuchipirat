@@ -2,7 +2,7 @@ import Firebase from "../firebase.class";
 import FirebaseDbCloudFunctionUserPictureSrcUpdate from "./firebase.db.cloudfunction.userPictureSrcUpdate.class";
 import FirebaseDbCloudFunctionUserMottoUpdate from "./firebase.db.cloudfunction.userMottoUpdate.class";
 import FirebaseDbCloudFunctionRecipeUpdate from "./firebase.db.cloudfunction.recipeUpdate.class";
-import FirebaseDbCloudFunctionRecipeTrace from "./firebase.db.cloudfunction.recipeTrace.class";
+import FirebaseDbCloudFunctionObjectTrace from "./firebase.db.cloudfunction.objectTrace.class";
 import FirebaseDbCloudFunctionRecipeDelete from "./firebase.db.cloudfunction.recipeDelete.class";
 import FirebaseDbCloudFunctionMailcommunityLeaders from "./firebase.db.cloudfunction.mailCommunityLeaders.class";
 import FirebaseDbCloudFunctionRequestPublishRecipe from "./firebase.db.cloudfunction.requestPublishRecipe.class";
@@ -14,7 +14,7 @@ import FirebaseDbCloudFunctionProductUpdate from "./firebase.db.cloudfunction.pr
 import FirebaseDbCloudFunctionConvertProductToMaterial from "./firebase.db.cloudfunction.convertProductToMaterial.class";
 export class FirebaseDbCloudFunction {
   recipeUpdate: FirebaseDbCloudFunctionRecipeUpdate;
-  recipeTrace: FirebaseDbCloudFunctionRecipeTrace;
+  objectTrace: FirebaseDbCloudFunctionObjectTrace;
   recipeDelete: FirebaseDbCloudFunctionRecipeDelete;
   userMotto: FirebaseDbCloudFunctionUserMottoUpdate;
   updateUserDisplayName: FirebaseDbCloudFunctionUserDisplayNameUpdate;
@@ -31,7 +31,7 @@ export class FirebaseDbCloudFunction {
   // ===================================================================== */
   constructor(firebase: Firebase) {
     this.recipeUpdate = new FirebaseDbCloudFunctionRecipeUpdate(firebase);
-    this.recipeTrace = new FirebaseDbCloudFunctionRecipeTrace(firebase);
+    this.objectTrace = new FirebaseDbCloudFunctionObjectTrace(firebase);
     this.recipeDelete = new FirebaseDbCloudFunctionRecipeDelete(firebase);
 
     this.mailCommunityLeaders = new FirebaseDbCloudFunctionMailcommunityLeaders(

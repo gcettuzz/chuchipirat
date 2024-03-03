@@ -6,7 +6,7 @@ import Firebase from "../../Firebase/firebase.class";
 import Product from "../../Product/product.class";
 import Menuplan, {Menue} from "../Menuplan/menuplan.class";
 import Recipe from "../../Recipe/recipe.class";
-import ShoppingList, {ShoppingListItem} from "./shoppingList.class";
+import ShoppingList, {ItemType, ShoppingListItem} from "./shoppingList.class";
 import {
   UnitConversionBasic,
   UnitConversionProducts,
@@ -81,6 +81,7 @@ export interface ProductTrace {
   quantity: number;
   unit: Unit["key"];
   manualAdd?: boolean;
+  itemType: ItemType;
 }
 
 interface DeleteList {
@@ -127,6 +128,7 @@ interface AddTraceEntry {
   quantity: number;
   unit: Unit["key"];
   addedManually?: boolean;
+  itemType: ItemType;
 }
 
 interface DeleteTraceEntry {
@@ -141,6 +143,8 @@ export default class ShoppingListCollection {
   lastChange: ChangeRecord;
   eventUid: Event["uid"];
   usedProducts?: Product["uid"][];
+  usedMaterials?: Material["uid"][];
+
   /* =====================================================================
   // Konstruktor
   // ===================================================================== */
@@ -325,6 +329,7 @@ export default class ShoppingListCollection {
     quantity,
     unit,
     addedManually: addedManualy = false,
+    itemType,
   }: AddTraceEntry) => {
     if (!Object.prototype.hasOwnProperty.call(trace, item.uid)) {
       trace[item.uid] = [];
@@ -335,6 +340,7 @@ export default class ShoppingListCollection {
       recipe: recipe,
       quantity: quantity,
       unit: unit,
+      itemType: itemType,
     };
     if (planedPortions) {
       shoppingListItem.planedPortions = planedPortions;

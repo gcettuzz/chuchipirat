@@ -255,6 +255,7 @@ export default class Menuplan {
   products: Products;
   usedRecipes?: Recipe["uid"][];
   usedProducts?: Product["uid"][];
+  usedMaterials?: Material["uid"][];
 
   /* =====================================================================
    // Konstruktor

@@ -17,6 +17,7 @@ import Recipe, {RecipeMaterialPosition} from "../../Recipe/recipe.class";
 import {ProductTrace} from "../ShoppingList/shoppingListCollection.class";
 import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
 import Stats, {StatsField} from "../../Shared/stats.class";
+import {ItemType} from "../ShoppingList/shoppingList.class";
 
 export interface MaterialListEntry {
   properties: ListProperties;
@@ -420,6 +421,7 @@ export default class MaterialList {
         quantity: quantity,
         unit: "",
         manualAdd: manuelAdd,
+        itemType: ItemType.material,
       });
     } else {
       list.push({
@@ -436,6 +438,7 @@ export default class MaterialList {
             quantity: quantity,
             unit: "",
             manualAdd: manuelAdd,
+            itemType: ItemType.material,
           },
         ],
       });

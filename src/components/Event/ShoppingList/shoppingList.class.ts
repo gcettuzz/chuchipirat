@@ -226,6 +226,7 @@ export default class ShoppingList {
                       menueplan.mealRecipes[mealRecipeUid].totalPortions,
                     quantity: ingredient.quantity,
                     unit: ingredient.unit,
+                    itemType: ItemType.food,
                   });
                 }
               );
@@ -266,6 +267,7 @@ export default class ShoppingList {
                         menueplan.mealRecipes[mealRecipeUid].totalPortions,
                       quantity: recipeMaterial.quantity,
                       unit: "",
+                      itemType: ItemType.material,
                     });
                   }
                 }
@@ -299,6 +301,7 @@ export default class ShoppingList {
               recipe: {} as Recipe,
               quantity: menuPlanProductEntry.totalQuantity,
               unit: menuPlanProductEntry.unit,
+              itemType: ItemType.food,
             });
           });
 
@@ -330,6 +333,7 @@ export default class ShoppingList {
                   recipe: {} as Recipe,
                   quantity: menuPlanMaterialEntry.totalQuantity,
                   unit: menuPlanMaterialEntry.unit,
+                  itemType: ItemType.material,
                 });
               }
             }

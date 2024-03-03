@@ -12,6 +12,7 @@ import {
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
 import {
+  Materials,
   MealRecipeDeletedPrefix,
   MealRecipes,
   Products,
@@ -63,6 +64,7 @@ export class FirebaseDbEventMenuplan extends FirebaseDbSuper {
     // Array.
     const usedRecipes: string[] = [];
     const usedProducts: string[] = [];
+    const usedMaterials: string[] = [];
 
     Object.values(value.mealRecipes as MealRecipes).forEach((mealRecipe) => {
       if (!mealRecipe.recipe.recipeUid.includes(MealRecipeDeletedPrefix)) {
@@ -74,6 +76,11 @@ export class FirebaseDbEventMenuplan extends FirebaseDbSuper {
     Object.values(value.products as Products).forEach((menuProduct) => {
       if (!usedProducts.includes(menuProduct.productUid)) {
         usedProducts.push(menuProduct.productUid);
+      }
+    });
+    Object.values(value.materials as Materials).forEach((menuMaterial) => {
+      if (!usedMaterials.includes(menuMaterial.materialUid)) {
+        usedMaterials.push(menuMaterial.materialUid);
       }
     });
 
@@ -90,6 +97,7 @@ export class FirebaseDbEventMenuplan extends FirebaseDbSuper {
       lastChange: value.lastChange,
       usedRecipes: usedRecipes,
       usedProducts: usedProducts,
+      usedMaterials: usedMaterials,
     };
   }
   /* =====================================================================
