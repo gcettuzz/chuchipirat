@@ -14,6 +14,7 @@ import EventGroupConfiguration, {
 import RecipeShort from "../../Recipe/recipeShort.class";
 import Unit from "../../Unit/unit.class";
 import _ from "lodash";
+import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
 interface MenuplanObjectStructure<T> {
   entries: {[key: string]: T};
   order: string[];
@@ -210,6 +211,7 @@ interface AddPlanToGood<T> {
 }
 
 interface RecalculatePortions {
+  firebase: Firebase;
   menuplan: Menuplan;
   groupConfig: EventGroupConfiguration;
 }
@@ -729,6 +731,7 @@ export default class Menuplan {
    * @returns Menuüplan
    */
   static recalculatePortions = ({
+    firebase,
     menuplan,
     groupConfig,
   }: RecalculatePortions) => {
@@ -808,6 +811,11 @@ export default class Menuplan {
         (plan) => plan.diet != "" && plan.intolerance != ""
       );
     });
+
+    // Analytics mitführen
+    firebase.analytics.logEvent(
+      FirebaseAnalyticEvent.eventGroupConifgRecalculated
+    );
 
     return menuplan;
   };
