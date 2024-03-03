@@ -32,7 +32,7 @@ export class FirebaseDbCloudFunctionRecipeUpdate extends FirebaseDbCloudFunction
   // CloudFunction Type zurückgeben
   // ===================================================================== */
   getCloudFunctionType(): CloudFunctionType {
-    return CloudFunctionType.recipeTrace;
+    return CloudFunctionType.recipeUpdate;
   }
 }
 export default FirebaseDbCloudFunctionRecipeUpdate;

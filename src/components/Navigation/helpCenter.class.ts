@@ -22,7 +22,7 @@ export default class HelpCenter {
     const path = actualPath.split("/");
     let subdirectory = "";
     let page = "";
-
+    console.log(path);
     switch (`/${path[1]}`) {
       case ROUTES.HOME:
         subdirectory = "home";
@@ -99,11 +99,18 @@ export default class HelpCenter {
         break;
       case ROUTES.SYSTEM:
         subdirectory = "admin";
-        page = "system";
-        break;
-      case ROUTES.SYSTEM_WHERE_USED:
-        subdirectory = "admin";
-        page = "where_used";
+        if (path.length > 2) {
+          switch (actualPath) {
+            case ROUTES.SYSTEM_WHERE_USED:
+              page = "where_used";
+              break;
+            default:
+              console.info(actualPath);
+              page = "system";
+          }
+        } else {
+          page = "system";
+        }
         break;
       default:
         console.info(path[1]);
