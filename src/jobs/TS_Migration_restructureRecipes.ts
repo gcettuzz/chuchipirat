@@ -59,12 +59,12 @@ export async function restructureRecipeDocuments(firebase: Firebase) {
             posType: PositionType.ingredient,
             product: ingredient.product,
             quantity: !isNaN(ingredient.quantity)
-              ? parseInt(`${ingredient.quantity}`)
+              ? parseFloat(`${ingredient.quantity}`)
               : ingredient.quantity,
             unit: ingredient.unit,
             detail: ingredient.detail,
             scalingFactor: !isNaN(ingredient.scalingFactor)
-              ? parseInt(`${ingredient.scalingFactor}`)
+              ? parseFloat(`${ingredient.scalingFactor}`)
               : ingredient.scalingFactor,
           };
 
