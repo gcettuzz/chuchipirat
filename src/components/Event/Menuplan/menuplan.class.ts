@@ -159,6 +159,14 @@ interface GetMenuplan {
   uid: string;
   callback: (menuplan: Menuplan) => void;
 }
+interface GetMealsOfMenues {
+  menuplan: Menuplan;
+  menues: Menue["uid"][];
+}
+interface GetMenuesOfMeals {
+  menuplan: Menuplan;
+  meals: Meal["uid"][];
+}
 
 interface Save {
   menuplan: Menuplan;
@@ -625,6 +633,45 @@ export default class Menuplan {
       menue.materialOrder.includes(materialUid)
     );
     return menue;
+  };
+  // ===================================================================== */
+  /**
+   * Die Menüs bestimmen, die Mahlzeiten bestimmen, in denen die
+   * übergebenen Menüs sind.
+   * @param Objekt - Menüplan und Menues (als Array)
+   * @returns Array mit Meal-UID
+   */
+  static getMealsOfMenues = ({menuplan, menues}: GetMealsOfMenues) => {
+    const mealsOfMenues: Meal["uid"][] = [];
+
+    menues.forEach((menueUid) => {
+      const meal = Object.values(menuplan.meals).find((meal) =>
+        meal.menuOrder.includes(menueUid)
+      );
+
+      if (meal && !mealsOfMenues.includes(meal.uid)) {
+        mealsOfMenues.push(meal.uid);
+      }
+    });
+
+    return mealsOfMenues;
+  };
+  // ===================================================================== */
+  /**
+   * Die Menüs bestimmen, die in den Übergebenen Mahlzeiten sind.
+   * @param Objekt - Menüplan und Mahlzeiten (als Array)
+   * @returns Array mit Menue-UID
+   */
+  static getMenuesOfMeals = ({menuplan, meals}: GetMenuesOfMeals) => {
+    const menuesOfMeals: Menue["uid"][] = [];
+
+    meals.forEach((mealUid) => {
+      menuplan.meals[mealUid].menuOrder.forEach((menueUid) =>
+        menuesOfMeals.push(menueUid)
+      );
+    });
+
+    return menuesOfMeals;
   };
   // ===================================================================== */
   /**

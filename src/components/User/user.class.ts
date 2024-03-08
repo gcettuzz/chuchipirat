@@ -47,7 +47,6 @@ export interface UserOverviewStructure {
   memberId: UserPublicProfile["memberId"];
   memberSince: Date;
   uid?: User["uid"];
-  disabled?: User["disabled"];
 }
 
 export interface UserFullProfile extends User, UserPublicProfile {}
@@ -134,7 +133,6 @@ export default class User {
   lastLogin: Date;
   noLogins: number;
   roles: Role[];
-  disabled?: boolean;
   /* =====================================================================
   // Konstruktor
   // ===================================================================== */

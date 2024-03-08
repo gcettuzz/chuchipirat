@@ -5,7 +5,7 @@ import {ChangeRecord} from "../../Shared/global.interface";
 import Utils from "../../Shared/utils.class";
 import Event from "../Event/event.class";
 import _ from "lodash";
-import Menuplan from "../Menuplan/menuplan.class";
+import Menuplan, {Meal, Menue} from "../Menuplan/menuplan.class";
 
 import {ERROR_NO_RECIPES_FOUND as TEXT_ERROR_NO_RECIPES_FOUND} from "../../../constants/text";
 
@@ -31,7 +31,7 @@ interface GetUsedRecipesListener {
 
 interface CreateNewList {
   name: string;
-  selectedMenues: string[];
+  selectedMenues: Menue["uid"][];
   menueplan: Menuplan;
   firebase: Firebase;
   authUser: AuthUser;
@@ -56,7 +56,8 @@ interface EditListName {
 interface ListProperties {
   uid: string;
   name: string;
-  selectedMenues: string[];
+  selectedMeals: Meal["uid"][];
+  selectedMenues: Menue["uid"][];
   generated: ChangeRecord;
 }
 interface _DefineSelectedRecipes {
@@ -100,7 +101,6 @@ export default class UsedRecipes {
    */
   static save = async ({usedRecipes, firebase, authUser}: Save) => {
     usedRecipes.lastChange = Utils.createChangeRecord(authUser);
-
     firebase.event.usedRecipes
       .set({
         uids: [usedRecipes.uid],
@@ -177,9 +177,16 @@ export default class UsedRecipes {
   }: CreateNewList) => {
     const listEntry = {} as UsedRecipeListEntry;
 
+    // Es wird mit den Menüs gearbeitet. Aber gespeichert werden die
+    // Mahlzeiten. --> Wenn die Menüs verschoben werden, müssen die
+    // Augrund der gewählten Mahlzeit neu bestimmt werden.
     listEntry.properties = {
       uid: Utils.generateUid(5),
       name: name,
+      selectedMeals: Menuplan.getMealsOfMenues({
+        menuplan: menueplan,
+        menues: selectedMenues,
+      }),
       selectedMenues: selectedMenues,
       generated: Utils.createChangeRecord(authUser),
     };
@@ -232,6 +239,33 @@ export default class UsedRecipes {
         date: new Date(),
       };
 
+      // überprüfen ob die gewählten Menüs auch in den Mahlzeiten sind.
+      // Wenn die Menüs im Menüplan verschoben werden, müssen die Menüs neu definiert werden
+      // Anhand der Mahlzeiten (die mitgespeichert werden)
+      if (
+        !Utils.areStringArraysEqual(
+          list.properties.selectedMeals,
+          Menuplan.getMealsOfMenues({
+            menuplan: menueplan,
+            menues: list.properties.selectedMenues,
+          })
+        ) ||
+        // Sind neue Menü dazugekommen/ oder wurden Menüs aus der
+        // Auswahl entfernt
+        list.properties.selectedMenues.length !==
+          Menuplan.getMenuesOfMeals({
+            menuplan: menueplan,
+            meals: list.properties.selectedMeals,
+          }).length
+      ) {
+        // Die Menüs wurden geändert. Daher müssen wir jetzt
+        // die Menüs neu bestimmen anhand der Mahlzeiten
+        list.properties.selectedMenues = Menuplan.getMenuesOfMeals({
+          menuplan: menueplan,
+          meals: list.properties.selectedMeals,
+        });
+      }
+
       usedRecipesPerList[list.properties.uid] =
         UsedRecipes.defineSelectedRecipes({
           selectedMenues: list.properties.selectedMenues,
@@ -240,11 +274,14 @@ export default class UsedRecipes {
 
       recipeList = recipeList.concat(usedRecipesPerList[list.properties.uid]);
     });
-
     // Dupplikate löschen und alle Rezepte holen
     // Dies ist nötig, weil in verschiedenen Listen, das gleiche Rezept
     // mehrmals vorkommen kann. Wir wollen es aber nur einmal lesen.
     recipeList = UsedRecipes._getUniqRecipes(recipeList);
+
+    if (recipeList.length === 0) {
+      throw new Error(TEXT_ERROR_NO_RECIPES_FOUND);
+    }
 
     await Recipe.getMultipleRecipes({
       firebase: firebase,
@@ -253,6 +290,7 @@ export default class UsedRecipes {
       .then((result) => {
         //Hier nochmals darüberloopen und benötigte Rezepte hinzufügen....
         Object.values(usedRecipes.lists).forEach((list) => {
+          list.recipes = {};
           usedRecipesPerList[list.properties.uid].map(
             (recipe) => (list.recipes[recipe.uid] = result[recipe.uid])
           );

@@ -616,9 +616,9 @@ const RecipeEdit = ({
   });
 
   const {customDialog} = useCustomDialog();
-  if (!state.recipe.name && dbRecipe.name) {
+  if (!state.recipe.name && dbRecipe.name && !isEmbedded) {
     document.title = dbRecipe.name;
-  } else {
+  } else if (!isEmbedded) {
     document.title = state.recipe.name;
   }
 
@@ -822,7 +822,6 @@ const RecipeEdit = ({
       if (product.name.endsWith(TEXT.ADD)) {
         // Begriff Hinzufügen und Anführzungszeichen entfernen
         const productName = product.name.match('".*"')![0].slice(1, -1);
-
         // Neues Produkt. PopUp Anzeigen und nicht weiter
         setProductAddPopupValues({
           ...productAddPopupValues,
@@ -1357,9 +1356,7 @@ const RecipeEdit = ({
         break;
     }
   };
-  /* ------------------------------------------
-  // XXX
-  // ------------------------------------------ */
+
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <React.Fragment>
@@ -1939,7 +1936,7 @@ const RecipeIngredients = ({
             size="small"
           />
         </Grid>
-        {/* Zutaten auflsiten */}
+        {/* Zutaten auflisten */}
         <Droppable
           droppableId={"ingredients"}
           type={DragDropTypes.INGREDIENT}

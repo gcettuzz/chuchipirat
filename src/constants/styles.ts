@@ -299,6 +299,16 @@ const useStyles = makeStyles((theme) => ({
   goBackButtonIcon: {
     marginLeft: theme.spacing(0.9),
   },
+  closeDrawerIconButton: {
+    flexGrow: 1,
+    position: "fixed",
+    margin: theme.spacing(1),
+    top: theme.spacing(1),
+    right: theme.spacing(1),
+    zIndex: 1000,
+    background: alpha(theme.palette.background.paper, 0.7), // color: theme.palette.primary.main,
+  },
+
   title: {
     flexGrow: 1,
   },
@@ -511,6 +521,7 @@ const useStyles = makeStyles((theme) => ({
     alignContent: "flex-end",
     // paddingRight: "2%",
   },
+
   /* ------------------------------------------
   // Menüplan
   // ------------------------------------------ */
@@ -525,8 +536,20 @@ const useStyles = makeStyles((theme) => ({
   },
   menuplanRow: {
     display: "flex",
+    flexDirection: "row",
     padding: 0,
   },
+  menuplanRowOnDrag: {
+    display: "flex",
+    flexDirection: "row",
+    padding: 0,
+  },
+  menuplanRowNoDrag: {
+    display: "flex",
+    flexDirection: "row",
+    padding: 0,
+  },
+
   menuplanItem: {
     flexGrow: 1,
     flexBasis: 0,
@@ -578,6 +601,14 @@ const useStyles = makeStyles((theme) => ({
     transition: "background-color 0.2s ease",
   },
   ListNoDrop: {
+    backgroundColor: "inherit",
+    transition: "background-color 0.2s ease",
+  },
+  mealRowOnDrop: {
+    backgroundColor: theme.palette.action.hover,
+    transition: "background-color 0.2s ease",
+  },
+  mealRowNoDrop: {
     backgroundColor: "inherit",
     transition: "background-color 0.2s ease",
   },

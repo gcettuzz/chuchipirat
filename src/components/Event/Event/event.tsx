@@ -768,7 +768,6 @@ const EventBase: React.FC<
     // ShoppingList-Collection
     if (
       activeTab == EventTabs.shoppingList &&
-      !state.shoppingListCollection.eventUid &&
       state.event.refDocuments?.includes(EventRefDocuments.shoppingList)
     ) {
       let unsubscribe: (() => void) | undefined;
@@ -929,7 +928,6 @@ const EventBase: React.FC<
     // Verwendete Rezepte
     if (
       activeTab == EventTabs.usedRecipes &&
-      !state.usedRecipes.uid &&
       state.event.refDocuments?.includes(EventRefDocuments.usedRecipes)
     ) {
       let unsubscribe: () => void;
@@ -959,7 +957,6 @@ const EventBase: React.FC<
     // Materialliste
     if (
       activeTab == EventTabs.materialList &&
-      !state.materialList.uid &&
       state.event.refDocuments?.includes(EventRefDocuments.materialList)
     ) {
       let unsubscribe: () => void;
@@ -1494,7 +1491,7 @@ const EventBase: React.FC<
             ? TEXT_MATERIAL_LIST
             : activeTab === EventTabs.eventInfo
             ? TEXT_EVENT_INFO_SHORT
-            : ""
+            : "xx"
         }`}
       />
       {/* ===== BODY ===== */}
@@ -1559,12 +1556,13 @@ const EventBase: React.FC<
         </div>
         {activeTab == EventTabs.menuplan ? (
           <Container
-            maxWidth="lg"
+            maxWidth="xl"
             style={{
               overflowX: "scroll",
-              display: "flex",
-              flexDirection: "row",
+              // display: "flex",
+              // flexDirection: "row",
             }}
+            id="menuplan_page_containter"
           >
             <MenuplanPage
               menuplan={state.menuplan}

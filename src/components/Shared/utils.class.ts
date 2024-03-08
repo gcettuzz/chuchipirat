@@ -475,4 +475,25 @@ export default class Utils {
       fromDisplayName: authUser.publicProfile.displayName,
     } as ChangeRecord;
   };
+  // ===================================================================== */
+  /**
+   * Überprüfen ob zwei Array die gleichen Werte enthalen (egal in welcher
+   * Reihenfolge).
+   * @result Boolean
+   */
+  static areStringArraysEqual = (array1: string[], array2: string[]) => {
+    if (array1.length !== array2.length) {
+      return false; // Die Arrays haben unterschiedliche Längen, daher können sie nicht identisch sein.
+    }
+
+    const sortedArray1 = array1.slice().sort();
+    const sortedArray2 = array2.slice().sort();
+    for (let i = 0; i < sortedArray1.length; i++) {
+      if (sortedArray1[i] !== sortedArray2[i]) {
+        return false; // Einträge an der gleichen Position sind unterschiedlich, daher sind die Arrays nicht identisch.
+      }
+    }
+
+    return true; // Die Arrays sind identisch.
+  };
 }

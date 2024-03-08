@@ -590,6 +590,7 @@ export default class Recipe {
       recipe: recipe,
       products: products,
     });
+
     if (recipe.type === RecipeType.public) {
       await Recipe.savePublic({
         firebase: firebase,
@@ -903,6 +904,11 @@ export default class Recipe {
     if (Object.values(recipe.materials.entries).length > 0) {
       recipe.materials = Recipe.deleteEmptyMaterials(recipe.materials);
     }
+    if (Object.values(recipe.preparationSteps.entries).length > 0) {
+      recipe.preparationSteps = Recipe.deleteEmptyPreparationSteps(
+        recipe.preparationSteps
+      );
+    }
 
     // vorbereiten der Diät-Eigenschaften.
     recipe.dietProperties = Recipe.defineDietProperties({
@@ -1005,7 +1011,6 @@ export default class Recipe {
     order,
   }: DefinePostionSectionAdjusted) {
     let positionCounter = 0;
-
     for (let i = 0; i < order.length; i++) {
       if (entries[order[i]].posType !== PositionType.section) {
         positionCounter++;
@@ -1131,18 +1136,28 @@ export default class Recipe {
   // leere Zubereitungsschritte entfernen
   // ===================================================================== */
   static deleteEmptyPreparationSteps(
-    preparationSteps: RecipeObjectStructure<PreparationStep>
+    preparationSteps: RecipeObjectStructure<PreparationStep | Section>
   ) {
     const preparationStepUids = [...preparationSteps.order];
+    const cleanedPreparationSteps = _.cloneDeep(preparationSteps);
+
     preparationStepUids.forEach((preparationStepUid) => {
-      if (!preparationSteps.entries[preparationStepUid].step) {
-        delete preparationSteps.entries[preparationStepUid];
-        preparationSteps.order = preparationSteps.order.filter(
-          (orderUid) => orderUid !== preparationStepUid
-        );
+      if (
+        cleanedPreparationSteps.entries[preparationStepUid].posType ==
+        PositionType.preparationStep
+      ) {
+        const preparationStep = cleanedPreparationSteps.entries[
+          preparationStepUid
+        ] as PreparationStep;
+        if (preparationStep.step == "") {
+          delete cleanedPreparationSteps.entries[preparationStepUid];
+          cleanedPreparationSteps.order = cleanedPreparationSteps.order.filter(
+            (orderUid) => orderUid !== preparationStepUid
+          );
+        }
       }
     });
-    return preparationSteps;
+    return cleanedPreparationSteps;
   }
   /* =====================================================================
   // leere Materiale entfernen
@@ -1515,7 +1530,6 @@ export default class Recipe {
     ) {
       throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
     }
-
     if (type === RecipeType.public) {
       await firebase.recipePublic
         .read<Recipe>({uids: [uid]})

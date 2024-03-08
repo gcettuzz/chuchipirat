@@ -22,7 +22,6 @@ export default class HelpCenter {
     const path = actualPath.split("/");
     let subdirectory = "";
     let page = "";
-    console.log(path);
     switch (`/${path[1]}`) {
       case ROUTES.HOME:
         subdirectory = "home";
@@ -117,6 +116,10 @@ export default class HelpCenter {
         subdirectory = "";
     }
 
-    return `${HELPCENTER_URL}/docs/${subdirectory}/${page}`;
+    if (subdirectory === "" && page === "") {
+      return `${HELPCENTER_URL}`;
+    } else {
+      return `${HELPCENTER_URL}/docs/${subdirectory}/${page}`;
+    }
   };
 }

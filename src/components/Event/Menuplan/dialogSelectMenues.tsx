@@ -34,7 +34,7 @@ import {
 // ============================== Global =============================
 // =================================================================== */
 interface DecodeSeletedMenues {
-  selectedMenues: string[];
+  selectedMeals: string[];
   menuplan: Menuplan;
 }
 
@@ -42,8 +42,8 @@ interface TimeSlice {
   from: {date: Date | null; mealType: MealType["uid"]};
   to: {date: Date | null; mealType: MealType["uid"]};
 }
-export const decodeSelectedMenues = ({
-  selectedMenues,
+export const decodeSelectedMeals = ({
+  selectedMeals,
   menuplan,
 }: DecodeSeletedMenues) => {
   // Über den Menüplan in der Reihenfolge loopen und ein Array
@@ -65,32 +65,30 @@ export const decodeSelectedMenues = ({
       );
 
       if (meal) {
-        meal.menuOrder.forEach((menuUid) => {
-          if (selectedMenues.includes(menuUid)) {
-            if (!openTimeSlice) {
-              // Neuer Range erfassen
-              timeslice.from = {
-                date: date,
-                mealType: menuplan.mealTypes.entries[mealTypeUid].name,
-              };
-            }
-            openTimeSlice = true;
-          } else {
-            if (openTimeSlice) {
-              // abschliessen
-              timeslice.to = {
-                date: preRecord.date,
-                mealType: menuplan.mealTypes.entries[preRecord.mealType].name,
-              };
-              selectedRange.push(timeslice);
-              timeslice = {
-                from: {date: null, mealType: ""},
-                to: {date: null, mealType: ""},
-              };
-              openTimeSlice = false;
-            }
+        if (selectedMeals?.includes(meal.uid)) {
+          if (!openTimeSlice) {
+            // Neuer Range erfassen
+            timeslice.from = {
+              date: date,
+              mealType: menuplan.mealTypes.entries[mealTypeUid].name,
+            };
           }
-        });
+          openTimeSlice = true;
+        } else {
+          if (openTimeSlice) {
+            // abschliessen
+            timeslice.to = {
+              date: preRecord.date,
+              mealType: menuplan.mealTypes.entries[preRecord.mealType].name,
+            };
+            selectedRange.push(timeslice);
+            timeslice = {
+              from: {date: null, mealType: ""},
+              to: {date: null, mealType: ""},
+            };
+            openTimeSlice = false;
+          }
+        }
       }
       preRecord.mealType = mealTypeUid;
       preRecord.date = date;
@@ -186,14 +184,19 @@ export const DialogSelectMenues = ({
     });
     return initialValues;
   };
-  if (
-    !dialogValues ||
-    (Object.keys(dialogValues).length == 0 &&
-      Object.keys(preSelectedMenue).length > 0)
+
+  if (!open && dialogValues !== null && Object.keys(dialogValues).length > 0) {
+    setDialogValues(null);
+  } else if (
+    open &&
+    (dialogValues == null ||
+      (Object.keys(dialogValues).length == 0 &&
+        Object.keys(preSelectedMenue).length > 0))
   ) {
     initialDialogValues = createInitialValues(menues);
     setDialogValues({...initialDialogValues, ...preSelectedMenue});
   } else if (
+    dialogValues !== null &&
     Object.values(dialogValues).filter((menue) => menue === true).length == 0 &&
     Object.keys(preSelectedMenue).length > 0
   ) {
@@ -210,11 +213,22 @@ export const DialogSelectMenues = ({
     }
 
     const newDialogValues = {...dialogValues};
+    let newValueToSet = true;
+
+    // ausschlaggebend ist der erste Eintrag.
+    // dieser wird für alle an diesem Tag umgekehrt.
+    const meal = Object.values(meals).find(
+      (meal) =>
+        meal.date == event.currentTarget.id && meal.menuOrder.length !== 0
+    );
+    if (meal) {
+      newValueToSet = !dialogValues![meal.menuOrder[0]];
+    }
 
     Object.values(meals).forEach((meal) => {
       if (meal.date == event.currentTarget.id) {
         meal.menuOrder.forEach((menueUid) => {
-          newDialogValues[menueUid] = true;
+          newDialogValues[menueUid] = newValueToSet;
         });
       }
     });
@@ -223,9 +237,13 @@ export const DialogSelectMenues = ({
   const selectAllMenues = () => {
     const newDialogValues = {...dialogValues};
 
+    // Hier zählt der erste Eintrag um bestimmten wie die anderen
+    // gesetzt werden.
+    const newValueToSet = !Object.values(dialogValues!)[0];
+
     Object.values(meals).forEach((meal) => {
       meal.menuOrder.forEach((menueUid) => {
-        newDialogValues[menueUid] = true;
+        newDialogValues[menueUid] = newValueToSet;
       });
     });
     setDialogValues(newDialogValues);
@@ -267,8 +285,8 @@ export const DialogSelectMenues = ({
         selectedMenues[menueUid] = true;
       }
     });
-    setDialogValues(null);
     // setDialogValues(createInitialValues(menues));
+    setDialogValues(null);
     onConfirm(selectedMenues);
   };
   const onCloseClick = () => {
@@ -276,7 +294,6 @@ export const DialogSelectMenues = ({
     setDialogValues(null);
     onClose();
   };
-
   return (
     <Dialog open={open} maxWidth="xl">
       <DialogTitle>{title}</DialogTitle>

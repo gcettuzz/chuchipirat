@@ -494,31 +494,35 @@ export const RecipePreparation = ({recipe}: RecipePreparationProps) => {
 
         return (
           <React.Fragment key={"step_row_" + counter}>
-            {recipe.preparationSteps.entries[stepUid].posType ==
-            PositionType.section ? (
-              <RecipeSection
-                section={section}
-                key={"ingredientBlock_" + step.uid + "_section_" + section.uid}
-              />
-            ) : (
-              <View
-                style={styles.tableRow}
-                key={"preparationStep_" + recipe.uid + "_" + step.uid}
-              >
+            {step.step !== "" ? (
+              recipe.preparationSteps.entries[stepUid].posType ==
+              PositionType.section ? (
+                <RecipeSection
+                  section={section}
+                  key={
+                    "ingredientBlock_" + step.uid + "_section_" + section.uid
+                  }
+                />
+              ) : (
                 <View
-                  style={styles.tableColStepPos}
-                  key={"preparationStepPos_" + recipe.uid + "_" + step.uid}
+                  style={styles.tableRow}
+                  key={"preparationStep_" + recipe.uid + "_" + step.uid}
                 >
-                  <Text style={styles.tableCell}>{counter + 1}</Text>
+                  <View
+                    style={styles.tableColStepPos}
+                    key={"preparationStepPos_" + recipe.uid + "_" + step.uid}
+                  >
+                    <Text style={styles.tableCell}>{counter + 1}</Text>
+                  </View>
+                  <View
+                    style={styles.tableColStep}
+                    key={"preparationStepText_" + recipe.uid + "_" + step.uid}
+                  >
+                    <Text style={styles.tableCell}>{step.step}</Text>
+                  </View>
                 </View>
-                <View
-                  style={styles.tableColStep}
-                  key={"preparationStepText_" + recipe.uid + "_" + step.uid}
-                >
-                  <Text style={styles.tableCell}>{step.step}</Text>
-                </View>
-              </View>
-            )}
+              )
+            ) : null}
           </React.Fragment>
         );
       })}

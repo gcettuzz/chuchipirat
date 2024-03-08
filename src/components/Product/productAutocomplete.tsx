@@ -20,7 +20,7 @@ interface ProductAutocompleteProps {
   label?: string;
   onChange: (
     event: React.ChangeEvent<HTMLInputElement>,
-    newValue: string | Product,
+    newValue: string | Product | null,
     action: AutocompleteChangeReason,
     objectId: string
   ) => void;
@@ -65,7 +65,7 @@ const ProductAutocomplete = ({
       options={products}
       autoSelect
       autoHighlight
-      getOptionSelected={(optionProduct) => optionProduct.name === product.name}
+      getOptionSelected={(option, value) => option.uid == value.uid}
       getOptionLabel={(option) => {
         if (typeof option === "string") {
           return option;
@@ -80,7 +80,6 @@ const ProductAutocomplete = ({
         return option.name;
       }}
       onChange={(event, newValue, action) =>
-        newValue &&
         onChange(
           event as unknown as React.ChangeEvent<HTMLInputElement>,
           newValue,

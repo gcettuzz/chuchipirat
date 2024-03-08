@@ -43,6 +43,7 @@ import {
   MANUALLY_ADDED_PRODUCTS as TEXT_MANUALLY_ADDED_PRODUCTS,
   KEEP as TEXT_KEEP,
   DELETE as TEXT_DELETE,
+  ERROR_NO_MATERIALS_FOUND as TEXT_ERROR_NO_MATERIALS_FOUND,
 } from "../../../constants/text";
 
 import {MoreVert as MoreVertIcon} from "@material-ui/icons";
@@ -58,7 +59,7 @@ import AlertMessage from "../../Shared/AlertMessage";
 import {
   DialogSelectMenues,
   DialogSelectMenuesForRecipeDialogValues,
-  decodeSelectedMenues,
+  decodeSelectedMeals,
 } from "../Menuplan/dialogSelectMenues";
 import Menuplan, {
   MealRecipe,
@@ -91,6 +92,7 @@ import Material from "../../Material/material.class";
 import {
   DialogTraceItem,
   EventListCard,
+  OperationType,
   PositionContextMenu,
 } from "../Event/eventSharedComponents";
 import DialogMaterial, {
@@ -161,6 +163,7 @@ const usedRecipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.SHOW_LOADING:
       return {
         ...state,
+        error: null,
         isLoading: action.payload.isLoading,
       };
     case ReducerActions.SET_SELECTED_LIST_ITEM:
@@ -197,6 +200,13 @@ const usedRecipesReducer = (state: State, action: DispatchAction): State => {
       console.error("Unbekannter ActionType: ", action.type);
       throw new Error();
   }
+};
+
+const DIALOG_SELECT_MENUE_DATA_INITIAL_DATA = {
+  open: false,
+  menues: {} as DialogSelectMenuesForRecipeDialogValues,
+  selectedListUid: "",
+  operationType: OperationType.none,
 };
 /* ===================================================================
 // =============================== Base ==============================
@@ -240,10 +250,9 @@ const EventMaterialListPage = ({
     usedRecipesReducer,
     inititialState
   );
-  const [dialogSelectMenueData, setDialogSelectMenueData] = React.useState({
-    open: false,
-    menues: {} as DialogSelectMenuesForRecipeDialogValues,
-  });
+  const [dialogSelectMenueData, setDialogSelectMenueData] = React.useState(
+    DIALOG_SELECT_MENUE_DATA_INITIAL_DATA
+  );
   const [contextMenuSelectedItem, setContextMenuSelectedItem] = React.useState(
     CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE
   );
@@ -305,56 +314,77 @@ const EventMaterialListPage = ({
   /* ------------------------------------------
   // Dialog-Handling
   // ------------------------------------------ */
-  const onShowDialogSelectMenues = () => {
-    setDialogSelectMenueData({...dialogSelectMenueData, open: true});
+  const onCreateList = () => {
+    setDialogSelectMenueData({
+      ...dialogSelectMenueData,
+      open: true,
+      operationType: OperationType.Create,
+    });
   };
   const onCloseDialogSelectMenues = () => {
-    setDialogSelectMenueData({...dialogSelectMenueData, open: false});
+    setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
   };
   const onConfirmDialogSelectMenues = async (
     selectedMenues: DialogSelectMenuesForRecipeDialogValues
   ) => {
+    setDialogSelectMenueData({...dialogSelectMenueData, open: false});
+
     const userInput = (await customDialog({
       dialogType: DialogType.SingleTextInput,
       title: TEXT_NEW_LIST,
       text: TEXT_GIVE_THE_NEW_LIST_A_NAME,
       singleTextInputProperties: {
-        initialValue: "",
+        initialValue:
+          dialogSelectMenueData.operationType === OperationType.Update
+            ? materialList.lists[dialogSelectMenueData.selectedListUid]
+                .properties.name
+            : "",
         textInputLabel: TEXT_NAME,
       },
     })) as SingleTextInputResult;
-    setDialogSelectMenueData({...dialogSelectMenueData, open: false});
 
     if (userInput.valid) {
       // Wait anzeigen
       dispatch({type: ReducerActions.SHOW_LOADING, payload: {isLoading: true}});
-      // Rezepte holen und Material sammeln
-      MaterialList.createNewList({
-        name: userInput.input,
-        selectedMenues: Object.keys(selectedMenues).map((menueUid) => menueUid),
-        menueplan: menuplan,
-        materials: materials,
-        firebase: firebase,
-        authUser: authUser,
-      })
-        .then(async (result) => {
-          const updatedMaterialList = {...materialList};
-          updatedMaterialList.lists[result.properties.uid] = result;
-          updatedMaterialList.noOfLists++;
-          updatedMaterialList.uid = event.uid;
 
-          onMaterialListUpdate(updatedMaterialList);
-          dispatch({
-            type: ReducerActions.SHOW_LOADING,
-            payload: {isLoading: false},
-          });
+      if (dialogSelectMenueData.operationType === OperationType.Create) {
+        // Rezepte holen und Material sammeln
+        MaterialList.createNewList({
+          name: userInput.input,
+          selectedMenues: Object.keys(selectedMenues),
+          menueplan: menuplan,
+          materials: materials,
+          firebase: firebase,
+          authUser: authUser,
         })
-        .catch((error) => {
-          dispatch({
-            type: ReducerActions.GENERIC_ERROR,
-            payload: error,
+          .then(async (result) => {
+            const updatedMaterialList = {...materialList};
+            updatedMaterialList.lists[result.properties.uid] = result;
+            updatedMaterialList.noOfLists++;
+            updatedMaterialList.uid = event.uid;
+
+            onMaterialListUpdate(updatedMaterialList);
+            dispatch({
+              type: ReducerActions.SHOW_LOADING,
+              payload: {isLoading: false},
+            });
+          })
+          .catch((error) => {
+            dispatch({
+              type: ReducerActions.GENERIC_ERROR,
+              payload: error,
+            });
           });
-        });
+      } else if (dialogSelectMenueData.operationType === OperationType.Update) {
+        onRefreshLists(userInput.input, Object.keys(selectedMenues));
+      }
+    } else {
+      // Abbruch wieder das andere anzeigen
+      setDialogSelectMenueData({
+        ...dialogSelectMenueData,
+        menues: selectedMenues,
+        open: true,
+      });
     }
   };
   /* ------------------------------------------
@@ -437,7 +467,10 @@ const EventMaterialListPage = ({
   /* ------------------------------------------
   // List-Handling
   // ------------------------------------------ */
-  const onRefreshLists = async () => {
+  const onRefreshLists = async (
+    newName?: string,
+    selectedMenues?: Menue["uid"][]
+  ) => {
     let keepManuallyAddedItems = false;
 
     if (
@@ -465,24 +498,50 @@ const EventMaterialListPage = ({
     // Alle Liste aktualisieren
     dispatch({type: ReducerActions.SHOW_LOADING, payload: {isLoading: true}});
 
+    const materialListToReferesh = {...materialList};
+
+    if (dialogSelectMenueData.operationType === OperationType.Update) {
+      // die neu gewählten Menüs und Name setzen
+
+      materialListToReferesh.lists[
+        dialogSelectMenueData.selectedListUid
+      ].properties.name = newName!;
+
+      materialListToReferesh.lists[
+        dialogSelectMenueData.selectedListUid
+      ].properties.selectedMenues = Object.keys(selectedMenues!);
+
+      materialListToReferesh.lists[
+        dialogSelectMenueData.selectedListUid
+      ].properties.selectedMeals = Menuplan.getMealsOfMenues({
+        menuplan: menuplan,
+        menues: selectedMenues!,
+      });
+
+      setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
+    }
+
     MaterialList.refreshList({
       listUidToRefresh: state.selectedListItem!,
       keepManuallyAddedItems: keepManuallyAddedItems,
-      materialList: materialList,
+      materialList: materialListToReferesh,
       materials: materials,
       menueplan: menuplan,
       firebase: firebase,
       authUser: authUser,
-    }).then((result) => {
-      onMaterialListUpdate(result);
+    })
+      .then((result) => {
+        onMaterialListUpdate(result);
 
-      firebase.analytics.logEvent(FirebaseAnalyticEvent.materialListGenerated);
-
-      dispatch({
-        type: ReducerActions.SHOW_LOADING,
-        payload: {isLoading: false},
+        dispatch({
+          type: ReducerActions.SHOW_LOADING,
+          payload: {isLoading: false},
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
       });
-    });
   };
   const onListElementSelect = async (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
@@ -522,27 +581,54 @@ const EventMaterialListPage = ({
     });
   };
   const onListElementEdit = async (event: React.MouseEvent<HTMLElement>) => {
-    const selectedList = event.currentTarget.id.split("_")[1];
-    if (!selectedList) {
+    const selectedListUid = event.currentTarget.id.split("_")[1];
+    if (!selectedListUid) {
       return;
     }
-    const userInput = (await customDialog({
-      dialogType: DialogType.SingleTextInput,
-      title: "Namen anpassen",
-      singleTextInputProperties: {
-        initialValue: materialList.lists[selectedList].properties.name,
-        textInputLabel: "Name",
-      },
-    })) as SingleTextInputResult;
-    if (userInput.valid) {
-      const updatedMaterialList = MaterialList.editListName({
-        materialList: materialList,
-        listUidToEdit: selectedList,
-        newName: userInput.input,
-        authUser: authUser,
+    const selectedMenuesForDialog: DialogSelectMenuesForRecipeDialogValues = {};
+
+    let selectedMenues =
+      materialList.lists[selectedListUid].properties.selectedMenues;
+
+    // Prüfen ob die Menüs immer noch gleich sind
+    if (
+      !Utils.areStringArraysEqual(
+        materialList.lists[selectedListUid].properties.selectedMeals,
+        Menuplan.getMealsOfMenues({
+          menuplan: menuplan,
+          menues: materialList.lists[selectedListUid].properties.selectedMenues,
+        })
+      ) ||
+      // Sind neue Menü dazugekommen/ oder wurden Menüs aus der
+      // Auswahl entfernt
+      materialList.lists[selectedListUid].properties.selectedMenues.length !==
+        Menuplan.getMenuesOfMeals({
+          menuplan: menuplan,
+          meals: materialList.lists[selectedListUid].properties.selectedMeals,
+        }).length
+    ) {
+      selectedMenues = Menuplan.getMenuesOfMeals({
+        menuplan: menuplan,
+        meals: materialList.lists[selectedListUid].properties.selectedMeals,
       });
-      onMaterialListUpdate(updatedMaterialList);
     }
+
+    // Menues der Mahlzeiten holen und Objekt umwandeln
+    Menuplan.getMealsOfMenues({
+      menuplan: menuplan,
+      menues: materialList.lists[selectedListUid].properties.selectedMeals,
+    }).forEach((menueUid) => (selectedMenues[menueUid] = true));
+
+    selectedMenues.forEach(
+      (menueUid) => (selectedMenuesForDialog[menueUid] = true)
+    );
+
+    setDialogSelectMenueData({
+      menues: selectedMenuesForDialog,
+      open: true,
+      selectedListUid: selectedListUid,
+      operationType: OperationType.Update,
+    });
   };
   /* ------------------------------------------
   // Artikel hinzufügen Dialog
@@ -651,11 +737,19 @@ const EventMaterialListPage = ({
   // PDF erzeugen
   // ------------------------------------------ */
   const onGeneratePrintVersion = () => {
+    if (materialList.lists[state.selectedListItem!].items.length === 0) {
+      dispatch({
+        type: ReducerActions.GENERIC_ERROR,
+        payload: new Error(TEXT_ERROR_NO_MATERIALS_FOUND),
+      });
+      return;
+    }
+
     pdf(
       <MaterialListPdf
         materialList={materialList.lists[state.selectedListItem!]}
-        materialListSelectedTimeSlice={decodeSelectedMenues({
-          selectedMenues:
+        materialListSelectedTimeSlice={decodeSelectedMeals({
+          selectedMeals:
             materialList.lists[state.selectedListItem!].properties
               .selectedMenues,
           menuplan: menuplan,
@@ -700,7 +794,7 @@ const EventMaterialListPage = ({
             lists={materialList.lists}
             noOfLists={materialList.noOfLists}
             menuplan={menuplan}
-            onShowDialogSelectMenues={onShowDialogSelectMenues}
+            onCreateList={onCreateList}
             onListElementSelect={onListElementSelect}
             onListElementDelete={onListElementDelete}
             onListElementEdit={onListElementEdit}
@@ -733,7 +827,7 @@ const EventMaterialListPage = ({
         open={dialogSelectMenueData.open}
         title={TEXT_WHICH_MENUES_FOR_MATERIAL_LIST_GENERATION}
         dates={menuplan.dates}
-        preSelectedMenue={{}}
+        preSelectedMenue={dialogSelectMenueData.menues}
         mealTypes={menuplan.mealTypes}
         meals={menuplan.meals}
         menues={menuplan.menues}

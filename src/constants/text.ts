@@ -116,7 +116,7 @@ export const TRACE = "Trace";
 export const WHERE_ARE_YOUR = "Wo bist du?";
 export const TIME_TO_CLEAN_UP = "Zeit aufzuräumen";
 export const PAGE_TITLE_GLOBAL_SETTINGS = "Globale Einstellungen";
-export const REQUESTS = "Anfragen";
+export const REQUESTS = "Anträge";
 /* =====================================================================
 // Tabellen Überschriften
 // ===================================================================== */
@@ -302,15 +302,15 @@ export const ADD_LOGO_OR_CAMP_PICTURE_HERE =
 export const CONTINUE = "Weiter";
 export const BACK_TO_OVERVIEW = "Zurück zur Übersicht";
 export const BACK_TO_GROUPCONFIG = "Zurück zur Gruppendefinition";
-export const KITCHENCREW = "Küchenmannschaft";
+export const KITCHENCREW = "Küchen-Crew";
 export const COOKING_IS_COMMUNITY_SPORT =
-  "Weil kochen ein Gesellschaftssport ist, füge hier deine Küchenmannschaft hinzu.";
+  "Weil kochen ein Gesellschaftssport ist, füge hier deine Küchen-Crew hinzu.";
 export const ADD_COOK_TO_EVENT = "Person zu Anlass hinzufügen";
 export const BACK_TO_EVENT_INFO = "Zurück zu Informationen";
 export const ERROR_EVENT_NAME_CANT_BE_EMPTY =
   "Der Name des Anlasses darf nicht leer sein.";
 export const ERROR_EVENT_MUST_HAVE_MIN_ONE_COOK =
-  "Der Anlass muss mindestens eine Person in der Küchenmannschaft haben.";
+  "Der Anlass muss mindestens eine Person in der Küchen-Crew haben.";
 export const ERROR_FROM_DATE_EMPTY = "Von-Datum darf nicht leer sein";
 export const ERROR_TO_DATE_EMPTY = "Bis-Datum darf nicht leer sein";
 export const ERROR_FROM_DATE_BIGGER_THAN_TO_DATE =
@@ -577,7 +577,7 @@ export const NAVIGATION_DEPARTMENTS = "Abteilungen (Einkauf)";
 export const NAVIGATION_SIGN_OUT = "Abmelden";
 // export const NAVIGATION_SIGN_IN = "Anmelden";
 export const NAVIGATION_USER_PROFILE = "Profil";
-export const NAVIGATION_REQUEST_OVERVIEW = "Anfragen";
+export const NAVIGATION_REQUEST_OVERVIEW = "Anträge";
 export const NAVIGATION_SYSTEM = "System";
 export const NAVIGATION_ADMIN = "Admin";
 export const NAVIGATION_USERS = "Users";
@@ -599,6 +599,7 @@ export const HOME_STATS_CAPTIONS = {
   SHOPPING_LISTS: "Generierte Postizettel",
   PARTICIPANTS: "bekochte Personen",
   MATERIALS: "Materialien",
+  MATERIALLISTS: "Generierte Materiallisten",
 };
 /* =====================================================================
 // Meldungen rund um SignIn/SignUp
@@ -791,7 +792,7 @@ export const FEED_TITLE = {
   RECIPE_PUBLISHED: "Neues Rezept",
   RECIPE_RATED: "Neues Rating für",
   EVENT_CREATED: "Gut geplant ist halb gewonnen",
-  EVENT_COOK_ADDED: "Küchenmannschaft vergrössert",
+  EVENT_COOK_ADDED: "Küchen-Crew vergrössert",
   MENUPLAN_CREATED: "Was wird wann gekocht?",
   SHOPPINGLIST_CREATED: "Einkaufen ist angesagt",
 };
@@ -961,7 +962,7 @@ export const SCALED = "skaliert";
 export const PREPARATION = "Zubereitung";
 export const MATERIAL = "Material";
 export const MATERIAL_TYPE = "Materialtyp";
-export const OUTDOOR_KITCHEN_SUITABLE = "Geeigent für Outdoor-Küche";
+export const OUTDOOR_KITCHEN_SUITABLE = "Geeignet für Outdoor-Küche";
 export const SHOW_ONLY_MY_RECIPES = "Nur meine Rezepte anzeigen";
 export const MATERIAL_TYPE_CONSUMABLE = "Verbrauchsmaterial";
 export const MATERIAL_TYPE_USAGE = "Gebrauchsmaterial";
@@ -1057,7 +1058,7 @@ export const SAVE = "Speichern";
 export const OPEN = "Öffnen";
 export const MENUE_SELECTION = "Auswahl Menüs";
 export const USED_RECIPES_MENUE_SELECTION_DESCRIPTION =
-  "Hier kannst du bereits generierte Listen anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltete alle verwendeten Rezepte der gewählten Menüs. Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
+  "Hier kannst du bereits generierte Listen anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltet alle verwendeten Rezepte der gewählten Menüs. Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
 export const SHOPPING_LIST_MENUE_SELECTION_DESCRIPTION =
   "Hier kannst du bereits generierte Einkaufslisten anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltete alle Zutaten, Gebrauchsmaterialien der gewählten Menüs (inklusive einzelne hinzugefügte Produkte). Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
 export const REFRESH = "Aktualisieren";
@@ -1147,7 +1148,7 @@ export const EDIT_AUTHORIZATION_DESCRIPTION =
 export const RE_SIGN_IN_REQUIRED = "Neu-Anmeldung nötig";
 export const RE_SIGN_IN_REQUIRED_AFTER_ROLES_ASSIGNMENT =
   "Die vergebenen Rechte sind erst nach einer erneuten Anmeldung aktiv.";
-
+export const THIS_RECIPE_IS_PLANNED_FOR = "Dieses Rezept ist geplant für:";
 /* =====================================================================
 // Abkürzungen
 // ===================================================================== */
@@ -1159,6 +1160,11 @@ export const ERROR_WRONG_DB_CLASS =
   "Falsche DB Klasse angesprochen. Prüfe die Klassen mit Vererbung. ";
 export const ERROR_NOT_IMPLEMENTED_YET = "☠️ Not implemented yet! ☠️";
 export const ERROR_NO_RECIPES_FOUND = "Die Auswahl beinhaltet keine Rezepte.";
+export const ERROR_NO_MATERIALS_FOUND =
+  "Die Auwahl beinhaltet keine Materialien.";
+export const ERROR_NO_PRODUCTS_FOUND = "Die Auwahl beinhaltet keine Produkte.";
+export const ERROR_NO_RECIPE_PRODUCT_MATERIAL_FOUND =
+  "Die Auswahl beinhaltet keine Artikel.";
 /* =====================================================================
 // Workflow
 // ===================================================================== */
@@ -1171,8 +1177,8 @@ export const STATUS_NAME = {
 };
 export const REQUEST_STATUS_TRANSITION_PUBLISH_RECIPE = {
   created: {
-    inReview: {description: "Anfrage prüfen"},
-    declined: {description: "Anfrage ablehnen"},
+    inReview: {description: "Antrag prüfen"},
+    declined: {description: "Antrag ablehnen"},
     backToAuthor: {description: "Zurück zu Author*in"},
     done: {description: "Rezept publizieren"},
   },
@@ -1188,7 +1194,7 @@ export const REQUEST_STATUS_TRANSITION_REPORT_ERROR = {
 /* =====================================================================
 // Request
 // ===================================================================== */
-export const REQUEST = "Anfrage";
+export const REQUEST = "Antrag";
 export const REQUEST_TYPE = {
   recipePublish: "Rezeptveröffentlichung",
   reportError: "Fehler im Rezept",
@@ -1203,7 +1209,8 @@ export const REQUEST_NEXT_POSSIBLE_TRANSITION_LABEL =
   "Nächster möglicher Schritt";
 export const REQUEST_NEXT_POSSIBLES_TRANSITIONS_LABEL =
   "Nächste mögliche Schitte";
-export const REQUEST_ASSIGN_TO_ME_LABEL = "Anfrage mir zuweisen";
-export const NO_OPEN_REQUESTS_FOUND = "Keine offenen Anfragen gefunden.";
-export const ACTIVE_REQUESTS = "Aktive Anfragen";
-export const ALL_REQUESTS = "Alle Anfragen";
+export const REQUEST_ASSIGN_TO_ME_LABEL = "Antrag mir zuweisen";
+export const NO_OPEN_REQUESTS_FOUND = "Keine offenen Anträge gefunden.";
+export const ACTIVE_REQUESTS = "Aktive Anträge";
+export const ALL_REQUESTS = "Alle Anträge";
+export const WRONG_ASIGNEE = "Der Antrag ist nicht dir zugewiesen.";

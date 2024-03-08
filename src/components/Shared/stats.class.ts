@@ -1,4 +1,4 @@
-import * as TEXT from "../../constants/text";
+import {HOME_STATS_CAPTIONS as TEXT_HOME_STATS_CAPTIONS} from "../../constants/text";
 import Firebase from "../Firebase/firebase.class";
 import Recipe from "../Recipe/recipe.class";
 
@@ -94,23 +94,25 @@ export default class Stats {
   static getCaptionFromField = (field: StatsField) => {
     switch (field) {
       case StatsField.noUsers:
-        return TEXT.HOME_STATS_CAPTIONS.USERS;
+        return TEXT_HOME_STATS_CAPTIONS.USERS;
       case StatsField.noEvents:
-        return TEXT.HOME_STATS_CAPTIONS.EVENTS;
+        return TEXT_HOME_STATS_CAPTIONS.EVENTS;
       case StatsField.noIngredients:
-        return TEXT.HOME_STATS_CAPTIONS.INGREDIENTS;
+        return TEXT_HOME_STATS_CAPTIONS.INGREDIENTS;
       case StatsField.noRecipesPublic:
-        return TEXT.HOME_STATS_CAPTIONS.RECIPES_PUBLIC;
+        return TEXT_HOME_STATS_CAPTIONS.RECIPES_PUBLIC;
       case StatsField.noRecipesPrivate:
-        return TEXT.HOME_STATS_CAPTIONS.RECIPES_PRIVATE;
+        return TEXT_HOME_STATS_CAPTIONS.RECIPES_PRIVATE;
       case StatsField.noShoppingLists:
-        return TEXT.HOME_STATS_CAPTIONS.SHOPPING_LISTS;
+        return TEXT_HOME_STATS_CAPTIONS.SHOPPING_LISTS;
       case StatsField.noParticipants:
-        return TEXT.HOME_STATS_CAPTIONS.PARTICIPANTS;
+        return TEXT_HOME_STATS_CAPTIONS.PARTICIPANTS;
       case StatsField.noMaterials:
-        return TEXT.HOME_STATS_CAPTIONS.MATERIALS;
+        return TEXT_HOME_STATS_CAPTIONS.MATERIALS;
       case StatsField.noRecipeVariants:
-        return TEXT.HOME_STATS_CAPTIONS.RECIPES_VARIANTS;
+        return TEXT_HOME_STATS_CAPTIONS.RECIPES_VARIANTS;
+      case StatsField.noMaterialLists:
+        return TEXT_HOME_STATS_CAPTIONS.MATERIALLISTS;
       default:
         return "";
     }

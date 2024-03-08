@@ -19,6 +19,7 @@ import {
   Menu,
   MenuItem,
   ListItemIcon,
+  useTheme,
 } from "@material-ui/core";
 
 import {
@@ -595,10 +596,11 @@ const EventGroupConfigurationCard = ({
   showUpdateConfigButtons = false,
 }: EventGroupConfigurationCardProps) => {
   const classes = useStyles();
+  const theme = useTheme();
 
   return (
     <div style={{overflowX: "scroll", minWidth: "750px"}}>
-      <Card>
+      <Card className={classes.card}>
         <CardHeader
           title={TEXT_GROUP_CONFIGURATION_SETTINGS}
           subheader={TEXT_GROUP_CONFIGURATION_SETTINGS_DESCRIPTION}
@@ -664,7 +666,13 @@ const EventGroupConfigurationCard = ({
           </Grid>
         </CardContent>
         {showUpdateConfigButtons && (
-          <CardActions style={{justifyContent: "flex-end"}}>
+          <CardActions
+            style={{
+              justifyContent: "flex-end",
+              marginBottom: theme.spacing(2),
+              marginTop: theme.spacing(2),
+            }}
+          >
             <Button
               color="primary"
               variant="outlined"
@@ -810,9 +818,14 @@ const EventGroupConfigDietColumn = ({
                     label={TEXT_PORTIONS}
                     variant="outlined"
                     size="small"
-                    type="number"
                     fullWidth
-                    InputProps={{inputProps: {min: 0}}}
+                    InputProps={{
+                      inputProps: {
+                        min: 0,
+                        step: 1,
+                      },
+                      inputComponent: "input",
+                    }}
                     onWheel={(event) =>
                       event.target instanceof HTMLElement && event.target.blur()
                     }

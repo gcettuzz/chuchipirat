@@ -199,7 +199,6 @@ const RecipeView = ({
   firebase,
   mealPlan,
   scaledPortions,
-  // scaledIngredients,
   isLoading,
   error,
   isEmbedded = false,
@@ -234,7 +233,9 @@ const RecipeView = ({
   const [reportErrorDialogOpen, setReportErrorDialogOpen] =
     React.useState(false);
 
-  document.title = recipe.name;
+  if (!isEmbedded) {
+    document.title = recipe.name;
+  }
   /* ------------------------------------------
   // Navigation-Handler
   // ------------------------------------------ */
@@ -249,34 +250,36 @@ const RecipeView = ({
   // Skalieren, falls nötig
   // ------------------------------------------ */
   React.useEffect(() => {
-    if (scaledPortions != 0) {
-      // let scaledIngredients: Ingredient[] = [];
-      // let scaledMaterials: RecipeMaterialPosition[] = [];
-
-      const scaledIngredients = Recipe.scaleIngredients({
-        recipe: recipe,
-        portionsToScale: scaledPortions,
-      });
-      const scaledMaterials = Recipe.scaleMaterials({
-        recipe: recipe,
-        portionsToScale: scaledPortions,
-      });
-
-      setScalingInformation({
-        portions: scaledPortions,
-        ingredients: scaledIngredients,
-        materials: scaledMaterials,
-        scalingOptions: {} as ScalingOptions,
-      });
-    } else {
-      setScalingInformation({
-        portions: 0,
-        ingredients: {} as RecipeObjectStructure<Ingredient>,
-        materials: {} as RecipeObjectStructure<RecipeMaterialPosition>,
-        scalingOptions: {} as ScalingOptions,
-      });
+    if (recipe) {
+      if (scaledPortions != 0) {
+        // let scaledIngredients: Ingredient[] = [];
+        // let scaledMaterials: RecipeMaterialPosition[] = [];
+        console.log(scaledPortions);
+        const scaledIngredients = Recipe.scaleIngredients({
+          recipe: recipe,
+          portionsToScale: scaledPortions,
+        });
+        const scaledMaterials = Recipe.scaleMaterials({
+          recipe: recipe,
+          portionsToScale: scaledPortions,
+        });
+        console.log(scaledIngredients);
+        setScalingInformation({
+          portions: scaledPortions,
+          ingredients: scaledIngredients,
+          materials: scaledMaterials,
+          scalingOptions: {} as ScalingOptions,
+        });
+      } else {
+        setScalingInformation({
+          portions: 0,
+          ingredients: {} as RecipeObjectStructure<Ingredient>,
+          materials: {} as RecipeObjectStructure<RecipeMaterialPosition>,
+          scalingOptions: {} as ScalingOptions,
+        });
+      }
     }
-  }, [scaledPortions]);
+  }, [scaledPortions, recipe.ingredients]);
   /* ------------------------------------------
   // Rating
   // ------------------------------------------ */
@@ -1363,7 +1366,7 @@ export const MealPlanPanel = ({
 
   return (
     <Card className={classes.card}>
-      <CardHeader title={"Diese Rezept ist geplant für:"} />
+      <CardHeader title={TEXT.THIS_RECIPE_IS_PLANNED_FOR} />
       <CardContent className={classes.cardContent}>
         <List key={"mealsList"}>
           {mealPlan.map((plan, index) => (

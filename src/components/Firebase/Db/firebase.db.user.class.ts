@@ -83,7 +83,6 @@ export class FirebaseDbUser extends FirebaseDbSuper {
       // lastLogin: value.lastLogin.toDate(),
       noLogins: value.noLogins,
       roles: value.roles,
-      disabled: value?.disabled ? value.disabled : false,
     } as unknown as T;
   }
   /* =====================================================================

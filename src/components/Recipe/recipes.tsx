@@ -690,8 +690,9 @@ export const RecipeSearch = ({
         return false;
       }
 
-      // prüfen ob Outdoorküche
+      // prüfen ob Outdoorküche --> nur filtern wenn Schalter an
       if (
+        searchSettings.outdoorKitchenSuitable &&
         recipe.outdoorKitchenSuitable !== searchSettings.outdoorKitchenSuitable
       ) {
         return false;

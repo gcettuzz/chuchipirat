@@ -33,6 +33,7 @@ import {
   REQUEST_AUTHOR_DISPLAYNAME as TEXT_REQUEST_AUTHOR_DISPLAYNAME,
   REQUEST_ASSIGNEE_DISPLAYNAME as TEXT_REQUEST_ASSIGNEE_DISPLAYNAME,
   REQUEST_ASSIGN_TO_ME_LABEL as TEXT_REQUEST_ASSIGN_TO_ME_LABEL,
+  WRONG_ASIGNEE as TEXT_WRONG_ASIGNEE,
   // REQUEST_CONTINUE_WITH as TEXT_REQUEST_CONTINUE_WITH,
   BUTTON_CANCEL as TEXT_BUTTON_CANCEL,
   BUTTON_CLOSE as TEXT_BUTTON_CLOSE,
@@ -182,31 +183,39 @@ const DialogRequest = ({
               key={"RequestNextPossibleState"}
               id={"RequestRequestNextPossibleStateType"}
               value={
-                <React.Fragment>
-                  {Request.getNextPossibleTransitionsForType({
-                    status: request.status,
-                    requestType: request.requestType,
-                  })?.map((possibleTransition, counter) => (
-                    <React.Fragment
-                      key={
-                        "transition_" + possibleTransition.description + counter
-                      }
-                    >
-                      {counter > 0 && " | "}
-                      <Link
-                        key={`transitionLink_${counter}`}
-                        style={{
-                          cursor: "pointer",
-                        }}
-                        onClick={() =>
-                          onClickNextStatus(possibleTransition.toState)
+                request?.assignee?.uid === authUser.uid ? (
+                  <React.Fragment>
+                    {Request.getNextPossibleTransitionsForType({
+                      status: request.status,
+                      requestType: request.requestType,
+                    })?.map((possibleTransition, counter) => (
+                      <React.Fragment
+                        key={
+                          "transition_" +
+                          possibleTransition.description +
+                          counter
                         }
                       >
-                        {possibleTransition.description}
-                      </Link>
-                    </React.Fragment>
-                  ))}
-                </React.Fragment>
+                        {counter > 0 && " | "}
+                        <Link
+                          key={`transitionLink_${counter}`}
+                          style={{
+                            cursor: "pointer",
+                          }}
+                          onClick={() =>
+                            onClickNextStatus(possibleTransition.toState)
+                          }
+                        >
+                          {possibleTransition.description}
+                        </Link>
+                      </React.Fragment>
+                    ))}
+                  </React.Fragment>
+                ) : (
+                  <Typography color="textSecondary">
+                    {TEXT_WRONG_ASIGNEE}
+                  </Typography>
+                )
               }
               label={TEXT_REQUEST_NEXT_POSSIBLE_TRANSITION_LABEL}
             />

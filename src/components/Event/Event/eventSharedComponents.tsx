@@ -46,7 +46,7 @@ import {
   Info as InfoIcon,
 } from "@material-ui/icons";
 
-import {decodeSelectedMenues} from "../Menuplan/dialogSelectMenues";
+import {decodeSelectedMeals} from "../Menuplan/dialogSelectMenues";
 import ShoppingListCollection, {
   ProductTrace,
 } from "../ShoppingList/shoppingListCollection.class";
@@ -55,6 +55,14 @@ import MaterialList from "../MaterialList/materialList.class";
 import Action from "../../../constants/actions";
 import Recipe from "../../Recipe/recipe.class";
 import useStyles from "../../../constants/styles";
+/* ===================================================================
+// ===================== Globale Einstellungen ======================
+// =================================================================== */
+export enum OperationType {
+  none,
+  Create,
+  Update,
+}
 
 /* ===================================================================
 // ======================= Einstellungen-Card ========================
@@ -70,7 +78,7 @@ interface EventListCardProps {
     | MaterialList["lists"];
   noOfLists: number;
   menuplan: Menuplan;
-  onShowDialogSelectMenues: () => void;
+  onCreateList: () => void;
   onListElementSelect: (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => void;
@@ -87,7 +95,7 @@ export const EventListCard = ({
   lists,
   noOfLists,
   menuplan,
-  onShowDialogSelectMenues,
+  onCreateList,
   onListElementSelect,
   onListElementEdit,
   onListElementDelete,
@@ -114,8 +122,8 @@ export const EventListCard = ({
               >
                 <ListItemText
                   primary={list?.properties.name}
-                  secondary={decodeSelectedMenues({
-                    selectedMenues: list?.properties.selectedMenues,
+                  secondary={decodeSelectedMeals({
+                    selectedMeals: list?.properties.selectedMeals,
                     menuplan: menuplan,
                   })}
                 />
@@ -162,11 +170,7 @@ export const EventListCard = ({
           )}
       </CardContent>
       <CardActions style={{justifyContent: "flex-end"}}>
-        <Button
-          color="primary"
-          variant="outlined"
-          onClick={onShowDialogSelectMenues}
-        >
+        <Button color="primary" variant="outlined" onClick={onCreateList}>
           {TEXT_NEW_LIST}
         </Button>
         {noOfLists > 0 && (
@@ -265,7 +269,6 @@ export const DialogTraceItem = ({
   onShowRecipe,
 }: DialogTraceItem) => {
   const classes = useStyles();
-  // let traceSortedByMenue: ProductTrace[] = [];
 
   /* ------------------------------------------
   // Rezept Handler
@@ -280,23 +283,6 @@ export const DialogTraceItem = ({
     }
   };
 
-  // if (!trace) {
-  //   return null;
-  // } else if (trace && trace.length > 1) {
-  //   // die Menüs in die richtige Reihenfolge setzen
-  //   traceSortedByMenue = trace.sort((a, b) => {
-  //     const indexA = sortedMenues.findIndex(
-  //       (menue) => menue.menueUid == a.menueUid
-  //     );
-  //     const indexB = sortedMenues.findIndex(
-  //       (menue) => menue.menueUid == b.menueUid
-  //     );
-
-  //     return indexA - indexB;
-  //   });
-  // } else {
-  //   traceSortedByMenue = trace;
-  // }
   return (
     <Dialog open={dialogOpen} maxWidth="xs" fullWidth style={{zIndex: 500}}>
       <DialogTitle>{TEXT_WHERE_DOES_THIS_ITEM_COME_FROM}</DialogTitle>
@@ -314,6 +300,7 @@ export const DialogTraceItem = ({
               </Grid>
             </React.Fragment>
           )}
+          {console.log(trace)}
           <Grid item xs={12}>
             <List key={`list_for_trace`}>
               {sortedMenues.map((menue) => {

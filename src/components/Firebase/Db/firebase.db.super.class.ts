@@ -181,27 +181,34 @@ export abstract class FirebaseDbSuper {
       }
     }
 
-    return await document.get().then((snapshot) => {
-      if (!snapshot.data()) {
-        // Keine Daten -> Gibt ein leeres Objekt
-        return <T>{};
-      }
-      const values = this.prepareDataForApp<T>({
-        uid: snapshot.id,
-        value: this.convertTimestampValuesToDates(
-          snapshot.data() as ValueObject
-        ),
-      });
-      // SessionStorage update
-      SessionStorageHandler.upsertDocument({
-        storageObjectProperty: this.getSessionHandlerProperty(),
-        documentUid: document.id,
-        value: values,
-        prefix: uids ? uids[0] : "",
-      });
+    return await document
+      .get()
+      .then((snapshot) => {
+        if (!snapshot.data()) {
+          // Keine Daten -> Gibt ein leeres Objekt
+          return <T>{};
+        }
+        const values = this.prepareDataForApp<T>({
+          uid: snapshot.id,
+          value: this.convertTimestampValuesToDates(
+            snapshot.data() as ValueObject
+          ),
+        });
+        // SessionStorage update
+        SessionStorageHandler.upsertDocument({
+          storageObjectProperty: this.getSessionHandlerProperty(),
+          documentUid: document.id,
+          value: values,
+          prefix: uids ? uids[0] : "",
+        });
 
-      return values;
-    });
+        return values;
+      })
+      .catch((error) => {
+        console.info("get Document:", document.id);
+        console.log(error);
+        throw error;
+      });
   }
   /* =====================================================================
   /**
@@ -311,6 +318,7 @@ export abstract class FirebaseDbSuper {
         return result;
       })
       .catch((error) => {
+        console.info("read collection:", collection.id);
         console.error(error);
         throw error;
       });
@@ -508,6 +516,8 @@ export abstract class FirebaseDbSuper {
         });
       })
       .catch((error) => {
+        console.info("updateFields:", document.id, values);
+        console.error(error);
         throw error;
       });
   }

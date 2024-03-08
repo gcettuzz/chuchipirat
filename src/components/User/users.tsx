@@ -240,8 +240,6 @@ const UsersBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
   // User-Profil-PopUp-Handling
   // ------------------------------------------ */
   const onOpenDialog = async (userUid: User["uid"]) => {
-    console.log(userUid);
-
     if (!userUid) {
       return;
     }
@@ -288,8 +286,6 @@ const UsersBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
     setRoleDialog(ROLE_DIALOG_INITIAL_STATE);
   };
   const onDialogEditRolesUpdate = (newRoles: User["roles"]) => {
-    console.log(newRoles);
-
     User.updateRoles({
       firebase: firebase,
       userUid: dialogValues.selectedUser.uid,

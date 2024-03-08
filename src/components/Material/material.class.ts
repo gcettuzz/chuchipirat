@@ -12,7 +12,7 @@ import Product from "../Product/product.class";
 
 import {ERROR_PARAMETER_NOT_PASSED as TEXT_ERROR_PARAMETER_NOT_PASSED} from "../../constants/text";
 
-// ATTENTION:
+// HINT💡:
 // wird dies erweitert, muss auch im Cloud-Function File index
 // die Beschreibung angepasst werden. Sonst funktioniert der
 // Feed-Recap-Newsletter nicht.
