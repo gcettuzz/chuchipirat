@@ -1177,7 +1177,7 @@ export const RecipeInfoPanel = ({
                 {recipe.created.fromDisplayName}
               </Link>
             }
-            label={TEXT.FIELD_CREATED_FROM}
+            label={TEXT.CREATED_FROM}
           />
           {/* Zubereitungszeit */}
           <FormListItem

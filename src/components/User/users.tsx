@@ -381,11 +381,7 @@ const UsersBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
 // =================================================================== */
 interface UsersTableProps {
   dbUsers: UserOverviewStructure[];
-  onUserSelect: (
-    userUid: User["uid"]
-    // event: React.MouseEvent<HTMLSpanElement, MouseEvent>,
-    // user: UserOverviewStructure
-  ) => void;
+  onUserSelect: (userUid: User["uid"]) => void;
 }
 
 const UsersTable = ({dbUsers, onUserSelect}: UsersTableProps) => {

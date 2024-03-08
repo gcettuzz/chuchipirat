@@ -105,7 +105,7 @@ export const FormListItem = ({
           </React.Fragment>
         )}
       </ListItem>
-      {!editMode && withDivider && <Divider variant="inset" component="li" />}
+      {!editMode && withDivider && <Divider component="li" />}
     </React.Fragment>
   );
 };
