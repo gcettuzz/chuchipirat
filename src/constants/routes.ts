@@ -29,6 +29,7 @@ export const SYSTEM_CONVERT_PRODUCT_TO_MATERIAL =
   "/system/convertproducttomaterial";
 export const SYSTEM_GLOBAL_SETTINGS = "/system/globalsettings";
 export const SYSTEM_DB_INDICES = "/system/dbIndices";
+export const SYSTEM_ACTIVATE_SUPPORT_USER = "/system/activatesupportuser";
 
 export const SYSTEM_OVERVIEW_RECIPES = "/system/overview/recipes";
 export const SYSTEM_OVERVIEW_EVENTS = "/system/overview/events";

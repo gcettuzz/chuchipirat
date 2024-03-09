@@ -68,6 +68,7 @@ const Jobs = lazy(() => import("../Admin/executeJob"));
 const BuildDbIndices = lazy(() => import("../Admin/buildDbIndex"));
 const OverviewRecipes = lazy(() => import("../Admin/overviewRecipes"));
 const OverviewEvents = lazy(() => import("../Admin/overviewEvents"));
+const ActivateSupportUser = lazy(() => import("../Admin/activateSupportUser"));
 
 const App = () => {
   let listener;
@@ -201,6 +202,11 @@ const App = () => {
                   exact
                   path={ROUTES.SYSTEM_DB_INDICES}
                   component={BuildDbIndices}
+                />
+                <Route
+                  exact
+                  path={ROUTES.SYSTEM_ACTIVATE_SUPPORT_USER}
+                  component={ActivateSupportUser}
                 />
                 <Route
                   exact

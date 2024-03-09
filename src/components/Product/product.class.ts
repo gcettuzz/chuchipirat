@@ -288,40 +288,6 @@ export default class Product {
 
     return products;
   };
-
-  /* =====================================================================
-  // Produkt tracen
-  // ===================================================================== */
-  static traceProduct = async ({firebase, uid, traceListener}) => {
-    console.log(firebase, uid, traceListener);
-    // if (!firebase || !uid) {
-    //   throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
-    // }
-    // let listener;
-    // let docRef = firebase.cloudFunctions_productTrace().doc();
-    // await docRef
-    //   .set({
-    //     uid: uid,
-    //     date: firebase.timestamp.fromDate(new Date()),
-    //   })
-    //   .then(async () => {
-    //     await firebase.delay(1);
-    //   })
-    //   .then(() => {
-    //     const unsubscribe = docRef.onSnapshot((snapshot) => {
-    //       traceListener(snapshot.data());
-    //       if (snapshot.data()?.done) {
-    //         // Wenn das Feld DONE vorhanden ist, ist die Cloud-Function durch
-    //         unsubscribe();
-    //       }
-    //     });
-    //   })
-    //   .catch((error) => {
-    //     throw error;
-    //   });
-    // firebase.analytics.logEvent(FIREBASE_EVENTS.CLOUD_FUNCTION_EXECUTED);
-    // return listener;
-  };
   // =====================================================================
   /**
    * Zwei Produkte mergen

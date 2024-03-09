@@ -43,6 +43,8 @@ import Recipe from "../../Recipe/recipe.class";
 import UsedRecipes from "../UsedRecipes/usedRecipes.class";
 import MaterialList from "../MaterialList/materialList.class";
 import EventGroupConfiguration from "../GroupConfiguration/groupConfiguration.class";
+import {getSupportUserUid} from "../../../constants/defaultValues";
+import {CloudFunctionActivateSupportUserDocumentStructure} from "../../Firebase/Db/firebase.db.cloudfunction.activateSupportUser.class";
 
 export const EVENT_TYPES = {
   TYPE_ACTUAL: "actual",
@@ -140,6 +142,19 @@ interface AddRefDocument {
 interface CheckIfDeletedDayArePlanned {
   event: Event;
   menuplan: Menuplan;
+}
+
+interface RegisterSupportUser {
+  firebase: Firebase;
+  eventUid: Event["uid"];
+  authUser: AuthUser;
+  callback: ({
+    done,
+    error,
+    eventUid,
+    supportUserUid,
+    date,
+  }: CloudFunctionActivateSupportUserDocumentStructure) => void;
 }
 export default class Event {
   uid: string;
@@ -323,24 +338,6 @@ export default class Event {
       );
     }
   }
-  /* =====================================================================
-  // Eintrag in Array löschen
-  // ===================================================================== */
-  // static deleteEntry({
-  //   array,
-  //   fieldValue,
-  //   fieldName,
-  //   emptyObject,
-  //   renumberByField,
-  // }: DeleteEntry) {
-  //   array = array.filter((entry) => entry[fieldName] !== fieldValue);
-
-  //   if (array.length === 0) {
-  //     array.push(emptyObject);
-  //   }
-  //   array = Utils.renumberArray({array: array, field: renumberByField});
-  //   return array;
-  // }
   /* =====================================================================
   // Person/Koch hinzufügen
   // ===================================================================== */
@@ -1002,5 +999,56 @@ export default class Event {
       0
     );
     return Boolean(planedObjects !== 0);
+  };
+  // ===================================================================== */
+  /**
+   * Für den angegebenen Anlass den Support-User aktivieren
+   * Der Support User wird in die Auth-User des Anlasses eingefügt. Dieser
+   * wird dann im Daily-Summary wieder abgebaut.
+   * @param Object - Objekt Firebase und Event-UID, authUser und Callback
+   */
+  static activateSupportUser = async ({
+    firebase,
+    eventUid,
+    authUser,
+    callback,
+  }: RegisterSupportUser) => {
+    let unsubscribe: () => void;
+    let documentId = "";
+
+    firebase.cloudFunction.activateSupportUser
+      .triggerCloudFunction({
+        values: {
+          eventUid: eventUid,
+          supportUserUid: getSupportUserUid(),
+        },
+        authUser: authUser,
+      })
+      .then((result) => {
+        documentId = result;
+      })
+      .then(() => {
+        // Melden wenn fertig
+        const callbackCaller = (data) => {
+          if (data?.done) {
+            callback(data);
+            unsubscribe();
+          }
+        };
+
+        firebase.cloudFunction.activateSupportUser
+          .listen({
+            uids: [documentId],
+            callback: callbackCaller,
+          })
+          .then((result) => {
+            console.warn(result);
+            unsubscribe = result;
+          });
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
   };
 }

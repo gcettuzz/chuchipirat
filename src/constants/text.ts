@@ -558,7 +558,9 @@ export const MERGE_ERROR_SAME_PRODUCTS =
 export const GLOBAL_SETTINGS_ALLOW_SIGNUP_LABEL = "Neu-Anmeldung ermöglichen";
 export const GLOBAL_SETTINGS_ALLOW_SIGNUP_DESCRIPTION =
   "Neue User können sich für den chuchipirat anmelden.";
-
+export const ACTIVATE_SUPPORT_USER = "Support-User aktivieren";
+export const ACTIVATE_SUPPORT_USER_DESCRIPTION =
+  "Den Support-User für einen Anlass berechtigen.";
 /* =====================================================================
 // Diverse (längere) Texte
 // ===================================================================== */
@@ -585,6 +587,7 @@ export const NAVIGATION_HELP = "Hilfe";
 export const REFRESH_APP_TILE = "Neue Version verfügbar";
 export const REFRESH_APP_TEXT =
   "Es gibt eine neue Version des chuchipirat. Um die App zu aktualisieren, muss ein Refresh durchgeführt werden. Sichere daher vorher allfällige Änderungen. Mit OK bestätigst du, dass die Seite neu geladen werden kann.";
+
 /* =====================================================================
 // Statistik 
 // ===================================================================== */
@@ -1149,6 +1152,12 @@ export const RE_SIGN_IN_REQUIRED = "Neu-Anmeldung nötig";
 export const RE_SIGN_IN_REQUIRED_AFTER_ROLES_ASSIGNMENT =
   "Die vergebenen Rechte sind erst nach einer erneuten Anmeldung aktiv.";
 export const THIS_RECIPE_IS_PLANNED_FOR = "Dieses Rezept ist geplant für:";
+export const EVENT_UID = "Event-UID";
+export const ACTIVATE_SUPPORT_MODE = "Support-Modus aktivieren";
+export const ACTIVATE_SUPPORT_MODE_DESCRIPTION =
+  "Um den Support-Modus zu aktivieren, kannst du die UID eines Anlasses hier eingeben. Danach wird der Support-User für den angegebenen Anlass bis 01:00 Uhr Morgen früh berechtigt.";
+export const SUPPORT_USER_REGISTERED =
+  "Support-User wurde für Anlass berechtigt.";
 /* =====================================================================
 // Abkürzungen
 // ===================================================================== */

@@ -252,9 +252,6 @@ const RecipeView = ({
   React.useEffect(() => {
     if (recipe) {
       if (scaledPortions != 0) {
-        // let scaledIngredients: Ingredient[] = [];
-        // let scaledMaterials: RecipeMaterialPosition[] = [];
-        console.log(scaledPortions);
         const scaledIngredients = Recipe.scaleIngredients({
           recipe: recipe,
           portionsToScale: scaledPortions,
@@ -263,7 +260,6 @@ const RecipeView = ({
           recipe: recipe,
           portionsToScale: scaledPortions,
         });
-        console.log(scaledIngredients);
         setScalingInformation({
           portions: scaledPortions,
           ingredients: scaledIngredients,

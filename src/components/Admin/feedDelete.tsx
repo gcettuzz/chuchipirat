@@ -44,6 +44,7 @@ import {useTheme} from "@material-ui/core";
 import withEmailVerification from "../Session/withEmailVerification";
 import {CustomRouterProps} from "../Shared/global.interface";
 import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import PageTitle from "../Shared/pageTitle";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -375,6 +376,8 @@ const FeedDeleteBase: React.FC<
 
   return (
     <React.Fragment>
+      {/*===== HEADER ===== */}
+      <PageTitle title={TEXT_DELETE_FEED} subTitle="" />
       {/* ===== BODY ===== */}
       <Container className={classes.container} component="main" maxWidth="sm">
         <Backdrop className={classes.backdrop} open={state.isLoading}>

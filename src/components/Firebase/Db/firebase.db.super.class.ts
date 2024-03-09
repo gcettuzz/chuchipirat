@@ -206,7 +206,7 @@ export abstract class FirebaseDbSuper {
       })
       .catch((error) => {
         console.info("get Document:", document.id);
-        console.log(error);
+        console.error(error);
         throw error;
       });
   }

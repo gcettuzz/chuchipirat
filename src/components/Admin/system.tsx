@@ -29,6 +29,7 @@ import {
   Fastfood as FastfoodIcon,
   FindInPage as FindInPageIcon,
   Cached as CachedIcon,
+  HeadsetMic as HeadsetMicIcon,
 } from "@material-ui/icons";
 
 import {
@@ -51,6 +52,8 @@ import {
   OVERVIEW as TEXT_OVERVIEW,
   RECIPES as TEXT_RECIPES,
   EVENTS as TEXT_EVENTS,
+  ACTIVATE_SUPPORT_USER as TEXT_ACTIVATE_SUPPORT_USER,
+  ACTIVATE_SUPPORT_USER_DESCRIPTION as TEXT_ACTIVATE_SUPPORT_USER_DESCRIPTION,
 } from "../../constants/text";
 import Role from "../../constants/roles";
 import {
@@ -64,6 +67,7 @@ import {
   SYSTEM_DB_INDICES as ROUTE_SYSTEM_DB_INDICES,
   SYSTEM_OVERVIEW_RECIPES as ROUTE_SYSTEM_OVERVIEW_RECIPES,
   SYSTEM_OVERVIEW_EVENTS as ROUTE_SYSTEM_OVERVIEW_EVENTS,
+  SYSTEM_ACTIVATE_SUPPORT_USER as ROUTE_SYSTEM_ACTIVATE_SUPPORT_USER,
 } from "../../constants/routes";
 
 import useStyles from "../../constants/styles";
@@ -141,6 +145,14 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
   const goToConvertProductToMaterial = () => {
     push({
       pathname: ROUTE_SYSTEM_CONVERT_PRODUCT_TO_MATERIAL,
+    });
+  };
+  /* ------------------------------------------
+  // Support-User aktivieren
+  // ------------------------------------------ */
+  const goToActivateSupportUser = () => {
+    push({
+      pathname: ROUTE_SYSTEM_ACTIVATE_SUPPORT_USER,
     });
   };
 
@@ -239,6 +251,15 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
               description={TEXT_CONVERT_PRODUCT_TO_MATERIAL_DESCRIPTION}
               icon={<CachedIcon />}
               action={goToConvertProductToMaterial}
+            />
+          </Grid>
+          <Grid item xs={12} md={6} lg={4}>
+            <AdminTile
+              id={"support"}
+              text={TEXT_ACTIVATE_SUPPORT_USER}
+              description={TEXT_ACTIVATE_SUPPORT_USER_DESCRIPTION}
+              icon={<HeadsetMicIcon />}
+              action={goToActivateSupportUser}
             />
           </Grid>
           {authUser.roles.includes(Role.admin) && (

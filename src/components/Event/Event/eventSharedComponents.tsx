@@ -300,7 +300,6 @@ export const DialogTraceItem = ({
               </Grid>
             </React.Fragment>
           )}
-          {console.log(trace)}
           <Grid item xs={12}>
             <List key={`list_for_trace`}>
               {sortedMenues.map((menue) => {

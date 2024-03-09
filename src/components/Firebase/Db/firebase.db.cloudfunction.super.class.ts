@@ -24,6 +24,7 @@ export enum CloudFunctionType {
   feedsDelete = "feedsDelete",
   mergeProducts = "mergeProducts",
   convertProductToMaterial = "convertProductToMaterial",
+  activateSupportUser = "activateSupportUser",
 }
 
 interface CreateDocumentForCloudFunctionsTrigger {
@@ -45,6 +46,11 @@ interface UpdateCounter {
 interface Listen<T> {
   uids: string[];
   callback: (T) => void;
+}
+
+export interface BaseDocumentStructure {
+  date: Date;
+  done: boolean;
 }
 
 export abstract class FirebaseDbCloudFunctionSuper {

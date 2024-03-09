@@ -12,6 +12,7 @@ import FirebaseDbCloudFunctionMergeProducts from "./firebase.db.cloudfunction.me
 import FirebaseDbCloudFunctionUserDisplayNameUpdate from "./firebase.db.cloudfunction.userDisplayNameUpdate.class";
 import FirebaseDbCloudFunctionProductUpdate from "./firebase.db.cloudfunction.productUpdate";
 import FirebaseDbCloudFunctionConvertProductToMaterial from "./firebase.db.cloudfunction.convertProductToMaterial.class";
+import FirebaseDbCloudFunctionActivateSupportUser from "./firebase.db.cloudfunction.activateSupportUser.class";
 export class FirebaseDbCloudFunction {
   recipeUpdate: FirebaseDbCloudFunctionRecipeUpdate;
   objectTrace: FirebaseDbCloudFunctionObjectTrace;
@@ -26,6 +27,7 @@ export class FirebaseDbCloudFunction {
   mergeProducts: FirebaseDbCloudFunctionMergeProducts;
   convertProductToMaterial: FirebaseDbCloudFunctionConvertProductToMaterial;
   productUpdate: FirebaseDbCloudFunctionProductUpdate;
+  activateSupportUser: FirebaseDbCloudFunctionActivateSupportUser;
   /* =====================================================================
   // Constructor
   // ===================================================================== */
@@ -52,6 +54,10 @@ export class FirebaseDbCloudFunction {
     this.convertProductToMaterial =
       new FirebaseDbCloudFunctionConvertProductToMaterial(firebase);
     this.productUpdate = new FirebaseDbCloudFunctionProductUpdate(firebase);
+
+    this.activateSupportUser = new FirebaseDbCloudFunctionActivateSupportUser(
+      firebase
+    );
   }
 }
 export default FirebaseDbCloudFunction;

@@ -103,6 +103,9 @@ export default class HelpCenter {
             case ROUTES.SYSTEM_WHERE_USED:
               page = "where_used";
               break;
+            case ROUTES.SYSTEM_ACTIVATE_SUPPORT_USER:
+              page = "activate_support_user";
+              break;
             default:
               console.info(actualPath);
               page = "system";

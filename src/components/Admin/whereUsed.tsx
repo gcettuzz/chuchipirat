@@ -294,7 +294,6 @@ const WhereUsedBase: React.FC<
           ? state.selectedRecipeUid
           : state.selectedItem!.uid,
       callback: (documentList) => {
-        console.warn(documentList);
         dispatch({type: ReducerActions.TRACE_DONE, payload: documentList});
       },
       objectType: state.selectedRecipeUid
