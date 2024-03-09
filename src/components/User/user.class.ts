@@ -462,6 +462,10 @@ export default class User {
   }: SaveFullProfile) => {
     let pictureSrc = userProfile.pictureSrc;
 
+    if (userProfile.displayName == "") {
+      userProfile.displayName = userProfile.firstName;
+    }
+
     // Alte werte holen um zu vergleichen ob die Cloud Function gestartet werden muss
     let actualPublicProfile = <UserPublicProfile>{};
     await firebase.user.public.profile

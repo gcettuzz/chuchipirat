@@ -14,7 +14,7 @@ export enum UserPublicProfileStatsFields {
   noEvents = "noEvents",
   noRecipesPublic = "noRecipesPublic",
   noRecipesPrivate = "noRecipesPrivate",
-  noFoundBungs = "noFoundBugs",
+  noFoundBugs = "noFoundBugs",
 }
 type Stats = {[key in UserPublicProfileStatsFields]: number};
 

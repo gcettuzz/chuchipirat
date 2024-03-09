@@ -564,6 +564,7 @@ const UsersTable = ({dbUsers, onUserSelect}: UsersTableProps) => {
       searchString = searchString.toLowerCase();
       filteredUsers = users.filter(
         (user) =>
+          user.uid!.toLocaleLowerCase().includes(searchString) ||
           user.firstName.toLowerCase().includes(searchString) ||
           user.lastName.toLowerCase().includes(searchString) ||
           user.displayName.toLowerCase().includes(searchString) ||

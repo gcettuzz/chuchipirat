@@ -35,7 +35,7 @@ export const SIGN_IN = "Anmelden";
 export const BUTTON_SIGN_UP = "";
 export const SIGN_UP = "Registrieren";
 export const CHANGE_PASSWORD = "Passwort ändern";
-export const CHANGE_EMAIL = "E-Mailadresse ändern";
+export const CHANGE_EMAIL = "E-Mail-Adresse ändern";
 export const RESET = "Zurücksetzen";
 export const BUTTON_SEARCH = "Suche";
 export const BUTTON_MENUPLAN = "Menuplan";
@@ -166,7 +166,7 @@ export const TEMP_JOBS = "Temporäre Job-Übersicht";
 export const JOBS_DESCRIPTION = "Jobs manuel ausführen.";
 export const OVERVIEW = "Übersicht diverser Elemente";
 export const OVERVIEW_RECIPES_DESCRIPTION = "Übericht über alle Rezepte";
-
+export const OVERVIEW_EVENTS_DESCRIPTION = "Übericht über alle Alässe";
 /* =====================================================================
 // Felder
 // ===================================================================== */
@@ -293,6 +293,10 @@ export const MOTTO_HELPERTEXT = "Hat dein Anlass ein Motto?";
 export const LOCATION = "Ort";
 export const LOCATION_HELPERTEXT = "Wo findet der Anlass statt?";
 export const DATES = "Daten";
+export const START_DATE = "Start-Datum";
+export const END_DATE = "Ende-Datum";
+export const NO_OF_DAYS = "Anzahl Tage";
+export const NO_OF_COOKS = "Köche";
 export const DELETE_DATES = "Daten löschen.";
 export const ADD_IMAGE = "Bild hinzufügen";
 export const DELETE_IMAGE = "Bild löschen";
@@ -524,9 +528,9 @@ export const ALERT_TATSCH_BANG_DONE = "Tätsch-Bäng-Meringue: Erledigt!";
 export const BACKSPELLED = "Zurück-buchstabiert";
 export const CHANGE_UNDONE = "Die Änderung wurde rückgängig gemacht.";
 export const NEW_EMAIL_IDENTICAL =
-  "Die E-Mailadresse ist mit der bestehenden identisch.";
+  "Die E-Mail-Adresse ist mit der bestehenden identisch.";
 export const EMAIL_RECOVERED =
-  "Die alte E-Mailadresse ist wieder deine Login-Adresse. Sicherheitshalber wurdest du abgemeldet. Hier kannst du dich wieder anmelden:  ";
+  "Die alte E-Mail-Adresse ist wieder deine Login-Adresse. Sicherheitshalber wurdest du abgemeldet. Hier kannst du dich wieder anmelden:  ";
 export const ALERT_TEXT_IMAGE_SAVE_FIRST =
   "Bitte speichere den Anlass bevor du ein Bild hochlädst.";
 export const ALERT_TEXT_IMAGE_SOURCE =
@@ -608,13 +612,13 @@ export const HOME_STATS_CAPTIONS = {
 // Meldungen rund um SignIn/SignUp
 // ===================================================================== */
 export const VERIFY_YOUR_EMAIL =
-  "Kontrolliere bitte deine E-Mail: Schau in deinem Postfach nach (auch im Spam-Ordner), ob du eine Nachricht bekommen hast. Klicke auf den Link in der E-Mail, um deine E-Mailadresse zu bestätigen. Falls nötig, kannst du die Bestätigungs-E-Mail erneut anfordern.";
+  "Kontrolliere bitte deine E-Mail: Schau in deinem Postfach nach (auch im Spam-Ordner), ob du eine Nachricht bekommen hast. Klicke auf den Link in der E-Mail, um deine E-Mail-Adresse zu bestätigen. Falls nötig, kannst du die Bestätigungs-E-Mail erneut anfordern.";
 export const VERIFICATION_EMAIL_SENT =
   "Die E-Mail zur Bestätigung wurde verschickt. Schau in deinen E-Mails (auch im Spam-Ordner) nach der Bestätigungs-E-Mail. Nachdem du die E-Mail bestätigt hast, aktualisiere bitte diese Seite.";
 export const NO_AUTH_REDIRECT_TO_HOME =
   "Für die angeforderte Seite hast du keine Berechtigung. Du wirst automatisch umgeleitet.";
 export const NOT_REGISTERED_YET_SIGN_UP = "Noch keinen Account? Melde dich an!";
-export const EMAIL_HAS_BEEN_CHANGED = "Deine E-Mailadresse wurden geändert. ";
+export const EMAIL_HAS_BEEN_CHANGED = "Deine E-Mail-Adresse wurden geändert. ";
 export const LOGIN_CHANGE_ARE_YOU_READY = "Bereit für ein neues Login?";
 export const SIGN_IN_WHY_REAUTHENTICATE = "Bitte authentifiziere dich erneut.";
 export const LOGIN_SUCCESSFULL = "Login erfolgreich";
@@ -717,6 +721,7 @@ export const FOUND_TREASURES = "Gefundene Schätze";
 export const RECIPES_CREATED_PUBLIC = "erfasste öffentliche Rezepte";
 export const RECIPES_CREATED_PRIVATE = "erfasste private Rezepte";
 export const EVENTS_PARTICIPATED = "bekochte Anlässe";
+export const FOUND_BUGS = "Gefundene Bugs";
 export const COMMENTS_LEFT = "hinterlassene Kommentare";
 export const USER_PROFILE_ERROR_DISPLAYNAME_MISSING =
   "Bitte gib einen Anzeigename an.";

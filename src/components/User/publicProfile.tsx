@@ -16,6 +16,7 @@ import TodayIcon from "@material-ui/icons/Today";
 import LocalActivityIcon from "@material-ui/icons/LocalActivity";
 import HowToRegIcon from "@material-ui/icons/HowToReg";
 import FastfoodIcon from "@material-ui/icons/Fastfood";
+import BugReportIcon from "@material-ui/icons/BugReport";
 
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
@@ -32,6 +33,7 @@ import {
   RECIPES_CREATED_PUBLIC as TEXT_RECIPES_CREATED_PUBLIC,
   RECIPES_CREATED_PRIVATE as TEXT_RECIPES_CREATED_PRIVATE,
   EVENTS_PARTICIPATED as TEXT_EVENTS_PARTICIPATED,
+  FOUND_BUGS as TEXT_FOUND_BUGS,
 } from "../../constants/text";
 import Action from "../../constants/actions";
 import * as ROUTES from "../../constants/routes";
@@ -304,6 +306,7 @@ interface AchievedRewardsListProps {
 export const AchievedRewardsList = ({
   userProfile,
 }: AchievedRewardsListProps) => {
+  console.log(userProfile);
   return (
     <List>
       <FormListItem
@@ -328,7 +331,15 @@ export const AchievedRewardsList = ({
         label={TEXT_EVENTS_PARTICIPATED}
         icon={<TodayIcon fontSize="small" />}
       />
-
+      {userProfile.stats?.noFoundBugs > 0 && (
+        <FormListItem
+          id={"noFoundBungs"}
+          key={"noFoundBungs"}
+          value={userProfile.stats.noFoundBugs}
+          label={TEXT_FOUND_BUGS}
+          icon={<BugReportIcon fontSize="small" />}
+        />
+      )}
       {/* <FormListItem
         id={"noComments"}
         key={"noComments"}

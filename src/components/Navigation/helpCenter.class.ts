@@ -96,6 +96,14 @@ export default class HelpCenter {
         subdirectory = "masterdata";
         page = "departments";
         break;
+      case ROUTES.USER_PROFILE:
+        subdirectory = "user";
+        page = "profile";
+        break;
+      case ROUTES.PASSWORD_CHANGE:
+        subdirectory = "user";
+        page = "profile";
+        break;
       case ROUTES.SYSTEM:
         subdirectory = "admin";
         if (path.length > 2) {
@@ -114,6 +122,11 @@ export default class HelpCenter {
           page = "system";
         }
         break;
+      case ROUTES.USERS:
+        subdirectory = "admin";
+        page = "users";
+        break;
+
       default:
         console.info(path[1]);
         subdirectory = "";

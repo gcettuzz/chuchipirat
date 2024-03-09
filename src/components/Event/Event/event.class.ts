@@ -121,6 +121,10 @@ interface GetEvent {
   firebase: Firebase;
   uid: string;
 }
+
+interface GetAllEvents {
+  firebase: Firebase;
+}
 interface GetEventListener {
   firebase: Firebase;
   uid: string;
@@ -131,7 +135,7 @@ interface GetEvents {
   userUid: string;
   eventType: EventType;
 }
-interface GetAllEvents {
+interface GetAllEventsOfUser {
   firebase: Firebase;
   userUid: string;
 }
@@ -150,7 +154,7 @@ interface RegisterSupportUser {
   authUser: AuthUser;
   callback: ({
     done,
-    error,
+    errorMessage,
     eventUid,
     supportUserUid,
     date,
@@ -816,6 +820,28 @@ export default class Event {
       });
     return event;
   };
+  /* =====================================================================
+  // Alle Events holen
+  // ===================================================================== */
+  static getAllEvents = async ({firebase}: GetAllEvents) => {
+    let eventList: Event[] = [];
+    await firebase.event
+      .readCollection<Event>({
+        uids: [],
+        where: [{field: "numberOfDays", operator: Operator.GE, value: 1}],
+        orderBy: {field: "numberOfDays", sortOrder: SortOrder.desc},
+        ignoreCache: true,
+      })
+      .then((result) => {
+        eventList = result;
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+    return eventList;
+  };
+
   // ===================================================================== */
   /**
    * Listener holen
@@ -920,7 +946,7 @@ export default class Event {
    * @param eventType Type der Events, die gelesen werden sollen (siehe enum EventType )
    */
   // ===================================================================== */
-  static async getAllEventsOfUser({firebase, userUid}: GetAllEvents) {
+  static async getAllEventsOfUser({firebase, userUid}: GetAllEventsOfUser) {
     let events: Event[] = [];
 
     await firebase.event

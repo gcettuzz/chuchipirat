@@ -66,6 +66,7 @@ export class FirebaseDbUserPublicProfile extends FirebaseDbSuper {
         noRecipesPrivate: value.stats.noRecipesPrivate
           ? value.stats.noRecipesPrivate
           : 0,
+        noFoundBugs: value.stats.noFoundBugs ? value.stats.noFoundBugs : 0,
       },
     };
   }
@@ -85,6 +86,7 @@ export class FirebaseDbUserPublicProfile extends FirebaseDbSuper {
         noEvents: value.stats?.noEvents,
         noRecipesPublic: value.stats?.noRecipesPublic,
         noRecipesPrivate: value.stats?.noRecipesPrivate,
+        noFoundBugs: value.stats?.noFoundBugs,
       },
     } as unknown as T;
   }

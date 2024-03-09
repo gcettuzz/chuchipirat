@@ -4,19 +4,25 @@ import {compose} from "react-recompose";
 import {useHistory} from "react-router";
 
 import useStyles from "../../constants/styles";
-import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
-import Backdrop from "@material-ui/core/Backdrop";
-import CircularProgress from "@material-ui/core/CircularProgress";
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-import Radio from "@material-ui/core/Radio";
-import RadioGroup from "@material-ui/core/RadioGroup";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
+import {
+  Container,
+  Grid,
+  Backdrop,
+  CircularProgress,
+  Card,
+  CardContent,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+} from "@material-ui/core";
 
 import {IconButton, Typography, useTheme} from "@material-ui/core";
-import LockIcon from "@material-ui/icons/Lock";
-import LockOpenIcon from "@material-ui/icons/LockOpen";
+
+import {
+  OpenInNew as OpenInNewIcon,
+  Lock as LockIcon,
+  LockOpen as LockOpenIcon,
+} from "@material-ui/icons";
 
 import PageTitle from "../Shared/pageTitle";
 // import EnhancedTable, {
@@ -28,8 +34,6 @@ import AlertMessage from "../Shared/AlertMessage";
 import SearchPanel from "../Shared/searchPanel";
 import RecipeShort from "../Recipe/recipeShort.class";
 import DialogRecipeQuickView from "../Recipe/dialogRecipeQuickView";
-
-import {OpenInNew as OpenInNewIcon} from "@material-ui/icons";
 
 import {
   OPEN as TEXT_OPEN,
@@ -68,7 +72,6 @@ import Utils from "../Shared/utils.class";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
-//TODO: SessionState speichern
 enum ReducerActions {
   RECIPES_FETCH_INIT = "RECIPES_FETCH_INIT",
   PUBLIC_RECIPES_FETCH_SUCCESS = "RECIPES_FETCH_SUCCESS",
@@ -201,6 +204,9 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
       if (action.payload.searchString) {
         tmpList = tmpList.filter(
           (recipe) =>
+            recipe.uid
+              .toLocaleLowerCase()
+              .includes(action.payload.searchString.toLowerCase()) ||
             recipe.name
               .toLowerCase()
               .includes(action.payload.searchString.toLowerCase()) ||
@@ -541,6 +547,7 @@ interface RecipesPanelProps {
 }
 const RecipesPanel = ({recipes, onRecipeOpen}: RecipesPanelProps) => {
   const theme = useTheme();
+  const classes = useStyles();
 
   const DATA_GRID_COLUMNS: GridColDef[] = [
     {
@@ -634,65 +641,6 @@ const RecipesPanel = ({recipes, onRecipeOpen}: RecipesPanelProps) => {
     },
   ];
 
-  // const TABLE_COLUMS: Column[] = [
-  //   {
-  //     id: "uid",
-  //     type: TableColumnTypes.string,
-  //     textAlign: ColumnTextAlign.center,
-  //     disablePadding: false,
-  //     label: TEXT.UID,
-  //     visible: false,
-  //   },
-  //   {
-  //     id: "name",
-  //     type: TableColumnTypes.string,
-  //     textAlign: ColumnTextAlign.left,
-  //     disablePadding: false,
-  //     label: TEXT.RECIPES,
-  //     visible: true,
-  //   },
-  //   {
-  //     id: "typeIcon",
-  //     type: TableColumnTypes.icon,
-  //     textAlign: ColumnTextAlign.center,
-  //     disablePadding: false,
-  //     label: TEXT.VISIBILITY,
-  //     visible: true,
-  //   },
-  //   {
-  //     id: "source",
-  //     type: TableColumnTypes.link,
-  //     textAlign: ColumnTextAlign.left,
-  //     disablePadding: false,
-  //     label: TEXT.SOURCE,
-  //     visible: true,
-  //   },
-  //   {
-  //     id: "created.date",
-  //     type: TableColumnTypes.date,
-  //     textAlign: ColumnTextAlign.center,
-  //     disablePadding: false,
-  //     label: TEXT.FIELD_CREATED_AT,
-  //     visible: true,
-  //   },
-  //   {
-  //     id: "created.fromUid",
-  //     type: TableColumnTypes.string,
-  //     textAlign: ColumnTextAlign.center,
-  //     disablePadding: false,
-  //     label: TEXT.FIELD_CREATED_FROM,
-  //     visible: false,
-  //   },
-  //   {
-  //     id: "created.fromDisplayName",
-  //     type: TableColumnTypes.string,
-  //     textAlign: ColumnTextAlign.left,
-  //     disablePadding: false,
-  //     label: TEXT.FIELD_CREATED_FROM,
-  //     visible: true,
-  //   },
-  // ];
-  const classes = useStyles();
   return (
     <Card className={classes.card} key={"cardProductsPanel"}>
       <CardContent className={classes.cardContent} key={"cardPrdocutContent"}>
