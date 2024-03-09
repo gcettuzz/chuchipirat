@@ -394,43 +394,27 @@ export abstract class FirebaseDbSuper {
     errorCallback,
   }: Listen<T>) {
     const document = this.getDocument(uids);
-    // return document.onSnapshot((snapshot) => {
-    //   try {
-    //     if (!snapshot.exists) {
-    //       // Dokument wurde gelöscht
-    //       throw new Error(TEXT_DB_DOCUMENT_DELETED);
-    //     }
 
-    //     callback(
-    //       this.prepareDataForApp<T>({
-    //         uid: snapshot.id,
-    //         value: this.convertTimestampValues(snapshot.data() as ValueObject),
-    //       })
-    //     );
-    //   } catch (error) {
-    //     console.error(error);
-    //     throw error;
-    //   }
-    // });
-    return document.onSnapshot((snapshot) => {
-      if (!snapshot.exists) {
-        if (errorCallback) {
-          errorCallback(new Error(TEXT_DB_DOCUMENT_DELETED));
-          return;
-        } else {
+    return document.onSnapshot(
+      (snapshot) => {
+        if (!snapshot.exists) {
           throw new Error(TEXT_DB_DOCUMENT_DELETED);
         }
+
+        const dataForApp = this.prepareDataForApp<T>({
+          uid: snapshot.id,
+          value: this.convertTimestampValuesToDates(
+            snapshot.data() as ValueObject
+          ),
+        });
+
+        callback(dataForApp);
+      },
+      (error) => {
+        console.error("Fehler beim Hören auf Snapshot:", document.id, error);
+        errorCallback(error);
       }
-
-      const dataForApp = this.prepareDataForApp<T>({
-        uid: snapshot.id,
-        value: this.convertTimestampValuesToDates(
-          snapshot.data() as ValueObject
-        ),
-      });
-
-      callback(dataForApp);
-    });
+    );
   }
   // ===================================================================== */
   /**

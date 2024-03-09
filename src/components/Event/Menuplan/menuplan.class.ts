@@ -158,6 +158,7 @@ interface GetMenuplan {
   firebase: Firebase;
   uid: string;
   callback: (menuplan: Menuplan) => void;
+  errorCallback: (error: Error) => void;
 }
 interface GetMealsOfMenues {
   menuplan: Menuplan;
@@ -338,15 +339,12 @@ export default class Menuplan {
     firebase,
     uid,
     callback,
+    errorCallback,
   }: GetMenuplan) => {
     const menuplanCallback = (menuplan: Menuplan) => {
       // Menüplan mit UID anreichern
       menuplan.uid = uid;
       callback(menuplan);
-    };
-    const errorCallback = (error: Error) => {
-      console.error(error);
-      throw error;
     };
 
     return await firebase.event.menuplan

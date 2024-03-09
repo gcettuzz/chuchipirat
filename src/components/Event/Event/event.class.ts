@@ -129,6 +129,7 @@ interface GetEventListener {
   firebase: Firebase;
   uid: string;
   callback: (event: Event) => void;
+  errorCallback: (error: Error) => void;
 }
 interface GetEvents {
   firebase: Firebase;
@@ -569,7 +570,6 @@ export default class Event {
     });
 
     event.authUsers = this.getAuthUsersFromCooks(event.cooks);
-
     return event;
   }
   // ===================================================================== */
@@ -828,8 +828,7 @@ export default class Event {
     await firebase.event
       .readCollection<Event>({
         uids: [],
-        where: [{field: "numberOfDays", operator: Operator.GE, value: 1}],
-        orderBy: {field: "numberOfDays", sortOrder: SortOrder.desc},
+        orderBy: {field: "name", sortOrder: SortOrder.desc},
         ignoreCache: true,
       })
       .then((result) => {
@@ -852,6 +851,7 @@ export default class Event {
     firebase,
     uid,
     callback,
+    errorCallback,
   }: GetEventListener) => {
     let eventListener: (() => void) | undefined;
 
@@ -859,11 +859,6 @@ export default class Event {
       // Menüplan mit UID anreichern
       event.uid = uid;
       callback(event);
-    };
-
-    const errorCallback = (error: Error) => {
-      console.error(error);
-      throw error;
     };
 
     await firebase.event

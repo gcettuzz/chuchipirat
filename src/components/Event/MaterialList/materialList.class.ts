@@ -57,6 +57,7 @@ interface GetMaterialListListener {
   firebase: Firebase;
   uid: string;
   callback: (materialList: MaterialList) => void;
+  errorCallback: (error: Error) => void;
 }
 interface Factory {
   event: Event;
@@ -190,15 +191,12 @@ export default class MaterialList {
     firebase,
     uid,
     callback,
+    errorCallback,
   }: GetMaterialListListener) => {
     const materialListCallback = (materialList: MaterialList) => {
       // Menüplan mit UID anreichern
       materialList.uid = uid;
       callback(materialList);
-    };
-    const errorCallback = (error: Error) => {
-      console.error(error);
-      throw error;
     };
 
     return await firebase.event.materialList

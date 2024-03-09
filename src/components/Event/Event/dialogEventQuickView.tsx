@@ -1,16 +1,17 @@
 import React from "react";
 import useStyles from "../../../constants/styles";
 
-import Button from "@material-ui/core/Button";
-import Backdrop from "@material-ui/core/Backdrop";
-import CircularProgress from "@material-ui/core/CircularProgress";
+import {
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogActions,
+  CardMedia,
+  DialogContent,
+  Link,
+  List,
+} from "@material-ui/core";
 
-import Dialog from "@material-ui/core/Dialog";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogActions from "@material-ui/core/DialogActions";
-import CardMedia from "@material-ui/core/CardMedia";
-
-import {DialogContent, Link, List} from "@material-ui/core";
 import {FormListItem} from "../../Shared/formListItem";
 
 import Firebase from "../../Firebase/firebase.class";
@@ -27,7 +28,6 @@ import {
 } from "../../../constants/text";
 
 import EventShort from "./eventShort.class";
-import Event from "./event.class";
 import {ImageRepository} from "../../../constants/imageRepository";
 import {useHistory} from "react-router";
 import Action from "../../../constants/actions";
@@ -38,8 +38,8 @@ export interface DialogQuickViewActions {
   name: string;
   variant: "text" | "outlined" | "contained";
   onClick: (
-    event: React.MouseEvent<HTMLButtonElement> | undefined,
-    recipe: Event
+    actionEvent: React.MouseEvent<HTMLButtonElement> | undefined,
+    event: EventShort
   ) => void;
 }
 
@@ -55,27 +55,13 @@ interface DialogEventQuickViewProps {
 }
 
 const DialogEventQuickView = ({
-  firebase,
   eventShort,
   dialogOpen,
   handleClose,
   dialogActions,
 }: DialogEventQuickViewProps) => {
-  const [event, setEvent] = React.useState<Event>(new Event());
-  const [isLoading, setIsLoading] = React.useState<boolean>(true);
-
   const classes = useStyles();
   const {push} = useHistory();
-
-  if (eventShort?.uid && !event.uid) {
-    Event.getEvent({
-      firebase: firebase,
-      uid: eventShort.uid,
-    }).then((result) => {
-      setEvent(result);
-      setIsLoading(false);
-    });
-  }
 
   return (
     <Dialog
@@ -86,10 +72,6 @@ const DialogEventQuickView = ({
       open={dialogOpen}
       scroll={"paper"}
     >
-      <Backdrop className={classes.backdrop} open={isLoading}>
-        <CircularProgress color="inherit" />
-      </Backdrop>
-
       {eventShort.pictureSrc && (
         <CardMedia
           className={classes.cardMedia}
@@ -109,7 +91,7 @@ const DialogEventQuickView = ({
           <FormListItem
             key={"uid"}
             id={"uid"}
-            value={event.uid}
+            value={eventShort.uid}
             label={TEXT_UID}
             displayAsCode={true}
           />
@@ -118,21 +100,21 @@ const DialogEventQuickView = ({
           <FormListItem
             key={"location"}
             id={"location"}
-            value={event.location}
+            value={eventShort.location}
             label={TEXT_LOCATION}
           />
           {/* Motto */}
           <FormListItem
             key={"motto"}
             id={"motto"}
-            value={event.motto}
+            value={eventShort.motto}
             label={TEXT_MOTTO}
           />
           {/* Anzahl Köche */}
           <FormListItem
             key={"noOfCooks"}
             id={"noOfCooks"}
-            value={event.authUsers.length}
+            value={eventShort.noOfCooks}
             label={TEXT_NO_OF_COOKS}
           />
           {/* Start-Datum */}
@@ -140,10 +122,10 @@ const DialogEventQuickView = ({
             key={"startDate"}
             id={"startDate"}
             value={
-              event.dates[0]?.from
-                ? new Intl.DateTimeFormat("de-CH", {
+              eventShort.startDate instanceof Date
+                ? eventShort.startDate.toLocaleString("de-CH", {
                     dateStyle: "medium",
-                  }).format(new Date(event.dates[0]?.from))
+                  })
                 : ""
             }
             label={TEXT_START_DATE}
@@ -152,16 +134,20 @@ const DialogEventQuickView = ({
           <FormListItem
             key={"EndDate"}
             id={"EndDate"}
-            value={new Intl.DateTimeFormat("de-CH", {
-              dateStyle: "medium",
-            }).format(event.maxDate as Date)}
+            value={
+              eventShort.endDate instanceof Date
+                ? eventShort.endDate.toLocaleString("de-CH", {
+                    dateStyle: "medium",
+                  })
+                : ""
+            }
             label={TEXT_END_DATE}
           />
           {/* Anzahl Tage */}
           <FormListItem
             key={"noOfDays"}
             id={"noOfDays"}
-            value={event.numberOfDays}
+            value={eventShort.numberOfDays}
             label={TEXT_NO_OF_DAYS}
           />
           {/* Autor*in */}
@@ -173,15 +159,15 @@ const DialogEventQuickView = ({
                 style={{cursor: "pointer"}}
                 onClick={() =>
                   push({
-                    pathname: `${ROUTES_USER_PUBLIC_PROFILE}/${event.created.fromUid}`,
+                    pathname: `${ROUTES_USER_PUBLIC_PROFILE}/${eventShort.created.fromUid}`,
                     state: {
                       action: Action.VIEW,
-                      displayName: event.created.fromDisplayName,
+                      displayName: eventShort.created.fromDisplayName,
                     },
                   })
                 }
               >
-                {event.created.fromDisplayName}
+                {eventShort.created.fromDisplayName}
               </Link>
             }
             label={TEXT_CREATED_FROM}
@@ -189,7 +175,7 @@ const DialogEventQuickView = ({
           <FormListItem
             key={"authorUid"}
             id={"authorUid"}
-            value={event.created.fromUid}
+            value={eventShort.created.fromUid}
             label={`${TEXT_CREATED_FROM} ${TEXT_UID}`}
             displayAsCode={true}
           />
@@ -203,7 +189,7 @@ const DialogEventQuickView = ({
             size="small"
             color="primary"
             variant={action.variant}
-            onClick={(actionEvent) => action.onClick(actionEvent, event)}
+            onClick={(actionEvent) => action.onClick(actionEvent, eventShort)}
           >
             {action.name}
           </Button>

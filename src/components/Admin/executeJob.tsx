@@ -140,7 +140,7 @@ const ExecuteJobBase: React.FC<
   };
 
   const onRebuildFile000AllEvents = async () => {
-    await rebuildFile000AllEvents(firebase).then((result) => {
+    await rebuildFile000AllEvents(firebase, authUser).then((result) => {
       setDocumentCounter({...documentCounter, allEvents: result});
     });
   };

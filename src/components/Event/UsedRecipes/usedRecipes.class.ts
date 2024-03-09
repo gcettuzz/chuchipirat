@@ -27,6 +27,7 @@ interface GetUsedRecipesListener {
   firebase: Firebase;
   uid: string;
   callback: (usedRecipes: UsedRecipes) => void;
+  errorCallback: (error: Error) => void;
 }
 
 interface CreateNewList {
@@ -136,15 +137,12 @@ export default class UsedRecipes {
     firebase,
     uid,
     callback,
+    errorCallback,
   }: GetUsedRecipesListener) => {
     const usedRecipesCallback = (usedRecipes: UsedRecipes) => {
       // Menüplan mit UID anreichern
       usedRecipes.uid = uid;
       callback(usedRecipes);
-    };
-    const errorCallback = (error: Error) => {
-      console.error(error);
-      throw error;
     };
 
     return await firebase.event.usedRecipes

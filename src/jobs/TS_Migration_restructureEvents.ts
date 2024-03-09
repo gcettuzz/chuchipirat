@@ -100,10 +100,11 @@ export async function restructureEventDocuments(
         numberOfDays: eventDocumentData.dates.reduce((result, currenEntry) => {
           return (
             result +
-            Utils.differenceBetweenTwoDates({
-              dateFrom: currenEntry.from,
-              dateTo: currenEntry.to,
-            })
+              Utils.differenceBetweenTwoDates({
+                dateFrom: currenEntry.from,
+                dateTo: currenEntry.to,
+              }),
+            0
           );
         }),
         pictureSrc: eventDocumentData?.pictureSrc

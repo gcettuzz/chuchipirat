@@ -64,6 +64,7 @@ interface GetGroupConfigurationListener {
   firebase: Firebase;
   uid: EventGroupConfiguration["uid"];
   callback: (groupConfiguration: EventGroupConfiguration) => void;
+  errorCallback: (error: Error) => void;
 }
 interface IntolerancePortions {
   [key: Intolerance["uid"]]: number;
@@ -359,6 +360,7 @@ export default class EventGroupConfiguration {
     firebase,
     uid,
     callback,
+    errorCallback,
   }: GetGroupConfigurationListener) => {
     let groupConfigurationListener: (() => void) | undefined;
 
@@ -368,11 +370,6 @@ export default class EventGroupConfiguration {
       // Menüplan mit UID anreichern
       groupConfiguration.uid = uid;
       callback(groupConfiguration);
-    };
-
-    const errorCallback = (error: Error) => {
-      console.error(error);
-      throw error;
     };
 
     await firebase.event.groupConfiguration
@@ -388,6 +385,7 @@ export default class EventGroupConfiguration {
         console.error(error);
         throw error;
       });
+
     return groupConfigurationListener;
   };
 }

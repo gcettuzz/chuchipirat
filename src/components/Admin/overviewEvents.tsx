@@ -127,9 +127,9 @@ const moveDataToUiStructure = (events: EventShort[]): EventOverview[] => {
       endDate: event.endDate,
       numberOfDays: event.numberOfDays,
       pictureSrc: event.pictureSrc,
-      create_date: event.created.date,
-      create_fromUid: event.created.fromUid,
-      create_fromDisplayName: event.created.fromDisplayName,
+      create_date: event.created?.date,
+      create_fromUid: event.created?.fromUid,
+      create_fromDisplayName: event.created?.fromDisplayName,
     });
   });
   return result;
@@ -280,7 +280,7 @@ const OverviewEventsBase: React.FC<
   };
   const onQuickDialogOpenEvent = (
     actionEvent: React.MouseEvent<HTMLButtonElement, MouseEvent> | undefined,
-    event: Event
+    event: EventShort
   ) => {
     push({
       pathname: `${ROUTE_EVENT}/${event.uid}`,
@@ -432,11 +432,11 @@ const EventsPanel = ({events, onEventOpen}: EventsPanelProps) => {
       editable: false,
       width: 150,
       valueGetter: (params: GridValueFormatterParams) => {
-        return params?.value
-          ? new Intl.DateTimeFormat("de-CH", {dateStyle: "medium"}).format(
-              params.value as Date
-            )
-          : undefined;
+        return params?.value instanceof Date
+          ? params.value.toLocaleString("de-CH", {
+              dateStyle: "medium",
+            })
+          : "";
       },
     },
     {
@@ -445,11 +445,11 @@ const EventsPanel = ({events, onEventOpen}: EventsPanelProps) => {
       editable: false,
       width: 150,
       valueGetter: (params: GridValueFormatterParams) => {
-        return params?.value
-          ? new Intl.DateTimeFormat("de-CH", {dateStyle: "medium"}).format(
-              params.value as Date
-            )
-          : undefined;
+        return params?.value instanceof Date
+          ? params.value.toLocaleString("de-CH", {
+              dateStyle: "medium",
+            })
+          : "";
       },
     },
     {
@@ -464,11 +464,11 @@ const EventsPanel = ({events, onEventOpen}: EventsPanelProps) => {
       headerName: TEXT_CREATED_AT,
       editable: false,
       valueGetter: (params: GridValueFormatterParams) => {
-        return params?.value
-          ? new Intl.DateTimeFormat("de-CH", {dateStyle: "medium"}).format(
-              params.value as Date
-            )
-          : undefined;
+        return params?.value instanceof Date
+          ? params.value.toLocaleString("de-CH", {
+              dateStyle: "medium",
+            })
+          : "";
       },
       width: 100,
     },

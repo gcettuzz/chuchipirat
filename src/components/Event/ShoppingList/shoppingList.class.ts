@@ -99,6 +99,7 @@ interface GetShoppingListListener {
   eventUid: Event["uid"];
   shoppingListUid: ShoppingList["uid"];
   callback: (shoppingList: ShoppingList) => void;
+  errorCallback: (error: Error) => void;
 }
 
 interface GetShoppingList {
@@ -547,15 +548,12 @@ export default class ShoppingList {
     eventUid,
     shoppingListUid,
     callback,
+    errorCallback,
   }: GetShoppingListListener) => {
     const shoppingListCallback = (shoppingList: ShoppingList) => {
       // Menüplan mit UID anreichern
       shoppingList.uid = shoppingListUid;
       callback(shoppingList);
-    };
-    const errorCallback = (error: Error) => {
-      console.error(error);
-      throw error;
     };
     return await firebase.event.shoppingList
       .listen<ShoppingList>({
