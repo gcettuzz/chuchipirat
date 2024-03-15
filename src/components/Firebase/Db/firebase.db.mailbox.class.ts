@@ -6,11 +6,12 @@ import {
   PrepareDataForDb,
   PrepareDataForApp,
 } from "./firebase.db.super.class";
-import { ERROR_NOT_IMPLEMENTED_YET } from "../../../constants/text";
+import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
 import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+
 export class FirebaseDbMailbox extends FirebaseDbSuper {
   firebase: Firebase;
   /* =====================================================================
@@ -48,7 +49,7 @@ export class FirebaseDbMailbox extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForDb<T extends ValueObject>({ value }: PrepareDataForDb<T>) {
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
     return {
       to: value.to,
       bbc: value.bbc,
@@ -58,7 +59,7 @@ export class FirebaseDbMailbox extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({ uid, value }: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
     return {
       uid: uid,
       to: value.to,

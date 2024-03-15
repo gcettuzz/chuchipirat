@@ -122,7 +122,7 @@ export default class HelpCenter {
           page = "system";
         }
         break;
-      case ROUTES.USERS:
+      case ROUTES.SYSTEM_OVERVIEW_USERS:
         subdirectory = "admin";
         page = "users";
         break;

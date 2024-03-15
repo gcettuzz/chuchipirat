@@ -76,7 +76,6 @@ const DialogRecipeQuickView = ({
       setIsLoading(false);
     });
   }
-  console.log(recipe);
   return (
     <Dialog
       onClose={handleClose}

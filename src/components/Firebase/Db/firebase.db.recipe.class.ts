@@ -41,6 +41,7 @@ export class FirebaseDbRecipe extends FirebaseDbSuper {
   /* =====================================================================
   // Collection holen
   // ===================================================================== */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getCollection(uids: string[]) {
     throw Error(ERROR_WRONG_DB_CLASS);
     return this.firebase.db.collection("recipes");
@@ -86,7 +87,7 @@ export class FirebaseDbRecipe extends FirebaseDbSuper {
     if (value.materials.order.length > 0) {
       Object.values(
         value.materials
-          .enetries as RecipeObjectStructure<RecipeMaterialPosition>["entries"]
+          .entries as RecipeObjectStructure<RecipeMaterialPosition>["entries"]
       ).forEach((material) => {
         usedMaterials.push(material.material.uid);
       });

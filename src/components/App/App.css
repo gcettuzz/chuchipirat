@@ -1,3 +1,5 @@
+
+
 /* ===================================================================
 // ============================ Input Fields =========================
 // =================================================================== */
@@ -376,3 +378,67 @@ input[type="number"] {
   bottom: 30px;
   transform: rotate(-225deg);
 }
+/* ===================================================================
+// =========================== Quill Editor ==========================
+// =================================================================== */
+.quill > * {
+  border-color: inherit !important;
+  color: inherit !important;
+}
+.quill > .ql-toolbar {
+  /* border radius of the toolbar */
+  border-radius: 4px 4px 0 0;
+}
+.quill > .ql-container {
+  /* border radius of the container and for font size*/
+  font-size: inherit;
+  border-radius: 0 0 4px 4px;
+}
+.ql-toolbar.ql-snow .ql-picker-label {
+  color: inherit !important;
+  opacity: 0.76;
+}
+.ql-snow .ql-picker {
+  color: inherit !important;
+}
+.quill > .ql-container > .ql-editor.ql-blank::before {
+  /* for placeholder */
+  color: inherit;
+}
+.ql-snow.ql-toolbar button svg {
+  opacity: 0.76;
+  color: currentColor;
+}
+.ql-snow .ql-stroke {
+  /* for the border of the editor */
+  stroke: currentColor !important;
+}
+.ql-snow .ql-fill {
+  /* for the bg color */
+  fill: currentColor !important;
+}
+.ql-picker-item {
+  /* for dropdown */
+  color: #444 !important;
+}
+.ql-active {
+  color: #006064 !important;
+}
+/* Stile für den Dark Mode */
+@media (prefers-color-scheme: dark) {
+  .ql-active {
+    color: #00bcd4 !important;
+  }
+}
+
+
+/* Test umgebung */
+/* .ql-active {
+  color: #AB47BC !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ql-active {
+    color: #6a1b9a !important;
+  }
+} */

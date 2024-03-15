@@ -500,8 +500,8 @@ export abstract class FirebaseDbSuper {
         });
       })
       .catch((error) => {
-        console.info("updateFields:", document.id, values);
-        console.error(error);
+        // console.info("updateFields:", document.id, values);
+        // console.error(error);
         throw error;
       });
   }

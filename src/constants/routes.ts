@@ -19,7 +19,6 @@ export const EVENT_UID = "/event/:id";
 export const CREATE_NEW_EVENT = "/event/new";
 export const EVENTS = "/events";
 
-export const USERS = "/users";
 export const SYSTEM = "/system";
 export const SYSTEM_JOBS = "/system/jobs";
 export const SYSTEM_FEED_DELETE = "/system/feeddelete";
@@ -33,6 +32,10 @@ export const SYSTEM_ACTIVATE_SUPPORT_USER = "/system/activatesupportuser";
 
 export const SYSTEM_OVERVIEW_RECIPES = "/system/overview/recipes";
 export const SYSTEM_OVERVIEW_EVENTS = "/system/overview/events";
+export const SYSTEM_OVERVIEW_USERS = "/overview/users";
+export const SYSTEM_OVERVIEW_MAILBOX = "/overview/mailbox";
+
+export const SYSTEM_MAIL_CONSOLE = "/system/mailconsole";
 
 export const USER_PUBLIC_PROFILE = "/publicprofile";
 export const USER_PUBLIC_PROFILE_UID = "/publicprofile/:id";

@@ -30,6 +30,8 @@ import {
   FindInPage as FindInPageIcon,
   Cached as CachedIcon,
   HeadsetMic as HeadsetMicIcon,
+  Mail as MailIcon,
+  Send as SendIcon,
 } from "@material-ui/icons";
 
 import {
@@ -54,6 +56,9 @@ import {
   EVENTS as TEXT_EVENTS,
   ACTIVATE_SUPPORT_USER as TEXT_ACTIVATE_SUPPORT_USER,
   ACTIVATE_SUPPORT_USER_DESCRIPTION as TEXT_ACTIVATE_SUPPORT_USER_DESCRIPTION,
+  MAIL_CONSOLE as TEXT_MAIL_CONSOLE,
+  MAIL_CONSOLE_DESCRIPTION as TEXT_MAIL_CONSOLE_DESCRIPTION,
+  MAILBOX as TEXT_MAILBOX,
 } from "../../constants/text";
 import Role from "../../constants/roles";
 import {
@@ -68,6 +73,8 @@ import {
   SYSTEM_OVERVIEW_RECIPES as ROUTE_SYSTEM_OVERVIEW_RECIPES,
   SYSTEM_OVERVIEW_EVENTS as ROUTE_SYSTEM_OVERVIEW_EVENTS,
   SYSTEM_ACTIVATE_SUPPORT_USER as ROUTE_SYSTEM_ACTIVATE_SUPPORT_USER,
+  SYSTEM_MAIL_CONSOLE as ROUTE_SYSTEM_MAIL_CONSOLE,
+  SYSTEM_OVERVIEW_MAILBOX as ROUTE_SYSTEM_OVERVIEW_MAILBOX,
 } from "../../constants/routes";
 
 import useStyles from "../../constants/styles";
@@ -155,7 +162,19 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
       pathname: ROUTE_SYSTEM_ACTIVATE_SUPPORT_USER,
     });
   };
-
+  /* ------------------------------------------
+  // Mail-Konsole öffnen
+  // ------------------------------------------ */
+  const goToMailConsole = () => {
+    push({
+      pathname: ROUTE_SYSTEM_MAIL_CONSOLE,
+    });
+  };
+  const goToOverviewMailbox = () => {
+    push({
+      pathname: ROUTE_SYSTEM_OVERVIEW_MAILBOX,
+    });
+  };
   const goToTemp = () => {
     push({
       pathname: ROUTE_TEMP,
@@ -175,12 +194,12 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
     });
   };
 
-  const onShowRecipes = () => {
+  const goToOverviewRecipes = () => {
     push({
       pathname: ROUTE_SYSTEM_OVERVIEW_RECIPES,
     });
   };
-  const onShowEvents = () => {
+  const goToOverviewEvents = () => {
     push({
       pathname: ROUTE_SYSTEM_OVERVIEW_EVENTS,
     });
@@ -206,12 +225,12 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
               />
             </Grid>
           )}
-
           <Grid item xs={12} md={6}>
             <OverviewTile
               id={"overview"}
-              onShowRecipes={onShowRecipes}
-              onShowEvents={onShowEvents}
+              onShowRecipes={goToOverviewRecipes}
+              onShowEvents={goToOverviewEvents}
+              onShowMailbox={goToOverviewMailbox}
               icon={<ViewListIcon />}
             />
           </Grid>
@@ -263,38 +282,46 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
             />
           </Grid>
           {authUser.roles.includes(Role.admin) && (
-            <Grid item xs={12} md={6} lg={4}>
-              <AdminTile
-                id={"jobs"}
-                text={TEXT_JOBS}
-                description={TEXT_JOBS_DESCRIPTION}
-                icon={<TimelapseIcon />}
-                action={goToJobs}
-              />
-            </Grid>
-          )}
-          {authUser.roles.includes(Role.admin) && (
-            <Grid item xs={12} md={6} lg={4}>
-              <AdminTile
-                id={"dbIndices"}
-                text={TEXT_DB_INDICES}
-                description={TEXT_DB_INDICES_DESCRIPTION}
-                icon={<FindInPageIcon />}
-                action={goToDbIndices}
-              />
-            </Grid>
-          )}
-          {authUser.roles.includes(Role.admin) && (
-            <Grid item xs={12} md={6} lg={4}>
-              <AdminTile
-                id={"temp"}
-                text={"Temp"}
-                description={""}
-                icon={<CallMergeIcon />}
-                action={goToTemp}
-              />
-            </Grid>
-          )}
+            <React.Fragment>
+              <Grid item xs={12} md={6} lg={4}>
+                <AdminTile
+                  id={"jobs"}
+                  text={TEXT_JOBS}
+                  description={TEXT_JOBS_DESCRIPTION}
+                  icon={<TimelapseIcon />}
+                  action={goToJobs}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6} lg={4}>
+                <AdminTile
+                  id={"dbIndices"}
+                  text={TEXT_DB_INDICES}
+                  description={TEXT_DB_INDICES_DESCRIPTION}
+                  icon={<FindInPageIcon />}
+                  action={goToDbIndices}
+                />
+              </Grid>
+              <Grid item xs={12} md={6} lg={4}>
+                <AdminTile
+                  id={"mailConsole"}
+                  text={TEXT_MAIL_CONSOLE}
+                  description={TEXT_MAIL_CONSOLE_DESCRIPTION}
+                  icon={<MailIcon />}
+                  action={goToMailConsole}
+                />
+              </Grid>
+              <Grid item xs={12} md={6} lg={4}>
+                <AdminTile
+                  id={"temp"}
+                  text={"Temp"}
+                  description={""}
+                  icon={<CallMergeIcon />}
+                  action={goToTemp}
+                />
+              </Grid>
+            </React.Fragment>
+          )}{" "}
         </Grid>
       </Container>
     </>
@@ -339,12 +366,14 @@ interface OverviewTileProps {
   id: string;
   onShowRecipes: () => void;
   onShowEvents: () => void;
+  onShowMailbox: () => void;
   icon: JSX.Element;
 }
 const OverviewTile = ({
   id,
   onShowRecipes,
   onShowEvents,
+  onShowMailbox,
   icon,
 }: OverviewTileProps) => {
   const classes = useStyles();
@@ -372,6 +401,12 @@ const OverviewTile = ({
               <EventIcon />
             </ListItemIcon>
             <ListItemText primary={TEXT_EVENTS} onClick={onShowEvents} />
+          </ListItem>
+          <ListItem button>
+            <ListItemIcon>
+              <SendIcon />
+            </ListItemIcon>
+            <ListItemText primary={TEXT_MAILBOX} onClick={onShowMailbox} />
           </ListItem>
         </List>
       </CardContent>

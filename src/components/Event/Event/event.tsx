@@ -40,6 +40,11 @@ import {
   EVENT_IS_BEEING_SAVED as TEXT_EVENT_IS_BEEING_SAVED,
   DELETE_EVENT as TEXT_DELETE_EVENT,
   ALERT_TITLE_UUPS as TEXT_ALERT_TITLE_UUPS,
+  DIALOG_TITLE_DELETION_CONFIRMATION as TEXT_DIALOG_TITLE_DELETION_CONFIRMATION,
+  DIALOG_SUBTITLE_DELETION_CONFIRMATION as TEXT_DIALOG_SUBTITLE_DELETION_CONFIRMATION,
+  DIALOG_TEXT_DELETION_CONFIRMATION as TEXT_DIALOG_TEXT_DELETION_CONFIRMATION,
+  CANCEL as TEXT_CANCEL,
+  DELETE as TEXT_DELETE,
 } from "../../../constants/text";
 
 import {HOME as ROUTE_HOME} from "../../../constants/routes";
@@ -1212,8 +1217,13 @@ const EventBase: React.FC<
   };
   const onEventDelete = async () => {
     const isConfirmed = await customDialog({
-      dialogType: DialogType.ConfirmDeletion,
+      dialogType: DialogType.ConfirmSecure,
       deletionDialogProperties: {confirmationString: state.event.name},
+      title: TEXT_DIALOG_TITLE_DELETION_CONFIRMATION,
+      subtitle: TEXT_DIALOG_SUBTITLE_DELETION_CONFIRMATION,
+      text: TEXT_DIALOG_TEXT_DELETION_CONFIRMATION,
+      buttonTextCancel: TEXT_CANCEL,
+      buttonTextConfirm: TEXT_DELETE,
     });
     if (!isConfirmed) {
       return;

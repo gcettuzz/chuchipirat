@@ -53,7 +53,65 @@ import ExpandLess from "@material-ui/icons/ExpandLess";
 import ExpandMore from "@material-ui/icons/ExpandMore";
 import EditIcon from "@material-ui/icons/Edit";
 
-import * as TEXT from "../../constants/text";
+import {
+  VARIANT_NOTE as TEXT_VARIANT_NOTE,
+  MATERIAL as TEXT_MATERIAL,
+  PREPARATION as TEXT_PREPARATION,
+  SCALED as TEXT_SCALED,
+  ORIGINAL as TEXT_ORIGINAL,
+  INGREDIENTS as TEXT_INGREDIENTS,
+  FOR_ACCUSATIVE as TEXT_FOR_ACCUSATIVE,
+  TAG as TEXT_TAG,
+  ADD as TEXT_ADD,
+  PORTION as TEXT_PORTION,
+  PORTIONS as TEXT_PORTIONS,
+  ALL as TEXT_ALL,
+  THIS_RECIPE_IS_PLANNED_FOR as TEXT_THIS_RECIPE_IS_PLANNED_FOR,
+  HAS_MEAT as TEXT_HAS_MEAT,
+  IS_VEGAN as TEXT_IS_VEGAN,
+  IS_VEGETARIAN as TEXT_IS_VEGETARIAN,
+  IS_GLUTENFREE as TEXT_IS_GLUTENFREE,
+  HAS_GLUTEN as TEXT_HAS_GLUTEN,
+  IS_LACTOSEFREE as TEXT_IS_LACTOSEFREE,
+  HAS_LACTOSE as TEXT_HAS_LACTOSE,
+  FIELD_TAGS as TEXT_FIELD_TAGS,
+  FIELD_HINT as TEXT_FIELD_HINT,
+  MENU_TYPE as TEXT_MENU_TYPE,
+  MENU_TYPES as TEXT_MENU_TYPES,
+  TIPS_AND_TAGS as TEXT_TIPS_AND_TAGS,
+  DIET_PROPERTIES as TEXT_DIET_PROPERTIES,
+  FIELD_COOK_TIME as TEXT_FIELD_COOK_TIME,
+  FIELD_REST_TIME as TEXT_FIELD_REST_TIME,
+  UNIT_MIN as TEXT_UNIT_MIN,
+  FIELD_PREPARATION_TIME as TEXT_FIELD_PREPARATION_TIME,
+  CREATED_FROM as TEXT_CREATED_FROM,
+  SOURCE as TEXT_SOURCE,
+  DELETE_RECIPE as TEXT_DELETE_RECIPE,
+  SHOW_OPEN_REQUESTS as TEXT_SHOW_OPEN_REQUESTS,
+  REPORT_ERROR as TEXT_REPORT_ERROR,
+  PUBLISH_RECIPE as TEXT_PUBLISH_RECIPE,
+  BUTTON_PRINTVERSION as TEXT_BUTTON_PRINTVERSION,
+  BUTTON_OWN_VARIANT as TEXT_BUTTON_OWN_VARIANT,
+  BUTTON_SCALE as TEXT_BUTTON_SCALE,
+  EDIT as TEXT_EDIT,
+  BUTTON_ADD_TO_EVENT as TEXT_BUTTON_ADD_TO_EVENT,
+  IMAGE_SOURCE as TEXT_IMAGE_SOURCE,
+  IMAGE_MAY_BE_SUBJECT_OF_COPYRIGHT as TEXT_IMAGE_MAY_BE_SUBJECT_OF_COPYRIGHT,
+  VOTE as TEXT_VOTE,
+  VOTES as TEXT_VOTES,
+  FIELD_YOUR_RATING as TEXT_FIELD_YOUR_RATING,
+  VARIANT as TEXT_VARIANT,
+  ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
+  REPORT_ERROR_RECIPE_REQUEST_CREATED as TEXT_REPORT_ERROR_RECIPE_REQUEST_CREATED,
+  PUBLISH_RECIPE_REQUEST_CREATED as TEXT_PUBLISH_RECIPE_REQUEST_CREATED,
+  SUFFIX_PDF as TEXT_SUFFIX_PDF,
+  THANK_YOU_FOR_YOUR_RATING as TEXT_THANK_YOU_FOR_YOUR_RATING,
+  DIALOG_TITLE_DELETION_CONFIRMATION as TEXT_DIALOG_TITLE_DELETION_CONFIRMATION,
+  DIALOG_SUBTITLE_DELETION_CONFIRMATION as TEXT_DIALOG_SUBTITLE_DELETION_CONFIRMATION,
+  DIALOG_TEXT_DELETION_CONFIRMATION as TEXT_DIALOG_TEXT_DELETION_CONFIRMATION,
+  CANCEL as TEXT_CANCEL,
+  DELETE as TEXT_DELETE,
+} from "../../constants/text";
 import * as ROUTES from "../../constants/routes";
 import {ImageRepository} from "../../constants/imageRepository";
 import RecipePdf from "./recipePdf";
@@ -289,7 +347,7 @@ const RecipeView = ({
       onUpdateRecipe({
         recipe: {...recipe, rating: result},
         snackbar: {
-          message: TEXT.THANK_YOU_FOR_YOUR_RATING,
+          message: TEXT_THANK_YOU_FOR_YOUR_RATING,
           severity: "info",
           open: true,
         },
@@ -520,7 +578,7 @@ const RecipeView = ({
     )
       .toBlob()
       .then((result) => {
-        fileSaver.saveAs(result, recipe.name + TEXT.SUFFIX_PDF);
+        fileSaver.saveAs(result, recipe.name + TEXT_SUFFIX_PDF);
       });
   };
   /* ------------------------------------------
@@ -545,7 +603,7 @@ const RecipeView = ({
         onUpdateRecipe({
           recipe: recipe,
           snackbar: {
-            message: TEXT.PUBLISH_RECIPE_REQUEST_CREATED(requestNo),
+            message: TEXT_PUBLISH_RECIPE_REQUEST_CREATED(requestNo),
             severity: "success",
             open: true,
           },
@@ -588,7 +646,7 @@ const RecipeView = ({
         onUpdateRecipe({
           recipe: recipe,
           snackbar: {
-            message: TEXT.REPORT_ERROR_RECIPE_REQUEST_CREATED(requestNo),
+            message: TEXT_REPORT_ERROR_RECIPE_REQUEST_CREATED(requestNo),
             severity: "success",
             open: true,
           },
@@ -608,8 +666,13 @@ const RecipeView = ({
   const onDeleteRecipe = async () => {
     // Löschung wurde bestätigt. Löschen kann losgehen
     const isConfirmed = await customDialog({
-      dialogType: DialogType.ConfirmDeletion,
+      dialogType: DialogType.ConfirmSecure,
       deletionDialogProperties: {confirmationString: recipe.name},
+      title: TEXT_DIALOG_TITLE_DELETION_CONFIRMATION,
+      subtitle: TEXT_DIALOG_SUBTITLE_DELETION_CONFIRMATION,
+      text: TEXT_DIALOG_TEXT_DELETION_CONFIRMATION,
+      buttonTextCancel: TEXT_CANCEL,
+      buttonTextConfirm: TEXT_DELETE,
     });
     if (!isConfirmed) {
       return;
@@ -692,7 +755,7 @@ const RecipeView = ({
             <Grid item key={"error"} xs={12}>
               <AlertMessage
                 error={error ? error : state.error}
-                messageTitle={TEXT.ALERT_TITLE_WAIT_A_MINUTE}
+                messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
               />
             </Grid>
           )}
@@ -871,7 +934,7 @@ const RecipeHeader = ({
               style={{display: "block"}}
               gutterBottom
             >
-              {`${TEXT.VARIANT} ${recipe.variantProperties?.variantName}`}
+              {`${TEXT_VARIANT} ${recipe.variantProperties?.variantName}`}
             </Typography>
           )}
           {recipe.type === RecipeType.public && (
@@ -902,7 +965,7 @@ const RecipeHeader = ({
                 >
                   <Box className={classes.statsKpiBox} style={{margin: "1em"}}>
                     <Typography color="textSecondary" align="center">
-                      {TEXT.FIELD_YOUR_RATING}
+                      {TEXT_FIELD_YOUR_RATING}
                     </Typography>
                     <Box className={classes.statsRatingBox}>
                       <Rating
@@ -918,7 +981,7 @@ const RecipeHeader = ({
               </Box>
               <Typography color="textSecondary" align="center" variant="body2">
                 {`${recipe.rating.noRatings} ${
-                  recipe.rating.noRatings === 1 ? TEXT.VOTE : TEXT.VOTES
+                  recipe.rating.noRatings === 1 ? TEXT_VOTE : TEXT_VOTES
                 }`}
               </Typography>
             </React.Fragment>
@@ -926,9 +989,9 @@ const RecipeHeader = ({
         </div>
         {recipe.pictureSrc && (
           <div className={classes.recipeHeaderPictureSource}>
-            <Tooltip title={TEXT.IMAGE_MAY_BE_SUBJECT_OF_COPYRIGHT} arrow>
+            <Tooltip title={TEXT_IMAGE_MAY_BE_SUBJECT_OF_COPYRIGHT} arrow>
               <Typography variant="body2">
-                {TEXT.IMAGE_SOURCE}
+                {TEXT_IMAGE_SOURCE}
                 <Link href={recipe.pictureSrc} target="_blank">
                   {Utils.getDomain(recipe.pictureSrc)}
                 </Link>
@@ -982,7 +1045,7 @@ const RecipeButtonRow = ({
       id: "add_to_event",
       hero: true,
       visible: true,
-      label: TEXT.BUTTON_ADD_TO_EVENT,
+      label: TEXT_BUTTON_ADD_TO_EVENT,
       variant: "contained",
       color: "primary",
       startIcon: <AddIcon />,
@@ -991,7 +1054,7 @@ const RecipeButtonRow = ({
 
   buttons.push({
     id: "edit",
-    label: TEXT.BUTTON_EDIT,
+    label: TEXT_EDIT,
     hero: true,
     visible:
       (recipe.type === RecipeType.public &&
@@ -1012,7 +1075,7 @@ const RecipeButtonRow = ({
     id: "scale",
     hero: true,
     visible: true,
-    label: TEXT.BUTTON_SCALE,
+    label: TEXT_BUTTON_SCALE,
     variant: "outlined",
     color: "primary",
     onClick: onScale,
@@ -1024,7 +1087,7 @@ const RecipeButtonRow = ({
       id: "own_variant",
       hero: true,
       visible: true,
-      label: TEXT.BUTTON_OWN_VARIANT,
+      label: TEXT_BUTTON_OWN_VARIANT,
       variant: "outlined",
       color: "primary",
       onClick: onCreateOwnVariant,
@@ -1033,7 +1096,7 @@ const RecipeButtonRow = ({
     id: "print",
     hero: true,
     visible: true,
-    label: TEXT.BUTTON_PRINTVERSION,
+    label: TEXT_BUTTON_PRINTVERSION,
     variant: "outlined",
     color: "primary",
     onClick: onPrint,
@@ -1047,7 +1110,7 @@ const RecipeButtonRow = ({
         recipe.type === RecipeType.private &&
         recipe.created.fromUid === authUser.uid &&
         (recipe?.isInReview === false || recipe.isInReview === undefined),
-      label: TEXT.PUBLISH_RECIPE,
+      label: TEXT_PUBLISH_RECIPE,
       variant: "outlined",
       color: "primary",
       onClick: onPublish,
@@ -1058,7 +1121,7 @@ const RecipeButtonRow = ({
       id: "reportError",
       hero: true,
       visible: recipe.type === RecipeType.public,
-      label: TEXT.REPORT_ERROR,
+      label: TEXT_REPORT_ERROR,
       variant: "outlined",
       color: "primary",
       onClick: onReportError,
@@ -1072,7 +1135,7 @@ const RecipeButtonRow = ({
         recipe.type === RecipeType.private &&
         recipe.created.fromUid === authUser.uid &&
         recipe.isInReview === true,
-      label: TEXT.SHOW_OPEN_REQUESTS,
+      label: TEXT_SHOW_OPEN_REQUESTS,
       variant: "outlined",
       color: "primary",
       onClick: onShowRequest,
@@ -1091,7 +1154,7 @@ const RecipeButtonRow = ({
       (recipe.type === RecipeType.variant &&
         isEmbedded &&
         recipe.created.fromUid === authUser.uid),
-    label: TEXT.DELETE_RECIPE,
+    label: TEXT_DELETE_RECIPE,
     variant: "outlined",
     color: "primary",
     onClick: onDelete,
@@ -1151,7 +1214,7 @@ export const RecipeInfoPanel = ({
                 recipe.source
               )
             }
-            label={TEXT.SOURCE}
+            label={TEXT_SOURCE}
           />
           {/* Autor*in */}
           <FormListItem
@@ -1173,40 +1236,39 @@ export const RecipeInfoPanel = ({
                 {recipe.created.fromDisplayName}
               </Link>
             }
-            label={TEXT.CREATED_FROM}
+            label={TEXT_CREATED_FROM}
           />
           {/* Zubereitungszeit */}
           <FormListItem
             key={"times.preparation"}
             id={"times.preparation"}
-            value={`${recipe.times.preparation} ${TEXT.UNIT_MIN}`}
-            label={TEXT.FIELD_PREPARATION_TIME}
+            value={`${recipe.times.preparation} ${TEXT_UNIT_MIN}`}
+            label={TEXT_FIELD_PREPARATION_TIME}
           />
           {/* Ruhezeit */}
           <FormListItem
             key={"times.rest"}
             id={"times.rest"}
-            value={`${recipe.times.rest} ${TEXT.UNIT_MIN}`}
-            label={TEXT.FIELD_REST_TIME}
+            value={`${recipe.times.rest} ${TEXT_UNIT_MIN}`}
+            label={TEXT_FIELD_REST_TIME}
           />
           {/* Kochzeit */}
           <FormListItem
             key={"times.cooking"}
             id={"times.cooking"}
-            value={`${recipe.times.cooking} ${TEXT.UNIT_MIN}`}
-            label={TEXT.FIELD_COOK_TIME}
+            value={`${recipe.times.cooking} ${TEXT_UNIT_MIN}`}
+            label={TEXT_FIELD_COOK_TIME}
           />
           {/* Diät Infos */}
           <FormListItem
             key={"diet.property"}
             id={"diet.property"}
             value={<DietProperties recipe={recipe} />}
-            label={TEXT.DIET_PROPERTIES}
-            // withDivider={false}
+            label={TEXT_DIET_PROPERTIES}
           />
 
           <ListItem button onClick={handleOnTipsAndTagsClick}>
-            <ListItemText secondary={TEXT.TIPS_AND_TAGS} />
+            <ListItemText secondary={TEXT_TIPS_AND_TAGS} />
             {tipsAndTagsSectionOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
 
@@ -1217,16 +1279,16 @@ export const RecipeInfoPanel = ({
                 key={"menuType"}
                 id={"menuType"}
                 value={recipe.menuTypes
-                  .map((menuType) => TEXT.MENU_TYPES[menuType])
+                  .map((menuType) => TEXT_MENU_TYPES[menuType])
                   .join(", ")}
-                label={TEXT.MENU_TYPE}
+                label={TEXT_MENU_TYPE}
               />
               {/* Hinweis */}
               <FormListItem
                 key={"note"}
                 id={"note"}
                 value={recipe.note}
-                label={TEXT.FIELD_HINT}
+                label={TEXT_FIELD_HINT}
               />
               {/* Tags */}
               <FormListItem
@@ -1267,7 +1329,7 @@ export const RecipeInfoPanel = ({
                     </IconButton>
                   ) : undefined
                 }
-                label={TEXT.FIELD_TAGS}
+                label={TEXT_FIELD_TAGS}
               />
             </List>
           </Collapse>
@@ -1290,12 +1352,12 @@ const DietProperties = ({recipe}: DietPropertiesProps) => {
           {recipe.dietProperties.allergens.includes(Allergen.Lactose) ? (
             <React.Fragment>
               <LactoseIcon fontSize="large" />
-              <Typography variant="body2">{TEXT.HAS_LACTOSE}</Typography>
+              <Typography variant="body2">{TEXT_HAS_LACTOSE}</Typography>
             </React.Fragment>
           ) : (
             <React.Fragment>
               <LactoseFreeIcon fontSize="large" />
-              <Typography variant="body2">{TEXT.IS_LACTOSEFREE}</Typography>
+              <Typography variant="body2">{TEXT_IS_LACTOSEFREE}</Typography>
             </React.Fragment>
           )}
         </Grid>
@@ -1303,12 +1365,12 @@ const DietProperties = ({recipe}: DietPropertiesProps) => {
           {recipe.dietProperties.allergens.includes(Allergen.Gluten) ? (
             <React.Fragment>
               <GlutenIcon fontSize="large" />
-              <Typography variant="body2">{TEXT.HAS_GLUTEN}</Typography>
+              <Typography variant="body2">{TEXT_HAS_GLUTEN}</Typography>
             </React.Fragment>
           ) : (
             <React.Fragment>
               <GlutenFreeIcon fontSize="large" />
-              <Typography variant="body2">{TEXT.IS_GLUTENFREE}</Typography>
+              <Typography variant="body2">{TEXT_IS_GLUTENFREE}</Typography>
             </React.Fragment>
           )}
         </Grid>
@@ -1316,17 +1378,17 @@ const DietProperties = ({recipe}: DietPropertiesProps) => {
           {recipe.dietProperties.diet === Diet.Vegetarian ? (
             <React.Fragment>
               <VegetarianIcon fontSize="large" />
-              <Typography variant="body2">{TEXT.IS_VEGETARIAN}</Typography>
+              <Typography variant="body2">{TEXT_IS_VEGETARIAN}</Typography>
             </React.Fragment>
           ) : recipe.dietProperties.diet === Diet.Vegan ? (
             <React.Fragment>
               <VeganIcon fontSize="large" />
-              <Typography variant="body2">{TEXT.IS_VEGAN}</Typography>
+              <Typography variant="body2">{TEXT_IS_VEGAN}</Typography>
             </React.Fragment>
           ) : (
             <React.Fragment>
               <MeatIcon fontSize="large" />
-              <Typography variant="body2">{TEXT.HAS_MEAT}</Typography>
+              <Typography variant="body2">{TEXT_HAS_MEAT}</Typography>
             </React.Fragment>
           )}
         </Grid>
@@ -1362,7 +1424,7 @@ export const MealPlanPanel = ({
 
   return (
     <Card className={classes.card}>
-      <CardHeader title={TEXT.THIS_RECIPE_IS_PLANNED_FOR} />
+      <CardHeader title={TEXT_THIS_RECIPE_IS_PLANNED_FOR} />
       <CardContent className={classes.cardContent}>
         <List key={"mealsList"}>
           {mealPlan.map((plan, index) => (
@@ -1405,7 +1467,7 @@ export const MealPlanPanel = ({
                           : ``
                       } ${
                         singleMealPlan.diet == PlanedDiet.ALL
-                          ? TEXT.ALL
+                          ? TEXT_ALL
                           : singleMealPlan.diet == PlanedDiet.FIX
                           ? ""
                           : groupConfiguration.diets.entries[
@@ -1423,8 +1485,8 @@ export const MealPlanPanel = ({
                             }`
                       } (${singleMealPlan.totalPortions} ${
                         singleMealPlan.totalPortions == 1
-                          ? TEXT.PORTION
-                          : TEXT.PORTIONS
+                          ? TEXT_PORTION
+                          : TEXT_PORTIONS
                       })`}
                       {index !== plan.mealPlan.length - 1 && <br />}
                       {/* Zeilenumbruch, außer beim letzten Element */}
@@ -1508,7 +1570,7 @@ export const DialogTagAdd = ({
     <Dialog open={dialogOpen} onClose={handleClose} maxWidth="xs" fullWidth>
       <DialogContent>
         <Typography>
-          {TEXT.TAG} {TEXT.ADD}
+          {TEXT_TAG} {TEXT_ADD}
         </Typography>
         <TextField
           fullWidth
@@ -1533,10 +1595,10 @@ export const DialogTagAdd = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onDialogCancel} color="primary">
-          {TEXT.BUTTON_CANCEL}
+          {TEXT_CANCEL}
         </Button>
         <Button onClick={onDialogClose} color="primary">
-          {TEXT.ADD}
+          {TEXT_ADD}
         </Button>
       </DialogActions>
     </Dialog>
@@ -1585,26 +1647,26 @@ export const RecipeIngredients = ({
         style={{display: "block"}}
         gutterBottom
       >
-        {TEXT.INGREDIENTS}
+        {TEXT_INGREDIENTS}
       </Typography>
       <Typography component="div" align="center">
-        {TEXT.FOR_ACCUSATIVE}
+        {TEXT_FOR_ACCUSATIVE}
         {"  "}
         <Box fontWeight="fontWeightBold" display="inline">
           {scaledPortions ? scaledPortions : recipe.portions}
         </Box>
         {"  "}
-        {TEXT.PORTIONS}
+        {TEXT_PORTIONS}
       </Typography>
       {scaledPortions && (
         <Typography component="div" align="center" color="textSecondary">
-          {TEXT.ORIGINAL}
+          {TEXT_ORIGINAL}
           {"  "}
           <Box fontWeight="fontWeightBold" display="inline">
             {recipe?.portions}
           </Box>
           {"  "}
-          {TEXT.PORTIONS}
+          {TEXT_PORTIONS}
         </Typography>
       )}
       <Divider
@@ -1630,7 +1692,7 @@ export const RecipeIngredients = ({
                 key={"ingredient_header_original"}
                 color="textSecondary"
               >
-                {TEXT.ORIGINAL}
+                {TEXT_ORIGINAL}
               </Typography>
             </Grid>
             <Grid
@@ -1640,7 +1702,7 @@ export const RecipeIngredients = ({
               xs={ingredientGridColumSize.scaledOn.scaledHeader}
             >
               <Typography key={"ingredient_header_scaled"} color="textPrimary">
-                {TEXT.SCALED}
+                {TEXT_SCALED}
               </Typography>
             </Grid>
             <Grid
@@ -1851,7 +1913,7 @@ export const RecipePreparation = ({recipe}: RecipePreparationProps) => {
         style={{display: "block"}}
         gutterBottom
       >
-        {TEXT.PREPARATION}
+        {TEXT_PREPARATION}
       </Typography>
       <Grid container spacing={2}>
         {recipe?.preparationSteps.order.map((preparationStepUid, counter) => {
@@ -1959,7 +2021,7 @@ export const RecipeMaterial = ({
         style={{display: "block"}}
         gutterBottom
       >
-        {TEXT.MATERIAL}
+        {TEXT_MATERIAL}
       </Typography>
       <Grid container spacing={1}>
         {scaledPortions && (
@@ -1974,7 +2036,7 @@ export const RecipeMaterial = ({
                 key={"material_header_original"}
                 color="textSecondary"
               >
-                {TEXT.ORIGINAL}
+                {TEXT_ORIGINAL}
               </Typography>
             </Grid>
             <Grid
@@ -1984,7 +2046,7 @@ export const RecipeMaterial = ({
               xs={2}
             >
               <Typography key={"material_header_scaled"} color="textPrimary">
-                {TEXT.SCALED}
+                {TEXT_SCALED}
               </Typography>
             </Grid>
             <Grid
@@ -2087,7 +2149,7 @@ const RecipeVariantNote = ({recipe}: RecipeVariantNoteProps) => {
         style={{display: "block"}}
         gutterBottom
       >
-        {TEXT.VARIANT_NOTE}
+        {TEXT_VARIANT_NOTE}
       </Typography>
       <Grid container spacing={1} alignItems="center">
         <Grid item key={"recipe_variant_note_grid"} xs={12}>

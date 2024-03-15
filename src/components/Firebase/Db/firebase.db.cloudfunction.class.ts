@@ -13,6 +13,7 @@ import FirebaseDbCloudFunctionUserDisplayNameUpdate from "./firebase.db.cloudfun
 import FirebaseDbCloudFunctionProductUpdate from "./firebase.db.cloudfunction.productUpdate";
 import FirebaseDbCloudFunctionConvertProductToMaterial from "./firebase.db.cloudfunction.convertProductToMaterial.class";
 import FirebaseDbCloudFunctionActivateSupportUser from "./firebase.db.cloudfunction.activateSupportUser.class";
+import FirebaseDbCloudFunctionSignOutAllUsers from "./firebase.db.cloudfunction.signOutAllUsers.class";
 export class FirebaseDbCloudFunction {
   recipeUpdate: FirebaseDbCloudFunctionRecipeUpdate;
   objectTrace: FirebaseDbCloudFunctionObjectTrace;
@@ -28,6 +29,7 @@ export class FirebaseDbCloudFunction {
   convertProductToMaterial: FirebaseDbCloudFunctionConvertProductToMaterial;
   productUpdate: FirebaseDbCloudFunctionProductUpdate;
   activateSupportUser: FirebaseDbCloudFunctionActivateSupportUser;
+  signOutAllUsers: FirebaseDbCloudFunctionSignOutAllUsers;
   /* =====================================================================
   // Constructor
   // ===================================================================== */
@@ -58,6 +60,7 @@ export class FirebaseDbCloudFunction {
     this.activateSupportUser = new FirebaseDbCloudFunctionActivateSupportUser(
       firebase
     );
+    this.signOutAllUsers = new FirebaseDbCloudFunctionSignOutAllUsers(firebase);
   }
 }
 export default FirebaseDbCloudFunction;

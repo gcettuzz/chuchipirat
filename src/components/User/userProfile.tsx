@@ -544,7 +544,7 @@ const ProfileCard = ({
               : userProfile.displayName
           }
         />
-        <div className={classes.userProfileCardNameOnImageBackground}>
+        <div className={classes.textOnCardMediaImage}>
           {editMode && (
             <div>
               <input

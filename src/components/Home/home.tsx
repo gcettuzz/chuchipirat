@@ -41,6 +41,7 @@ import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
   FEED as TEXT_FEED,
   STATS as TEXT_STATS,
+  APP_NAME as TEXT_APP_NAME,
 } from "../../constants/text";
 import * as ROUTES from "../../constants/routes";
 
@@ -540,6 +541,7 @@ const HomeHeader = ({authUser}: HomeHeaderProps) => {
     <PageTitle
       title={TEXT_PAGE_TITLE_HOME(authUser.publicProfile.displayName)}
       subTitle={TEXT_PAGE_SUBTITLE_HOME}
+      windowTitle={`${TEXT_APP_NAME} | Home`}
     />
   );
 };

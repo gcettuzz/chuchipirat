@@ -55,7 +55,6 @@ const Recipe = lazy(() => import("../Recipe/recipe"));
 
 const CreateNewEvent = lazy(() => import("../Event/Event/createNewEvent"));
 const Recipes = lazy(() => import("../Recipe/recipes"));
-const Users = lazy(() => import("../User/users"));
 const System = lazy(() => import("../Admin/system"));
 const GlobalSettings = lazy(() => import("../Admin/globalSettings"));
 const FeedDelete = lazy(() => import("../Admin/feedDelete"));
@@ -68,10 +67,12 @@ const Jobs = lazy(() => import("../Admin/executeJob"));
 const BuildDbIndices = lazy(() => import("../Admin/buildDbIndex"));
 const OverviewRecipes = lazy(() => import("../Admin/overviewRecipes"));
 const OverviewEvents = lazy(() => import("../Admin/overviewEvents"));
+const OverviewUsers = lazy(() => import("../Admin/overviewUsers"));
+const OverviewMailbox = lazy(() => import("../Admin/overviewMailbox"));
 const ActivateSupportUser = lazy(() => import("../Admin/activateSupportUser"));
+const MailConsole = lazy(() => import("../Admin/mailConsole"));
 
 const App = () => {
-  let listener;
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const classes = useStyles();
 
@@ -108,7 +109,7 @@ const App = () => {
                 ROUTES.DEPARTMENTS,
                 ROUTES.SYSTEM,
                 ROUTES.NOT_FOUND,
-                ROUTES.USERS,
+                ROUTES.SYSTEM_OVERVIEW_USERS,
                 ROUTES.USER_PUBLIC_PROFILE_UID,
                 ROUTES.USER_PROFILE,
               ]}
@@ -157,7 +158,14 @@ const App = () => {
                 <Route path={ROUTES.MATERIALS} component={Materials} />
                 <Route path={ROUTES.DEPARTMENTS} component={Departments} />
                 <Route exact path={ROUTES.SYSTEM_JOBS} component={Jobs} />
-                <Route path={ROUTES.USERS} component={Users} />
+                <Route
+                  path={ROUTES.SYSTEM_OVERVIEW_USERS}
+                  component={OverviewUsers}
+                />
+                <Route
+                  path={ROUTES.SYSTEM_OVERVIEW_MAILBOX}
+                  component={OverviewMailbox}
+                />
                 <Route exact path={ROUTES.SYSTEM} component={System} />
                 <Route
                   path={ROUTES.REQUEST_OVERVIEW}
@@ -207,6 +215,11 @@ const App = () => {
                   exact
                   path={ROUTES.SYSTEM_ACTIVATE_SUPPORT_USER}
                   component={ActivateSupportUser}
+                />
+                <Route
+                  exact
+                  path={ROUTES.SYSTEM_MAIL_CONSOLE}
+                  component={MailConsole}
                 />
                 <Route
                   exact

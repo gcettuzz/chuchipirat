@@ -102,6 +102,8 @@ const useStyles = makeStyles((theme) => ({
   },
   cardActionRight: {
     justifyContent: "flex-end",
+    marginBottom: theme.spacing(2),
+    marginTop: theme.spacing(2),
   },
   alignGridItemContentRight: {
     justifyContent: "flex-end",
@@ -243,7 +245,7 @@ const useStyles = makeStyles((theme) => ({
   typographyCode: {
     fontFamily: "Roboto Mono",
   },
-  userProfileCardNameOnImageBackground: {
+  textOnCardMediaImage: {
     width: "100%",
     position: "absolute",
     bottom: "5%",

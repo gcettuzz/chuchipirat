@@ -52,6 +52,7 @@ enum ReducerActions {
   UPDATE_INDEX_DISPLAYNAME_RECIPES,
   UPDATE_INDEX_DISPLAYNAME_EVENT,
   UPDATE_INDEX_ORIGINAL_RECIPE_UID_RECIPES,
+  UPDATE_INDEX_USER_BY_ROLE,
   GENERIC_ERROR,
   SNACKBAR_CLOSE,
   SNACKBAR_SHOW,
@@ -77,6 +78,7 @@ const INITITIAL_STATE: State = {
     resultCounter: 0,
     executed: false,
   },
+  indexUserByRole: {error: null, resultCounter: 0, executed: false},
   error: null,
   isError: false,
   isLoading: false,
@@ -97,6 +99,7 @@ type State = {
   indexDisplayNameRecipes: IndexQueryResult;
   indexDisplayNameEvents: IndexQueryResult;
   indexOriginalRecipeUidVariant: IndexQueryResult;
+  indexUserByRole: IndexQueryResult;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
@@ -113,6 +116,7 @@ enum BuildIndex {
   displayNameRecipes,
   displayNameEvents,
   oringalRecipeUidRecipeVariant,
+  userByRole,
 }
 
 const splitErrorText = (errorText) => {
@@ -211,6 +215,15 @@ const buildIndicesReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         indexOriginalRecipeUidVariant: {
+          error: splitErrorText(action.payload.error),
+          resultCounter: action.payload.resultCounter,
+          executed: true,
+        },
+      };
+    case ReducerActions.UPDATE_INDEX_USER_BY_ROLE:
+      return {
+        ...state,
+        indexUserByRole: {
           error: splitErrorText(action.payload.error),
           resultCounter: action.payload.resultCounter,
           executed: true,
@@ -401,8 +414,8 @@ const BuildIndicesBase: React.FC<
             .where("usedProducts", "array-contains", userInput.input)
             .get()
             .then((result) => {
-              console.log(result);
-              result.forEach((document) => console.log(document.ref.path));
+              console.info(result);
+              result.forEach((document) => console.info(document.ref.path));
               dispatch({
                 type: ReducerActions.UPDATE_INDEX_USED_PRODUCTS_RECIPES,
                 payload: {error: null, resultCounter: result.size},
@@ -434,10 +447,10 @@ const BuildIndicesBase: React.FC<
             .where("usedProducts", "array-contains", userInput.input)
             .get()
             .then((result) => {
-              console.log(result);
+              console.info(result);
               result.forEach((document) => {
-                console.log(document.ref.parent!.parent!.id);
-                console.log(document.ref.path);
+                console.info(document.ref.parent!.parent!.id);
+                console.info(document.ref.path);
               });
               dispatch({
                 type: ReducerActions.UPDATE_INDEX_USED_PRODUCTS_EVENT,
@@ -470,10 +483,10 @@ const BuildIndicesBase: React.FC<
             .where("created.fromUid", "==", userInput.input)
             .get()
             .then((result) => {
-              console.log(result);
+              console.info(result);
               result.forEach((document) => {
-                console.log(document.ref.parent!.parent!.id);
-                console.log(document.ref.path);
+                console.info(document.ref.parent!.parent!.id);
+                console.info(document.ref.path);
               });
               dispatch({
                 type: ReducerActions.UPDATE_INDEX_DISPLAYNAME_RECIPES,
@@ -495,10 +508,10 @@ const BuildIndicesBase: React.FC<
           .where("created.fromUid", "==", "")
           .get()
           .then((result) => {
-            console.log(result);
+            console.info(result);
             result.forEach((document) => {
-              console.log(document.ref.parent!.parent!.id);
-              console.log(document.ref.path);
+              console.info(document.ref.parent!.parent!.id);
+              console.info(document.ref.path);
             });
             dispatch({
               type: ReducerActions.UPDATE_INDEX_DISPLAYNAME_EVENT,
@@ -530,10 +543,10 @@ const BuildIndicesBase: React.FC<
             .where("variantProperties.originalRecipeUid", "==", userInput.input)
             .get()
             .then((result) => {
-              console.log(result);
+              console.info(result);
               result.forEach((document) => {
-                console.log(document.ref.parent!.parent!.id);
-                console.log(document.ref.path);
+                console.info(document.ref.parent!.parent!.id);
+                console.info(document.ref.path);
               });
               dispatch({
                 type: ReducerActions.UPDATE_INDEX_ORIGINAL_RECIPE_UID_RECIPES,
@@ -548,6 +561,26 @@ const BuildIndicesBase: React.FC<
               });
             });
         }
+        break;
+      case BuildIndex.userByRole:
+        firebase.db
+          .collectionGroup("users")
+          .where("roles", "array-contains", "basic")
+          .get()
+          .then((result) => {
+            console.info(result.size);
+            dispatch({
+              type: ReducerActions.UPDATE_INDEX_USER_BY_ROLE,
+              payload: {error: null, resultCounter: result.size},
+            });
+          })
+          .catch((error) => {
+            console.error(error);
+            dispatch({
+              type: ReducerActions.UPDATE_INDEX_USER_BY_ROLE,
+              payload: {error: error.toString(), resultCounter: 0},
+            });
+          });
         break;
       default:
     }
@@ -649,6 +682,12 @@ const BuildIndicesBase: React.FC<
                     }
                     buildIndexType={BuildIndex.oringalRecipeUidRecipeVariant}
                     buildIndexState={state.indexOriginalRecipeUidVariant}
+                    onBuildIndex={buildIndex}
+                  />
+                  <ListItemBuildIndex
+                    indexName={"[user.roles] /users/${anyDocument}"}
+                    buildIndexType={BuildIndex.userByRole}
+                    buildIndexState={state.indexUserByRole}
                     onBuildIndex={buildIndex}
                   />
                 </List>

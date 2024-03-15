@@ -86,10 +86,8 @@ import withEmailVerification from "../Session/withEmailVerification";
 import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import {CustomRouterProps} from "../Shared/global.interface";
-import ScrollDownOnKeyPress from "../Shared/ScrollDownOnKeyPress";
 import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 
-//TODO: alle kommentare löschen
 /* ===================================================================
 // ============================ Dispatcher ===========================
 // =================================================================== */
@@ -295,48 +293,6 @@ const RecipesBase: React.FC<
       payload: {},
     });
   };
-  // TODO: die interaktion mit der Search muss in die untere Komponente
-  // damit diese auch von andere nutzbar wird!
-
-  /* ------------------------------------------
-  // Rezepte suchen
-  // ------------------------------------------ */
-  // const onSearch = (
-  //   event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
-  // ) => {
-  // setSearchSettings({ ...searchSettings, searchString: event.target.value });
-  // setFilteredData(
-  //   filterRecipes({
-  //     searchSettings: { ...searchSettings, searchString: event.target.value },
-  //     recipes: state.recipes,
-  //   })
-  // );
-  // };
-  // const onSearchSettings = (updatedSearchSettings: SearchSettings) => {
-  // setSearchSettings(updatedSearchSettings);
-  // setFilteredData(
-  //   filterRecipes({
-  //     searchSettings: updatedSearchSettings,
-  //     recipes: state.recipes,
-  //   })
-  // );
-  // };
-  /* ------------------------------------------
-  // Suchstring löschen
-  // ------------------------------------------ */
-  // const onClearSearchString = () => {
-  // setSearchSettings({ ...searchSettings, searchString: "" });
-  // setFilteredData(state.recipes);
-  // };
-
-  // Alle Rezepte anzeigen, falls nichts gesucht wurde
-  // if (
-  //   searchSettings == INITIAL_SEARCH_SETTINGS &&
-  //   state.recipes.length > 0 &&
-  //   filteredData.length === 0
-  // ) {
-  //   setFilteredData(state.recipes);
-  // }
   return (
     <React.Fragment>
       <CssBaseline />
@@ -376,7 +332,6 @@ const RecipesBase: React.FC<
         snackbarOpen={state.snackbar.open}
         handleClose={handleSnackbarClose}
       />
-      <ScrollDownOnKeyPress />
     </React.Fragment>
   );
 };

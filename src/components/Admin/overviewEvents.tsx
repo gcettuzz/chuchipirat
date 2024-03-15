@@ -27,7 +27,6 @@ import withEmailVerification from "../Session/withEmailVerification";
 import {ChangeRecord, CustomRouterProps} from "../Shared/global.interface";
 import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
 import EventShort from "../Event/Event/eventShort.class";
-import Event from "../Event/Event/event.class";
 import {EVENT as ROUTE_EVENT} from "../../constants/routes";
 import {
   EVENT as TEXT_EVENT,

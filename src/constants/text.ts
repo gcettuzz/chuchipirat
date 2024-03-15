@@ -1,4 +1,8 @@
-"../../constants/text"; /* =====================================================================
+"../../constants/text";
+
+import exp from "constants";
+
+/* =====================================================================
 // App
 // ===================================================================== */
 export const APP_NAME = "chuchipirat";
@@ -23,7 +27,6 @@ export const BUTTON_CHANGE = "Ändern";
 export const BUTTON_DELETE = "Löschen";
 export const BUTTON_SCALE = "Skalieren";
 export const BUTTON_OWN_VARIANT = "Eigene Variante erstellen";
-export const BUTTON_LINK = "Verknüpfen";
 export const ADD_DEPARTMENT = "Abteilung hinzufügen";
 export const BUTTON_ADD_PERSON = "Person hinzufügen";
 export const BUTTON_ADD_TO_EVENT = "Zu Anlass hinzufügen";
@@ -115,7 +118,6 @@ export const REAUTHENTICATE_DIALOG_TITLE = "Ausweis bitte...";
 export const TRACE = "Trace";
 export const WHERE_ARE_YOUR = "Wo bist du?";
 export const TIME_TO_CLEAN_UP = "Zeit aufzuräumen";
-export const PAGE_TITLE_GLOBAL_SETTINGS = "Globale Einstellungen";
 export const REQUESTS = "Anträge";
 /* =====================================================================
 // Tabellen Überschriften
@@ -165,8 +167,26 @@ export const JOBS = "Job-Übersicht";
 export const TEMP_JOBS = "Temporäre Job-Übersicht";
 export const JOBS_DESCRIPTION = "Jobs manuel ausführen.";
 export const OVERVIEW = "Übersicht diverser Elemente";
-export const OVERVIEW_RECIPES_DESCRIPTION = "Übericht über alle Rezepte";
-export const OVERVIEW_EVENTS_DESCRIPTION = "Übericht über alle Alässe";
+export const OVERVIEW_RECIPES_DESCRIPTION = "Übersicht über alle Rezepte";
+export const OVERVIEW_EVENTS_DESCRIPTION = "Übersicht über alle Alässe";
+export const MAIL_CONSOLE = "Mail-Konsole";
+export const MAIL_CONSOLE_DESCRIPTION =
+  "Versenden von E-Mail an unsere Nutzer*innen";
+export const BECAUSE_NEWSLETTER_ARE_ALWAYS_LOVED =
+  "Weil wir dachten, dein Posteingang könnte ein bisschen mehr Aufregung vertragen.";
+export const EDITOR = "Editor";
+export const SUBJECT = "Betreff";
+export const TITLE = "Titel";
+export const SUB_TITLE = "Untertitel";
+export const MAILTEXT = "E-Mail Nachricht";
+export const RECIPIENT_TYPE = {
+  0: "keine",
+  1: "E-Mail-Adresse",
+  2: "User-UID",
+  3: "Rolle",
+};
+export const DIVIDE_MULTIPLE_VALUES_BY_SEMICOLON =
+  "Trenne mehrere Werte mit Semmikolon.";
 /* =====================================================================
 // Felder
 // ===================================================================== */
@@ -341,6 +361,16 @@ export const ROLE_TYPES = {
 export const ROLES_UPDATED_SUCCSESSFULLY = "Berechtigung wurde aktualisiert";
 export const YOU_CANT_UPDATE_YOUR_OWN_AUTHORIZATION =
   "Du kannst deine eigene Berechtigung nicht anpassen.";
+export const MAIL_HEADER_PICTURE_SRC = "Bild-URL für Header-Bild";
+export const PREVIEW = "Vorschau";
+export const TEST_MAIL_SENT =
+  "Testnachricht wurde versendet. Prüfe dein Postfach";
+export const MAIL_SENT_TO_RECIPIENTS =
+  "Mail wurde an gewählte Empfänger*innen versandt";
+export const SEND_TEST_MAIL = "Test Mail senden";
+export const SENDT_MAIL_TO_RECIPIENTS = "Mail senden";
+export const BUTTON_TEXT = "Button-Beschriftung";
+export const BUTTON_LINK = "Link für Button (Ziel)";
 /* =====================================================================
 // Meldungen zur Gruppen-Konfiguration
 // ===================================================================== */
@@ -561,10 +591,18 @@ export const MERGE_ERROR_SAME_PRODUCTS =
   "Produkt A und Produkt B sind identisch. Ein Zusammenführen macht daher keinen Sinn.";
 export const GLOBAL_SETTINGS_ALLOW_SIGNUP_LABEL = "Neu-Anmeldung ermöglichen";
 export const GLOBAL_SETTINGS_ALLOW_SIGNUP_DESCRIPTION =
-  "Neue User können sich für den chuchipirat anmelden.";
+  "Personen können ein Login für den chuchipirat erstellen (Neuanmeldung/Registrierung).";
+export const GLOBAL_SETTINGS_MAINTENANCE_MODE_LABEL = "Wartungsmodus";
+export const GLOBAL_SETTINGS_MAINTENANCE_MODE_DESCRIPTION =
+  "Im Wartungsmodus ist eine (Neu-)Anmeldung nicht möglich.";
 export const ACTIVATE_SUPPORT_USER = "Support-User aktivieren";
 export const ACTIVATE_SUPPORT_USER_DESCRIPTION =
   "Den Support-User für einen Anlass berechtigen.";
+export const SIGN_OUT_ALL_USERS = "Alle Benutzer*innen abmelden";
+export const SIGN_OUT_ALL_USERS_DESCRIPTION =
+  "Für alle Benutzer*innen (ausser Admin) ein Log-Out durchführen.";
+export const SIGN_OUT_EVERYBODY = "Alle abmelden";
+export const USERS_ARE_LOGGED_OUT = "Benutzer*innen werden abgemeldet.";
 /* =====================================================================
 // Diverse (längere) Texte
 // ===================================================================== */
@@ -580,7 +618,7 @@ export const NAVIGATION_UNITS = "Mengeneinheiten";
 export const NAVIGATION_UNIT_CONVERSION = "Mengenumrechnungen";
 export const NAVIGATION_PRODUCTS = "Produkte";
 export const NAVIGATION_DEPARTMENTS = "Abteilungen (Einkauf)";
-export const NAVIGATION_SIGN_OUT = "Abmelden";
+export const SIGN_OUT = "Abmelden";
 // export const NAVIGATION_SIGN_IN = "Anmelden";
 export const NAVIGATION_USER_PROFILE = "Profil";
 export const NAVIGATION_REQUEST_OVERVIEW = "Anträge";
@@ -625,6 +663,10 @@ export const LOGIN_SUCCESSFULL = "Login erfolgreich";
 export const SIGN_UP_NOT_ALLOWED_TITLE = "Wohin des Weges Pirat?";
 export const SIGN_UP_NOT_ALLOWED_TEXT =
   "Der chuchipirat befindet sich in der Beta-Phase. Die Anmeldung ist daher auf wenige Personen eingeschränkt. Melde dich unter hallo@chuchipirat für mehr Infos.";
+export const MAINTENANCE_MODE_SIGN_UP_NOT_ALLOWED =
+  "chuchipirat macht Pause: Wartungsmodus aktiviert";
+export const MAINTENANCE_MODE_SIGN_UP_NOT_ALLOWED_TEXT =
+  "Oh-oh! Der chuchipirat macht gerade eine kleine Pause, um seine digitalen Schaltkreise zu überprüfen und ein paar virtuelle Schrauben nachzuziehen. Bitte warte einen Moment, während er seine Wartungsarbeiten durchführt und dann mit frischer Energie zurückkehrt!";
 /* =====================================================================
 // Meldungen zu Password
 // ===================================================================== */
@@ -994,6 +1036,12 @@ export const DIALOG_SUBTITLE_DELETION_CONFIRMATION =
   "Dadurch werden alle Daten endgültig gelöscht. Dieser Schritt kann nicht rückgängig gemacht werden.";
 export const DIALOG_TEXT_DELETION_CONFIRMATION =
   "Bestätige, dass du diese Daten löschen möchtest. Gib dazu die folgende ID ein:";
+export const DIALOG_SIGNOUT_USERS_CONFIRMATION = "Alle Users abmelden?";
+export const DIALOG_SUBTITLE_SIGNOUT_USERS_CONFIRMATION =
+  "Dadurch werden Benutzer*innen (ausser Admins) vom chuchipirat abgemeldet.";
+export const DIALOG_TEXT_SIGNOUT_USERS_CONFIRMATION =
+  "Bestätige, dass du alle abmelden möchtest. Gib dazu die folgende ID ein:";
+
 export const REQUIRED = "Erforderlich";
 export const DIALOG_DELETION_CONFIRMATION_STRING_DOES_NOT_MATCH =
   "Die angegebene ID ist nicht korrekt";
@@ -1163,6 +1211,7 @@ export const ACTIVATE_SUPPORT_MODE_DESCRIPTION =
   "Um den Support-Modus zu aktivieren, kannst du die UID eines Anlasses hier eingeben. Danach wird der Support-User für den angegebenen Anlass bis 01:00 Uhr Morgen früh berechtigt.";
 export const SUPPORT_USER_REGISTERED =
   "Support-User wurde für Anlass berechtigt.";
+export const MAILBOX = "Mailbox";
 /* =====================================================================
 // Abkürzungen
 // ===================================================================== */

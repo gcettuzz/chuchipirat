@@ -20,6 +20,7 @@ import {
   Avatar,
   ListItemText,
   ListItemSecondaryAction,
+  useMediaQuery,
 } from "@material-ui/core";
 import {Alert} from "@material-ui/lab";
 import {
@@ -315,6 +316,7 @@ const EventBasicInfoCard = ({
   const classes = useStyles();
 
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 
   const handleFileChange = async (
     actionEvent: React.ChangeEvent<HTMLInputElement>
@@ -519,7 +521,7 @@ const EventBasicInfoCard = ({
                     backgroundRepeat: "no-repeat",
                     backgroundSize: "contain",
                     borderRadius: "4px",
-                    mixBlendMode: "multiply",
+                    mixBlendMode: prefersDarkMode ? "normal" : "multiply",
                   }}
                 />
               </Grid>

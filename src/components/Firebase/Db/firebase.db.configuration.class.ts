@@ -75,7 +75,7 @@ export class FirebaseDbConfiguration extends FirebaseDbSuper {
   // Einstellungen für den Session Storage zurückgeben
   //===================================================================== */
   getSessionHandlerProperty(): StorageObjectProperty {
-    return STORAGE_OBJECT_PROPERTY.RECIPE;
+    return STORAGE_OBJECT_PROPERTY.CONFIGURATION;
   }
 }
 export default FirebaseDbConfiguration;

@@ -192,20 +192,19 @@ const ROLE_DIALOG_INITIAL_STATE = {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const UsersPage = (props) => {
+const OverviewUsersPage = (props) => {
   return (
     <AuthUserContext.Consumer>
-      {(authUser) => <UsersBase {...props} authUser={authUser} />}
+      {(authUser) => <OverviewUsersBase {...props} authUser={authUser} />}
     </AuthUserContext.Consumer>
   );
 };
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const UsersBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
-  authUser,
-  ...props
-}) => {
+const OverviewUsersBase: React.FC<
+  CustomRouterProps & {authUser: AuthUser | null}
+> = ({authUser, ...props}) => {
   const firebase = props.firebase;
   const classes = useStyles();
 
@@ -956,4 +955,4 @@ export default compose(
   withEmailVerification,
   withAuthorization(condition),
   withFirebase
-)(UsersPage);
+)(OverviewUsersPage);

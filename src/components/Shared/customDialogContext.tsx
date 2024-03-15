@@ -8,7 +8,7 @@ export enum DialogType {
   None,
   Confirm,
   SingleTextInput,
-  ConfirmDeletion,
+  ConfirmSecure,
   selectOptions,
 }
 
@@ -17,6 +17,7 @@ const CUSTOM_DIALOG_INITIAL_STATE: State = {
   visible: false,
   text: "",
   title: "",
+  subtitle: "",
   buttonTextConfirm: "",
   buttonTextCancel: "",
   options: [],
@@ -53,6 +54,7 @@ type State = {
   visible: boolean;
   title: string;
   text: string;
+  subtitle: string;
   buttonTextConfirm: string;
   buttonTextCancel: string;
   deletionDialogProperties?: DeletionDialogProperties;
@@ -74,6 +76,7 @@ interface DialogContentProps {
   dialogType: DialogType;
   title?: string;
   text?: string;
+  subtitle?: string;
   buttonTextConfirm?: string;
   buttonTextCancel?: string;
   deletionDialogProperties?: DeletionDialogProperties;
@@ -144,6 +147,7 @@ export const useCustomDialog = () => {
     dialogType,
     title,
     text,
+    subtitle,
     buttonTextCancel,
     buttonTextConfirm,
     deletionDialogProperties,
@@ -156,6 +160,7 @@ export const useCustomDialog = () => {
         dialogType: dialogType,
         title: title,
         text: text,
+        subtitle: subtitle ? subtitle : "",
         buttonTextConfirm: buttonTextConfirm ? buttonTextConfirm : TEXT_OK,
         buttonTextCancel: buttonTextCancel ? buttonTextCancel : TEXT_CANCEL,
         deletionDialogProperties: deletionDialogProperties,

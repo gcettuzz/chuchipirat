@@ -17,6 +17,7 @@ import {
 import Role from "../../constants/roles";
 import MailTemplate from "../../constants/mailTemplates";
 import _ from "lodash";
+import {RecipientType} from "../Admin/mailConsole.class";
 export interface GetActiveRequests {
   firebase: Firebase;
   authUser: AuthUser;
@@ -319,7 +320,9 @@ export abstract class Request {
       firstName: authUser.firstName,
       lastName: authUser.lastName,
       email: authUser.email,
-      pictureSrc: authUser.publicProfile.pictureSrc.normalSize,
+      pictureSrc: authUser.publicProfile?.pictureSrc?.normalSize
+        ? authUser.publicProfile.pictureSrc.normalSize
+        : "",
     };
     this.assignee = {
       uid: "",
@@ -633,10 +636,11 @@ export abstract class Request {
                 commentAuthor: authUser.publicProfile.displayName,
                 comment: comment,
               },
-              recipientUid:
+              recipients:
                 request.author.uid === authUser.uid
                   ? request.assignee.uid
                   : request.author.uid,
+              recipientType: RecipientType.uid,
               mailTemplate: MailTemplate.requestNewComment,
             },
             authUser: authUser,

@@ -14,6 +14,7 @@ import {
   RequestType,
   TransitionPostFunction,
 } from "./request.class";
+import {RecipientType} from "../Admin/mailConsole.class";
 
 /**
  * Klasse für den Rezept-Review Prozess
@@ -108,7 +109,8 @@ export class RequestReportError extends Request {
               recipeUid: request.requestObject.uid,
               requestNumber: request.number,
             },
-            recipientUid: request.author.uid,
+            recipients: request.author.uid,
+            recipientType: RecipientType.uid,
             mailTemplate: MailTemplate.requestReportErrorFixed,
           },
           authUser: authUser,

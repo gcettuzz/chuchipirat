@@ -22,7 +22,7 @@ export async function rebuildFile000AllEvents(
       }
     }
   });
-  console.log(allEvents, counter);
+  console.info(allEvents, counter);
   firebase.eventShort
     .set({
       uids: [],

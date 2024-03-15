@@ -218,7 +218,7 @@ const PublicProfileBase: React.FC<
                     }
                     title={state.publicProfile.displayName}
                   />
-                  <div className={classes.userProfileCardNameOnImageBackground}>
+                  <div className={classes.textOnCardMediaImage}>
                     <Grid
                       container
                       direction="row"
@@ -306,7 +306,6 @@ interface AchievedRewardsListProps {
 export const AchievedRewardsList = ({
   userProfile,
 }: AchievedRewardsListProps) => {
-  console.log(userProfile);
   return (
     <List>
       <FormListItem

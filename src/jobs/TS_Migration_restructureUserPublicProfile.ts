@@ -2,7 +2,6 @@
 import Firebase from "../components/Firebase/firebase.class";
 import RecipeShort from "../../src/components/Recipe/recipeShort.class";
 import UserPublicProfile from "../components/User/user.public.profile.class";
-import AuthUser from "../components/Firebase/Authentication/authUser.class";
 import {ValueObject} from "../components/Firebase/Db/firebase.db.super.class";
 
 // interface oldUserProfile {
@@ -38,53 +37,50 @@ export async function restructureUserPublicProfile(firebase: Firebase) {
 
   // console.log(publicRecipes, privateRecipes);
 
-  await collection.get().then(async (snapshot) => {
-    for (const user of snapshot.docs) {
+  await collection.get().then(async (userDocuments) => {
+    console.log(userDocuments.size);
+    for (const user of userDocuments.docs) {
       counter++;
 
-      const document = firebase.db.doc(`/users/${user.id}/public/profile`);
-      await document
+      await firebase.db
+        .doc(`/users/${user.id}/public/profile`)
         .get()
-        .then(async (snapshot) => {
-          const oldPublicUserProfile = snapshot.data() as ValueObject;
+        .then(async (publicProfileDocument) => {
+          const oldPublicUserProfile =
+            publicProfileDocument.data() as ValueObject;
+          console.log(oldPublicUserProfile);
 
           if (
+            oldPublicUserProfile &&
             !Object.prototype.hasOwnProperty.call(oldPublicUserProfile, "stats")
           ) {
-            const newPublicUserProfile = <UserPublicProfile>{};
-
-            newPublicUserProfile.pictureSrc = {
-              smallSize: "",
-              normalSize: "",
-              fullSize: "",
-            };
-            newPublicUserProfile.stats = {
-              noComments: 0,
-              noEvents: 0,
-              noRecipesPublic: 0,
-              noRecipesPrivate: 0,
-              noFoundBugs: 0,
-            };
+            const newPublicUserProfile = new UserPublicProfile();
 
             newPublicUserProfile.uid = user.id;
             newPublicUserProfile.displayName = oldPublicUserProfile.displayName;
-            newPublicUserProfile.memberSince =
-              oldPublicUserProfile.memberSince.toDate();
+            newPublicUserProfile.memberSince = oldPublicUserProfile.memberSince;
             newPublicUserProfile.memberId = oldPublicUserProfile?.memberId;
             newPublicUserProfile.motto = oldPublicUserProfile.motto;
-            newPublicUserProfile.pictureSrc.fullSize =
-              oldPublicUserProfile?.pictureSrcFullSize;
-            newPublicUserProfile.pictureSrc.normalSize =
-              oldPublicUserProfile?.pictureSrcFullSize;
-            newPublicUserProfile.pictureSrc.smallSize =
-              oldPublicUserProfile?.pictureSrc;
+
+            if (oldPublicUserProfile?.pictureSrc !== "") {
+              newPublicUserProfile.pictureSrc.fullSize =
+                oldPublicUserProfile.pictureSrcFullSize;
+              newPublicUserProfile.pictureSrc.normalSize =
+                oldPublicUserProfile.pictureSrcFullSize;
+              newPublicUserProfile.pictureSrc.smallSize =
+                oldPublicUserProfile.pictureSrc;
+            }
 
             // Stats setzen....
             newPublicUserProfile.stats.noComments =
-              oldPublicUserProfile?.noComments;
+              oldPublicUserProfile?.noComments
+                ? oldPublicUserProfile.noComments
+                : 0;
 
-            newPublicUserProfile.stats.noEvents =
-              oldPublicUserProfile?.noEvents;
+            newPublicUserProfile.stats.noEvents = oldPublicUserProfile?.noEvents
+              ? oldPublicUserProfile.noEvents
+              : 0;
+
             newPublicUserProfile.stats.noRecipesPrivate = privateRecipes.filter(
               (recipe) => recipe.created.fromUid === user.id
             ).length;
@@ -93,11 +89,8 @@ export async function restructureUserPublicProfile(firebase: Firebase) {
               (recipe) => recipe.created.fromUid === user.id
             ).length;
 
-            firebase.user.public.profile.set({
-              uids: [user.id],
-              value: newPublicUserProfile,
-              authUser: {} as AuthUser,
-            });
+            console.log(newPublicUserProfile);
+            await publicProfileDocument.ref.set(newPublicUserProfile);
           }
         })
         .catch((error) => {

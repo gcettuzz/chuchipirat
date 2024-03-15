@@ -25,6 +25,7 @@ export enum CloudFunctionType {
   mergeProducts = "mergeProducts",
   convertProductToMaterial = "convertProductToMaterial",
   activateSupportUser = "activateSupportUser",
+  signOutAllUsers = "signOutAllUsers",
 }
 
 interface CreateDocumentForCloudFunctionsTrigger {

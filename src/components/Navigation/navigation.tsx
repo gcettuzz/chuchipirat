@@ -437,7 +437,7 @@ const NavigationAuthBase = (props) => {
                 </ListItemIcon>
                 <ListItemText
                   primary={TEXT.NAVIGATION_USERS}
-                  onClick={() => push(ROUTES.USERS)}
+                  onClick={() => push(ROUTES.SYSTEM_OVERVIEW_USERS)}
                 />
               </ListItem>
             )}
@@ -529,7 +529,7 @@ const NavigationAuthBase = (props) => {
 
               {/* <MenuItem>Einstellungen</MenuItem> */}
               <MenuItem id={BUTTONTEXT.SIGNOUT} onClick={handleMenuClick}>
-                {TEXT.NAVIGATION_SIGN_OUT}
+                {TEXT.SIGN_OUT}
               </MenuItem>
             </Menu>
           </div>

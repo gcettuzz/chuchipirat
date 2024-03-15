@@ -161,6 +161,18 @@ export const STORAGE_OBJECT_PROPERTY: {[key: string]: StorageObjectProperty} = {
     respectPrefix: false,
     excludeFromCaching: false,
   },
+  CONFIGURATION: {
+    durationOfValidity: 0,
+    uid: "",
+    respectPrefix: false,
+    excludeFromCaching: true,
+  },
+  GLOBAL_SETTINGS: {
+    durationOfValidity: 0,
+    uid: "",
+    respectPrefix: false,
+    excludeFromCaching: true,
+  },
 };
 
 const PREFIX_DOCUMENTUID_SEPARATOR = "|";

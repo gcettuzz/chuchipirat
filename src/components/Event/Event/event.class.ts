@@ -554,6 +554,11 @@ export default class Event {
       return date.to > max ? date.to : max;
     }, new Date());
 
+    event.maxDate = event.dates.reduce((maxDate, currentDate) => {
+      // Vergleiche das "To Date" des aktuellen Elements mit dem bisher höchsten "To Date"
+      return currentDate.to > maxDate.to ? currentDate : maxDate;
+    }, event.dates[0]).to;
+
     event.maxDate = new Date(event.maxDate.setHours(0, 0, 0, 0));
 
     // Anzahl Tage Total berechnen
@@ -568,7 +573,6 @@ export default class Event {
       array: event.dates,
       field: "pos",
     });
-
     event.authUsers = this.getAuthUsersFromCooks(event.cooks);
     return event;
   }

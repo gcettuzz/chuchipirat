@@ -26,6 +26,8 @@ import {
   PASSWORD as TEXT_PASSWORD,
   SHOW_PASSWORD as TEXT_SHOW_PASSWORD,
   ALERT_TITLE_UUPS as TEXT_ALERT_TITLE_UUPS,
+  MAINTENANCE_MODE_SIGN_UP_NOT_ALLOWED as TEXT_MAINTENANCE_MODE_SIGN_UP_NOT_ALLOWED,
+  MAINTENANCE_MODE_SIGN_UP_NOT_ALLOWED_TEXT as TEXT_MAINTENANCE_MODE_SIGN_UP_NOT_ALLOWED_TEXT,
 } from "../../constants/text";
 import {AuthMessages} from "../../constants/firebaseMessages";
 import {HOME as ROUTE_HOME} from "../../constants/routes";
@@ -37,13 +39,15 @@ import User from "../User/user.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import {useHistory} from "react-router";
 import Utils from "../Shared/utils.class";
-import {Backdrop, CircularProgress} from "@material-ui/core";
+import {Backdrop, CircularProgress, Grid} from "@material-ui/core";
 import {CustomRouterProps} from "../Shared/global.interface";
+import GlobalSettings from "../Admin/globalSettings.class";
 
 // ===================================================================
 // ======================== globale Funktionen =======================
 // ===================================================================
 enum ReducerActions {
+  SET_MAINTANANCE_MODE,
   UPDATE_FIELD,
   SIGN_IN,
   GENERIC_ERROR,
@@ -56,6 +60,7 @@ type SignInData = {
 
 type State = {
   signInData: SignInData;
+  maintenanceMode: boolean;
   error: FirebaseError | null;
   isSigningIn: boolean;
   showPassword: boolean;
@@ -71,6 +76,7 @@ const inititialState: State = {
     email: "",
     password: "",
   },
+  maintenanceMode: false,
   isSigningIn: false,
   error: null,
   showPassword: false,
@@ -85,6 +91,11 @@ const signInReducer = (state: State, action: DispatchAction): State => {
           ...state.signInData,
           [action.payload.field]: action.payload.value,
         },
+      };
+    case ReducerActions.SET_MAINTANANCE_MODE:
+      return {
+        ...state,
+        maintenanceMode: action.payload.value,
       };
     case ReducerActions.SIGN_IN:
       return {...state, isSigningIn: true};
@@ -109,6 +120,18 @@ const SignInPage: React.FC<CustomRouterProps> = ({...props}) => {
   const {push} = useHistory();
 
   const [state, dispatch] = React.useReducer(signInReducer, inititialState);
+  /* ------------------------------------------
+  // Einstellungen holen
+  // ------------------------------------------ */
+  React.useEffect(() => {
+    GlobalSettings.getGlobalSettings({firebase}).then((result) => {
+      dispatch({
+        type: ReducerActions.SET_MAINTANANCE_MODE,
+        payload: {value: result.maintenanceMode},
+      });
+    });
+  }, []);
+
   /* ------------------------------------------
   // Feld-Änderungen
   // ------------------------------------------ */
@@ -148,7 +171,6 @@ const SignInPage: React.FC<CustomRouterProps> = ({...props}) => {
         dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
       });
   };
-
   return (
     <React.Fragment>
       <PageTitle smallTitle={TEXT_COME_IN} />
@@ -157,35 +179,47 @@ const SignInPage: React.FC<CustomRouterProps> = ({...props}) => {
       </Backdrop>
 
       <Container className={classes.container} component="main" maxWidth="xs">
-        <Card className={classes.card}>
-          <CardMedia
-            className={classes.cardMedia}
-            image={ImageRepository.getEnviromentRelatedPicture().SIGN_IN_HEADER}
-            title={"Logo"}
-          />
-          <CardContent className={classes.cardContent}>
-            <SignInForm
-              signInData={state.signInData}
-              onFieldChange={onFieldChange}
-              onSignIn={onSignIn}
-            />
-            {state.error && (
-              <AlertMessage
-                error={state.error}
-                severity={"error"}
-                messageTitle={TEXT_ALERT_TITLE_UUPS}
-                body={
-                  state.error.code! === AuthMessages.INTERNAL_ERROR ? (
-                    <ForgotPasswordLink />
-                  ) : (
-                    ""
-                  )
+        <Grid container spacing={2}>
+          {state.maintenanceMode && (
+            <Grid item xs={12}>
+              <AlertMaintenanceMode />
+            </Grid>
+          )}
+          <Grid item xs={12}>
+            <Card className={classes.card}>
+              <CardMedia
+                className={classes.cardMedia}
+                image={
+                  ImageRepository.getEnviromentRelatedPicture().SIGN_IN_HEADER
                 }
+                title={"Logo"}
               />
-            )}
-            <SignUpLink />
-          </CardContent>
-        </Card>
+              <CardContent className={classes.cardContent}>
+                <SignInForm
+                  signInData={state.signInData}
+                  onFieldChange={onFieldChange}
+                  onSignIn={onSignIn}
+                  maintenanceMode={state.maintenanceMode}
+                />
+                {state.error && (
+                  <AlertMessage
+                    error={state.error}
+                    severity={"error"}
+                    messageTitle={TEXT_ALERT_TITLE_UUPS}
+                    body={
+                      state.error.code! === AuthMessages.INTERNAL_ERROR ? (
+                        <ForgotPasswordLink />
+                      ) : (
+                        ""
+                      )
+                    }
+                  />
+                )}
+                {!state.maintenanceMode && <SignUpLink />}
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
       </Container>
     </React.Fragment>
   );
@@ -196,10 +230,16 @@ const SignInPage: React.FC<CustomRouterProps> = ({...props}) => {
 // ===================================================================
 interface SignInFormProps {
   signInData: SignInData;
+  maintenanceMode: boolean;
   onFieldChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onSignIn: () => void;
 }
-const SignInForm = ({signInData, onFieldChange, onSignIn}: SignInFormProps) => {
+const SignInForm = ({
+  signInData,
+  maintenanceMode,
+  onFieldChange,
+  onSignIn,
+}: SignInFormProps) => {
   const [showPassword, setShowPassword] = React.useState(false);
   const classes = useStyles();
 
@@ -234,6 +274,7 @@ const SignInForm = ({signInData, onFieldChange, onSignIn}: SignInFormProps) => {
         autoFocus
         value={signInData.email}
         onChange={onFieldChange}
+        disabled={maintenanceMode}
       />
       {/* Passwort */}
       <TextField
@@ -247,6 +288,7 @@ const SignInForm = ({signInData, onFieldChange, onSignIn}: SignInFormProps) => {
         autoComplete="new-password"
         value={signInData.password}
         onChange={onFieldChange}
+        disabled={maintenanceMode}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
@@ -263,6 +305,7 @@ const SignInForm = ({signInData, onFieldChange, onSignIn}: SignInFormProps) => {
       />
       <Button
         disabled={
+          maintenanceMode ||
           !signInData.email ||
           !signInData.email.includes("@") ||
           !signInData.password ||
@@ -278,6 +321,19 @@ const SignInForm = ({signInData, onFieldChange, onSignIn}: SignInFormProps) => {
         {TEXT_SIGN_IN}
       </Button>
     </React.Fragment>
+  );
+};
+// ===================================================================
+// ========================== Wartungswarnung ========================
+// ===================================================================
+export const AlertMaintenanceMode = () => {
+  return (
+    <AlertMessage
+      error={null}
+      severity={"warning"}
+      messageTitle={TEXT_MAINTENANCE_MODE_SIGN_UP_NOT_ALLOWED}
+      body={TEXT_MAINTENANCE_MODE_SIGN_UP_NOT_ALLOWED_TEXT}
+    />
   );
 };
 

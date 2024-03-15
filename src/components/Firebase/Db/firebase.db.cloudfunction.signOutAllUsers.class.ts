@@ -1,20 +1,17 @@
-import MailTemplate from "../../../constants/mailTemplates";
-import User from "../../User/user.class";
 import Firebase from "../firebase.class";
 import FirebaseDbCloudFunctionSuper, {
-  BaseDocumentStructure,
+  // BaseDocumentStructure,
   CloudFunctionType,
 } from "./firebase.db.cloudfunction.super.class";
 
-export interface CloudFunctionMailUserDocumentStructure
-  extends BaseDocumentStructure {
-  mailTemplate: MailTemplate;
-  recipientUid: User["uid"];
-  recipients: string;
-  templateData: {[key: string]: string};
-}
+// export interface CloudFunctionActivateSupportUserDocumentStructure
+//   extends BaseDocumentStructure {
+//   eventUid: string;
+//   supportUserUid: string;
+//   errorMessage: Error["message"];
+// }
 
-export class FirebaseDbCloudFunctionMailUser extends FirebaseDbCloudFunctionSuper {
+export class FirebaseDbCloudFunctionSignOutAllUsers extends FirebaseDbCloudFunctionSuper {
   firebase: Firebase;
   /* =====================================================================
   // Constructor
@@ -28,20 +25,22 @@ export class FirebaseDbCloudFunctionMailUser extends FirebaseDbCloudFunctionSupe
   // ===================================================================== */
   getDocument(uids: string[]) {
     return this.firebase.db.doc(
-      `_cloudFunctions/functions/mailUser/${uids[0]}`
+      `_cloudFunctions/functions/signOutAllUsers/${uids[0]}`
     );
   }
   /* =====================================================================
   // Trigger für CloudFunction
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("_cloudFunctions/functions/mailUser");
+    return this.firebase.db.collection(
+      "_cloudFunctions/functions/signOutAllUsers"
+    );
   }
   /* =====================================================================
   // CloudFunction Type zurückgeben
   // ===================================================================== */
   getCloudFunctionType(): CloudFunctionType {
-    return CloudFunctionType.mailUser;
+    return CloudFunctionType.signOutAllUsers;
   }
 }
-export default FirebaseDbCloudFunctionMailUser;
+export default FirebaseDbCloudFunctionSignOutAllUsers;

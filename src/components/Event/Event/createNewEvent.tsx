@@ -89,6 +89,7 @@ enum ReducerActions {
   SET_PICTURE,
   UPLOAD_PICTURE_INIT,
   UPLOAD_PICTURE_SUCCESS,
+  SHOW_LOADING,
   SAVE_EVENT_INIT,
   SAVE_EVENT_SUCCESS,
   FORM_FIELD_ERROR,
@@ -160,6 +161,11 @@ const eventReducer = (state: State, action: DispatchAction): State => {
         error: action.payload as Error,
         eventFormValidation: action.payload
           .formValidation as FormValidationFieldError[],
+      };
+    case ReducerActions.SHOW_LOADING:
+      return {
+        ...state,
+        isSaving: true,
       };
     case ReducerActions.GENERIC_ERROR:
       return {
@@ -248,7 +254,14 @@ const CreateEventBase: React.FC<
     dispatch({type: ReducerActions.SET_GROUP_CONFIG, payload: value});
     setActiveStep(WizardSteps.completion);
   };
-  const goToMenuplan = () => {
+  const goToMenuplan = async () => {
+    dispatch({type: ReducerActions.SHOW_LOADING, payload: {}});
+
+    // Kurz warten, dass auch alles ready ist
+    await new Promise(function (resolve) {
+      setTimeout(resolve, 1500);
+    });
+
     push({
       pathname: `${ROUTE_EVENT}/${state.event.uid}`,
       state: {event: state.event, groupConfig: state.groupConfig},
