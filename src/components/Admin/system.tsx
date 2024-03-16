@@ -51,7 +51,7 @@ import {
   JOBS_DESCRIPTION as TEXT_JOBS_DESCRIPTION,
   DB_INDICES as TEXT_DB_INDICES,
   DB_INDICES_DESCRIPTION as TEXT_DB_INDICES_DESCRIPTION,
-  OVERVIEW as TEXT_OVERVIEW,
+  OVERVIEW_DIFFERENT_ELEMENTS as TEXT_OVERVIEW_DIFFERENT_ELEMENTS,
   RECIPES as TEXT_RECIPES,
   EVENTS as TEXT_EVENTS,
   ACTIVATE_SUPPORT_USER as TEXT_ACTIVATE_SUPPORT_USER,
@@ -232,6 +232,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
               onShowEvents={goToOverviewEvents}
               onShowMailbox={goToOverviewMailbox}
               icon={<ViewListIcon />}
+              authUser={authUser}
             />
           </Grid>
           {authUser.roles.includes(Role.admin) && (
@@ -368,6 +369,7 @@ interface OverviewTileProps {
   onShowEvents: () => void;
   onShowMailbox: () => void;
   icon: JSX.Element;
+  authUser: AuthUser;
 }
 const OverviewTile = ({
   id,
@@ -375,13 +377,14 @@ const OverviewTile = ({
   onShowEvents,
   onShowMailbox,
   icon,
+  authUser,
 }: OverviewTileProps) => {
   const classes = useStyles();
 
   return (
     <Card className={classes.card} key={"card_" + id}>
       <CardHeader
-        title={TEXT_OVERVIEW}
+        title={TEXT_OVERVIEW_DIFFERENT_ELEMENTS}
         action={
           <IconButton aria-label={"admin Card "}>
             {icon ? icon : <ForwardIcon />}
@@ -402,12 +405,14 @@ const OverviewTile = ({
             </ListItemIcon>
             <ListItemText primary={TEXT_EVENTS} onClick={onShowEvents} />
           </ListItem>
-          <ListItem button>
-            <ListItemIcon>
-              <SendIcon />
-            </ListItemIcon>
-            <ListItemText primary={TEXT_MAILBOX} onClick={onShowMailbox} />
-          </ListItem>
+          {authUser.roles.includes(Role.admin) && (
+            <ListItem button>
+              <ListItemIcon>
+                <SendIcon />
+              </ListItemIcon>
+              <ListItemText primary={TEXT_MAILBOX} onClick={onShowMailbox} />
+            </ListItem>
+          )}
         </List>
       </CardContent>
     </Card>

@@ -114,6 +114,18 @@ export default class HelpCenter {
             case ROUTES.SYSTEM_ACTIVATE_SUPPORT_USER:
               page = "activate_support_user";
               break;
+            case ROUTES.SYSTEM_OVERVIEW_MAILBOX:
+              page = "mailbox_overview";
+              break;
+            case ROUTES.SYSTEM_OVERVIEW_EVENTS:
+              page = "event_overview";
+              break;
+            case ROUTES.SYSTEM_OVERVIEW_RECIPES:
+              page = "recipe_overview";
+              break;
+            case ROUTES.SYSTEM_MAIL_CONSOLE:
+              page = "mailconsole";
+              break;
             default:
               console.info(actualPath);
               page = "system";
@@ -126,12 +138,10 @@ export default class HelpCenter {
         subdirectory = "admin";
         page = "users";
         break;
-
       default:
         console.info(path[1]);
         subdirectory = "";
     }
-
     if (subdirectory === "" && page === "") {
       return `${HELPCENTER_URL}`;
     } else {

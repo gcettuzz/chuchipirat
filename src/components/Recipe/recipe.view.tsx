@@ -1059,7 +1059,8 @@ const RecipeButtonRow = ({
     visible:
       (recipe.type === RecipeType.public &&
         !isEmbedded &&
-        authUser.roles.includes(Role.admin)) ||
+        (authUser.roles.includes(Role.admin) ||
+          authUser.roles.includes(Role.communityLeader))) ||
       (recipe.type === RecipeType.private &&
         (recipe.created.fromUid === authUser.uid ||
           authUser.roles.includes(Role.admin))) ||

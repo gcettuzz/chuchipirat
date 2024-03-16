@@ -132,10 +132,10 @@ export const STORAGE_OBJECT_PROPERTY: {[key: string]: StorageObjectProperty} = {
     excludeFromCaching: true,
   },
   MAILBOX: {
-    durationOfValidity: 0,
+    durationOfValidity: 720, // 12 Stunden
     uid: "/mailbox",
     respectPrefix: false,
-    excludeFromCaching: true,
+    excludeFromCaching: false,
   },
   CLOUDFUNCTION: {
     durationOfValidity: 0,

@@ -166,7 +166,7 @@ export const WHERE_USED_DESCRIPTION =
 export const JOBS = "Job-Übersicht";
 export const TEMP_JOBS = "Temporäre Job-Übersicht";
 export const JOBS_DESCRIPTION = "Jobs manuel ausführen.";
-export const OVERVIEW = "Übersicht diverser Elemente";
+export const OVERVIEW_DIFFERENT_ELEMENTS = "Übersicht diverser Elemente";
 export const OVERVIEW_RECIPES_DESCRIPTION = "Übersicht über alle Rezepte";
 export const OVERVIEW_EVENTS_DESCRIPTION = "Übersicht über alle Alässe";
 export const MAIL_CONSOLE = "Mail-Konsole";
@@ -371,6 +371,11 @@ export const SEND_TEST_MAIL = "Test Mail senden";
 export const SENDT_MAIL_TO_RECIPIENTS = "Mail senden";
 export const BUTTON_TEXT = "Button-Beschriftung";
 export const BUTTON_LINK = "Link für Button (Ziel)";
+export const RECIPIENTS = "Empfänger";
+export const NO_RECIPIENTS = "Anzahl Empfänger";
+export const MAIL_TEMPLATE = "Mail-Template";
+export const TIMESTAMP = "Timestamp";
+export const MAILS = "E-Mails";
 /* =====================================================================
 // Meldungen zur Gruppen-Konfiguration
 // ===================================================================== */
@@ -1116,7 +1121,7 @@ export const MENUE_SELECTION = "Auswahl Menüs";
 export const USED_RECIPES_MENUE_SELECTION_DESCRIPTION =
   "Hier kannst du bereits generierte Listen anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltet alle verwendeten Rezepte der gewählten Menüs. Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
 export const SHOPPING_LIST_MENUE_SELECTION_DESCRIPTION =
-  "Hier kannst du bereits generierte Einkaufslisten anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltete alle Zutaten, Gebrauchsmaterialien der gewählten Menüs (inklusive einzelne hinzugefügte Produkte). Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
+  "Hier kannst du bereits generierte Einkaufslisten anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltet alle Zutaten, Gebrauchsmaterialien der gewählten Menüs (inklusive einzelne hinzugefügte Produkte). Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
 export const REFRESH = "Aktualisieren";
 export const SELECT_MENUES = "Menüs auswählen";
 export const WHICH_MENUES_FOR_RECIPE_GENERATION =
@@ -1176,7 +1181,7 @@ export const KEEP_MANUALLY_ADDED_PRODUCTS = (listName: string) =>
   `Diese ${listName} beinhaltet manuell hinzugefügte Artikel. Sollen diese bei der Aktualisierung beibehalten oder sollen sie aus der Liste gelöscht werden?`;
 export const KEEP = "Behalten";
 export const MATERIAL_LIST_MENUE_SELECTION_DESCRIPTION =
-  " Hier kannst du bereits generierte Materiallisten anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltete alle Materialien vom Typ «Gebrauchsmaterial» der gewählten Menüs. Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
+  " Hier kannst du bereits generierte Materiallisten anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltet alle Materialien vom Typ «Gebrauchsmaterial» der gewählten Menüs. Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
 export const LIST = "Liste";
 export const ATTENTION_ABOUT_TO_DELETE_PLANED_DAYS =
   "Achtung – Geplante Tage werden gelöscht!";
@@ -1212,6 +1217,16 @@ export const ACTIVATE_SUPPORT_MODE_DESCRIPTION =
 export const SUPPORT_USER_REGISTERED =
   "Support-User wurde für Anlass berechtigt.";
 export const MAILBOX = "Mailbox";
+export const MONITOR = "Monitor";
+export const OVERVIEW = "Übersicht";
+export const RECIPIENT_TO = "An";
+export const RECIPIENT_BCC = "BCC";
+export const MAIL_DATA = "E-Mail-Inhalt";
+export const DELETE_MAIL_PROTOCOLS = "Mailprotokolle löschen";
+export const DELETE_MAIL_PROTOCOLS_OLDER_THAN =
+  "Mailprotokolle löschen, die älter als X Tage sind";
+export const MAIL_PROTOCOLS = "Mailprotokolle";
+export const MAIL_PROTOCOLS_DELETED = "Mailprotokolle gelöscht";
 /* =====================================================================
 // Abkürzungen
 // ===================================================================== */

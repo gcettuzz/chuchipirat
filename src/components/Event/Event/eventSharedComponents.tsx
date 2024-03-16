@@ -303,7 +303,7 @@ export const DialogTraceItem = ({
           <Grid item xs={12}>
             <List key={`list_for_trace`}>
               {sortedMenues.map((menue) => {
-                const traceItems = trace.filter(
+                const traceItems = trace?.filter(
                   (item) => item.menueUid == menue.menueUid
                 );
                 return (

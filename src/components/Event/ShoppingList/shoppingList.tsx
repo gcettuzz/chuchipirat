@@ -410,11 +410,11 @@ const EventShoppingListPage = ({
               type: FetchMissingDataType.SHOPPING_LIST,
               objectUid: result.shoppingListUid,
             });
-            // liste gleich anzeigen!
 
+            // liste gleich anzeigen!
             dispatch({
               type: ReducerActions.SET_SELECTED_LIST_ITEM,
-              payload: {uid: result},
+              payload: {uid: result.shoppingListUid},
             });
           })
           .catch((error) => {
@@ -755,6 +755,7 @@ const EventShoppingListPage = ({
     let updatedShoppingList: ShoppingList;
     let updatedTrace: ShoppingListTrace;
     let updatedShoppingListCollection: ShoppingListCollection;
+
     switch (pressedButton[1]) {
       case Action.EDIT:
         quantity = shoppingList?.list[
@@ -993,7 +994,8 @@ const EventShoppingListPage = ({
   // Artikel Trace Dialog
   // ------------------------------------------ */
   const onDialogTraceItemClose = () => {
-    setTraceItemDialogValues({...traceItemDialogValues, open: false});
+    setTraceItemDialogValues(TRACE_ITEM_DIALOG_INITIAL_VALUES);
+    setContextMenuSelectedItem(CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE);
   };
   /* ------------------------------------------
   // Recipe-Drawer-Handler
@@ -1151,7 +1153,7 @@ const EventShoppingListPage = ({
         <DialogTraceItem
           dialogOpen={traceItemDialogValues.open}
           trace={
-            shoppingListCollection.lists[state.selectedListItem!]?.trace[
+            shoppingListCollection.lists[state.selectedListItem!].trace[
               contextMenuSelectedItem.productUid
             ]
           }

@@ -11,18 +11,15 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
-import FirebaseDbMailboxShort from "./firebase.db.mailboxShort.class";
 
-export class FirebaseDbMailbox extends FirebaseDbSuper {
+export class FirebaseDbMailboxShort extends FirebaseDbSuper {
   firebase: Firebase;
-  short: FirebaseDbMailboxShort;
   /* =====================================================================
   // Constructor
   // ===================================================================== */
   constructor(firebase: Firebase) {
     super();
     this.firebase = firebase;
-    this.short = new FirebaseDbMailboxShort(firebase);
   }
   /* =====================================================================
   // Collection holen
@@ -40,8 +37,8 @@ export class FirebaseDbMailbox extends FirebaseDbSuper {
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
-  getDocument(uids: string[]) {
-    return this.firebase.db.doc(`_mailbox/${uids[0]}`);
+  getDocument() {
+    return this.firebase.db.doc(`_mailbox/000_log`);
   }
   /* =====================================================================
   // Dokumente holen
@@ -53,29 +50,19 @@ export class FirebaseDbMailbox extends FirebaseDbSuper {
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
-    return {
-      to: value.to,
-      bcc: value.bcc,
-      template: value.template,
-    };
+    return value;
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
-    return {
-      uid: uid,
-      to: value.to,
-      bcc: value.bcc,
-      template: value.template,
-      delivery: value.delivery,
-    } as unknown as T;
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
+    return value as unknown as T;
   }
   /* =====================================================================
   // Einstellungen für den Session Storage zurückgeben
   //===================================================================== */
   getSessionHandlerProperty(): StorageObjectProperty {
-    return STORAGE_OBJECT_PROPERTY.MAILBOX;
+    return STORAGE_OBJECT_PROPERTY.NONE;
   }
 }
-export default FirebaseDbMailbox;
+export default FirebaseDbMailboxShort;
