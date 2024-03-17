@@ -1,8 +1,11 @@
 import {ImageRepository} from "../../constants/imageRepository";
 import MailTemplate from "../../constants/mailTemplates";
 import AuthUser from "../Firebase/Authentication/authUser.class";
+import {CloudFunctionType} from "../Firebase/Db/firebase.db.cloudfunction.super.class";
 import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 import Firebase from "../Firebase/firebase.class";
+import User from "../User/user.class";
+import UserPublicProfile from "../User/user.public.profile.class";
 
 export enum RecipientType {
   none,
@@ -27,44 +30,13 @@ export interface MailLogEntry {
   timestamp: Date;
 }
 
-export interface MailProtocol {
-  uid: string;
-  to: string | string[];
-  bcc: string | string[];
-  delivery: {
-    attempts: number;
-    endTime: Date;
-    error: string | null;
-    info: {
-      accepted: string[];
-      messageId: string;
-      pending: string[];
-      rejected: string[];
-      response: string;
-    };
-    leaseEpireTime: Date | null;
-    startTime: Date;
-    state: string;
-  };
-  template: {
-    data: ValueObject;
-    name: string;
-  };
-}
-
-interface Send {
-  firebase: Firebase;
-  authUser: AuthUser;
-  mailContent: Mail;
-  recipients: string;
-  recipientType: RecipientType;
-}
-interface GetMailboxOverview {
+interface GetCloudFxOverview {
   firebase: Firebase;
 }
-interface GetSendProtocol {
+interface GetCloudFunctionTriggerFile {
   firebase: Firebase;
-  mailUid: string;
+  cloudFunctionType: CloudFunctionType;
+  triggerFileUid: string;
 }
 interface DeleteMailProtocols {
   firebase: Firebase;
@@ -72,93 +44,62 @@ interface DeleteMailProtocols {
   dayOffset: number;
   mailLog: MailLogEntry[];
 }
-// ===================================================================== */
-/**
- * Mail versenden
- * Mail über die Cloud-Fx versenden
- * @param param0 - Objekt
- */
-export class Mail {
-  subject: string;
-  mailtext: string;
-  title: string;
-  subtitle?: string;
-  buttonText?: string;
-  buttonLink?: string;
-  headerPictureSrc?: string;
+
+class CloudFx {
+  cloudFunctionType: CloudFunctionType;
+  date: Date;
+  invokedBy: {
+    displayName: UserPublicProfile["displayName"];
+    email: User["email"];
+    firstName: User["firstName"];
+    lastName: User["lastName"];
+    uid: User["uid"];
+  };
 
   // ===================================================================== */
   /**
    * Constructor
    */
   constructor() {
-    this.subject = "";
-    this.mailtext = "";
-    this.title = "ich bin der Titel";
-    this.subtitle = "";
-    this.buttonLink = "";
-    this.buttonText = "";
-    this.headerPictureSrc =
-      ImageRepository.getEnviromentRelatedPicture().CARD_PLACEHOLDER_MEDIA;
+    this.cloudFunctionType = CloudFunctionType.none;
+    this.date = new Date();
+    this.invokedBy = {
+      displayName: "",
+      email: "",
+      firstName: "",
+      lastName: "",
+      uid: "",
+    };
   }
-}
-
-class MailConsole {
-  // ===================================================================== */
-  /**
-   * Mail versenden
-   */
-  static send = ({
-    firebase,
-    authUser,
-    mailContent,
-    recipients,
-    recipientType,
-  }: Send) => {
-    firebase.cloudFunction.sendMail.triggerCloudFunction({
-      values: {
-        recipients: recipients,
-        recipientType: recipientType,
-        mailTemplate: MailTemplate.newletter,
-        templateData: {
-          subject: mailContent.subject,
-          mailtext: mailContent.mailtext,
-          title: mailContent.title,
-          subtitle: mailContent?.subtitle,
-          showLinkButton:
-            mailContent?.buttonText && mailContent?.buttonLink ? true : false,
-          buttonText: mailContent?.buttonText,
-          buttonLink: mailContent?.buttonLink,
-          headerPictureSrc: mailContent.headerPictureSrc,
-        },
-      },
-      authUser: authUser,
-    });
-  };
   // ===================================================================== */
   /**
    * Versand-Protokoll holen
    */
-  static getSendProtocol = async ({firebase, mailUid}: GetSendProtocol) => {
-    return await firebase.mailbox
-      .read({uids: [mailUid]})
-      .then((result) => {
-        result.uid = mailUid;
-        return result as MailProtocol;
-      })
-      .catch((error) => {
-        console.error(error);
-        throw error;
-      });
+  static getCloudFunctionTriggerFile = async ({
+    firebase,
+    cloudFunctionType,
+    triggerFileUid,
+  }: GetCloudFunctionTriggerFile) => {
+    console.log("todo");
+    // return await firebase.mailbox
+    //   .read({uids: [mailUid]})
+    //   .then((result) => {
+    //     result.uid = mailUid;
+    //     return result as MailProtocol;
+    //   })
+    //   .catch((error) => {
+    //     console.error(error);
+    //     throw error;
+    //   });
   };
   // ===================================================================== */
   /**
    * Mail-Log auslesen
    */
-  static getMailboxOverview = async ({firebase}: GetMailboxOverview) => {
+  static getCloudFxOverview = async ({firebase}: GetCloudFxOverview) => {
     const mailOverview: MailLogEntry[] = [];
 
-    await firebase.mailbox.short
+    await firebase.cloudFunction.log
       .read({uids: []})
       .then((result) => {
         Object.keys(result).forEach((key) => {
@@ -229,4 +170,4 @@ class MailConsole {
   };
 }
 
-export default MailConsole;
+export default CloudFx;

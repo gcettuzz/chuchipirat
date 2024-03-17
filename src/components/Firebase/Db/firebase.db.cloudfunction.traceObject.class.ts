@@ -2,8 +2,13 @@ import Firebase from "../firebase.class";
 import FirebaseDbCloudFunctionSuper, {
   CloudFunctionType,
 } from "./firebase.db.cloudfunction.super.class";
+import {
+  PrepareDataForApp,
+  PrepareDataForDb,
+  ValueObject,
+} from "./firebase.db.super.class";
 
-export class FirebaseDbCloudFunctionProductUpdate extends FirebaseDbCloudFunctionSuper {
+export class FirebaseDbCloudFunctionTraceObject extends FirebaseDbCloudFunctionSuper {
   firebase: Firebase;
   /* =====================================================================
   // Constructor
@@ -17,22 +22,33 @@ export class FirebaseDbCloudFunctionProductUpdate extends FirebaseDbCloudFunctio
   // ===================================================================== */
   getDocument(uids: string[]) {
     return this.firebase.db.doc(
-      `_cloudFunctions/functions/productUpdate/${uids[0]}`
+      `_cloudFunctions/functions/traceObject/${uids[0]}`
     );
   }
   /* =====================================================================
   // Trigger für CloudFunction
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection(
-      "_cloudFunctions/functions/productUpdate"
-    );
+    return this.firebase.db.collection("_cloudFunctions/functions/traceObject");
   }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
+    return value as unknown as T;
+  }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp): T {
+    return {...value, uid: uid} as unknown as T;
+  }
+
   /* =====================================================================
   // CloudFunction Type zurückgeben
   // ===================================================================== */
   getCloudFunctionType(): CloudFunctionType {
-    return CloudFunctionType.productUpdate;
+    return CloudFunctionType.traceObject;
   }
 }
-export default FirebaseDbCloudFunctionProductUpdate;
+export default FirebaseDbCloudFunctionTraceObject;

@@ -628,7 +628,7 @@ export abstract class Request {
         // Mail auslösen, dass neuer Kommentar erfasst wurde
         // Der Empfänger ist jeweils die andere Partei Author*in <--> Bearbeiter*in
         if (request.assignee.uid && request.author.uid) {
-          firebase.cloudFunction.mailUser.triggerCloudFunction({
+          firebase.cloudFunction.sendMail.triggerCloudFunction({
             values: {
               templateData: {
                 headerPictureSrc: request.requestObject.pictureSrc,

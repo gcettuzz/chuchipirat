@@ -542,7 +542,7 @@ export default class User {
         });
       }
       if (actualPublicProfile.motto !== userProfile.motto) {
-        firebase.cloudFunction.userMotto.triggerCloudFunction({
+        firebase.cloudFunction.updateUserMotto.triggerCloudFunction({
           values: {
             uid: userProfile.uid,
             newValue: userProfile.motto,
@@ -607,7 +607,7 @@ export default class User {
       });
 
     // CloudFunction Triggern
-    firebase.cloudFunction.userPictureSrc.triggerCloudFunction({
+    firebase.cloudFunction.updateUserPictureSrc.triggerCloudFunction({
       values: {
         uid: authUser.uid,
         pictureSrc: {smallSize: "", normalSize: "", fullSize: ""} as Picture,

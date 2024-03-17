@@ -138,10 +138,10 @@ export const STORAGE_OBJECT_PROPERTY: {[key: string]: StorageObjectProperty} = {
     excludeFromCaching: false,
   },
   CLOUDFUNCTION: {
-    durationOfValidity: 0,
+    durationOfValidity: 720,
     uid: "/cloudfunction",
-    respectPrefix: false,
-    excludeFromCaching: true,
+    respectPrefix: true,
+    excludeFromCaching: false,
   },
   USER_SHORT: {
     durationOfValidity: 0,

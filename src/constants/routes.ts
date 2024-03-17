@@ -34,6 +34,7 @@ export const SYSTEM_OVERVIEW_RECIPES = "/system/overview/recipes";
 export const SYSTEM_OVERVIEW_EVENTS = "/system/overview/events";
 export const SYSTEM_OVERVIEW_USERS = "/system/overview/users";
 export const SYSTEM_OVERVIEW_MAILBOX = "/system/overview/mailbox";
+export const SYSTEM_OVERVIEW_CLOUDFX = "/system/overview/cloudfx";
 
 export const SYSTEM_MAIL_CONSOLE = "/system/mailconsole";
 

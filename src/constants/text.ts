@@ -1,7 +1,5 @@
 "../../constants/text";
 
-import exp from "constants";
-
 /* =====================================================================
 // App
 // ===================================================================== */
@@ -1227,6 +1225,7 @@ export const DELETE_MAIL_PROTOCOLS_OLDER_THAN =
   "Mailprotokolle löschen, die älter als X Tage sind";
 export const MAIL_PROTOCOLS = "Mailprotokolle";
 export const MAIL_PROTOCOLS_DELETED = "Mailprotokolle gelöscht";
+export const CLOUD_FX = "Cloud-Functions";
 /* =====================================================================
 // Abkürzungen
 // ===================================================================== */

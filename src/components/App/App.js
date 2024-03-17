@@ -69,6 +69,7 @@ const OverviewRecipes = lazy(() => import("../Admin/overviewRecipes"));
 const OverviewEvents = lazy(() => import("../Admin/overviewEvents"));
 const OverviewUsers = lazy(() => import("../Admin/overviewUsers"));
 const OverviewMailbox = lazy(() => import("../Admin/overviewMailbox"));
+const OverviewCloudFx = lazy(() => import("../Admin/overviewCloudFunctions"));
 const ActivateSupportUser = lazy(() => import("../Admin/activateSupportUser"));
 const MailConsole = lazy(() => import("../Admin/mailConsole"));
 
@@ -185,6 +186,11 @@ const App = () => {
                   exact
                   path={ROUTES.SYSTEM_OVERVIEW_EVENTS}
                   component={OverviewEvents}
+                />
+                <Route
+                  exact
+                  path={ROUTES.SYSTEM_OVERVIEW_CLOUDFX}
+                  component={OverviewCloudFx}
                 />
                 <Route
                   exact

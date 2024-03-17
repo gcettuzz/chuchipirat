@@ -1,37 +1,45 @@
-import {
-  CollectionReference,
-  DocumentReference,
-} from "@firebase/firestore-types";
-import {ERROR_PARAMETER_NOT_PASSED} from "../../../constants/text";
+// import {DocumentReference} from "@firebase/firestore-types";
+// import {ERROR_PARAMETER_NOT_PASSED} from "../../../constants/text";
+import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
 
 import Firebase from "../firebase.class";
 import {AuthUser} from "../Authentication/authUser.class";
-import {ValueObject} from "./firebase.db.super.class";
+import {
+  FirebaseDbSuper,
+  PrepareDataForApp,
+  PrepareDataForDb,
+  ValueObject,
+} from "./firebase.db.super.class";
 import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
+import {
+  STORAGE_OBJECT_PROPERTY,
+  StorageObjectProperty,
+} from "./sessionStorageHandler.class";
 
+//HINT: Aufbau verbNomen
 export enum CloudFunctionType {
-  userDiplayNameUpdate = "userDisplayNameUpdate",
-  userMottoUpdate = "userMottoUpdate",
-  userPictureSrcUpdate = "userPictureSrcUpdate",
-  recipeUpdate = "recipeUpdate",
-  recipeDelete = "recipeDelete",
-  objectTrace = "objectTrace",
-  productUpdate = "productUpdate",
-  recipeReviewMailCommunityLeaders = "recipeReviewMailCommunityLeaders",
-  requestPublishRecipe = "requestPublishRecipe",
-  mailUser = "mailUser",
+  none = "",
+  updateUserDiplayName = "updateUserDiplayName",
+  updateUserMotto = "updateUserMotto",
+  updateUserPictureSrc = "updateUserPictureSrc",
+  updateRecipe = "updateRecipe",
+  deleteRecipe = "deleteRecipe",
+  traceObject = "traceObject",
+  updateProduct = "updateProduct",
+  publishRecipeRequest = "publishRecipeRequest",
+  sendMail = "sendMail",
   dailySummary = "dailySummary",
-  feedsDelete = "feedsDelete",
+  deleteFeeds = "deleteFeeds",
   mergeProducts = "mergeProducts",
   convertProductToMaterial = "convertProductToMaterial",
   activateSupportUser = "activateSupportUser",
   signOutAllUsers = "signOutAllUsers",
 }
 
-interface CreateDocumentForCloudFunctionsTrigger {
-  document: DocumentReference;
-  values: {[key: string]: any};
-}
+// interface CreateDocumentForCloudFunctionsTrigger {
+//   document: DocumentReference;
+//   values: {[key: string]: any};
+// }
 export interface TriggerCloudFunction {
   values: {[key: string]: any};
   authUser: AuthUser;
@@ -44,56 +52,83 @@ interface UpdateLog {
 interface UpdateCounter {
   cloudFunctionType: CloudFunctionType;
 }
-interface Listen<T> {
-  uids: string[];
-  callback: (T) => void;
-}
+// interface Listen<T> {
+//   uids: string[];
+//   callback: (T: T) => void;
+// }
 
 export interface BaseDocumentStructure {
   date: Date;
   done: boolean;
 }
 
-export abstract class FirebaseDbCloudFunctionSuper {
+export abstract class FirebaseDbCloudFunctionSuper extends FirebaseDbSuper {
   abstract firebase: Firebase;
-  abstract getDocument(uids?: string[]): DocumentReference;
-  abstract getCollection(uid?: string): CollectionReference;
   abstract getCloudFunctionType(): CloudFunctionType;
-
   /* =====================================================================
-  // Dokument schreiben
+  // Collection holen
   // ===================================================================== */
-  async createDocumentForCloudFunctionsTrigger({
-    document,
-    values,
-  }: CreateDocumentForCloudFunctionsTrigger) {
-    if (!document) {
-      throw new Error(ERROR_PARAMETER_NOT_PASSED);
-    }
-    values.date = this.firebase.timestamp.fromDate(new Date());
-
-    return await document.set(values).catch((error) => {
-      console.error(error);
-      throw error;
-    });
+  getCollection() {
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
+    return this.firebase.db.collection("");
+  }
+  /* =====================================================================
+  // Collection-Group holen
+  // ===================================================================== */
+  getCollectionGroup() {
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
+    return this.firebase.db.collectionGroup("");
+  }
+  /* =====================================================================
+  // Dokument holen
+  // ===================================================================== */
+  getDocument(uids: string[]) {
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
+    return this.firebase.db.doc(`events/${uids[0]}`);
+  }
+  /* =====================================================================
+  // Dokumente holen
+  // ===================================================================== */
+  getDocuments() {
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
+  }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
+    return value as unknown as T;
+  }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
+    return value as unknown as T;
+  }
+  /* =====================================================================
+  // Einstellungen für den Session Storage zurückgeben
+  //===================================================================== */
+  getSessionHandlerProperty(): StorageObjectProperty {
+    return STORAGE_OBJECT_PROPERTY.CLOUDFUNCTION;
   }
   /* =====================================================================
   // Logfile updaten
   // ===================================================================== */
   async updateLog({uid, cloudFunctionType, authUser}: UpdateLog) {
-    const document = this.firebase.db.doc("_cloudFunctions/log");
-
-    document
+    this.firebase.cloudFunction.log
       .update({
-        [uid]: {
-          cloudFunctionType: cloudFunctionType,
-          date: this.firebase.timestamp.fromDate(new Date()),
-          invokedBy: {
-            uid: authUser.uid,
-            displayName: authUser.publicProfile.displayName,
-            firstName: authUser.firstName,
-            lastName: authUser.lastName,
-            email: authUser.email,
+        uids: [],
+        authUser: authUser,
+        value: {
+          [uid]: {
+            cloudFunctionType: cloudFunctionType,
+            date: this.firebase.timestamp.fromDate(new Date()),
+            invokedBy: {
+              uid: authUser.uid,
+              displayName: authUser.publicProfile.displayName,
+              firstName: authUser.firstName,
+              lastName: authUser.lastName,
+              email: authUser.email,
+            },
           },
         },
       })
@@ -106,11 +141,13 @@ export abstract class FirebaseDbCloudFunctionSuper {
   // Zähler der Cloud-FX hochzählen
   // ===================================================================== */
   updateCounter = async ({cloudFunctionType}: UpdateCounter) => {
-    const document = this.firebase.db.doc("_cloudFunctions/functions");
-
-    document
+    this.firebase.cloudFunction
       .update({
-        [cloudFunctionType]: this.firebase.fieldValue.increment(1),
+        uids: ["functions"],
+        value: {
+          [cloudFunctionType]: this.firebase.fieldValue.increment(1),
+        },
+        authUser: {} as AuthUser,
       })
       .catch((error) => {
         console.error(error);
@@ -119,40 +156,29 @@ export abstract class FirebaseDbCloudFunctionSuper {
   };
   // ===================================================================== */
   /**
-   * Bestimmtes Dokument - überwachen
-   * @param param0  Objekt mit UIDs zu Dokument und Callback Funtion
-   */
-  async listen<T extends ValueObject>({uids, callback}: Listen<T>) {
-    const document = this.getDocument(uids);
-
-    return document.onSnapshot((snapshot) => {
-      callback(snapshot.data());
-    });
-  }
-  // ===================================================================== */
-  /**
    * Cloudfunction triggern
    * @param param0  Objekt mit zu schreibenden Werten für die Cloudfuntions
    *                und den authUser
    * @returns UID des Dokumentes, das den Trigger ausgelöst hat
    */
   async triggerCloudFunction({values, authUser}: TriggerCloudFunction) {
-    const document = this.getCollection().doc();
+    let documentUid = "";
 
-    await this.createDocumentForCloudFunctionsTrigger({
-      document: document,
-      values: values,
-    }).catch((error) => {
-      console.error(error);
-      throw error;
-    });
+    await this.create({value: values, authUser: authUser})
+      .then((result) => {
+        documentUid = result.uid;
+        this.updateLog({
+          uid: result.uid,
+          cloudFunctionType: this.getCloudFunctionType(),
+          authUser: authUser,
+        });
+        this.updateCounter({cloudFunctionType: this.getCloudFunctionType()});
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
 
-    this.updateLog({
-      uid: document.id,
-      cloudFunctionType: this.getCloudFunctionType(),
-      authUser: authUser,
-    });
-    this.updateCounter({cloudFunctionType: this.getCloudFunctionType()});
     this.firebase.analytics.logEvent(
       FirebaseAnalyticEvent.cloudFunctionExecuted,
       {
@@ -160,7 +186,7 @@ export abstract class FirebaseDbCloudFunctionSuper {
       }
     );
 
-    return document.id;
+    return documentUid;
   }
 }
 export default FirebaseDbCloudFunctionSuper;

@@ -280,7 +280,7 @@ export default class Product {
     });
 
     if (triggerCloudFx) {
-      firebase.cloudFunction.productUpdate.triggerCloudFunction({
+      firebase.cloudFunction.updateProduct.triggerCloudFunction({
         values: changedProducts,
         authUser: authUser,
       });

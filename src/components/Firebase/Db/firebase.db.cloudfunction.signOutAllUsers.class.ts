@@ -3,6 +3,11 @@ import FirebaseDbCloudFunctionSuper, {
   // BaseDocumentStructure,
   CloudFunctionType,
 } from "./firebase.db.cloudfunction.super.class";
+import {
+  PrepareDataForApp,
+  PrepareDataForDb,
+  ValueObject,
+} from "./firebase.db.super.class";
 
 // export interface CloudFunctionActivateSupportUserDocumentStructure
 //   extends BaseDocumentStructure {
@@ -36,6 +41,19 @@ export class FirebaseDbCloudFunctionSignOutAllUsers extends FirebaseDbCloudFunct
       "_cloudFunctions/functions/signOutAllUsers"
     );
   }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
+    return value as unknown as T;
+  }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp): T {
+    return {...value, uid: uid} as unknown as T;
+  }
+
   /* =====================================================================
   // CloudFunction Type zurückgeben
   // ===================================================================== */

@@ -2,8 +2,13 @@ import Firebase from "../firebase.class";
 import FirebaseDbCloudFunctionSuper, {
   CloudFunctionType,
 } from "./firebase.db.cloudfunction.super.class";
+import {
+  PrepareDataForApp,
+  PrepareDataForDb,
+  ValueObject,
+} from "./firebase.db.super.class";
 
-export class FirebaseDbCloudFunctionFeedsDelete extends FirebaseDbCloudFunctionSuper {
+export class FirebaseDbCloudFunctionDeleteFeeds extends FirebaseDbCloudFunctionSuper {
   firebase: Firebase;
   /* =====================================================================
   // Constructor
@@ -17,20 +22,33 @@ export class FirebaseDbCloudFunctionFeedsDelete extends FirebaseDbCloudFunctionS
   // ===================================================================== */
   getDocument(uids: string[]) {
     return this.firebase.db.doc(
-      `_cloudFunctions/functions/feedsDelete/${uids[0]}`
+      `_cloudFunctions/functions/deleteFeeds/${uids[0]}`
     );
   }
   /* =====================================================================
   // Trigger für CloudFunction
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("_cloudFunctions/functions/feedsDelete");
+    return this.firebase.db.collection("_cloudFunctions/functions/deleteFeeds");
   }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
+    return value as unknown as T;
+  }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp): T {
+    return {...value, uid: uid} as unknown as T;
+  }
+
   /* =====================================================================
   // CloudFunction Type zurückgeben
   // ===================================================================== */
   getCloudFunctionType(): CloudFunctionType {
-    return CloudFunctionType.feedsDelete;
+    return CloudFunctionType.deleteFeeds;
   }
 }
-export default FirebaseDbCloudFunctionFeedsDelete;
+export default FirebaseDbCloudFunctionDeleteFeeds;

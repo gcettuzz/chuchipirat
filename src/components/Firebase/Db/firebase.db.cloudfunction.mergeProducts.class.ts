@@ -2,6 +2,11 @@ import Firebase from "../firebase.class";
 import FirebaseDbCloudFunctionSuper, {
   CloudFunctionType,
 } from "./firebase.db.cloudfunction.super.class";
+import {
+  PrepareDataForApp,
+  PrepareDataForDb,
+  ValueObject,
+} from "./firebase.db.super.class";
 
 export class FirebaseDbCloudFunctionMergeProducts extends FirebaseDbCloudFunctionSuper {
   firebase: Firebase;
@@ -28,6 +33,19 @@ export class FirebaseDbCloudFunctionMergeProducts extends FirebaseDbCloudFunctio
       "_cloudFunctions/functions/mergeProducts"
     );
   }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
+    return value as unknown as T;
+  }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp): T {
+    return {...value, uid: uid} as unknown as T;
+  }
+
   /* =====================================================================
   // CloudFunction Type zurückgeben
   // ===================================================================== */

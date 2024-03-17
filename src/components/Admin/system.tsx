@@ -32,6 +32,7 @@ import {
   HeadsetMic as HeadsetMicIcon,
   Mail as MailIcon,
   Send as SendIcon,
+  Cloud as CloudIcon,
 } from "@material-ui/icons";
 
 import {
@@ -59,6 +60,7 @@ import {
   MAIL_CONSOLE as TEXT_MAIL_CONSOLE,
   MAIL_CONSOLE_DESCRIPTION as TEXT_MAIL_CONSOLE_DESCRIPTION,
   MAILBOX as TEXT_MAILBOX,
+  CLOUD_FX as TEXT_CLOUD_FX,
 } from "../../constants/text";
 import Role from "../../constants/roles";
 import {
@@ -75,6 +77,7 @@ import {
   SYSTEM_ACTIVATE_SUPPORT_USER as ROUTE_SYSTEM_ACTIVATE_SUPPORT_USER,
   SYSTEM_MAIL_CONSOLE as ROUTE_SYSTEM_MAIL_CONSOLE,
   SYSTEM_OVERVIEW_MAILBOX as ROUTE_SYSTEM_OVERVIEW_MAILBOX,
+  SYSTEM_OVERVIEW_CLOUDFX as ROUTE_SYSTEM_OVERVIEW_CLOUDFX,
 } from "../../constants/routes";
 
 import useStyles from "../../constants/styles";
@@ -114,96 +117,14 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
   }
 
   /* ------------------------------------------
-  // Globale Einstelllungen
+  // Ziel ansteuern
   // ------------------------------------------ */
-  const goToGlobalSettings = () => {
+  const goToDestination = (routeDestination: string) => {
     push({
-      pathname: ROUTE_SYSTEM_GLOBAL_SETTINGS,
+      pathname: routeDestination,
     });
   };
 
-  /* ------------------------------------------
-  // Feed löschen
-  // ------------------------------------------ */
-  const goToDeleteFeed = () => {
-    push({
-      pathname: ROUTE_SYSTEM_FEED_DELETE,
-    });
-  };
-  // /* ------------------------------------------
-  // Verfolgungsnachweis
-  // ------------------------------------------ */
-  const goToWhereUsed = () => {
-    push({
-      pathname: ROUTE_SYSTEM_WHERE_USED,
-    });
-  };
-  /* ------------------------------------------
-  // Produkte mergen
-  // ------------------------------------------ */
-  const goToMergeProducts = () => {
-    push({
-      pathname: ROUTE_SYSTEM_MERGE_PRODUCT,
-    });
-  };
-  /* ------------------------------------------
-  // Produkte umwandeln
-  // ------------------------------------------ */
-  const goToConvertProductToMaterial = () => {
-    push({
-      pathname: ROUTE_SYSTEM_CONVERT_PRODUCT_TO_MATERIAL,
-    });
-  };
-  /* ------------------------------------------
-  // Support-User aktivieren
-  // ------------------------------------------ */
-  const goToActivateSupportUser = () => {
-    push({
-      pathname: ROUTE_SYSTEM_ACTIVATE_SUPPORT_USER,
-    });
-  };
-  /* ------------------------------------------
-  // Mail-Konsole öffnen
-  // ------------------------------------------ */
-  const goToMailConsole = () => {
-    push({
-      pathname: ROUTE_SYSTEM_MAIL_CONSOLE,
-    });
-  };
-  const goToOverviewMailbox = () => {
-    push({
-      pathname: ROUTE_SYSTEM_OVERVIEW_MAILBOX,
-    });
-  };
-  const goToTemp = () => {
-    push({
-      pathname: ROUTE_TEMP,
-    });
-  };
-  /* ------------------------------------------
-  // Job ausführen 
-  // ------------------------------------------ */
-  const goToJobs = () => {
-    push({
-      pathname: ROUTES_SYSTEM_JOBS,
-    });
-  };
-  const goToDbIndices = () => {
-    push({
-      pathname: ROUTE_SYSTEM_DB_INDICES,
-    });
-  };
-
-  const goToOverviewRecipes = () => {
-    push({
-      pathname: ROUTE_SYSTEM_OVERVIEW_RECIPES,
-    });
-  };
-  const goToOverviewEvents = () => {
-    push({
-      pathname: ROUTE_SYSTEM_OVERVIEW_EVENTS,
-    });
-  };
   return (
     <>
       {/*===== HEADER ===== */}
@@ -221,16 +142,18 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
                 text={TEXT_GLOBAL_SETTINGS}
                 description={TEXT_SYSTEM_GLOBAL_DESCRIPTION}
                 icon={<TuneIcon />}
-                action={goToGlobalSettings}
+                action={goToDestination}
+                routeDestination={ROUTE_SYSTEM_GLOBAL_SETTINGS}
               />
             </Grid>
           )}
           <Grid item xs={12} md={6}>
             <OverviewTile
               id={"overview"}
-              onShowRecipes={goToOverviewRecipes}
-              onShowEvents={goToOverviewEvents}
-              onShowMailbox={goToOverviewMailbox}
+              onShowRecipes={goToDestination}
+              onShowEvents={goToDestination}
+              onShowMailbox={goToDestination}
+              onShowCloudFx={goToDestination}
               icon={<ViewListIcon />}
               authUser={authUser}
             />
@@ -242,7 +165,8 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
                 text={TEXT_DELETE_FEED}
                 description={TEXT_DELETE_FEED_DESCRIPTION}
                 icon={<DeleteIcon />}
-                action={goToDeleteFeed}
+                action={goToDestination}
+                routeDestination={ROUTE_SYSTEM_FEED_DELETE}
               />
             </Grid>
           )}
@@ -252,7 +176,8 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
               text={TEXT_WHERE_USED}
               description={TEXT_WHERE_USED_DESCRIPTION}
               icon={<ZoomOutMapIcon />}
-              action={goToWhereUsed}
+              action={goToDestination}
+              routeDestination={ROUTE_SYSTEM_WHERE_USED}
             />
           </Grid>
           <Grid item xs={12} md={6} lg={4}>
@@ -261,7 +186,8 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
               text={TEXT_MERGE_PRODUCTS}
               description={TEXT_MERGE_PRODUCT_DESCRIPTION}
               icon={<CallMergeIcon />}
-              action={goToMergeProducts}
+              action={goToDestination}
+              routeDestination={ROUTE_SYSTEM_MERGE_PRODUCT}
             />
           </Grid>
           <Grid item xs={12} md={6} lg={4}>
@@ -270,7 +196,8 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
               text={TEXT_CONVERT_PRODUCT_TO_MATERIAL}
               description={TEXT_CONVERT_PRODUCT_TO_MATERIAL_DESCRIPTION}
               icon={<CachedIcon />}
-              action={goToConvertProductToMaterial}
+              action={goToDestination}
+              routeDestination={ROUTE_SYSTEM_CONVERT_PRODUCT_TO_MATERIAL}
             />
           </Grid>
           <Grid item xs={12} md={6} lg={4}>
@@ -279,7 +206,8 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
               text={TEXT_ACTIVATE_SUPPORT_USER}
               description={TEXT_ACTIVATE_SUPPORT_USER_DESCRIPTION}
               icon={<HeadsetMicIcon />}
-              action={goToActivateSupportUser}
+              action={goToDestination}
+              routeDestination={ROUTE_SYSTEM_ACTIVATE_SUPPORT_USER}
             />
           </Grid>
           {authUser.roles.includes(Role.admin) && (
@@ -290,7 +218,8 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
                   text={TEXT_JOBS}
                   description={TEXT_JOBS_DESCRIPTION}
                   icon={<TimelapseIcon />}
-                  action={goToJobs}
+                  action={goToDestination}
+                  routeDestination={ROUTES_SYSTEM_JOBS}
                 />
               </Grid>
 
@@ -300,7 +229,8 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
                   text={TEXT_DB_INDICES}
                   description={TEXT_DB_INDICES_DESCRIPTION}
                   icon={<FindInPageIcon />}
-                  action={goToDbIndices}
+                  action={goToDestination}
+                  routeDestination={ROUTE_SYSTEM_DB_INDICES}
                 />
               </Grid>
               <Grid item xs={12} md={6} lg={4}>
@@ -309,7 +239,8 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
                   text={TEXT_MAIL_CONSOLE}
                   description={TEXT_MAIL_CONSOLE_DESCRIPTION}
                   icon={<MailIcon />}
-                  action={goToMailConsole}
+                  action={goToDestination}
+                  routeDestination={ROUTE_SYSTEM_MAIL_CONSOLE}
                 />
               </Grid>
               <Grid item xs={12} md={6} lg={4}>
@@ -318,7 +249,8 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
                   text={"Temp"}
                   description={""}
                   icon={<CallMergeIcon />}
-                  action={goToTemp}
+                  action={goToDestination}
+                  routeDestination={ROUTE_TEMP}
                 />
               </Grid>
             </React.Fragment>
@@ -336,14 +268,22 @@ interface AdminTileProps {
   text: string;
   description: string;
   icon: JSX.Element;
-  action: () => void;
+  action: (routeDestination: string) => void;
+  routeDestination: string;
 }
-const AdminTile = ({id, text, description, icon, action}: AdminTileProps) => {
+const AdminTile = ({
+  id,
+  text,
+  description,
+  icon,
+  action,
+  routeDestination,
+}: AdminTileProps) => {
   const classes = useStyles();
 
   return (
     <Card className={classes.card} key={"card_" + id}>
-      <CardActionArea onClick={action}>
+      <CardActionArea onClick={() => action(routeDestination)}>
         <CardHeader
           title={text}
           action={
@@ -365,9 +305,10 @@ const AdminTile = ({id, text, description, icon, action}: AdminTileProps) => {
 // =================================================================== */
 interface OverviewTileProps {
   id: string;
-  onShowRecipes: () => void;
-  onShowEvents: () => void;
-  onShowMailbox: () => void;
+  onShowRecipes: (routeDestination: string) => void;
+  onShowEvents: (routeDestination: string) => void;
+  onShowMailbox: (routeDestination: string) => void;
+  onShowCloudFx: (routeDestination: string) => void;
   icon: JSX.Element;
   authUser: AuthUser;
 }
@@ -376,6 +317,7 @@ const OverviewTile = ({
   onShowRecipes,
   onShowEvents,
   onShowMailbox,
+  onShowCloudFx,
   icon,
   authUser,
 }: OverviewTileProps) => {
@@ -397,21 +339,41 @@ const OverviewTile = ({
             <ListItemIcon>
               <FastfoodIcon />
             </ListItemIcon>
-            <ListItemText primary={TEXT_RECIPES} onClick={onShowRecipes} />
+            <ListItemText
+              primary={TEXT_RECIPES}
+              onClick={() => onShowRecipes(ROUTE_SYSTEM_OVERVIEW_RECIPES)}
+            />
           </ListItem>
           <ListItem button>
             <ListItemIcon>
               <EventIcon />
             </ListItemIcon>
-            <ListItemText primary={TEXT_EVENTS} onClick={onShowEvents} />
+            <ListItemText
+              primary={TEXT_EVENTS}
+              onClick={() => onShowEvents(ROUTE_SYSTEM_OVERVIEW_EVENTS)}
+            />
           </ListItem>
           {authUser.roles.includes(Role.admin) && (
-            <ListItem button>
-              <ListItemIcon>
-                <SendIcon />
-              </ListItemIcon>
-              <ListItemText primary={TEXT_MAILBOX} onClick={onShowMailbox} />
-            </ListItem>
+            <React.Fragment>
+              <ListItem button>
+                <ListItemIcon>
+                  <SendIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary={TEXT_MAILBOX}
+                  onClick={() => onShowMailbox(ROUTE_SYSTEM_OVERVIEW_MAILBOX)}
+                />
+              </ListItem>
+              <ListItem button>
+                <ListItemIcon>
+                  <CloudIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary={TEXT_CLOUD_FX}
+                  onClick={() => onShowCloudFx(ROUTE_SYSTEM_OVERVIEW_CLOUDFX)}
+                />
+              </ListItem>
+            </React.Fragment>
           )}
         </List>
       </CardContent>

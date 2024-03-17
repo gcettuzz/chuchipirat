@@ -2,8 +2,13 @@ import Firebase from "../firebase.class";
 import FirebaseDbCloudFunctionSuper, {
   CloudFunctionType,
 } from "./firebase.db.cloudfunction.super.class";
+import {
+  PrepareDataForApp,
+  PrepareDataForDb,
+  ValueObject,
+} from "./firebase.db.super.class";
 
-export class FirebaseDbCloudFunctionUserMottoUpdate extends FirebaseDbCloudFunctionSuper {
+export class FirebaseDbCloudFunctionUpdateUserMotto extends FirebaseDbCloudFunctionSuper {
   firebase: Firebase;
   /* =====================================================================
   // Constructor
@@ -29,10 +34,23 @@ export class FirebaseDbCloudFunctionUserMottoUpdate extends FirebaseDbCloudFunct
     );
   }
   /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
+    return value as unknown as T;
+  }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp): T {
+    return {...value, uid: uid} as unknown as T;
+  }
+
+  /* =====================================================================
   // CloudFunction Type zurückgeben
   // ===================================================================== */
   getCloudFunctionType(): CloudFunctionType {
-    return CloudFunctionType.userMottoUpdate;
+    return CloudFunctionType.updateUserMotto;
   }
 }
-export default FirebaseDbCloudFunctionUserMottoUpdate;
+export default FirebaseDbCloudFunctionUpdateUserMotto;

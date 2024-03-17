@@ -142,6 +142,9 @@ const ActivateSupportUserBase: React.FC<
           payload: document,
         });
       },
+      errorCallback: (error) => {
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+      },
     }).catch((error) => {
       console.error(error);
       dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});

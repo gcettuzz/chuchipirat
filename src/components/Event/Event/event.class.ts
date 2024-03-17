@@ -160,6 +160,7 @@ interface RegisterSupportUser {
     supportUserUid,
     date,
   }: CloudFunctionActivateSupportUserDocumentStructure) => void;
+  errorCallback: (error: Error) => void;
 }
 export default class Event {
   uid: string;
@@ -1037,13 +1038,15 @@ export default class Event {
     eventUid,
     authUser,
     callback,
+    errorCallback,
   }: RegisterSupportUser) => {
     let unsubscribe: () => void;
     let documentId = "";
 
-    firebase.cloudFunction.activateSupportUser
+    await firebase.cloudFunction.activateSupportUser
       .triggerCloudFunction({
         values: {
+          date: new Date(),
           eventUid: eventUid,
           supportUserUid: getSupportUserUid(),
         },
@@ -1051,6 +1054,7 @@ export default class Event {
       })
       .then((result) => {
         documentId = result;
+        console.log(documentId);
       })
       .then(() => {
         // Melden wenn fertig
@@ -1065,6 +1069,7 @@ export default class Event {
           .listen({
             uids: [documentId],
             callback: callbackCaller,
+            errorCallback: errorCallback,
           })
           .then((result) => {
             console.warn(result);

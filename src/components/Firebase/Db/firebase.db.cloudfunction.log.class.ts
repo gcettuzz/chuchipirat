@@ -2,8 +2,13 @@ import Firebase from "../firebase.class";
 import FirebaseDbCloudFunctionSuper, {
   CloudFunctionType,
 } from "./firebase.db.cloudfunction.super.class";
+import {
+  PrepareDataForApp,
+  PrepareDataForDb,
+  ValueObject,
+} from "./firebase.db.super.class";
 
-export class FirebaseDbCloudFunctionMailCommunityLeader extends FirebaseDbCloudFunctionSuper {
+export class FirebaseDbCloudFunctionLog extends FirebaseDbCloudFunctionSuper {
   firebase: Firebase;
   /* =====================================================================
   // Constructor
@@ -15,24 +20,33 @@ export class FirebaseDbCloudFunctionMailCommunityLeader extends FirebaseDbCloudF
   /* =====================================================================
   // Dokument holen, das die Cloudfunction triggert
   // ===================================================================== */
-  getDocument(uids: string[]) {
-    return this.firebase.db.doc(
-      `_cloudFunctions/functions/mailCommunityLeaders/${uids[0]}`
-    );
+  getDocument() {
+    return this.firebase.db.doc(`_cloudFunctions/log`);
   }
   /* =====================================================================
   // Trigger für CloudFunction
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection(
-      "_cloudFunctions/functions/mailCommunityLeaders"
-    );
+    return this.firebase.db.collection("_cloudFunctions");
   }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
+    return value as unknown as T;
+  }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp): T {
+    return {...value, uid: uid} as unknown as T;
+  }
+
   /* =====================================================================
   // CloudFunction Type zurückgeben
   // ===================================================================== */
   getCloudFunctionType(): CloudFunctionType {
-    return CloudFunctionType.recipeReviewMailCommunityLeaders;
+    return CloudFunctionType.none;
   }
 }
-export default FirebaseDbCloudFunctionMailCommunityLeader;
+export default FirebaseDbCloudFunctionLog;

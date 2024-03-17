@@ -115,7 +115,7 @@ export class RequestPublishRecipe extends Request {
           const recipeShort = RecipeShort.createShortRecipeFromRecipe(result);
 
           // Cloud Function auslösen
-          firebase.cloudFunction.requestRecipePublish.triggerCloudFunction({
+          firebase.cloudFunction.publishRecipeRequest.triggerCloudFunction({
             values: {
               recipeName: request.requestObject.name,
               recipeUid: request.requestObject.uid,
@@ -132,7 +132,7 @@ export class RequestPublishRecipe extends Request {
           // });
 
           // Mail auslösen // --> über cloud Function! weil Adresse unbekannt.
-          firebase.cloudFunction.mailUser.triggerCloudFunction({
+          firebase.cloudFunction.sendMail.triggerCloudFunction({
             values: {
               templateData: {
                 recipeName: request.requestObject.name,
@@ -194,15 +194,17 @@ export class RequestPublishRecipe extends Request {
   }: CreateRequestPostFunction) {
     // Mail auslösen --> Die Adressen der Content-Admins werden per
     // Cloudfunction ausgelesen (Datenschutz!)
-    firebase.cloudFunction.mailCommunityLeaders.triggerCloudFunction({
+    firebase.cloudFunction.sendMail.triggerCloudFunction({
       values: {
+        recipients: Role.communityLeader,
+        recipientType: RecipientType.role,
+        mailTemplate: MailTemplate.newRecipePublishRequest,
         templateData: {
           recipeName: request.requestObject.name,
           headerPictureSrc: request.requestObject.pictureSrc,
           requestAuthor: authUser.publicProfile.displayName,
           requestNumber: request.number,
         },
-        mailTemplate: MailTemplate.newRecipePublishRequest,
       },
       authUser: authUser,
     });

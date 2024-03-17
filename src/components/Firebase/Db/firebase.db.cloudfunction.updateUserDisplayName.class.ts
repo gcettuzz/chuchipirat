@@ -2,8 +2,13 @@ import Firebase from "../firebase.class";
 import FirebaseDbCloudFunctionSuper, {
   CloudFunctionType,
 } from "./firebase.db.cloudfunction.super.class";
+import {
+  PrepareDataForApp,
+  PrepareDataForDb,
+  ValueObject,
+} from "./firebase.db.super.class";
 
-export class FirebaseDbCloudFunctionRequestPublishRecipe extends FirebaseDbCloudFunctionSuper {
+export class FirebaseDbCloudFunctionUpdateUserDisplayName extends FirebaseDbCloudFunctionSuper {
   firebase: Firebase;
   /* =====================================================================
   // Constructor
@@ -17,7 +22,7 @@ export class FirebaseDbCloudFunctionRequestPublishRecipe extends FirebaseDbCloud
   // ===================================================================== */
   getDocument(uids: string[]) {
     return this.firebase.db.doc(
-      `_cloudFunctions/functions/requestPublishRecipe/${uids[0]}`
+      `_cloudFunctions/functions/updateUserDisplayName/${uids[0]}`
     );
   }
   /* =====================================================================
@@ -25,14 +30,27 @@ export class FirebaseDbCloudFunctionRequestPublishRecipe extends FirebaseDbCloud
   // ===================================================================== */
   getCollection() {
     return this.firebase.db.collection(
-      "_cloudFunctions/functions/requestPublishRecipe"
+      "_cloudFunctions/functions/updateUserDisplayName"
     );
   }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
+    return value as unknown as T;
+  }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp): T {
+    return {...value, uid: uid} as unknown as T;
+  }
+
   /* =====================================================================
   // CloudFunction Type zurückgeben
   // ===================================================================== */
   getCloudFunctionType(): CloudFunctionType {
-    return CloudFunctionType.requestPublishRecipe;
+    return CloudFunctionType.updateUserDiplayName;
   }
 }
-export default FirebaseDbCloudFunctionRequestPublishRecipe;
+export default FirebaseDbCloudFunctionUpdateUserDisplayName;

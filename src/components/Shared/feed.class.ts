@@ -295,7 +295,7 @@ export default class Feed {
     let unsubscribe: () => void;
     let documentId = "";
 
-    await firebase.cloudFunction.feedsDelete
+    await firebase.cloudFunction.deleteFeeds
       .triggerCloudFunction({
         values: {daysOffset: daysOffset},
         authUser: authUser,
@@ -312,7 +312,7 @@ export default class Feed {
           }
         };
 
-        firebase.cloudFunction.feedsDelete
+        firebase.cloudFunction.deleteFeeds
           .listen({
             uids: [documentId],
             callback: callback,

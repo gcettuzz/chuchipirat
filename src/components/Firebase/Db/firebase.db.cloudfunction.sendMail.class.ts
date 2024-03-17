@@ -1,22 +1,30 @@
+import MailTemplate from "../../../constants/mailTemplates";
+import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
+import {RecipientType} from "../../Admin/mailConsole.class";
 import Firebase from "../firebase.class";
 import FirebaseDbCloudFunctionSuper, {
   BaseDocumentStructure,
   CloudFunctionType,
 } from "./firebase.db.cloudfunction.super.class";
 import {
-  ValueObject,
   PrepareDataForApp,
   PrepareDataForDb,
+  ValueObject,
 } from "./firebase.db.super.class";
+import {
+  STORAGE_OBJECT_PROPERTY,
+  StorageObjectProperty,
+} from "./sessionStorageHandler.class";
 
-export interface CloudFunctionActivateSupportUserDocumentStructure
+export interface CloudFunctionSendMailDocumentStructure
   extends BaseDocumentStructure {
-  eventUid: string;
-  supportUserUid: string;
-  errorMessage: Error["message"];
+  mailTemplate: MailTemplate;
+  recipients: string;
+  recipientType: RecipientType;
+  templateData: {[key: string]: string};
 }
 
-export class FirebaseDbCloudFunctionActivateSupportUser extends FirebaseDbCloudFunctionSuper {
+export class FirebaseDbCloudFunctionSendMail extends FirebaseDbCloudFunctionSuper {
   firebase: Firebase;
   /* =====================================================================
   // Constructor
@@ -30,16 +38,27 @@ export class FirebaseDbCloudFunctionActivateSupportUser extends FirebaseDbCloudF
   // ===================================================================== */
   getDocument(uids: string[]) {
     return this.firebase.db.doc(
-      `_cloudFunctions/functions/activateSupportUser/${uids[0]}`
+      `_cloudFunctions/functions/sendMail/${uids[0]}`
     );
   }
   /* =====================================================================
   // Trigger für CloudFunction
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection(
-      "_cloudFunctions/functions/activateSupportUser"
-    );
+    return this.firebase.db.collection("_cloudFunctions/functions/sendMail");
+  }
+  /* =====================================================================
+  // Collection-Group holen
+  // ===================================================================== */
+  getCollectionGroup() {
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
+    return this.firebase.db.collectionGroup("none");
+  }
+  /* =====================================================================
+  // Dokumente holen
+  // ===================================================================== */
+  getDocuments() {
+    throw Error(ERROR_NOT_IMPLEMENTED_YET);
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
@@ -50,14 +69,20 @@ export class FirebaseDbCloudFunctionActivateSupportUser extends FirebaseDbCloudF
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp): T {
-    return {...value, uid: uid} as unknown as T;
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
+    return value as unknown as T;
+  }
+  /* =====================================================================
+  // Einstellungen für den Session Storage zurückgeben
+  //===================================================================== */
+  getSessionHandlerProperty(): StorageObjectProperty {
+    return STORAGE_OBJECT_PROPERTY.CLOUDFUNCTION;
   }
   /* =====================================================================
   // CloudFunction Type zurückgeben
   // ===================================================================== */
   getCloudFunctionType(): CloudFunctionType {
-    return CloudFunctionType.activateSupportUser;
+    return CloudFunctionType.sendMail;
   }
 }
-export default FirebaseDbCloudFunctionActivateSupportUser;
+export default FirebaseDbCloudFunctionSendMail;

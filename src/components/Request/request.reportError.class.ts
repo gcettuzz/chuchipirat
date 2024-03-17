@@ -15,6 +15,7 @@ import {
   TransitionPostFunction,
 } from "./request.class";
 import {RecipientType} from "../Admin/mailConsole.class";
+import Role from "../../constants/roles";
 
 /**
  * Klasse für den Rezept-Review Prozess
@@ -101,7 +102,7 @@ export class RequestReportError extends Request {
     switch (request.status) {
       case RequestStatus.done:
         // Mail auslösen // --> über cloud Function! weil Adresse unbekannt.
-        firebase.cloudFunction.mailUser.triggerCloudFunction({
+        firebase.cloudFunction.sendMail.triggerCloudFunction({
           values: {
             templateData: {
               recipeName: request.requestObject.name,
@@ -148,15 +149,17 @@ export class RequestReportError extends Request {
   }: CreateRequestPostFunction) {
     // Mail auslösen --> Die Adressen der Content-Admins werden per
     // Cloudfunction ausgelesen (Datenschutz!)
-    firebase.cloudFunction.mailCommunityLeaders.triggerCloudFunction({
+    firebase.cloudFunction.sendMail.triggerCloudFunction({
       values: {
+        recipients: Role.communityLeader,
+        recipientType: RecipientType.role,
+        mailTemplate: MailTemplate.newReportErrorRequest,
         templateData: {
           recipeName: request.requestObject.name,
           headerPictureSrc: request.requestObject.pictureSrc,
           requestAuthor: authUser.publicProfile.displayName,
           requestNumber: request.number,
         },
-        mailTemplate: MailTemplate.newReportErrorRequest,
       },
       authUser: authUser,
     });

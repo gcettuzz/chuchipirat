@@ -1,20 +1,14 @@
-import MailTemplate from "../../../constants/mailTemplates";
-import User from "../../User/user.class";
 import Firebase from "../firebase.class";
 import FirebaseDbCloudFunctionSuper, {
-  BaseDocumentStructure,
   CloudFunctionType,
 } from "./firebase.db.cloudfunction.super.class";
+import {
+  PrepareDataForApp,
+  PrepareDataForDb,
+  ValueObject,
+} from "./firebase.db.super.class";
 
-export interface CloudFunctionMailUserDocumentStructure
-  extends BaseDocumentStructure {
-  mailTemplate: MailTemplate;
-  recipientUid: User["uid"];
-  recipients: string;
-  templateData: {[key: string]: string};
-}
-
-export class FirebaseDbCloudFunctionMailUser extends FirebaseDbCloudFunctionSuper {
+export class FirebaseDbCloudFunctionUpdateRecipe extends FirebaseDbCloudFunctionSuper {
   firebase: Firebase;
   /* =====================================================================
   // Constructor
@@ -28,20 +22,35 @@ export class FirebaseDbCloudFunctionMailUser extends FirebaseDbCloudFunctionSupe
   // ===================================================================== */
   getDocument(uids: string[]) {
     return this.firebase.db.doc(
-      `_cloudFunctions/functions/mailUser/${uids[0]}`
+      `_cloudFunctions/functions/updateRecipe/${uids[0]}`
     );
   }
   /* =====================================================================
   // Trigger für CloudFunction
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("_cloudFunctions/functions/mailUser");
+    return this.firebase.db.collection(
+      "_cloudFunctions/functions/updateRecipe"
+    );
   }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
+    return value as unknown as T;
+  }
+  /* =====================================================================
+  // Daten für DB-Strutkur vorbereiten
+  // ===================================================================== */
+  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp): T {
+    return {...value, uid: uid} as unknown as T;
+  }
+
   /* =====================================================================
   // CloudFunction Type zurückgeben
   // ===================================================================== */
   getCloudFunctionType(): CloudFunctionType {
-    return CloudFunctionType.mailUser;
+    return CloudFunctionType.updateRecipe;
   }
 }
-export default FirebaseDbCloudFunctionMailUser;
+export default FirebaseDbCloudFunctionUpdateRecipe;

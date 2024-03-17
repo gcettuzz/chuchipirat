@@ -661,7 +661,7 @@ export default class Recipe {
       });
 
     if (recipe.name !== recipeNameBeforeSave) {
-      firebase.cloudFunction.recipeUpdate.triggerCloudFunction({
+      firebase.cloudFunction.updateRecipe.triggerCloudFunction({
         values: {
           uid: recipe.uid,
           type: recipe.type,
@@ -788,7 +788,7 @@ export default class Recipe {
     }
 
     if (!newRecipe && recipe.name !== recipeNameBeforeSave) {
-      firebase.cloudFunction.recipeUpdate.triggerCloudFunction({
+      firebase.cloudFunction.updateRecipe.triggerCloudFunction({
         values: {
           uid: recipe.uid,
           type: recipe.type,
@@ -1249,7 +1249,7 @@ export default class Recipe {
 
     // Cloud-Function triggern, die die Rezepte aus den Menüplänen entfernt
     if (recipe.type !== RecipeType.variant) {
-      firebase.cloudFunction.recipeDelete.triggerCloudFunction({
+      firebase.cloudFunction.deleteRecipe.triggerCloudFunction({
         values: {
           uid: recipe.uid,
           name: recipe.name,

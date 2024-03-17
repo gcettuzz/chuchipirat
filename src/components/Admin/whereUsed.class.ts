@@ -38,10 +38,10 @@ export class WhereUsed {
     let unsubscribe: () => void;
     let documentId = "";
 
-    firebase.cloudFunction.objectTrace
+    firebase.cloudFunction.traceObject
       .triggerCloudFunction({
         values: {
-          uid: uid,
+          objectUid: uid,
           objectType: objectType,
         },
         authUser: authUser,
@@ -58,10 +58,15 @@ export class WhereUsed {
           }
         };
 
-        firebase.cloudFunction.objectTrace
+        const errorCallback = (error: Error) => {
+          throw error;
+        };
+
+        firebase.cloudFunction.traceObject
           .listen({
             uids: [documentId],
             callback: callbackCaller,
+            errorCallback: errorCallback,
           })
           .then((result) => {
             unsubscribe = result;

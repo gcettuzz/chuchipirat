@@ -43,11 +43,17 @@ import {
   Tab,
   Tabs,
   Dialog,
+  // DialogActions,
   DialogContent,
   DialogTitle,
+  // FormControl,
+  // FormControlLabel,
+  // FormGroup,
+  // FormLabel,
   Grid,
   IconButton,
   List,
+  // Switch,
   Typography,
   useTheme,
   LinearProgress,
@@ -69,24 +75,25 @@ import {
   GridValueFormatterParams,
   deDE,
 } from "@mui/x-data-grid";
-
+// import {Alert, AlertTitle} from "@material-ui/lab";
 import MailConsole, {
   MailLogEntry,
   MailLogOverviewStructure,
   MailProtocol,
 } from "./mailConsole.class";
+import CloudFx from "./cloudFx.class";
 import {ImageRepository} from "../../constants/imageRepository";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
 enum ReducerActions {
-  MAILS_FETCH_INIT,
-  MAILS_FETCH_SUCCESS,
-  MAIL_FETCH_INIT,
-  MAIL_FETCH_SUCCESS,
-  MAIL_DELETING_INIT,
-  MAIL_DELETING_SUCCESS,
+  CLOUD_FX_LOG_FETCH_INIT,
+  CLOUD_FX_LOG_FETCH_SUCCESS,
+  CLOUD_FX_FETCH_INIT,
+  CLOUD_FX_FETCH_SUCCESS,
+  CLOUD_FX_DELETING_INIT,
+  CLOUD_FX_DELETING_SUCCESS,
   SNACKBAR_SET,
   SNACKBAR_CLOSE,
   GENERIC_ERROR,
@@ -120,24 +127,24 @@ const inititialState: State = {
   snackbar: SNACKBAR_INITIAL_STATE_VALUES,
 };
 
-const mailboxReducer = (state: State, action: DispatchAction): State => {
+const cloudFxReducer = (state: State, action: DispatchAction): State => {
   // let tempUsers: State["users"] = [];
   // let index: number;
   switch (action.type) {
-    case ReducerActions.MAILS_FETCH_INIT:
+    case ReducerActions.CLOUD_FX_LOG_FETCH_INIT:
       return {
         ...state,
         isLoading: true,
       };
-    case ReducerActions.MAILS_FETCH_SUCCESS:
+    case ReducerActions.CLOUD_FX_LOG_FETCH_SUCCESS:
       return {
         ...state,
         isLoading: false,
         mailLog: action.payload.value as MailLogEntry[],
       };
-    case ReducerActions.MAIL_FETCH_INIT:
+    case ReducerActions.CLOUD_FX_FETCH_INIT:
       return {...state, isLoading: true};
-    case ReducerActions.MAIL_FETCH_SUCCESS:
+    case ReducerActions.CLOUD_FX_FETCH_SUCCESS:
       return {
         ...state,
         isLoading: false,
@@ -146,9 +153,9 @@ const mailboxReducer = (state: State, action: DispatchAction): State => {
           [action.payload.uid]: action.payload,
         },
       };
-    case ReducerActions.MAIL_DELETING_INIT:
+    case ReducerActions.CLOUD_FX_DELETING_INIT:
       return {...state, isDeleting: true};
-    case ReducerActions.MAIL_DELETING_SUCCESS:
+    case ReducerActions.CLOUD_FX_DELETING_SUCCESS:
       return {
         ...state,
         mailLog: action.payload.mailLog,
@@ -185,31 +192,31 @@ const mailboxReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const OverviewMailboxPage = (props) => {
+const OverviewCloudFxPage = (props) => {
   return (
     <AuthUserContext.Consumer>
-      {(authUser) => <OverviewMailboxBase {...props} authUser={authUser} />}
+      {(authUser) => <OverviewCloudFxBase {...props} authUser={authUser} />}
     </AuthUserContext.Consumer>
   );
 };
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-interface MailProtocolDialogValues {
+interface OverviewCloudFxBaseProps {
   selectedMailProtocoll: null | MailProtocol;
   open: boolean;
 }
-const OverviewMailboxBase: React.FC<
+const OverviewCloudFxBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
   const classes = useStyles();
   const theme = useTheme();
 
-  const [state, dispatch] = React.useReducer(mailboxReducer, inititialState);
+  const [state, dispatch] = React.useReducer(cloudFxReducer, inititialState);
   const [tabValue, setTabValue] = React.useState(TabValue.overview);
   const [dialogValues, setDialogValues] =
-    React.useState<MailProtocolDialogValues>({
+    React.useState<OverviewCloudFxBaseProps>({
       selectedMailProtocoll: null,
       open: false,
     });
@@ -218,14 +225,15 @@ const OverviewMailboxBase: React.FC<
 	// ------------------------------------------ */
   React.useEffect(() => {
     dispatch({
-      type: ReducerActions.MAILS_FETCH_INIT,
+      type: ReducerActions.CLOUD_FX_LOG_FETCH_INIT,
       payload: {},
     });
 
-    MailConsole.getMailboxOverview({firebase: firebase})
+    CloudFx.getCloudFxOverview({firebase: firebase})
       .then((result) => {
+        console.log(result);
         dispatch({
-          type: ReducerActions.MAILS_FETCH_SUCCESS,
+          type: ReducerActions.CLOUD_FX_LOG_FETCH_SUCCESS,
           payload: {value: result},
         });
       })
@@ -260,7 +268,7 @@ const OverviewMailboxBase: React.FC<
       !Object.prototype.hasOwnProperty.call(state.mailProtocols, maillogUid)
     ) {
       dispatch({
-        type: ReducerActions.MAIL_FETCH_INIT,
+        type: ReducerActions.CLOUD_FX_FETCH_INIT,
         payload: {},
       });
       await MailConsole.getSendProtocol({
@@ -268,7 +276,7 @@ const OverviewMailboxBase: React.FC<
         mailUid: maillogUid,
       }).then((result) => {
         dispatch({
-          type: ReducerActions.MAIL_FETCH_SUCCESS,
+          type: ReducerActions.CLOUD_FX_FETCH_SUCCESS,
           payload: result,
         });
         setDialogValues({selectedMailProtocoll: result, open: true});
@@ -291,7 +299,7 @@ const OverviewMailboxBase: React.FC<
   // Handling Mails löschen
   // ------------------------------------------ */
   const onDeleteMails = (days: number) => {
-    dispatch({type: ReducerActions.MAIL_DELETING_INIT, payload: {}});
+    dispatch({type: ReducerActions.CLOUD_FX_DELETING_INIT, payload: {}});
 
     MailConsole.deleteMailProtocols({
       firebase: firebase,
@@ -300,7 +308,7 @@ const OverviewMailboxBase: React.FC<
       mailLog: state.mailLog,
     }).then((result) => {
       dispatch({
-        type: ReducerActions.MAIL_DELETING_SUCCESS,
+        type: ReducerActions.CLOUD_FX_DELETING_SUCCESS,
         payload: {counter: result.counter, mailLog: result.mailLog},
       });
     });
@@ -348,10 +356,11 @@ const OverviewMailboxBase: React.FC<
           <Tab label={TEXT_DELETE} />
         </Tabs>
         {tabValue === TabValue.overview && (
-          <MaillogTable
-            dbMaillog={state.mailLog}
-            onMailLogSelect={onOpenDialog}
-          />
+          <div>dk</div>
+          // <MaillogTable
+          //   dbMaillog={state.mailLog}
+          //   onMailLogSelect={onOpenDialog}
+          // />
         )}
         {tabValue === TabValue.delete && (
           <DeleteMailsPanel
@@ -737,4 +746,4 @@ export default compose(
   withEmailVerification,
   withAuthorization(condition),
   withFirebase
-)(OverviewMailboxPage);
+)(OverviewCloudFxPage);
