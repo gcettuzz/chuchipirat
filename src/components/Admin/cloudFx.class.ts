@@ -16,6 +16,7 @@ export interface CloudFxLogEntry {
     lastName: User["lastName"];
     uid: User["uid"];
   };
+  processedDocuments: number;
 }
 
 interface GetCloudFxOverview {

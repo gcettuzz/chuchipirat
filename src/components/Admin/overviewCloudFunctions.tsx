@@ -20,6 +20,7 @@ import {
   OPEN as TEXT_OPEN,
   INVOKED as TEXT_INVOKED,
   CLOUD_FX_TRIGGER_DOCS_DELETED as TEXT_CLOUD_FX_TRIGGER_DOCS_DELETED,
+  PROCESSED_DOCUMENTS as TEXT_PROCESSED_DOCUMENTS,
 } from "../../constants/text";
 
 import {OpenInNew as OpenInNewIcon} from "@material-ui/icons";
@@ -103,6 +104,7 @@ interface CloudFxLogOverviewStructure {
   cloudFunctionType: CloudFunctionType;
   date: Date;
   displayName: UserPublicProfile["displayName"];
+  processedDocuments: number;
   email: User["email"];
   firstName: User["firstName"];
   lastName: User["lastName"];
@@ -491,6 +493,12 @@ const CloudFxTable = ({dbClodFxLog, onCloudFxLogSelect}: CloudFxTableProps) => {
       },
     },
     {
+      field: "processedDocuments",
+      headerName: TEXT_PROCESSED_DOCUMENTS,
+      editable: false,
+      width: 150,
+    },
+    {
       field: "displayName",
       headerName: `${TEXT_INVOKED}: ${TEXT_NAME}`,
       editable: false,
@@ -581,6 +589,7 @@ const CloudFxTable = ({dbClodFxLog, onCloudFxLogSelect}: CloudFxTableProps) => {
         firstName: logEntry.invokedBy.firstName,
         lastName: logEntry.invokedBy.lastName,
         userUid: logEntry.invokedBy.uid,
+        processedDocuments: logEntry.processedDocuments,
       })
     );
     console.log(cloudFxLogUiStructure);

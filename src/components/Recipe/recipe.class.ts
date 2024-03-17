@@ -690,7 +690,7 @@ export default class Recipe {
           authUser: authUser,
         })
         .then((result) => {
-          recipe = result;
+          recipe = result.value;
         })
         .catch((error) => {
           console.error(error);
@@ -815,7 +815,7 @@ export default class Recipe {
           authUser: authUser,
         })
         .then((result) => {
-          recipe = result;
+          recipe = result.value;
         })
         .catch((error) => {
           console.error(error);

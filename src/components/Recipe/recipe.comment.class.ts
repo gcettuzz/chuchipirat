@@ -1,9 +1,9 @@
-import { UserShort } from "../User/user.class";
+import {UserShort} from "../User/user.class";
 import Firebase from "../Firebase/firebase.class";
-import { SortOrder } from "../Firebase/Db/firebase.db.super.class";
+import {SortOrder} from "../Firebase/Db/firebase.db.super.class";
 
 import * as DEFAULT_VALUES from "../../constants/defaultValues";
-import { AuthUser } from "../Firebase/Authentication/authUser.class";
+import {AuthUser} from "../Firebase/Authentication/authUser.class";
 
 interface GetComments {
   firebase: Firebase;
@@ -31,7 +31,7 @@ export class RecipeComment {
   comment: string;
   constructor() {
     this.uid = "";
-    this.user = { userUid: "", displayName: "", pictureSrc: "", motto: "" };
+    this.user = {userUid: "", displayName: "", pictureSrc: "", motto: ""};
     this.createdAt = new Date(0);
     this.comment = "";
   }
@@ -40,13 +40,13 @@ export class RecipeComment {
    * Kommentare holen
    * @param param0 - Objekt mit Firebase-Referenz und Rezept-UID
    */
-  static async getComments({ firebase, recipeUid, lastComment }: GetComments) {
+  static async getComments({firebase, recipeUid, lastComment}: GetComments) {
     let comments: RecipeComment[] = [];
 
     await firebase.recipePublic.comment
       .readCollection<RecipeComment>({
         uids: [recipeUid],
-        orderBy: { field: "createdAt", sortOrder: SortOrder.desc },
+        orderBy: {field: "createdAt", sortOrder: SortOrder.desc},
         limit: DEFAULT_VALUES.COMMENT_DISPLAY,
         startAfter: lastComment?.createdAt,
       })
@@ -65,7 +65,8 @@ export class RecipeComment {
    * @param param0 Objekt mit Firebase-Referenz, Rezept-UID, den neuen
    *        Kommentar und dem authUser
    */
-  static async save({ firebase, recipeUid, comment, authUser }: Save) {
+  static async save({firebase, recipeUid, comment, authUser}: Save) {
+    console.info(recipeUid);
     // Umbiegen auf Objekt
     let newComment: RecipeComment = {
       uid: "",
@@ -85,7 +86,7 @@ export class RecipeComment {
         authUser: authUser,
       })
       .then((result) => {
-        newComment = result;
+        newComment = result.value;
       })
       .catch((error) => {
         console.error(error);

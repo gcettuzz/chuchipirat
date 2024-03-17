@@ -329,11 +329,15 @@ export default class Product {
             unsubscribe();
           }
         };
+        const errorCallback = (error: Error) => {
+          throw error;
+        };
 
         firebase.cloudFunction.mergeProducts
           .listen({
             uids: [documentId],
             callback: callback,
+            errorCallback: errorCallback,
           })
           .then((result) => {
             unsubscribe = result;

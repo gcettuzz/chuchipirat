@@ -450,7 +450,7 @@ export default class Event {
       await firebase.event
         .create<Event>({value: eventData, authUser: authUser})
         .then(async (result) => {
-          eventData = result;
+          eventData = result.value;
 
           // Bild hochladen, wenn vorhanden
           if (localPicture instanceof File) {

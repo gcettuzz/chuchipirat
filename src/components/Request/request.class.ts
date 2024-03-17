@@ -207,7 +207,7 @@ export abstract class Request {
         await firebase.request.active
           .create<Request>({value: this, uids: [], authUser: authUser})
           .then((result) => {
-            this.uid = result.uid;
+            this.uid = result.documentUid;
           })
           .catch((error) => {
             throw error;

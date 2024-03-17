@@ -194,11 +194,15 @@ export default class Material {
             unsubscribe();
           }
         };
+        const errorCallback = (error: Error) => {
+          throw error;
+        };
 
         firebase.cloudFunction.convertProductToMaterial
           .listen({
             uids: [documentId],
             callback: callback,
+            errorCallback: errorCallback,
           })
           .then((result) => {
             unsubscribe = result;

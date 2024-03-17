@@ -1235,6 +1235,7 @@ export const CLOUD_FX_TRIGGER_DOCS = "Cloud-FX Triggerdokumente";
 export const CLOUD_FX_TRIGGER_DOCS_DELETED = "Mailprotokolle gelöscht";
 export const DATE = "Datum";
 export const INVOKED = "Ausgeführt";
+export const PROCESSED_DOCUMENTS = "Verarbeitete Dokumente";
 /* =====================================================================
 // Abkürzungen
 // ===================================================================== */
