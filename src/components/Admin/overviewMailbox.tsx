@@ -250,7 +250,6 @@ const OverviewMailboxBase: React.FC<
   // User-Profil-PopUp-Handling
   // ------------------------------------------ */
   const onOpenDialog = async (maillogUid: MailLogEntry["uid"]) => {
-    console.log(maillogUid);
     if (!maillogUid) {
       return;
     }
@@ -317,7 +316,6 @@ const OverviewMailboxBase: React.FC<
       payload: {},
     });
   };
-  console.log(state);
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}
@@ -354,10 +352,16 @@ const OverviewMailboxBase: React.FC<
           />
         )}
         {tabValue === TabValue.delete && (
-          <DeleteMailsPanel
-            onDelete={onDeleteMails}
-            isDeleting={state.isDeleting}
-          />
+          <Container
+            className={classes.container}
+            component="main"
+            maxWidth="sm"
+          >
+            <DeleteMailsPanel
+              onDelete={onDeleteMails}
+              isDeleting={state.isDeleting}
+            />
+          </Container>
         )}
       </Container>
       <CustomSnackbar
@@ -588,7 +592,6 @@ const DialogMailProtocol = ({
 }: DialogMailProtocolProps) => {
   const classes = useStyles();
   const theme = useTheme();
-  console.log(mailProtocol);
   return (
     <Dialog
       open={dialogOpen}

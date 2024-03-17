@@ -2,26 +2,24 @@ import React from "react";
 import {compose} from "react-recompose";
 
 import {
-  MAILBOX as TEXT_MAILBOX,
   MONITOR as TEXT_MONITOR,
   OVERVIEW as TEXT_OVERVIEW,
   DELETE as TEXT_DELETE,
   ALERT_TITLE_UUPS as TEXT_ALERT_TITLE_UUPS,
   UID as TEXT_UID,
-  RECIPIENTS as TEXT_RECIPIENTS,
-  NO_RECIPIENTS as TEXT_NO_RECIPIENTS,
-  MAIL_TEMPLATE as TEXT_MAIL_TEMPLATE,
-  TIMESTAMP as TEXT_TIMESTAMP,
-  MAILS as TEXT_MAILS,
-  RECIPIENT_TO as TEXT_RECIPIENT_TO,
-  RECIPIENT_BCC as TEXT_RECIPIENT_BBC,
-  MAIL_DATA as TEXT_MAIL_DATA,
-  DELETE_MAIL_PROTOCOLS as TEXT_DELETE_MAIL_PROTOCOLS,
-  DELETE_MAIL_PROTOCOLS_OLDER_THAN as TEXT_DELETE_MAIL_PROTOCOLS_OLDER_THAN,
-  MAIL_PROTOCOLS as TEXT_MAIL_PROTOCOLS,
+  NAME as TEXT_NAME,
+  FIRSTNAME as TEXT_FIRSTNAME,
+  LASTNAME as TEXT_LASTNAME,
+  EMAIL as TEXT_EMAIL,
+  DATE as TEXT_DATE,
+  CLOUD_FX as TEXT_CLOUD_FX,
+  DELETE_CLOUD_FX_TRIGGER_DOCS as TEXT_DELETE_CLOUD_FX_TRIGGER_DOCS,
+  DELETE_CLOUD_FX_TRIGGER_DOCS_OLDER_THAN as TEXT_DELETE_CLOUD_FX_TRIGGER_DOCS_OLDER_THAN,
+  CLOUD_FX_TRIGGER_DOCS as TEXT_CLOUD_FX_TRIGGER_DOCS,
   FROM as TEXT_FROM,
   OPEN as TEXT_OPEN,
-  MAIL_PROTOCOLS_DELETED as TEXT_MAIL_PROTOCOLS_DELETED,
+  INVOKED as TEXT_INVOKED,
+  CLOUD_FX_TRIGGER_DOCS_DELETED as TEXT_CLOUD_FX_TRIGGER_DOCS_DELETED,
 } from "../../constants/text";
 
 import {OpenInNew as OpenInNewIcon} from "@material-ui/icons";
@@ -75,14 +73,10 @@ import {
   GridValueFormatterParams,
   deDE,
 } from "@mui/x-data-grid";
-// import {Alert, AlertTitle} from "@material-ui/lab";
-import MailConsole, {
-  MailLogEntry,
-  MailLogOverviewStructure,
-  MailProtocol,
-} from "./mailConsole.class";
-import CloudFx from "./cloudFx.class";
-import {ImageRepository} from "../../constants/imageRepository";
+import CloudFx, {CloudFxLogEntry} from "./cloudFx.class";
+import {CloudFunctionType} from "../Firebase/Db/firebase.db.cloudfunction.super.class";
+import UserPublicProfile from "../User/user.public.profile.class";
+import User from "../User/user.class";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -104,14 +98,25 @@ enum TabValue {
   delete,
 }
 
+interface CloudFxLogOverviewStructure {
+  uid: CloudFx["uid"];
+  cloudFunctionType: CloudFunctionType;
+  date: Date;
+  displayName: UserPublicProfile["displayName"];
+  email: User["email"];
+  firstName: User["firstName"];
+  lastName: User["lastName"];
+  userUid: User["uid"];
+}
+
 type DispatchAction = {
   type: ReducerActions;
   payload: {[key: string]: any};
 };
 
 type State = {
-  mailLog: MailLogEntry[];
-  mailProtocols: {[key: MailProtocol["uid"]]: MailProtocol};
+  cloudFxLog: CloudFxLogEntry[];
+  cloudFxTriggerDocument: {[key: CloudFx["uid"]]: CloudFx};
   error: Error | null;
   isLoading: boolean;
   isDeleting: boolean;
@@ -119,8 +124,8 @@ type State = {
 };
 
 const inititialState: State = {
-  mailLog: [],
-  mailProtocols: {},
+  cloudFxLog: [],
+  cloudFxTriggerDocument: {},
   error: null,
   isLoading: false,
   isDeleting: false,
@@ -128,8 +133,6 @@ const inititialState: State = {
 };
 
 const cloudFxReducer = (state: State, action: DispatchAction): State => {
-  // let tempUsers: State["users"] = [];
-  // let index: number;
   switch (action.type) {
     case ReducerActions.CLOUD_FX_LOG_FETCH_INIT:
       return {
@@ -140,7 +143,7 @@ const cloudFxReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoading: false,
-        mailLog: action.payload.value as MailLogEntry[],
+        cloudFxLog: action.payload.value as CloudFxLogEntry[],
       };
     case ReducerActions.CLOUD_FX_FETCH_INIT:
       return {...state, isLoading: true};
@@ -148,8 +151,8 @@ const cloudFxReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoading: false,
-        mailProtocols: {
-          ...state.mailProtocols,
+        cloudFxTriggerDocument: {
+          ...state.cloudFxTriggerDocument,
           [action.payload.uid]: action.payload,
         },
       };
@@ -158,11 +161,11 @@ const cloudFxReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.CLOUD_FX_DELETING_SUCCESS:
       return {
         ...state,
-        mailLog: action.payload.mailLog,
+        cloudFxLog: action.payload.cloudFxLog,
         isDeleting: false,
         snackbar: {
           severity: "success",
-          message: `${action.payload.counter} ${TEXT_MAIL_PROTOCOLS_DELETED}`,
+          message: `${action.payload.counter} ${TEXT_CLOUD_FX_TRIGGER_DOCS_DELETED}`,
           open: true,
         },
       };
@@ -203,7 +206,8 @@ const OverviewCloudFxPage = (props) => {
 // =============================== Base ==============================
 // =================================================================== */
 interface OverviewCloudFxBaseProps {
-  selectedMailProtocoll: null | MailProtocol;
+  selectedCloudFxTriggerDoc: null | CloudFx;
+  logEntry: CloudFxLogEntry | null;
   open: boolean;
 }
 const OverviewCloudFxBase: React.FC<
@@ -217,7 +221,8 @@ const OverviewCloudFxBase: React.FC<
   const [tabValue, setTabValue] = React.useState(TabValue.overview);
   const [dialogValues, setDialogValues] =
     React.useState<OverviewCloudFxBaseProps>({
-      selectedMailProtocoll: null,
+      selectedCloudFxTriggerDoc: null,
+      logEntry: null,
       open: false,
     });
   /* ------------------------------------------
@@ -229,7 +234,7 @@ const OverviewCloudFxBase: React.FC<
       payload: {},
     });
 
-    CloudFx.getCloudFxOverview({firebase: firebase})
+    CloudFx.getCloudFxLog({firebase: firebase})
       .then((result) => {
         console.log(result);
         dispatch({
@@ -257,59 +262,79 @@ const OverviewCloudFxBase: React.FC<
   /* ------------------------------------------
   // User-Profil-PopUp-Handling
   // ------------------------------------------ */
-  const onOpenDialog = async (maillogUid: MailLogEntry["uid"]) => {
-    console.log(maillogUid);
-    if (!maillogUid) {
+  const onOpenDialog = async (cloudFxLogUid: CloudFxLogEntry["uid"]) => {
+    console.log(cloudFxLogUid);
+    if (!cloudFxLogUid) {
+      return;
+    }
+    const logEntry = state.cloudFxLog.find(
+      (logEntry) => logEntry.uid === cloudFxLogUid
+    );
+
+    if (!logEntry) {
       return;
     }
 
-    // Prüfen ob wir dieses Mail bereits gelesen haben.
+    //   // Prüfen ob wir dieses Dokument bereits gelesen haben.
     if (
-      !Object.prototype.hasOwnProperty.call(state.mailProtocols, maillogUid)
+      !Object.prototype.hasOwnProperty.call(
+        state.cloudFxTriggerDocument,
+        cloudFxLogUid
+      )
     ) {
       dispatch({
         type: ReducerActions.CLOUD_FX_FETCH_INIT,
         payload: {},
       });
-      await MailConsole.getSendProtocol({
+      await CloudFx.getCloudFunctionTriggerFile({
         firebase: firebase,
-        mailUid: maillogUid,
+        cloudFunctionType: logEntry.cloudFunctionType,
+        triggerFileUid: cloudFxLogUid,
       }).then((result) => {
         dispatch({
           type: ReducerActions.CLOUD_FX_FETCH_SUCCESS,
           payload: result,
         });
-        setDialogValues({selectedMailProtocoll: result, open: true});
+        setDialogValues({
+          selectedCloudFxTriggerDoc: result,
+          logEntry: logEntry,
+          open: true,
+        });
       });
     } else {
       setDialogValues({
-        selectedMailProtocoll: state.mailProtocols[maillogUid],
+        selectedCloudFxTriggerDoc: state.cloudFxTriggerDocument[cloudFxLogUid],
+        logEntry: logEntry,
         open: true,
       });
     }
   };
   const onDialogClose = () => {
-    setDialogValues({open: false, selectedMailProtocoll: null});
+    setDialogValues({
+      open: false,
+      selectedCloudFxTriggerDoc: null,
+      logEntry: null,
+    });
   };
 
   if (!authUser) {
     return null;
   }
   /* ------------------------------------------
-  // Handling Mails löschen
+  // Handling Dokumente löschen
   // ------------------------------------------ */
-  const onDeleteMails = (days: number) => {
+  const onDeleteCloudFxTriggerDocuments = (days: number) => {
     dispatch({type: ReducerActions.CLOUD_FX_DELETING_INIT, payload: {}});
 
-    MailConsole.deleteMailProtocols({
+    CloudFx.deleteCloudFxTriggerDocuments({
       firebase: firebase,
       authUser: authUser,
       dayOffset: days,
-      mailLog: state.mailLog,
+      cloudFxLog: state.cloudFxLog,
     }).then((result) => {
       dispatch({
         type: ReducerActions.CLOUD_FX_DELETING_SUCCESS,
-        payload: {counter: result.counter, mailLog: result.mailLog},
+        payload: {counter: result.counter, cloudFxLog: result.cloudFxLog},
       });
     });
   };
@@ -329,7 +354,7 @@ const OverviewCloudFxBase: React.FC<
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}
-      <PageTitle title={`${TEXT_MAILBOX} ${TEXT_MONITOR}`} />
+      <PageTitle title={`${TEXT_CLOUD_FX} ${TEXT_MONITOR}`} />
 
       {/* ===== BODY ===== */}
       <Container className={classes.container} component="main" maxWidth="xl">
@@ -356,17 +381,22 @@ const OverviewCloudFxBase: React.FC<
           <Tab label={TEXT_DELETE} />
         </Tabs>
         {tabValue === TabValue.overview && (
-          <div>dk</div>
-          // <MaillogTable
-          //   dbMaillog={state.mailLog}
-          //   onMailLogSelect={onOpenDialog}
-          // />
+          <CloudFxTable
+            dbClodFxLog={state.cloudFxLog}
+            onCloudFxLogSelect={onOpenDialog}
+          />
         )}
         {tabValue === TabValue.delete && (
-          <DeleteMailsPanel
-            onDelete={onDeleteMails}
-            isDeleting={state.isDeleting}
-          />
+          <Container
+            className={classes.container}
+            component="main"
+            maxWidth="sm"
+          >
+            <DeleteDocumentTriggerDocumentsPanel
+              onDelete={onDeleteCloudFxTriggerDocuments}
+              isDeleting={state.isDeleting}
+            />
+          </Container>
         )}
       </Container>
       <CustomSnackbar
@@ -375,30 +405,33 @@ const OverviewCloudFxBase: React.FC<
         snackbarOpen={state.snackbar.open}
         handleClose={handleSnackbarClose}
       />
-      {dialogValues.selectedMailProtocoll !== null && (
-        <DialogMailProtocol
+      {dialogValues.selectedCloudFxTriggerDoc !== null && (
+        <DialogCloudFxTriggerDocument
           dialogOpen={dialogValues.open}
           handleClose={onDialogClose}
-          mailProtocol={dialogValues.selectedMailProtocoll}
+          logEntry={dialogValues.logEntry!}
+          cloudFxTrigger={dialogValues.selectedCloudFxTriggerDoc}
         />
       )}
     </React.Fragment>
   );
 };
 /* ===================================================================
-// ========================== Mail-Log Panel =========================
+// ========================= Clod-FX-Log Panel =======================
 // =================================================================== */
-interface MaillogTableProps {
-  dbMaillog: MailLogEntry[];
-  onMailLogSelect: (mailUid: MailLogEntry["uid"]) => void;
+interface CloudFxTableProps {
+  dbClodFxLog: CloudFxLogEntry[];
+  onCloudFxLogSelect: (cloudFxLogUid: CloudFxLogEntry["uid"]) => void;
 }
 
-const MaillogTable = ({dbMaillog, onMailLogSelect}: MaillogTableProps) => {
+const CloudFxTable = ({dbClodFxLog, onCloudFxLogSelect}: CloudFxTableProps) => {
   const [searchString, setSearchString] = React.useState("");
-  const [maillog, setMaillog] = React.useState<MailLogOverviewStructure[]>([]);
+  const [cloudFxLog, setCloudFxLog] = React.useState<
+    CloudFxLogOverviewStructure[]
+  >([]);
 
-  const [filteredMaillogUi, setFilteredMaillogUi] = React.useState<
-    MailLogOverviewStructure[]
+  const [filteredCloudFxlogUi, setFilteredCloudFxlogUi] = React.useState<
+    CloudFxLogOverviewStructure[]
   >([]);
   const classes = useStyles();
   const theme = useTheme();
@@ -410,7 +443,7 @@ const MaillogTable = ({dbMaillog, onMailLogSelect}: MaillogTableProps) => {
       sortable: false,
       renderCell: (params) => {
         const onClick = () => {
-          onMailLogSelect(params.id as string);
+          onCloudFxLogSelect(params.id as string);
         };
 
         return (
@@ -433,26 +466,14 @@ const MaillogTable = ({dbMaillog, onMailLogSelect}: MaillogTableProps) => {
       cellClassName: () => `super-app ${classes.typographyCode}`,
     },
     {
-      field: "recipients",
-      headerName: TEXT_RECIPIENTS,
+      field: "cloudFunctionType",
+      headerName: TEXT_CLOUD_FX,
       editable: false,
       width: 250,
     },
     {
-      field: "noRecipients",
-      headerName: TEXT_NO_RECIPIENTS,
-      editable: false,
-      width: 150,
-    },
-    {
-      field: "templateName",
-      headerName: TEXT_MAIL_TEMPLATE,
-      editable: false,
-      width: 250,
-    },
-    {
-      field: "timestamp",
-      headerName: TEXT_TIMESTAMP,
+      field: "date",
+      headerName: TEXT_DATE,
       editable: false,
       width: 200,
       valueFormatter: (params: GridValueFormatterParams) => {
@@ -469,6 +490,41 @@ const MaillogTable = ({dbMaillog, onMailLogSelect}: MaillogTableProps) => {
         }
       },
     },
+    {
+      field: "displayName",
+      headerName: `${TEXT_INVOKED}: ${TEXT_NAME}`,
+      editable: false,
+      width: 250,
+    },
+    {
+      field: "firstName",
+      headerName: `${TEXT_INVOKED}: ${TEXT_FIRSTNAME}`,
+      editable: false,
+      hide: true,
+      width: 250,
+    },
+    {
+      field: "lastName",
+      headerName: `${TEXT_INVOKED}: ${TEXT_LASTNAME}`,
+      editable: false,
+      hide: true,
+      width: 250,
+    },
+    {
+      field: "email",
+      headerName: `${TEXT_INVOKED}: ${TEXT_EMAIL}`,
+      editable: false,
+      hide: true,
+      width: 250,
+    },
+    {
+      field: "userUid",
+      headerName: `${TEXT_INVOKED}: ${TEXT_UID}`,
+      editable: false,
+      hide: true,
+      width: 275,
+      cellClassName: () => `super-app ${classes.typographyCode}`,
+    },
   ];
 
   /* ------------------------------------------
@@ -476,59 +532,69 @@ const MaillogTable = ({dbMaillog, onMailLogSelect}: MaillogTableProps) => {
   // ------------------------------------------ */
   const clearSearchString = () => {
     setSearchString("");
-    setFilteredMaillogUi(filterMaillog(maillog, ""));
+    setFilteredCloudFxlogUi(filterCloudFxLog(cloudFxLog, ""));
   };
   const updateSearchString = (
     event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
   ) => {
     setSearchString(event.target.value);
-    setFilteredMaillogUi(filterMaillog(maillog, event.target.value as string));
+    setFilteredCloudFxlogUi(
+      filterCloudFxLog(cloudFxLog, event.target.value as string)
+    );
   };
   /* ------------------------------------------
   // Filter-Logik
   // ------------------------------------------ */
-  const filterMaillog = (
-    maillog: MailLogOverviewStructure[],
+  const filterCloudFxLog = (
+    cloudFxLog: CloudFxLogOverviewStructure[],
     searchString: string
   ) => {
-    let filteredMaillog: MailLogOverviewStructure[] = [];
+    let filteredCloudFxLog: CloudFxLogOverviewStructure[] = [];
     if (searchString) {
       searchString = searchString.toLowerCase();
-      filteredMaillog = maillog.filter(
-        (mail) =>
-          mail.uid!.toLocaleLowerCase().includes(searchString) ||
-          mail.recipients.toLowerCase().includes(searchString) ||
-          mail.templateName.toLowerCase().includes(searchString)
+      filteredCloudFxLog = cloudFxLog.filter(
+        (logEntry) =>
+          logEntry.uid!.toLocaleLowerCase().includes(searchString) ||
+          logEntry.cloudFunctionType.toLowerCase().includes(searchString) ||
+          logEntry.displayName.toLowerCase().includes(searchString)
       );
     } else {
-      filteredMaillog = maillog;
+      filteredCloudFxLog = cloudFxLog;
     }
-    return filteredMaillog;
+    return filteredCloudFxLog;
   };
   /* ------------------------------------------
   // Initiale Werte
   // ------------------------------------------ */
-  if (dbMaillog.length > 0 && maillog.length === 0) {
+  if (dbClodFxLog.length > 0 && cloudFxLog.length === 0) {
     // Deep-Copy, damit der Cancel-Befehl wieder die DB-Daten zeigt,
     // werden die Daten hier für die Tabelle geklont.
-    const maillogUiStructure: MailLogOverviewStructure[] = [];
+    const cloudFxLogUiStructure: CloudFxLogOverviewStructure[] = [];
 
-    dbMaillog.forEach((mail) =>
-      maillogUiStructure.push({
-        uid: mail.uid,
-        recipients: mail.recipients.join("; "),
-        noRecipients: mail.noRecipients,
-        templateName: mail.template.name,
-        timestamp: mail.timestamp,
+    dbClodFxLog.forEach((logEntry) =>
+      cloudFxLogUiStructure.push({
+        cloudFunctionType: logEntry.cloudFunctionType,
+        uid: logEntry.uid,
+        date: logEntry.date,
+        displayName: logEntry.invokedBy.displayName,
+        email: logEntry.invokedBy.email,
+        firstName: logEntry.invokedBy.firstName,
+        lastName: logEntry.invokedBy.lastName,
+        userUid: logEntry.invokedBy.uid,
       })
     );
-
-    setMaillog(maillogUiStructure);
+    console.log(cloudFxLogUiStructure);
+    console.log(dbClodFxLog);
+    setCloudFxLog(cloudFxLogUiStructure);
   }
 
-  if (!searchString && maillog.length > 0 && filteredMaillogUi.length === 0) {
+  if (
+    !searchString &&
+    cloudFxLog.length > 0 &&
+    filteredCloudFxlogUi.length === 0
+  ) {
     // Initialer Aufbau
-    setFilteredMaillogUi(filterMaillog(maillog, ""));
+    setFilteredCloudFxlogUi(filterCloudFxLog(cloudFxLog, ""));
   }
 
   return (
@@ -549,11 +615,11 @@ const MaillogTable = ({dbMaillog, onMailLogSelect}: MaillogTableProps) => {
               variant="body2"
               style={{marginTop: "0.5em", marginBottom: "2em"}}
             >
-              {filteredMaillogUi.length == maillog.length
-                ? `${maillog.length} ${TEXT_MAILS}`
-                : `${filteredMaillogUi.length} ${TEXT_FROM.toLowerCase()} ${
-                    maillog.length
-                  } ${TEXT_MAILS}`}
+              {filteredCloudFxlogUi.length == cloudFxLog.length
+                ? `${cloudFxLog.length} ${TEXT_CLOUD_FX_TRIGGER_DOCS}`
+                : `${filteredCloudFxlogUi.length} ${TEXT_FROM.toLowerCase()} ${
+                    cloudFxLog.length
+                  } ${TEXT_CLOUD_FX_TRIGGER_DOCS}`}
             </Typography>
           </Grid>
           <Grid item xs={12}>
@@ -561,7 +627,7 @@ const MaillogTable = ({dbMaillog, onMailLogSelect}: MaillogTableProps) => {
               <div style={{flexGrow: 1}}>
                 <DataGrid
                   autoHeight
-                  rows={filteredMaillogUi}
+                  rows={filteredCloudFxlogUi}
                   columns={DATA_GRID_COLUMNS}
                   getRowId={(row) => row.uid}
                   localeText={deDE.props.MuiDataGrid.localeText}
@@ -585,108 +651,117 @@ const MaillogTable = ({dbMaillog, onMailLogSelect}: MaillogTableProps) => {
 /* ===================================================================
 // ========================= Dialog-Protokoll ========================
 // =================================================================== */
-interface DialogMailProtocolProps {
+interface DialogCloudFxTriggerDocumentProps {
   dialogOpen: boolean;
-  mailProtocol: MailProtocol;
+  logEntry: CloudFxLogEntry;
+  cloudFxTrigger: CloudFx;
   handleClose: () => void;
 }
-const DialogMailProtocol = ({
+const DialogCloudFxTriggerDocument = ({
   dialogOpen,
-  mailProtocol,
+  cloudFxTrigger,
+  logEntry,
   handleClose,
-}: DialogMailProtocolProps) => {
-  const classes = useStyles();
+}: DialogCloudFxTriggerDocumentProps) => {
   const theme = useTheme();
-  console.log(mailProtocol);
+  const classes = useStyles();
+
   return (
     <Dialog
       open={dialogOpen}
       onClose={handleClose}
-      aria-labelledby="dialog mailprotocol"
+      aria-labelledby="dialog cloudFxTrigger"
       fullWidth={true}
       maxWidth="sm"
     >
-      <DialogTitle
-        className={classes.dialogHeaderWithPicture}
-        style={{
-          backgroundImage: `url(${
-            mailProtocol.template.data?.headerPictureSrc
-              ? mailProtocol.template.data?.headerPictureSrc
-              : ImageRepository.getEnviromentRelatedPicture()
-                  .CARD_PLACEHOLDER_MEDIA
-          })`,
-          backgroundPosition: "center",
-          backgroundSize: "cover",
-          backgroundRepeat: "no-repeat",
-        }}
-        disableTypography
-      >
-        <Typography
-          variant="h4"
-          component="h1"
-          className={classes.dialogHeaderWithPictureTitle}
-          style={{paddingLeft: "2ex"}}
+      {cloudFxTrigger?.["templateData"]?.["headerPictureSrc"] ? (
+        <DialogTitle
+          className={classes.dialogHeaderWithPicture}
+          style={{
+            backgroundImage: `url(${cloudFxTrigger?.["templateData"]?.["headerPictureSrc"]})`,
+            backgroundPosition: "center",
+            backgroundSize: "cover",
+            backgroundRepeat: "no-repeat",
+          }}
+          disableTypography
         >
-          {mailProtocol.template.name}
-        </Typography>
-      </DialogTitle>
+          {logEntry.cloudFunctionType}
+        </DialogTitle>
+      ) : (
+        <DialogTitle>{logEntry.cloudFunctionType}</DialogTitle>
+      )}
       <DialogContent style={{overflow: "unset"}}>
-        <Typography>{TEXT_RECIPIENTS}</Typography>
         <List dense style={{marginBottom: theme.spacing(2)}}>
-          {typeof mailProtocol.to === "string" ? (
-            <FormListItem
-              key={`recipient_to}`}
-              id={"recipient_to"}
-              value={mailProtocol.to}
-              label={TEXT_RECIPIENT_TO}
-            />
-          ) : Array.isArray(mailProtocol.to) ? (
-            mailProtocol.to.map((recipient) => (
-              <FormListItem
-                key={`recipient_to_${recipient}`}
-                id={`recipient_to_${recipient}`}
-                value={recipient}
-                label={TEXT_RECIPIENT_TO}
-              />
-            ))
-          ) : null}
-          {typeof mailProtocol.bcc === "string" ? (
-            <FormListItem
-              key={`recipient_bbc}`}
-              id={"recipient_bbc"}
-              value={mailProtocol.bcc}
-              label={TEXT_RECIPIENT_BBC}
-            />
-          ) : Array.isArray(mailProtocol.bcc) ? (
-            mailProtocol.bcc.map((recipient) => (
-              <FormListItem
-                key={`recipient_to_${recipient}`}
-                id={`recipient_to_${recipient}`}
-                value={recipient}
-                label={TEXT_RECIPIENT_BBC}
-              />
-            ))
-          ) : null}
+          {Object.entries(cloudFxTrigger).map(([key, value]) => {
+            console.log(typeof key, key);
+            switch (typeof value) {
+              case "string":
+              case "number":
+              case "boolean":
+                return (
+                  <FormListItem
+                    key={key}
+                    id={key}
+                    value={value.toString()}
+                    label={key}
+                    displayAsCode={key.toLocaleLowerCase().includes("uid")}
+                  />
+                );
+            }
+          })}
         </List>
-        <Typography>{TEXT_MAIL_DATA}</Typography>
-        <List dense style={{marginBottom: theme.spacing(2)}}>
-          {Object.entries(mailProtocol.template.data).map(([key, value]) => (
-            <FormListItem key={key} id={key} value={value} label={key} />
-          ))}
-        </List>
+        {Object.entries(cloudFxTrigger).map(([key, value]) => {
+          if (Array.isArray(value)) {
+            return (
+              <React.Fragment key={`fragment_${key}`}>
+                <Typography>{key}</Typography>
+                <List dense style={{marginBottom: theme.spacing(2)}}>
+                  {value.map((value, counter) => (
+                    <FormListItem
+                      key={`${key}_${counter}`}
+                      id={`${key}_${counter}`}
+                      value={value.toString()}
+                      label={key}
+                    />
+                  ))}
+                </List>
+              </React.Fragment>
+            );
+          } else if (typeof value === "object") {
+            return (
+              <React.Fragment key={`fragment_${key}`}>
+                <Typography>{key}</Typography>
+                <List dense style={{marginBottom: theme.spacing(2)}}>
+                  {Object.entries(value).map(([key, value]) => (
+                    <FormListItem
+                      key={key}
+                      id={key}
+                      value={value.toString()}
+                      label={key}
+                      displayAsCode={key.toLocaleLowerCase().includes("uid")}
+                    />
+                  ))}
+                </List>
+              </React.Fragment>
+            );
+          }
+        })}
       </DialogContent>
     </Dialog>
   );
 };
 
 /* ===================================================================
-// =========================== Mails löschen =========================
+// ================= Cloud-Fx-Trigger-Dokumente löschen ==============
 // =================================================================== */
-interface DeleteMailsPanelProps {
+interface DeleteDocumentTriggerDocumentsPanelProps {
   isDeleting: boolean;
   onDelete: (days: number) => void;
 }
-const DeleteMailsPanel = ({isDeleting, onDelete}: DeleteMailsPanelProps) => {
+const DeleteDocumentTriggerDocumentsPanel = ({
+  isDeleting,
+  onDelete,
+}: DeleteDocumentTriggerDocumentsPanelProps) => {
   const classes = useStyles();
   const theme = useTheme();
 
@@ -700,7 +775,7 @@ const DeleteMailsPanel = ({isDeleting, onDelete}: DeleteMailsPanelProps) => {
     <Card className={classes.card} key={"cardInfo"}>
       <CardContent className={classes.cardContent} key={"cardContentInfo"}>
         <Typography gutterBottom={true} variant="h5" component="h2">
-          {TEXT_DELETE_MAIL_PROTOCOLS}
+          {TEXT_DELETE_CLOUD_FX_TRIGGER_DOCS}
         </Typography>
 
         <TextField
@@ -708,7 +783,7 @@ const DeleteMailsPanel = ({isDeleting, onDelete}: DeleteMailsPanelProps) => {
           key={"daysOffset"}
           type="number"
           InputProps={{inputProps: {min: 100}}}
-          label={TEXT_DELETE_MAIL_PROTOCOLS_OLDER_THAN}
+          label={TEXT_DELETE_CLOUD_FX_TRIGGER_DOCS_OLDER_THAN}
           name={"daysOffset"}
           required
           value={daysOffset}
@@ -732,7 +807,7 @@ const DeleteMailsPanel = ({isDeleting, onDelete}: DeleteMailsPanelProps) => {
           className={classes.submit}
           onClick={() => onDelete(daysOffset)}
         >
-          {`${TEXT_MAIL_PROTOCOLS} ${TEXT_DELETE}`}
+          {`${TEXT_CLOUD_FX_TRIGGER_DOCS} ${TEXT_DELETE}`}
         </Button>
       </CardContent>
     </Card>

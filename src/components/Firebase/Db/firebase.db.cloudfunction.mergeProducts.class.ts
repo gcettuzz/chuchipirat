@@ -42,10 +42,9 @@ export class FirebaseDbCloudFunctionMergeProducts extends FirebaseDbCloudFunctio
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp): T {
-    return {...value, uid: uid} as unknown as T;
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp): T {
+    return value as unknown as T;
   }
-
   /* =====================================================================
   // CloudFunction Type zurückgeben
   // ===================================================================== */

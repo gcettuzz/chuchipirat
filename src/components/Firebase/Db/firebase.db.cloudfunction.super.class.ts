@@ -101,7 +101,7 @@ export abstract class FirebaseDbCloudFunctionSuper extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp): T {
     return value as unknown as T;
   }
   /* =====================================================================
@@ -166,9 +166,9 @@ export abstract class FirebaseDbCloudFunctionSuper extends FirebaseDbSuper {
 
     await this.create({value: values, authUser: authUser})
       .then((result) => {
-        documentUid = result.uid;
+        documentUid = result.documentUid;
         this.updateLog({
-          uid: result.uid,
+          uid: documentUid,
           cloudFunctionType: this.getCloudFunctionType(),
           authUser: authUser,
         });

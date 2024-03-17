@@ -482,7 +482,7 @@ export default class ShoppingList {
           authUser: authUser,
         })
         .then((result) => {
-          shoppingList = result;
+          shoppingList = result.value;
 
           // Feed Eintrag
           const indexList = Object.keys(shoppingList.list);

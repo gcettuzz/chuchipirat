@@ -117,7 +117,7 @@ export default class Feed {
    * @param objectUserDisplayName optional Anzeigename der Person, die im Feed erwähnt wird
    * @param objectUserPictureSrc optional Bildquelle, der Person, die im Feed erwähnt wird.
    */
-  static createFeedEntry({
+  static async createFeedEntry({
     firebase,
     authUser,
     feedType,
@@ -160,7 +160,24 @@ export default class Feed {
         fromDisplayName: authUser.publicProfile.displayName,
       },
     };
-    firebase.feed.create<Feed>({value: feed, authUser: authUser});
+    await firebase.feed
+      .create<Feed>({value: feed, authUser: authUser})
+      .then((result) => {
+        // Log nachführen, dass ein Feed erstellt wurde
+        firebase.feed.log.update({
+          uids: [],
+          value: {
+            [result.documentUid]: {
+              created: feed.created,
+              type: feed.type,
+              visibilty: feed.visibility,
+              title: feed.title,
+              text: feed.text,
+            },
+          },
+          authUser: authUser,
+        });
+      });
   }
   /* =====================================================================
   // Neuste X Feed holen
@@ -311,11 +328,15 @@ export default class Feed {
             unsubscribe();
           }
         };
+        const errorCallback = (error: Error) => {
+          throw error;
+        };
 
         firebase.cloudFunction.deleteFeeds
           .listen({
             uids: [documentId],
             callback: callback,
+            errorCallback: errorCallback,
           })
           .then((result) => {
             unsubscribe = result;

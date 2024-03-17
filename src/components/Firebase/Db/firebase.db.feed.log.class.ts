@@ -1,30 +1,28 @@
-import MailTemplate from "../../../constants/mailTemplates";
-import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
-import {RecipientType} from "../../Admin/mailConsole.class";
 import Firebase from "../firebase.class";
-import FirebaseDbCloudFunctionSuper, {
-  BaseDocumentStructure,
-  CloudFunctionType,
-} from "./firebase.db.cloudfunction.super.class";
 import {
-  PrepareDataForApp,
-  PrepareDataForDb,
+  FirebaseDbSuper,
   ValueObject,
+  PrepareDataForDb,
+  PrepareDataForApp,
 } from "./firebase.db.super.class";
+import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
 import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {ChangeRecord} from "../../Shared/global.interface";
+import Feed, {FeedType} from "../../Shared/feed.class";
+import Role from "../../../constants/roles";
 
-export interface CloudFunctionSendMailDocumentStructure
-  extends BaseDocumentStructure {
-  mailTemplate: MailTemplate;
-  recipients: string;
-  recipientType: RecipientType;
-  templateData: {[key: string]: string};
+export interface FeedLogDocumemntStructure {
+  created: ChangeRecord;
+  type: FeedType;
+  visibilty: Role;
+  title: Feed["title"];
+  text: Feed["text"];
 }
 
-export class FirebaseDbCloudFunctionSendMail extends FirebaseDbCloudFunctionSuper {
+export class FirebaseDbFeedLog extends FirebaseDbSuper {
   firebase: Firebase;
   /* =====================================================================
   // Constructor
@@ -34,18 +32,10 @@ export class FirebaseDbCloudFunctionSendMail extends FirebaseDbCloudFunctionSupe
     this.firebase = firebase;
   }
   /* =====================================================================
-  // Dokument holen, das die Cloudfunction triggert
-  // ===================================================================== */
-  getDocument(uids: string[]) {
-    return this.firebase.db.doc(
-      `_cloudFunctions/functions/sendMail/${uids[0]}`
-    );
-  }
-  /* =====================================================================
-  // Trigger für CloudFunction
+  // Collection holen
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("_cloudFunctions/functions/sendMail");
+    return this.firebase.db.collection("feeds");
   }
   /* =====================================================================
   // Collection-Group holen
@@ -55,34 +45,34 @@ export class FirebaseDbCloudFunctionSendMail extends FirebaseDbCloudFunctionSupe
     return this.firebase.db.collectionGroup("none");
   }
   /* =====================================================================
+  // Dokument holen
+  // ===================================================================== */
+  getDocument() {
+    return this.firebase.db.doc(`feeds/000_log`);
+  }
+  /* =====================================================================
   // Dokumente holen
   // ===================================================================== */
   getDocuments() {
-    throw Error(ERROR_NOT_IMPLEMENTED_YET);
+    // Not implemented
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
-    return value as unknown as T;
+    return value as T;
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp): T {
-    return value as unknown as T;
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
+    return value as T;
   }
   /* =====================================================================
   // Einstellungen für den Session Storage zurückgeben
   //===================================================================== */
   getSessionHandlerProperty(): StorageObjectProperty {
-    return STORAGE_OBJECT_PROPERTY.CLOUDFUNCTION;
-  }
-  /* =====================================================================
-  // CloudFunction Type zurückgeben
-  // ===================================================================== */
-  getCloudFunctionType(): CloudFunctionType {
-    return CloudFunctionType.sendMail;
+    return STORAGE_OBJECT_PROPERTY.FEED;
   }
 }
-export default FirebaseDbCloudFunctionSendMail;
+export default FirebaseDbFeedLog;

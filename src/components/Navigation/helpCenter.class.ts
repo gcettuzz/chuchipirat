@@ -123,6 +123,9 @@ export default class HelpCenter {
             case ROUTES.SYSTEM_OVERVIEW_RECIPES:
               page = "recipe_overview";
               break;
+            case ROUTES.SYSTEM_OVERVIEW_CLOUDFX:
+              page = "cloudfx_overview";
+              break;
             case ROUTES.SYSTEM_MAIL_CONSOLE:
               page = "mailconsole";
               break;

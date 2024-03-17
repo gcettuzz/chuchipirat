@@ -350,6 +350,8 @@ export const RESUME_INTRODUCTION = (eventName: string) =>
 export const PLEASE_DONATE = "Spende erwünscht";
 export const WHY_DONATE =
   "Unser Team arbeitet ehrenamtlich, um die App kostenlos anzubieten. Wir sind auf Spenden angewiesen, um die laufenden Kosten zu decken. Wenn dir die App gefällt und dein Anlassbudget es zulässt, unterstütze uns gerne mit einer Spende von Fr. 5.00. Dein Beitrag hilft, das Angebot weiterhin kostenlos anbieten zu können sowie die App am Laufen zu halten und weiter zu verbessern.";
+export const NEED_A_RECEIPT =
+  "Wenn du eine Quittung für den gespendeten Betrag benötigst, melde dich bitte unter hallo@chuchipirat.ch mit folgenden Angaben: Eventname, Zahlungsdatum und -uhrzeit. Wir senden dir dann gerne eine Quittung zu.";
 export const THANK_YOU_1000 = "Merci 1000";
 export const ROLE_TYPES = {
   admin: "Admin",
@@ -1226,6 +1228,13 @@ export const DELETE_MAIL_PROTOCOLS_OLDER_THAN =
 export const MAIL_PROTOCOLS = "Mailprotokolle";
 export const MAIL_PROTOCOLS_DELETED = "Mailprotokolle gelöscht";
 export const CLOUD_FX = "Cloud-Functions";
+export const DELETE_CLOUD_FX_TRIGGER_DOCS = "Cloud-FX Dokumente löschen";
+export const DELETE_CLOUD_FX_TRIGGER_DOCS_OLDER_THAN =
+  "Cloud-FX Dokumente löschen, die älter als X Tage sind";
+export const CLOUD_FX_TRIGGER_DOCS = "Cloud-FX Triggerdokumente";
+export const CLOUD_FX_TRIGGER_DOCS_DELETED = "Mailprotokolle gelöscht";
+export const DATE = "Datum";
+export const INVOKED = "Ausgeführt";
 /* =====================================================================
 // Abkürzungen
 // ===================================================================== */

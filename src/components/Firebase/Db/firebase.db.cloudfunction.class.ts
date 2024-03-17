@@ -108,7 +108,7 @@ export class FirebaseDbCloudFunction extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp): T {
     return value as unknown as T;
   }
   /* =====================================================================

@@ -128,7 +128,7 @@ export abstract class FirebaseDbSuper {
     authUser,
     uids,
     force = false,
-  }: Create<T>): Promise<T> {
+  }: Create<T>): Promise<{documentUid: string; value: T}> {
     value = FirebaseDbSuper.setCreatedFields<T>(value, authUser, force);
 
     let dbObject = _.cloneDeep(this.convertDateValuesToTimestamp(value));
@@ -151,7 +151,7 @@ export abstract class FirebaseDbSuper {
           value: value,
           prefix: uids ? uids[0] : "",
         });
-        return value as T;
+        return {documentUid: docRef.id, value: value as T};
       })
       .catch((error) => {
         console.error(error);

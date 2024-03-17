@@ -34,6 +34,7 @@ import {
   RESUME_INTRODUCTION as TEXT_RESUME_INTRODUCTION,
   PLEASE_DONATE as TEXT_PLEASE_DONATE,
   WHY_DONATE as TEXT_WHY_DONATE,
+  NEED_A_RECEIPT as TEXT_NEED_A_RECEIPT,
   THANK_YOU_1000 as TEXT_THANK_YOU_1000,
 } from "../../../constants/text";
 
@@ -450,6 +451,8 @@ const CreateEventCompletion = ({
               <strong>{TEXT_PLEASE_DONATE}</strong>
               <br />
               {TEXT_WHY_DONATE}
+              <br />
+              {TEXT_NEED_A_RECEIPT}
               <br />
               <br />
               {TEXT_THANK_YOU_1000}
