@@ -1063,7 +1063,10 @@ const RecipeButtonRow = ({
           authUser.roles.includes(Role.communityLeader))) ||
       (recipe.type === RecipeType.private &&
         (recipe.created.fromUid === authUser.uid ||
-          authUser.roles.includes(Role.admin))) ||
+          // Falls das Rezepte im Freigabeprozess ist, soll es von
+          // der*m Commnunity-Leader*in angepasst weden können
+          (recipe.isInReview &&
+            authUser.roles.includes(Role.communityLeader)))) ||
       (recipe.type === RecipeType.variant &&
         (recipe.created.fromUid === authUser.uid ||
           authUser.roles.includes(Role.admin))),

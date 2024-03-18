@@ -88,11 +88,16 @@ interface LandingPagePictureRepository {
   groupconfig: string;
 }
 const LANDING_PAGE_PICTURES_PRODUCTION: LandingPagePictureRepository = {
-  recipes: "",
-  menuplan: "",
-  scaling: "",
-  shoppinglist: "",
-  groupconfig: "",
+  recipes:
+    "https://firebasestorage.googleapis.com/v0/b/chuchipirat.appspot.com/o/landing%2Frecipes.png?alt=media&token=b26aa5de-8ef6-4813-93fb-f578ce8a14bf",
+  menuplan:
+    "https://firebasestorage.googleapis.com/v0/b/chuchipirat.appspot.com/o/landing%2Fmenuplan.png?alt=media&token=c9d4a24f-4462-4a98-a88b-2fd71808198e",
+  scaling:
+    "https://firebasestorage.googleapis.com/v0/b/chuchipirat.appspot.com/o/landing%2Fscaling.png?alt=media&token=26ed12bc-44ac-4351-8584-65b4ef7b1a64",
+  shoppinglist:
+    "https://firebasestorage.googleapis.com/v0/b/chuchipirat.appspot.com/o/landing%2Fshoppinglist.png?alt=media&token=c8b6aee3-52c3-4cb9-8072-2a58772a79fd",
+  groupconfig:
+    "https://firebasestorage.googleapis.com/v0/b/chuchipirat.appspot.com/o/landing%2Fshoppinglist.png?alt=media&token=c8b6aee3-52c3-4cb9-8072-2a58772a79fd",
 };
 const LANDING_PAGE_PICTURES_TEST: LandingPagePictureRepository = {
   recipes:

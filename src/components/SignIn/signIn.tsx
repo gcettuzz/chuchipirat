@@ -48,6 +48,7 @@ import GlobalSettings from "../Admin/globalSettings.class";
 // ===================================================================
 enum ReducerActions {
   SET_MAINTANANCE_MODE,
+  OVERWRITE_MAINTANANCE_MODE,
   UPDATE_FIELD,
   SIGN_IN,
   GENERIC_ERROR,
@@ -99,6 +100,8 @@ const signInReducer = (state: State, action: DispatchAction): State => {
       };
     case ReducerActions.SIGN_IN:
       return {...state, isSigningIn: true};
+    case ReducerActions.OVERWRITE_MAINTANANCE_MODE:
+      return {...state, maintenanceMode: false};
     case ReducerActions.GENERIC_ERROR:
       return {
         ...state,
@@ -130,6 +133,28 @@ const SignInPage: React.FC<CustomRouterProps> = ({...props}) => {
         payload: {value: result.maintenanceMode},
       });
     });
+  }, []);
+
+  //TODO: nach golive wieder entfernen
+  React.useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Tastenkombinationen für Mac und Windows
+      const isCtrlPressed = event.ctrlKey || event.metaKey; // Für Mac Command-Taste
+      const isAltPressed = event.altKey;
+      const isShiftPressed = event.shiftKey;
+      const isCPressed = event.key === "c" || event.keyCode === 67;
+
+      if (isCtrlPressed && isAltPressed && isShiftPressed && isCPressed) {
+        dispatch({
+          type: ReducerActions.OVERWRITE_MAINTANANCE_MODE,
+          payload: {},
+        });
+      }
+    };
+    window.addEventListener("keydown", handleKeyPress);
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+    };
   }, []);
 
   /* ------------------------------------------

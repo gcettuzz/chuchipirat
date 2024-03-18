@@ -97,16 +97,15 @@ export async function restructureEventDocuments(
         maxDate: eventDocumentData.maxDate,
         motto: eventDocumentData.motto,
         name: eventDocumentData.name,
-        numberOfDays: eventDocumentData.dates.reduce((result, currenEntry) => {
-          return (
+        numberOfDays: eventDocumentData.dates.reduce(
+          (result, currenEntry) =>
             result +
-              Utils.differenceBetweenTwoDates({
-                dateFrom: currenEntry.from,
-                dateTo: currenEntry.to,
-              }),
-            0
-          );
-        }),
+            Utils.differenceBetweenTwoDates({
+              dateFrom: currenEntry.from,
+              dateTo: currenEntry.to,
+            }),
+          0
+        ),
         pictureSrc: eventDocumentData?.pictureSrc
           ? eventDocumentData?.pictureSrc
           : "",

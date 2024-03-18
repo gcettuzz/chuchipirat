@@ -330,6 +330,7 @@ const PanelMergeProducts = ({
           products={mergeProducts.products}
           onChange={onChangeProductSelection}
           label={`${TEXT_PRODUCT} A`}
+          allowCreateNewProduct={false}
         />
         <br />
         <ProductAutocomplete
@@ -338,6 +339,7 @@ const PanelMergeProducts = ({
           products={mergeProducts.products}
           onChange={onChangeProductSelection}
           label={`${TEXT_PRODUCT} B`}
+          allowCreateNewProduct={false}
         />
         {mergeProducts.isMerging && (
           <React.Fragment>

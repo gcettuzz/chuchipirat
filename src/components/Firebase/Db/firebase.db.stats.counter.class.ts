@@ -57,15 +57,16 @@ export class FirebaseDbStatsCounter extends FirebaseDbSuper {
       noParticipants: value.noParticipants,
       noRecipesPublic: value.noRecipesPublic,
       noRecipesPrivate: value.noRecipesPrivate,
-      noRecipesVariants: value.noRecipesVariants,
+      noRecipeVariants: value.noRecipeVariants,
       noShoppingLists: value.noShoppingLists,
+      noMaterialLists: value.noMaterialLists,
       noUsers: value.noUsers,
     };
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
     return {
       noEvents: value.noEvents,
       noIngredients: value.noIngredients,
@@ -73,8 +74,9 @@ export class FirebaseDbStatsCounter extends FirebaseDbSuper {
       noParticipants: value.noParticipants,
       noRecipesPublic: value.noRecipesPublic,
       noRecipesPrivate: value.noRecipesPrivate,
-      noRecipesVariants: value.noRecipesVariants,
+      noRecipeVariants: value.noRecipeVariants,
       noShoppingLists: value.noShoppingLists,
+      noMaterialLists: value.noMaterialLists,
       noUsers: value.noUsers,
     } as unknown as T;
   }

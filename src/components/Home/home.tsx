@@ -69,6 +69,7 @@ import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
 import {withFirebase} from "../Firebase/firebaseContext";
 import withEmailVerification from "../Session/withEmailVerification";
 import {CustomRouterProps} from "../Shared/global.interface";
+import Utils from "../Shared/utils.class";
 /* ===================================================================
 // ============================ Dispatcher ===========================
 // =================================================================== */
@@ -451,7 +452,6 @@ const HomeBase: React.FC<
       payload: {},
     });
   };
-
   return (
     <React.Fragment>
       <HomeHeader authUser={authUser} />
@@ -484,21 +484,23 @@ const HomeBase: React.FC<
           <Grid item xs={12}>
             <Divider style={{marginBottom: "2rem"}} />
           </Grid>
-          <Grid item xs={12}>
-            <Typography variant="h5" align="center" gutterBottom>
-              Testing
-            </Typography>
-            <Typography variant="h5" align="center" gutterBottom>
-              <Link
-                href="https://help.chuchipirat.ch/known_errors"
-                target="_blank"
-              >
-                --» Aktuell bekannte Fehler «--
-              </Link>
-            </Typography>
-            <br />
-            <Divider style={{marginBottom: "2rem"}} />
-          </Grid>
+          {Utils.isTestEnviroment() && (
+            <Grid item xs={12}>
+              <Typography variant="h5" align="center" gutterBottom>
+                Testing
+              </Typography>
+              <Typography variant="h5" align="center" gutterBottom>
+                <Link
+                  href="https://help.chuchipirat.ch/known_errors"
+                  target="_blank"
+                >
+                  --» Aktuell bekannte Fehler «--
+                </Link>
+              </Typography>
+              <br />
+              <Divider style={{marginBottom: "2rem"}} />
+            </Grid>
+          )}
           <Grid item xs={12} md={4}>
             <HomeNewestRecipes
               recipes={state.recipes}

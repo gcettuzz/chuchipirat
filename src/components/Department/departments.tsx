@@ -370,7 +370,8 @@ const DepartmentsBase: React.FC<
           {
             id: "edit",
             hero: true,
-            visible: !editMode && authUser.roles.includes(Roles.admin),
+            visible:
+              !editMode && authUser.roles.includes(Roles.communityLeader),
             label: TEXT_EDIT,
             variant: "contained",
             color: "primary",
@@ -379,7 +380,7 @@ const DepartmentsBase: React.FC<
           {
             id: "save",
             hero: true,
-            visible: editMode && authUser.roles.includes(Roles.admin),
+            visible: editMode && authUser.roles.includes(Roles.communityLeader),
             label: TEXT_SAVE,
             variant: "contained",
             color: "primary",
@@ -388,7 +389,7 @@ const DepartmentsBase: React.FC<
           {
             id: "add",
             hero: true,
-            visible: authUser.roles.includes(Roles.admin) && editMode,
+            visible: authUser.roles.includes(Roles.communityLeader) && editMode,
             label: TEXT_ADD_DEPARTMENT,
             variant: "outlined",
             color: "primary",

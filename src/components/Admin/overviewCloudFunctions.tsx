@@ -238,7 +238,6 @@ const OverviewCloudFxBase: React.FC<
 
     CloudFx.getCloudFxLog({firebase: firebase})
       .then((result) => {
-        console.log(result);
         dispatch({
           type: ReducerActions.CLOUD_FX_LOG_FETCH_SUCCESS,
           payload: {value: result},
@@ -265,7 +264,6 @@ const OverviewCloudFxBase: React.FC<
   // User-Profil-PopUp-Handling
   // ------------------------------------------ */
   const onOpenDialog = async (cloudFxLogUid: CloudFxLogEntry["uid"]) => {
-    console.log(cloudFxLogUid);
     if (!cloudFxLogUid) {
       return;
     }
@@ -352,7 +350,6 @@ const OverviewCloudFxBase: React.FC<
       payload: {},
     });
   };
-  console.log(state);
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}
@@ -592,8 +589,6 @@ const CloudFxTable = ({dbClodFxLog, onCloudFxLogSelect}: CloudFxTableProps) => {
         processedDocuments: logEntry.processedDocuments,
       })
     );
-    console.log(cloudFxLogUiStructure);
-    console.log(dbClodFxLog);
     setCloudFxLog(cloudFxLogUiStructure);
   }
 
@@ -702,7 +697,6 @@ const DialogCloudFxTriggerDocument = ({
       <DialogContent style={{overflow: "unset"}}>
         <List dense style={{marginBottom: theme.spacing(2)}}>
           {Object.entries(cloudFxTrigger).map(([key, value]) => {
-            console.log(typeof key, key);
             switch (typeof value) {
               case "string":
               case "number":

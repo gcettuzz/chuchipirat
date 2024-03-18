@@ -698,7 +698,7 @@ const UnitConversionBase: React.FC<
           {
             id: "edit",
             hero: true,
-            visible: !editMode && authUser.roles.includes(Role.admin),
+            visible: !editMode && authUser.roles.includes(Role.communityLeader),
             label: TEXT_EDIT,
             variant: "contained",
             color: "primary",
@@ -707,7 +707,7 @@ const UnitConversionBase: React.FC<
           {
             id: "save",
             hero: true,
-            visible: editMode && authUser.roles.includes(Role.admin),
+            visible: editMode && authUser.roles.includes(Role.communityLeader),
             label: TEXT_SAVE,
             variant: "contained",
             color: "primary",
@@ -716,7 +716,7 @@ const UnitConversionBase: React.FC<
           {
             id: "add",
             hero: true,
-            visible: authUser.roles.includes(Role.admin) && editMode,
+            visible: authUser.roles.includes(Role.communityLeader) && editMode,
             label: TEXT_ADD,
             variant: "outlined",
             color: "primary",

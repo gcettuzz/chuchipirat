@@ -73,16 +73,16 @@ export class FirebaseDbEventMenuplan extends FirebaseDbSuper {
         }
       }
     });
-    Object.values(value.products as Products).forEach((menuProduct) => {
-      if (!usedProducts.includes(menuProduct.productUid)) {
-        usedProducts.push(menuProduct.productUid);
-      }
-    });
-    Object.values(value.materials as Materials).forEach((menuMaterial) => {
-      if (!usedMaterials.includes(menuMaterial.materialUid)) {
-        usedMaterials.push(menuMaterial.materialUid);
-      }
-    });
+    // Object.values(value.products as Products).forEach((menuProduct) => {
+    //   if (!usedProducts.includes(menuProduct.productUid)) {
+    //     usedProducts.push(menuProduct.productUid);
+    //   }
+    // });
+    // Object.values(value.materials as Materials).forEach((menuMaterial) => {
+    //   if (!usedMaterials.includes(menuMaterial.materialUid)) {
+    //     usedMaterials.push(menuMaterial.materialUid);
+    //   }
+    // });
 
     return {
       dates: value.dates.map((date) => this.firebase.timestamp.fromDate(date)),

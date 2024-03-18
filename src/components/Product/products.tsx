@@ -477,7 +477,6 @@ const ProductsBase: React.FC<
       payload: {},
     });
   };
-
   return (
     <React.Fragment>
       <CssBaseline />

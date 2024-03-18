@@ -362,6 +362,7 @@ const PanelConvertProductToMaterial = ({
           products={products}
           onChange={onChangeProductSelection}
           label={TEXT_PRODUCT}
+          allowCreateNewProduct={false}
         />
         <br />
         <Typography variant="subtitle1">{TEXT_MATERIAL_TYPE}</Typography>

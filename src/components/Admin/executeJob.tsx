@@ -19,6 +19,7 @@ import {
 import {rebuildFile000AllRecipes} from "../../jobs/rebuildFile000AllRecipes";
 import {rebuildFile000AllUsers} from "../../jobs/rebuildFile000AllUsers";
 import {rebuildFile000AllEvents} from "../../jobs/rebuildFile000AllEvents";
+import {rebuildStatsCounter} from "../../jobs/rebuildStatsCounter";
 
 import {restructureRecipeDocuments} from "../../jobs/TS_Migration_restructureRecipes";
 // import {restructurePrivateRecipeDocuments} from "../../jobs/TS_Migration_restructurePrivateRecipes";
@@ -46,6 +47,7 @@ interface DocumentCounter {
   allRecipes: number;
   allUsers: number;
   allEvents: number;
+  statsCounter: number;
   publicUserProfile: number;
   restructeredEvents: number;
   restructureProducts: number;
@@ -58,6 +60,7 @@ interface JobMonitor {
   allRecipes: boolean;
   allUsers: boolean;
   allEvents: boolean;
+  statsCounter: boolean;
   publicUserProfile: boolean;
   restructeredEvents: boolean;
   restructureProducts: boolean;
@@ -90,6 +93,7 @@ const ExecuteJobBase: React.FC<
       allRecipes: 0,
       allUsers: 0,
       allEvents: 0,
+      statsCounter: 0,
       publicUserProfile: 0,
       restructeredEvents: 0,
       restructureProducts: 0,
@@ -103,6 +107,7 @@ const ExecuteJobBase: React.FC<
     allRecipes: false,
     allUsers: false,
     allEvents: false,
+    statsCounter: false,
     publicUserProfile: false,
     restructeredEvents: false,
     restructureProducts: false,
@@ -116,11 +121,11 @@ const ExecuteJobBase: React.FC<
   /* ------------------------------------------
   // Rezepte (Dokumente) der neuen Struktur anpassen
   // ------------------------------------------ */
-  const onRestructureRecipeDocuments = async () => {
-    await restructureRecipeDocuments(firebase).then((result) => {
-      setDocumentCounter({...documentCounter, restructeredRecipes: result});
-    });
-  };
+  // const onRestructureRecipeDocuments = async () => {
+  //   await restructureRecipeDocuments(firebase).then((result) => {
+  //     setDocumentCounter({...documentCounter, restructeredRecipes: result});
+  //   });
+  // };
   // const onMovePriveRecipeDocuments = async () => {
   //   await restructurePrivateRecipeDocuments(firebase).then((result) => {
   //     setDocumentCounter({...documentCounter, privateRecipes: result});
@@ -144,22 +149,27 @@ const ExecuteJobBase: React.FC<
       setDocumentCounter({...documentCounter, allEvents: result});
     });
   };
-
-  const onRestructePublicUserProfile = async () => {
-    setJobMonitor({...jobMonitor, publicUserProfile: true});
-    await restructureUserPublicProfile(firebase).then((result) => {
-      setDocumentCounter({...documentCounter, publicUserProfile: result});
-      setJobMonitor({...jobMonitor, publicUserProfile: false});
+  const onRebuildStatsCounter = async () => {
+    await rebuildStatsCounter(firebase, authUser).then((result) => {
+      setDocumentCounter({...documentCounter, statsCounter: result});
     });
   };
 
-  const onRestructeEvents = async () => {
-    setJobMonitor({...jobMonitor, restructeredEvents: true});
-    await restructureEventDocuments(firebase, authUser).then((result) => {
-      setDocumentCounter({...documentCounter, restructeredEvents: result});
-      setJobMonitor({...jobMonitor, restructeredEvents: false});
-    });
-  };
+  // const onRestructePublicUserProfile = async () => {
+  //   setJobMonitor({...jobMonitor, publicUserProfile: true});
+  //   await restructureUserPublicProfile(firebase).then((result) => {
+  //     setDocumentCounter({...documentCounter, publicUserProfile: result});
+  //     setJobMonitor({...jobMonitor, publicUserProfile: false});
+  //   });
+  // };
+
+  // const onRestructeEvents = async () => {
+  //   setJobMonitor({...jobMonitor, restructeredEvents: true});
+  //   await restructureEventDocuments(firebase, authUser).then((result) => {
+  //     setDocumentCounter({...documentCounter, restructeredEvents: result});
+  //     setJobMonitor({...jobMonitor, restructeredEvents: false});
+  //   });
+  // };
 
   return (
     <React.Fragment>
@@ -173,11 +183,12 @@ const ExecuteJobBase: React.FC<
               onRebuild000AllRecipes={onRebuildFile000AllRecipes}
               onRebuild000AllUsers={onRebuildFile000AllUsers}
               onRebuild000AllEvents={onRebuildFile000AllEvents}
+              onRebuildStatsCounter={onRebuildStatsCounter}
               documentCounter={documentCounter}
               jobMonitor={jobMonitor}
             />
           </Grid>
-          <Grid item xs={12}>
+          {/*<Grid item xs={12}>
             <PanelTempJobList
               onRestructureRecipeDocuments={onRestructureRecipeDocuments}
               // onMovePriveRecipeDocuments={onMovePriveRecipeDocuments}
@@ -188,7 +199,7 @@ const ExecuteJobBase: React.FC<
               documentCounter={documentCounter}
               jobMonitor={jobMonitor}
             />
-          </Grid>
+          </Grid>*/}
         </Grid>
       </Container>
     </React.Fragment>
@@ -201,6 +212,7 @@ interface JobListProps {
   onRebuild000AllRecipes: () => void;
   onRebuild000AllUsers: () => void;
   onRebuild000AllEvents: () => void;
+  onRebuildStatsCounter: () => void;
   documentCounter: DocumentCounter;
   jobMonitor: JobMonitor;
 }
@@ -209,6 +221,7 @@ const PanelJobList = ({
   onRebuild000AllRecipes,
   onRebuild000AllUsers,
   onRebuild000AllEvents,
+  onRebuildStatsCounter,
   documentCounter,
   jobMonitor,
 }: JobListProps) => {
@@ -244,6 +257,15 @@ const PanelJobList = ({
           jobIsRunning={jobMonitor.allEvents}
           changedRecords={documentCounter.allEvents}
           successMessage={`Dokument 000_alEvents mit ${documentCounter.allEvents} Events neu aufgebaut.`}
+        />
+        <br />
+        <JobEntry
+          onClick={onRebuildStatsCounter}
+          jobName={"Stats-Counter neu aufbauen"}
+          jobDescription={"Dokument stats/counter und Statistik neu berechnen."}
+          jobIsRunning={jobMonitor.statsCounter}
+          changedRecords={documentCounter.statsCounter}
+          successMessage={`Dokument stats/counter mit ${documentCounter.statsCounter} gelesenen Dokumenten neu aufgebaut.`}
         />
       </CardContent>
     </Card>

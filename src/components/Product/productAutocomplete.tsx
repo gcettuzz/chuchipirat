@@ -18,6 +18,7 @@ interface ProductAutocompleteProps {
   product: Product | IngredientProduct;
   products: Product[];
   label?: string;
+  allowCreateNewProduct?: boolean;
   onChange: (
     event: React.ChangeEvent<HTMLInputElement>,
     newValue: string | Product | null,
@@ -53,6 +54,7 @@ const ProductAutocomplete = ({
   products,
   label = INGREDIENT,
   onChange,
+  allowCreateNewProduct = true,
 }: ProductAutocompleteProps) => {
   // Handler für Zutaten/Produkt hinzufügen
   const filter = createFilterOptions<Product>();
@@ -99,10 +101,12 @@ const ProductAutocomplete = ({
           ) === undefined &&
           !params.inputValue.endsWith(ADD)
         ) {
-          // Hinzufügen-Möglichkeit auch als Produkt reinschmuggeln
-          const newProduct = new Product();
-          newProduct.name = `"${params.inputValue}" ${ADD}`;
-          filtered.push(newProduct);
+          if (allowCreateNewProduct) {
+            // Hinzufügen-Möglichkeit auch als Produkt reinschmuggeln
+            const newProduct = new Product();
+            newProduct.name = `"${params.inputValue}" ${ADD}`;
+            filtered.push(newProduct);
+          }
         }
         // So sortieren, dass Zutaten, die mit den gleichen Zeichen beginnen
         // vorher angezeigt werden (Salz vor Erdnüsse, gesalzen)

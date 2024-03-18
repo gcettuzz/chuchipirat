@@ -54,7 +54,25 @@ export async function restructureUserPublicProfile(firebase: Firebase) {
             oldPublicUserProfile &&
             !Object.prototype.hasOwnProperty.call(oldPublicUserProfile, "stats")
           ) {
-            const newPublicUserProfile = new UserPublicProfile();
+            const newPublicUserProfile: UserPublicProfile = {
+              uid: "",
+              displayName: "",
+              memberSince: new Date(0),
+              memberId: 0,
+              motto: "",
+              pictureSrc: {
+                smallSize: "",
+                normalSize: "",
+                fullSize: "",
+              },
+              stats: {
+                noComments: 0,
+                noEvents: 0,
+                noRecipesPublic: 0,
+                noRecipesPrivate: 0,
+                noFoundBugs: 0,
+              },
+            };
 
             newPublicUserProfile.uid = user.id;
             newPublicUserProfile.displayName = oldPublicUserProfile.displayName;
@@ -90,7 +108,13 @@ export async function restructureUserPublicProfile(firebase: Firebase) {
             ).length;
 
             console.log(newPublicUserProfile);
-            await publicProfileDocument.ref.set(newPublicUserProfile);
+            await publicProfileDocument.ref
+              .set({...newPublicUserProfile})
+              .catch((error) => {
+                console.error(error);
+                console.info(newPublicUserProfile);
+                console.info(publicProfileDocument.id);
+              });
           }
         })
         .catch((error) => {

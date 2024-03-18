@@ -136,7 +136,6 @@ export abstract class FirebaseDbSuper {
     dbObject = this.prepareDataForDb({value: dbObject});
 
     const collection = this.getCollection(uids);
-
     return await collection
       .add(dbObject)
       .then((docRef) => {

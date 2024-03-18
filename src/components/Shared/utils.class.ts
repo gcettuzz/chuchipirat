@@ -496,4 +496,27 @@ export default class Utils {
 
     return true; // Die Arrays sind identisch.
   };
+  // ===================================================================== */
+  /**
+   * Überprüfen ob zwei Array die gleichen Werte enthalen (egal in welcher
+   * Reihenfolge).
+   * @result Boolean
+   */
+  static areArraysIdentical<T>(array1: T[], array2: T[]): boolean {
+    // Überprüfe, ob die Arrays die gleiche Länge haben
+    if (array1.length !== array2.length) {
+      return false;
+    }
+
+    // Vergleiche Element für Element
+    for (let i = 0; i < array1.length; i++) {
+      // Wenn ein Element nicht übereinstimmt, sind die Arrays nicht identisch
+      if (array1[i] !== array2[i]) {
+        return false;
+      }
+    }
+
+    // Alle Elemente stimmen überein, daher sind die Arrays identisch
+    return true;
+  }
 }

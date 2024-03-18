@@ -286,6 +286,9 @@ export default class Menuplan {
     this.products = {} as Products;
     this.created = {date: new Date(0), fromUid: "", fromDisplayName: ""};
     this.lastChange = {date: new Date(0), fromUid: "", fromDisplayName: ""};
+    this.usedRecipes = [];
+    this.usedProducts = [];
+    this.usedMaterials = [];
   }
 
   // ===================================================================== */

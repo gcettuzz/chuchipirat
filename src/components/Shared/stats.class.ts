@@ -1,4 +1,5 @@
 import {HOME_STATS_CAPTIONS as TEXT_HOME_STATS_CAPTIONS} from "../../constants/text";
+import AuthUser from "../Firebase/Authentication/authUser.class";
 import Firebase from "../Firebase/firebase.class";
 import Recipe from "../Recipe/recipe.class";
 
@@ -20,6 +21,11 @@ interface incrementStat {
   field: StatsField;
   value: number;
 }
+interface Save {
+  firebase: Firebase;
+  stats: Stats;
+  authUser: AuthUser;
+}
 interface IncrementRecipeVariantCounter {
   firebase: Firebase;
   recipeUid: Recipe["uid"];
@@ -34,10 +40,13 @@ export interface Kpi {
 export default class Stats {
   noEvents: number;
   noIngredients: number;
+  noMaterials: number;
   noParticipants: number;
   noRecipesPublic: number;
   noRecipesPrivate: number;
+  noRecipeVariants: number;
   noShoppingLists: number;
+  noMaterialLists: number;
   noUsers: number;
   /* =====================================================================
   // Constructor
@@ -45,10 +54,13 @@ export default class Stats {
   constructor() {
     this.noEvents = 0;
     this.noIngredients = 0;
+    this.noMaterials = 0;
     this.noParticipants = 0;
     this.noRecipesPublic = 0;
     this.noRecipesPrivate = 0;
+    this.noRecipeVariants = 0;
     this.noShoppingLists = 0;
+    this.noMaterialLists = 0;
     this.noUsers = 0;
   }
   /* =====================================================================
@@ -63,6 +75,19 @@ export default class Stats {
       value: value,
     });
   }
+  /* =====================================================================
+  // Statistik lesen
+  // ===================================================================== */
+  /* istanbul ignore next */
+  /* DB-Methode wird zur Zeit nicht geprüft */
+  static save = async ({firebase, stats, authUser}: Save) => {
+    await firebase.stats.counter
+      .set<Stats>({uids: [], value: stats, authUser: authUser})
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  };
   /* =====================================================================
   // Statistik lesen
   // ===================================================================== */

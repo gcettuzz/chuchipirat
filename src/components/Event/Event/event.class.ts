@@ -1054,7 +1054,6 @@ export default class Event {
       })
       .then((result) => {
         documentId = result;
-        console.log(documentId);
       })
       .then(() => {
         // Melden wenn fertig

@@ -244,8 +244,8 @@ export default class Product {
     // Dokument updaten mit neuem Produkt
     let triggerCloudFx = false;
     const changedProducts = [] as Product[];
-    // TODO: altes File holen und vergleichen. für die geänderten Produkte muss die Cloud-FX ausgelöst werden
-    Product.getAllProducts({
+    // altes File holen und vergleichen. für die geänderten Produkte muss die Cloud-FX ausgelöst werden
+    await Product.getAllProducts({
       firebase: firebase,
       onlyUsable: false,
       withDepartmentName: false,
@@ -259,11 +259,16 @@ export default class Product {
           if (
             dbProduct &&
             (dbProduct.name != product.name ||
-              dbProduct.dietProperties != product.dietProperties)
+              !Utils.areArraysIdentical<Allergen>(
+                dbProduct.dietProperties.allergens,
+                product.dietProperties.allergens
+              ) ||
+              dbProduct.dietProperties.diet !== product.dietProperties.diet)
           ) {
             // Das Produkt hat eine Änderung erfahren, die über alle
             // Dokumente nachgeführt werden muss
             triggerCloudFx = true;
+            delete product.departmentUid;
             changedProducts.push(product);
           }
         });
@@ -281,7 +286,7 @@ export default class Product {
 
     if (triggerCloudFx) {
       firebase.cloudFunction.updateProduct.triggerCloudFunction({
-        values: changedProducts,
+        values: {changedProducts: changedProducts},
         authUser: authUser,
       });
     }
