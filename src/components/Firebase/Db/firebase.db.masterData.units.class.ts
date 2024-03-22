@@ -55,7 +55,7 @@ export class FirebaseDbMasterDataUnits extends FirebaseDbSuper {
     const unitMap = {};
 
     value.forEach((unit: Unit) => {
-      unitMap[unit.key] = {name: unit.name};
+      unitMap[unit.key] = {name: unit.name, dimension: unit.dimension};
     });
     return unitMap;
   }

@@ -12,11 +12,14 @@ import {
   Grid,
   Backdrop,
   CircularProgress,
+  Select,
+  MenuItem,
 } from "@material-ui/core";
 
 import {
   NAME as TEXT_NAME,
   UNIT as TEXT_UNIT,
+  DIMENSION as TEXT_DIMENSION,
   SAVE_SUCCESS as TEXT_SAVE_SUCCESS,
   UNIT_CREATED as TEXT_UNIT_CREATED,
   UNITS as TEXT_UNITS,
@@ -24,6 +27,7 @@ import {
   SAVE as TEXT_SAVE,
   ADD as TEXT_ADD,
   ALERT_TITLE_UUPS as TEXT_ALERT_TITLE_UUPS,
+  UNIT_DIMENSION as TEXT_UNIT_DIMENSION,
 } from "../../constants/text";
 import Role from "../../constants/roles";
 
@@ -40,7 +44,7 @@ import AlertMessage from "../Shared/AlertMessage";
 
 import useStyles from "../../constants/styles";
 
-import Unit from "./unit.class";
+import Unit, {UnitDimension} from "./unit.class";
 import withEmailVerification from "../Session/withEmailVerification";
 import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
 import {withFirebase} from "../Firebase/firebaseContext";
@@ -102,7 +106,11 @@ const unitsReducer = (state: State, action: DispatchAction): State => {
         ...state,
         isError: false,
         units: state.units.concat([
-          {key: action.payload.key, name: action.payload.name},
+          {
+            key: action.payload.key,
+            name: action.payload.name,
+            dimension: action.payload.dimension,
+          },
         ]),
         snackbar: {
           severity: action.payload.snackbarSeverity,
@@ -173,6 +181,14 @@ const TABLE_COLUMS: Column[] = [
     label: TEXT_NAME,
     visible: true,
   },
+  {
+    id: "dimension",
+    type: TableColumnTypes.string,
+    textAlign: ColumnTextAlign.left,
+    disablePadding: false,
+    label: TEXT_DIMENSION,
+    visible: true,
+  },
 ];
 
 /* ===================================================================
@@ -225,8 +241,12 @@ const UnitsBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
   /* ------------------------------------------
   // onChangeField
   // ------------------------------------------ */
-  const onChangeField = (event) => {
-    const unitField = event.target.id.split("_");
+  const onChangeField = (
+    event:
+      | React.ChangeEvent<HTMLInputElement>
+      | React.ChangeEvent<{value: unknown}>
+  ) => {
+    const unitField = event.target.name.split("_");
 
     dispatch({
       type: ReducerActions.UNITS_ON_CHANGE,
@@ -387,7 +407,11 @@ const UnitsBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
 // =================================================================== */
 interface TablePanelProps {
   units: Unit[];
-  onChangeField: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onChangeField: (
+    event:
+      | React.ChangeEvent<HTMLInputElement>
+      | React.ChangeEvent<{value: unknown}>
+  ) => void;
   editMode: boolean;
 }
 const TablePanel = ({units, onChangeField, editMode}: TablePanelProps) => {
@@ -402,8 +426,11 @@ const TablePanel = ({units, onChangeField, editMode}: TablePanelProps) => {
               <Grid item xs={4}>
                 <Typography variant="subtitle1">{TEXT_UNIT}</Typography>
               </Grid>
-              <Grid item xs={8}>
+              <Grid item xs={4}>
                 <Typography variant="subtitle1">{TEXT_NAME}</Typography>
+              </Grid>
+              <Grid item xs={4}>
+                <Typography variant="subtitle1">{TEXT_DIMENSION}</Typography>
               </Grid>
               <Divider />
               {units.map((unit) => (
@@ -412,19 +439,48 @@ const TablePanel = ({units, onChangeField, editMode}: TablePanelProps) => {
                     <TextField
                       id={"key_" + unit.key}
                       key={"key_" + unit.key}
+                      name={"key_" + unit.key}
                       disabled
                       value={unit.key}
                       fullWidth
                     />
                   </Grid>
-                  <Grid item xs={8} key={"gridItemName_" + unit.key}>
+                  <Grid item xs={4} key={"gridItemName_" + unit.key}>
                     <TextField
                       id={"name_" + unit.key}
                       key={"name_" + unit.key}
+                      name={"name_" + unit.key}
                       value={unit.name}
                       onChange={onChangeField}
                       fullWidth
                     />
+                  </Grid>
+                  <Grid item xs={4} key={"gridItemDim_" + unit.key}>
+                    <Select
+                      labelId="unit-dimension"
+                      id={"dimension_" + unit.key}
+                      name={"dimension_" + unit.key}
+                      value={unit.dimension}
+                      onChange={onChangeField}
+                      fullWidth
+                    >
+                      <MenuItem value={UnitDimension.volume}>
+                        {TEXT_UNIT_DIMENSION[UnitDimension.volume]}
+                      </MenuItem>
+                      <MenuItem value={UnitDimension.mass}>
+                        {TEXT_UNIT_DIMENSION[UnitDimension.mass]}
+                      </MenuItem>
+                      <MenuItem value={UnitDimension.dimensionless}>
+                        {TEXT_UNIT_DIMENSION[UnitDimension.dimensionless]}
+                      </MenuItem>
+                    </Select>
+                    {/* <TextField
+                      id={"dim_" + unit.key}
+                      key={"dim_" + unit.key}
+                      value={unit.dimension}
+                      onChange={onChangeField}
+                      fullWidth
+                    /> */}
                   </Grid>
                   <Grid item xs={12} key={"gridItemDivider_" + unit.key}>
                     <Divider />

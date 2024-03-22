@@ -37,8 +37,14 @@ interface FooterProps {
   uid: string;
   actualDate: Date;
   authUser: AuthUser;
+  showLogo?: boolean;
 }
-export const Footer = ({uid, actualDate, authUser}: FooterProps) => {
+export const Footer = ({
+  uid,
+  actualDate,
+  authUser,
+  showLogo = true,
+}: FooterProps) => {
   const styles = StylesPdf.getPdfStyles();
 
   return (
@@ -74,11 +80,13 @@ export const Footer = ({uid, actualDate, authUser}: FooterProps) => {
       <Text key={"pageFooter_appName_" + uid} style={styles.chuchipirat} fixed>
         {TEXT_APP_NAME}
       </Text>
-      <Image
-        style={styles.footerImage}
-        src={ImageRepository.getEnviromentRelatedPicture().PDF_FOOTER_IMAGE}
-        fixed
-      />
+      {showLogo && (
+        <Image
+          style={styles.footerImage}
+          src={ImageRepository.getEnviromentRelatedPicture().PDF_FOOTER_IMAGE}
+          fixed
+        />
+      )}
     </React.Fragment>
   );
 };

@@ -1,6 +1,7 @@
 import React from "react";
 import {compose} from "react-recompose";
-// import {useHistory} from "react-router";
+import {pdf} from "@react-pdf/renderer";
+import fileSaver from "file-saver";
 
 import useStyles from "../../constants/styles";
 import {
@@ -13,9 +14,22 @@ import {
   useTheme,
   Typography,
   IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
 } from "@material-ui/core";
 
-import {OpenInNew as OpenInNewIcon} from "@material-ui/icons";
+import {
+  OpenInNew as OpenInNewIcon,
+  MoreVert as MoreVertIcon,
+  Receipt as ReceiptIcon,
+} from "@material-ui/icons";
 
 import PageTitle from "../Shared/pageTitle";
 
@@ -45,6 +59,13 @@ import {
   END_DATE as TEXT_END_DATE,
   CREATED_AT as TEXT_CREATED_AT,
   CREATED_FROM as TEXT_CREATED_FROM,
+  CREATE_RECEIPT as TEXT_CREATE_RECEIPT,
+  CREATE as TEXT_CREATE,
+  PAY_DATE as TEXT_PAY_DATE,
+  DONOR as TEXT_DONOR,
+  EMAIL as TEXT_EMAIL,
+  AMOUNT as TEXT_AMOUNT,
+  SUFFIX_PDF as TEXT_SUFFIX_PDF,
 } from "../../constants/text";
 import AlertMessage from "../Shared/AlertMessage";
 import SearchPanel from "../Shared/searchPanel";
@@ -58,6 +79,17 @@ import {
 import DialogEventQuickView from "../Event/Event/dialogEventQuickView";
 import {useHistory} from "react-router";
 import Action from "../../constants/actions";
+import User from "../User/user.class";
+import {
+  KeyboardDatePicker,
+  MuiPickersUtilsProvider,
+} from "@material-ui/pickers";
+
+import format from "date-fns/format";
+import deLocale from "date-fns/locale/de";
+import DateFnsUtils from "@date-io/date-fns";
+import EventReceiptPdf from "../Event/Event/eventRecipePdf";
+import Receipt from "../Event/Event/receipt.class";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -66,6 +98,7 @@ enum ReducerActions {
   EVENTS_FETCH_INIT,
   EVENTS_FETCH_SUCCESS,
   FILTER_EVENTS_LIST,
+  SHOW_LOADING,
   GENERIC_ERROR,
 }
 
@@ -111,6 +144,24 @@ interface DialogQuickViewState {
 const DIALOG_QUICK_VIEW_INITIAL_STATE: DialogQuickViewState = {
   dialogOpen: false,
   selectedEvent: new EventShort(),
+};
+interface DialogCreateReceiptState {
+  dialogOpen: boolean;
+  eventUid: EventShort["uid"];
+  eventName: EventShort["name"];
+  payDate: Date;
+  amount: number;
+  donorName: string;
+  donorEmail: string;
+}
+const DIALOG_CREATE_RECEIPT_INITIAL_STATE: DialogCreateReceiptState = {
+  dialogOpen: false,
+  eventUid: "",
+  eventName: "",
+  payDate: new Date(),
+  amount: 0,
+  donorName: "",
+  donorEmail: "",
 };
 
 const moveDataToUiStructure = (events: EventShort[]): EventOverview[] => {
@@ -185,12 +236,18 @@ const eventsReducer = (state: State, action: DispatchAction): State => {
         filteredData: tmpList,
       };
     }
+    case ReducerActions.SHOW_LOADING:
+      return {...state, isLoading: action.payload.value};
     default:
       console.error("Unbekannter ActionType: ", action.type);
       throw new Error();
   }
 };
-
+class DeLocalizedUtils extends DateFnsUtils {
+  getDatePickerHeaderText(date) {
+    return format(date, "dd.MM.yyyy", {locale: this.locale});
+  }
+}
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
@@ -213,7 +270,9 @@ const OverviewEventsBase: React.FC<
   const [searchString, setSearchString] = React.useState<string>("");
   const [dialogQuickView, setDialogQuickView] =
     React.useState<DialogQuickViewState>(DIALOG_QUICK_VIEW_INITIAL_STATE);
-
+  const [dialogCreateReceipt, setDialogCreateReceipt] = React.useState(
+    DIALOG_CREATE_RECEIPT_INITIAL_STATE
+  );
   const classes = useStyles();
   const {push} = useHistory();
 
@@ -289,6 +348,71 @@ const OverviewEventsBase: React.FC<
       },
     });
   };
+  /* ------------------------------------------
+  // Quittung erstellen
+  // ------------------------------------------ */
+  const onCreateReceipt = async (eventUid: EventShort["uid"]) => {
+    const event = state.events.find((event) => event.uid === eventUid);
+    if (!event) {
+      return;
+    }
+    dispatch({type: ReducerActions.SHOW_LOADING, payload: {value: true}});
+
+    await User.getFullProfile({firebase, uid: event.created.fromUid})
+      .then((result) => {
+        setDialogCreateReceipt({
+          dialogOpen: true,
+          amount: 0,
+          eventUid: eventUid,
+          eventName: event.name,
+          payDate: event.created.date,
+          donorEmail: result.email,
+          donorName: result.firstName
+            ? `${result.firstName} ${result.lastName}`
+            : result.displayName,
+        });
+        dispatch({type: ReducerActions.SHOW_LOADING, payload: {value: false}});
+      })
+      .catch((error) => {
+        console.error(error);
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+      });
+  };
+  const onCreateReceiptClose = () => {
+    setDialogCreateReceipt(DIALOG_CREATE_RECEIPT_INITIAL_STATE);
+  };
+  const generateReceipt = async (dialogValues: DialogCreateReceiptState) => {
+    setDialogCreateReceipt(DIALOG_CREATE_RECEIPT_INITIAL_STATE);
+
+    const receiptData = new Receipt();
+
+    Object.entries(dialogValues).forEach(([key, value]) => {
+      if (Object.prototype.hasOwnProperty.call(receiptData, key)) {
+        receiptData[key] = value;
+      }
+    });
+
+    pdf(<EventReceiptPdf receiptData={receiptData} authUser={authUser} />)
+      .toBlob()
+      .then((result) => {
+        fileSaver.saveAs(
+          result,
+          dialogValues.eventName + TEXT_CREATE_RECEIPT + TEXT_SUFFIX_PDF
+        );
+      })
+      .catch((error) => {
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+      });
+
+    Receipt.save({
+      firebase: firebase,
+      receipt: receiptData,
+      authUser: authUser,
+    }).catch((error) => {
+      console.error(error);
+      dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+    });
+  };
 
   return (
     <React.Fragment>
@@ -328,6 +452,7 @@ const OverviewEventsBase: React.FC<
             <EventsPanel
               events={state.filteredData}
               onEventOpen={onEventOpen}
+              onCreateReceipt={onCreateReceipt}
             />
           </Grid>
         </Grid>
@@ -352,6 +477,11 @@ const OverviewEventsBase: React.FC<
           },
         ]}
       />
+      <DialogCreateReceipt
+        dialogData={dialogCreateReceipt}
+        handleClose={onCreateReceiptClose}
+        handleOk={generateReceipt}
+      />
     </React.Fragment>
   );
 };
@@ -361,11 +491,30 @@ const OverviewEventsBase: React.FC<
 interface EventsPanelProps {
   events: EventOverview[];
   onEventOpen: (eventUid: EventShort["uid"]) => void;
+  onCreateReceipt: (eventUid: EventShort["uid"]) => void;
 }
 
-const EventsPanel = ({events, onEventOpen}: EventsPanelProps) => {
+const EventsPanel = ({
+  events,
+  onEventOpen,
+  onCreateReceipt,
+}: EventsPanelProps) => {
   const theme = useTheme();
   const classes = useStyles();
+  const [contextMenuAnchorElement, setContextMenuAnchorElement] =
+    React.useState<HTMLElement | null>(null);
+  const [contextMenuSelectedItem, setContextMenuSelectedItem] =
+    React.useState("");
+
+  const closeContextMenu = () => {
+    setContextMenuAnchorElement(null);
+    setContextMenuSelectedItem("");
+  };
+  const createReceipt = () => {
+    onCreateReceipt(contextMenuSelectedItem);
+    setContextMenuAnchorElement(null);
+    setContextMenuSelectedItem("");
+  };
 
   /* ------------------------------------------
   // Spalten Definition
@@ -490,34 +639,214 @@ const EventsPanel = ({events, onEventOpen}: EventsPanelProps) => {
       },
       width: 200,
     },
+    {
+      field: "menu",
+      headerName: "",
+      editable: false,
+      sortable: false,
+      renderCell: (params) => {
+        const onClick = (event: React.MouseEvent<HTMLElement>) => {
+          setContextMenuSelectedItem(params.id as string);
+          setContextMenuAnchorElement(event.currentTarget);
+        };
+
+        return (
+          <IconButton
+            aria-label="open User"
+            style={{margin: theme.spacing(1)}}
+            size="small"
+            onClick={onClick}
+          >
+            <MoreVertIcon fontSize="inherit" />
+          </IconButton>
+        );
+      },
+      width: 50,
+    },
   ];
 
   return (
-    <Card className={classes.card} key={"cardProductsPanel"}>
-      <CardContent className={classes.cardContent} key={"cardPrdocutContent"}>
-        <Typography gutterBottom={true} variant="h5" component="h2">
-          {events.length} {TEXT_EVENTS}
-        </Typography>
+    <React.Fragment>
+      <Card className={classes.card} key={"cardProductsPanel"}>
+        <CardContent className={classes.cardContent} key={"cardPrdocutContent"}>
+          <Typography gutterBottom={true} variant="h5" component="h2">
+            {events.length} {TEXT_EVENTS}
+          </Typography>
 
-        <DataGrid
-          autoHeight
-          rows={events}
-          columns={DATA_GRID_COLUMNS}
-          getRowId={(row) => row.uid}
-          localeText={deDE.props.MuiDataGrid.localeText}
-          getRowClassName={(params) => {
-            if (params.row?.disabled) {
-              return `super-app ${classes.dataGridDisabled}`;
-            } else {
-              return `super-app-theme`; // Fehlendes 'return' ergänzt
-            }
-          }}
-          components={{
-            Toolbar: GridToolbar,
-          }}
-        />
-      </CardContent>
-    </Card>
+          <DataGrid
+            autoHeight
+            rows={events}
+            columns={DATA_GRID_COLUMNS}
+            getRowId={(row) => row.uid}
+            localeText={deDE.props.MuiDataGrid.localeText}
+            getRowClassName={(params) => {
+              if (params.row?.disabled) {
+                return `super-app ${classes.dataGridDisabled}`;
+              } else {
+                return `super-app-theme`; // Fehlendes 'return' ergänzt
+              }
+            }}
+            components={{
+              Toolbar: GridToolbar,
+            }}
+          />
+        </CardContent>
+      </Card>
+
+      <Menu
+        open={Boolean(contextMenuAnchorElement)}
+        keepMounted
+        anchorEl={contextMenuAnchorElement}
+        onClose={closeContextMenu}
+      >
+        <MenuItem onClick={createReceipt}>
+          <ListItemIcon>
+            <ReceiptIcon />
+          </ListItemIcon>
+          <Typography variant="inherit" noWrap>
+            {TEXT_CREATE_RECEIPT}
+          </Typography>
+        </MenuItem>
+      </Menu>
+    </React.Fragment>
+  );
+};
+/* ===================================================================
+// ==================== Dialog Rezept erstellen ======================
+// =================================================================== */
+
+interface DialogCreateReceiptProps {
+  dialogData: DialogCreateReceiptState;
+  handleClose: () => void;
+  handleOk: (dialogValues: DialogCreateReceiptState) => void;
+}
+const DialogCreateReceipt = ({
+  dialogData,
+  handleClose,
+  handleOk: handleOkSuper,
+}: DialogCreateReceiptProps) => {
+  const classes = useStyles();
+  const [dialogValues, setDialogValues] = React.useState(
+    DIALOG_CREATE_RECEIPT_INITIAL_STATE
+  );
+  /* ------------------------------------------
+  // Initialisieren
+  // ------------------------------------------ */
+  if (
+    dialogValues == DIALOG_CREATE_RECEIPT_INITIAL_STATE &&
+    dialogData != DIALOG_CREATE_RECEIPT_INITIAL_STATE
+  ) {
+    setDialogValues(dialogData);
+  }
+  /* ------------------------------------------
+  // Felder-Update
+  // ------------------------------------------ */
+  const onFieldChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    let value: string | Date | number;
+    if (event.target.id === "amount") {
+      value = parseFloat(event.target.value);
+    } else {
+      value = event.target.value;
+    }
+
+    setDialogValues({...dialogValues, [event.target.id]: value});
+  };
+  const handlOk = () => {
+    handleOkSuper(dialogValues);
+    setDialogValues(DIALOG_CREATE_RECEIPT_INITIAL_STATE);
+  };
+
+  return (
+    <Dialog
+      open={dialogData.dialogOpen}
+      onClose={handleClose}
+      aria-labelledby="dialog Quittung für Event erstellen"
+      fullWidth={true}
+      maxWidth="sm"
+    >
+      <DialogTitle>{TEXT_CREATE_RECEIPT}</DialogTitle>
+      <DialogContent>
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <TextField
+              id="eventUid"
+              fullWidth
+              label={TEXT_UID}
+              value={dialogValues.eventUid}
+              disabled={true}
+              className={classes.typographyCode}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              id="eventName"
+              fullWidth
+              value={dialogValues.eventName}
+              label={TEXT_EVENT}
+              onChange={onFieldChange}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <MuiPickersUtilsProvider utils={DeLocalizedUtils} locale={deLocale}>
+              <KeyboardDatePicker
+                disableToolbar
+                format="dd.MM.yyyy"
+                id={"payDate"}
+                key={"payDate"}
+                label={TEXT_PAY_DATE}
+                value={dialogValues.payDate}
+                fullWidth
+                onChange={(date) => {
+                  setDialogValues({...dialogValues, payDate: date as Date});
+                }}
+                KeyboardButtonProps={{
+                  "aria-label": "Datum",
+                }}
+              />
+            </MuiPickersUtilsProvider>
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              id="donorName"
+              fullWidth
+              value={dialogValues.donorName}
+              label={TEXT_DONOR}
+              onChange={onFieldChange}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              id="donorEmail"
+              fullWidth
+              value={dialogValues.donorEmail}
+              label={`${TEXT_DONOR} ${TEXT_EMAIL}`}
+              onChange={onFieldChange}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              id="amount"
+              fullWidth
+              value={dialogValues.amount}
+              label={TEXT_AMOUNT}
+              onChange={onFieldChange}
+              inputProps={{
+                inputMode: "numeric",
+                pattern: "[0-9]*",
+              }}
+            />
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <Button color="primary" onClick={handleClose}>
+          {TEXT_CANCEL}
+        </Button>
+        <Button variant="outlined" color="primary" onClick={handlOk}>
+          {TEXT_CREATE}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 

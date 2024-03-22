@@ -347,7 +347,9 @@ export const DialogTraceItem = ({
                                     Number.isNaN(item.quantity) ||
                                     item.quantity == 0
                                       ? ""
-                                      : item.quantity
+                                      : Intl.NumberFormat("de-CH", {
+                                          maximumSignificantDigits: 3,
+                                        }).format(item.quantity)
                                   } ${item.unit}`}
                                   className={classes.listItemTextAlignRight}
                                   id={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
@@ -377,7 +379,9 @@ export const DialogTraceItem = ({
                                     Number.isNaN(item.quantity) ||
                                     item.quantity == 0
                                       ? ""
-                                      : item.quantity
+                                      : Intl.NumberFormat("de-CH", {
+                                          maximumSignificantDigits: 3,
+                                        }).format(item.quantity)
                                   } ${item.unit}`}
                                   className={classes.listItemTextAlignRight}
                                   id={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
@@ -393,25 +397,28 @@ export const DialogTraceItem = ({
                 );
               })}
               {/* Die manuell hinzugefügten Artikel auflisten */}
-              {trace
-                .filter((item) => item?.manualAdd)
-                .map((item, counter) => (
-                  <ListItem key={`manualItem_${counter}`}>
-                    <ListItemText
-                      primary={TEXT_ADDED_MANUALY}
-                      key={`manualItemTextItem_${counter}`}
-                    />
-                    <ListItemText
-                      primary={`${
-                        Number.isNaN(item.quantity) || item.quantity == 0
-                          ? ""
-                          : item.quantity
-                      } ${item.unit}`}
-                      className={classes.listItemTextAlignRight}
-                      key={`manualItemTextQuantity_${counter}`}
-                    />
-                  </ListItem>
-                ))}
+              {trace &&
+                trace
+                  .filter((item) => item?.manualAdd)
+                  .map((item, counter) => (
+                    <ListItem key={`manualItem_${counter}`}>
+                      <ListItemText
+                        primary={TEXT_ADDED_MANUALY}
+                        key={`manualItemTextItem_${counter}`}
+                      />
+                      <ListItemText
+                        primary={`${
+                          Number.isNaN(item.quantity) || item.quantity == 0
+                            ? ""
+                            : Intl.NumberFormat("de-CH", {
+                                maximumSignificantDigits: 3,
+                              }).format(item.quantity)
+                        } ${item.unit}`}
+                        className={classes.listItemTextAlignRight}
+                        key={`manualItemTextQuantity_${counter}`}
+                      />
+                    </ListItem>
+                  ))}
             </List>
           </Grid>
         </Grid>

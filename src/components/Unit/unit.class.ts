@@ -8,6 +8,12 @@ interface Constructor {
   name: Unit["name"];
 }
 
+export enum UnitDimension {
+  volume = "VOL",
+  mass = "MAS",
+  dimensionless = "DLS",
+}
+
 interface GetAllUnits {
   firebase: Firebase;
 }
@@ -27,12 +33,14 @@ export default class Unit {
   // HINT: Änderungen müssen auch im Cloud-FX-Type nachgeführt werden
   key: string;
   name: string;
+  dimension: UnitDimension;
   /* =====================================================================
   // Constructor
   // ===================================================================== */
   constructor({key, name}: Constructor) {
     this.key = key;
     this.name = name;
+    this.dimension = UnitDimension.dimensionless;
   }
   /* =====================================================================
   // Alle Einheiten aus der DB holen
@@ -44,7 +52,11 @@ export default class Unit {
       .read<ValueObject>({uids: []})
       .then((result) => {
         Object.keys(result).forEach((key) => {
-          units.push({key: key, name: result[key].name});
+          units.push({
+            key: key,
+            name: result[key].name,
+            dimension: result[key].dimension,
+          });
         });
       })
       .catch((error: Error) => {
@@ -75,5 +87,16 @@ export default class Unit {
       value: [unit],
       authUser: authUser,
     });
+  };
+  /* =====================================================================
+  // Dimension einer Einheit bestimmen
+  // ===================================================================== */
+  static getDimensionOfUnit = (units: Unit[], unitToFind: Unit["key"]) => {
+    let dimension = units.find((unit) => unit.key === unitToFind)?.dimension;
+
+    if (!dimension) {
+      dimension = UnitDimension.dimensionless;
+    }
+    return dimension;
   };
 }

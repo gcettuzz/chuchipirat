@@ -54,6 +54,7 @@ interface CreateNewList {
   products: Product[];
   materials: Material[];
   departments: Department[];
+  units: Unit[];
   unitConversionBasic: UnitConversionBasic;
   unitConversionProducts: UnitConversionProducts;
   firebase: Firebase;
@@ -69,6 +70,7 @@ interface RefreshLists {
   products: Product[];
   materials: Material[];
   departments: Department[];
+  units: Unit[];
   unitConversionBasic: UnitConversionBasic;
   unitConversionProducts: UnitConversionProducts;
   firebase: Firebase;
@@ -265,6 +267,7 @@ export default class ShoppingListCollection {
     products,
     materials,
     departments,
+    units,
     unitConversionBasic,
     unitConversionProducts,
     firebase,
@@ -279,6 +282,7 @@ export default class ShoppingListCollection {
       products: products,
       materials: materials,
       departments: departments,
+      units: units,
       unitConversionBasic: unitConversionBasic,
       unitConversionProducts: unitConversionProducts,
       firebase: firebase,
@@ -389,6 +393,7 @@ export default class ShoppingListCollection {
     menueplan,
     products,
     materials,
+    units,
     unitConversionBasic,
     unitConversionProducts,
     departments,
@@ -472,6 +477,7 @@ export default class ShoppingListCollection {
       products: products,
       materials: materials,
       departments: departments,
+      units: units,
       unitConversionBasic: unitConversionBasic,
       unitConversionProducts: unitConversionProducts,
       firebase: firebase,

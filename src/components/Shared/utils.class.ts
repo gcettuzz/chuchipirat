@@ -503,8 +503,11 @@ export default class Utils {
    * @result Boolean
    */
   static areArraysIdentical<T>(array1: T[], array2: T[]): boolean {
-    // Überprüfe, ob die Arrays die gleiche Länge haben
+    if (!Array.isArray(array1) || !Array.isArray(array2)) {
+      return false;
+    }
     if (array1.length !== array2.length) {
+      // Überprüfe, ob die Arrays die gleiche Länge haben
       return false;
     }
 
@@ -518,5 +521,17 @@ export default class Utils {
 
     // Alle Elemente stimmen überein, daher sind die Arrays identisch
     return true;
+  }
+  // ===================================================================== */
+  /**
+   * Überprüfen zwei Daten den gleichen Tag sind (Zeit wird ignoriert)
+   * @result Boolean
+   */
+  static areDatesIdentical(date1: Date, date2: Date): boolean {
+    return (
+      date1.getDate() === date2.getDate() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getFullYear() === date2.getFullYear()
+    );
   }
 }

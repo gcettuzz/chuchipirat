@@ -270,7 +270,7 @@ export default class EventGroupConfiguration {
    */
   static async save({firebase, groupConfig, authUser}: Save) {
     let newDocument = false;
-    let newPortions = 0;
+    let newParticipants = 0;
     if (!groupConfig.created.fromUid) {
       // Wird soeben neu erstellt.
       groupConfig.created = {
@@ -282,7 +282,7 @@ export default class EventGroupConfiguration {
     }
 
     if (newDocument) {
-      newPortions = groupConfig.totalPortions;
+      newParticipants = groupConfig.totalPortions;
     } else {
       // Alte Grösse holen
       await EventGroupConfiguration.getGroupConfiguration({
@@ -290,7 +290,7 @@ export default class EventGroupConfiguration {
         uid: groupConfig.uid,
       })
         .then((result) => {
-          newPortions = groupConfig.totalPortions - result.totalPortions;
+          newParticipants = groupConfig.totalPortions - result.totalPortions;
         })
         .catch((error) => console.error(error));
     }
@@ -313,7 +313,7 @@ export default class EventGroupConfiguration {
     Stats.incrementStat({
       firebase: firebase,
       field: StatsField.noParticipants,
-      value: newPortions,
+      value: newParticipants,
     });
   }
   // ===================================================================== */

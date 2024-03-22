@@ -23,6 +23,8 @@ export const MENUPLAN_MEALS = [
   {name: "Znacht", uid: ""},
 ];
 
+export const TWINT_PAYLINK = "https://pay.raisenow.io/jhbvj";
+
 export const MENUPLAN_NO_OF_COLUMS_MOBILE = 1;
 export const MENUPLAN_NO_OF_COLUMS_NORMAL = 3;
 export const MENUPLAN_NO_OF_COLUMS_LARGE = 5;

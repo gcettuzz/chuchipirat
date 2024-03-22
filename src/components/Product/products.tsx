@@ -70,7 +70,7 @@ import useStyles from "../../constants/styles";
 import SearchPanel from "../Shared/searchPanel";
 
 import Product, {Allergen, Diet} from "./product.class";
-import Unit from "../Unit/unit.class";
+import Unit, {UnitDimension} from "../Unit/unit.class";
 import Department from "../Department/department.class";
 
 import AuthUser from "../Firebase/Authentication/authUser.class";
@@ -291,7 +291,7 @@ const PRODUCT_POPUP_VALUES = {
   productName: "",
   productUid: "",
   department: {name: "", uid: ""},
-  shoppingUnit: {key: "", name: ""},
+  shoppingUnit: {key: "", name: "", dimension: UnitDimension.dimensionless},
   usable: false,
   popUpOpen: false,
   dietProperties: Product.createEmptyDietProperty(),
@@ -377,7 +377,11 @@ const ProductsBase: React.FC<
         Unit.getAllUnits({firebase: firebase})
           .then((result) => {
             // leeres Feld gehört auch dazu
-            result.push({key: "", name: ""});
+            result.push({
+              key: "",
+              name: "",
+              dimension: UnitDimension.dimensionless,
+            });
 
             dispatch({
               type: ReducerActions.UNITS_FETCH_SUCCESS,
@@ -807,7 +811,7 @@ const ProductsTable = ({
         shoppingUnit: product.shoppingUnit,
         containsLactose: (
           <Checkbox
-            checked={product.dietProperties.allergens.includes(
+            checked={product.dietProperties?.allergens?.includes(
               Allergen.Lactose
             )}
             color="primary"
@@ -819,7 +823,9 @@ const ProductsTable = ({
         ),
         containsGluten: (
           <Checkbox
-            checked={product.dietProperties.allergens.includes(Allergen.Gluten)}
+            checked={product.dietProperties?.allergens?.includes(
+              Allergen.Gluten
+            )}
             color="primary"
             disabled={!editMode}
             onChange={handleCheckboxChange}
@@ -994,7 +1000,11 @@ const ProductsTable = ({
         uid: product.department.uid,
         name: product.department.name,
       },
-      shoppingUnit: {key: product.shoppingUnit, name: ""},
+      shoppingUnit: {
+        key: product.shoppingUnit,
+        name: "",
+        dimension: UnitDimension.dimensionless,
+      },
       dietProperties: product.dietProperties,
       usable: product.usable,
       popUpOpen: true,

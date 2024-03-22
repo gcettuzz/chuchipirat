@@ -45,6 +45,7 @@ import {
   DIALOG_TEXT_DELETION_CONFIRMATION as TEXT_DIALOG_TEXT_DELETION_CONFIRMATION,
   CANCEL as TEXT_CANCEL,
   DELETE as TEXT_DELETE,
+  DB_DOCUMENT_DELETED as TEXT_DB_DOCUMENT_DELETED,
 } from "../../../constants/text";
 
 import {HOME as ROUTE_HOME} from "../../../constants/routes";
@@ -91,6 +92,7 @@ import {
 import {CustomRouterProps} from "../../Shared/global.interface";
 import withEmailVerification from "../../Session/withEmailVerification";
 import AlertMessage from "../../Shared/AlertMessage";
+import Stats, {StatsField} from "../../Shared/stats.class";
 
 /* ===================================================================
 // ============================== Global =============================
@@ -1205,6 +1207,13 @@ const EventBase: React.FC<
       existingEvent: state.event,
     });
 
+    // Statistik anpassen
+    Stats.incrementStat({
+      firebase: firebase,
+      field: StatsField.noPlanedDays,
+      value: eventDraft.event.numberOfDays - state.event.numberOfDays,
+    });
+
     onMenuplanUpdate(updatedMenuplan);
     onEventSave(eventDraft.event);
     dispatch({
@@ -1454,7 +1463,9 @@ const EventBase: React.FC<
             });
           },
           errorCallback: (error) => {
-            dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+            if (error.message !== TEXT_DB_DOCUMENT_DELETED) {
+              dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+            }
           },
         })
           .then((result) => {
@@ -1645,6 +1656,7 @@ const EventBase: React.FC<
                   menuplan={state.menuplan}
                   usedRecipes={state.usedRecipes}
                   products={state.products}
+                  units={state.units}
                   unitConversionBasic={state.unitConversionBasic}
                   unitConversionProducts={state.unitConversionProducts}
                   fetchMissingData={fetchMissingData}

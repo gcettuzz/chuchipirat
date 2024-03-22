@@ -35,6 +35,7 @@ import SignInPage from "../SignIn/signIn";
 import PasswordReset from "../AuthServiceHandler/passwordReset";
 
 import {withAuthentication} from "../Session/authUserContext";
+import {SessionStorageHandler} from "../Firebase/Db/sessionStorageHandler.class";
 
 const PasswordChange = lazy(() => import("../PasswordChange/passwordChange"));
 const Units = lazy(() => import("../Unit/units"));
@@ -84,6 +85,23 @@ const App = () => {
     () => createTheme({palette: CustomTheme.getTheme(prefersDarkMode)}),
     [prefersDarkMode]
   );
+
+  React.useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      // Wenn auf Auffrischen geklickt wird, soll der Session-Storage gelöscht werden
+      // Wir gehen davon aus, dass die Person über das Resultat irritiert ist und darum
+      // laden wir die Daten frisch aus der DB.
+      SessionStorageHandler.clearAll();
+    };
+
+    // Event Listener für das beforeunload-Ereignis hinzufügen
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // Aufräumarbeiten: Event Listener entfernen, um Speicherlecks zu vermeiden
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
 
   return (
     <MuiThemeProvider theme={theme}>

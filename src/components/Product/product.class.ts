@@ -26,7 +26,7 @@ interface CreateProduct {
   authUser: AuthUser;
   dietProperties: DietProperties;
 }
-interface SaveAllProductsProps {
+interface SaveAllProducts {
   firebase: Firebase;
   products: Product[];
   authUser: AuthUser;
@@ -240,7 +240,7 @@ export default class Product {
     firebase,
     products,
     authUser,
-  }: SaveAllProductsProps) => {
+  }: SaveAllProducts) => {
     // Dokument updaten mit neuem Produkt
     let triggerCloudFx = false;
     const changedProducts = [] as Product[];
@@ -278,7 +278,7 @@ export default class Product {
         throw error;
       });
 
-    firebase.masterdata.products.update<Array<Product>>({
+    await firebase.masterdata.products.set<Array<Product>>({
       uids: [""], // Wird in der Klasse bestimmt
       value: products,
       authUser: authUser,

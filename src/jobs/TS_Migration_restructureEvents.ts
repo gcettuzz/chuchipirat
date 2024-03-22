@@ -268,7 +268,9 @@ export async function restructureEventDocuments(
           const mealRecipe = {
             uid: recipe?.uid,
             recipe: {
-              createdFromUid: fullRecipe?.created?.fromUid,
+              createdFromUid: fullRecipe?.created?.fromUid
+                ? fullRecipe?.created?.fromUid
+                : "",
               name: fullRecipe
                 ? fullRecipe?.name
                 : `🗑️ Das Rezept «${recipe.recipeName}» wurde gelöscht`,
@@ -277,13 +279,13 @@ export async function restructureEventDocuments(
                 : `${MealRecipeDeletedPrefix}${recipe.recipeUid}`,
               type: fullRecipe ? fullRecipe?.type : RecipeType.public,
             },
-            totalPortions: recipe.noOfServings,
+            totalPortions: parseInt(recipe.noOfServings),
             plan: [
               {
                 diet: PlanedDiet.FIX,
                 intolerance: PlanedIntolerances.FIX,
                 factor: 1,
-                totalPortions: recipe.noOfServings,
+                totalPortions: parseInt(recipe.noOfServings),
               },
             ],
           } as MealRecipe;

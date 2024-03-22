@@ -73,11 +73,6 @@ const useStyles = makeStyles((theme) => ({
     height: 0,
     paddingTop: "56.25%", // 16:9
   },
-  cardMediaQrCode: {
-    height: "100%",
-    margin: "auto",
-    maxWidth: "30%",
-  },
   cardContent: {
     flexGrow: 1,
   },
@@ -785,6 +780,34 @@ const useStyles = makeStyles((theme) => ({
     height: theme.spacing(7),
     alignItems: "flex-end",
     display: "flex",
+  },
+  /* ------------------------------------------
+  // Twint Button
+  // ------------------------------------------ */
+  cardMediaQrCode: {
+    height: "100%",
+    margin: "auto",
+    maxWidth: "350px",
+  },
+  twintButton: {
+    textTransform: "none",
+    maxWidth: "420px",
+  },
+  twintButtonLightMode: {
+    backgroundColor: "#262626",
+    color: "#fff",
+    "&:hover": {
+      backgroundColor: "#262626", // Hintergrundfarbe beim Hover-Effekt
+      boxShadow: "#fff", // Schatten beim Hover-Effekt
+    },
+  },
+  twintButtonDarkMode: {
+    backgroundColor: "#fff",
+    color: "#000",
+    "&:hover": {
+      backgroundColor: "#fff", // Hintergrundfarbe beim Hover-Effekt
+      boxShadow: "#000", // Schatten beim Hover-Effekt
+    },
   },
 }));
 export default useStyles;

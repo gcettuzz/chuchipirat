@@ -69,6 +69,10 @@ interface IncrementField {
   field: string;
   value: number;
 }
+interface IncrementFields {
+  uids: string[];
+  values: {field: string; value: number}[];
+}
 interface Delete {
   uids: string[];
 }
@@ -397,7 +401,7 @@ export abstract class FirebaseDbSuper {
     return document.onSnapshot(
       (snapshot) => {
         if (!snapshot.exists) {
-          throw new Error(TEXT_DB_DOCUMENT_DELETED);
+          errorCallback(new Error(TEXT_DB_DOCUMENT_DELETED));
         }
 
         const dataForApp = this.prepareDataForApp<T>({
@@ -574,6 +578,39 @@ export abstract class FirebaseDbSuper {
           documentUid: document.id,
           field: field,
           value: value,
+          prefix: uids ? uids[0] : "",
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  }
+  // ===================================================================== */
+  /**
+   * incrementField: Wert mehrerer Feldes um einen Wert erhöhen/reduzieren.
+   * @param uid - UID des Dokumentes in der Collection
+   * @param values - Array mit Objekt (field, value), dessen Wert angepasst
+   *                 werden soll
+   * @returns <Promise>void
+   */
+  // =====================================================================
+  public async incrementFields({uids, values}: IncrementFields): Promise<void> {
+    const document = this.getDocument(uids);
+
+    const newValues = {};
+    values.forEach((value) => {
+      newValues[value.field] = this.firebase.fieldValue.increment(value.value);
+    });
+
+    return await document
+      .update(newValues)
+      .then(() => {
+        // Session Storage anpassen
+        SessionStorageHandler.incrementFieldsValue({
+          storageObjectProperty: this.getSessionHandlerProperty(),
+          documentUid: document.id,
+          values: values,
           prefix: uids ? uids[0] : "",
         });
       })

@@ -81,6 +81,7 @@ import {
 } from "../../Unit/unitConversion.class";
 import {FetchMissingDataProps, FetchMissingDataType} from "../Event/event";
 import {EventListCard, OperationType} from "../Event/eventSharedComponents";
+import Unit from "../../Unit/unit.class";
 
 /* ===================================================================
 // ============================ Dispatcher ===========================
@@ -173,6 +174,7 @@ interface EventUsedRecipesPageProps {
   menuplan: Menuplan;
   usedRecipes: UsedRecipes;
   products: Product[];
+  units: Unit[] | null;
   unitConversionBasic: UnitConversionBasic | null;
   unitConversionProducts: UnitConversionProducts | null;
   fetchMissingData: ({type, recipeShort}: FetchMissingDataProps) => void;
@@ -186,6 +188,7 @@ const EventUsedRecipesPage = ({
   menuplan,
   usedRecipes,
   products,
+  units,
   unitConversionBasic,
   unitConversionProducts,
   fetchMissingData,
@@ -219,6 +222,9 @@ const EventUsedRecipesPage = ({
     }
     if (!unitConversionBasic || !unitConversionProducts) {
       fetchMissingData({type: FetchMissingDataType.UNIT_CONVERSION});
+    }
+    if (!units || units.length == 0) {
+      fetchMissingData({type: FetchMissingDataType.UNITS});
     }
   }, []);
 
@@ -512,6 +518,7 @@ const EventUsedRecipesPage = ({
             menuplan={menuplan}
             groupConfiguration={groupConfiguration}
             products={products}
+            units={units}
             unitConversionBasic={unitConversionBasic}
             unitConversionProducts={unitConversionProducts}
           />
@@ -542,6 +549,7 @@ interface EventUsedRecipesProps {
   menuplan: Menuplan;
   groupConfiguration: EventGroupConfiguration;
   products: Product[];
+  units: Unit[] | null;
   unitConversionBasic: UnitConversionBasic | null;
   unitConversionProducts: UnitConversionProducts | null;
 }
@@ -551,6 +559,7 @@ const EventUsedRecipes = ({
   menuplan,
   groupConfiguration,
   products,
+  units,
   unitConversionBasic,
   unitConversionProducts,
 }: EventUsedRecipesProps) => {
@@ -581,6 +590,7 @@ const EventUsedRecipes = ({
                     menueCoordinate={menueCoordinate}
                     groupConfiguration={groupConfiguration}
                     products={products}
+                    units={units}
                     unitConversionBasic={unitConversionBasic}
                     unitConversionProducts={unitConversionProducts}
                     key={"eventUsedRecipe_" + mealRecipeUid}
@@ -602,6 +612,7 @@ interface EventUsedMealRecipeProps {
   menueCoordinate: MenueCoordinates;
   groupConfiguration: EventGroupConfiguration;
   products: Product[];
+  units: Unit[] | null;
   unitConversionBasic: UnitConversionBasic | null;
   unitConversionProducts: UnitConversionProducts | null;
 }
@@ -611,6 +622,7 @@ const EventUsedMealRecipe = ({
   menueCoordinate,
   groupConfiguration,
   products,
+  units,
   unitConversionBasic,
   unitConversionProducts,
 }: EventUsedMealRecipeProps) => {
@@ -652,6 +664,7 @@ const EventUsedMealRecipe = ({
             recipe={recipe}
             mealRecipe={mealRecipe}
             products={products}
+            units={units}
             unitConversionBasic={unitConversionBasic}
             unitConversionProducts={unitConversionProducts}
           />
@@ -836,6 +849,7 @@ interface EventUsedMealRecipeIngredientBlockProps {
   recipe: Recipe;
   mealRecipe: MealRecipe;
   products: Product[];
+  units: Unit[] | null;
   unitConversionBasic: UnitConversionBasic | null;
   unitConversionProducts: UnitConversionProducts | null;
 }
@@ -843,6 +857,7 @@ const EventUsedMealRecipeIngredientBlock = ({
   recipe,
   mealRecipe,
   products,
+  units,
   unitConversionBasic,
   unitConversionProducts,
 }: EventUsedMealRecipeIngredientBlockProps) => {
@@ -851,6 +866,7 @@ const EventUsedMealRecipeIngredientBlock = ({
     portionsToScale: mealRecipe.totalPortions,
     scalingOptions: {convertUnits: true}, // Hier fix WAHR
     products: products,
+    units: units,
     unitConversionBasic: unitConversionBasic,
     unitConversionProducts: unitConversionProducts,
   });

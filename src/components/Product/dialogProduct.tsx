@@ -55,7 +55,7 @@ import {
   CREATE as TEXT_CREATE,
 } from "../../constants/text";
 import Department from "../Department/department.class";
-import Unit from "../Unit/unit.class";
+import Unit, {UnitDimension} from "../Unit/unit.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import UnitAutocomplete from "../Unit/unitAutocomplete";
 
@@ -122,7 +122,7 @@ const DialogProduct = ({
   handleOk,
   handleClose,
   selectedDepartment = {} as Department,
-  selectedUnit = {key: "", name: ""},
+  selectedUnit = {key: "", name: "", dimension: UnitDimension.dimensionless},
   usable = true,
   departments = [],
   units = [],
@@ -156,11 +156,19 @@ const DialogProduct = ({
 
     switch (field) {
       case "unit_shoppingUnit":
-        value = newValue;
+        if (action !== "clear") {
+          value = newValue;
+        } else {
+          value = "";
+        }
         field = "shoppingUnit";
         break;
       case "department":
-        value = newValue;
+        if (action !== "clear") {
+          value = newValue;
+        } else {
+          value = "";
+        }
         break;
       case "name":
         value = event.target.value;
@@ -224,14 +232,6 @@ const DialogProduct = ({
       dietProperties: dietProperties,
     });
   };
-  // const onChangeUsableCheckbox = (
-  //   event: React.ChangeEvent<HTMLInputElement>
-  // ) => {
-  //   setProductPopUpValues({
-  //     ...productPopUpValues,
-  //     usable: event.target.checked,
-  //   });
-  // };
 
   /* ------------------------------------------
   // PopUp Abbrechen

@@ -152,7 +152,7 @@ export default class Feed {
         : {
             uid: authUser.uid,
             displayName: authUser.publicProfile.displayName,
-            pictureSrc: authUser.publicProfile.pictureSrc.normalSize,
+            pictureSrc: authUser.publicProfile.pictureSrc.smallSize,
           },
       created: {
         date: new Date(),

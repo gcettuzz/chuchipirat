@@ -56,6 +56,7 @@ interface CreateNewList {
   products: Product[];
   materials: Material[];
   departments: Department[];
+  units: Unit[];
   unitConversionBasic: UnitConversionBasic;
   unitConversionProducts: UnitConversionProducts;
   firebase: Firebase;
@@ -144,6 +145,7 @@ export default class ShoppingList {
     products,
     materials,
     departments,
+    units,
     unitConversionBasic,
     unitConversionProducts,
     firebase,
@@ -185,6 +187,7 @@ export default class ShoppingList {
                   portionsToScale:
                     menueplan.mealRecipes[mealRecipeUid].totalPortions,
                   scalingOptions: {convertUnits: true},
+                  units: units,
                   unitConversionBasic: unitConversionBasic,
                   unitConversionProducts: unitConversionProducts,
                   products: products,
@@ -411,10 +414,14 @@ export default class ShoppingList {
     let shoppingListItem = shoppingListReference.list[
       department.pos
     ].items.find(
-      (listItem: ShoppingListItem) => listItem.item.uid === item!.uid
+      (listItem: ShoppingListItem) =>
+        listItem.item.uid === item!.uid && listItem.unit === unit
     );
 
-    if (!shoppingListItem || shoppingListItem.unit != unit) {
+    if (shoppingListItem) {
+      // Gibt es schon -- Addieren
+      shoppingListItem.quantity = shoppingListItem.quantity + quantity;
+    } else {
       // Neu -- hinzufügen || Andere Einheit, gleich behandeln, wie neues Produkt
       shoppingListItem = {
         checked: false,
@@ -430,12 +437,7 @@ export default class ShoppingList {
 
       shoppingListReference.list[department.pos].items.push(shoppingListItem);
       return;
-    } else if (shoppingListItem.unit == unit) {
-      // Gibt es schon -- Addieren
-      shoppingListItem.quantity = shoppingListItem.quantity + quantity;
     }
-
-    // shoppingListReference.list[department.pos].items.push(shoppingListItem);
   };
   // ===================================================================== */
   /**
@@ -494,7 +496,6 @@ export default class ShoppingList {
             randomDepartment[
               Math.floor(Math.random() * randomDepartment.length)
             ];
-
           Feed.createFeedEntry({
             firebase: firebase,
             authUser: authUser,

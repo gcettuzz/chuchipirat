@@ -129,6 +129,9 @@ export default class HelpCenter {
             case ROUTES.SYSTEM_MAIL_CONSOLE:
               page = "mailconsole";
               break;
+            case ROUTES.SYSTEM_JOBS:
+              page = "jobs";
+              break;
             default:
               console.info(actualPath);
               page = "system";

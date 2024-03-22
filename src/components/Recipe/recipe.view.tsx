@@ -157,6 +157,7 @@ import UnitConversion, {
   UnitConversionProducts,
 } from "../Unit/unitConversion.class";
 import DialogReportError from "./dialogReportError";
+import Unit from "../Unit/unit.class";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
@@ -172,6 +173,7 @@ type DispatchAction = {
 };
 
 type State = {
+  units: Unit[] | null;
   unitConversionBasic: UnitConversionBasic | null;
   unitConversionProducts: UnitConversionProducts | null;
   products: Product[];
@@ -179,6 +181,7 @@ type State = {
   error: Error | null;
 };
 const inititialState: State = {
+  units: null,
   unitConversionBasic: null,
   unitConversionProducts: null,
   products: [],
@@ -190,6 +193,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.FETCH_MISSING_MASTERDATA:
       return {
         ...state,
+        units: action.payload.units,
         unitConversionBasic: action.payload.unitConversionBasic,
         unitConversionProducts: action.payload.unitConversionProducts,
         products: action.payload.products,
@@ -212,15 +216,6 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
 export interface OnAddToEvent {
   recipe: RecipeShort;
 }
-// interface DocumentProps {
-//   title?: string;
-//   author?: string;
-//   subject?: string;
-//   keywords?: string;
-//   creator?: string;
-//   producer?: string;
-//   onRender?: () => any;
-// }
 interface ScalingInformation {
   portions: number;
   ingredients: RecipeObjectStructure<Ingredient>;
@@ -414,6 +409,7 @@ const RecipeView = ({
     let unitConversionBasic = state.unitConversionBasic;
     let unitConversionProducts = state.unitConversionProducts;
     let products = state.products;
+    let units = state.units;
     if (
       scalingOptions.convertUnits == true &&
       (!state.unitConversionBasic || !state.unitConversionProducts)
@@ -463,7 +459,23 @@ const RecipeView = ({
             });
           });
       }
+      if (!state.units) {
+        await Unit.getAllUnits({
+          firebase: firebase,
+        })
+          .then((result) => {
+            units = result;
+          })
+          .catch((error) => {
+            console.error(error);
+            dispatch({
+              type: ReducerActions.GENERIC_ERROR,
+              payload: error,
+            });
+          });
+      }
       if (
+        units &&
         unitConversionBasic &&
         unitConversionProducts &&
         products.length > 0
@@ -471,6 +483,7 @@ const RecipeView = ({
         dispatch({
           type: ReducerActions.FETCH_MISSING_MASTERDATA,
           payload: {
+            units: units,
             unitConversionBasic: unitConversionBasic,
             unitConversionProducts: unitConversionProducts,
             products: products,
@@ -485,6 +498,7 @@ const RecipeView = ({
         portionsToScale: scaledPortions,
         scalingOptions: scalingOptions,
         products: products,
+        units: units,
         unitConversionBasic: unitConversionBasic,
         unitConversionProducts: unitConversionProducts,
       });
@@ -801,8 +815,8 @@ const RecipeView = ({
             <RecipePreparation recipe={recipe} />
           </Grid>
           {recipe.materials.order.length > 0 &&
-            recipe.materials.entries[recipe.materials.order[0]].material.uid !==
-              "" && (
+            recipe.materials.entries[recipe.materials.order[0]]?.material
+              .uid !== "" && (
               <Grid
                 item
                 xs={12}
@@ -1974,7 +1988,7 @@ export const RecipePreparation = ({recipe}: RecipePreparationProps) => {
                        --> nicht anzeigen! */}
                     {preparationStep.step && (
                       <Typography color="textSecondary">
-                        {Recipe.definePostionSectionAdjusted({
+                        {Recipe.definePositionSectionAdjusted({
                           uid: preparationStepUid,
                           entries: recipe.preparationSteps.entries,
                           order: recipe.preparationSteps.order,

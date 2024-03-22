@@ -164,7 +164,7 @@ interface DefineDietProperties {
   recipe: Recipe;
   products: Product[];
 }
-interface DefinePostionSectionAdjusted {
+interface DefinePositionSectionAdjusted {
   uid: string;
   order: string[];
   entries: {[key: string]: {posType: PositionType}};
@@ -253,6 +253,7 @@ interface Scale {
   recipe: Recipe;
   portionsToScale: number;
   scalingOptions?: ScalingOptions;
+  units?: Unit[] | null;
   unitConversionBasic?: UnitConversionBasic | null;
   unitConversionProducts?: UnitConversionProducts | null;
   products?: Product[];
@@ -700,14 +701,14 @@ export default class Recipe {
       // Alte Werte holen bevor gespeichert wird; dadurch wird entschieden ob später die
       // Cloudfunction die Änderungen überall updaten muss
       await firebase.recipePrivate
-        .read<Recipe>({uids: [authUser.uid, recipe.uid]})
+        .read<Recipe>({uids: [recipe.created.fromUid, recipe.uid]})
         .then((result) => {
           recipeNameBeforeSave = result.name;
         });
       //Speichern
       await firebase.recipePrivate
         .set<Recipe>({
-          uids: [authUser.uid, recipe.uid],
+          uids: [recipe.created.fromUid, recipe.uid],
           value: recipe,
           authUser: authUser,
         })
@@ -723,7 +724,7 @@ export default class Recipe {
     // 000_allRecipes Updaten
     firebase.recipeShortPrivate
       .updateFields({
-        uids: [authUser.uid],
+        uids: [recipe.created.fromUid],
         values: {
           [recipe.uid]: recipeShort,
         },
@@ -736,7 +737,7 @@ export default class Recipe {
         ) {
           // Dokument existiert nicht - neu Anlegen
           firebase.recipeShortPrivate.set({
-            uids: [authUser.uid],
+            uids: [recipe.created.fromUid],
             value: recipeShort,
             authUser: authUser,
           });
@@ -871,7 +872,7 @@ export default class Recipe {
       firebase.analytics.logEvent(FirebaseAnalyticEvent.recipeVariantCreated);
       Stats.incrementStat({
         firebase: firebase,
-        field: StatsField.noRecipeVariants,
+        field: StatsField.noRecipesVariants,
         value: 1,
       });
       Stats.incrementRecipeVariantCounter({
@@ -1005,14 +1006,19 @@ export default class Recipe {
   /* =====================================================================
   // Position definieren, und dabei die vorhergehenden Sektion ingnorieren
   // ===================================================================== */
-  static definePostionSectionAdjusted({
+  static definePositionSectionAdjusted({
     uid,
     entries,
     order,
-  }: DefinePostionSectionAdjusted) {
+  }: DefinePositionSectionAdjusted) {
     let positionCounter = 0;
+
+    if (Object.keys(entries).length !== order.length) {
+      return positionCounter;
+    }
+
     for (let i = 0; i < order.length; i++) {
-      if (entries[order[i]].posType !== PositionType.section) {
+      if (entries[order[i]]?.posType !== PositionType.section) {
         positionCounter++;
       }
 
@@ -1075,7 +1081,7 @@ export default class Recipe {
       case RecipeType.private:
         await firebase.recipePrivate
           .updateFields({
-            uids: [authUser.uid, recipe.uid],
+            uids: [recipe.created.fromUid, recipe.uid],
             values: {tags: tags},
             authUser: authUser,
           })
@@ -1086,7 +1092,7 @@ export default class Recipe {
 
         await firebase.recipeShortPrivate
           .updateFields({
-            uids: [authUser.uid],
+            uids: [recipe.created.fromUid],
             values: {
               [recipe.uid]: {
                 ...RecipeShort.createShortRecipeFromRecipe(recipe),
@@ -1261,7 +1267,7 @@ export default class Recipe {
   /* =====================================================================
   /**
    * deletePublic: öffentliches Rezept löschen
-   * alle nötigen Infos (000_allRecipes) udn Counter werden angepasst.
+   * alle nötigen Infos (000_allRecipes) und Counter werden angepasst.
    */
   private static deletePublic = async ({
     firebase,
@@ -1292,7 +1298,7 @@ export default class Recipe {
   /* =====================================================================
   /**
    * deletePrivate: Privates Rezept löschen
-   * alle nötigen Infos (000_allRecipes) udn Counter werden angepasst.
+   * alle nötigen Infos (000_allRecipes) und Counter werden angepasst.
    */
   private static deletePrivate = async ({
     firebase,
@@ -1304,7 +1310,7 @@ export default class Recipe {
     }
 
     await firebase.recipePrivate
-      .delete({uids: [authUser.uid, recipe.uid]})
+      .delete({uids: [recipe.created.fromUid, recipe.uid]})
       .catch((error) => {
         console.error(error);
         throw error;
@@ -1318,15 +1324,15 @@ export default class Recipe {
     // Dem User Credits nehmen
     UserPublicProfile.incrementField({
       firebase: firebase,
-      uid: authUser.uid,
+      uid: recipe.created.fromUid,
       field: UserPublicProfileStatsFields.noRecipesPrivate,
       step: -1,
     });
   };
   /* =====================================================================
   /**
-   * deletePrivate: Privates Rezept löschen
-   * alle nötigen Infos (000_allRecipes) udn Counter werden angepasst.
+   * deleteVariant: Varianten-Rezept löschen
+   * alle nötigen Infos (000_allRecipes) und Counter werden angepasst.
    */
   private static deleteVariant = async ({firebase, recipe}: Delete) => {
     await firebase.recipeVariant
@@ -1338,7 +1344,7 @@ export default class Recipe {
     // Counter für Stats herunterzählen
     Stats.incrementStat({
       firebase: firebase,
-      field: StatsField.noRecipeVariants,
+      field: StatsField.noRecipesVariants,
       value: -1,
     });
     Stats.incrementRecipeVariantCounter({
@@ -1390,7 +1396,7 @@ export default class Recipe {
       })
       .then(() => {
         Stats.incrementStat({
-          field: StatsField.noRecipeVariants,
+          field: StatsField.noRecipesVariants,
           value: counter * -1,
           firebase: firebase,
         });
@@ -1841,6 +1847,7 @@ export default class Recipe {
     recipe,
     portionsToScale,
     scalingOptions,
+    units,
     unitConversionBasic,
     unitConversionProducts,
     products,
@@ -1883,6 +1890,7 @@ export default class Recipe {
                 productUid: scaledIngredient.product.uid,
                 fromUnit: scaledIngredient.unit,
                 toUnit: product!.shoppingUnit!,
+                units: units!,
                 unitConversionBasic: unitConversionBasic!,
                 unitConversionProducts: unitConversionProducts!,
               });
@@ -1932,7 +1940,7 @@ export default class Recipe {
     });
     // Rezept update, dass sich diesen in Review befindet.
     await firebase.recipePrivate.updateFields({
-      uids: [authUser.uid, recipe.uid],
+      uids: [recipe.created.fromUid, recipe.uid],
       values: {isInReview: true},
       authUser: authUser,
     });

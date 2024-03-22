@@ -91,7 +91,6 @@ const TempBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
   if (!authUser) {
     return null;
   }
-  console.log(firebase);
 
   const moveRecipes = async () => {
     firebase.db

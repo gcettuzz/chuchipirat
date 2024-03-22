@@ -18,7 +18,7 @@ import {MenueCoordinates} from "../Event/Menuplan/menuplan.class";
 import {Footer} from "../Shared/pdfComponents";
 
 /* ===================================================================
-// ======================= Mengenberechnung PDF ======================
+// ============================ Rezept PDF ===========================
 // =================================================================== */
 interface RecipePdfProps {
   recipe: Recipe;

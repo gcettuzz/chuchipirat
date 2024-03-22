@@ -78,13 +78,13 @@ export class RequestPublishRecipe extends Request {
           TEXT_REQUEST_STATUS_TRANSITION_PUBLISH_RECIPE.created.declined
             .description,
       },
-      {
-        fromState: RequestStatus.inReview,
-        toState: RequestStatus.backToAuthor,
-        description:
-          TEXT_REQUEST_STATUS_TRANSITION_PUBLISH_RECIPE.created.backToAuthor
-            .description,
-      },
+      // {
+      //   fromState: RequestStatus.inReview,
+      //   toState: RequestStatus.backToAuthor,
+      //   description:
+      //     TEXT_REQUEST_STATUS_TRANSITION_PUBLISH_RECIPE.created.backToAuthor
+      //       .description,
+      // },
       {
         fromState: RequestStatus.inReview,
         toState: RequestStatus.done,
@@ -164,7 +164,17 @@ export class RequestPublishRecipe extends Request {
         });
         break;
       case RequestStatus.declined:
-        //TODO: Mail auslösen
+        firebase.cloudFunction.declineRecipeRequest.triggerCloudFunction({
+          values: {
+            requestUid: request.uid,
+            requestNumber: request.number,
+            recipeName: request.requestObject.name,
+            recipeUid: request.requestObject.uid,
+            recipeAuthorUid: request.author.uid,
+          },
+          authUser: authUser,
+        });
+
         break;
       default:
         return;

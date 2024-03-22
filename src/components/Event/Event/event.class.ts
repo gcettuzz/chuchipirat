@@ -61,6 +61,7 @@ export enum EventRefDocuments {
   shoppingList,
   materialList,
   recipeVariants,
+  receipt,
 }
 
 export interface Cook extends AuthUserPublicProfile {
@@ -512,10 +513,12 @@ export default class Event {
       // Event auslösen
       firebase.analytics.logEvent(FirebaseAnalyticEvent.eventCreated);
       // Statistik
-      Stats.incrementStat({
+      Stats.incrementStats({
         firebase: firebase,
-        field: StatsField.noEvents,
-        value: 1,
+        values: [
+          {field: StatsField.noEvents, value: 1},
+          {field: StatsField.noPlanedDays, value: eventData.numberOfDays},
+        ],
       });
 
       // Allen Teammitgliedern Credits geben
@@ -663,10 +666,12 @@ export default class Event {
       })
       .then(async () => {
         // Statistik anpassen
-        Stats.incrementStat({
+        Stats.incrementStats({
           firebase: firebase,
-          field: StatsField.noEvents,
-          value: -1,
+          values: [
+            {field: StatsField.noEvents, value: -1},
+            {field: StatsField.noPlanedDays, value: event.numberOfDays * -1},
+          ],
         });
       })
       .then(async () => {

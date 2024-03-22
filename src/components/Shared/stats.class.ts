@@ -1,5 +1,6 @@
 import {HOME_STATS_CAPTIONS as TEXT_HOME_STATS_CAPTIONS} from "../../constants/text";
 import AuthUser from "../Firebase/Authentication/authUser.class";
+import {CloudFunctionRebuildStatsDocumentStructure} from "../Firebase/Db/firebase.db.cloudfunction.rebuildStats.class";
 import Firebase from "../Firebase/firebase.class";
 import Recipe from "../Recipe/recipe.class";
 
@@ -10,16 +11,25 @@ export enum StatsField {
   noMaterials = "noMaterials",
   noRecipesPublic = "noRecipesPublic",
   noRecipesPrivate = "noRecipesPrivate",
-  noRecipeVariants = "noRecipesVariants",
+  noRecipesVariants = "noRecipesVariants",
   noShoppingLists = "noShoppingLists",
   noParticipants = "noParticipants",
   noMaterialLists = "noMaterialLists",
+  noPortions = "noPortions",
+  noPlanedDays = "noPlanedDays",
 }
 
 interface incrementStat {
   firebase: Firebase;
   field: StatsField;
   value: number;
+}
+interface incrementStats {
+  firebase: Firebase;
+  values: {
+    field: StatsField;
+    value: number;
+  }[];
 }
 interface Save {
   firebase: Firebase;
@@ -31,20 +41,33 @@ interface IncrementRecipeVariantCounter {
   recipeUid: Recipe["uid"];
   value: number;
 }
+interface RebuildStats {
+  firebase: Firebase;
+  authUser: AuthUser;
+  callback: ({
+    date,
+    done,
+    errorMessage,
+    processedDocuments,
+  }: CloudFunctionRebuildStatsDocumentStructure) => void;
+}
 export interface Kpi {
   id: StatsField;
   value: number;
   caption: string;
 }
-
+//HINT💡: Muss in der Cloud-FX nachgeführt werden
 export default class Stats {
+  // HINT: auch in enum StatsField nachführen
   noEvents: number;
   noIngredients: number;
   noMaterials: number;
   noParticipants: number;
+  noPortions: number;
+  noPlanedDays: number;
   noRecipesPublic: number;
   noRecipesPrivate: number;
-  noRecipeVariants: number;
+  noRecipesVariants: number;
   noShoppingLists: number;
   noMaterialLists: number;
   noUsers: number;
@@ -56,9 +79,11 @@ export default class Stats {
     this.noIngredients = 0;
     this.noMaterials = 0;
     this.noParticipants = 0;
+    this.noPortions = 0;
+    this.noPlanedDays = 0;
     this.noRecipesPublic = 0;
     this.noRecipesPrivate = 0;
-    this.noRecipeVariants = 0;
+    this.noRecipesVariants = 0;
     this.noShoppingLists = 0;
     this.noMaterialLists = 0;
     this.noUsers = 0;
@@ -73,6 +98,17 @@ export default class Stats {
       uids: [""],
       field: field,
       value: value,
+    });
+  }
+  /* =====================================================================
+  // Statistikfeld um X erhöhen
+  // ===================================================================== */
+  /* istanbul ignore next */
+  /* DB-Methode wird zur Zeit nicht geprüft */
+  static incrementStats({firebase, values}: incrementStats) {
+    firebase.stats.counter.incrementFields({
+      uids: [""],
+      values: values,
     });
   }
   /* =====================================================================
@@ -117,30 +153,32 @@ export default class Stats {
   // Texte zu ID holen
   // ===================================================================== */
   static getCaptionFromField = (field: StatsField) => {
-    switch (field) {
-      case StatsField.noUsers:
-        return TEXT_HOME_STATS_CAPTIONS.USERS;
-      case StatsField.noEvents:
-        return TEXT_HOME_STATS_CAPTIONS.EVENTS;
-      case StatsField.noIngredients:
-        return TEXT_HOME_STATS_CAPTIONS.INGREDIENTS;
-      case StatsField.noRecipesPublic:
-        return TEXT_HOME_STATS_CAPTIONS.RECIPES_PUBLIC;
-      case StatsField.noRecipesPrivate:
-        return TEXT_HOME_STATS_CAPTIONS.RECIPES_PRIVATE;
-      case StatsField.noShoppingLists:
-        return TEXT_HOME_STATS_CAPTIONS.SHOPPING_LISTS;
-      case StatsField.noParticipants:
-        return TEXT_HOME_STATS_CAPTIONS.PARTICIPANTS;
-      case StatsField.noMaterials:
-        return TEXT_HOME_STATS_CAPTIONS.MATERIALS;
-      case StatsField.noRecipeVariants:
-        return TEXT_HOME_STATS_CAPTIONS.RECIPES_VARIANTS;
-      case StatsField.noMaterialLists:
-        return TEXT_HOME_STATS_CAPTIONS.MATERIALLISTS;
-      default:
-        return "";
-    }
+    return TEXT_HOME_STATS_CAPTIONS[field];
+    // switch (field) {
+    //   case StatsField.noUsers:
+    //     return TEXT_HOME_STATS_CAPTIONS.USERS;
+    //   case StatsField.noEvents:
+    //     return TEXT_HOME_STATS_CAPTIONS.EVENTS;
+    //   case StatsField.noIngredients:
+    //     return TEXT_HOME_STATS_CAPTIONS.INGREDIENTS;
+    //   case StatsField.noRecipesPublic:
+    //     return TEXT_HOME_STATS_CAPTIONS.RECIPES_PUBLIC;
+    //   case StatsField.noRecipesPrivate:
+    //     return TEXT_HOME_STATS_CAPTIONS.RECIPES_PRIVATE;
+    //   case StatsField.noShoppingLists:
+    //     return TEXT_HOME_STATS_CAPTIONS.SHOPPING_LISTS;
+    //   case StatsField.noParticipants:
+    //     return TEXT_HOME_STATS_CAPTIONS.PARTICIPANTS;
+    //   case StatsField.noMaterials:
+    //     return TEXT_HOME_STATS_CAPTIONS.MATERIALS;
+    //   case StatsField.noRecipesVariants:
+    //     return TEXT_HOME_STATS_CAPTIONS.RECIPES_VARIANTS;
+    //   case StatsField.noMaterialLists:
+    //     return TEXT_HOME_STATS_CAPTIONS.MATERIALLISTS;
+    //   case statsfie
+    //     default:
+    //     return "";
+    // }
   };
   /* =====================================================================
   // Statistik Verwendete Rezepte in Menüplan
@@ -190,5 +228,54 @@ export default class Stats {
       field: recipeUid,
       value: value,
     });
+  };
+  /* =====================================================================
+  // Alle Zähler neu zählen
+  // ===================================================================== */
+  static rebuildStats = async ({
+    firebase,
+    authUser,
+    callback,
+  }: RebuildStats) => {
+    let unsubscribe: () => void;
+    let documentId = "";
+
+    await firebase.cloudFunction.rebuildStats
+      .triggerCloudFunction({
+        values: {},
+        authUser: authUser,
+      })
+      .then((result) => {
+        documentId = result;
+      })
+      .then(() => {
+        // Melden wenn fertig
+        const callbackCaller = (data) => {
+          if (data?.done) {
+            callback(data);
+            unsubscribe();
+          }
+        };
+
+        const errorCallback = (error: Error) => {
+          console.error(error);
+          throw error;
+        };
+
+        firebase.cloudFunction.rebuildStats
+          .listen({
+            uids: [documentId],
+            callback: callbackCaller,
+            errorCallback: errorCallback,
+          })
+          .then((result) => {
+            console.warn(result);
+            unsubscribe = result;
+          });
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
   };
 }

@@ -74,7 +74,7 @@ import useStyles from "../../constants/styles";
 import Action from "../../constants/actions";
 
 import Product from "../Product/product.class";
-import Unit from "../Unit/unit.class";
+import Unit, {UnitDimension} from "../Unit/unit.class";
 import Utils from "../Shared/utils.class";
 import Department from "../Department/department.class";
 import AlertMessage from "../Shared/AlertMessage";
@@ -655,7 +655,11 @@ const RecipeEdit = ({
       Unit.getAllUnits({firebase: firebase})
         .then((result) => {
           // leeres Feld gehört auch dazu
-          result.push({key: "", name: ""});
+          result.push({
+            key: "",
+            name: "",
+            dimension: UnitDimension.dimensionless,
+          });
 
           dispatch({
             type: ReducerActions.UNITS_FETCH_SUCCESS,
@@ -1356,7 +1360,6 @@ const RecipeEdit = ({
         break;
     }
   };
-
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <React.Fragment>
@@ -1992,7 +1995,7 @@ const RecipeIngredients = ({
                             />
                           ) : (
                             <IngredientPosition
-                              position={Recipe.definePostionSectionAdjusted({
+                              position={Recipe.definePositionSectionAdjusted({
                                 uid: ingredientUid,
                                 entries: recipe.ingredients.entries,
                                 order: recipe.ingredients.order,
@@ -2281,7 +2284,7 @@ const RecipePreparationSteps = ({
                               // Zubereitungsschritt
                               <PreparationStepPosition
                                 key={preparationStepUid}
-                                position={Recipe.definePostionSectionAdjusted({
+                                position={Recipe.definePositionSectionAdjusted({
                                   uid: preparationStepUid,
                                   entries: recipe.preparationSteps.entries,
                                   order: recipe.preparationSteps.order,

@@ -294,7 +294,10 @@ export abstract class Request {
         throw new Error("RequestType unbekannt.");
     }
 
-    if (request.status === RequestStatus.done) {
+    if (
+      request.status === RequestStatus.done ||
+      request.status === RequestStatus.declined
+    ) {
       Request.closeRequest({
         request: request,
         firebase: firebase,

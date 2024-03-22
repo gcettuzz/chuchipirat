@@ -26,6 +26,8 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import FirebaseDbCloudFunctionRebuildStats from "./firebase.db.cloudfunction.rebuildStats.class";
+import FirebaseDbCloudFunctionDeclineRecipeRequest from "./firebase.db.cloudfunction.declineRecipeRequest.class";
 export class FirebaseDbCloudFunction extends FirebaseDbSuper {
   firebase: Firebase;
   log: FirebaseDbCloudFunctionLog;
@@ -36,6 +38,7 @@ export class FirebaseDbCloudFunction extends FirebaseDbSuper {
   updateUserDisplayName: FirebaseDbCloudFunctionUpdateUserDisplayName;
   updateUserPictureSrc: FirebaseDbCloudFunctionUpdateUserPictureSrc;
   publishRecipeRequest: FirebaseDbCloudFunctionPublishRecipeRequest;
+  declineRecipeRequest: FirebaseDbCloudFunctionDeclineRecipeRequest;
   sendMail: FirebaseDbCloudFunctionSendMail;
   deleteFeeds: FirebaseDbCloudFunctionDeleteFeeds;
   mergeProducts: FirebaseDbCloudFunctionMergeProducts;
@@ -43,6 +46,7 @@ export class FirebaseDbCloudFunction extends FirebaseDbSuper {
   updateProduct: FirebaseDbCloudFunctionUpdateProduct;
   activateSupportUser: FirebaseDbCloudFunctionActivateSupportUser;
   signOutAllUsers: FirebaseDbCloudFunctionSignOutAllUsers;
+  rebuildStats: FirebaseDbCloudFunctionRebuildStats;
   /* =====================================================================
   // Constructor
   // ===================================================================== */
@@ -62,6 +66,9 @@ export class FirebaseDbCloudFunction extends FirebaseDbSuper {
     this.publishRecipeRequest = new FirebaseDbCloudFunctionPublishRecipeRequest(
       firebase
     );
+    this.declineRecipeRequest = new FirebaseDbCloudFunctionDeclineRecipeRequest(
+      firebase
+    );
     this.sendMail = new FirebaseDbCloudFunctionSendMail(firebase);
     this.deleteFeeds = new FirebaseDbCloudFunctionDeleteFeeds(firebase);
     this.mergeProducts = new FirebaseDbCloudFunctionMergeProducts(firebase);
@@ -73,6 +80,7 @@ export class FirebaseDbCloudFunction extends FirebaseDbSuper {
       firebase
     );
     this.signOutAllUsers = new FirebaseDbCloudFunctionSignOutAllUsers(firebase);
+    this.rebuildStats = new FirebaseDbCloudFunctionRebuildStats(firebase);
   }
   /* =====================================================================
   // Collection holen

@@ -18,7 +18,6 @@ export const BUTTON_SAVE = "Speichern";
 export const BUTTON_EDIT = "Bearbeiten";
 export const BUTTON_CANCEL = "Abbrechen";
 export const BUTTON_SHOW = "Anzeigen";
-export const BUTTON_CREATE = "Erstellen";
 export const BUTTON_ADD = "Hinzufügen";
 export const BUTTON_ADD_COMMENT = "Kommentar Hinzufügen";
 export const BUTTON_CHANGE = "Ändern";
@@ -351,7 +350,7 @@ export const PLEASE_DONATE = "Spende erwünscht";
 export const WHY_DONATE =
   "Unser Team arbeitet ehrenamtlich, um die App kostenlos anzubieten. Wir sind auf Spenden angewiesen, um die laufenden Kosten zu decken. Wenn dir die App gefällt und dein Anlassbudget es zulässt, unterstütze uns gerne mit einer Spende von Fr. 5.00. Dein Beitrag hilft, das Angebot weiterhin kostenlos anbieten zu können sowie die App am Laufen zu halten und weiter zu verbessern.";
 export const NEED_A_RECEIPT =
-  "Wenn du eine Quittung für den gespendeten Betrag benötigst, melde dich bitte unter hallo@chuchipirat.ch mit folgenden Angaben: Eventname, Zahlungsdatum und -uhrzeit. Wir senden dir dann gerne eine Quittung zu.";
+  "Wenn du eine Quittung für den gespendeten Betrag benötigst, melde dich bitte unter hallo@chuchipirat.ch mit folgenden Angaben: Eventname und Zahlungsdatum. Wir senden dir dann gerne eine Quittung zu.";
 export const THANK_YOU_1000 = "Merci 1000";
 export const ROLE_TYPES = {
   admin: "Admin",
@@ -640,16 +639,18 @@ export const REFRESH_APP_TEXT =
 // ===================================================================== */
 export const STATS = "Statistik";
 export const HOME_STATS_CAPTIONS = {
-  USERS: "Köche",
-  EVENTS: "Anlässe",
-  INGREDIENTS: "Lebensmittel",
-  RECIPES_PUBLIC: "öffentliche Rezepte",
-  RECIPES_PRIVATE: "private Rezepte",
-  RECIPES_VARIANTS: "Anlassvarianten Rezepte",
-  SHOPPING_LISTS: "Generierte Postizettel",
-  PARTICIPANTS: "bekochte Personen",
-  MATERIALS: "Materialien",
-  MATERIALLISTS: "Generierte Materiallisten",
+  noUsers: "Köche",
+  noEvents: "Anlässe",
+  noIngredients: "Lebensmittel",
+  noRecipesPublic: "öffentliche Rezepte",
+  noRecipesPrivate: "private Rezepte",
+  noRecipesVariants: "Anlassvarianten Rezepte",
+  noShoppingLists: "Generierte Postizettel",
+  noParticipants: "bekochte Personen",
+  noPortions: "Geplante Portionen",
+  noPlanedDays: "Geplante Anlasstage",
+  noMaterials: "Materialien",
+  noMaterialLists: "Generierte Materiallisten",
 };
 /* =====================================================================
 // Meldungen rund um SignIn/SignUp
@@ -1141,6 +1142,7 @@ export const PLANED_FOR = "Geplant für";
 export const FOR_DATIVE = "zum";
 export const UNIT = "Einheit";
 export const UNITS = "Einheiten";
+export const DIMENSION = "Dimension";
 export const UNIT_ABREVIATION = "Einheit (Abkürzung)";
 export const UID = "UID";
 export const DENOMINATOR = "Menge von";
@@ -1236,6 +1238,19 @@ export const CLOUD_FX_TRIGGER_DOCS_DELETED = "Mailprotokolle gelöscht";
 export const DATE = "Datum";
 export const INVOKED = "Ausgeführt";
 export const PROCESSED_DOCUMENTS = "Verarbeitete Dokumente";
+export const UNIT_DIMENSION = {
+  VOL: "Volumen",
+  MAS: "Masse",
+  DLS: "Dimensionslos",
+};
+export const RECEIPT = "Quittung";
+export const CREATE_RECEIPT = "Quittung erstellen";
+export const PAY_DATE = "Bezahlt am";
+export const DONOR = "Spender*in";
+export const AMOUNT = "Betrag";
+export const RECEIPT_THANK_YOU =
+  "Danke für deine Spende. Deine Spende ermöglicht es, den chuchipirat weiterzuentwickeln und weiterhin kostenlos anzubieten.";
+export const ASSOCIATION = "Verein";
 /* =====================================================================
 // Abkürzungen
 // ===================================================================== */

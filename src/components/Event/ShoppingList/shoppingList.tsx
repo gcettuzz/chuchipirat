@@ -398,6 +398,7 @@ const EventShoppingListPage = ({
           products: products,
           materials: materials,
           departments: departments,
+          units: units,
           unitConversionBasic: unitConversionBasic!,
           unitConversionProducts: unitConversionProducts!,
           firebase: firebase,
@@ -508,6 +509,7 @@ const EventShoppingListPage = ({
       eventUid: event.uid,
       products: products,
       materials: materials,
+      units: units,
       unitConversionBasic: unitConversionBasic!,
       unitConversionProducts: unitConversionProducts!,
       departments: departments,
@@ -1052,7 +1054,6 @@ const EventShoppingListPage = ({
   const onRecipeDrawerClose = () => {
     setRecipeDrawerData({...recipeDrawerData, open: false});
   };
-
   return (
     <React.Fragment>
       {state.error && (

@@ -15,7 +15,7 @@ import {
   Card,
   CardHeader,
   CardContent,
-  CardMedia,
+  useMediaQuery,
 } from "@material-ui/core";
 
 import {
@@ -69,9 +69,8 @@ import {
 } from "../../Session/authUserContext";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import {CustomRouterProps} from "../../Shared/global.interface";
-
-import {twintQrCodeSvg} from "../../Shared/twintQrCode";
-
+import {ImageRepository} from "../../../constants/imageRepository";
+import {TWINT_PAYLINK} from "../../../constants/defaultValues";
 /* ===================================================================
 // ============================== Global =============================
 // =================================================================== */
@@ -439,61 +438,113 @@ const CreateEventCompletion = ({
   onReturn,
 }: CreateEventCompletionProps) => {
   const classes = useStyles();
-  return (
-    <Grid container spacing={2}>
-      <Grid item xs={12}>
-        <Card>
-          <CardHeader title={TEXT_COMPLETION} />
-          <CardContent>
-            <Typography>{TEXT_RESUME_INTRODUCTION(event.name)}</Typography>
-            <br />
-            <Typography>
-              <strong>{TEXT_PLEASE_DONATE}</strong>
-              <br />
-              {TEXT_WHY_DONATE}
-              <br />
-              {TEXT_NEED_A_RECEIPT}
-              <br />
-              <br />
-              {TEXT_THANK_YOU_1000}
-            </Typography>
-          </CardContent>
-          <CardMedia
-            component="img"
-            title="Twint-QR-Code"
-            className={classes.cardMediaQrCode}
-            src={`data:image/svg+xml;utf8,${encodeURIComponent(
-              twintQrCodeSvg
-            )}`}
-          />
-          <Typography align="center" variant="subtitle1">
-            Wenn du etwas spenden möchtest, nutze bitte Twint.
-          </Typography>
-          <br />
-        </Card>
-      </Grid>
 
-      <Grid item xs={12}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} container justifyContent="flex-end">
-            <Button variant="outlined" color="primary" onClick={onReturn}>
-              {TEXT_BACK_TO_GROUPCONFIG}
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              style={{marginLeft: "1rem"}}
-              onClick={onProceed}
-            >
-              {TEXT_CONTIUNE}
-            </Button>
+  return (
+    <Container component="main" maxWidth="md">
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <Card>
+            <CardHeader title={TEXT_COMPLETION} />
+            <CardContent>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <Typography>
+                    {TEXT_RESUME_INTRODUCTION(event.name)}
+                  </Typography>
+                  <br />
+                  <Typography>
+                    <strong>{TEXT_PLEASE_DONATE}</strong>
+                    <br />
+                    {TEXT_WHY_DONATE}
+                    <br />
+                    {TEXT_NEED_A_RECEIPT}
+                    <br />
+                    <br />
+                    {TEXT_THANK_YOU_1000}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Grid container justifyContent="center">
+                    <img
+                      src={
+                        ImageRepository.getEnviromentRelatedPicture()
+                          .TWINT_QR_CODE
+                      }
+                      className={classes.cardMediaQrCode}
+                      style={{maxWidth: "100%", height: "auto"}}
+                    />
+                  </Grid>
+                </Grid>
+                <Grid item xs={12}>
+                  <Grid container justifyContent="center">
+                    <TwintButton />
+                  </Grid>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} container justifyContent="flex-end">
+              <Button variant="outlined" color="primary" onClick={onReturn}>
+                {TEXT_BACK_TO_GROUPCONFIG}
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                style={{marginLeft: "1rem"}}
+                onClick={onProceed}
+              >
+                {TEXT_CONTIUNE}
+              </Button>
+            </Grid>
           </Grid>
         </Grid>
       </Grid>
-    </Grid>
+    </Container>
   );
 };
+// ===================================================================
+// ============================ Twint Button =========================
+// =================================================================== */
+const TwintButton = () => {
+  const classes = useStyles();
+  // const theme = useTheme();
+  const [darkMode, setDarkMode] = React.useState(false);
 
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+
+  React.useEffect(() => {
+    setDarkMode(prefersDarkMode);
+  }, [prefersDarkMode]);
+
+  return (
+    <Button
+      // style={{paddingLeft: theme.spacing(2), marginRight: theme.spacing(2)}}
+      fullWidth
+      startIcon={
+        <img
+          src={
+            darkMode
+              ? "https://assets.raisenow.io/twint-logo-light.svg"
+              : "https://assets.raisenow.io/twint-logo-dark.svg"
+          }
+          alt="Twint-Icon"
+        />
+      }
+      onClick={() => {
+        window.open(TWINT_PAYLINK, "_blank");
+      }}
+      className={`${classes.twintButton} ${
+        darkMode ? classes.twintButtonDarkMode : classes.twintButtonLightMode
+      }`}
+    >
+      Mit TWINT bezahlen
+    </Button>
+  );
+};
 /* ===================================================================
 // ============================== Stepper ============================
 // =================================================================== */
@@ -515,6 +566,7 @@ const CreateEventStepper = ({activeStep}: CreateEventStepperProps) => {
     </Stepper>
   );
 };
+
 const condition = (authUser: AuthUser | null) => !!authUser;
 
 export default compose(

@@ -210,6 +210,13 @@ interface IncrementFieldValue {
   value: number;
   prefix?: string;
 }
+interface IncrementFieldsValue {
+  storageObjectProperty: StorageObjectProperty;
+  documentUid: string;
+  values: {field: string; value: number}[];
+  prefix?: string;
+}
+
 interface DeleteDocument {
   storageObjectProperty: StorageObjectProperty;
   documentUid: string;
@@ -474,7 +481,7 @@ export class SessionStorageHandler {
               case Operator.NE:
                 return entry.value[statement.field] != statement.value;
               case Operator.ArrayContains:
-                return entry.value[statement.field].includes(statement.value);
+                return entry.value[statement.field]?.includes(statement.value);
               case Operator.ArrayContainsAny:
                 throw Error(ERROR_NOT_IMPLEMENTED_YET);
               case Operator.in:
@@ -542,6 +549,59 @@ export class SessionStorageHandler {
       value: {
         ...sessionStorageValue[documentPrefixUid].value,
         [field]: sessionStorageValue[documentPrefixUid].value[field] + value,
+      },
+    };
+
+    SessionStorageHandler.setSessionStorageEntry({
+      storageObjectProperty: storageObjectProperty,
+      value: sessionStorageValue,
+    });
+  }
+  // ===================================================================== */
+  /**
+   * Die Feldwerte um den Wert VALUE erhöhen.
+   * @param object - Objekt mit Einstellungen für diesen Objekttyp und der
+   * Dokumenten-UID, Wert der erhöht/reduziert werden soll, Prefix
+   */
+  static incrementFieldsValue({
+    storageObjectProperty,
+    documentUid,
+    values,
+    prefix,
+  }: IncrementFieldsValue) {
+    // Dokument lesen
+    if (storageObjectProperty.excludeFromCaching) {
+      return;
+    }
+    const sessionStorageValue = SessionStorageHandler.getSessionStorageEntry({
+      storageObjectProperty: storageObjectProperty,
+    });
+
+    // Dokument-ID erstellen
+    const documentPrefixUid = SessionStorageHandler.mergeStorageDocumentUid(
+      storageObjectProperty,
+      documentUid,
+      prefix
+    );
+
+    if (!sessionStorageValue || !sessionStorageValue[documentPrefixUid]) {
+      // Wenn kein File vorhanden ist, können auch keine
+      // einzelnen Felder angepasst werden
+      return;
+    }
+
+    const newValues = {};
+    values.forEach((value) => {
+      newValues[value.field] =
+        sessionStorageValue[documentPrefixUid].value[value.field] + value.value;
+    });
+
+    // Wert überklatschen
+    sessionStorageValue[documentPrefixUid] = {
+      date: new Date(),
+      value: {
+        ...sessionStorageValue[documentPrefixUid].value,
+        newValues,
       },
     };
 
@@ -706,5 +766,12 @@ export class SessionStorageHandler {
     } else {
       return documentUid;
     }
+  }
+  // ===================================================================== */
+  /**
+   * Gesamer Session-Storage löschen
+   */
+  static clearAll() {
+    sessionStorage.clear();
   }
 }
