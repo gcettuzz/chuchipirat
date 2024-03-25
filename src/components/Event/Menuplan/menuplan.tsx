@@ -1760,6 +1760,7 @@ const MenuplanPage = ({
         departments={departments}
         productToUpdate={dialogGoodsData.product}
         materialToUpdate={dialogGoodsData.material}
+        firebase={firebase}
         authUser={authUser}
         onCancel={onDialogGoodsCancel}
         onOk={onDialogGoodsOk}
@@ -4392,6 +4393,7 @@ interface DialogGoodsProps {
   }: OnAddGoodToMenuProps) => void;
   onMaterialCreate: (material: Material) => void;
   onProductCreate: (product: Product) => void;
+  firebase: Firebase;
 }
 interface DialogGoodsValues {
   planMode: GoodsPlanMode;
@@ -4430,6 +4432,7 @@ export const DialogGoods = ({
   productToUpdate,
   materialToUpdate,
   departments,
+  firebase,
   authUser,
   onCancel: onCancelSuper,
   onOk: onOkSuper,
@@ -4610,6 +4613,7 @@ export const DialogGoods = ({
   // Pop-Up Handler Material/Produkt
   // ------------------------------------------ */
   const onMaterialCreate = (material: Material) => {
+    setDialogValues({...dialogValues, material: material});
     setMaterialAddPopupValues({
       ...MATERIAL_POP_UP_VALUES_INITIAL_STATE,
       popUpOpen: false,
@@ -4618,6 +4622,7 @@ export const DialogGoods = ({
     onMaterialCreateSuper(material);
   };
   const onProductCreate = (product: Product) => {
+    setDialogValues({...dialogValues, product: product});
     setProductAddPopupValues({
       ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
       popUpOpen: false,
@@ -4666,7 +4671,6 @@ export const DialogGoods = ({
     setDialogValues(DIALOG_VALUES_INITIAL_STATE);
     onCancelSuper();
   };
-
   return (
     <React.Fragment>
       <Dialog
@@ -4801,8 +4805,10 @@ export const DialogGoods = ({
         handleOk={onMaterialCreate}
         handleClose={onCloseDialogMaterial}
         authUser={authUser}
+        firebase={firebase}
       />
       <DialogProduct
+        firebase={firebase}
         productName={productAddPopupValues.name}
         productUid={productAddPopupValues.uid}
         productDietProperties={productAddPopupValues.dietProperties}

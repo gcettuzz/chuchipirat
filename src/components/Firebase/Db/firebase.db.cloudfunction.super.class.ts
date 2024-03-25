@@ -26,6 +26,7 @@ export enum CloudFunctionType {
   deleteRecipe = "deleteRecipe",
   traceObject = "traceObject",
   updateProduct = "updateProduct",
+  updateMaterial = "updateMaterial",
   publishRecipeRequest = "publishRecipeRequest",
   declineRecipeRequest = "declineRecipeRequest",
   sendMail = "sendMail",

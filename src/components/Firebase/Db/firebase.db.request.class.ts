@@ -1,5 +1,10 @@
 import Firebase from "../firebase.class";
-import {FirebaseDbSuper, ValueObject} from "./firebase.db.super.class";
+import {
+  FirebaseDbSuper,
+  PrepareDataForApp,
+  PrepareDataForDb,
+  ValueObject,
+} from "./firebase.db.super.class";
 
 import {
   ERROR_WRONG_DB_CLASS,
@@ -12,13 +17,11 @@ import {
 import FirebaseDbRequestActive from "./firebase.db.request.active.class";
 import FirebaseDbRequestNumberStorage from "./firebase.db.request.numberStorage.class";
 import FirebaseDbRequestClosed from "./firebase.db.request.closed.class";
-import FirebaseDbRequestLog from "./firebase.db.request.log.class";
 
 export class FirebaseDbRequest extends FirebaseDbSuper {
   firebase: Firebase;
   active: FirebaseDbRequestActive;
   closed: FirebaseDbRequestClosed;
-  log: FirebaseDbRequestLog;
   numberStorage: FirebaseDbRequestNumberStorage;
 
   /* =====================================================================
@@ -29,15 +32,13 @@ export class FirebaseDbRequest extends FirebaseDbSuper {
     this.firebase = firebase;
     this.active = new FirebaseDbRequestActive(firebase);
     this.closed = new FirebaseDbRequestClosed(firebase);
-    this.log = new FirebaseDbRequestLog(firebase);
     this.numberStorage = new FirebaseDbRequestNumberStorage(firebase);
   }
   /* =====================================================================
   // Collection holen
   // ===================================================================== */
   getCollection() {
-    throw Error(ERROR_WRONG_DB_CLASS);
-    return this.firebase.db.collection("_requests");
+    return this.firebase.db.collection("requests");
   }
   /* =====================================================================
   // Collection-Group holen
@@ -50,8 +51,7 @@ export class FirebaseDbRequest extends FirebaseDbSuper {
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
-    throw Error(ERROR_WRONG_DB_CLASS);
-    return this.firebase.db.doc(`_requests/${uids[0]}`);
+    return this.firebase.db.doc(`requests/${uids[0]}`);
   }
   /* =====================================================================
   // Dokumente holen
@@ -63,14 +63,14 @@ export class FirebaseDbRequest extends FirebaseDbSuper {
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForDb() {
-    return {};
+  prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
+    return value as T;
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>() {
-    return {} as unknown as T;
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
+    return value as unknown as T;
   }
   /* =====================================================================
   // Einstellungen für den Session Storage zurückgeben

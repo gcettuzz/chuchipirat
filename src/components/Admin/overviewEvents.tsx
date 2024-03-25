@@ -209,26 +209,15 @@ const eventsReducer = (state: State, action: DispatchAction): State => {
       let tmpList: EventOverview[] = moveDataToUiStructure(state.events);
 
       if (action.payload.searchString) {
+        const searchString = action.payload.searchString.toLowerCase();
         tmpList = tmpList.filter(
           (event) =>
-            event.uid
-              .toLocaleLowerCase()
-              .includes(action.payload.searchString.toLowerCase()) ||
-            event.name
-              .toLowerCase()
-              .includes(action.payload.searchString.toLowerCase()) ||
-            event.motto
-              .toLowerCase()
-              .includes(action.payload.searchString.toLowerCase()) ||
-            event.location
-              .toLowerCase()
-              .includes(action.payload.searchString.toLowerCase()) ||
-            event.create_fromDisplayName
-              .toLowerCase()
-              .includes(action.payload.searchString.toLowerCase()) ||
-            event.create_fromUid
-              .toLowerCase()
-              .includes(action.payload.searchString.toLowerCase())
+            event.uid.toLocaleLowerCase().includes(searchString) ||
+            event.name.toLowerCase().includes(searchString) ||
+            event.motto.toLowerCase().includes(searchString) ||
+            event.location.toLowerCase().includes(searchString) ||
+            event.create_fromDisplayName.toLowerCase().includes(searchString) ||
+            event.create_fromUid.toLowerCase().includes(searchString)
         );
       }
       return {

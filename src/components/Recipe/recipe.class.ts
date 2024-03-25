@@ -985,6 +985,10 @@ export default class Recipe {
           (product) => product.uid === productUid
         ) as Product;
 
+        if (!product) {
+          throw new Error(TEXT.ERROR_PRODUCT_UNKNOWN(ingredient.product.name));
+        }
+
         if (product?.dietProperties?.allergens?.length > 0) {
           dietProperties.allergens = dietProperties.allergens.concat(
             product.dietProperties.allergens

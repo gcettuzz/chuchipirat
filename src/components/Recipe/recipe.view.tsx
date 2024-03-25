@@ -1126,8 +1126,9 @@ const RecipeButtonRow = ({
       hero: true,
       visible:
         recipe.type === RecipeType.private &&
-        recipe.created.fromUid === authUser.uid &&
-        (recipe?.isInReview === false || recipe.isInReview === undefined),
+        (recipe?.isInReview === false || recipe.isInReview === undefined) &&
+        (recipe.created.fromUid === authUser.uid ||
+          authUser.roles.includes(Role.admin)),
       label: TEXT_PUBLISH_RECIPE,
       variant: "outlined",
       color: "primary",

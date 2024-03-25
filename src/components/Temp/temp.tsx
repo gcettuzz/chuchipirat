@@ -48,6 +48,7 @@ import withEmailVerification from "../Session/withEmailVerification";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import {CustomRouterProps} from "../Shared/global.interface";
 import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {Request} from "../Request/request.class";
 // import {
 //   Ingredient,
 //   PositionType,
@@ -92,35 +93,66 @@ const TempBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
     return null;
   }
 
-  const moveRecipes = async () => {
-    firebase.db
-      .collection("/recipe/public/recipes")
-      .get()
-      .then((recipeDocuments) => {
-        recipeDocuments.forEach((recipeDoc) => {
-          const docData = recipeDoc.data();
-
-          if (Object.prototype.hasOwnProperty.call(docData, "ingredients")) {
-            console.log(recipeDoc.id);
-            firebase.db
-              .collection("recipes/public/recipes")
-              .doc(recipeDoc.id)
-              .set(docData)
-              .then(() => {
-                recipeDoc.ref.delete();
-              });
-          } else if (recipeDoc.id === "000_allRecipes") {
-            firebase.db
-              .collection("recipes")
-              .doc("public")
-              .set(docData)
-              .then(() => {
-                recipeDoc.ref.delete();
-              });
-          }
+  const rebuildRequestIndex = async () => {
+    const indexFile = {};
+    await Request.getClosedRequests({
+      firebase: firebase,
+      authUser: authUser,
+    }).then((result) => {
+      result.forEach((request) => {
+        indexFile[request.uid] = Request.createShortRequest({
+          request,
+          authUser: {
+            uid: request.author.uid,
+            firstName: request.author.firstName,
+            lastName: request.author.lastName,
+            email: request.author.email,
+            publicProfile: {
+              displayName: request.author.displayName,
+            },
+          } as AuthUser,
         });
       });
+
+      firebase.request
+        .update({uids: ["closed"], value: indexFile, authUser: authUser})
+        .catch((error) => {
+          console.error(error);
+        });
+
+      console.log(indexFile);
+    });
   };
+
+  // const moveRecipes = async () => {
+  //   firebase.db
+  //     .collection("/recipe/public/recipes")
+  //     .get()
+  //     .then((recipeDocuments) => {
+  //       recipeDocuments.forEach((recipeDoc) => {
+  //         const docData = recipeDoc.data();
+
+  //         if (Object.prototype.hasOwnProperty.call(docData, "ingredients")) {
+  //           console.log(recipeDoc.id);
+  //           firebase.db
+  //             .collection("recipes/public/recipes")
+  //             .doc(recipeDoc.id)
+  //             .set(docData)
+  //             .then(() => {
+  //               recipeDoc.ref.delete();
+  //             });
+  //         } else if (recipeDoc.id === "000_allRecipes") {
+  //           firebase.db
+  //             .collection("recipes")
+  //             .doc("public")
+  //             .set(docData)
+  //             .then(() => {
+  //               recipeDoc.ref.delete();
+  //             });
+  //         }
+  //       });
+  //     });
+  // };
 
   // const classes = useStyles();
   // const {customDialog} = useCustomDialog();
@@ -496,8 +528,12 @@ const TempBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
           TEMP
         </Typography>
         <Grid container justifyContent="center">
-          <Button variant="outlined" color="primary" onClick={moveRecipes}>
-            Rezepte umziehen
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={rebuildRequestIndex}
+          >
+            Request Index neu aufbauen
           </Button>
         </Grid>
       </Container>

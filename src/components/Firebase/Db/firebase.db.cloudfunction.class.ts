@@ -28,6 +28,7 @@ import {
 } from "./sessionStorageHandler.class";
 import FirebaseDbCloudFunctionRebuildStats from "./firebase.db.cloudfunction.rebuildStats.class";
 import FirebaseDbCloudFunctionDeclineRecipeRequest from "./firebase.db.cloudfunction.declineRecipeRequest.class";
+import FirebaseDbCloudFunctionUpdateMaterial from "./firebase.db.cloudfunction.updateMaterial";
 export class FirebaseDbCloudFunction extends FirebaseDbSuper {
   firebase: Firebase;
   log: FirebaseDbCloudFunctionLog;
@@ -44,6 +45,7 @@ export class FirebaseDbCloudFunction extends FirebaseDbSuper {
   mergeProducts: FirebaseDbCloudFunctionMergeProducts;
   convertProductToMaterial: FirebaseDbCloudFunctionConvertProductToMaterial;
   updateProduct: FirebaseDbCloudFunctionUpdateProduct;
+  updateMaterial: FirebaseDbCloudFunctionUpdateMaterial;
   activateSupportUser: FirebaseDbCloudFunctionActivateSupportUser;
   signOutAllUsers: FirebaseDbCloudFunctionSignOutAllUsers;
   rebuildStats: FirebaseDbCloudFunctionRebuildStats;
@@ -75,7 +77,7 @@ export class FirebaseDbCloudFunction extends FirebaseDbSuper {
     this.convertProductToMaterial =
       new FirebaseDbCloudFunctionConvertProductToMaterial(firebase);
     this.updateProduct = new FirebaseDbCloudFunctionUpdateProduct(firebase);
-
+    this.updateMaterial = new FirebaseDbCloudFunctionUpdateMaterial(firebase);
     this.activateSupportUser = new FirebaseDbCloudFunctionActivateSupportUser(
       firebase
     );

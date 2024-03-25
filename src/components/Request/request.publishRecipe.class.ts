@@ -109,7 +109,7 @@ export class RequestPublishRecipe extends Request {
           firebase: firebase,
           uid: request.requestObject.uid,
           type: RecipeType.private,
-          userUid: request.author.uid,
+          userUid: request.requestObject.authorUid,
           authUser: authUser,
         }).then((result: Recipe) => {
           const recipeShort = RecipeShort.createShortRecipeFromRecipe(result);
@@ -120,32 +120,30 @@ export class RequestPublishRecipe extends Request {
               recipeName: request.requestObject.name,
               recipeUid: request.requestObject.uid,
               recipeShort: recipeShort,
-              recipeAuthorUid: request.author.uid,
+              recipeAuthorUid: request.requestObject.authorUid,
             },
             authUser: authUser,
           });
-
-          // firebase.request.active.updateFields({
-          //   uids: [request.uid],
-          //   values: {resolveDate: new Date()},
-          //   authUser,
-          // });
 
           // Mail auslösen // --> über cloud Function! weil Adresse unbekannt.
-          firebase.cloudFunction.sendMail.triggerCloudFunction({
-            values: {
-              templateData: {
-                recipeName: request.requestObject.name,
-                headerPictureSrc: request.requestObject.pictureSrc,
-                recipeUid: request.requestObject.uid,
-                requestNumber: request.number,
+          if (request.requestObject.authorUid === request.author.uid) {
+            // Wenn das Rezept Zwangs-Veröffentlich wird, wird der*die Author*in nicht
+            // benachrichtigt
+            firebase.cloudFunction.sendMail.triggerCloudFunction({
+              values: {
+                templateData: {
+                  recipeName: request.requestObject.name,
+                  headerPictureSrc: request.requestObject.pictureSrc,
+                  recipeUid: request.requestObject.uid,
+                  requestNumber: request.number,
+                },
+                recipients: request.author.uid,
+                recipientType: RecipientType.uid,
+                mailTemplate: MailTemplate.requestRecipePublished,
               },
-              recipients: request.author.uid,
-              recipientType: RecipientType.uid,
-              mailTemplate: MailTemplate.requestRecipePublished,
-            },
-            authUser: authUser,
-          });
+              authUser: authUser,
+            });
+          }
 
           // Feed-Eintrag
           Feed.createFeedEntry({
@@ -189,6 +187,7 @@ export class RequestPublishRecipe extends Request {
     return {
       name: requestObject.name,
       uid: requestObject.uid,
+      authorUid: requestObject.created.fromUid,
       pictureSrc: requestObject.pictureSrc
         ? requestObject.pictureSrc
         : ImageRepository.getEnviromentRelatedPicture().CARD_PLACEHOLDER_MEDIA,

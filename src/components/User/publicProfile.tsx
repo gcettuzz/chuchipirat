@@ -211,8 +211,8 @@ const PublicProfileBase: React.FC<
                   <CardMedia
                     className={classes.cardMedia}
                     image={
-                      state.publicProfile.pictureSrc.fullSize
-                        ? state.publicProfile.pictureSrc.fullSize
+                      state.publicProfile.pictureSrc.normalSize
+                        ? state.publicProfile.pictureSrc.normalSize
                         : ImageRepository.getEnviromentRelatedPicture()
                             .CARD_PLACEHOLDER_MEDIA
                     }
@@ -311,14 +311,14 @@ export const AchievedRewardsList = ({
       <FormListItem
         id={"noRecipesPrivate"}
         key={"noRecipesPrivate"}
-        value={userProfile.stats.noRecipesPublic}
+        value={userProfile.stats.noRecipesPublic.toLocaleString("de-CH")}
         label={TEXT_RECIPES_CREATED_PUBLIC}
         icon={<FastfoodIcon fontSize="small" />}
       />
       <FormListItem
         id={"noRecipesPublic"}
         key={"noRecipesPublic"}
-        value={userProfile.stats.noRecipesPrivate}
+        value={userProfile.stats.noRecipesPrivate.toLocaleString("de-CH")}
         label={TEXT_RECIPES_CREATED_PRIVATE}
         icon={<FastfoodIcon fontSize="small" />}
       />
@@ -326,7 +326,7 @@ export const AchievedRewardsList = ({
       <FormListItem
         id={"noEvents"}
         key={"noEvents"}
-        value={userProfile.stats.noEvents}
+        value={userProfile.stats.noEvents.toLocaleString("de-CH")}
         label={TEXT_EVENTS_PARTICIPATED}
         icon={<TodayIcon fontSize="small" />}
       />
@@ -334,7 +334,7 @@ export const AchievedRewardsList = ({
         <FormListItem
           id={"noFoundBungs"}
           key={"noFoundBungs"}
-          value={userProfile.stats.noFoundBugs}
+          value={userProfile.stats.noFoundBugs.toLocaleString("de-CH")}
           label={TEXT_FOUND_BUGS}
           icon={<BugReportIcon fontSize="small" />}
         />

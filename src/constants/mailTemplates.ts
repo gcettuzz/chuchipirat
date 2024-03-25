@@ -6,6 +6,7 @@ enum MailTemplate {
   requestReportErrorFixed = "RequestReportErrorFixed",
   requestNewComment = "RequestNewComment",
   newletter = "Newsletter",
+  welcomeNewUser = "WelcomeNewUser",
 }
 
 export default MailTemplate;

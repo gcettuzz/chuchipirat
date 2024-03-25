@@ -736,16 +736,16 @@ const useStyles = makeStyles((theme) => ({
   // Worfklow Chips
   // ------------------------------------------ */
   workflowChipActive: {
-    backgroundColor: "#01579B",
-    color: "white",
+    backgroundColor: "#01579B !important",
+    color: "white !important",
   },
   workflowChipDone: {
-    backgroundColor: "#1B5E20",
-    color: "white",
+    backgroundColor: "#1B5E20 !important",
+    color: "white !important",
   },
   workflowChipAborted: {
-    backgroundColor: "#B71C1C",
-    color: "white",
+    backgroundColor: "#B71C1C !important",
+    color: "white !important",
   },
   /* ------------------------------------------
   // Request 

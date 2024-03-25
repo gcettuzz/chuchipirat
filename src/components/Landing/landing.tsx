@@ -38,14 +38,28 @@ import useStyles from "../../constants/styles";
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
 import {HOME as ROUTE_HOME} from "../../constants/routes";
+import {AuthUserContext} from "../Session/authUserContext";
+import {CustomRouterProps} from "../Shared/global.interface";
+import AuthUser from "../Firebase/Authentication/authUser.class";
+
+/* ===================================================================
+// ================================ Page =============================
+// =================================================================== */
+const LandingPage = (props) => {
+  return (
+    <AuthUserContext.Consumer>
+      {(authUser) => <LandingBase {...props} authUser={authUser} />}
+    </AuthUserContext.Consumer>
+  );
+};
 
 /* ===================================================================
 // ================================ Base =============================
 // =================================================================== */
-const LandingPage = () => {
-  // const authUser = useAuthUser();
+const LandingBase: React.FC<
+  CustomRouterProps & {authUser: AuthUser | null}
+> = ({authUser, ...props}) => {
   const classes = useStyles();
-  const authUser = null;
   const {push} = useHistory();
 
   // Wenn angemeldet direkt weiterleiten
