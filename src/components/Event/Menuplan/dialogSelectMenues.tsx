@@ -302,7 +302,7 @@ export const DialogSelectMenues = ({
           className={classes.dialogSelectMenueRow}
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
             gridAutoFlow: "column",
           }}
         >
@@ -357,7 +357,7 @@ export const DialogSelectMenues = ({
             key={"dialogSelectMenueDayCardContainerMealType_row_" + mealTypeUid}
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
               gridAutoFlow: "column",
             }}
           >
