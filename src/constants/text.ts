@@ -1239,6 +1239,7 @@ export const RECEIPT_THANK_YOU =
   "Danke für deine Spende. Deine Spende ermöglicht es, den chuchipirat weiterzuentwickeln und weiterhin kostenlos anzubieten.";
 export const ASSOCIATION = "Verein";
 export const TYPE = "Typ";
+export const INVOLVED_EVENTS = "Beteiligte Anlässe lesen";
 /* =====================================================================
 // Abkürzungen
 // ===================================================================== */

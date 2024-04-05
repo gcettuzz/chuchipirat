@@ -25,6 +25,8 @@ import {
   SAVE as TEXT_SAVE,
   ROLES_UPDATED_SUCCSESSFULLY as TEXT_ROLES_UPDATED_SUCCSESSFULLY,
   YOU_CANT_UPDATE_YOUR_OWN_AUTHORIZATION as TEXT_YOU_CANT_UPDATE_YOUR_OWN_AUTHORIZATION,
+  INVOLVED_EVENTS as TEXT_INVOLVED_EVENTS,
+  EVENTS as TEXT_EVENTS,
 } from "../../constants/text";
 
 import {OpenInNew as OpenInNewIcon} from "@material-ui/icons";
@@ -50,6 +52,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   FormControl,
   FormControlLabel,
   FormGroup,
@@ -57,6 +60,8 @@ import {
   Grid,
   IconButton,
   List,
+  ListItem,
+  ListItemText,
   Switch,
   Typography,
   useTheme,
@@ -79,10 +84,12 @@ import {CustomRouterProps} from "../Shared/global.interface";
 import {
   DataGrid,
   GridColDef,
+  GridSortModel,
   GridValueFormatterParams,
   deDE,
 } from "@mui/x-data-grid";
 import {Alert, AlertTitle} from "@material-ui/lab";
+import Event from "../Event/Event/event.class";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -92,9 +99,12 @@ enum ReducerActions {
   USERS_FETCH_SUCCESS,
   USER_FULL_PROFILE_FETCH_INIT,
   USER_FULL_PROFILE_FETCH_SUCCESS,
+  USER_EVENTS_FETCH_INIT,
+  USER_EVENTS_FETCH_SUCCESS,
   USER_UPDATE,
   SNACKBAR_SET,
   SNACKBAR_CLOSE,
+  SET_LOADING,
   GENERIC_ERROR,
 }
 type DispatchAction = {
@@ -105,6 +115,7 @@ type DispatchAction = {
 type State = {
   users: UserOverviewStructure[];
   userProfiles: {[key: User["uid"]]: UserFullProfile};
+  eventsOfUsers: {[key: User["uid"]]: Event[]};
   error: Error | null;
   isLoading: boolean;
   snackbar: Snackbar;
@@ -113,6 +124,7 @@ type State = {
 const inititialState: State = {
   users: [],
   userProfiles: {},
+  eventsOfUsers: {},
   error: null,
   isLoading: false,
   snackbar: SNACKBAR_INITIAL_STATE_VALUES,
@@ -158,6 +170,14 @@ const usersReducer = (state: State, action: DispatchAction): State => {
         ...state,
         users: tempUsers,
       };
+    case ReducerActions.USER_EVENTS_FETCH_INIT:
+      return {...state, isLoading: true};
+    case ReducerActions.USER_EVENTS_FETCH_SUCCESS:
+      return {
+        ...state,
+        isLoading: false,
+        eventsOfUsers: {...state.eventsOfUsers, ...action.payload},
+      };
     case ReducerActions.SNACKBAR_SET:
       return {
         ...state,
@@ -173,6 +193,8 @@ const usersReducer = (state: State, action: DispatchAction): State => {
           open: false,
         },
       };
+    case ReducerActions.SET_LOADING:
+      return {...state, isLoading: action.payload.value};
     case ReducerActions.GENERIC_ERROR:
       // allgemeiner Fehler
       return {
@@ -211,6 +233,7 @@ const OverviewUsersBase: React.FC<
   const [state, dispatch] = React.useReducer(usersReducer, inititialState);
   const [dialogValues, setDialogValues] = React.useState({
     selectedUser: {} as UserFullProfile,
+    eventsOfUser: [] as Event[],
     open: false,
   });
   const [roleDialog, setRoleDialog] = React.useState(ROLE_DIALOG_INITIAL_STATE);
@@ -267,13 +290,20 @@ const OverviewUsersBase: React.FC<
     } else {
       setDialogValues({
         ...dialogValues,
+        eventsOfUser: state.eventsOfUsers[userUid]
+          ? state.eventsOfUsers[userUid]
+          : [],
         selectedUser: state.userProfiles[userUid],
         open: true,
       });
     }
   };
   const onDialogClose = () => {
-    setDialogValues({...dialogValues, open: false});
+    setDialogValues({
+      eventsOfUser: [],
+      selectedUser: {} as UserFullProfile,
+      open: false,
+    });
   };
   if (!authUser) {
     return null;
@@ -313,6 +343,34 @@ const OverviewUsersBase: React.FC<
   };
 
   /* ------------------------------------------
+  // Anlässe eines Users holen
+  // ------------------------------------------ */
+  const getEventsOfUser = async (userUid: User["uid"]) => {
+    dispatch({type: ReducerActions.USER_EVENTS_FETCH_INIT, payload: {}});
+
+    if (!Object.prototype.hasOwnProperty.call(state.eventsOfUsers, userUid)) {
+      await Event.getAllEventsOfUser({
+        firebase: firebase,
+        userUid: userUid,
+      }).then((result) => {
+        setDialogValues({...dialogValues, eventsOfUser: result});
+        dispatch({
+          type: ReducerActions.USER_EVENTS_FETCH_SUCCESS,
+          payload: {[userUid]: result},
+        });
+      });
+    } else {
+      setDialogValues({
+        ...dialogValues,
+        eventsOfUser: state.eventsOfUsers[userUid],
+      });
+      dispatch({
+        type: ReducerActions.SET_LOADING,
+        payload: {value: false},
+      });
+    }
+  };
+  /* ------------------------------------------
   // Snackbar
   // ------------------------------------------ */
   const handleSnackbarClose = (event, reason) => {
@@ -324,7 +382,6 @@ const OverviewUsersBase: React.FC<
       payload: {},
     });
   };
-
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}
@@ -368,9 +425,11 @@ const OverviewUsersBase: React.FC<
         dialogOpen={dialogValues.open}
         handleClose={onDialogClose}
         userFullProfile={dialogValues.selectedUser}
+        eventOfUser={dialogValues.eventsOfUser}
         // onDeactivateUser={deactivateUser}
         // onResetPassword={resetPassword}
         onEditRoles={showRoleDialog}
+        getEventsOfUser={getEventsOfUser}
       />
     </React.Fragment>
   );
@@ -389,6 +448,12 @@ const UsersTable = ({dbUsers, onUserSelect}: UsersTableProps) => {
   const [filteredUsersUi, setFilteredUsersUi] = React.useState<
     UserOverviewStructure[]
   >([]);
+  const [sortModel, setSortModel] = React.useState<GridSortModel>([
+    {
+      field: "displayName",
+      sort: "asc",
+    },
+  ]);
   const classes = useStyles();
   const theme = useTheme();
 
@@ -468,75 +533,6 @@ const UsersTable = ({dbUsers, onUserSelect}: UsersTableProps) => {
       },
     },
   ];
-
-  // const TABLE_COLUMS: Column[] = [
-  //   {
-  //     id: "edit",
-  //     type: TableColumnTypes.button,
-  //     textAlign: ColumnTextAlign.center,
-  //     disablePadding: false,
-  //     visible: true,
-  //     label: "",
-  //     iconButton: <EditIcon fontSize="small" />,
-  //   },
-  //   {
-  //     id: "uid",
-  //     type: TableColumnTypes.string,
-  //     textAlign: ColumnTextAlign.center,
-  //     disablePadding: false,
-  //     label: TEXT_UID,
-  //     visible: false,
-  //     monoSpaces: true,
-  //   },
-  //   {
-  //     id: "displayName",
-  //     type: TableColumnTypes.string,
-  //     textAlign: ColumnTextAlign.left,
-  //     disablePadding: false,
-  //     label: TEXT_DISPLAYNAME,
-  //     visible: true,
-  //   },
-  //   {
-  //     id: "firstName",
-  //     type: TableColumnTypes.string,
-  //     textAlign: ColumnTextAlign.left,
-  //     disablePadding: false,
-  //     label: TEXT_FIRSTNAME,
-  //     visible: true,
-  //   },
-  //   {
-  //     id: "lastName",
-  //     type: TableColumnTypes.string,
-  //     textAlign: ColumnTextAlign.left,
-  //     disablePadding: false,
-  //     label: TEXT_LASTNAME,
-  //     visible: true,
-  //   },
-  //   {
-  //     id: "email",
-  //     type: TableColumnTypes.string,
-  //     textAlign: ColumnTextAlign.left,
-  //     disablePadding: false,
-  //     label: TEXT_EMAIL,
-  //     visible: true,
-  //   },
-  //   {
-  //     id: "memberId",
-  //     type: TableColumnTypes.number,
-  //     textAlign: ColumnTextAlign.center,
-  //     disablePadding: false,
-  //     label: TEXT_MEMBER_ID,
-  //     visible: true,
-  //   },
-  //   {
-  //     id: "memberSince",
-  //     type: TableColumnTypes.date,
-  //     textAlign: ColumnTextAlign.center,
-  //     disablePadding: false,
-  //     label: TEXT_MEMBER_SINCE,
-  //     visible: true,
-  //   },
-  // ];
 
   /* ------------------------------------------
   // Suche
@@ -620,6 +616,10 @@ const UsersTable = ({dbUsers, onUserSelect}: UsersTableProps) => {
                   autoHeight
                   rows={filteredUsersUi}
                   columns={DATA_GRID_COLUMNS}
+                  sortModel={sortModel}
+                  onSortModelChange={(model) =>
+                    model != sortModel && setSortModel(model)
+                  }
                   getRowId={(row) => row.uid}
                   localeText={deDE.props.MuiDataGrid.localeText}
                   getRowClassName={(params) => {
@@ -645,18 +645,22 @@ const UsersTable = ({dbUsers, onUserSelect}: UsersTableProps) => {
 interface DialogUserProps {
   dialogOpen: boolean;
   userFullProfile: UserFullProfile;
+  eventOfUser: Event[];
   handleClose: () => void;
   // onResetPassword: (userUid: User["uid"]) => void;
   // onDeactivateUser: (userUid: User["uid"]) => void;
   onEditRoles: (userUid: User["uid"]) => void;
+  getEventsOfUser: (userUid: User["uid"]) => void;
 }
 const DialogUser = ({
   dialogOpen,
   userFullProfile,
+  eventOfUser,
   handleClose,
   // onResetPassword,
   // onDeactivateUser,
   onEditRoles,
+  getEventsOfUser,
 }: DialogUserProps) => {
   const classes = useStyles();
   const theme = useTheme();
@@ -693,89 +697,118 @@ const DialogUser = ({
         </Typography>
       </DialogTitle>
       <DialogContent style={{overflow: "unset"}}>
-        <List style={{marginBottom: theme.spacing(2)}}>
-          <FormListItem
-            key={"displayName"}
-            id={"displayName"}
-            value={userFullProfile.displayName}
-            label={TEXT_DISPLAYNAME}
-          />
-          <FormListItem
-            key={"firstName"}
-            id={"firstName"}
-            value={userFullProfile.firstName}
-            label={TEXT_FIRSTNAME}
-          />
-          <FormListItem
-            key={"lastName"}
-            id={"LastName"}
-            value={userFullProfile.lastName}
-            label={TEXT_LASTNAME}
-          />
-          <FormListItem
-            key={"uid"}
-            id={"uid"}
-            value={userFullProfile.uid}
-            label={TEXT_UID}
-            displayAsCode
-          />
-          <FormListItem
-            key={"email"}
-            id={"email"}
-            value={userFullProfile.email}
-            label={TEXT_EMAIL}
-          />
-          <FormListItem
-            key={"motto"}
-            id={"motto"}
-            value={userFullProfile.motto}
-            label={TEXT_MOTTO}
-          />
-          <FormListItem
-            key={"memberId"}
-            id={"memberId"}
-            value={userFullProfile.memberId}
-            label={TEXT_MEMBER_ID}
-          />
-          <FormListItem
-            key={"memberSincer"}
-            id={"memnerSince"}
-            value={userFullProfile.memberSince}
-            label={TEXT_MEMBER_SINCE}
-          />
-          <FormListItem
-            key={"roles"}
-            id={"roles"}
-            value={userFullProfile?.roles?.join(", ")}
-            label={TEXT_ROLES}
-          />
-        </List>
+        <React.Fragment>
+          <List style={{marginBottom: theme.spacing(2)}}>
+            <FormListItem
+              key={"displayName"}
+              id={"displayName"}
+              value={userFullProfile.displayName}
+              label={TEXT_DISPLAYNAME}
+            />
+            <FormListItem
+              key={"firstName"}
+              id={"firstName"}
+              value={userFullProfile.firstName}
+              label={TEXT_FIRSTNAME}
+            />
+            <FormListItem
+              key={"lastName"}
+              id={"LastName"}
+              value={userFullProfile.lastName}
+              label={TEXT_LASTNAME}
+            />
+            <FormListItem
+              key={"uid"}
+              id={"uid"}
+              value={userFullProfile.uid}
+              label={TEXT_UID}
+              displayAsCode
+            />
+            <FormListItem
+              key={"email"}
+              id={"email"}
+              value={userFullProfile.email}
+              label={TEXT_EMAIL}
+            />
+            <FormListItem
+              key={"motto"}
+              id={"motto"}
+              value={userFullProfile.motto}
+              label={TEXT_MOTTO}
+            />
+            <FormListItem
+              key={"memberId"}
+              id={"memberId"}
+              value={userFullProfile.memberId}
+              label={TEXT_MEMBER_ID}
+            />
+            <FormListItem
+              key={"memberSincer"}
+              id={"memnerSince"}
+              value={userFullProfile.memberSince}
+              label={TEXT_MEMBER_SINCE}
+            />
+            <FormListItem
+              key={"roles"}
+              id={"roles"}
+              value={userFullProfile?.roles?.join(", ")}
+              label={TEXT_ROLES}
+            />
+          </List>
+
+          {eventOfUser.length > 0 && (
+            <React.Fragment>
+              <Typography variant="h6">{TEXT_EVENTS}</Typography>
+              <List dense>
+                {eventOfUser.map((event) => (
+                  <React.Fragment key={"event_" + event.uid}>
+                    <ListItem key={"list_" + event.uid}>
+                      <ListItemText
+                        primary={event.name}
+                        secondary={
+                          <React.Fragment>
+                            <Typography
+                              component="span"
+                              className={classes.typographyCode}
+                              variant="body2"
+                              color="textPrimary"
+                            >
+                              {event.uid}
+                            </Typography>
+                            {` - ${event.dates[0].from.toLocaleString("de-CH", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            })} - ${event.maxDate.toLocaleString("de-CH", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            })}`}
+                          </React.Fragment>
+                        }
+                      />
+                    </ListItem>
+                    <Divider key={"divider_" + event.uid} component="li" />
+                  </React.Fragment>
+                ))}
+              </List>
+            </React.Fragment>
+          )}
+        </React.Fragment>
+      </DialogContent>
+      <DialogActions>
         <Button
           onClick={() => onEditRoles(userFullProfile.uid)}
           color="primary"
         >
           {TEXT_EDIT_AUTHORIZATION}
         </Button>
-      </DialogContent>
-      <DialogActions>
-        {/* <Button
-          onClick={() => onResetPassword(userFullProfile.uid)}
+        <Button
+          onClick={() => getEventsOfUser(userFullProfile.uid)}
           color="primary"
         >
-          Password-zurücksetzen
-        </Button> */}
-        {/* <Button
-          onClick={() => onEditRoles(userFullProfile.uid)}
-          color="primary"
-        >
-          {TEXT_EDIT_AUTHORIZATION}
-        </Button> */}
-        {/* <Button
-          onClick={() => onDeactivateUser(userFullProfile.uid)}
-          color="primary"
-        >
-          User deaktivieren
-        </Button> */}
+          {TEXT_INVOLVED_EVENTS}
+        </Button>
       </DialogActions>
     </Dialog>
   );
