@@ -464,6 +464,7 @@ const EventUsedRecipesPage = ({
         menueplan={menuplan}
         eventName={event.name}
         products={products}
+        units={units}
         unitConversionBasic={unitConversionBasic}
         unitConversionProducts={unitConversionProducts}
         authUser={authUser}
@@ -712,7 +713,7 @@ const EventUsedMealRecipe = ({
             <img
               className={classes.marginCenter}
               src={
-                ImageRepository.getEnviromentRelatedPicture().DIVIDER_ICON_SRC
+                ImageRepository.getEnviromentRelatedPicture().VECTOR_LOGO_GREY
               }
               alt=""
               width="50px"

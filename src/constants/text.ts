@@ -49,7 +49,6 @@ export const BUTTON_LOAD_OLDER_COMMENTS = "... ältere Kommentare laden ....";
 export const BUTTON_SAVE_COMMENT = "Kommentar speichern";
 export const CREATE_RECIPE = "Neues Rezept anlegen";
 export const BUTTON_LOAD_MORE_RECIPES = "Weitere Rezepte laden";
-export const BUTTON_SHOPPINGLIST = "Postizettel";
 export const BUTTON_PRINTVERSION = "Druckversion";
 export const BUTTON_QUANTITY_CALCULATION = "Mengenberechnung";
 
@@ -107,7 +106,6 @@ export const USER_LIST = "User-Liste";
 export const PAGE_SUBTITLE_USERS = "";
 export const PAGE_TITLE_QUANTITY_CALCULATION = "Mengenberechnung";
 export const PAGE_SUBTITLE_QUANTITY_CALCULATION = "";
-export const PAGE_TITLE_SHOPPING_LIST = "Postizettel";
 export const PAGE_SUBTITLE_SHOPPING_LIST = "";
 export const HELLO_NAME = (name: string) => `Hoi ${name}`;
 export const SHOW_US_WHO_YOU_ARE = "Zeig uns wer Du bist.";
@@ -487,6 +485,7 @@ export const DEPARTMENT_CREATED = (department: string) => {
 // Meldungen zum Feed
 // ===================================================================== */
 export const FEED = "Feed";
+export const SHOULD_FEED_ENTRY_BE_DELETED = "Feed-Eintrag löschen?";
 /* =====================================================================
 // Meldungen zu Material
 // ===================================================================== */
@@ -645,7 +644,7 @@ export const HOME_STATS_CAPTIONS = {
   noRecipesPublic: "öffentliche Rezepte",
   noRecipesPrivate: "private Rezepte",
   noRecipesVariants: "Anlassvarianten Rezepte",
-  noShoppingLists: "Generierte Postizettel",
+  noShoppingLists: "Generierte Einkaufslisten",
   noParticipants: "bekochte Personen",
   noPortions: "Geplante Portionen",
   noPlanedDays: "Geplante Anlasstage",
@@ -789,20 +788,7 @@ export const CREATE_NEW_UNIT_CONVERSION = "Neue Einheitenumrechnung anlegen";
 export const METRIC_SYSTEM = "Metrisches System";
 export const HINT_CREATE_IN_METRIC_SYSTEM =
   "Bitte erfasse die Umrechung mit einer Zieleinheit im metrischen Einheitssystem.";
-/* =====================================================================
-// Meldungen zu Einkaufsliste
-// ===================================================================== */
-export const SHOPPING_LIST_CHOSEN_PERIOD = "gewählter Zeitraum";
-export const DIALOG_TITLE_GENERATE_SHOPPING_LIST = "Postizettel generieren";
-export const SHOPPING_LIST_WARNING_EXISTING_WILL_BE_OVERWRITEN =
-  "Bestehender Postizettel wird überschrieben.";
-export const SHOPPING_LIST_GENERATED_ON = "Generiert am: ";
-export const SHOPPING_LIST_GENERATED_FROM = "von: ";
-export const DIALOG_TITLE_SHOPPING_LIST_ADD_ITEM = "Produkt hinzufügen";
-export const DIALOG_TITLE_SHOPPING_LIST_EDIT_ITEM = "Eintrag ändern";
-export const DIALOG_TITLE_ITEM_TRACE = "Nachverfolgung Produkt";
-export const ERROR_ADD_ITEM_PRODUCT_UNKNOWN =
-  "Produkt unbekannt. Hast du es angelegt?";
+
 /* =====================================================================
 // Meldungen zu Mengenberechnung
 // ===================================================================== */
@@ -1243,6 +1229,7 @@ export const UNIT_DIMENSION = {
   MAS: "Masse",
   DLS: "Dimensionslos",
 };
+export const FEEDS = "Feed-Einträge";
 export const RECEIPT = "Quittung";
 export const CREATE_RECEIPT = "Quittung erstellen";
 export const PAY_DATE = "Bezahlt am";
@@ -1251,6 +1238,7 @@ export const AMOUNT = "Betrag";
 export const RECEIPT_THANK_YOU =
   "Danke für deine Spende. Deine Spende ermöglicht es, den chuchipirat weiterzuentwickeln und weiterhin kostenlos anzubieten.";
 export const ASSOCIATION = "Verein";
+export const TYPE = "Typ";
 /* =====================================================================
 // Abkürzungen
 // ===================================================================== */

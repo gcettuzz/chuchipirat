@@ -17,7 +17,7 @@ import Role from "../../../constants/roles";
 export interface FeedLogDocumemntStructure {
   created: ChangeRecord;
   type: FeedType;
-  visibilty: Role;
+  visibility: Role;
   title: Feed["title"];
   text: Feed["text"];
 }

@@ -814,7 +814,7 @@ const RecipeView = ({
           >
             <RecipePreparation recipe={recipe} />
           </Grid>
-          {recipe.materials.order.length > 0 &&
+          {recipe.materials?.order.length > 0 &&
             recipe.materials.entries[recipe.materials.order[0]]?.material
               .uid !== "" && (
               <Grid
@@ -1252,7 +1252,7 @@ export const RecipeInfoPanel = ({
                   })
                 }
               >
-                {recipe.created.fromDisplayName}
+                {recipe.created?.fromDisplayName}
               </Link>
             }
             label={TEXT_CREATED_FROM}
@@ -1733,7 +1733,7 @@ export const RecipeIngredients = ({
           </React.Fragment>
         )}
         <React.Fragment>
-          {recipe.ingredients.order.map((ingredientUid, counter) => {
+          {recipe.ingredients?.order.map((ingredientUid, counter) => {
             let section: Section;
             let ingredient: Ingredient;
 
@@ -1935,7 +1935,7 @@ export const RecipePreparation = ({recipe}: RecipePreparationProps) => {
         {TEXT_PREPARATION}
       </Typography>
       <Grid container spacing={2}>
-        {recipe?.preparationSteps.order.map((preparationStepUid, counter) => {
+        {recipe?.preparationSteps?.order.map((preparationStepUid, counter) => {
           let preparationStep: PreparationStep;
           let section: Section;
           if (
@@ -2083,7 +2083,7 @@ export const RecipeMaterial = ({
           </React.Fragment>
         )}
 
-        {recipe.materials.order.map((materialUid) => {
+        {recipe.materials?.order.map((materialUid) => {
           const material = recipe.materials.entries[materialUid];
           return (
             <React.Fragment key={"material_row_" + materialUid}>

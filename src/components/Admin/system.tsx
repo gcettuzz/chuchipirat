@@ -19,7 +19,6 @@ import {
 
 import {
   Forward as ForwardIcon,
-  Delete as DeleteIcon,
   ZoomOutMap as ZoomOutMapIcon,
   CallMerge as CallMergeIcon,
   Tune as TuneIcon,
@@ -33,6 +32,7 @@ import {
   Mail as MailIcon,
   Send as SendIcon,
   Cloud as CloudIcon,
+  RssFeed as RssFeedIcon,
 } from "@material-ui/icons";
 
 import {
@@ -40,8 +40,6 @@ import {
   WELCOME_ON_THE_BRIDGE_CAPTAIN as TEXT_WELCOME_ON_THE_BRIDGE_CAPTAIN,
   GLOBAL_SETTINGS as TEXT_GLOBAL_SETTINGS,
   SYSTEM_GLOBAL_DESCRIPTION as TEXT_SYSTEM_GLOBAL_DESCRIPTION,
-  DELETE_FEED as TEXT_DELETE_FEED,
-  DELETE_FEED_DESCRIPTION as TEXT_DELETE_FEED_DESCRIPTION,
   WHERE_USED as TEXT_WHERE_USED,
   WHERE_USED_DESCRIPTION as TEXT_WHERE_USED_DESCRIPTION,
   MERGE_PRODUCTS as TEXT_MERGE_PRODUCTS,
@@ -61,11 +59,11 @@ import {
   MAIL_CONSOLE_DESCRIPTION as TEXT_MAIL_CONSOLE_DESCRIPTION,
   MAILBOX as TEXT_MAILBOX,
   CLOUD_FX as TEXT_CLOUD_FX,
+  FEEDS as TEXT_FEEDS,
 } from "../../constants/text";
 import Role from "../../constants/roles";
 import {
   SYSTEM_GLOBAL_SETTINGS as ROUTE_SYSTEM_GLOBAL_SETTINGS,
-  SYSTEM_FEED_DELETE as ROUTE_SYSTEM_FEED_DELETE,
   SYSTEM_WHERE_USED as ROUTE_SYSTEM_WHERE_USED,
   TEMP as ROUTE_TEMP,
   SYSTEM_MERGE_PRODUCT as ROUTE_SYSTEM_MERGE_PRODUCT,
@@ -78,6 +76,7 @@ import {
   SYSTEM_MAIL_CONSOLE as ROUTE_SYSTEM_MAIL_CONSOLE,
   SYSTEM_OVERVIEW_MAILBOX as ROUTE_SYSTEM_OVERVIEW_MAILBOX,
   SYSTEM_OVERVIEW_CLOUDFX as ROUTE_SYSTEM_OVERVIEW_CLOUDFX,
+  SYSTEM_OVERVIEW_FEEDS as ROUTE_OVERVIEW_FEEDS,
 } from "../../constants/routes";
 
 import useStyles from "../../constants/styles";
@@ -154,22 +153,21 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
               onShowEvents={goToDestination}
               onShowMailbox={goToDestination}
               onShowCloudFx={goToDestination}
+              onShowFeeds={goToDestination}
               icon={<ViewListIcon />}
               authUser={authUser}
             />
           </Grid>
-          {authUser.roles.includes(Role.admin) && (
-            <Grid item xs={12} md={6}>
-              <AdminTile
-                id={"deleteFeeds"}
-                text={TEXT_DELETE_FEED}
-                description={TEXT_DELETE_FEED_DESCRIPTION}
-                icon={<DeleteIcon />}
-                action={goToDestination}
-                routeDestination={ROUTE_SYSTEM_FEED_DELETE}
-              />
-            </Grid>
-          )}
+          <Grid item xs={12} md={6}>
+            <AdminTile
+              id={"support"}
+              text={TEXT_ACTIVATE_SUPPORT_USER}
+              description={TEXT_ACTIVATE_SUPPORT_USER_DESCRIPTION}
+              icon={<HeadsetMicIcon />}
+              action={goToDestination}
+              routeDestination={ROUTE_SYSTEM_ACTIVATE_SUPPORT_USER}
+            />
+          </Grid>
           <Grid item xs={12} md={6}>
             <AdminTile
               id={"whereUsed"}
@@ -198,16 +196,6 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
               icon={<CachedIcon />}
               action={goToDestination}
               routeDestination={ROUTE_SYSTEM_CONVERT_PRODUCT_TO_MATERIAL}
-            />
-          </Grid>
-          <Grid item xs={12} md={6} lg={4}>
-            <AdminTile
-              id={"support"}
-              text={TEXT_ACTIVATE_SUPPORT_USER}
-              description={TEXT_ACTIVATE_SUPPORT_USER_DESCRIPTION}
-              icon={<HeadsetMicIcon />}
-              action={goToDestination}
-              routeDestination={ROUTE_SYSTEM_ACTIVATE_SUPPORT_USER}
             />
           </Grid>
           {authUser.roles.includes(Role.admin) && (
@@ -309,6 +297,7 @@ interface OverviewTileProps {
   onShowEvents: (routeDestination: string) => void;
   onShowMailbox: (routeDestination: string) => void;
   onShowCloudFx: (routeDestination: string) => void;
+  onShowFeeds: (routeDestination: string) => void;
   icon: JSX.Element;
   authUser: AuthUser;
 }
@@ -318,6 +307,7 @@ const OverviewTile = ({
   onShowEvents,
   onShowMailbox,
   onShowCloudFx,
+  onShowFeeds,
   icon,
   authUser,
 }: OverviewTileProps) => {
@@ -351,6 +341,15 @@ const OverviewTile = ({
             <ListItemText
               primary={TEXT_EVENTS}
               onClick={() => onShowEvents(ROUTE_SYSTEM_OVERVIEW_EVENTS)}
+            />
+          </ListItem>
+          <ListItem button>
+            <ListItemIcon>
+              <RssFeedIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary={TEXT_FEEDS}
+              onClick={() => onShowFeeds(ROUTE_OVERVIEW_FEEDS)}
             />
           </ListItem>
           {authUser.roles.includes(Role.admin) && (

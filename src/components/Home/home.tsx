@@ -729,15 +729,15 @@ const HomeNewestRecipes = ({
   onCardClick,
 }: HomeNewestRecipesProps) => {
   const classes = useStyles();
-  const [hover, setHover] = React.useState(false);
+  const [hover, setHover] = React.useState({recipeUid: "", hover: false});
   /* ------------------------------------------
   // Hover-Effekt Karte
   // ------------------------------------------ */
-  const handleHover = () => {
-    setHover(true);
+  const handleHover = (recipeUid: string) => {
+    setHover({recipeUid: recipeUid, hover: true});
   };
   const handleMouseOut = () => {
-    setHover(false);
+    setHover({recipeUid: "", hover: false});
   };
 
   return (
@@ -762,7 +762,7 @@ const HomeNewestRecipes = ({
         <Grid item xs={12} key={"recipeGrid_" + recipe.uid}>
           <Card
             className={classes.card}
-            onMouseOver={handleHover}
+            onMouseOver={() => handleHover(recipe.uid)}
             onMouseOut={handleMouseOut}
             key={"recipeCard_" + recipe.uid}
           >
@@ -783,7 +783,10 @@ const HomeNewestRecipes = ({
                     }
                     title={recipe.sourceObject.name}
                     style={{
-                      transform: hover ? "scale(1.05)" : "scale(1)",
+                      transform:
+                        hover.hover && hover.recipeUid === recipe.uid
+                          ? "scale(1.05)"
+                          : "scale(1)",
                       transition: "0.5s ease",
                     }}
                   />

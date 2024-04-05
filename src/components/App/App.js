@@ -58,7 +58,6 @@ const CreateNewEvent = lazy(() => import("../Event/Event/createNewEvent"));
 const Recipes = lazy(() => import("../Recipe/recipes"));
 const System = lazy(() => import("../Admin/system"));
 const GlobalSettings = lazy(() => import("../Admin/globalSettings"));
-const FeedDelete = lazy(() => import("../Admin/feedDelete"));
 const WhereUsed = lazy(() => import("../Admin/whereUsed"));
 const MergeProducts = lazy(() => import("../Admin/mergeProducts"));
 const ConvertProductToMaterial = lazy(() =>
@@ -71,6 +70,7 @@ const OverviewEvents = lazy(() => import("../Admin/overviewEvents"));
 const OverviewUsers = lazy(() => import("../Admin/overviewUsers"));
 const OverviewMailbox = lazy(() => import("../Admin/overviewMailbox"));
 const OverviewCloudFx = lazy(() => import("../Admin/overviewCloudFunctions"));
+const OverviewFeeds = lazy(() => import("../Admin/overviewFeeds"));
 const ActivateSupportUser = lazy(() => import("../Admin/activateSupportUser"));
 const MailConsole = lazy(() => import("../Admin/mailConsole"));
 
@@ -212,8 +212,8 @@ const App = () => {
                 />
                 <Route
                   exact
-                  path={ROUTES.SYSTEM_FEED_DELETE}
-                  component={FeedDelete}
+                  path={ROUTES.SYSTEM_OVERVIEW_FEEDS}
+                  component={OverviewFeeds}
                 />
                 <Route
                   exact

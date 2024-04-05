@@ -30,6 +30,7 @@ import {
   UnitConversionProducts,
 } from "../../Unit/unitConversion.class";
 import {Footer, Header} from "../../Shared/pdfComponents";
+import Unit from "../../Unit/unit.class";
 
 interface UsedRecipesPdfProps {
   list: UsedRecipeListEntry;
@@ -37,6 +38,7 @@ interface UsedRecipesPdfProps {
   menueplan: Menuplan;
   eventName: Event["name"];
   products: Product[];
+  units: Unit[] | null;
   unitConversionBasic: UnitConversionBasic | null;
   unitConversionProducts: UnitConversionProducts | null;
   authUser: AuthUser;
@@ -48,6 +50,7 @@ const UsedRecipesPdf = ({
   menueplan,
   eventName,
   products,
+  units,
   unitConversionBasic,
   unitConversionProducts,
   authUser,
@@ -75,6 +78,7 @@ const UsedRecipesPdf = ({
               }
               menueCoordinates={menueCoordinate}
               products={products}
+              units={units}
               unitConversionBasic={unitConversionBasic}
               unitConversionProducts={unitConversionProducts}
               actualDate={actualDate}
@@ -97,6 +101,7 @@ interface RecipePageProps {
   recipe: Recipe;
   menueCoordinates: MenueCoordinates;
   products: Product[];
+  units: Unit[] | null;
   unitConversionBasic: UnitConversionBasic | null;
   unitConversionProducts: UnitConversionProducts | null;
   actualDate: Date;
@@ -107,6 +112,7 @@ const RecipePage = ({
   recipe,
   menueCoordinates,
   products,
+  units,
   unitConversionBasic,
   unitConversionProducts,
   eventName,
@@ -119,6 +125,7 @@ const RecipePage = ({
     portionsToScale: mealRecipe.totalPortions,
     scalingOptions: {convertUnits: true},
     products: products,
+    units: units,
     unitConversionBasic: unitConversionBasic,
     unitConversionProducts: unitConversionProducts,
   });

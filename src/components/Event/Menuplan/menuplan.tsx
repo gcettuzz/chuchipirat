@@ -2069,7 +2069,6 @@ const MealTypeRow = ({
   mealRecipes,
   menuplanSettings,
   draggableProvided,
-  draggableSnapshot,
   groupConfiguration,
   onMealTypeUpdate,
   onMenuplanUpdate,
@@ -2930,7 +2929,8 @@ MenuCardProps) => {
           disabled={
             menue.materialOrder.length == 0 &&
             menue.productOrder.length == 0 &&
-            menue.mealRecipeOrder.length == 0
+            menue.mealRecipeOrder.length == 0 &&
+            note == undefined
           }
         >
           <ListItemIcon>

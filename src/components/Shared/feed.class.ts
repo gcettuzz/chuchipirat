@@ -60,6 +60,22 @@ interface DeleteFeed {
   feedUid: Feed["uid"];
   firebase: Firebase;
 }
+interface GetFeedsLog {
+  firebase: Firebase;
+}
+interface GetFeed {
+  firebase: Firebase;
+  feedUid: Feed["uid"];
+}
+
+export interface FeedLogEntry {
+  uid: string;
+  created: ChangeRecord;
+  text: Feed["text"];
+  title: Feed["text"];
+  type: Feed["type"];
+  visibility: Feed["visibility"];
+}
 // ==================================================================== */
 /**
  * Feed Klasse
@@ -170,7 +186,7 @@ export default class Feed {
             [result.documentUid]: {
               created: feed.created,
               type: feed.type,
-              visibilty: feed.visibility,
+              visibility: feed.visibility,
               title: feed.title,
               text: feed.text,
             },
@@ -357,9 +373,66 @@ export default class Feed {
       throw new Error(TEXT_ERROR_PARAMETER_NOT_PASSED);
     }
 
-    await firebase.feed.delete({uids: [feedUid]}).catch((error) => {
-      console.error(error);
-      throw error;
-    });
+    await firebase.feed
+      .delete({uids: [feedUid]})
+      .then(() => {
+        // Log-Eintrag auch löschen!
+        firebase.feed.log
+          .deleteField({fieldName: feedUid, uids: []})
+          .catch((error) => {
+            console.error(error);
+            throw error;
+          });
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  };
+  // ===================================================================== */
+  /**
+   * Log aller Feeds holen
+   * @param Object - Firebase
+   */
+  static getFeedsLog = async ({firebase}: GetFeedsLog) => {
+    const feedLog: FeedLogEntry[] = [];
+
+    if (!firebase) {
+      throw new Error(TEXT_ERROR_PARAMETER_NOT_PASSED);
+    }
+
+    await firebase.feed.log
+      .read({uids: []})
+      .then((result) => {
+        Object.entries(result).forEach(([key, value]) => {
+          feedLog.push({uid: key, ...value});
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+
+    return feedLog;
+  };
+  // ===================================================================== */
+  /**
+   * Einzelner Feed holen
+   * @param Object - Firebase und Feed-UID
+   */
+  static getFeed = async ({firebase, feedUid}: GetFeed) => {
+    if (!firebase) {
+      throw new Error(TEXT_ERROR_PARAMETER_NOT_PASSED);
+    }
+
+    return firebase.feed
+      .read<Feed>({uids: [feedUid]})
+      .then((result) => {
+        return result;
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
   };
 }

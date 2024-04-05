@@ -21,7 +21,6 @@ export const EVENTS = "/events";
 
 export const SYSTEM = "/system";
 export const SYSTEM_JOBS = "/system/jobs";
-export const SYSTEM_FEED_DELETE = "/system/feeddelete";
 export const SYSTEM_WHERE_USED = "/system/whereused";
 export const SYSTEM_MERGE_PRODUCT = "/system/mergeproducts";
 export const SYSTEM_CONVERT_PRODUCT_TO_MATERIAL =
@@ -35,6 +34,7 @@ export const SYSTEM_OVERVIEW_EVENTS = "/system/overview/events";
 export const SYSTEM_OVERVIEW_USERS = "/system/overview/users";
 export const SYSTEM_OVERVIEW_MAILBOX = "/system/overview/mailbox";
 export const SYSTEM_OVERVIEW_CLOUDFX = "/system/overview/cloudfx";
+export const SYSTEM_OVERVIEW_FEEDS = "/system/overview/feeds";
 
 export const SYSTEM_MAIL_CONSOLE = "/system/mailconsole";
 
