@@ -222,6 +222,7 @@ export default class Product {
       feedVisibility: Role.communityLeader,
       objectUid: product.uid,
       objectName: product.name,
+      textElements: [product.name],
     });
 
     // Statistik

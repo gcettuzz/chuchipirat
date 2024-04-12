@@ -269,6 +269,9 @@ export default class Feed {
         return TEXT_FEED_TITLE.SHOPPINGLIST_CREATED;
       case FeedType.menuplanCreated:
         return TEXT_FEED_TITLE.MENUPLAN_CREATED;
+      case FeedType.productCreated:
+      case FeedType.materialCreated:
+        return textElement[0];
       default:
         return "?";
     }

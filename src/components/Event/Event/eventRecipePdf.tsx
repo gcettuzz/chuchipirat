@@ -95,7 +95,6 @@ const EventReceiptPdfPage = ({
           </View>
         </View>
       </View>
-
       <Footer
         uid={receiptData.eventUid}
         actualDate={actualDate}
@@ -181,7 +180,6 @@ const DataBlock = ({receiptData}: DataBlockProps) => {
           </Text>
         </View>
       </View>
-
       <View style={styles.tableRow}>
         <View style={styles.tableCol100}>
           <Text
@@ -217,7 +215,7 @@ Font.register({
       fontWeight: 100,
     },
     {
-      src: "http://fonts.gstatic.com/s/roboto/v15/dtpHsbgPEm2lVWciJZ0P-A.ttf",
+      src: "https://fonts.gstatic.com/s/roboto/v15/dtpHsbgPEm2lVWciJZ0P-A.ttf",
       fontStyle: "light",
       fontWeight: 300,
     },

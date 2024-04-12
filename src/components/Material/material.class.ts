@@ -143,6 +143,7 @@ export default class Material {
       feedVisibility: Role.communityLeader,
       objectUid: material.uid,
       objectName: material.name,
+      textElements: [material.name],
     });
 
     // Statistik

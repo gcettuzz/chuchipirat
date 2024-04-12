@@ -67,11 +67,6 @@ import {
   useTheme,
 } from "@material-ui/core";
 import AlertMessage from "../Shared/AlertMessage";
-// import EnhancedTable, {
-//   Column,
-//   ColumnTextAlign,
-//   TableColumnTypes,
-// } from "../Shared/enhancedTable";
 import SearchPanel from "../Shared/searchPanel";
 
 import {ImageRepository} from "../../constants/imageRepository";
@@ -90,6 +85,7 @@ import {
 } from "@mui/x-data-grid";
 import {Alert, AlertTitle} from "@material-ui/lab";
 import Event from "../Event/Event/event.class";
+import isEqual from "lodash/isEqual";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -617,9 +613,11 @@ const UsersTable = ({dbUsers, onUserSelect}: UsersTableProps) => {
                   rows={filteredUsersUi}
                   columns={DATA_GRID_COLUMNS}
                   sortModel={sortModel}
-                  onSortModelChange={(model) =>
-                    model != sortModel && setSortModel(model)
-                  }
+                  onSortModelChange={(model) => {
+                    if (!isEqual(model, sortModel)) {
+                      setSortModel(model);
+                    }
+                  }}
                   getRowId={(row) => row.uid}
                   localeText={deDE.props.MuiDataGrid.localeText}
                   getRowClassName={(params) => {

@@ -6,7 +6,7 @@ export default class PdfStyles {
     return StyleSheet.create({
       pageMargins: {
         paddingTop: 15,
-        paddingBottom: 100,
+        paddingBottom: 15,
         paddingHorizontal: 35,
       },
 

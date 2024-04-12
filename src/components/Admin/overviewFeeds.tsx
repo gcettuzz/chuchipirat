@@ -15,7 +15,7 @@ import {
   FROM as TEXT_FROM,
   OPEN as TEXT_OPEN,
   X_FEEDS_DELETED as TEXT_X_FEEDS_DELETED,
-  PROCESSED_DOCUMENTS as TEXT_PROCESSED_DOCUMENTS,
+  TITLE as TEXT_TITLE,
   TYPE as TEXT_TYPE,
   VISIBILITY as TEXT_VISIBILITY,
   CREATED_FROM as TEXT_CREATED_FROM,
@@ -544,7 +544,7 @@ const FeedLogTable = ({dbFeedLog, onFeedLogSelect}: FeedLogTableProps) => {
     },
     {
       field: "title",
-      headerName: TEXT_PROCESSED_DOCUMENTS,
+      headerName: TEXT_TITLE,
       editable: false,
       width: 150,
     },

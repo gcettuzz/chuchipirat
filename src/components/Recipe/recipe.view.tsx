@@ -1639,13 +1639,14 @@ export const RecipeIngredients = ({
   const classes = useStyles();
   const ingredientGridColumSize = {
     scaledOn: {
-      originalHeader: 3 as GridSize,
-      scaledHeader: 3 as GridSize,
+      originalHeader: 4 as GridSize,
+      scaledHeader: 4 as GridSize,
+      emptyHeaderSpace: 4 as GridSize,
       original: 2 as GridSize,
       scaled: 2 as GridSize,
-      unitOriginal: 1 as GridSize,
-      unitScaled: 1 as GridSize,
-      ingrdient: 6 as GridSize,
+      unitOriginal: 2 as GridSize,
+      unitScaled: 2 as GridSize,
+      ingredient: 4 as GridSize,
     },
     scaledOff: {
       original: 0 as GridSize,
@@ -1728,7 +1729,7 @@ export const RecipeIngredients = ({
               item
               key={"ingredient_header_grid_ingredient"}
               className={classes.centerCenter}
-              xs={ingredientGridColumSize.scaledOn.ingrdient}
+              xs={ingredientGridColumSize.scaledOn.emptyHeaderSpace}
             />
           </React.Fragment>
         )}
@@ -1886,7 +1887,7 @@ export const RecipeIngredients = ({
                       }
                       xs={
                         scaledPortions
-                          ? ingredientGridColumSize.scaledOn.ingrdient
+                          ? ingredientGridColumSize.scaledOn.ingredient
                           : ingredientGridColumSize.scaledOff.ingrdient
                       }
                     >

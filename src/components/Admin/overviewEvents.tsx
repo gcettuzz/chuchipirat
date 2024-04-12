@@ -90,6 +90,8 @@ import deLocale from "date-fns/locale/de";
 import DateFnsUtils from "@date-io/date-fns";
 import EventReceiptPdf from "../Event/Event/eventRecipePdf";
 import Receipt from "../Event/Event/receipt.class";
+import Utils from "../Shared/utils.class";
+import {SortOrder} from "../Firebase/Db/firebase.db.super.class";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -254,7 +256,6 @@ const OverviewEventsBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-
   const [state, dispatch] = React.useReducer(eventsReducer, inititialState);
   const [searchString, setSearchString] = React.useState<string>("");
   const [dialogQuickView, setDialogQuickView] =
@@ -276,6 +277,13 @@ const OverviewEventsBase: React.FC<
       });
       EventShort.getShortEvents({firebase: firebase})
         .then((result) => {
+          result = Utils.sortArray({
+            array: result,
+            attributeName: "startDate",
+            sortOrder: SortOrder.desc,
+          });
+
+          console.log(result);
           dispatch({
             type: ReducerActions.EVENTS_FETCH_SUCCESS,
             payload: result,
@@ -380,6 +388,12 @@ const OverviewEventsBase: React.FC<
         receiptData[key] = value;
       }
     });
+
+    receiptData.created = {
+      fromDisplayName: authUser.publicProfile.displayName,
+      date: new Date(),
+      fromUid: authUser.uid,
+    };
 
     pdf(<EventReceiptPdf receiptData={receiptData} authUser={authUser} />)
       .toBlob()
