@@ -331,70 +331,68 @@ const NavigationAuthBase = (props) => {
       onKeyDown={toggleDrawer(anchor, false)}
     >
       <List>
-        <ListItem button key="Recipes">
+        <ListItem button key="Recipes" onClick={() => push(ROUTES.RECIPES)}>
           <ListItemIcon>
             <FastfoodIcon />
           </ListItemIcon>
-          <ListItemText
-            primary={TEXT.RECIPES}
-            onClick={() => push(ROUTES.RECIPES)}
-          />
+          <ListItemText primary={TEXT.RECIPES} />
         </ListItem>
         <ListItem button key="Events">
-          <ListItemIcon>
+          <ListItemIcon onClick={() => push(ROUTES.EVENTS)}>
             <EventIcon />
           </ListItemIcon>
-          <ListItemText
-            primary={TEXT.EVENTS}
-            onClick={() => push(ROUTES.EVENTS)}
-          />
+          <ListItemText primary={TEXT.EVENTS} />
         </ListItem>
       </List>
       <Divider />
       <List>
-        <ListItem button key="UnitConversion">
+        <ListItem
+          button
+          key="UnitConversion"
+          onClick={() => push(ROUTES.UNITCONVERSION)}
+        >
           <ListItemIcon>
             <SwapHorizIcon />
           </ListItemIcon>
-          <ListItemText
-            primary={TEXT.NAVIGATION_UNIT_CONVERSION}
-            onClick={() => push(ROUTES.UNITCONVERSION)}
-          />
+          <ListItemText primary={TEXT.NAVIGATION_UNIT_CONVERSION} />
         </ListItem>
       </List>
       <Divider />
       <List>
-        <ListItem button key="requestOverview">
+        <ListItem
+          button
+          key="requestOverview"
+          onClick={() => push(ROUTES.REQUEST_OVERVIEW)}
+        >
           <ListItemIcon>
             <DescriptionIcon />
           </ListItemIcon>
-          <ListItemText
-            primary={TEXT.NAVIGATION_REQUEST_OVERVIEW}
-            onClick={() => push(ROUTES.REQUEST_OVERVIEW)}
-          />
+          <ListItemText primary={TEXT.NAVIGATION_REQUEST_OVERVIEW} />
         </ListItem>
       </List>
       {authUser.roles?.includes(Role.communityLeader) && (
         <React.Fragment>
           <Divider />
           <List>
-            <ListItem button key="Products">
+            <ListItem
+              button
+              key="Products"
+              onClick={() => push(ROUTES.PRODUCTS)}
+            >
               <ListItemIcon>
                 <LoyaltyIcon />
               </ListItemIcon>
-              <ListItemText
-                primary={TEXT.NAVIGATION_PRODUCTS}
-                onClick={() => push(ROUTES.PRODUCTS)}
-              />
+              <ListItemText primary={TEXT.NAVIGATION_PRODUCTS} />
             </ListItem>
-            <ListItem button key="Materials">
+            <ListItem
+              button
+              key="Materials"
+              onClick={() => push(ROUTES.MATERIALS)}
+            >
               <ListItemIcon>
                 <BuildIcon />
               </ListItemIcon>
-              <ListItemText
-                primary={TEXT.MATERIALS}
-                onClick={() => push(ROUTES.MATERIALS)}
-              />
+              <ListItemText primary={TEXT.MATERIALS} />
             </ListItem>
             <ListItem button key="departments">
               <ListItemIcon>
@@ -410,35 +408,30 @@ const NavigationAuthBase = (props) => {
       )}
       {authUser.roles?.includes(Role.communityLeader) && (
         <React.Fragment>
-          <ListItem button key="Units">
+          <ListItem button key="Units" onClick={() => push(ROUTES.UNITS)}>
             <ListItemIcon>
               <StraightenIcon />
             </ListItemIcon>
-            <ListItemText
-              primary={TEXT.NAVIGATION_UNITS}
-              onClick={() => push(ROUTES.UNITS)}
-            />
+            <ListItemText primary={TEXT.NAVIGATION_UNITS} />
           </ListItem>
           <Divider />
           <List>
-            <ListItem button key="Admin">
+            <ListItem button key="Admin" onClick={() => push(ROUTES.SYSTEM)}>
               <ListItemIcon>
                 <SettingsIcon />
               </ListItemIcon>
-              <ListItemText
-                primary={TEXT.NAVIGATION_SYSTEM}
-                onClick={() => push(ROUTES.SYSTEM)}
-              />
+              <ListItemText primary={TEXT.NAVIGATION_SYSTEM} />
             </ListItem>
             {authUser.roles?.includes(Role.admin) && (
-              <ListItem button key="Users">
+              <ListItem
+                button
+                key="Users"
+                onClick={() => push(ROUTES.SYSTEM_OVERVIEW_USERS)}
+              >
                 <ListItemIcon>
                   <GroupIcon />
                 </ListItemIcon>
-                <ListItemText
-                  primary={TEXT.NAVIGATION_USERS}
-                  onClick={() => push(ROUTES.SYSTEM_OVERVIEW_USERS)}
-                />
+                <ListItemText primary={TEXT.NAVIGATION_USERS} />
               </ListItem>
             )}
           </List>
