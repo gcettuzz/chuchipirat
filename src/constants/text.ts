@@ -1,5 +1,3 @@
-"../../constants/text";
-
 /* =====================================================================
 // App
 // ===================================================================== */
@@ -440,6 +438,14 @@ export const PRODUCT_ADD = "Neue Zutat erstellen";
 export const PRODUCT_EDIT = "Produkt anpassen";
 export const RECORD_INGREDIENT_WITH_NECCESSARY_INFO =
   "Erfasse die neue Zutat gleich mit den nötigen Infos.";
+export const GUIDELINES_NEW_PRODUCT = {
+  line1: `Bitte prüfe folgende Punkte, bevor du ein neues Produkt anlegst:`,
+  line2: `Das Produkt existiert im chuchipirat bislang nicht.`,
+  line3: `Das Produkt kann im Laden gekauft werden.`,
+  line4: `Der Produktnamen beinhaltet keine Marken, Mengen, Einheiten oder Zubereitungsformen.`,
+  line5: `Falls bei einer nachträglichen Kontrolle auffallen würde, dass das von dir angelegte Produkt nicht den Richtlinien entspricht, wird es ohne    Voranmeldung geändert/gelöscht, was zu unvollständigen/falschen privaten Rezepten führen kann.`,
+};
+export const NEW_PRODUCT = "Neues Produkt";
 export const WARNING_PRODUCT_1 =
   "Die Änderungen sind global und gelten für alle! ";
 export const WARNING_PRODUCT_2 =

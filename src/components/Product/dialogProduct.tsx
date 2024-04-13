@@ -7,7 +7,7 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogActions from "@material-ui/core/DialogActions";
-import {Alert} from "@material-ui/lab";
+import {Alert, AlertTitle} from "@material-ui/lab";
 
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
@@ -45,7 +45,7 @@ import {
   HAS_LACTOSE as TEXT_HAS_LACTOSE,
   HAS_GLUTEN as TEXT_HAS_GLUTEN,
   PRODUCT_PROPERTY as TEXT_PRODUCT_PROPERTY,
-  RECORD_INGREDIENT_WITH_NECCESSARY_INFO as TEXT_RECORD_INGREDIENT_WITH_NECCESSARY_INFO,
+  // RECORD_INGREDIENT_WITH_NECCESSARY_INFO as TEXT_RECORD_INGREDIENT_WITH_NECCESSARY_INFO,
   IS_MEAT as TEXT_IS_MEAT,
   IS_VEGETARIAN as TEXT_IS_VEGETARIAN,
   IS_VEGAN as TEXT_IS_VEGAN,
@@ -53,6 +53,8 @@ import {
   CANCEL as TEXT_CANCEL,
   OK as TEXT_OK,
   CREATE as TEXT_CREATE,
+  GUIDELINES_NEW_PRODUCT as TEXT_GUIDELINES_NEW_PRODUCT,
+  NEW_PRODUCT as TEXT_NEW_PRODUCT,
 } from "../../constants/text";
 import Department from "../Department/department.class";
 import Unit, {UnitDimension} from "../Unit/unit.class";
@@ -256,7 +258,13 @@ const DialogProduct = ({
       });
       hasError = true;
     }
-    if (!productPopUpValues.department) {
+    if (
+      !productPopUpValues.department ||
+      !Object.prototype.hasOwnProperty.call(
+        productPopUpValues.department,
+        "name"
+      )
+    ) {
       setValidation({
         ...validation,
         department: {
@@ -385,10 +393,22 @@ const DialogProduct = ({
       </DialogTitle>
 
       <DialogContent>
-        <Alert severity="info">
+        {/* <Alert severity="info">
           {TEXT_RECORD_INGREDIENT_WITH_NECCESSARY_INFO}
         </Alert>
-        <br />
+        <br /> */}
+        <Alert severity="warning">
+          <AlertTitle>{`${TEXT_NEW_PRODUCT}?`}</AlertTitle>
+          <div>
+            {TEXT_GUIDELINES_NEW_PRODUCT.line1}
+            <ul>
+              <li>{TEXT_GUIDELINES_NEW_PRODUCT.line2}</li>
+              <li>{TEXT_GUIDELINES_NEW_PRODUCT.line3}</li>
+              <li>{TEXT_GUIDELINES_NEW_PRODUCT.line4}</li>
+            </ul>
+            {TEXT_GUIDELINES_NEW_PRODUCT.line5}
+          </div>
+        </Alert>
         <DialogContentText>
           {dialogType === PRODUCT_DIALOG_TYPE.CREATE && TEXT_PRODUCT}
         </DialogContentText>

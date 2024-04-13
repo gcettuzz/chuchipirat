@@ -68,18 +68,27 @@ export class FirebaseDbEventMenuplan extends FirebaseDbSuper {
 
     Object.values(value.mealRecipes as MealRecipes).forEach((mealRecipe) => {
       if (!mealRecipe.recipe.recipeUid.includes(MealRecipeDeletedPrefix)) {
-        if (!usedRecipes.includes(mealRecipe.recipe.recipeUid)) {
+        if (
+          !usedRecipes.includes(mealRecipe.recipe.recipeUid) &&
+          mealRecipe.recipe.recipeUid
+        ) {
           usedRecipes.push(mealRecipe.recipe.recipeUid);
         }
       }
     });
     Object.values(value.products as Product).forEach((menuProduct) => {
-      if (!usedProducts.includes(menuProduct.productUid)) {
+      if (
+        !usedProducts.includes(menuProduct.productUid) &&
+        menuProduct.productUid
+      ) {
         usedProducts.push(menuProduct.productUid);
       }
     });
     Object.values(value.materials as Material).forEach((menuMaterial) => {
-      if (!usedMaterials.includes(menuMaterial.materialUid)) {
+      if (
+        !usedMaterials.includes(menuMaterial.materialUid) &&
+        menuMaterial.materialUid
+      ) {
         usedMaterials.push(menuMaterial.materialUid);
       }
     });
