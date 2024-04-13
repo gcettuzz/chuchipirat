@@ -7,6 +7,7 @@ enum MailTemplate {
   requestNewComment = "RequestNewComment",
   newletter = "Newsletter",
   welcomeNewUser = "WelcomeNewUser",
+  sendReviewForm = "SendReviewForm",
 }
 
 export default MailTemplate;
