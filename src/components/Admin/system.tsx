@@ -42,8 +42,8 @@ import {
   SYSTEM_GLOBAL_DESCRIPTION as TEXT_SYSTEM_GLOBAL_DESCRIPTION,
   WHERE_USED as TEXT_WHERE_USED,
   WHERE_USED_DESCRIPTION as TEXT_WHERE_USED_DESCRIPTION,
-  MERGE_PRODUCTS as TEXT_MERGE_PRODUCTS,
-  MERGE_PRODUCT_DESCRIPTION as TEXT_MERGE_PRODUCT_DESCRIPTION,
+  MERGE_ITEMS as TEXT_MERGE_ITEMS,
+  MERGE_ITEMS_DESCRIPTION as TEXT_MERGE_ITEMS_DESCRIPTION,
   CONVERT_PRODUCT_TO_MATERIAL as TEXT_CONVERT_PRODUCT_TO_MATERIAL,
   CONVERT_PRODUCT_TO_MATERIAL_DESCRIPTION as TEXT_CONVERT_PRODUCT_TO_MATERIAL_DESCRIPTION,
   JOBS as TEXT_JOBS,
@@ -181,8 +181,8 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
           <Grid item xs={12} md={6} lg={4}>
             <AdminTile
               id={"merge"}
-              text={TEXT_MERGE_PRODUCTS}
-              description={TEXT_MERGE_PRODUCT_DESCRIPTION}
+              text={TEXT_MERGE_ITEMS}
+              description={TEXT_MERGE_ITEMS_DESCRIPTION}
               icon={<CallMergeIcon />}
               action={goToDestination}
               routeDestination={ROUTE_SYSTEM_MERGE_PRODUCT}

@@ -15,7 +15,9 @@ interface MaterialAutocompleteProps {
   componentKey: string;
   material: Material | RecipeProduct | null;
   materials: Material[];
+  label?: string;
   disabled: boolean;
+  allowCreateNewMaterial?: boolean;
   onChange: (
     event: React.ChangeEvent<HTMLInputElement>,
     newValue: string | Material,
@@ -42,7 +44,9 @@ const MaterialAutocomplete = ({
   componentKey,
   material,
   materials,
+  label = MATERIAL,
   disabled,
+  allowCreateNewMaterial = true,
   onChange,
   error,
 }: MaterialAutocompleteProps) => {
@@ -95,10 +99,12 @@ const MaterialAutocomplete = ({
           ) === undefined &&
           !params.inputValue.endsWith(ADD)
         ) {
-          // Hinzufügen-Möglichkeit auch als Produkt reinschmuggeln
-          const newMaterial = new Material();
-          newMaterial.name = `"${params.inputValue}" ${ADD}`;
-          filtered.push(newMaterial);
+          if (allowCreateNewMaterial) {
+            // Hinzufügen-Möglichkeit auch als Produkt reinschmuggeln
+            const newMaterial = new Material();
+            newMaterial.name = `"${params.inputValue}" ${ADD}`;
+            filtered.push(newMaterial);
+          }
         }
         // So sortieren, dass Zutaten, die mit den gleichen Zeichen beginnen
         // vorher angezeigt werden (Salz vor Erdnüsse, gesalzen)
@@ -132,7 +138,7 @@ const MaterialAutocomplete = ({
       renderInput={(params) => (
         <TextField
           {...params}
-          label={MATERIAL}
+          label={label}
           size="small"
           error={error?.isError}
           helperText={

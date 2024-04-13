@@ -62,7 +62,7 @@ export const DELETE_CHECKED_FEEDS = "markierte Feed-Einträge löschen";
 export const GET_FEEDS = "Feed-Einträge holen";
 export const BUTTON_TRACE = "Trace";
 export const BUTTON_CHOOSE_RECIPE = "Rezept auswählen";
-export const MERGE_PRODUCTS = "Produkte zusammenführen";
+export const MERGE_ITEMS = "Items zusammenführen";
 export const CONVERT_PRODUCT_TO_MATERIAL = "Produkt zu Material umwandlen";
 export const BUTTON_CLOSE = "Schliessen";
 /* =====================================================================
@@ -147,8 +147,8 @@ export const DELETE_FEED_BY_DAYS = "Feed-Einträge nach Tagen löschen";
 export const DELETE_FEED_SELECTIV = "Feed-Einträge selektiv löschen";
 export const WHERE_USED = "Verfolgungsnachweis";
 export const SYSTEM_GLOBAL_DESCRIPTION = "Sytemweite-Einstellungen verwalten.";
-export const MERGE_PRODUCT_DESCRIPTION =
-  "Produkte zusammenführen in Rezepten, Menüplänen, Einkaufslisten und Stammdaten.";
+export const MERGE_ITEMS_DESCRIPTION =
+  "Produkte/Materialien zusammenführen in Rezepten, Menüplänen, Einkaufslisten und Stammdaten.";
 export const CONVERT_PRODUCT_TO_MATERIAL_DESCRIPTION =
   "Produkte zu einem Material umwandlen und die betroffenen Rezepte anpassen";
 
@@ -588,16 +588,18 @@ export const DELETE_PICTURE = "Bild löschen";
 // ===================================================================== */
 export const TRACE_RESULT = "Trace Ergebnis";
 export const MERGE_PRODUCT_SELECTION = "Produkteauswahl";
-export const MERGE_PRODUCT_EXPLANATION =
-  "Das Produkt A wird zu Produkt B. Alle Vorkommnisse des Produktes A (Rezepte, Menüplan, Einkaufslisten) werden angepasst. Nach erfolgreicher Änderungen der betroffenen Objekte wird das Produkt A gelöscht und steht nicht mehr zur Verfügung.";
+export const MERGE_MATERIAL_SELECTION = "Materialauswahl";
+
+export const MERGE_ITEM_EXPLANATION = (item: string) =>
+  `Das ${item} A wird zu ${item} B. Alle Vorkommnisse des ${item} A (Rezepte, Menüplan, Einkaufslisten) werden angepasst. Nach erfolgreicher Änderungen der betroffenen Objekte wird das ${item} A gelöscht und steht nicht mehr zur Verfügung.`;
 export const CONVERT_PRODUCT_TO_MATERIAL_EXPLANATION =
   "Das gewählte Produkt wird in ein Material umgewandelt. Dabei werden alle Rezepte, Menüpläne, Einkauf- und Materiallisten angepasst. ";
 export const MERGE_PRODUCT_A = "Produkt A";
 export const MERGE_PRODUCT_B = "Produkt B";
 export const CHANGED_DOCUMENTS = "Geänderte Dokumente";
 export const FOUND_DOCUMENTS = "Gefundene Dokumente";
-export const MERGE_ERROR_SAME_PRODUCTS =
-  "Produkt A und Produkt B sind identisch. Ein Zusammenführen macht daher keinen Sinn.";
+export const MERGE_ERROR_SAME_ITEMS = (item: string) =>
+  `${item} A und ${item} B sind identisch. Ein Zusammenführen macht daher keinen Sinn.`;
 export const GLOBAL_SETTINGS_ALLOW_SIGNUP_LABEL = "Neu-Anmeldung ermöglichen";
 export const GLOBAL_SETTINGS_ALLOW_SIGNUP_DESCRIPTION =
   "Personen können ein Login für den chuchipirat erstellen (Neuanmeldung/Registrierung).";
@@ -993,6 +995,7 @@ export const CONSIDER_INTOLERANCES = "Unverträglichkeit berücksichtigen";
 export const RESTRICTIONS = "Einschränkungen";
 export const NEW_RECIPE = "Neues Rezept";
 export const INGREDIENTS = "Zutaten";
+export const ALLERGENS = "Allergene";
 export const PRODUCT = "Produkt";
 export const PRODUCTS = "Produkte";
 export const QUANTITY_CALCULATION = "Mengenberechnung";
@@ -1010,10 +1013,15 @@ export const SCALED = "skaliert";
 export const PREPARATION = "Zubereitung";
 export const MATERIAL = "Material";
 export const MATERIAL_TYPE = "Materialtyp";
-export const OUTDOOR_KITCHEN_SUITABLE = "Geeignet für Outdoor-Küche";
-export const SHOW_ONLY_MY_RECIPES = "Nur meine Rezepte anzeigen";
 export const MATERIAL_TYPE_CONSUMABLE = "Verbrauchsmaterial";
 export const MATERIAL_TYPE_USAGE = "Gebrauchsmaterial";
+export const MATERIAL_TYPE_KEY_TEXT = {
+  0: "-",
+  1: MATERIAL_TYPE_CONSUMABLE,
+  2: MATERIAL_TYPE_USAGE,
+};
+export const OUTDOOR_KITCHEN_SUITABLE = "Geeignet für Outdoor-Küche";
+export const SHOW_ONLY_MY_RECIPES = "Nur meine Rezepte anzeigen";
 export const ORIGINAL_QUANTITIES = "Original Mengen";
 export const SCALED_QUANTITIES = "Hochgerechnete Mengen";
 export const CONVERT_UNITS = "Einheiten umrechnen";
@@ -1070,6 +1078,11 @@ export const DIET_TYPES = {
 export const ALLERGENS_FREE_TYPES = {
   1: "Laktosefrei",
   2: "Glutenfrei",
+};
+export const ALLERGEN_KEY_TEXT = {
+  0: "-",
+  1: LACTOSE,
+  2: GLUTEN,
 };
 export const RENAME = "Umbenennen";
 export const DELETE = "Löschen";

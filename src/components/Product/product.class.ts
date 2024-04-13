@@ -301,7 +301,6 @@ export default class Product {
    * in allen relevanten Dokumenten wird das nachgeführt
    * @param Objekt - Referenz auf Firebase, AuthUser, Produkt zu erstetzen,
    *                 Ersatz-Produkt, Callback wenn Cloud-FX fertig.
-   * @returns Liste der Produkte
    */
   static mergeProducts = async ({
     firebase,

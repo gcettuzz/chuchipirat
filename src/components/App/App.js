@@ -59,7 +59,7 @@ const Recipes = lazy(() => import("../Recipe/recipes"));
 const System = lazy(() => import("../Admin/system"));
 const GlobalSettings = lazy(() => import("../Admin/globalSettings"));
 const WhereUsed = lazy(() => import("../Admin/whereUsed"));
-const MergeProducts = lazy(() => import("../Admin/mergeProducts"));
+const MergeItems = lazy(() => import("../Admin/mergeItems"));
 const ConvertProductToMaterial = lazy(() =>
   import("../Admin/convertProductToMaterial")
 );
@@ -223,7 +223,7 @@ const App = () => {
                 <Route
                   exact
                   path={ROUTES.SYSTEM_MERGE_PRODUCT}
-                  component={MergeProducts}
+                  component={MergeItems}
                 />
                 <Route
                   exact

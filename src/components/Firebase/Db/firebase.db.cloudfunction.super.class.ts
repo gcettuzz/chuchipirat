@@ -33,6 +33,7 @@ export enum CloudFunctionType {
   dailySummary = "dailySummary",
   deleteFeeds = "deleteFeeds",
   mergeProducts = "mergeProducts",
+  mergeMaterials = "mergeMaterials",
   rebuildStats = "rebuildStats",
   convertProductToMaterial = "convertProductToMaterial",
   activateSupportUser = "activateSupportUser",

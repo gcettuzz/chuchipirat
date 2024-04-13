@@ -29,6 +29,7 @@ import {
 import FirebaseDbCloudFunctionRebuildStats from "./firebase.db.cloudfunction.rebuildStats.class";
 import FirebaseDbCloudFunctionDeclineRecipeRequest from "./firebase.db.cloudfunction.declineRecipeRequest.class";
 import FirebaseDbCloudFunctionUpdateMaterial from "./firebase.db.cloudfunction.updateMaterial";
+import FirebaseDbCloudFunctionMergeMaterials from "./firebase.db.cloudfunction.mergeMaterials.class";
 export class FirebaseDbCloudFunction extends FirebaseDbSuper {
   firebase: Firebase;
   log: FirebaseDbCloudFunctionLog;
@@ -43,6 +44,7 @@ export class FirebaseDbCloudFunction extends FirebaseDbSuper {
   sendMail: FirebaseDbCloudFunctionSendMail;
   deleteFeeds: FirebaseDbCloudFunctionDeleteFeeds;
   mergeProducts: FirebaseDbCloudFunctionMergeProducts;
+  mergeMaterials: FirebaseDbCloudFunctionMergeMaterials;
   convertProductToMaterial: FirebaseDbCloudFunctionConvertProductToMaterial;
   updateProduct: FirebaseDbCloudFunctionUpdateProduct;
   updateMaterial: FirebaseDbCloudFunctionUpdateMaterial;
@@ -74,6 +76,7 @@ export class FirebaseDbCloudFunction extends FirebaseDbSuper {
     this.sendMail = new FirebaseDbCloudFunctionSendMail(firebase);
     this.deleteFeeds = new FirebaseDbCloudFunctionDeleteFeeds(firebase);
     this.mergeProducts = new FirebaseDbCloudFunctionMergeProducts(firebase);
+    this.mergeMaterials = new FirebaseDbCloudFunctionMergeMaterials(firebase);
     this.convertProductToMaterial =
       new FirebaseDbCloudFunctionConvertProductToMaterial(firebase);
     this.updateProduct = new FirebaseDbCloudFunctionUpdateProduct(firebase);
