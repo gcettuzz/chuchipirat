@@ -63,7 +63,7 @@ export const GET_FEEDS = "Feed-Einträge holen";
 export const BUTTON_TRACE = "Trace";
 export const BUTTON_CHOOSE_RECIPE = "Rezept auswählen";
 export const MERGE_ITEMS = "Items zusammenführen";
-export const CONVERT_PRODUCT_TO_MATERIAL = "Produkt zu Material umwandlen";
+export const CONVERT_ITEM = "Produkt/Material umwandlen";
 export const BUTTON_CLOSE = "Schliessen";
 /* =====================================================================
 // Seiten Titel und Untertitel
@@ -149,8 +149,8 @@ export const WHERE_USED = "Verfolgungsnachweis";
 export const SYSTEM_GLOBAL_DESCRIPTION = "Sytemweite-Einstellungen verwalten.";
 export const MERGE_ITEMS_DESCRIPTION =
   "Produkte/Materialien zusammenführen in Rezepten, Menüplänen, Einkaufslisten und Stammdaten.";
-export const CONVERT_PRODUCT_TO_MATERIAL_DESCRIPTION =
-  "Produkte zu einem Material umwandlen und die betroffenen Rezepte anpassen";
+export const CONVERT_PRODUCT_ITEM_DESCRIPTION =
+  "Produkte zu einem Material (oder umgekeht) umwandlen und die betroffenen Rezepte anpassen";
 
 export const DELETE_FEED_DESCRIPTION =
   "Feed-Einträge löschen, welche älter als X Tage sind.";
@@ -592,8 +592,8 @@ export const MERGE_MATERIAL_SELECTION = "Materialauswahl";
 
 export const MERGE_ITEM_EXPLANATION = (item: string) =>
   `Das ${item} A wird zu ${item} B. Alle Vorkommnisse des ${item} A (Rezepte, Menüplan, Einkaufslisten) werden angepasst. Nach erfolgreicher Änderungen der betroffenen Objekte wird das ${item} A gelöscht und steht nicht mehr zur Verfügung.`;
-export const CONVERT_PRODUCT_TO_MATERIAL_EXPLANATION =
-  "Das gewählte Produkt wird in ein Material umgewandelt. Dabei werden alle Rezepte, Menüpläne, Einkauf- und Materiallisten angepasst. ";
+export const CONVERT_ITEM_EXPLANATION = (fromItem: string, toItem: string) =>
+  `Das gewählte ${fromItem} wird in ein ${toItem} umgewandelt. Dabei werden alle Rezepte, Menüpläne, Einkauf- und Materiallisten angepasst.`;
 export const MERGE_PRODUCT_A = "Produkt A";
 export const MERGE_PRODUCT_B = "Produkt B";
 export const CHANGED_DOCUMENTS = "Geänderte Dokumente";

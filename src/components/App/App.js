@@ -60,9 +60,7 @@ const System = lazy(() => import("../Admin/system"));
 const GlobalSettings = lazy(() => import("../Admin/globalSettings"));
 const WhereUsed = lazy(() => import("../Admin/whereUsed"));
 const MergeItems = lazy(() => import("../Admin/mergeItems"));
-const ConvertProductToMaterial = lazy(() =>
-  import("../Admin/convertProductToMaterial")
-);
+const ConvertItem = lazy(() => import("../Admin/convertItem"));
 const Jobs = lazy(() => import("../Admin/executeJob"));
 const BuildDbIndices = lazy(() => import("../Admin/buildDbIndex"));
 const OverviewRecipes = lazy(() => import("../Admin/overviewRecipes"));
@@ -222,13 +220,13 @@ const App = () => {
                 />
                 <Route
                   exact
-                  path={ROUTES.SYSTEM_MERGE_PRODUCT}
+                  path={ROUTES.SYSTEM_MERGE_ITEM}
                   component={MergeItems}
                 />
                 <Route
                   exact
-                  path={ROUTES.SYSTEM_CONVERT_PRODUCT_TO_MATERIAL}
-                  component={ConvertProductToMaterial}
+                  path={ROUTES.SYSTEM_CONVERT_ITEM}
+                  component={ConvertItem}
                 />
                 <Route
                   exact

@@ -30,6 +30,7 @@ import FirebaseDbCloudFunctionRebuildStats from "./firebase.db.cloudfunction.reb
 import FirebaseDbCloudFunctionDeclineRecipeRequest from "./firebase.db.cloudfunction.declineRecipeRequest.class";
 import FirebaseDbCloudFunctionUpdateMaterial from "./firebase.db.cloudfunction.updateMaterial";
 import FirebaseDbCloudFunctionMergeMaterials from "./firebase.db.cloudfunction.mergeMaterials.class";
+import FirebaseDbCloudFunctionConvertMaterialToProduct from "./firebase.db.cloudfunction.convertMaterialToProduct.class copy";
 export class FirebaseDbCloudFunction extends FirebaseDbSuper {
   firebase: Firebase;
   log: FirebaseDbCloudFunctionLog;
@@ -46,6 +47,7 @@ export class FirebaseDbCloudFunction extends FirebaseDbSuper {
   mergeProducts: FirebaseDbCloudFunctionMergeProducts;
   mergeMaterials: FirebaseDbCloudFunctionMergeMaterials;
   convertProductToMaterial: FirebaseDbCloudFunctionConvertProductToMaterial;
+  convertMaterialToProduct: FirebaseDbCloudFunctionConvertMaterialToProduct;
   updateProduct: FirebaseDbCloudFunctionUpdateProduct;
   updateMaterial: FirebaseDbCloudFunctionUpdateMaterial;
   activateSupportUser: FirebaseDbCloudFunctionActivateSupportUser;
@@ -79,6 +81,8 @@ export class FirebaseDbCloudFunction extends FirebaseDbSuper {
     this.mergeMaterials = new FirebaseDbCloudFunctionMergeMaterials(firebase);
     this.convertProductToMaterial =
       new FirebaseDbCloudFunctionConvertProductToMaterial(firebase);
+    this.convertMaterialToProduct =
+      new FirebaseDbCloudFunctionConvertMaterialToProduct(firebase);
     this.updateProduct = new FirebaseDbCloudFunctionUpdateProduct(firebase);
     this.updateMaterial = new FirebaseDbCloudFunctionUpdateMaterial(firebase);
     this.activateSupportUser = new FirebaseDbCloudFunctionActivateSupportUser(

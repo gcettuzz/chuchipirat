@@ -22,9 +22,8 @@ export const EVENTS = "/events";
 export const SYSTEM = "/system";
 export const SYSTEM_JOBS = "/system/jobs";
 export const SYSTEM_WHERE_USED = "/system/whereused";
-export const SYSTEM_MERGE_PRODUCT = "/system/mergeproducts";
-export const SYSTEM_CONVERT_PRODUCT_TO_MATERIAL =
-  "/system/convertproducttomaterial";
+export const SYSTEM_MERGE_ITEM = "/system/mergeitem";
+export const SYSTEM_CONVERT_ITEM = "/system/convertitem";
 export const SYSTEM_GLOBAL_SETTINGS = "/system/globalsettings";
 export const SYSTEM_DB_INDICES = "/system/dbIndices";
 export const SYSTEM_ACTIVATE_SUPPORT_USER = "/system/activatesupportuser";

@@ -12,7 +12,7 @@ import Utils from "../Shared/utils.class";
 import {MATERIAL, ADD, ITEM_CANT_BE_CHANGED} from "../../constants/text";
 
 interface MaterialAutocompleteProps {
-  componentKey: string;
+  componentKey?: string;
   material: Material | RecipeProduct | null;
   materials: Material[];
   label?: string;
@@ -55,8 +55,8 @@ const MaterialAutocomplete = ({
 
   return (
     <Autocomplete
-      key={"material_" + componentKey}
-      id={"material_" + componentKey}
+      key={componentKey ? "material_" + componentKey : "material"}
+      id={componentKey ? "material_" + componentKey : "material"}
       value={material?.name}
       options={materials}
       disabled={disabled}
@@ -84,7 +84,7 @@ const MaterialAutocomplete = ({
           event as unknown as React.ChangeEvent<HTMLInputElement>,
           newValue,
           action,
-          "material_" + componentKey
+          componentKey ? "material_" + componentKey : "material"
         )
       }
       fullWidth

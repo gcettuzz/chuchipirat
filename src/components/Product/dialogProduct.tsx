@@ -11,7 +11,6 @@ import {Alert, AlertTitle} from "@material-ui/lab";
 
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
-import Autocomplete from "@material-ui/lab/Autocomplete";
 import Checkbox from "@material-ui/core/Checkbox";
 
 import {
@@ -38,7 +37,6 @@ import {
   WARNING_PRODUCT_1 as TEXT_WARNING_PRODUCT_1,
   WARNING_PRODUCT_2 as TEXT_WARNING_PRODUCT_2,
   WARNING_PRODUCT_3 as TEXT_WARNING_PRODUCT_3,
-  DEPARTMENT as TEXT_DEPARTMENT,
   SHOPPING_UNIT_INFO as TEXT_SHOPPING_UNIT_INFO,
   USABLE as TEXT_USABLE,
   INTOLERANCES as TEXT_INTOLERANCES,
@@ -63,6 +61,7 @@ import UnitAutocomplete from "../Unit/unitAutocomplete";
 
 import Firebase from "../Firebase/firebase.class";
 import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
+import DepartmentAutocomplete from "../Department/departmentAutocomplete";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
@@ -250,7 +249,6 @@ const DialogProduct = ({
   const onOkClick = () => {
     // Prüfung Abteilung und Name gesetzt
     let hasError = false;
-
     if (!productPopUpValues.name) {
       setValidation({
         ...validation,
@@ -445,32 +443,11 @@ const DialogProduct = ({
           </Grid>
           <Grid item xs={12}>
             <FormControl fullWidth>
-              <Autocomplete
-                id={"department"}
-                value={productPopUpValues.department}
-                options={departments}
-                autoSelect
-                autoHighlight
-                getOptionLabel={(department) => department.name}
-                onChange={(event, newValue, action) => {
-                  onChangeField(
-                    event as React.ChangeEvent<HTMLInputElement>,
-                    newValue,
-                    action,
-                    "department"
-                  );
-                }}
-                fullWidth
-                renderInput={(params) => (
-                  <TextField
-                    error={validation.department.hasError}
-                    {...params}
-                    required
-                    label={TEXT_DEPARTMENT}
-                    size="small"
-                    helperText={validation.department.errorText}
-                  />
-                )}
+              <DepartmentAutocomplete
+                department={productPopUpValues.department}
+                departments={departments}
+                disabled={false}
+                onChange={onChangeField}
               />
             </FormControl>
           </Grid>

@@ -425,7 +425,7 @@ const MergeItemsBase: React.FC<
     setTabValue(newValue);
     dispatch({type: ReducerActions.CLEAR_MERGE_PROTOCOL, payload: {}});
   };
-  console.log(state);
+
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}
@@ -611,7 +611,10 @@ interface ProductDetailListProps {
   products: Product[];
 }
 
-const ProductDetailList = ({products, productUid}: ProductDetailListProps) => {
+export const ProductDetailList = ({
+  products,
+  productUid,
+}: ProductDetailListProps) => {
   const theme = useTheme();
   const product = products.find((product) => product.uid === productUid);
 
@@ -800,7 +803,7 @@ interface MaterialDetailListProps {
   materials: Material[];
 }
 
-const MaterialDetailList = ({
+export const MaterialDetailList = ({
   materials,
   materialUid,
 }: MaterialDetailListProps) => {

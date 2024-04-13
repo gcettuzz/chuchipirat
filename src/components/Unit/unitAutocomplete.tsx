@@ -8,12 +8,12 @@ import Autocomplete, {
   AutocompleteChangeReason,
 } from "@material-ui/lab/Autocomplete";
 
-import Unit from "./unit.class";
+import Unit, {UnitDimension} from "./unit.class";
 
 import {FIELD_UNIT, ABBREVIATION_UNIT} from "../../constants/text";
 
 interface UnitAutocompleteProps {
-  componentKey: string;
+  componentKey?: string;
   unitKey: Unit["key"];
   units: Unit[];
   onChange: (
@@ -40,9 +40,9 @@ const UnitAutocomplete = ({
 
   return (
     <Autocomplete
-      key={"unit_" + componentKey}
-      id={"unit_" + componentKey}
-      value={{key: unitKey, name: ""}}
+      key={componentKey ? "unit_" + componentKey : "unit"}
+      id={componentKey ? "unit_" + componentKey : "unit"}
+      value={{key: unitKey, name: "", dimension: UnitDimension.dimensionless}}
       options={units}
       autoSelect={!unitKey}
       autoHighlight
@@ -62,7 +62,7 @@ const UnitAutocomplete = ({
           event as unknown as React.ChangeEvent<HTMLInputElement>,
           newValue,
           action,
-          "unit_" + componentKey
+          componentKey ? "unit_" + componentKey : "unit"
         );
       }}
       fullWidth

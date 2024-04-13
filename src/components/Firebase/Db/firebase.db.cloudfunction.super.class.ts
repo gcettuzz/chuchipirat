@@ -36,6 +36,7 @@ export enum CloudFunctionType {
   mergeMaterials = "mergeMaterials",
   rebuildStats = "rebuildStats",
   convertProductToMaterial = "convertProductToMaterial",
+  convertMaterialToProduct = "convertMaterialToProduct",
   activateSupportUser = "activateSupportUser",
   signOutAllUsers = "signOutAllUsers",
 }
