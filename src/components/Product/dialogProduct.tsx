@@ -395,18 +395,20 @@ const DialogProduct = ({
           {TEXT_RECORD_INGREDIENT_WITH_NECCESSARY_INFO}
         </Alert>
         <br /> */}
-        <Alert severity="warning">
-          <AlertTitle>{`${TEXT_NEW_PRODUCT}?`}</AlertTitle>
-          <div>
-            {TEXT_GUIDELINES_NEW_PRODUCT.line1}
-            <ul>
-              <li>{TEXT_GUIDELINES_NEW_PRODUCT.line2}</li>
-              <li>{TEXT_GUIDELINES_NEW_PRODUCT.line3}</li>
-              <li>{TEXT_GUIDELINES_NEW_PRODUCT.line4}</li>
-            </ul>
-            {TEXT_GUIDELINES_NEW_PRODUCT.line5}
-          </div>
-        </Alert>
+        {dialogType === ProductDialog.CREATE && (
+          <Alert severity="warning">
+            <AlertTitle>{`${TEXT_NEW_PRODUCT}?`}</AlertTitle>
+            <div>
+              {TEXT_GUIDELINES_NEW_PRODUCT.line1}
+              <ul>
+                <li>{TEXT_GUIDELINES_NEW_PRODUCT.line2}</li>
+                <li>{TEXT_GUIDELINES_NEW_PRODUCT.line3}</li>
+                <li>{TEXT_GUIDELINES_NEW_PRODUCT.line4}</li>
+              </ul>
+              {TEXT_GUIDELINES_NEW_PRODUCT.line5}
+            </div>
+          </Alert>
+        )}
         <DialogContentText>
           {dialogType === PRODUCT_DIALOG_TYPE.CREATE && TEXT_PRODUCT}
         </DialogContentText>

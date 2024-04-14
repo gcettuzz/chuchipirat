@@ -3,7 +3,6 @@ import {compose} from "react-recompose";
 
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
 import Backdrop from "@material-ui/core/Backdrop";
 import CircularProgress from "@material-ui/core/CircularProgress";
 
@@ -11,14 +10,16 @@ import Typography from "@material-ui/core/Typography";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
 import {
-  FormControlLabel,
-  RadioGroup,
-  Radio,
+  // FormControlLabel,
+  // RadioGroup,
+  // Radio,
   Checkbox,
   Menu,
   MenuItem,
   ListItemIcon,
   IconButton,
+  useTheme,
+  Box,
 } from "@material-ui/core";
 
 import {
@@ -31,15 +32,15 @@ import {
   SAVE as TEXT_SAVE,
   CANCEL as TEXT_CANCEL,
   UID as TEXT_UID,
-  PRODUCT as TEXT_PRODUCT,
+  // PRODUCT as TEXT_PRODUCT,
   SHOPPING_UNIT as TEXT_SHOPPING_UNIT,
   HAS_LACTOSE as TEXT_HAS_LACTOSE,
   HAS_GLUTEN as TEXT_HAS_GLUTEN,
   DIET as TEXT_DIET,
   USABLE as TEXT_USABLE,
-  IS_MEAT as TEXT_IS_MEAT,
-  IS_VEGETARIAN as TEXT_IS_VEGETARIAN,
-  IS_VEGAN as TEXT_IS_VEGAN,
+  // IS_MEAT as TEXT_IS_MEAT,
+  // IS_VEGETARIAN as TEXT_IS_VEGETARIAN,
+  // IS_VEGAN as TEXT_IS_VEGAN,
   FROM as TEXT_FROM,
   NAME as TEXT_NAME,
   MATERIAL_TYPE_USAGE as TEXT_MATERIAL_TYPE_USAGE,
@@ -47,15 +48,20 @@ import {
   CHOOSE_MATERIAL_TYPE as TEXT_CHOOSE_MATERIAL_TYPE,
   MATERIAL_TYPE as TEXT_MATERIAL_TYPE,
   PRODUCT_CONVERTED_TO_MATERIAL as TEXT_PRODUCT_CONVERTED_TO_MATERIAL,
+  OPEN as TEXT_OPEN,
+  DIET_TYPES as TEXT_DIET_TYPES,
+  SHOW_ALL_PRODUCTS as TEXT_SHOW_ALL_PRODUCTS,
+  SHOW_ONLY_NEWEST_PRODUCTS as TEXT_SHOW_ONLY_NEWEST_PRODUCTS,
+  NO_NEWEST_PRODUCTS_FOUND as TEXT_NO_NEWEST_PRODUCTS_FOUND,
 } from "../../constants/text";
 import Roles from "../../constants/roles";
 
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
-import EnhancedTable, {
-  TableColumnTypes,
-  ColumnTextAlign,
-} from "../Shared/enhancedTable";
+// import EnhancedTable, {
+//   TableColumnTypes,
+//   ColumnTextAlign,
+// } from "../Shared/enhancedTable";
 import DialogProduct, {ProductDialog} from "./dialogProduct";
 import AlertMessage from "../Shared/AlertMessage";
 
@@ -63,6 +69,7 @@ import {
   Edit as EditIcon,
   MoreVert as MoreVertIcon,
   Cached as CachedIcon,
+  // OpenInNew as OpenInNewIcon,
 } from "@material-ui/icons";
 
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
@@ -85,6 +92,8 @@ import withEmailVerification from "../Session/withEmailVerification";
 import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
 import {withFirebase} from "../Firebase/firebaseContext";
 import {CustomRouterProps} from "../Shared/global.interface";
+import {DataGrid, GridColDef, deDE, gridClasses} from "@mui/x-data-grid";
+import Feed, {FeedType} from "../Shared/feed.class";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -93,13 +102,15 @@ enum ReducerActions {
   PRODUCTS_FETCH_INIT,
   PRODUCTS_FETCH_SUCCESS,
   PRODUCTS_SAVED,
-  // PRODUCTS_FILTER_LIST= "PRODUCTS_FILTER_LIST",
-  // PRODUCT_UPDATED= "PRODUCT_UPDATED",
+  NEWEST_PRODUCTS_FETCH_INIT,
+  NEWEST_PRODUCTS_FETCH_SUCCESS,
+  NEWEST_PRODUCTS_CLEAR,
   PRODUCT_CONVERTED_TO_MATERIAL,
   DEPARTMENT_FETCH_INIT,
   DEPARTMENTS_FETCH_SUCCESS,
   UNITS_FETCH_INIT,
   UNITS_FETCH_SUCCESS,
+  SNACKBAR_SHOW,
   SNACKBAR_CLOSE,
   GENERIC_ERROR,
 }
@@ -111,6 +122,7 @@ type State = {
   products: Product[];
   departments: Department[];
   units: Unit[];
+  newestProducts: Feed[];
   error: Error | null;
   isLoading: {
     overall: boolean;
@@ -125,6 +137,7 @@ const inititialState: State = {
   products: [],
   departments: [],
   units: [],
+  newestProducts: [],
   error: null,
   isLoading: {
     overall: false,
@@ -209,27 +222,16 @@ const productsReducer = (state: State, action: DispatchAction): State => {
           units: false,
         },
       };
-
-    // case REDUCER_ACTIONS.PRODUCT_UPDATED:
-    // Einzelnes Produkt wurde angepasst
-    // return {
-    //   ...state,
-    //   data: state.data.map((product) => {
-    //     if (product.uid === action.payload.uid) {
-    //       product.name = action.payload.name;
-    //       product.departmentName = action.payload.department.name;
-    //       product.departmentUid = action.payload.department.uid;
-    //       product.shoppingUnit = action.payload.shoppingUnit;
-    //       product.usable = action.payload.usable;
-    //     }
-    //     return product;
-    //   }),
-    //   snackbar: {
-    //     open: true,
-    //     severity: "success",
-    //     message: TEXT.PRODUCT_EDITED(action.payload.name),
-    //   },
-    // };
+    case ReducerActions.NEWEST_PRODUCTS_FETCH_SUCCESS:
+      return {
+        ...state,
+        isLoading: {...state.isLoading, overall: false},
+        newestProducts: action.payload as Feed[],
+      };
+    case ReducerActions.NEWEST_PRODUCTS_FETCH_INIT:
+      return {...state, isLoading: {...state.isLoading, overall: true}};
+    case ReducerActions.NEWEST_PRODUCTS_CLEAR:
+      return {...state, newestProducts: []};
     case ReducerActions.PRODUCT_CONVERTED_TO_MATERIAL:
       // Konvertiertes Produkt aus Liste löschen
       products = state.products.filter(
@@ -243,6 +245,16 @@ const productsReducer = (state: State, action: DispatchAction): State => {
           severity: "success",
           open: true,
           message: TEXT_PRODUCT_CONVERTED_TO_MATERIAL(action.payload.name),
+        },
+      };
+    case ReducerActions.SNACKBAR_SHOW:
+      return {
+        ...state,
+        isLoading: {...state.isLoading, overall: false},
+        snackbar: {
+          severity: action.payload.severity,
+          message: action.payload.message,
+          open: true,
         },
       };
     case ReducerActions.SNACKBAR_CLOSE:
@@ -433,9 +445,36 @@ const ProductsBase: React.FC<
   const onCancel = () => {
     toggleEditMode();
   };
+  const loadNewestProducts = () => {
+    if (state.newestProducts.length === 0) {
+      dispatch({type: ReducerActions.NEWEST_PRODUCTS_FETCH_INIT, payload: {}});
+      Feed.getNewestFeeds({
+        firebase: firebase,
+        limitTo: 100,
+        visibility: Role.communityLeader,
+        feedType: FeedType.productCreated,
+        daysOffset: 10,
+      }).then((result) => {
+        if (result.length > 0) {
+          dispatch({
+            type: ReducerActions.NEWEST_PRODUCTS_FETCH_SUCCESS,
+            payload: result,
+          });
+        } else {
+          dispatch({
+            type: ReducerActions.SNACKBAR_SHOW,
+            payload: {severity: "info", message: TEXT_NO_NEWEST_PRODUCTS_FOUND},
+          });
+        }
+      });
+    } else {
+      // löschen, damit alle wieder angezeigt werden
+      dispatch({type: ReducerActions.NEWEST_PRODUCTS_CLEAR, payload: {}});
+    }
+  };
+
   const onConvertProductToMaterial = async (product: Product) => {
     // Fragen welcher Material-Typ gesetzt werden soll?
-
     const userInput = (await customDialog({
       dialogType: DialogType.selectOptions,
       title: TEXT_MATERIAL_TYPE,
@@ -458,7 +497,6 @@ const ProductsBase: React.FC<
         newMaterialType: parseInt(userInput.input) as MaterialType,
         authUser: authUser,
       }).then(() => {
-        //TODO: snackbar, product aus der liste löschen
         dispatch({
           type: ReducerActions.PRODUCT_CONVERTED_TO_MATERIAL,
           payload: product,
@@ -494,6 +532,8 @@ const ProductsBase: React.FC<
         onEdit={toggleEditMode}
         onSave={raiseSaveTrigger}
         onCancel={raiseCancelTrigger}
+        onLoadNewestProducts={loadNewestProducts}
+        showLoadNewestProducts={state.newestProducts.length === 0}
         authUser={authUser}
       />
       {/* ===== BODY ===== */}
@@ -514,6 +554,7 @@ const ProductsBase: React.FC<
           dbProducts={state.products}
           departments={state.departments}
           units={state.units}
+          newestProducts={state.newestProducts}
           saveTrigger={saveTrigger}
           cancelTrigger={cancelTrigger}
           onSave={onSave}
@@ -539,6 +580,8 @@ interface ProductsButtonRowProps {
   onEdit: () => void;
   onCancel: () => void;
   onSave: () => void;
+  onLoadNewestProducts: () => void;
+  showLoadNewestProducts: boolean;
   authUser: AuthUser;
 }
 const ProductsButtonRow = ({
@@ -546,6 +589,8 @@ const ProductsButtonRow = ({
   onEdit,
   onCancel,
   onSave,
+  onLoadNewestProducts,
+  showLoadNewestProducts,
   authUser,
 }: ProductsButtonRowProps) => {
   return (
@@ -563,6 +608,24 @@ const ProductsButtonRow = ({
           variant: "contained",
           color: "primary",
           onClick: onEdit,
+        },
+        {
+          id: "newestProducts",
+          hero: true,
+          visible: showLoadNewestProducts,
+          label: TEXT_SHOW_ONLY_NEWEST_PRODUCTS,
+          variant: "outlined",
+          color: "primary",
+          onClick: onLoadNewestProducts,
+        },
+        {
+          id: "showAll",
+          hero: true,
+          visible: !showLoadNewestProducts,
+          label: TEXT_SHOW_ALL_PRODUCTS,
+          variant: "outlined",
+          color: "primary",
+          onClick: onLoadNewestProducts,
         },
         {
           id: "save",
@@ -593,6 +656,7 @@ interface ProductsTableProps {
   dbProducts: Product[];
   departments: Department[];
   units: Unit[];
+  newestProducts: Feed[];
   editMode: boolean;
   saveTrigger: any;
   cancelTrigger: any;
@@ -607,17 +671,18 @@ interface ProductLineUi {
   name: Product["name"];
   departmentName: Department["name"];
   shoppingUnit: Unit["name"];
-  containsLactose: JSX.Element;
-  containsGluten: JSX.Element;
-  diet: JSX.Element;
-  usable: JSX.Element;
-  context: JSX.Element;
+  containsLactose: boolean;
+  containsGluten: boolean;
+  diet: Diet;
+  usable: boolean;
+  // context: JSX.Element;
 }
 
 const ProductsTable = ({
   dbProducts,
   departments,
   units,
+  newestProducts,
   editMode,
   saveTrigger,
   cancelTrigger,
@@ -636,90 +701,137 @@ const ProductsTable = ({
   const [contextMenuAnchorElement, setContextMenuAnchorElement] =
     React.useState<HTMLElement | null>(null);
   const [contextMenuProductUid, setContextMenuProductUid] = React.useState("");
+  const [pageSize, setPageSize] = React.useState(20);
+
   const classes = useStyles();
-  const TABLE_COLUMS = [
+  const theme = useTheme();
+
+  const DATA_GRID_COLUMNS: GridColDef[] = [
     {
-      id: "edit",
-      type: TableColumnTypes.button,
-      textAlign: ColumnTextAlign.center,
-      disablePadding: false,
-      visible: editMode,
-      label: "",
-      iconButton: <EditIcon fontSize="small" />,
+      field: "open",
+      headerName: TEXT_OPEN,
+      sortable: false,
+      renderCell: (params) => {
+        const onClick = () => openPopUp(params.id as string); // onFeedLogSelect(params.id as string);
+
+        return (
+          <IconButton
+            aria-label="open User"
+            style={{margin: theme.spacing(1)}}
+            size="small"
+            disabled={!editMode}
+            onClick={onClick}
+          >
+            <EditIcon fontSize="inherit" />
+          </IconButton>
+        );
+      },
     },
     {
-      id: "uid",
-      type: TableColumnTypes.string,
-      textAlign: ColumnTextAlign.center,
-      disablePadding: false,
-      label: TEXT_UID,
-      visible: false,
+      field: "uid",
+      headerName: TEXT_UID,
+      editable: false,
+      hide: true,
+      width: 200,
+      cellClassName: () => `super-app ${classes.typographyCode}`,
     },
     {
-      id: "name",
-      type: TableColumnTypes.string,
-      textAlign: ColumnTextAlign.left,
-      disablePadding: false,
-      label: TEXT_PRODUCT,
-      visible: true,
+      field: "name",
+      headerName: TEXT_NAME,
+      editable: false,
+      width: 200,
     },
     {
-      id: "departmentName",
-      type: TableColumnTypes.string,
-      textAlign: ColumnTextAlign.left,
-      disablePadding: false,
-      label: TEXT_DEPARTMENT,
-      visible: true,
+      field: "departmentName",
+      headerName: TEXT_DEPARTMENT,
+      editable: false,
+      width: 200,
     },
     {
-      id: "shoppingUnit",
-      type: TableColumnTypes.string,
-      textAlign: ColumnTextAlign.center,
-      disablePadding: false,
-      label: TEXT_SHOPPING_UNIT,
-      visible: true,
+      field: "shoppingUnit",
+      headerName: TEXT_SHOPPING_UNIT,
+      editable: false,
+      width: 200,
     },
     {
-      id: "containsLactose",
-      type: TableColumnTypes.JSX,
-      textAlign: ColumnTextAlign.center,
-      disablePadding: false,
-      label: TEXT_HAS_LACTOSE,
-      visible: true,
+      field: "containsLactose",
+      headerName: TEXT_HAS_LACTOSE,
+      editable: false,
+      width: 200,
+      renderCell: (params) => (
+        <Checkbox
+          checked={params.value as boolean}
+          disabled={!editMode}
+          onChange={handleCheckboxChange}
+          key={"checkbox_" + Allergen.Lactose + "_" + params.id}
+          name={"checkbox_" + Allergen.Lactose + "_" + params.id}
+          color="primary"
+        />
+      ),
     },
     {
-      id: "containsGluten",
-      type: TableColumnTypes.JSX,
-      textAlign: ColumnTextAlign.center,
-      disablePadding: false,
-      label: TEXT_HAS_GLUTEN,
-      visible: true,
+      field: "containsGluten",
+      headerName: TEXT_HAS_GLUTEN,
+      editable: false,
+      width: 200,
+      renderCell: (params) => (
+        <Checkbox
+          checked={params.value as boolean}
+          disabled={!editMode}
+          onChange={handleCheckboxChange}
+          key={"checkbox_" + Allergen.Gluten + "_" + params.id}
+          name={"checkbox_" + Allergen.Gluten + "_" + params.id}
+          color="primary"
+        />
+      ),
     },
     {
-      id: "diet",
-      type: TableColumnTypes.JSX,
-      textAlign: ColumnTextAlign.center,
-      disablePadding: false,
-      label: TEXT_DIET,
-      visible: true,
+      field: "diet",
+      headerName: TEXT_DIET,
+      editable: false,
+      width: 200,
+      renderCell: (params) => TEXT_DIET_TYPES[params.value as number],
     },
     {
-      id: "usable",
-      type: TableColumnTypes.string,
-      textAlign: ColumnTextAlign.center,
-      disablePadding: false,
-      label: TEXT_USABLE,
-      visible: true,
+      field: "usable",
+      headerName: TEXT_USABLE,
+      editable: false,
+      width: 200,
+      renderCell: (params) => (
+        <Checkbox
+          checked={params.value as boolean}
+          disabled={!editMode}
+          onChange={handleCheckboxChange}
+          key={"checkbox_usable_" + params.id}
+          name={"checkbox_usable_" + params.id}
+          color="primary"
+        />
+      ),
     },
     {
-      id: "context",
-      type: TableColumnTypes.JSX,
-      textAlign: ColumnTextAlign.center,
-      disablePadding: false,
-      label: "",
-      visible: editMode,
+      field: "context",
+      headerName: "",
+      editable: false,
+      width: 200,
+      renderCell: (params) => {
+        const onClick = (event: React.MouseEvent<HTMLElement>) =>
+          openContextMenu(event, params.id as string);
+
+        return (
+          <IconButton
+            aria-label="open User"
+            style={{margin: theme.spacing(1)}}
+            size="small"
+            disabled={!editMode}
+            onClick={onClick}
+          >
+            <MoreVertIcon fontSize="inherit" />
+          </IconButton>
+        );
+      },
     },
   ];
+
   /* ------------------------------------------
   // Mutierte Daten hochschieben
   // ------------------------------------------ */
@@ -758,10 +870,27 @@ const ProductsTable = ({
   // Änderung des Edit-Mode verarbeiten
   // ------------------------------------------ */
   React.useEffect(() => {
-    setFilteredProductsUi(
-      prepareProductsListForUi(filterProducts(products, searchString))
-    );
+    if (searchString) {
+      setFilteredProductsUi(
+        prepareProductsListForUi(filterProducts(products, searchString))
+      );
+    }
   }, [editMode]);
+  /* ------------------------------------------
+  // Neueste Produkte anzeigen
+  // ------------------------------------------ */
+  React.useEffect(() => {
+    if (newestProducts.length > 0) {
+      // setProducts(newestProductsList);
+      setFilteredProductsUi(
+        prepareProductsListForUi(filterProducts(dbProducts, ""))
+      );
+    } else if (products.length !== 0 && newestProducts.length === 0) {
+      setFilteredProductsUi(
+        prepareProductsListForUi(filterProducts(dbProducts, ""))
+      );
+    }
+  }, [newestProducts.length]);
   /* ------------------------------------------
   // Suche
   // ------------------------------------------ */
@@ -797,6 +926,14 @@ const ProductsTable = ({
     } else {
       filteredProducts = products;
     }
+
+    if (newestProducts.length > 0) {
+      // alles herausfiltern, dass nicht in den letzten Tagen angelegt wurde
+      filteredProducts = filteredProducts.filter((product) =>
+        newestProducts.some((feed) => feed.sourceObject.uid === product.uid)
+      );
+    }
+
     return filteredProducts;
   };
   /* ------------------------------------------
@@ -809,76 +946,14 @@ const ProductsTable = ({
         name: product.name,
         departmentName: product.department.name,
         shoppingUnit: product.shoppingUnit,
-        containsLactose: (
-          <Checkbox
-            checked={product.dietProperties?.allergens?.includes(
-              Allergen.Lactose
-            )}
-            color="primary"
-            disabled={!editMode}
-            onChange={handleCheckboxChange}
-            key={"checkbox_" + Allergen.Lactose + "_" + product.uid}
-            name={"checkbox_" + Allergen.Lactose + "_" + product.uid}
-          />
+        containsLactose: product.dietProperties?.allergens?.includes(
+          Allergen.Lactose
         ),
-        containsGluten: (
-          <Checkbox
-            checked={product.dietProperties?.allergens?.includes(
-              Allergen.Gluten
-            )}
-            color="primary"
-            disabled={!editMode}
-            onChange={handleCheckboxChange}
-            key={"checkbox_" + Allergen.Gluten + "_" + product.uid}
-            name={"checkbox_" + Allergen.Gluten + "_" + product.uid}
-          />
+        containsGluten: product.dietProperties?.allergens?.includes(
+          Allergen.Gluten
         ),
-        diet: (
-          <RadioGroup
-            aria-label="Diät"
-            name={"radioGroup_" + product.uid}
-            key={"radioGroup_" + product.uid}
-            value={product.dietProperties.diet}
-            onChange={handleRadioButtonChange}
-            row
-          >
-            <FormControlLabel
-              value={Diet.Meat}
-              control={
-                <Radio size="small" color="primary" disabled={!editMode} />
-              }
-              label={TEXT_IS_MEAT}
-            />
-            <FormControlLabel
-              value={Diet.Vegetarian}
-              control={
-                <Radio size="small" color="primary" disabled={!editMode} />
-              }
-              label={TEXT_IS_VEGETARIAN}
-            />
-            <FormControlLabel
-              value={Diet.Vegan}
-              control={
-                <Radio size="small" color="primary" disabled={!editMode} />
-              }
-              label={TEXT_IS_VEGAN}
-            />
-          </RadioGroup>
-        ),
-        usable: (
-          <Checkbox
-            id={"checkbox_" + product.uid}
-            disabled={!editMode}
-            checked={product.usable}
-            color="primary"
-            onChange={handleCheckBoxChange}
-          />
-        ),
-        context: (
-          <IconButton id={"context_" + product.uid} onClick={openContextMenu}>
-            <MoreVertIcon fontSize="small" />
-          </IconButton>
-        ),
+        diet: product.dietProperties.diet,
+        usable: product.usable,
       };
     });
   };
@@ -887,7 +962,6 @@ const ProductsTable = ({
   // ------------------------------------------ */
   const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const pressedCheckbox = event.target.name.split("_");
-
     const tempProducts = products;
     const changedProduct = tempProducts.find(
       (product) => product.uid === pressedCheckbox[2]
@@ -895,52 +969,25 @@ const ProductsTable = ({
     if (!changedProduct) {
       return;
     }
-    const changedAllergene = parseInt(pressedCheckbox[1]) as Allergen;
 
-    if (event.target.checked) {
-      // Wert hinzufügen
-      changedProduct.dietProperties.allergens.push(changedAllergene);
+    if (pressedCheckbox[1] === "usable") {
+      changedProduct.usable = event.target.checked;
     } else {
-      // Wert entfernen
-      const index =
-        changedProduct.dietProperties.allergens.indexOf(changedAllergene);
-      if (index > -1) {
-        changedProduct.dietProperties.allergens.splice(index, 1);
+      const changedAllergene = parseInt(pressedCheckbox[1]) as Allergen;
+
+      if (event.target.checked) {
+        // Wert hinzufügen
+        changedProduct.dietProperties.allergens.push(changedAllergene);
+      } else {
+        // Wert entfernen
+        const index =
+          changedProduct.dietProperties.allergens.indexOf(changedAllergene);
+        if (index > -1) {
+          changedProduct.dietProperties.allergens.splice(index, 1);
+        }
       }
     }
-    setProducts(tempProducts);
-    setFilteredProductsUi(
-      prepareProductsListForUi(filterProducts(tempProducts, searchString))
-    );
-  };
-  const handleCheckBoxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const pressedCheckbox = event.target.id.split("_");
-    const tempProducts = products;
-    const changedProduct = tempProducts.find(
-      (product) => product.uid === pressedCheckbox[1]
-    );
-    if (!changedProduct) {
-      return;
-    }
-    changedProduct.usable = event.target.checked;
-    setProducts(tempProducts);
 
-    setFilteredProductsUi(
-      prepareProductsListForUi(filterProducts(tempProducts, searchString))
-    );
-  };
-  const handleRadioButtonChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const pressedRadioButtonGroup = event.target.name.split("_");
-    const tempProducts = products;
-    const changedProduct = tempProducts.find(
-      (product) => product.uid === pressedRadioButtonGroup[1]
-    );
-    if (!changedProduct) {
-      return;
-    }
-    changedProduct.dietProperties.diet = parseInt(event.target.value) as Diet;
     setProducts(tempProducts);
     setFilteredProductsUi(
       prepareProductsListForUi(filterProducts(tempProducts, searchString))
@@ -949,9 +996,12 @@ const ProductsTable = ({
   /* ------------------------------------------
 	// Context-Menü 
 	// ------------------------------------------ */
-  const openContextMenu = (event: React.MouseEvent<HTMLElement>) => {
+  const openContextMenu = (
+    event: React.MouseEvent<HTMLElement>,
+    productUid: Product["uid"]
+  ) => {
     setContextMenuAnchorElement(event.currentTarget);
-    setContextMenuProductUid(event.currentTarget.id.split("_")[1]);
+    setContextMenuProductUid(productUid);
   };
   const closeContextMenu = () => {
     setContextMenuAnchorElement(null);
@@ -972,23 +1022,10 @@ const ProductsTable = ({
   /* ------------------------------------------
 	// PopUp 
 	// ------------------------------------------ */
-  const openPopUp = (
-    event:
-      | React.MouseEvent<HTMLSpanElement, MouseEvent>
-      | React.MouseEvent<HTMLTableRowElement, MouseEvent>,
-    productToEdit: ProductLineUi | string
-  ) => {
+  const openPopUp = (productUid: string) => {
     let product = {} as Product;
 
-    if (typeof productToEdit === "string") {
-      product = products.find(
-        (product) => product.uid === productToEdit
-      ) as Product;
-    } else {
-      product = products.find(
-        (product) => product.uid === productToEdit.uid
-      ) as Product;
-    }
+    product = products.find((product) => product.uid === productUid) as Product;
 
     if (!product) {
       return;
@@ -1065,7 +1102,6 @@ const ProductsTable = ({
       prepareProductsListForUi(filterProducts(products, ""))
     );
   }
-
   return (
     <React.Fragment>
       <Card className={classes.card} key={"requestTablePanel"}>
@@ -1073,47 +1109,71 @@ const ProductsTable = ({
           className={classes.cardContent}
           key={"requestTableContent"}
         >
-          <Grid container>
-            <Grid item xs={12} style={{marginBottom: "2ex"}}>
-              <SearchPanel
-                searchString={searchString}
-                onUpdateSearchString={updateSearchString}
-                onClearSearchString={clearSearchString}
-              />
-              <Typography
-                variant="body2"
-                style={{marginTop: "0.5em", marginBottom: "2em"}}
-              >
-                {filteredProductsUi.length == products.length
-                  ? `${products.length} ${TEXT_PRODUCTS}`
-                  : `${filteredProductsUi.length} ${TEXT_FROM.toLowerCase()} ${
-                      products.length
-                    } ${TEXT_PRODUCTS}`}
-              </Typography>
+          <SearchPanel
+            searchString={searchString}
+            onUpdateSearchString={updateSearchString}
+            onClearSearchString={clearSearchString}
+          />
+          <Typography
+            variant="body2"
+            style={{marginTop: "0.5em", marginBottom: "2em"}}
+          >
+            {filteredProductsUi.length == products.length
+              ? `${products.length} ${TEXT_PRODUCTS}`
+              : `${filteredProductsUi.length} ${TEXT_FROM.toLowerCase()} ${
+                  products.length
+                } ${TEXT_PRODUCTS}`}
+          </Typography>
+          <Box sx={{width: "100%"}}>
+            <DataGrid
+              autoHeight
+              rows={filteredProductsUi}
+              columns={DATA_GRID_COLUMNS}
+              getRowId={(row) => row.uid}
+              pagination
+              localeText={deDE.props.MuiDataGrid.localeText}
+              getRowClassName={(params) => {
+                if (params.row?.disabled) {
+                  return `super-app ${classes.dataGridDisabled}`;
+                } else {
+                  `super-app-theme`;
+                }
+              }}
+              pageSize={pageSize}
+              onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+              rowsPerPageOptions={[20, 50, 100]}
+              sx={(theme) => ({
+                [`.${gridClasses.main}`]: {
+                  overflow: "unset",
+                },
+                [`.${gridClasses.columnHeaders}`]: {
+                  position: "sticky",
+                  top: 0,
+                  backgroundColor: theme.palette.background.paper,
+                  zIndex: 1,
+                },
+                [`.${gridClasses.virtualScroller}`]: {
+                  marginTop: "0 !important",
+                },
+              })}
+            />
+          </Box>
 
-              <EnhancedTable
-                tableData={filteredProductsUi}
-                tableColumns={TABLE_COLUMS}
-                keyColum={"uid"}
-                onIconClick={openPopUp}
-              />
-              <Menu
-                open={Boolean(contextMenuAnchorElement)}
-                keepMounted
-                anchorEl={contextMenuAnchorElement}
-                onClose={closeContextMenu}
-              >
-                <MenuItem onClick={onConvertProductToMaterial}>
-                  <ListItemIcon>
-                    <CachedIcon />
-                  </ListItemIcon>
-                  <Typography variant="inherit" noWrap>
-                    Zu Material umwandeln
-                  </Typography>
-                </MenuItem>
-              </Menu>
-            </Grid>
-          </Grid>
+          <Menu
+            open={Boolean(contextMenuAnchorElement)}
+            keepMounted
+            anchorEl={contextMenuAnchorElement}
+            onClose={closeContextMenu}
+          >
+            <MenuItem onClick={onConvertProductToMaterial}>
+              <ListItemIcon>
+                <CachedIcon />
+              </ListItemIcon>
+              <Typography variant="inherit" noWrap>
+                Zu Material umwandeln
+              </Typography>
+            </MenuItem>
+          </Menu>
         </CardContent>
       </Card>
       <DialogProduct

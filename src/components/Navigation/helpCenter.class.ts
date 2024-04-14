@@ -132,6 +132,12 @@ export default class HelpCenter {
             case ROUTES.SYSTEM_MAIL_CONSOLE:
               page = "mailconsole";
               break;
+            case ROUTES.SYSTEM_MERGE_ITEM:
+              page = "merge_items";
+              break;
+            case ROUTES.SYSTEM_CONVERT_ITEM:
+              page = "convert_items";
+              break;
             case ROUTES.SYSTEM_JOBS:
               page = "jobs";
               break;

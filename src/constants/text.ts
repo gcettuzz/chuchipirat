@@ -1095,6 +1095,10 @@ export const APPLY = "Übernehmenen";
 export const PER_PORTION = "pro Portion";
 export const VARIANT = "Variante";
 export const VARIANT_NOTE = "Varianten-Notiz";
+export const SHOW_ONLY_NEWEST_PRODUCTS = "Zeige nur Neuste Produkte";
+export const NO_NEWEST_PRODUCTS_FOUND =
+  "Es wurden keine Produkte gefunden, die die letzten 10 Tage angelegt wurden.";
+export const SHOW_ALL_PRODUCTS = "Zeige alle Produkte";
 export const EXPLANATION_DIALOG_GOODS_TYPE_PRODUCT =
   "Hier kannst du einzelne Produkte dem Menü hinzufügen. Diese werden ebenfalls für die Einkaufsliste berücksichtigt.";
 export const EXPLANATION_DIALOG_GOODS_TYPE_MATERIAL =

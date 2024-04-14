@@ -49,6 +49,7 @@ interface GetNewestFeeds {
   limitTo: number;
   visibility: Role | "*";
   feedType?: FeedType;
+  daysOffset?: number;
 }
 interface DeleteFeedsDaysOffset {
   firebase: Firebase;
@@ -205,6 +206,7 @@ export default class Feed {
     limitTo = DEFAULT_VALUES.FEEDS_DISPLAY,
     visibility = Role.basic,
     feedType,
+    daysOffset,
   }: GetNewestFeeds) => {
     let feeds: Feed[] = [];
     let whereClause: Where[] = [];
@@ -225,6 +227,16 @@ export default class Feed {
         operator: Operator.EQ,
         value: feedType,
       });
+
+    if (daysOffset) {
+      const offsetDate = new Date();
+      offsetDate.setDate(offsetDate.getDate() - daysOffset);
+      whereClause.push({
+        field: "created.date",
+        operator: Operator.GE,
+        value: offsetDate,
+      });
+    }
 
     await firebase.feed
       .readCollection<Feed>({

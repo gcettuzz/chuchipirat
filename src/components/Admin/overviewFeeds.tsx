@@ -710,7 +710,6 @@ const DialogFeedEntry = ({
 }: DialogFeedEntryProps) => {
   const theme = useTheme();
   const classes = useStyles();
-  //TODO: einzelne Feeds löschen (aus dem Dialog)
   return (
     <Dialog
       open={dialogOpen}
