@@ -138,6 +138,9 @@ export default class HelpCenter {
             case ROUTES.SYSTEM_CONVERT_ITEM:
               page = "convert_items";
               break;
+            case ROUTES.SYSTEM_SYSTEM_MESSAGE:
+              page = "system_message";
+              break;
             case ROUTES.SYSTEM_JOBS:
               page = "jobs";
               break;
