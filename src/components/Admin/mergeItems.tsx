@@ -402,7 +402,6 @@ const MergeItemsBase: React.FC<
       materialToReplaceWith: state.material_B,
       authUser: authUser as AuthUser,
       callbackDone: (mergeResult) => {
-        console.log(mergeResult);
         dispatch({
           type: ReducerActions.MATERIAL_MERGE_FINISHED,
           payload: mergeResult,

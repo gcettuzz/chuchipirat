@@ -173,6 +173,12 @@ export const STORAGE_OBJECT_PROPERTY: {[key: string]: StorageObjectProperty} = {
     respectPrefix: false,
     excludeFromCaching: true,
   },
+  SYSTEM_MESSAGE: {
+    durationOfValidity: 360,
+    uid: "/configuration",
+    respectPrefix: false,
+    excludeFromCaching: false,
+  },
 };
 
 const PREFIX_DOCUMENTUID_SEPARATOR = "|";

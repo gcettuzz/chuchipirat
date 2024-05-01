@@ -142,6 +142,9 @@ export const PANEL_COMMEINTRODUCE_YOURSELFNTS = "Kommentare";
 export const PANEL_PRODUCTS = "Produkte";
 export const INTRODUCE_YOURSELF = "Stell dich vor";
 export const GLOBAL_SETTINGS = "Globale Einstellungen";
+export const SYSTEM_MESSAGE = "Systemmeldung";
+export const ATENTION_IMPORTANT_ANNOUNCEMENT =
+  "Achtung, Achtung, wichtige Durchsage!";
 export const DELETE_FEED = "Feed-Einträge löschen";
 export const DELETE_FEED_BY_DAYS = "Feed-Einträge nach Tagen löschen";
 export const DELETE_FEED_SELECTIV = "Feed-Einträge selektiv löschen";
@@ -695,6 +698,8 @@ export const PASSWORD_WHERE_SEND_MAGIC_LINK =
   "Wohin soll der magische Link zugestellt werden?";
 export const PASSWORD_CHANGE = "Passwort ändern";
 export const PASSWORD_RESET = "Passwort zurücksetzen";
+export const HAVE_YOU_FORGOTEN_YOUR_PASSWORD =
+  "Hast du möglicherweise dein Passwort vergessen? ";
 
 export const PASSWORD_HOW_STRONG_IS_IT = "Wie stark ist dein Passwort: ";
 export const PASSWORD_STRENGTH_METER = {
@@ -1263,6 +1268,7 @@ export const RECEIPT_THANK_YOU =
 export const ASSOCIATION = "Verein";
 export const TYPE = "Typ";
 export const INVOLVED_EVENTS = "Beteiligte Anlässe lesen";
+export const VALID_TO = "Gültig bis";
 /* =====================================================================
 // Abkürzungen
 // ===================================================================== */

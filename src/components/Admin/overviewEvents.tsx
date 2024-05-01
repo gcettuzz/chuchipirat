@@ -283,7 +283,6 @@ const OverviewEventsBase: React.FC<
             sortOrder: SortOrder.desc,
           });
 
-          console.log(result);
           dispatch({
             type: ReducerActions.EVENTS_FETCH_SUCCESS,
             payload: result,

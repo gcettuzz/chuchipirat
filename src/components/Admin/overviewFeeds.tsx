@@ -402,8 +402,6 @@ const OverviewFeedsBase: React.FC<
     });
   };
 
-  console.log(state);
-
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}

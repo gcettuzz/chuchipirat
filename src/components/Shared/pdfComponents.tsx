@@ -46,7 +46,6 @@ export const Footer = ({
   showLogo = true,
 }: FooterProps) => {
   const styles = StylesPdf.getPdfStyles();
-  console.log(authUser);
   return (
     <React.Fragment>
       <Text

@@ -58,6 +58,7 @@ const CreateNewEvent = lazy(() => import("../Event/Event/createNewEvent"));
 const Recipes = lazy(() => import("../Recipe/recipes"));
 const System = lazy(() => import("../Admin/system"));
 const GlobalSettings = lazy(() => import("../Admin/globalSettings"));
+const SystemMessage = lazy(() => import("../Admin/systemMessage"));
 const WhereUsed = lazy(() => import("../Admin/whereUsed"));
 const MergeItems = lazy(() => import("../Admin/mergeItems"));
 const ConvertItem = lazy(() => import("../Admin/convertItem"));
@@ -192,6 +193,11 @@ const App = () => {
                   exact
                   path={ROUTES.SYSTEM_GLOBAL_SETTINGS}
                   component={GlobalSettings}
+                />
+                <Route
+                  exact
+                  path={ROUTES.SYSTEM_SYSTEM_MESSAGE}
+                  component={SystemMessage}
                 />
                 <Route
                   exact

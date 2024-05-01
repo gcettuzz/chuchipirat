@@ -33,13 +33,14 @@ import {
   Send as SendIcon,
   Cloud as CloudIcon,
   RssFeed as RssFeedIcon,
+  Build as BuildIcon,
+  Feedback as FeedbackIcon,
 } from "@material-ui/icons";
 
 import {
   ADMIN as TEXT_ADMIN,
   WELCOME_ON_THE_BRIDGE_CAPTAIN as TEXT_WELCOME_ON_THE_BRIDGE_CAPTAIN,
   GLOBAL_SETTINGS as TEXT_GLOBAL_SETTINGS,
-  SYSTEM_GLOBAL_DESCRIPTION as TEXT_SYSTEM_GLOBAL_DESCRIPTION,
   WHERE_USED as TEXT_WHERE_USED,
   WHERE_USED_DESCRIPTION as TEXT_WHERE_USED_DESCRIPTION,
   MERGE_ITEMS as TEXT_MERGE_ITEMS,
@@ -60,6 +61,7 @@ import {
   MAILBOX as TEXT_MAILBOX,
   CLOUD_FX as TEXT_CLOUD_FX,
   FEEDS as TEXT_FEEDS,
+  SYSTEM_MESSAGE as TEXT_SYSTEM_MESSAGE,
 } from "../../constants/text";
 import Role from "../../constants/roles";
 import {
@@ -77,6 +79,7 @@ import {
   SYSTEM_OVERVIEW_MAILBOX as ROUTE_SYSTEM_OVERVIEW_MAILBOX,
   SYSTEM_OVERVIEW_CLOUDFX as ROUTE_SYSTEM_OVERVIEW_CLOUDFX,
   SYSTEM_OVERVIEW_FEEDS as ROUTE_OVERVIEW_FEEDS,
+  SYSTEM_SYSTEM_MESSAGE as ROUTE_SYSTEM_SYSTEM_MESSAGE,
 } from "../../constants/routes";
 
 import useStyles from "../../constants/styles";
@@ -136,14 +139,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
         <Grid container spacing={2}>
           {authUser.roles.includes(Role.admin) && (
             <Grid item xs={12} md={6}>
-              <AdminTile
-                id={"globalSettings"}
-                text={TEXT_GLOBAL_SETTINGS}
-                description={TEXT_SYSTEM_GLOBAL_DESCRIPTION}
-                icon={<TuneIcon />}
-                action={goToDestination}
-                routeDestination={ROUTE_SYSTEM_GLOBAL_SETTINGS}
-              />
+              <SettingsTile goToDestination={goToDestination} />
             </Grid>
           )}
           <Grid item xs={12} md={6}>
@@ -287,7 +283,50 @@ const AdminTile = ({
     </Card>
   );
 };
+/* ===================================================================
+// ======================= Einstellungen Kachel ======================
+// =================================================================== */
+interface SettingsTileProps {
+  goToDestination: (route: string) => void;
+}
+const SettingsTile = ({goToDestination}: SettingsTileProps) => {
+  const classes = useStyles();
 
+  return (
+    <Card className={classes.card} key={"card_settings"}>
+      <CardHeader
+        title={TEXT_GLOBAL_SETTINGS}
+        action={
+          <IconButton aria-label={"settings Card "}>
+            <BuildIcon />
+          </IconButton>
+        }
+      />
+      <CardContent>
+        <List component="nav" aria-label="Mögliche Einstullen">
+          <ListItem button>
+            <ListItemIcon>
+              <TuneIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary={TEXT_GLOBAL_SETTINGS}
+              onClick={() => goToDestination(ROUTE_SYSTEM_GLOBAL_SETTINGS)}
+            />
+          </ListItem>
+          <ListItem button>
+            <ListItemIcon>
+              <FeedbackIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary={TEXT_SYSTEM_MESSAGE}
+              onClick={() => goToDestination(ROUTE_SYSTEM_SYSTEM_MESSAGE)}
+            />
+          </ListItem>
+        </List>
+      </CardContent>
+    </Card>
+  );
+};
 /* ===================================================================
 // ====================== Überblick Kachel Tile  =====================
 // =================================================================== */

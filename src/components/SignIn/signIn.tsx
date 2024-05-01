@@ -232,7 +232,7 @@ const SignInPage: React.FC<CustomRouterProps> = ({...props}) => {
                     severity={"error"}
                     messageTitle={TEXT_ALERT_TITLE_UUPS}
                     body={
-                      state.error.code! === AuthMessages.INTERNAL_ERROR ? (
+                      state.error.code! === AuthMessages.WRONG_PASSWORD ? (
                         <ForgotPasswordLink />
                       ) : (
                         ""

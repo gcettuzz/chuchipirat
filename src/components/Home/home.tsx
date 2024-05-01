@@ -70,6 +70,8 @@ import {withFirebase} from "../Firebase/firebaseContext";
 import withEmailVerification from "../Session/withEmailVerification";
 import {CustomRouterProps} from "../Shared/global.interface";
 import Utils from "../Shared/utils.class";
+import SystemMessage from "../Admin/systemMessage.class";
+import {AlertSystemMessage} from "../Admin/systemMessage";
 /* ===================================================================
 // ============================ Dispatcher ===========================
 // =================================================================== */
@@ -85,6 +87,7 @@ enum ReducerActions {
   FEED_FETCH_SUCCESS,
   STATS_FETCH_INIT,
   STATS_FETCH_SUCCESS,
+  SYSTEM_MESSAGE_FETCH_SUCCESS,
   SET_SNACKBAR,
   CLOSE_SNACKBAR,
   GENERIC_ERROR,
@@ -100,6 +103,7 @@ type State = {
   recipes: Feed[];
   feed: Feed[];
   stats: Kpi[];
+  systemMessage: SystemMessage | null;
   snackbar: Snackbar;
   isLoadingEvents: boolean;
   isLoadingPassedEvents: boolean;
@@ -115,6 +119,7 @@ const inititialState: State = {
   recipes: [],
   feed: [],
   stats: [],
+  systemMessage: null,
   snackbar: {} as Snackbar,
   isLoadingEvents: false,
   isLoadingPassedEvents: false,
@@ -180,6 +185,11 @@ const homeReducer = (state: State, action: DispatchAction): State => {
         ...state,
         isLoadingStats: false,
         stats: action.payload as Kpi[],
+      };
+    case ReducerActions.SYSTEM_MESSAGE_FETCH_SUCCESS:
+      return {
+        ...state,
+        systemMessage: action.payload,
       };
     case ReducerActions.SET_SNACKBAR:
       return {
@@ -330,6 +340,22 @@ const HomeBase: React.FC<
         dispatch({type: ReducerActions.GENERIC_ERROR, payload: error})
       );
   }, []);
+  React.useEffect(() => {
+    SystemMessage.getSystemMessage({
+      firebase: firebase,
+      mustBeValid: true,
+    })
+      .then((result) => {
+        dispatch({
+          type: ReducerActions.SYSTEM_MESSAGE_FETCH_SUCCESS,
+          payload: result,
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+      });
+  }, []);
 
   if (!authUser) {
     return null;
@@ -463,6 +489,11 @@ const HomeBase: React.FC<
                 error={state.error}
                 messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
               />
+            </Grid>
+          )}
+          {state.systemMessage !== null && (
+            <Grid item key="systemMessage" xs={12}>
+              <AlertSystemMessage systemMessage={state.systemMessage} />
             </Grid>
           )}
           <Grid item xs={12}>
