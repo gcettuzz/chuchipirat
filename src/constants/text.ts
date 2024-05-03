@@ -345,6 +345,7 @@ export const EVENT_IS_BEEING_SAVED = "Anlass wird gespeichert.";
 export const IMAGE_IS_BEEING_UPLOADED = "Bild wird hochgeladen.";
 export const RESUME_INTRODUCTION = (eventName: string) =>
   `Herzlichen Glückwunsch! Dein Anlass «${eventName}» wurde angelegt. Es geht gleich weiter. Gerne würden wir dich noch auf Folgendes hinweisen:`;
+export const DONATE = "Spenden";
 export const PLEASE_DONATE = "Spende erwünscht";
 export const WHY_DONATE =
   "Unser Team arbeitet ehrenamtlich, um die App kostenlos anzubieten. Wir sind auf Spenden angewiesen, um die laufenden Kosten zu decken. Wenn dir die App gefällt und dein Anlassbudget es zulässt, unterstütze uns gerne mit einer Spende von Fr. 5.00. Dein Beitrag hilft, das Angebot weiterhin kostenlos anbieten zu können sowie die App am Laufen zu halten und weiter zu verbessern.";
@@ -1269,6 +1270,7 @@ export const ASSOCIATION = "Verein";
 export const TYPE = "Typ";
 export const INVOLVED_EVENTS = "Beteiligte Anlässe lesen";
 export const VALID_TO = "Gültig bis";
+export const HOME_DASHBOARD = "Home-Dashboard";
 /* =====================================================================
 // Abkürzungen
 // ===================================================================== */

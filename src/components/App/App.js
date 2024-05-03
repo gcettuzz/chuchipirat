@@ -32,10 +32,10 @@ import CustomTheme from "./customTheme.class";
 // Für nachträglicher Load --> Code Splitting
 import SignUpPage from "../SignUp/signUp";
 import SignInPage from "../SignIn/signIn";
-import PasswordReset from "../AuthServiceHandler/passwordReset";
 
 import {withAuthentication} from "../Session/authUserContext";
 import {SessionStorageHandler} from "../Firebase/Db/sessionStorageHandler.class";
+import donate from "../Donate/donate";
 
 const PasswordChange = lazy(() => import("../PasswordChange/passwordChange"));
 const Units = lazy(() => import("../Unit/units"));
@@ -56,6 +56,10 @@ const Recipe = lazy(() => import("../Recipe/recipe"));
 
 const CreateNewEvent = lazy(() => import("../Event/Event/createNewEvent"));
 const Recipes = lazy(() => import("../Recipe/recipes"));
+const Donate = lazy(() => import("../Donate/donate"));
+
+const PasswordReset = lazy(() => import("../AuthServiceHandler/passwordReset"));
+
 const System = lazy(() => import("../Admin/system"));
 const GlobalSettings = lazy(() => import("../Admin/globalSettings"));
 const SystemMessage = lazy(() => import("../Admin/systemMessage"));
@@ -189,6 +193,7 @@ const App = () => {
                   path={ROUTES.REQUEST_OVERVIEW}
                   component={requestOverview}
                 />
+                <Route path={ROUTES.DONATE} component={Donate} />
                 <Route
                   exact
                   path={ROUTES.SYSTEM_GLOBAL_SETTINGS}

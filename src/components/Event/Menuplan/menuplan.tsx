@@ -50,6 +50,7 @@ import {
   Info as InfoIcon,
   Notes as NotesIcon,
   Edit,
+  DeleteSweep as DeleteSweepIcon,
 } from "@material-ui/icons";
 
 import useStyles from "../../../constants/styles";
@@ -2964,6 +2965,19 @@ MenuCardProps) => {
             {`${TEXT_NOTE} ${note ? TEXT_EDIT : TEXT_ADD}`}
           </Typography>
         </MenuItem>
+        {note && (
+          <MenuItem
+            onClick={() => onNoteUpdate({action: Action.DELETE, note: note})}
+          >
+            <ListItemIcon>
+              <DeleteSweepIcon />
+            </ListItemIcon>
+            <Typography variant="inherit" noWrap>
+              {`${TEXT_NOTE} ${TEXT_DELETE}`}
+            </Typography>
+          </MenuItem>
+        )}
+
         <MenuItem onClick={onDeleteMenue}>
           <ListItemIcon>
             <DeleteIcon />
@@ -4522,9 +4536,6 @@ export const DialogGoods = ({
     let material: Material;
     let product: Product;
 
-    if (!event?.target.id && action !== "clear") {
-      return;
-    }
     if (
       (action === "select-option" || action === "blur") &&
       objectId?.startsWith("material")
@@ -4549,7 +4560,7 @@ export const DialogGoods = ({
 
         setDialogValues({
           ...dialogValues,
-          material: material,
+          material: material ? material : null,
         });
         return;
       }
@@ -4577,10 +4588,22 @@ export const DialogGoods = ({
 
         setDialogValues({
           ...dialogValues,
-          product: product,
+          product: product ? product : null,
         });
         return;
       }
+    } else if (action === "clear" && objectId?.startsWith("material")) {
+      setDialogValues({
+        ...dialogValues,
+        material: null,
+      });
+      return;
+    } else if (action === "clear" && objectId?.startsWith("product")) {
+      setDialogValues({
+        ...dialogValues,
+        product: null,
+      });
+      return;
     }
 
     if (objectId == "product_" || objectId == "material_") {
@@ -4588,12 +4611,12 @@ export const DialogGoods = ({
         ...dialogValues,
         [objectId.slice(0, -1)]: newValue,
       });
-    } else if (objectId == "unit_" && newValue) {
+    } else if (objectId == "unit_" || objectId == "unit") {
       const newUnit = newValue as Unit;
 
       setDialogValues({
         ...dialogValues,
-        [objectId.slice(0, -1)]: newUnit.key,
+        unit: newUnit?.key ? newUnit.key : "",
       });
     } else {
       if (isNaN(parseFloat(event.target.value))) {
@@ -4748,7 +4771,8 @@ export const DialogGoods = ({
                 />
               )}
             </Grid>
-            <Grid item xs={6}>
+
+            <Grid item xs={goodsType === GoodsType.PRODUCT ? 6 : 12}>
               <TextField
                 key={"quantity"}
                 id={"quantity"}
@@ -4765,14 +4789,16 @@ export const DialogGoods = ({
                 fullWidth
               />
             </Grid>
-            <Grid item xs={6}>
-              <UnitAutocomplete
-                componentKey={""}
-                unitKey={dialogValues.unit}
-                units={units}
-                onChange={onChangeField}
-              />
-            </Grid>
+            {goodsType === GoodsType.PRODUCT && (
+              <Grid item xs={6}>
+                <UnitAutocomplete
+                  componentKey={""}
+                  unitKey={dialogValues.unit}
+                  units={units}
+                  onChange={onChangeField}
+                />
+              </Grid>
+            )}
           </Grid>
         </DialogContent>
         <DialogActions>
@@ -4782,7 +4808,7 @@ export const DialogGoods = ({
           </Button>
           <Button
             onClick={onOk}
-            disabled={!dialogValues.material && !dialogValues.product}
+            disabled={!dialogValues.material?.uid && !dialogValues.product?.uid}
             //   Object.keys(dialogValues.material).length == 0 &&
             //   Object.keys(dialogValues.product).length == 0
             // }

@@ -311,7 +311,6 @@ const DialogProduct = ({
           dietProperties: productPopUpValues.dietProperties,
           authUser: authUser,
         }).then((result) => {
-          // setProductPopUpValues({...productPopUpValues, uid: result.uid});
           handleOk(result);
           setProductPopUpValues({
             ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,

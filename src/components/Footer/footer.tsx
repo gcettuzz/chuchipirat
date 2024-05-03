@@ -48,9 +48,8 @@ const Footer = () => {
         <Grid item container justifyContent="center" xs={2}>
           <img
             className={classes.marginCenter}
-            src={ImageRepository.getEnviromentRelatedPicture().DIVIDER_ICON_SRC}
+            src={ImageRepository.getEnviromentRelatedPicture().VECTOR_LOGO_GREY}
             alt=""
-            // align="center"
             width="50px"
           />
         </Grid>
@@ -74,7 +73,7 @@ const Footer = () => {
             gutterBottom
           >
             {TEXT_FOOTER_CREATED_WITH_JOY_OF_LIFE.part1}
-            <Link href="https://jubla.ch">
+            <Link href="https://jubla.ch" target="_blank">
               {TEXT_FOOTER_CREATED_WITH_JOY_OF_LIFE.linkText}
             </Link>
             {TEXT_FOOTER_CREATED_WITH_JOY_OF_LIFE.part2}
@@ -87,7 +86,10 @@ const Footer = () => {
             gutterBottom
           >
             {TEXT_VERSION}{" "}
-            <Link href="https://github.com/gcettuzz/chuchipirat">
+            <Link
+              href="https://github.com/gcettuzz/chuchipirat"
+              target="_blank"
+            >
               {packageJson.version}
             </Link>
           </Typography>
@@ -99,7 +101,7 @@ const Footer = () => {
           >
             <strong>{TEXT_FOOTER_QUESTIONS_SUGGESTIONS.TITLE}</strong> <br />
             {TEXT_FOOTER_QUESTIONS_SUGGESTIONS.CONTACTHERE}{" "}
-            <Link href={`mailto:${DEFAULT_VALUES.MAILADDRESS}`}>
+            <Link href={`mailto:${DEFAULT_VALUES.MAILADDRESS}`} target="_blank">
               {DEFAULT_VALUES.MAILADDRESS}
             </Link>
             <br />
@@ -156,7 +158,7 @@ export const Copyright = () => {
     <React.Fragment>
       <Typography variant="body2" color="textSecondary" align="center">
         {"Copyright © "}
-        <Link color="inherit" href="https://chuchipirat.ch/">
+        <Link color="inherit" href="https://chuchipirat.ch/" target="_blank">
           {TEXT_APP_NAME}
         </Link>{" "}
         {new Date().getFullYear()}

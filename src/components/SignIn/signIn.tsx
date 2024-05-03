@@ -135,7 +135,6 @@ const SignInPage: React.FC<CustomRouterProps> = ({...props}) => {
     });
   }, []);
 
-  //TODO: nach golive wieder entfernen
   React.useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       // Tastenkombinationen für Mac und Windows

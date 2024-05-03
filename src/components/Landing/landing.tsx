@@ -58,7 +58,7 @@ const LandingPage = (props) => {
 // =================================================================== */
 const LandingBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
+> = ({authUser}) => {
   const classes = useStyles();
   const {push} = useHistory();
 

@@ -44,6 +44,7 @@ import GroupIcon from "@material-ui/icons/Group";
 import NewReleasesIcon from "@material-ui/icons/NewReleases";
 import DescriptionIcon from "@material-ui/icons/Description";
 import BuildIcon from "@material-ui/icons/Build";
+import HomeIcon from "@material-ui/icons/Home";
 
 import Action from "../../constants/actions";
 import * as ROUTES from "../../constants/routes";
@@ -66,6 +67,7 @@ import {withFirebase} from "../Firebase/firebaseContext";
 
 // import Environment from "../Shared/enviroment.class";
 import Utils from "../Shared/utils.class";
+import {DonateIcon} from "../Shared/icons";
 // ===================================================================
 // ============================= Global =============================
 // ===================================================================
@@ -140,7 +142,6 @@ const NavigationAuthBase = (props) => {
   const classes = useStyles();
   const firebase = props.firebase;
   const authUser = props.authUser;
-
   // const authUser = useAuthUser();
   // const firebase = useFirebase();
 
@@ -278,7 +279,7 @@ const NavigationAuthBase = (props) => {
       setDrawerState({...state, [anchor]: open});
     };
 
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+  const handleMenuClick = async (event: React.MouseEvent<HTMLElement>) => {
     const pressedButton = event.currentTarget.id.split("_");
 
     switch (pressedButton[0]) {
@@ -291,6 +292,12 @@ const NavigationAuthBase = (props) => {
       case BUTTONTEXT.SIGNOUT:
         firebase.signOut();
         localStorage.removeItem(LocalStorageKey.AUTH_USER);
+
+        // Kurz warten, damit der Auth-Context nach mag
+        await new Promise(function (resolve) {
+          setTimeout(resolve, 1000);
+        });
+
         push({
           pathname: ROUTES.LANDING,
         });
@@ -331,6 +338,15 @@ const NavigationAuthBase = (props) => {
       onKeyDown={toggleDrawer(anchor, false)}
     >
       <List>
+        <ListItem button key="Home" onClick={() => push(ROUTES.HOME)}>
+          <ListItemIcon>
+            <HomeIcon />
+          </ListItemIcon>
+          <ListItemText primary={TEXT.HOME_DASHBOARD} />
+        </ListItem>
+      </List>
+      <Divider />
+      <List>
         <ListItem button key="Recipes" onClick={() => push(ROUTES.RECIPES)}>
           <ListItemIcon>
             <FastfoodIcon />
@@ -368,6 +384,15 @@ const NavigationAuthBase = (props) => {
             <DescriptionIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.NAVIGATION_REQUEST_OVERVIEW} />
+        </ListItem>
+      </List>
+      <Divider />
+      <List>
+        <ListItem button key="donate" onClick={() => push(ROUTES.DONATE)}>
+          <ListItemIcon>
+            <DonateIcon />
+          </ListItemIcon>
+          <ListItemText primary={TEXT.DONATE} />
         </ListItem>
       </List>
       {authUser.roles?.includes(Role.communityLeader) && (

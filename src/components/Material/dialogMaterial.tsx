@@ -226,11 +226,11 @@ const DialogMaterial = ({
             type: materialPopUpValues.type,
             authUser: authUser,
           }).then((result) => {
+            handleOk(result);
             setMaterialPopUpValues({
               ...MATERIAL_POP_UP_VALUES_INITIAL_STATE,
               clear: true,
             });
-            handleOk(result);
           });
 
           break;

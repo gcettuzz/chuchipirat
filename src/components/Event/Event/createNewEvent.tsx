@@ -509,9 +509,8 @@ const CreateEventCompletion = ({
 // ===================================================================
 // ============================ Twint Button =========================
 // =================================================================== */
-const TwintButton = () => {
+export const TwintButton = () => {
   const classes = useStyles();
-  // const theme = useTheme();
   const [darkMode, setDarkMode] = React.useState(false);
 
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
@@ -522,7 +521,6 @@ const TwintButton = () => {
 
   return (
     <Button
-      // style={{paddingLeft: theme.spacing(2), marginRight: theme.spacing(2)}}
       fullWidth
       startIcon={
         <img

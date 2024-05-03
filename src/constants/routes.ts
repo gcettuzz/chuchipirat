@@ -18,6 +18,7 @@ export const EVENT = "/event";
 export const EVENT_UID = "/event/:id";
 export const CREATE_NEW_EVENT = "/event/new";
 export const EVENTS = "/events";
+export const DONATE = "/donate";
 
 export const SYSTEM = "/system";
 export const SYSTEM_JOBS = "/system/jobs";

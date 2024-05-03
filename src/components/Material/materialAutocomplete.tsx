@@ -20,7 +20,7 @@ interface MaterialAutocompleteProps {
   allowCreateNewMaterial?: boolean;
   onChange: (
     event: React.ChangeEvent<HTMLInputElement>,
-    newValue: string | Material,
+    newValue: string | Material | null,
     action: AutocompleteChangeReason,
     objectId: string
   ) => void;
@@ -79,7 +79,6 @@ const MaterialAutocomplete = ({
         return option.name;
       }}
       onChange={(event, newValue, action) =>
-        newValue &&
         onChange(
           event as unknown as React.ChangeEvent<HTMLInputElement>,
           newValue,
