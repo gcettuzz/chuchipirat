@@ -346,10 +346,12 @@ const HomeBase: React.FC<
       mustBeValid: true,
     })
       .then((result) => {
-        dispatch({
-          type: ReducerActions.SYSTEM_MESSAGE_FETCH_SUCCESS,
-          payload: result,
-        });
+        if (result?.text) {
+          dispatch({
+            type: ReducerActions.SYSTEM_MESSAGE_FETCH_SUCCESS,
+            payload: result,
+          });
+        }
       })
       .catch((error) => {
         console.error(error);
