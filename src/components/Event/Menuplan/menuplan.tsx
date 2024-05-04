@@ -3340,7 +3340,6 @@ const DialogPlanPortions = ({
           )
       );
     }
-
     setDialogValues({
       ...dialogValues,
       plan: plan,
@@ -4519,6 +4518,7 @@ export const DialogGoods = ({
       // Ein Button muss immer aktiv sein
       return;
     }
+
     setDialogValues({
       ...dialogValues,
       planMode: newValue as unknown as GoodsPlanMode,
@@ -4557,11 +4557,12 @@ export const DialogGoods = ({
         if (typeof newValue === "string") {
           material = materials.find((mat) => mat.name == newValue)!;
         }
-
-        setDialogValues({
-          ...dialogValues,
-          material: material ? material : null,
-        });
+        if (material) {
+          setDialogValues({
+            ...dialogValues,
+            material: material ? material : null,
+          });
+        }
         return;
       }
     } else if (
@@ -4585,11 +4586,12 @@ export const DialogGoods = ({
         if (typeof newValue === "string") {
           product = products.find((prd) => prd.name == newValue)!;
         }
-
-        setDialogValues({
-          ...dialogValues,
-          product: product ? product : null,
-        });
+        if (product) {
+          setDialogValues({
+            ...dialogValues,
+            product: product ? product : null,
+          });
+        }
         return;
       }
     } else if (action === "clear" && objectId?.startsWith("material")) {
@@ -4652,6 +4654,13 @@ export const DialogGoods = ({
     });
     onProductCreateSuper(product);
   };
+  const onProductChooseExisting = (product: Product) => {
+    setDialogValues({...dialogValues, product: product});
+    setProductAddPopupValues({
+      ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
+      popUpOpen: false,
+    });
+  };
   const onCloseDialogMaterial = () => {
     setMaterialAddPopupValues({
       ...MATERIAL_POP_UP_VALUES_INITIAL_STATE,
@@ -4680,6 +4689,7 @@ export const DialogGoods = ({
       ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
       ...{popUpOpen: false},
     });
+
     setDialogValues(DIALOG_VALUES_INITIAL_STATE);
   };
   const onCancel = () => {
@@ -4691,6 +4701,7 @@ export const DialogGoods = ({
       ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
       ...{popUpOpen: false},
     });
+
     setDialogValues(DIALOG_VALUES_INITIAL_STATE);
     onCancelSuper();
   };
@@ -4749,9 +4760,7 @@ export const DialogGoods = ({
                 <ProductAutocomplete
                   componentKey={""}
                   product={
-                    dialogValues.product
-                      ? dialogValues.product
-                      : ({} as Product)
+                    dialogValues.product ? dialogValues.product : new Product()
                   }
                   products={products}
                   onChange={onChangeField}
@@ -4843,6 +4852,7 @@ export const DialogGoods = ({
         dialogOpen={productAddPopupValues.popUpOpen}
         handleOk={onProductCreate}
         handleClose={onCloseDialogProduct}
+        handleChooseExisting={onProductChooseExisting}
         products={products}
         units={units}
         departments={departments}

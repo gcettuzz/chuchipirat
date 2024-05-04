@@ -1131,6 +1131,7 @@ const EventShoppingListPage = ({
         units={units}
         departments={departments}
         editMode={handleItemDialogValues.item.uid ? true : false}
+        firebase={firebase}
         authUser={authUser}
         handleOk={onDialogHandleItemOk}
         handleClose={onDialogHandleItemClose}
@@ -1371,6 +1372,7 @@ interface DialogHandleItemProps {
   units: Unit[];
   departments: Department[];
   editMode: boolean;
+  firebase: Firebase;
   authUser: AuthUser;
   handleOk: ({item, quantity, unit}: OnDialogAddItemOk) => void;
   handleClose: () => void;
@@ -1382,10 +1384,15 @@ interface OnDialogAddItemOk {
   quantity: number;
   unit: Unit["key"];
 }
-const DIALOG_VALUES_INITIAL_STATE = {
+interface DialogValues {
+  quantity: string;
+  unit: Unit["key"];
+  item: ProductItem | MaterialItem | null;
+}
+const DIALOG_VALUES_INITIAL_STATE: DialogValues = {
   quantity: "",
   unit: "",
-  item: {} as ProductItem | MaterialItem | null,
+  item: {...new Product(), itemType: ItemType.none},
 };
 const DIALOG_VALUES_VALIDATION_INITIAL_STATE = {
   isError: false,
@@ -1401,6 +1408,7 @@ const DialogHandleItem = ({
   units,
   departments,
   editMode,
+  firebase,
   authUser,
   handleOk: handleOkSuper,
   handleClose: handleCloseSuper,
@@ -1441,7 +1449,6 @@ const DialogHandleItem = ({
     if (typeof newValue === "string" || !newValue) {
       return;
     }
-
     if (newValue.name.endsWith(TEXT_ADD)) {
       // Herausfinden ob ein Produkt oder Material angelegt werden soll
       const userInput = (await customDialog({
@@ -1553,13 +1560,23 @@ const DialogHandleItem = ({
     });
     onProductCreateSuper(product);
   };
-  const onCloseDialogProduct = () => {
+
+  const onProductChooseExisting = (product: Product) => {
+    const item: ProductItem = {...product, itemType: ItemType.food};
+    setDialogValues({...dialogValues, item: item});
+
     setProductAddPopupValues({
       ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
       popUpOpen: false,
     });
   };
 
+  const onCloseDialogProduct = () => {
+    setProductAddPopupValues({
+      ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
+      popUpOpen: false,
+    });
+  };
   return (
     <React.Fragment>
       <Dialog open={dialogOpen} onClose={handleClose} maxWidth="xs" fullWidth>
@@ -1626,9 +1643,11 @@ const DialogHandleItem = ({
         dialogOpen={materialAddPopupValues.popUpOpen}
         handleOk={onMaterialCreate}
         handleClose={onCloseDialogMaterial}
+        firebase={firebase}
         authUser={authUser}
       />
       <DialogProduct
+        firebase={firebase}
         productName={productAddPopupValues.name}
         productUid={productAddPopupValues.uid}
         productUsable={productAddPopupValues.usable}
@@ -1637,6 +1656,7 @@ const DialogHandleItem = ({
         dialogOpen={productAddPopupValues.popUpOpen}
         handleOk={onProductCreate}
         handleClose={onCloseDialogProduct}
+        handleChooseExisting={onProductChooseExisting}
         products={products}
         units={units}
         departments={departments}

@@ -94,6 +94,7 @@ import {withFirebase} from "../Firebase/firebaseContext";
 import {CustomRouterProps} from "../Shared/global.interface";
 import {DataGrid, GridColDef, deDE, gridClasses} from "@mui/x-data-grid";
 import Feed, {FeedType} from "../Shared/feed.class";
+import Firebase from "../Firebase/firebase.class";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -560,6 +561,7 @@ const ProductsBase: React.FC<
           onSave={onSave}
           onCancel={onCancel}
           onConvertProductToMaterial={onConvertProductToMaterial}
+          firebase={firebase}
           authUser={authUser}
         />
         <CustomSnackbar
@@ -663,6 +665,7 @@ interface ProductsTableProps {
   onSave: (editedProducts: Product[]) => void;
   onCancel: () => void;
   onConvertProductToMaterial: (product: Product) => void;
+  firebase: Firebase;
   authUser: AuthUser;
 }
 // Aufbau der UI-Tabelle
@@ -689,6 +692,7 @@ const ProductsTable = ({
   onSave,
   onCancel,
   onConvertProductToMaterial: onConvertProductToMaterialSuper,
+  firebase,
   authUser,
 }: ProductsTableProps) => {
   const [searchString, setSearchString] = React.useState("");
@@ -1079,6 +1083,9 @@ const ProductsTable = ({
     );
     setProductPopUpValues(PRODUCT_POPUP_VALUES);
   };
+  const onPopUpChooseExisting = () => {
+    console.info("");
+  };
   if (dbProducts.length > 0 && products.length == 0) {
     // Deep-Copy, damit der Cancel-Befehl wieder die DB-Daten zeigt,
     // werden die Daten hier für die Tabelle geklont.
@@ -1186,6 +1193,7 @@ const ProductsTable = ({
         dialogOpen={productPopUpValues.popUpOpen}
         handleOk={onPopUpOk}
         handleClose={onPopUpClose}
+        handleChooseExisting={onPopUpChooseExisting}
         selectedDepartment={
           departments.find(
             (department) => department.uid === productPopUpValues.department.uid
@@ -1196,6 +1204,7 @@ const ProductsTable = ({
         departments={departments}
         units={units}
         authUser={authUser}
+        firebase={firebase}
       />
     </React.Fragment>
   );

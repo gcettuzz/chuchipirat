@@ -449,6 +449,10 @@ export const GUIDELINES_NEW_PRODUCT = {
   line4: `Der Produktnamen beinhaltet keine Marken, Mengen, Einheiten oder Zubereitungsformen.`,
   line5: `Falls bei einer nachträglichen Kontrolle auffallen würde, dass das von dir angelegte Produkt nicht den Richtlinien entspricht, wird es ohne    Voranmeldung geändert/gelöscht, was zu unvollständigen/falschen privaten Rezepten führen kann.`,
 };
+export const SIMILAR_PRODUCTS = "Ähnliche Produkte";
+export const EXISTING_PRODUCTS = "Bestehende Produkte";
+export const THERE_ARE_SIMILAR_PRODUCTS =
+  "Es gibt bereits Produkte, die ähnliche Namen haben. Bitte überprüfe die angezeigte Liste und prüfe, ob das von dir gewünschte Produkt nicht bereits vorhanden ist. Falls du dein Produkt findest, kannst du dieses wählen. Ansonsten klicke auf den Button «Produkt erstellen», um ein neues Produkt zu erstellen.";
 export const NEW_PRODUCT = "Neues Produkt";
 export const WARNING_PRODUCT_1 =
   "Die Änderungen sind global und gelten für alle! ";

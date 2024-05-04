@@ -20,11 +20,6 @@ import {rebuildFile000AllRecipes} from "../../jobs/rebuildFile000AllRecipes";
 import {rebuildFile000AllUsers} from "../../jobs/rebuildFile000AllUsers";
 import {rebuildFile000AllEvents} from "../../jobs/rebuildFile000AllEvents";
 
-// import {restructureRecipeDocuments} from "../../jobs/TS_Migration_restructureRecipes";
-// import {restructurePrivateRecipeDocuments} from "../../jobs/TS_Migration_restructurePrivateRecipes";
-// import {restructureUserPublicProfile} from "../../jobs/TS_Migration_restructureUserPublicProfile";
-// import {restructureEventDocuments} from "../../jobs/TS_Migration_restructureEvents";
-
 import useStyles from "../../constants/styles";
 
 import PageTitle from "../Shared/pageTitle";
@@ -118,20 +113,6 @@ const ExecuteJobBase: React.FC<
     return <React.Fragment></React.Fragment>;
   }
 
-  /* ------------------------------------------
-  // Rezepte (Dokumente) der neuen Struktur anpassen
-  // ------------------------------------------ */
-  // const onRestructureRecipeDocuments = async () => {
-  //   await restructureRecipeDocuments(firebase).then((result) => {
-  //     setDocumentCounter({...documentCounter, restructeredRecipes: result});
-  //   });
-  // };
-  // const onMovePriveRecipeDocuments = async () => {
-  //   await restructurePrivateRecipeDocuments(firebase).then((result) => {
-  //     setDocumentCounter({...documentCounter, privateRecipes: result});
-  //   });
-  // };
-
   const onRebuildFile000AllRecipes = async () => {
     await rebuildFile000AllRecipes(firebase).then((result) => {
       setDocumentCounter({...documentCounter, allRecipes: result});
@@ -164,22 +145,6 @@ const ExecuteJobBase: React.FC<
     }).catch((error) => console.error(error));
   };
 
-  // const onRestructePublicUserProfile = async () => {
-  //   setJobMonitor({...jobMonitor, publicUserProfile: true});
-  //   await restructureUserPublicProfile(firebase).then((result) => {
-  //     setDocumentCounter({...documentCounter, publicUserProfile: result});
-  //     setJobMonitor({...jobMonitor, publicUserProfile: false});
-  //   });
-  // };
-
-  // const onRestructeEvents = async () => {
-  //   setJobMonitor({...jobMonitor, restructeredEvents: true});
-  //   await restructureEventDocuments(firebase, authUser).then((result) => {
-  //     setDocumentCounter({...documentCounter, restructeredEvents: result});
-  //     setJobMonitor({...jobMonitor, restructeredEvents: false});
-  //   });
-  // };
-
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}
@@ -197,18 +162,6 @@ const ExecuteJobBase: React.FC<
               jobMonitor={jobMonitor}
             />
           </Grid>
-          {/*<Grid item xs={12}>
-            <PanelTempJobList
-              onRestructureRecipeDocuments={onRestructureRecipeDocuments}
-              // onMovePriveRecipeDocuments={onMovePriveRecipeDocuments}
-              onRestructurePublicUserProfile={onRestructePublicUserProfile}
-              onRestructureEvents={onRestructeEvents}
-              // onRestructureProducts={onRestructureProducts}
-              // onFixEvents={onFixEvent}
-              documentCounter={documentCounter}
-              jobMonitor={jobMonitor}
-            />
-          </Grid>*/}
         </Grid>
       </Container>
     </React.Fragment>
@@ -280,112 +233,6 @@ const PanelJobList = ({
     </Card>
   );
 };
-
-/* ===================================================================
-// ========================== Liste aller Jobs =======================
-// =================================================================== */
-// interface PanelTempJobListProps {
-//   onRestructureRecipeDocuments: () => void;
-//   // onMovePriveRecipeDocuments: () => void;
-//   onRestructurePublicUserProfile: () => void;
-//   onRestructureEvents: () => void;
-//   // onRestructureProducts: () => void;
-//   // onFixEvents: () => void;
-//   documentCounter: DocumentCounter;
-//   jobMonitor: JobMonitor;
-// }
-// const PanelTempJobList = ({
-//   onRestructureRecipeDocuments,
-//   // onMovePriveRecipeDocuments,
-//   onRestructurePublicUserProfile,
-//   onRestructureEvents,
-//   // onRestructureProducts,
-//   // onFixEvents,
-//   documentCounter,
-//   jobMonitor,
-// }: PanelTempJobListProps) => {
-//   const classes = useStyles();
-//   return (
-//     <Card className={classes.card} key={"cardTempJobs"}>
-//       <CardContent className={classes.cardContent} key={"cardContentTempJobs"}>
-//         <Typography gutterBottom={true} variant="h5" component="h2">
-//           {TEXT_TEMP_JOBS}
-//         </Typography>
-//         <Typography>
-//           Folgende Jobs sind für die Umstellung der Datenstruktur (Migratiom
-//           Typescript) angedacht. Diese dürfen nur <strong>EINMAL</strong>{" "}
-//           ausgeführt werden.
-//         </Typography>
-//         <Typography color="error">
-//           <strong>
-//             Vor der Migration auf Firebase unbedingt die Berechtigungen
-//             ausschalten, sodass ich als Admin alles darf.
-//           </strong>
-//         </Typography>
-//         <br></br>
-//         {/* <JobEntry
-//           onClick={onRestructureProducts}
-//           jobName={"Produkte restrukturieren"}
-//           jobDescription={"Produkte in neue Strutkur umbiegen."}
-//           jobIsRunning={jobMonitor.restructureProducts}
-//           changedRecords={documentCounter.restructureProducts}
-//           successMessage={`${documentCounter.restructureProducts} Produkte wurden angepasst.`}
-//         />
-//         <br></br> */}
-//         <JobEntry
-//           onClick={onRestructureRecipeDocuments}
-//           jobName={"Rezepte restrukturieren"}
-//           jobDescription={
-//             "Alle Rezept-Dokumente in Firebase nach der neuen File-Struktur umbiegen und in die privaten Verzeichnisse verschieben."
-//           }
-//           jobIsRunning={jobMonitor.restructeredRecipes}
-//           changedRecords={documentCounter.restructeredRecipes}
-//           successMessage={`${documentCounter.restructeredRecipes} Dokumente wurden angepasst.`}
-//         />
-//         <br></br>
-//         {/* <JobEntry
-//           onClick={onMovePriveRecipeDocuments}
-//           jobName={"Private Rezepte verschieben"}
-//           jobDescription={
-//             "Alle privaten Rezepte in neuer Firebase Struktur verschieben."
-//           }
-//           jobIsRunning={jobMonitor.privateRecipes}
-//           changedRecords={documentCounter.privateRecipes}
-//           successMessage={`${documentCounter.privateRecipes} Dokumente wurden angepasst.`}
-//         />
-//         <br></br>*/}
-//         <JobEntry
-//           onClick={onRestructurePublicUserProfile}
-//           jobName={"Öffentliches User Profil umstrukturieren"}
-//           jobDescription={
-//             "Die Felder des öffentlichen User Profil der neuen Struktur anpassen."
-//           }
-//           jobIsRunning={jobMonitor.publicUserProfile}
-//           changedRecords={documentCounter.publicUserProfile}
-//           successMessage={`${documentCounter.publicUserProfile} Dokumente wurden angepasst.`}
-//         />
-//         <br></br>
-//         <JobEntry
-//           onClick={onRestructureEvents}
-//           jobName={"Anlässe restukturieren"}
-//           jobDescription={"Anlässe in neue Struktur umbiegen"}
-//           jobIsRunning={jobMonitor.restructeredEvents}
-//           changedRecords={documentCounter.restructeredEvents}
-//           successMessage={`${documentCounter.restructeredEvents} Dokumente wurden angepasst.`}
-//         />
-//         <br></br>
-//         {/* <JobEntry
-//           onClick={onFixEvents}
-//           jobName={"Alter Anlass wiederherstellen"}
-//           jobDescription={"JSON einfügen um alten Anlass wiederherzustellen"}
-//           jobIsRunning={jobMonitor.fixEvent}
-//           changedRecords={documentCounter.fixEvents}
-//           successMessage={`${documentCounter.fixEvents} Dokumente wurden angepasst.`}
-//         /> */}
-//       </CardContent>
-//     </Card>
-//   );
-// };
 /* ===================================================================
 // ======================== Eintrag in Job Liste =====================
 // =================================================================== */

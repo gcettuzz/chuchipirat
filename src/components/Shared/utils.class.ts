@@ -534,4 +534,20 @@ export default class Utils {
       date1.getFullYear() === date2.getFullYear()
     );
   }
+  // ===================================================================== */
+  /**
+   * Jaccard-Index-Algorithmus - Prozent bestimmen, wie ähnlich sich zwei
+   * Strings sind
+   * @param a: String 1
+   * @param b: String 2
+   * @result Number -  Prozent wie fest sie sich überschneiden
+   */
+  static jaccardIndex(a: string, b: string): number {
+    const setA = new Set(a);
+    const setB = new Set(b);
+
+    const intersectionSize = [...setA].filter((char) => setB.has(char)).length;
+    const unionSize = setA.size + setB.size - intersectionSize;
+    return intersectionSize / unionSize;
+  }
 }

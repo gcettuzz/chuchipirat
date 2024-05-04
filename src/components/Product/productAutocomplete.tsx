@@ -58,7 +58,6 @@ const ProductAutocomplete = ({
 }: ProductAutocompleteProps) => {
   // Handler für Zutaten/Produkt hinzufügen
   const filter = createFilterOptions<Product>();
-
   return (
     <Autocomplete
       id={"product_" + componentKey}

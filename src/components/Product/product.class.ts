@@ -68,6 +68,10 @@ interface MergeProducts {
   productToReplaceWith: {uid: string; name: string};
   callbackDone: (document: MergeProductsCallbackDocument) => void;
 }
+interface FindSimilarProducts {
+  productName: Product["name"];
+  existingProducts: Product[];
+}
 
 // ATTENTION:
 // wird dies erweitert, muss auch im Cloud-Function File index
@@ -440,5 +444,58 @@ export default class Product {
         console.error(error);
         throw error;
       });
+  };
+  // =====================================================================
+  /**
+   * Produkte finden, mit dem ähnlichen Namen - die Liste mit ähnlichen
+   * Namen soll helfen, dass nicht gleiche Produkte erfasst werden
+   * @param Objekt mit Namen des Produktes und der Liste aller Produkte
+   * @returns Array mit Produkten, die ähnlich sind
+   */
+  static findSimilarProducts = ({
+    productName,
+    existingProducts,
+  }: FindSimilarProducts) => {
+    const threshold = 0.7;
+    const excludedWords = ["glutenfrei", "laktosefrei", "aha"]; // Wörter, die ausgeschlossen werden sollen
+
+    const similarProducts: {product: Product; similarity: number}[] = [];
+
+    let newProductWords = productName.toLowerCase().split(" ");
+    newProductWords = newProductWords.filter(
+      (word) => !excludedWords.includes(word)
+    );
+
+    for (const product of existingProducts) {
+      const productWords = product.name.toLowerCase().split(" ");
+
+      // Berechne die durchschnittliche Ähnlichkeit der einzelnen Wörter
+      const wordSimilaritySum = newProductWords.reduce((sum, word) => {
+        word.replace(",", "");
+
+        if (excludedWords.includes(word)) {
+          console.warn(word, product.name);
+          return sum;
+        }
+
+        const wordSimilarities = productWords.map((productWord) =>
+          Utils.jaccardIndex(word, productWord)
+        );
+        const maxSimilarity = Math.max(...wordSimilarities);
+        return sum + maxSimilarity;
+      }, 0);
+
+      const averageWordSimilarity = wordSimilaritySum / newProductWords.length;
+      if (averageWordSimilarity >= threshold) {
+        similarProducts.push({
+          product: product,
+          similarity: averageWordSimilarity,
+        });
+      }
+    }
+
+    // Sortieren der ähnlichen Produkte nach absteigender Ähnlichkeit
+    similarProducts.sort((a, b) => b.similarity - a.similarity);
+    return similarProducts.map((entry) => entry.product);
   };
 }

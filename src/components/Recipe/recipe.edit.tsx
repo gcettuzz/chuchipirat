@@ -826,12 +826,14 @@ const RecipeEdit = ({
       if (product.name.endsWith(TEXT.ADD)) {
         // Begriff Hinzufügen und Anführzungszeichen entfernen
         const productName = product.name.match('".*"')![0].slice(1, -1);
+
         // Neues Produkt. PopUp Anzeigen und nicht weiter
         setProductAddPopupValues({
           ...productAddPopupValues,
           name: productName,
           popUpOpen: true,
         });
+
         // ID der Position speichern, die das Ereignis
         // auslöst (im Falle eines Abbruchs)
         setTriggeredIngredientUid(ingredientUid);
@@ -1233,6 +1235,22 @@ const RecipeEdit = ({
       popUpOpen: false,
     });
   };
+  const onChooseExistingProductToAdd = (product: Product) => {
+    dispatch({
+      type: ReducerActions.ON_INGREDIENT_CHANGE,
+      payload: {
+        field: "product",
+        value: {uid: product.uid, name: product.name},
+        uid: triggeredIngredientUid,
+      },
+    });
+
+    setTriggeredIngredientUid("");
+    setProductAddPopupValues({
+      ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
+      popUpOpen: false,
+    });
+  };
   /* ------------------------------------------
   // PopUp Material Hinzufügen - 
   // ------------------------------------------ */
@@ -1473,6 +1491,7 @@ const RecipeEdit = ({
           dialogOpen={productAddPopupValues.popUpOpen}
           handleOk={onCreateProductToAdd}
           handleClose={onCloseProductToAdd}
+          handleChooseExisting={onChooseExistingProductToAdd}
           products={state.products}
           units={state.units}
           departments={state.departments}
