@@ -387,7 +387,7 @@ const SignUpForm = ({
             autoComplete="email"
             value={signUpData.email}
             onChange={onFieldChange}
-            disabled={!signUpAllowed | maintenanceMode}
+            disabled={!signUpAllowed || maintenanceMode}
           />
           {/* Passwort */}
           <TextField

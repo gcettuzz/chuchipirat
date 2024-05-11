@@ -1,5 +1,4 @@
 import React from "react";
-import {useHistory} from "react-router";
 
 import {Container, Grid, Card, Typography, CardMedia} from "@material-ui/core";
 
@@ -56,16 +55,23 @@ const LandingPage = (props) => {
 /* ===================================================================
 // ================================ Base =============================
 // =================================================================== */
-const LandingBase: React.FC<
+export const LandingBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser}) => {
+> = ({authUser, history}) => {
   const classes = useStyles();
-  const {push} = useHistory();
+  // const {push} = useHistory();
 
   // Wenn angemeldet direkt weiterleiten
-  if (authUser) {
-    push({pathname: ROUTE_HOME});
-  }
+  // if (authUser) {
+  //   push({pathname: ROUTE_HOME});
+  // }
+  React.useEffect(() => {
+    // Wenn angemeldet direkt weiterleiten
+    if (authUser) {
+      history.push({pathname: ROUTE_HOME});
+    }
+  }, [authUser, history]);
+
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}
@@ -81,7 +87,7 @@ const LandingBase: React.FC<
             variant: "contained",
             color: "primary",
             onClick: () => {
-              push({pathname: ROUTE_SIGN_IN});
+              history.push({pathname: ROUTE_SIGN_IN});
             },
           },
           {
@@ -92,7 +98,7 @@ const LandingBase: React.FC<
             variant: "outlined",
             color: "primary",
             onClick: () => {
-              push({pathname: ROUTE_SIGN_UP});
+              history.push({pathname: ROUTE_SIGN_UP});
             },
           },
         ]}

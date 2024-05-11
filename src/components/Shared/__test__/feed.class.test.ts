@@ -1,11 +1,10 @@
-import Feed, { FeedType } from "./feed.class";
-import { FEED_TITLE, FEED_TEXT } from "../../constants/text";
+import Feed from "../feed.class";
 
 /* =====================================================================
 // Kostruktor
 // ===================================================================== */
 test("Feed.constructor: Objekt Typ Feed instazieren", () => {
-  let feed = new Feed();
+  const feed = new Feed();
   expect(feed).toBeDefined();
   // expect(feed).toHaveProperty("uid");
   // expect(feed).toHaveProperty("createdAt");

@@ -134,14 +134,14 @@ interface AddTag {
   tags: string[];
   tagsToAdd: string;
 }
-interface AddLinkedRecipe {
-  linkedRecipes: RecipeShort[];
-  recipeToLink: RecipeShort;
-}
-interface RemoveLinkedRecipe {
-  linkedRecipes: RecipeShort[];
-  recipeToRemoveUid: string;
-}
+// interface AddLinkedRecipe {
+//   linkedRecipes: RecipeShort[];
+//   recipeToLink: RecipeShort;
+// }
+// interface RemoveLinkedRecipe {
+//   linkedRecipes: RecipeShort[];
+//   recipeToRemoveUid: string;
+// }
 /**
  * Speichern
  * @param firebase - Objekt zur DB
@@ -504,23 +504,23 @@ export default class Recipe {
   /* =====================================================================
   // Verlinktes Rezept hinzufügen
   // ===================================================================== */
-  static addLinkedRecipe({linkedRecipes, recipeToLink}: AddLinkedRecipe) {
-    linkedRecipes.push(recipeToLink);
+  // static addLinkedRecipe({linkedRecipes, recipeToLink}: AddLinkedRecipe) {
+  //   linkedRecipes.push(recipeToLink);
 
-    return Utils.sortArray({
-      array: linkedRecipes,
-      attributeName: "name",
-    });
-  }
+  //   return Utils.sortArray({
+  //     array: linkedRecipes,
+  //     attributeName: "name",
+  //   });
+  // }
   /* =====================================================================
   // Verlinktes Rezept entfernen
   // ===================================================================== */
-  static removeLinkedRecipe({
-    linkedRecipes,
-    recipeToRemoveUid,
-  }: RemoveLinkedRecipe) {
-    return linkedRecipes.filter((recipe) => recipe.uid !== recipeToRemoveUid);
-  }
+  // static removeLinkedRecipe({
+  //   linkedRecipes,
+  //   recipeToRemoveUid,
+  // }: RemoveLinkedRecipe) {
+  //   return linkedRecipes.filter((recipe) => recipe.uid !== recipeToRemoveUid);
+  // }
   /* =====================================================================
   // Daten prüfen
   // ===================================================================== */
@@ -621,6 +621,8 @@ export default class Recipe {
   /* =====================================================================
   // Daten in Firebase SPEICHERN für öffentliche Rezepte
   // ===================================================================== */
+  /* istanbul ignore next */
+  /* DB-Methode wird zur Zeit nicht geprüft */
   private static savePublic = async ({firebase, recipe, authUser}: Save) => {
     let recipeNameBeforeSave = "";
 
@@ -678,6 +680,8 @@ export default class Recipe {
   /* =====================================================================
   // Daten in Firebase SPEICHERN für private Rezepte
   // ===================================================================== */
+  /* istanbul ignore next */
+  /* DB-Methode wird zur Zeit nicht geprüft */
   private static savePrivate = async ({firebase, recipe, authUser}: Save) => {
     let newRecipe = false;
     let recipeNameBeforeSave = "";
@@ -805,6 +809,8 @@ export default class Recipe {
   /* =====================================================================
   // Daten in Firebase SPEICHERN für Varianten-Rezepte
   // ===================================================================== */
+  /* istanbul ignore next */
+  /* DB-Methode wird zur Zeit nicht geprüft */
   private static saveVariant = async ({firebase, recipe, authUser}: Save) => {
     let newRecipe = false;
     if (!recipe.uid) {
@@ -1044,6 +1050,8 @@ export default class Recipe {
   /* =====================================================================
   // Tags speichern
   // ===================================================================== */
+  /* istanbul ignore next */
+  /* DB-Methode wird zur Zeit nicht geprüft */
   static async saveTags({firebase, recipe, tags, authUser}: SaveTags) {
     // einzelnes Feld updaten!
 
@@ -1190,6 +1198,8 @@ export default class Recipe {
   /* =====================================================================
   // Rezept löschen
   // ===================================================================== */
+  /* istanbul ignore next */
+  /* DB-Methode wird zur Zeit nicht geprüft */
   static async delete({firebase, recipe, authUser}: Delete) {
     // sicherstellen, dass nur die richtigen Personen löschen dürfen
 
@@ -1273,6 +1283,8 @@ export default class Recipe {
    * deletePublic: öffentliches Rezept löschen
    * alle nötigen Infos (000_allRecipes) und Counter werden angepasst.
    */
+  /* istanbul ignore next */
+  /* DB-Methode wird zur Zeit nicht geprüft */
   private static deletePublic = async ({
     firebase,
     recipe,
@@ -1304,6 +1316,8 @@ export default class Recipe {
    * deletePrivate: Privates Rezept löschen
    * alle nötigen Infos (000_allRecipes) und Counter werden angepasst.
    */
+  /* istanbul ignore next */
+  /* DB-Methode wird zur Zeit nicht geprüft */
   private static deletePrivate = async ({
     firebase,
     recipe,
@@ -1338,6 +1352,8 @@ export default class Recipe {
    * deleteVariant: Varianten-Rezept löschen
    * alle nötigen Infos (000_allRecipes) und Counter werden angepasst.
    */
+  /* istanbul ignore next */
+  /* DB-Methode wird zur Zeit nicht geprüft */
   private static deleteVariant = async ({firebase, recipe}: Delete) => {
     await firebase.recipeVariant
       .delete({uids: [recipe.variantProperties!.eventUid!, recipe.uid]})
@@ -1362,6 +1378,8 @@ export default class Recipe {
    * Alle Rezept-Varianten löschen
    * Wird benötigt, wenn der ganze Event gelöscht wird.
    */
+  /* istanbul ignore next */
+  /* DB-Methode wird zur Zeit nicht geprüft */
   static deleteAllVariants = async ({
     eventUid,
     firebase,
@@ -1452,71 +1470,6 @@ export default class Recipe {
     } as RecipeMaterialPosition;
   }
   /* =====================================================================
-  // Eintrag in Array hinzufügen
-  // ===================================================================== */
-  // static addEmptyEntry<T>({
-  //   array,
-  //   pos,
-  //   emptyObject,
-  //   renumberByField,
-  // }: AddEmptyEntry<T>) {
-  //   array = Utils.insertArrayElementAtPosition({
-  //     array: array,
-  //     indexToInsert: pos - 1,
-  //     newElement: emptyObject,
-  //   });
-  //   array = Utils.renumberArray({array: array, field: renumberByField});
-  //   return array;
-  // }
-  /* =====================================================================
-  // Eintrag in Array löschen
-  // ===================================================================== */
-  // static deleteEntry<T>({
-  //   array,
-  //   fieldValue,
-  //   fieldName,
-  //   emptyObject,
-  //   renumberByField,
-  // }: DeleteEntry<T>) {
-  //   array = array.filter((entry) => entry[fieldName] !== fieldValue);
-
-  //   if (array.length === 0) {
-  //     array.push(emptyObject);
-  //   }
-  //   array = Utils.renumberArray({array: array, field: renumberByField});
-  //   return array;
-  // }
-  /* =====================================================================
-  // Eintrag in Liste runter schieben
-  // ===================================================================== */
-  // static moveArrayEntryDown<T>({
-  //   array,
-  //   posToMoveDown,
-  //   renumberByField,
-  // }: moveArrayEntryDown<T>) {
-  //   array = Utils.moveArrayElementDown<T>({
-  //     array: array,
-  //     indexToMoveDown: posToMoveDown - 1,
-  //   });
-  //   array = Utils.renumberArray({array: array, field: renumberByField});
-  //   return array;
-  // }
-  /* =====================================================================
-  // Eintrag in Liste hoch schieben
-  // ===================================================================== */
-  // static moveArrayEntryUp<T>({
-  //   array,
-  //   posToMoveUp,
-  //   renumberByField,
-  // }: moveArrayEntryUp<T>) {
-  //   array = Utils.moveArrayElementUp<T>({
-  //     array: array,
-  //     indexToMoveUp: posToMoveUp - 1,
-  //   });
-  //   array = Utils.renumberArray({array: array, field: renumberByField});
-  //   return array;
-  // }
-  /* =====================================================================
   // Rezept lesen
   // ===================================================================== */
   /* istanbul ignore next */
@@ -1594,6 +1547,8 @@ export default class Recipe {
   /* =====================================================================
   // Alle Rezepte aus der DB holen
   // ===================================================================== */
+  /* istanbul ignore next */
+  /* DB-Methode wird zur Zeit nicht geprüft */
   static getAllRecipes = async ({
     firebase,
   }: GetAllRecipes): Promise<Recipe[]> => {
@@ -1618,7 +1573,6 @@ export default class Recipe {
       });
     return recipes;
   };
-
   /* =====================================================================
   // Mehrere Rezepte aus der DB suchen
   // ===================================================================== */
@@ -1930,6 +1884,8 @@ export default class Recipe {
    * @param param0 - Objekt mit Firebase-Referenz, und Objekt, dass den
    * Request auslöst authUser
    */
+  /* istanbul ignore next */
+  /* DB-Methode wird zur Zeit nicht geprüft */
   static createRecipePublishRequest = async ({
     firebase,
     recipe,
@@ -1957,6 +1913,8 @@ export default class Recipe {
    * @param param0 - Objekt mit Firebase-Referenz, und Objekt, dass den
    * Request auslöst authUser
    */
+  /* istanbul ignore next */
+  /* DB-Methode wird zur Zeit nicht geprüft */
   static createReportErrorRequest = async ({
     firebase,
     recipe,
