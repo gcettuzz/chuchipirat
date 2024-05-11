@@ -200,7 +200,7 @@ export default class User {
     user.uid = uid;
     user.firstName = firstName;
     user.lastName = lastName;
-    user.email = email;
+    user.email = email.toLocaleLowerCase();
     user.noLogins = 0;
     user.roles = [Role.basic];
 

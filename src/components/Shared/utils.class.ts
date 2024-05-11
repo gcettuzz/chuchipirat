@@ -14,24 +14,6 @@ export interface InsertArrayElementAtPosition<T> {
   newElement: T;
 }
 /**
- * Schnittstelle für Util.moveArrayElementDown
- * @param array - Array das geändert werden soll
- * @param indexToMoveUDown- Index der Zeile, die um eine Position runter verschoben werden soll
- */
-export interface MoveArrayElementDown<T> {
-  array: T[];
-  indexToMoveDown: number;
-}
-/**
- * Schnittstelle für Util.moveArrayElementUp
- * @param array - Array das geändert werden soll
- * @param indexToMoveUp - Index der Zeile, die um eine Position hoch verschoben werden soll
- */
-export interface MoveArrayElementUp<T> {
-  array: T[];
-  indexToMoveUp: number;
-}
-/**
  * Schnittstelle für Util.RenumberArray
  * @param array - Array
  * @param field - Name des Object.Key
@@ -154,55 +136,6 @@ export default class Utils {
     listPartAfterInsert = array.slice(indexToInsert + 1);
 
     return listPartPreInsert.concat(listNewElement, listPartAfterInsert);
-  }
-  /* =====================================================================
-  // Array-Element Position runter schieben
-  // ===================================================================== */
-  static moveArrayElementDown<T>({
-    array,
-    indexToMoveDown,
-  }: MoveArrayElementDown<T>) {
-    let listPartPreMove: T[] = [];
-
-    if (indexToMoveDown + 1 === array.length) {
-      return array;
-    }
-
-    if (indexToMoveDown !== 0) {
-      listPartPreMove = array.slice(0, indexToMoveDown);
-    }
-    const listElementSwapDown: T = array[indexToMoveDown];
-    const listElementSwapUp: T = array[indexToMoveDown + 1];
-    const listPartRest: T[] = array.slice(indexToMoveDown + 2);
-
-    return listPartPreMove.concat(
-      listElementSwapUp,
-      listElementSwapDown,
-      listPartRest
-    ) as T[];
-  }
-  /* =====================================================================
-  // Array-Element Position runter schieben
-  // ===================================================================== */
-  static moveArrayElementUp<T>({array, indexToMoveUp}: MoveArrayElementUp<T>) {
-    if (indexToMoveUp === 0) {
-      // Erste Position kann nicht weiter hochgeschoben werden
-      return array;
-    }
-
-    const listPartPreMove: T[] = array.slice(0, indexToMoveUp - 1);
-    const listElementSwapUp: T = array[indexToMoveUp];
-    const listElementSwapDown: T = array[indexToMoveUp - 1];
-
-    let listPartRest: T[] = [];
-    if (indexToMoveUp !== array.length) {
-      listPartRest = array.slice(indexToMoveUp + 1);
-    }
-    return listPartPreMove.concat(
-      listElementSwapUp,
-      listElementSwapDown,
-      listPartRest
-    ) as T[];
   }
   /* =====================================================================
   // Array nach bestimmten Feld neu Nummerieren
@@ -405,7 +338,7 @@ export default class Utils {
   static deriveIsLoading = (loadingComponents: {[key: string]: boolean}) => {
     return (
       Object.values(loadingComponents).filter((isLoading) => isLoading === true)
-        .length === 1
+        .length >= 1
     );
   };
   // ===================================================================== */
@@ -543,11 +476,15 @@ export default class Utils {
    * @result Number -  Prozent wie fest sie sich überschneiden
    */
   static jaccardIndex(a: string, b: string): number {
-    const setA = new Set(a);
-    const setB = new Set(b);
+    // Normalisiere die Eingabestrings, indem Leerzeichen entfernt und in Kleinbuchstaben umgewandelt werden
+    const normalizedA = a.trim().toLowerCase();
+    const normalizedB = b.trim().toLowerCase();
 
-    const intersectionSize = [...setA].filter((char) => setB.has(char)).length;
-    const unionSize = setA.size + setB.size - intersectionSize;
+    const setA = new Set(normalizedA);
+    const setB = new Set(normalizedB);
+    const intersectionSize = new Set([...setA].filter((char) => setB.has(char)))
+      .size;
+    const unionSize = new Set([...setA, ...setB]).size;
     return intersectionSize / unionSize;
   }
 }

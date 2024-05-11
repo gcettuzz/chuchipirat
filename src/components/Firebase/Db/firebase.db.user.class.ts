@@ -56,7 +56,7 @@ export class FirebaseDbUser extends FirebaseDbSuper {
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
     const dbUser = {
-      email: value.email,
+      email: value.email.toLocaleLowerCase(),
       firstName: value.firstName,
       lastLogin: value.lastLogin,
       lastName: value.lastName,

@@ -49,7 +49,7 @@ export class FirebaseUserPublicSearchFields extends FirebaseDbSuper {
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
     return {
-      email: value.email,
+      email: value.email.toLocaleLowerCase(),
       uid: value.uid,
     };
   }
