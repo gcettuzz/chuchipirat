@@ -12,13 +12,15 @@ import Utils from "../Shared/utils.class";
 import {MATERIAL, ADD, ITEM_CANT_BE_CHANGED} from "../../constants/text";
 
 interface MaterialAutocompleteProps {
-  componentKey: string;
+  componentKey?: string;
   material: Material | RecipeProduct | null;
   materials: Material[];
+  label?: string;
   disabled: boolean;
+  allowCreateNewMaterial?: boolean;
   onChange: (
     event: React.ChangeEvent<HTMLInputElement>,
-    newValue: string | Material,
+    newValue: string | Material | null,
     action: AutocompleteChangeReason,
     objectId: string
   ) => void;
@@ -42,7 +44,9 @@ const MaterialAutocomplete = ({
   componentKey,
   material,
   materials,
+  label = MATERIAL,
   disabled,
+  allowCreateNewMaterial = true,
   onChange,
   error,
 }: MaterialAutocompleteProps) => {
@@ -51,8 +55,8 @@ const MaterialAutocomplete = ({
 
   return (
     <Autocomplete
-      key={"material_" + componentKey}
-      id={"material_" + componentKey}
+      key={componentKey ? "material_" + componentKey : "material"}
+      id={componentKey ? "material_" + componentKey : "material"}
       value={material?.name}
       options={materials}
       disabled={disabled}
@@ -75,12 +79,11 @@ const MaterialAutocomplete = ({
         return option.name;
       }}
       onChange={(event, newValue, action) =>
-        newValue &&
         onChange(
           event as unknown as React.ChangeEvent<HTMLInputElement>,
           newValue,
           action,
-          "material_" + componentKey
+          componentKey ? "material_" + componentKey : "material"
         )
       }
       fullWidth
@@ -95,10 +98,12 @@ const MaterialAutocomplete = ({
           ) === undefined &&
           !params.inputValue.endsWith(ADD)
         ) {
-          // Hinzufügen-Möglichkeit auch als Produkt reinschmuggeln
-          const newMaterial = new Material();
-          newMaterial.name = `"${params.inputValue}" ${ADD}`;
-          filtered.push(newMaterial);
+          if (allowCreateNewMaterial) {
+            // Hinzufügen-Möglichkeit auch als Produkt reinschmuggeln
+            const newMaterial = new Material();
+            newMaterial.name = `"${params.inputValue}" ${ADD}`;
+            filtered.push(newMaterial);
+          }
         }
         // So sortieren, dass Zutaten, die mit den gleichen Zeichen beginnen
         // vorher angezeigt werden (Salz vor Erdnüsse, gesalzen)
@@ -132,7 +137,7 @@ const MaterialAutocomplete = ({
       renderInput={(params) => (
         <TextField
           {...params}
-          label={MATERIAL}
+          label={label}
           size="small"
           error={error?.isError}
           helperText={

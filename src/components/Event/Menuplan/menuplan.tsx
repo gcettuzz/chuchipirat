@@ -50,6 +50,7 @@ import {
   Info as InfoIcon,
   Notes as NotesIcon,
   Edit,
+  DeleteSweep as DeleteSweepIcon,
 } from "@material-ui/icons";
 
 import useStyles from "../../../constants/styles";
@@ -131,6 +132,7 @@ import {
   VARIANT as TEXT_VARIANT,
   RECIPE_WIHOUT_PORTIONPLAN as TEXT_RECIPE_WIHOUT_PORTIONPLAN,
   DIALOG_CHOOSE_MENUES_TITLE as TEXT_DIALOG_CHOOSE_MENUES_TITLE,
+  PRODUCT as TEXT_PRODUCT,
 } from "../../../constants/text";
 import {
   FetchMissingDataType,
@@ -144,6 +146,7 @@ import {
   Draggable,
   DropResult,
   DraggableProvided,
+  DraggableStateSnapshot,
 } from "react-beautiful-dnd";
 import MenuplanPdf from "./menuplanPdf";
 import Utils from "../../Shared/utils.class";
@@ -339,6 +342,7 @@ const MenuplanPage = ({
   fetchMissingData,
   onMasterdataCreate,
 }: MenuplanPageProps) => {
+  const classes = useStyles();
   const {customDialog} = useCustomDialog();
   const navigationValuesContext = React.useContext(NavigationValuesContext);
 
@@ -1575,7 +1579,7 @@ const MenuplanPage = ({
     if (units.length == 0) {
       fetchMissingData({type: FetchMissingDataType.UNITS});
     }
-    if (products.length == 0) {
+    if (materials.length == 0) {
       fetchMissingData({type: FetchMissingDataType.MATERIALS});
     }
     // Dialog für fixe Menge öffnen
@@ -1587,17 +1591,35 @@ const MenuplanPage = ({
       material: menuplan.materials[materialUid],
     });
   };
+
+  if (
+    new Set(menuplan.mealTypes.order).size !== menuplan.mealTypes.order.length
+  ) {
+    console.warn("Doppelte MealTypes: ", menuplan.mealTypes.order);
+  }
+
   return (
     <React.Fragment>
       <CssBaseline />
       <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId="mealTypes" type={DragDropTypes.MEALTYPE}>
-          {(provided) => (
+        <Droppable
+          droppableId="mealTypes"
+          type={DragDropTypes.MEALTYPE}
+          key={"droppable_MealRow"}
+        >
+          {(provided, snapshot) => (
             <Container
+              key={"container_menuplan_rows"}
               innerRef={provided.innerRef}
               {...provided.droppableProps}
+              className={
+                snapshot.isDraggingOver
+                  ? classes.mealRowOnDrop
+                  : classes.mealRowNoDrop
+              }
+              style={{display: "flex", flexDirection: "column"}}
             >
-              <DaysRow
+              <MenuplanHeaderRow
                 dates={menuplan.dates}
                 notes={menuplan.notes}
                 menuplanSettings={menuplanSettings}
@@ -1606,40 +1628,58 @@ const MenuplanPage = ({
                 onNoteUpdate={onNoteUpdate}
                 onPrint={onPrint}
               />
-              {menuplan.mealTypes.order.map((mealType, index) => (
+              {/* <Container
+                key={"container_mealtype_rows"}
+                innerRef={provided.innerRef}
+                {...provided.droppableProps}
+                className={
+                  snapshot.isDraggingOver
+                    ? classes.mealRowOnDrop
+                    : classes.mealRowNoDrop
+                }
+                // style={{flexGrow: 1}}
+              > */}
+              {menuplan.mealTypes.order.map((mealTypeUid, index) => (
                 <Draggable
-                  draggableId={mealType}
+                  draggableId={mealTypeUid}
                   index={index}
-                  key={"draggableMealTypRow_" + mealType}
+                  key={"draggableMealTypRow_" + mealTypeUid}
+                  isDragDisabled={menuplan.mealTypes.order.length <= 1}
                 >
-                  {(provided) => (
-                    <MealTypeRow
-                      key={"mealTypeRow_" + mealType}
-                      mealType={menuplan.mealTypes.entries[mealType]}
-                      dates={menuplan.dates}
-                      meals={menuplan.meals}
-                      menues={menuplan.menues}
-                      notes={menuplan.notes}
-                      products={menuplan.products}
-                      materials={menuplan.materials}
-                      mealRecipes={menuplan.mealRecipes}
-                      menuplanSettings={menuplanSettings}
-                      groupConfiguration={groupConfiguration}
-                      draggableProvided={provided}
-                      onMealTypeUpdate={onMealTypeUpdate}
-                      onMenuplanUpdate={onMenuplanUpdate}
-                      fetchMissingData={fetchMissingData}
-                      onAddRecipe={onAddRecipe}
-                      onAddProduct={onAddProduct}
-                      onAddMaterial={onAddMaterial}
-                      onEditMenue={onEditMenue}
-                      onMealRecipeOpen={onMealRecipeOpen}
-                      onNoteUpdate={onNoteUpdate}
-                    />
-                  )}
+                  {(provided, snapshot) => {
+                    return (
+                      <MealTypeRow
+                        key={"mealTypeRow_" + mealTypeUid}
+                        mealType={menuplan.mealTypes.entries[mealTypeUid]}
+                        dates={menuplan.dates}
+                        meals={menuplan.meals}
+                        menues={menuplan.menues}
+                        notes={menuplan.notes}
+                        products={menuplan.products}
+                        materials={menuplan.materials}
+                        mealRecipes={menuplan.mealRecipes}
+                        menuplanSettings={menuplanSettings}
+                        groupConfiguration={groupConfiguration}
+                        draggableProvided={provided}
+                        draggableSnapshot={snapshot}
+                        onMealTypeUpdate={onMealTypeUpdate}
+                        onMenuplanUpdate={onMenuplanUpdate}
+                        fetchMissingData={fetchMissingData}
+                        onAddRecipe={onAddRecipe}
+                        onAddProduct={onAddProduct}
+                        onAddMaterial={onAddMaterial}
+                        onEditMenue={onEditMenue}
+                        onMealRecipeOpen={onMealRecipeOpen}
+                        onMealProductOpen={onEditProductPlan}
+                        onMealMaterialOpen={onEditMaterialPlan}
+                        onNoteUpdate={onNoteUpdate}
+                      />
+                    );
+                  }}
                 </Draggable>
               ))}
               {provided.placeholder}
+              {/* </Container> */}
             </Container>
           )}
         </Droppable>
@@ -1721,6 +1761,7 @@ const MenuplanPage = ({
         departments={departments}
         productToUpdate={dialogGoodsData.product}
         materialToUpdate={dialogGoodsData.material}
+        firebase={firebase}
         authUser={authUser}
         onCancel={onDialogGoodsCancel}
         onOk={onDialogGoodsOk}
@@ -1733,7 +1774,7 @@ const MenuplanPage = ({
 /* ===================================================================
 // ========================= Tag-Überschriften =======================
 // =================================================================== */
-interface DaysRowProps {
+interface MenuplanHeaderRowProps {
   dates: Menuplan["dates"];
   notes: Menuplan["notes"];
   menuplanSettings: MenuplanSettings;
@@ -1751,7 +1792,7 @@ const CONTEXT_MENU_INITIAL_STATE: DaysRowContextMenuState = {
   date: "",
   note: undefined,
 };
-const DaysRow = ({
+const MenuplanHeaderRow = ({
   dates,
   notes,
   menuplanSettings,
@@ -1759,7 +1800,7 @@ const DaysRow = ({
   onMealTypeUpdate,
   onNoteUpdate,
   onPrint,
-}: DaysRowProps) => {
+}: MenuplanHeaderRowProps) => {
   const classes = useStyles();
   const theme = useTheme();
   const {customDialog} = useCustomDialog();
@@ -1854,9 +1895,11 @@ const DaysRow = ({
     setContextMenuState(CONTEXT_MENU_INITIAL_STATE);
     setContextMenuAnchorElement(null);
   };
-
   return (
-    <Container className={classes.menuplanRow} style={{display: "flex"}}>
+    <div
+      className={classes.menuplanRow}
+      // style={{display: "flex", flexDirection: "row"}}
+    >
       <Container
         className={classes.menuplanItem}
         style={{
@@ -1983,7 +2026,7 @@ const DaysRow = ({
           </MenuItem>
         )}
       </Menu>
-    </Container>
+    </div>
   );
 };
 /* ===================================================================
@@ -2001,6 +2044,7 @@ interface MealTypeRowProps {
   menuplanSettings: MenuplanSettings;
   groupConfiguration: EventGroupConfiguration;
   draggableProvided: DraggableProvided;
+  draggableSnapshot: DraggableStateSnapshot;
   onMealTypeUpdate: ({action, mealType}: OnMealTypeUpdate) => void;
   onMenuplanUpdate: (updatedValues: onMenuplanUpdate) => void;
   fetchMissingData: ({type, recipeShort}: FetchMissingDataProps) => void;
@@ -2011,6 +2055,8 @@ interface MealTypeRowProps {
   onMealRecipeOpen: (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => void;
+  onMealProductOpen: (uid: MenuplanProduct["uid"]) => void;
+  onMealMaterialOpen: (uid: MenuplanMaterial["uid"]) => void;
   onNoteUpdate: ({action, note}: OnNoteUpdate) => void;
 }
 const MealTypeRow = ({
@@ -2033,6 +2079,8 @@ const MealTypeRow = ({
   onAddMaterial,
   onEditMenue,
   onMealRecipeOpen,
+  onMealProductOpen,
+  onMealMaterialOpen,
   onNoteUpdate,
 }: MealTypeRowProps) => {
   const classes = useStyles();
@@ -2113,13 +2161,19 @@ const MealTypeRow = ({
       materials: updateMaterials,
     });
   };
-
   return (
-    <Container
-      className={classes.menuplanRow}
-      innerRef={draggableProvided.innerRef}
+    <div
+      key={"mealtype_row_container_" + mealType.uid}
+      id={"mealtype_row_container_" + mealType.uid}
+      ref={draggableProvided.innerRef}
       {...draggableProvided.draggableProps}
-      style={{display: "flex"}}
+      {...draggableProvided.dragHandleProps}
+      className={
+        classes.menuplanRow
+        // draggableSnapshot.isDragging
+        //   ? classes.menuplanRowOnDrag
+        //   : classes.menuplanRowNoDrag
+      }
     >
       <Container
         className={classes.menuplanItem}
@@ -2158,6 +2212,7 @@ const MealTypeRow = ({
                   display: "flex",
                   padding: theme.spacing(1),
                   paddingBottom: theme.spacing(2),
+                  flexDirection: "column",
                 }}
                 key={
                   "mealCardContainer_" +
@@ -2193,6 +2248,8 @@ const MealTypeRow = ({
                           onAddMaterial={onAddMaterial}
                           onEditMenue={onEditMenue}
                           onMealRecipeOpen={onMealRecipeOpen}
+                          onMealProductOpen={onMealProductOpen}
+                          onMealMaterialOpen={onMealMaterialOpen}
                           onNoteUpdate={onNoteUpdate}
                         />
                       )}
@@ -2223,7 +2280,7 @@ const MealTypeRow = ({
           </Droppable>
         );
       })}
-    </Container>
+    </div>
   );
 };
 /* ===================================================================
@@ -2372,6 +2429,8 @@ interface MenuCardProps {
   onMealRecipeOpen: (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => void;
+  onMealProductOpen: (uid: MenuplanProduct["uid"]) => void;
+  onMealMaterialOpen: (uid: MenuplanMaterial["uid"]) => void;
   onNoteUpdate: ({action, note}: OnNoteUpdate) => void;
 }
 const MenueCard = ({
@@ -2386,6 +2445,8 @@ const MenueCard = ({
   onUpdateMenue,
   onDeleteMenue: onDeleteMenueSuper,
   onMealRecipeOpen,
+  onMealMaterialOpen,
+  onMealProductOpen,
   onAddRecipe: onAddRecipeSuper,
   onAddProduct: onAddProductSuper,
   onAddMaterial: onAddMaterialSuper,
@@ -2706,7 +2767,7 @@ MenuCardProps) => {
                       >
                         {(provided, snapshot) => (
                           <ListItem
-                            // button
+                            button
                             dense
                             key={"listitem_" + menue.uid + "_" + productUid}
                             id={"listitem_" + menue.uid + "_" + productUid}
@@ -2718,7 +2779,7 @@ MenuCardProps) => {
                                 ? classes.listItemOnDrag
                                 : classes.listItemNoDrag
                             }
-                            // onClick={onMealRecipeOpen}
+                            onClick={() => onMealProductOpen(productUid)}
                           >
                             <ListItemText
                               key={
@@ -2795,7 +2856,7 @@ MenuCardProps) => {
                       >
                         {(provided, snapshot) => (
                           <ListItem
-                            // button
+                            button
                             dense
                             key={"listitem_" + menue.uid + "_" + materialUid}
                             id={"listitem_" + menue.uid + "_" + materialUid}
@@ -2807,7 +2868,7 @@ MenuCardProps) => {
                                 ? classes.listItemOnDrag
                                 : classes.listItemNoDrag
                             }
-                            // onClick={onMealRecipeOpen}
+                            onClick={() => onMealMaterialOpen(materialUid)}
                           >
                             <ListItemText
                               key={
@@ -2869,7 +2930,8 @@ MenuCardProps) => {
           disabled={
             menue.materialOrder.length == 0 &&
             menue.productOrder.length == 0 &&
-            menue.mealRecipeOrder.length == 0
+            menue.mealRecipeOrder.length == 0 &&
+            note == undefined
           }
         >
           <ListItemIcon>
@@ -2903,6 +2965,19 @@ MenuCardProps) => {
             {`${TEXT_NOTE} ${note ? TEXT_EDIT : TEXT_ADD}`}
           </Typography>
         </MenuItem>
+        {note && (
+          <MenuItem
+            onClick={() => onNoteUpdate({action: Action.DELETE, note: note})}
+          >
+            <ListItemIcon>
+              <DeleteSweepIcon />
+            </ListItemIcon>
+            <Typography variant="inherit" noWrap>
+              {`${TEXT_NOTE} ${TEXT_DELETE}`}
+            </Typography>
+          </MenuItem>
+        )}
+
         <MenuItem onClick={onDeleteMenue}>
           <ListItemIcon>
             <DeleteIcon />
@@ -2948,16 +3023,15 @@ const RecipeSearchDrawer = ({
         keepMounted: true,
       }}
     >
-      <div>
-        <IconButton
-          edge="end"
-          color="inherit"
-          onClick={onClose}
-          style={{position: "absolute", top: "1em", right: "1em"}}
-        >
-          <CloseIcon />
-        </IconButton>
-      </div>
+      <IconButton
+        color="inherit"
+        size="small"
+        aria-label="close"
+        className={classes.closeDrawerIconButton}
+        onClick={onClose}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>
       <Container style={{marginTop: "2rem", width: "100vw", height: "100vh"}}>
         <Typography variant="h2" align="center" style={{marginBottom: "2rem"}}>
           {TEXT_RECIPES_DRAWER_TITLE}{" "}
@@ -3021,7 +3095,6 @@ export const RecipeDrawer = ({
       onRecipeUpdateSuper(recipe);
     }
   };
-
   return (
     <Drawer
       anchor="bottom"
@@ -3032,23 +3105,16 @@ export const RecipeDrawer = ({
         keepMounted: true,
       }}
     >
-      <div>
-        <IconButton
-          edge="end"
-          color="inherit"
-          onClick={onClose}
-          size="small"
-          style={{
-            background: alpha("#fff", 0.5),
-            position: "absolute",
-            top: "1em",
-            right: "1em",
-            zIndex: 1000,
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-      </div>
+      <IconButton
+        color="inherit"
+        size="small"
+        aria-label="close"
+        className={classes.closeDrawerIconButton}
+        onClick={onClose}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>
+
       <Container style={{width: "100vw", height: "100vh", padding: "0"}}>
         {editMode ? (
           <RecipeEdit
@@ -3274,7 +3340,6 @@ const DialogPlanPortions = ({
           )
       );
     }
-
     setDialogValues({
       ...dialogValues,
       plan: plan,
@@ -4341,6 +4406,7 @@ interface DialogGoodsProps {
   }: OnAddGoodToMenuProps) => void;
   onMaterialCreate: (material: Material) => void;
   onProductCreate: (product: Product) => void;
+  firebase: Firebase;
 }
 interface DialogGoodsValues {
   planMode: GoodsPlanMode;
@@ -4348,6 +4414,7 @@ interface DialogGoodsValues {
   unit: Unit["key"];
   product: Product | null;
   material: Material | null;
+  dialogOpen: boolean;
 }
 interface OnAddGoodToMenuProps {
   planMode: GoodsPlanMode;
@@ -4356,6 +4423,18 @@ interface OnAddGoodToMenuProps {
   product: Product | null;
   material: Material | null;
 }
+
+const DIALOG_VALUES_INITIAL_STATE = {
+  planMode: GoodsPlanMode.TOTAL,
+  quantity: 0,
+  unit: "",
+  product: null,
+  material: null,
+  // Die Werte werden erst mit dem React.useState gesetzt. Dann darf der Dialog nicht
+  // bereits geöffnet seind, darum wird der Zustand auch über den useState gesteuert
+  // ansonsten wäre der Autocomplete jeweils leer
+  dialogOpen: false,
+};
 
 export const DialogGoods = ({
   open,
@@ -4366,6 +4445,7 @@ export const DialogGoods = ({
   productToUpdate,
   materialToUpdate,
   departments,
+  firebase,
   authUser,
   onCancel: onCancelSuper,
   onOk: onOkSuper,
@@ -4373,13 +4453,9 @@ export const DialogGoods = ({
   onProductCreate: onProductCreateSuper,
 }: DialogGoodsProps) => {
   const theme = useTheme();
-  const [dialogValues, setDialogValues] = React.useState<DialogGoodsValues>({
-    planMode: GoodsPlanMode.TOTAL,
-    quantity: 0,
-    unit: "",
-    product: null,
-    material: null,
-  });
+  const [dialogValues, setDialogValues] = React.useState<DialogGoodsValues>(
+    DIALOG_VALUES_INITIAL_STATE
+  );
   const [materialAddPopupValues, setMaterialAddPopupValues] = React.useState({
     ...MATERIAL_POP_UP_VALUES_INITIAL_STATE,
     ...{popUpOpen: false},
@@ -4389,6 +4465,7 @@ export const DialogGoods = ({
     ...{popUpOpen: false},
   });
   // Falls initialer Wert kommt diesen übernehmen
+
   if (
     goodsType == GoodsType.PRODUCT &&
     productToUpdate !== null &&
@@ -4405,6 +4482,7 @@ export const DialogGoods = ({
         quantity: productToUpdate.quantity,
         unit: productToUpdate.unit,
         product: product,
+        dialogOpen: open,
       });
     }
   } else if (
@@ -4415,7 +4493,6 @@ export const DialogGoods = ({
     const material = materials.find(
       (material) => material.uid == materialToUpdate.materialUid
     );
-
     if (material) {
       setDialogValues({
         ...dialogValues,
@@ -4423,8 +4500,12 @@ export const DialogGoods = ({
         quantity: materialToUpdate.quantity,
         unit: materialToUpdate.unit,
         material: material,
+        dialogOpen: open,
       });
     }
+  } else if (open === true && dialogValues.dialogOpen === false) {
+    // Item wird neu hinzugefügt, einfach den Dialog öffnen
+    setDialogValues({...dialogValues, dialogOpen: true});
   }
   /* ------------------------------------------
   // Typ der Einplanung
@@ -4437,6 +4518,7 @@ export const DialogGoods = ({
       // Ein Button muss immer aktiv sein
       return;
     }
+
     setDialogValues({
       ...dialogValues,
       planMode: newValue as unknown as GoodsPlanMode,
@@ -4454,9 +4536,6 @@ export const DialogGoods = ({
     let material: Material;
     let product: Product;
 
-    if (!event?.target.id && action !== "clear") {
-      return;
-    }
     if (
       (action === "select-option" || action === "blur") &&
       objectId?.startsWith("material")
@@ -4478,11 +4557,12 @@ export const DialogGoods = ({
         if (typeof newValue === "string") {
           material = materials.find((mat) => mat.name == newValue)!;
         }
-
-        setDialogValues({
-          ...dialogValues,
-          material: material,
-        });
+        if (material) {
+          setDialogValues({
+            ...dialogValues,
+            material: material ? material : null,
+          });
+        }
         return;
       }
     } else if (
@@ -4506,13 +4586,26 @@ export const DialogGoods = ({
         if (typeof newValue === "string") {
           product = products.find((prd) => prd.name == newValue)!;
         }
-
-        setDialogValues({
-          ...dialogValues,
-          product: product,
-        });
+        if (product) {
+          setDialogValues({
+            ...dialogValues,
+            product: product ? product : null,
+          });
+        }
         return;
       }
+    } else if (action === "clear" && objectId?.startsWith("material")) {
+      setDialogValues({
+        ...dialogValues,
+        material: null,
+      });
+      return;
+    } else if (action === "clear" && objectId?.startsWith("product")) {
+      setDialogValues({
+        ...dialogValues,
+        product: null,
+      });
+      return;
     }
 
     if (objectId == "product_" || objectId == "material_") {
@@ -4520,12 +4613,12 @@ export const DialogGoods = ({
         ...dialogValues,
         [objectId.slice(0, -1)]: newValue,
       });
-    } else if (objectId == "unit_" && newValue) {
+    } else if (objectId == "unit_" || objectId == "unit") {
       const newUnit = newValue as Unit;
 
       setDialogValues({
         ...dialogValues,
-        [objectId.slice(0, -1)]: newUnit.key,
+        unit: newUnit?.key ? newUnit.key : "",
       });
     } else {
       if (isNaN(parseFloat(event.target.value))) {
@@ -4545,6 +4638,7 @@ export const DialogGoods = ({
   // Pop-Up Handler Material/Produkt
   // ------------------------------------------ */
   const onMaterialCreate = (material: Material) => {
+    setDialogValues({...dialogValues, material: material});
     setMaterialAddPopupValues({
       ...MATERIAL_POP_UP_VALUES_INITIAL_STATE,
       popUpOpen: false,
@@ -4553,11 +4647,19 @@ export const DialogGoods = ({
     onMaterialCreateSuper(material);
   };
   const onProductCreate = (product: Product) => {
+    setDialogValues({...dialogValues, product: product});
     setProductAddPopupValues({
       ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
       popUpOpen: false,
     });
     onProductCreateSuper(product);
+  };
+  const onProductChooseExisting = (product: Product) => {
+    setDialogValues({...dialogValues, product: product});
+    setProductAddPopupValues({
+      ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
+      popUpOpen: false,
+    });
   };
   const onCloseDialogMaterial = () => {
     setMaterialAddPopupValues({
@@ -4587,13 +4689,8 @@ export const DialogGoods = ({
       ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
       ...{popUpOpen: false},
     });
-    setDialogValues({
-      planMode: GoodsPlanMode.TOTAL,
-      quantity: 0,
-      unit: "",
-      product: null,
-      material: null,
-    });
+
+    setDialogValues(DIALOG_VALUES_INITIAL_STATE);
   };
   const onCancel = () => {
     setMaterialAddPopupValues({
@@ -4604,19 +4701,18 @@ export const DialogGoods = ({
       ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
       ...{popUpOpen: false},
     });
-    setDialogValues({
-      planMode: GoodsPlanMode.TOTAL,
-      quantity: 0,
-      unit: "",
-      product: {} as Product,
-      material: {} as Material,
-    });
+
+    setDialogValues(DIALOG_VALUES_INITIAL_STATE);
     onCancelSuper();
   };
-
   return (
     <React.Fragment>
-      <Dialog open={open} maxWidth="xs" fullWidth>
+      <Dialog
+        aria-labelledby="Dialog Goods"
+        open={dialogValues.dialogOpen}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>
           {goodsType === GoodsType.MATERIAL ? TEXT_MATERIAL : TEXT_PRODUCTS}
         </DialogTitle>
@@ -4664,12 +4760,11 @@ export const DialogGoods = ({
                 <ProductAutocomplete
                   componentKey={""}
                   product={
-                    dialogValues.product
-                      ? dialogValues.product
-                      : ({} as Product)
+                    dialogValues.product ? dialogValues.product : new Product()
                   }
                   products={products}
                   onChange={onChangeField}
+                  label={TEXT_PRODUCT}
                 />
               ) : (
                 <MaterialAutocomplete
@@ -4685,7 +4780,8 @@ export const DialogGoods = ({
                 />
               )}
             </Grid>
-            <Grid item xs={6}>
+
+            <Grid item xs={goodsType === GoodsType.PRODUCT ? 6 : 12}>
               <TextField
                 key={"quantity"}
                 id={"quantity"}
@@ -4702,14 +4798,16 @@ export const DialogGoods = ({
                 fullWidth
               />
             </Grid>
-            <Grid item xs={6}>
-              <UnitAutocomplete
-                componentKey={""}
-                unitKey={dialogValues.unit}
-                units={units}
-                onChange={onChangeField}
-              />
-            </Grid>
+            {goodsType === GoodsType.PRODUCT && (
+              <Grid item xs={6}>
+                <UnitAutocomplete
+                  componentKey={""}
+                  unitKey={dialogValues.unit}
+                  units={units}
+                  onChange={onChangeField}
+                />
+              </Grid>
+            )}
           </Grid>
         </DialogContent>
         <DialogActions>
@@ -4719,7 +4817,7 @@ export const DialogGoods = ({
           </Button>
           <Button
             onClick={onOk}
-            disabled={!dialogValues.material && !dialogValues.product}
+            disabled={!dialogValues.material?.uid && !dialogValues.product?.uid}
             //   Object.keys(dialogValues.material).length == 0 &&
             //   Object.keys(dialogValues.product).length == 0
             // }
@@ -4742,8 +4840,10 @@ export const DialogGoods = ({
         handleOk={onMaterialCreate}
         handleClose={onCloseDialogMaterial}
         authUser={authUser}
+        firebase={firebase}
       />
       <DialogProduct
+        firebase={firebase}
         productName={productAddPopupValues.name}
         productUid={productAddPopupValues.uid}
         productDietProperties={productAddPopupValues.dietProperties}
@@ -4752,6 +4852,7 @@ export const DialogGoods = ({
         dialogOpen={productAddPopupValues.popUpOpen}
         handleOk={onProductCreate}
         handleClose={onCloseDialogProduct}
+        handleChooseExisting={onProductChooseExisting}
         products={products}
         units={units}
         departments={departments}

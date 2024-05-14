@@ -71,7 +71,10 @@ const DialogAddUser = ({
         return;
       }
       //UID aus E-Mail-Adresse ermitteln
-      await User.getUidByEmail({firebase: firebase, email: userEmail})
+      await User.getUidByEmail({
+        firebase: firebase,
+        email: userEmail.toLocaleLowerCase(),
+      })
         .then((result) => {
           handleAddUser(result);
           setUserEmail("");

@@ -16,6 +16,7 @@ class FirebaseMessageHandler {
       case AuthMessages.INVALID_ACTION_CODE:
       case AuthMessages.REQUIRES_RECENT_LOGIN:
       case AuthMessages.TOO_MANY_REQUESTS:
+      case AuthMessages.INTERNAL_ERROR:
       case General.PERMISSION_DENIED:
       case General.UNAVAILABLE:
         return TEXT_FIREBASE_MESSAGES[

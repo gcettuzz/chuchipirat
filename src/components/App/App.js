@@ -32,9 +32,10 @@ import CustomTheme from "./customTheme.class";
 // Für nachträglicher Load --> Code Splitting
 import SignUpPage from "../SignUp/signUp";
 import SignInPage from "../SignIn/signIn";
-import PasswordReset from "../AuthServiceHandler/passwordReset";
 
 import {withAuthentication} from "../Session/authUserContext";
+import {SessionStorageHandler} from "../Firebase/Db/sessionStorageHandler.class";
+import donate from "../Donate/donate";
 
 const PasswordChange = lazy(() => import("../PasswordChange/passwordChange"));
 const Units = lazy(() => import("../Unit/units"));
@@ -55,22 +56,28 @@ const Recipe = lazy(() => import("../Recipe/recipe"));
 
 const CreateNewEvent = lazy(() => import("../Event/Event/createNewEvent"));
 const Recipes = lazy(() => import("../Recipe/recipes"));
-const Users = lazy(() => import("../User/users"));
+const Donate = lazy(() => import("../Donate/donate"));
+
+const PasswordReset = lazy(() => import("../AuthServiceHandler/passwordReset"));
+
 const System = lazy(() => import("../Admin/system"));
 const GlobalSettings = lazy(() => import("../Admin/globalSettings"));
-const FeedDelete = lazy(() => import("../Admin/feedDelete"));
+const SystemMessage = lazy(() => import("../Admin/systemMessage"));
 const WhereUsed = lazy(() => import("../Admin/whereUsed"));
-const MergeProducts = lazy(() => import("../Admin/mergeProducts"));
-const ConvertProductToMaterial = lazy(() =>
-  import("../Admin/convertProductToMaterial")
-);
+const MergeItems = lazy(() => import("../Admin/mergeItems"));
+const ConvertItem = lazy(() => import("../Admin/convertItem"));
 const Jobs = lazy(() => import("../Admin/executeJob"));
 const BuildDbIndices = lazy(() => import("../Admin/buildDbIndex"));
 const OverviewRecipes = lazy(() => import("../Admin/overviewRecipes"));
 const OverviewEvents = lazy(() => import("../Admin/overviewEvents"));
+const OverviewUsers = lazy(() => import("../Admin/overviewUsers"));
+const OverviewMailbox = lazy(() => import("../Admin/overviewMailbox"));
+const OverviewCloudFx = lazy(() => import("../Admin/overviewCloudFunctions"));
+const OverviewFeeds = lazy(() => import("../Admin/overviewFeeds"));
+const ActivateSupportUser = lazy(() => import("../Admin/activateSupportUser"));
+const MailConsole = lazy(() => import("../Admin/mailConsole"));
 
 const App = () => {
-  let listener;
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const classes = useStyles();
 
@@ -81,6 +88,23 @@ const App = () => {
     () => createTheme({palette: CustomTheme.getTheme(prefersDarkMode)}),
     [prefersDarkMode]
   );
+
+  React.useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      // Wenn auf Auffrischen geklickt wird, soll der Session-Storage gelöscht werden
+      // Wir gehen davon aus, dass die Person über das Resultat irritiert ist und darum
+      // laden wir die Daten frisch aus der DB.
+      SessionStorageHandler.clearAll();
+    };
+
+    // Event Listener für das beforeunload-Ereignis hinzufügen
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // Aufräumarbeiten: Event Listener entfernen, um Speicherlecks zu vermeiden
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
 
   return (
     <MuiThemeProvider theme={theme}>
@@ -107,7 +131,7 @@ const App = () => {
                 ROUTES.DEPARTMENTS,
                 ROUTES.SYSTEM,
                 ROUTES.NOT_FOUND,
-                ROUTES.USERS,
+                ROUTES.SYSTEM_OVERVIEW_USERS,
                 ROUTES.USER_PUBLIC_PROFILE_UID,
                 ROUTES.USER_PROFILE,
               ]}
@@ -156,16 +180,29 @@ const App = () => {
                 <Route path={ROUTES.MATERIALS} component={Materials} />
                 <Route path={ROUTES.DEPARTMENTS} component={Departments} />
                 <Route exact path={ROUTES.SYSTEM_JOBS} component={Jobs} />
-                <Route path={ROUTES.USERS} component={Users} />
+                <Route
+                  path={ROUTES.SYSTEM_OVERVIEW_USERS}
+                  component={OverviewUsers}
+                />
+                <Route
+                  path={ROUTES.SYSTEM_OVERVIEW_MAILBOX}
+                  component={OverviewMailbox}
+                />
                 <Route exact path={ROUTES.SYSTEM} component={System} />
                 <Route
                   path={ROUTES.REQUEST_OVERVIEW}
                   component={requestOverview}
                 />
+                <Route path={ROUTES.DONATE} component={Donate} />
                 <Route
                   exact
                   path={ROUTES.SYSTEM_GLOBAL_SETTINGS}
                   component={GlobalSettings}
+                />
+                <Route
+                  exact
+                  path={ROUTES.SYSTEM_SYSTEM_MESSAGE}
+                  component={SystemMessage}
                 />
                 <Route
                   exact
@@ -179,8 +216,13 @@ const App = () => {
                 />
                 <Route
                   exact
-                  path={ROUTES.SYSTEM_FEED_DELETE}
-                  component={FeedDelete}
+                  path={ROUTES.SYSTEM_OVERVIEW_CLOUDFX}
+                  component={OverviewCloudFx}
+                />
+                <Route
+                  exact
+                  path={ROUTES.SYSTEM_OVERVIEW_FEEDS}
+                  component={OverviewFeeds}
                 />
                 <Route
                   exact
@@ -189,18 +231,28 @@ const App = () => {
                 />
                 <Route
                   exact
-                  path={ROUTES.SYSTEM_MERGE_PRODUCT}
-                  component={MergeProducts}
+                  path={ROUTES.SYSTEM_MERGE_ITEM}
+                  component={MergeItems}
                 />
                 <Route
                   exact
-                  path={ROUTES.SYSTEM_CONVERT_PRODUCT_TO_MATERIAL}
-                  component={ConvertProductToMaterial}
+                  path={ROUTES.SYSTEM_CONVERT_ITEM}
+                  component={ConvertItem}
                 />
                 <Route
                   exact
                   path={ROUTES.SYSTEM_DB_INDICES}
                   component={BuildDbIndices}
+                />
+                <Route
+                  exact
+                  path={ROUTES.SYSTEM_ACTIVATE_SUPPORT_USER}
+                  component={ActivateSupportUser}
+                />
+                <Route
+                  exact
+                  path={ROUTES.SYSTEM_MAIL_CONSOLE}
+                  component={MailConsole}
                 />
                 <Route
                   exact

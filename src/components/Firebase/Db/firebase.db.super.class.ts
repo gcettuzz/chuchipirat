@@ -69,6 +69,10 @@ interface IncrementField {
   field: string;
   value: number;
 }
+interface IncrementFields {
+  uids: string[];
+  values: {field: string; value: number}[];
+}
 interface Delete {
   uids: string[];
 }
@@ -128,7 +132,7 @@ export abstract class FirebaseDbSuper {
     authUser,
     uids,
     force = false,
-  }: Create<T>): Promise<T> {
+  }: Create<T>): Promise<{documentUid: string; value: T}> {
     value = FirebaseDbSuper.setCreatedFields<T>(value, authUser, force);
 
     let dbObject = _.cloneDeep(this.convertDateValuesToTimestamp(value));
@@ -136,7 +140,6 @@ export abstract class FirebaseDbSuper {
     dbObject = this.prepareDataForDb({value: dbObject});
 
     const collection = this.getCollection(uids);
-
     return await collection
       .add(dbObject)
       .then((docRef) => {
@@ -151,7 +154,7 @@ export abstract class FirebaseDbSuper {
           value: value,
           prefix: uids ? uids[0] : "",
         });
-        return value as T;
+        return {documentUid: docRef.id, value: value as T};
       })
       .catch((error) => {
         console.error(error);
@@ -181,27 +184,34 @@ export abstract class FirebaseDbSuper {
       }
     }
 
-    return await document.get().then((snapshot) => {
-      if (!snapshot.data()) {
-        // Keine Daten -> Gibt ein leeres Objekt
-        return <T>{};
-      }
-      const values = this.prepareDataForApp<T>({
-        uid: snapshot.id,
-        value: this.convertTimestampValuesToDates(
-          snapshot.data() as ValueObject
-        ),
-      });
-      // SessionStorage update
-      SessionStorageHandler.upsertDocument({
-        storageObjectProperty: this.getSessionHandlerProperty(),
-        documentUid: document.id,
-        value: values,
-        prefix: uids ? uids[0] : "",
-      });
+    return await document
+      .get()
+      .then((snapshot) => {
+        if (!snapshot.data()) {
+          // Keine Daten -> Gibt ein leeres Objekt
+          return <T>{};
+        }
+        const values = this.prepareDataForApp<T>({
+          uid: snapshot.id,
+          value: this.convertTimestampValuesToDates(
+            snapshot.data() as ValueObject
+          ),
+        });
+        // SessionStorage update
+        SessionStorageHandler.upsertDocument({
+          storageObjectProperty: this.getSessionHandlerProperty(),
+          documentUid: document.id,
+          value: values,
+          prefix: uids ? uids[0] : "",
+        });
 
-      return values;
-    });
+        return values;
+      })
+      .catch((error) => {
+        console.info("get Document:", document.id);
+        console.error(error);
+        throw error;
+      });
   }
   /* =====================================================================
   /**
@@ -311,6 +321,7 @@ export abstract class FirebaseDbSuper {
         return result;
       })
       .catch((error) => {
+        console.info("read collection:", collection.id);
         console.error(error);
         throw error;
       });
@@ -386,43 +397,27 @@ export abstract class FirebaseDbSuper {
     errorCallback,
   }: Listen<T>) {
     const document = this.getDocument(uids);
-    // return document.onSnapshot((snapshot) => {
-    //   try {
-    //     if (!snapshot.exists) {
-    //       // Dokument wurde gelöscht
-    //       throw new Error(TEXT_DB_DOCUMENT_DELETED);
-    //     }
 
-    //     callback(
-    //       this.prepareDataForApp<T>({
-    //         uid: snapshot.id,
-    //         value: this.convertTimestampValues(snapshot.data() as ValueObject),
-    //       })
-    //     );
-    //   } catch (error) {
-    //     console.error(error);
-    //     throw error;
-    //   }
-    // });
-    return document.onSnapshot((snapshot) => {
-      if (!snapshot.exists) {
-        if (errorCallback) {
+    return document.onSnapshot(
+      (snapshot) => {
+        if (!snapshot.exists) {
           errorCallback(new Error(TEXT_DB_DOCUMENT_DELETED));
-          return;
-        } else {
-          throw new Error(TEXT_DB_DOCUMENT_DELETED);
         }
+
+        const dataForApp = this.prepareDataForApp<T>({
+          uid: snapshot.id,
+          value: this.convertTimestampValuesToDates(
+            snapshot.data() as ValueObject
+          ),
+        });
+
+        callback(dataForApp);
+      },
+      (error) => {
+        console.error("Fehler beim Hören auf Snapshot:", document.id, error);
+        errorCallback(error);
       }
-
-      const dataForApp = this.prepareDataForApp<T>({
-        uid: snapshot.id,
-        value: this.convertTimestampValuesToDates(
-          snapshot.data() as ValueObject
-        ),
-      });
-
-      callback(dataForApp);
-    });
+    );
   }
   // ===================================================================== */
   /**
@@ -508,6 +503,8 @@ export abstract class FirebaseDbSuper {
         });
       })
       .catch((error) => {
+        // console.info("updateFields:", document.id, values);
+        // console.error(error);
         throw error;
       });
   }
@@ -581,6 +578,39 @@ export abstract class FirebaseDbSuper {
           documentUid: document.id,
           field: field,
           value: value,
+          prefix: uids ? uids[0] : "",
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  }
+  // ===================================================================== */
+  /**
+   * incrementField: Wert mehrerer Feldes um einen Wert erhöhen/reduzieren.
+   * @param uid - UID des Dokumentes in der Collection
+   * @param values - Array mit Objekt (field, value), dessen Wert angepasst
+   *                 werden soll
+   * @returns <Promise>void
+   */
+  // =====================================================================
+  public async incrementFields({uids, values}: IncrementFields): Promise<void> {
+    const document = this.getDocument(uids);
+
+    const newValues = {};
+    values.forEach((value) => {
+      newValues[value.field] = this.firebase.fieldValue.increment(value.value);
+    });
+
+    return await document
+      .update(newValues)
+      .then(() => {
+        // Session Storage anpassen
+        SessionStorageHandler.incrementFieldsValue({
+          storageObjectProperty: this.getSessionHandlerProperty(),
+          documentUid: document.id,
+          values: values,
           prefix: uids ? uids[0] : "",
         });
       })

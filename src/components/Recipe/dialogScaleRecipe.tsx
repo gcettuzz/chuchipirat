@@ -9,12 +9,10 @@ import {
   TextField,
   Switch,
   Typography,
-  FormControlLabel,
   Grid,
   useTheme,
 } from "@material-ui/core";
 
-import useStyles from "../../constants/styles";
 import {Alert, AlertTitle} from "@material-ui/lab";
 
 import {
@@ -59,8 +57,6 @@ const DialogScaleRecipe = ({
     initial: true,
     convertUnits: true,
   });
-
-  const classes = useStyles();
 
   // Werte setzen aus dem Rezept
   if (!formFields.scaledPortions && scaledPortions && formFields.initial) {

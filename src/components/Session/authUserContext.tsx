@@ -32,6 +32,7 @@ export const withAuthentication = <P extends WithAuthenticationProps>(
     const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 
     useEffect(() => {
+      // wieso wird der auth listener nicht erneut gerufen....
       const listener = firebase.onAuthUserListener((authUser) => {
         setAuthUser(authUser);
       });

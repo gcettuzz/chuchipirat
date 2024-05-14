@@ -269,8 +269,8 @@ export default class Firebase {
   // Email Verifizierung versenden 
   // ===================================================================== */
   sendEmailVerification = () => {
-    return this.auth.currentUser.sendEmailVerification({
-      url: process.env.REACT_APP_CONFIRMATION_EMAIL_REDIRECT,
+    return this.auth.currentUser!.sendEmailVerification({
+      url: process.env.REACT_APP_CONFIRMATION_EMAIL_REDIRECT!,
     });
   };
   /* =====================================================================
@@ -295,7 +295,7 @@ export default class Firebase {
     password,
   }: ReauthenticateWithCredential): Promise<app.auth.UserCredential> => {
     const credential = this.emailAuthProvider.credential(email, password);
-    return this.auth.currentUser.reauthenticateWithCredential(credential);
+    return this.auth.currentUser!.reauthenticateWithCredential(credential);
   };
   // Abmelden
   signOut = () => {
@@ -303,7 +303,7 @@ export default class Firebase {
   };
   // E-Mail ändern
   emailChange = (email: string): Promise<void> => {
-    return this.auth.currentUser.updateEmail(email);
+    return this.auth.currentUser!.updateEmail(email);
   };
   // Passwort zurücksetzen
   passwordReset = (email: string): Promise<void> => {

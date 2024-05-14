@@ -3,7 +3,9 @@
 
 # Was ist der chuchipirat?
 
+# Release-Übersicht
 
+Eine Übersicht der Releases findest du im [Helpcenter](https://help.chuchipirat.ch/release_notes).
 
 # Bugs, Anregungen, Wünsche
 

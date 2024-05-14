@@ -11,6 +11,9 @@ import Firebase from "../Firebase/firebase.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import FirebaseAnalyticEvent from "../../constants/firebaseEvent";
 import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
+import Material from "../Material/material.class";
+
+import {ERROR_PARAMETER_NOT_PASSED as TEXT_ERROR_PARAMETER_NOT_PASSED} from "../../constants/text";
 
 interface GetAllProducts {
   firebase: Firebase;
@@ -26,10 +29,30 @@ interface CreateProduct {
   authUser: AuthUser;
   dietProperties: DietProperties;
 }
-interface SaveAllProductsProps {
+interface SaveAllProducts {
   firebase: Firebase;
   products: Product[];
   authUser: AuthUser;
+}
+
+export interface ConvertMaterialToProductCallbackDocument {
+  date: Date;
+  documentList: {document: string; name: string}[];
+  done: boolean;
+  material: {uid: Material["uid"]; name: Material["name"]};
+  department: Department;
+  shoppingUnit: Unit;
+  dietProperties: DietProperties;
+}
+
+interface CreateProductFromMaterialProps {
+  firebase: Firebase;
+  material: {uid: Material["uid"]; name: Material["name"]};
+  department: Department;
+  shoppingUnit: Unit;
+  dietProperties: DietProperties;
+  authUser: AuthUser;
+  callbackDone?: (document: ConvertMaterialToProductCallbackDocument) => void;
 }
 export interface MergeProductsCallbackDocument {
   date: Date;
@@ -44,6 +67,10 @@ interface MergeProducts {
   productToReplace: {uid: string; name: string};
   productToReplaceWith: {uid: string; name: string};
   callbackDone: (document: MergeProductsCallbackDocument) => void;
+}
+interface FindSimilarProducts {
+  productName: Product["name"];
+  existingProducts: Product[];
 }
 
 // ATTENTION:
@@ -222,6 +249,7 @@ export default class Product {
       feedVisibility: Role.communityLeader,
       objectUid: product.uid,
       objectName: product.name,
+      textElements: [product.name],
     });
 
     // Statistik
@@ -240,12 +268,12 @@ export default class Product {
     firebase,
     products,
     authUser,
-  }: SaveAllProductsProps) => {
+  }: SaveAllProducts) => {
     // Dokument updaten mit neuem Produkt
     let triggerCloudFx = false;
     const changedProducts = [] as Product[];
-    // TODO: altes File holen und vergleichen. für die geänderten Produkte muss die Cloud-FX ausgelöst werden
-    Product.getAllProducts({
+    // altes File holen und vergleichen. für die geänderten Produkte muss die Cloud-FX ausgelöst werden
+    await Product.getAllProducts({
       firebase: firebase,
       onlyUsable: false,
       withDepartmentName: false,
@@ -259,11 +287,16 @@ export default class Product {
           if (
             dbProduct &&
             (dbProduct.name != product.name ||
-              dbProduct.dietProperties != product.dietProperties)
+              !Utils.areArraysIdentical<Allergen>(
+                dbProduct.dietProperties.allergens,
+                product.dietProperties.allergens
+              ) ||
+              dbProduct.dietProperties.diet !== product.dietProperties.diet)
           ) {
             // Das Produkt hat eine Änderung erfahren, die über alle
             // Dokumente nachgeführt werden muss
             triggerCloudFx = true;
+            delete product.departmentUid;
             changedProducts.push(product);
           }
         });
@@ -273,54 +306,20 @@ export default class Product {
         throw error;
       });
 
-    firebase.masterdata.products.update<Array<Product>>({
+    await firebase.masterdata.products.set<Array<Product>>({
       uids: [""], // Wird in der Klasse bestimmt
       value: products,
       authUser: authUser,
     });
 
     if (triggerCloudFx) {
-      firebase.cloudFunction.productUpdate.triggerCloudFunction({
-        values: changedProducts,
+      firebase.cloudFunction.updateProduct.triggerCloudFunction({
+        values: {changedProducts: changedProducts},
         authUser: authUser,
       });
     }
 
     return products;
-  };
-
-  /* =====================================================================
-  // Produkt tracen
-  // ===================================================================== */
-  static traceProduct = async ({firebase, uid, traceListener}) => {
-    console.log(firebase, uid, traceListener);
-    // if (!firebase || !uid) {
-    //   throw new Error(TEXT.ERROR_PARAMETER_NOT_PASSED);
-    // }
-    // let listener;
-    // let docRef = firebase.cloudFunctions_productTrace().doc();
-    // await docRef
-    //   .set({
-    //     uid: uid,
-    //     date: firebase.timestamp.fromDate(new Date()),
-    //   })
-    //   .then(async () => {
-    //     await firebase.delay(1);
-    //   })
-    //   .then(() => {
-    //     const unsubscribe = docRef.onSnapshot((snapshot) => {
-    //       traceListener(snapshot.data());
-    //       if (snapshot.data()?.done) {
-    //         // Wenn das Feld DONE vorhanden ist, ist die Cloud-Function durch
-    //         unsubscribe();
-    //       }
-    //     });
-    //   })
-    //   .catch((error) => {
-    //     throw error;
-    //   });
-    // firebase.analytics.logEvent(FIREBASE_EVENTS.CLOUD_FUNCTION_EXECUTED);
-    // return listener;
   };
   // =====================================================================
   /**
@@ -329,7 +328,6 @@ export default class Product {
    * in allen relevanten Dokumenten wird das nachgeführt
    * @param Objekt - Referenz auf Firebase, AuthUser, Produkt zu erstetzen,
    *                 Ersatz-Produkt, Callback wenn Cloud-FX fertig.
-   * @returns Liste der Produkte
    */
   static mergeProducts = async ({
     firebase,
@@ -363,11 +361,15 @@ export default class Product {
             unsubscribe();
           }
         };
+        const errorCallback = (error: Error) => {
+          throw error;
+        };
 
         firebase.cloudFunction.mergeProducts
           .listen({
             uids: [documentId],
             callback: callback,
+            errorCallback: errorCallback,
           })
           .then((result) => {
             unsubscribe = result;
@@ -376,5 +378,124 @@ export default class Product {
       .catch((error) => {
         throw error;
       });
+  };
+  // =====================================================================
+  /**
+   * Aus einem Material ein Produkt erstellen -->
+   * Cloud-FX triggern, die das Material umwandelt.
+   * @param Objekt nach Interface CreateProductFromMaterialProps
+   * @returns void
+   */
+
+  static createProductFromMaterial = async ({
+    firebase,
+    material,
+    department,
+    shoppingUnit,
+    dietProperties,
+    authUser,
+    callbackDone,
+  }: CreateProductFromMaterialProps) => {
+    if (!firebase || !material || !department) {
+      throw new Error(TEXT_ERROR_PARAMETER_NOT_PASSED);
+    }
+    let unsubscribe: () => void;
+    let documentId = "";
+
+    firebase.cloudFunction.convertMaterialToProduct
+      .triggerCloudFunction({
+        values: {
+          material: material,
+          department: department,
+          shoppingUnit: shoppingUnit,
+          dietProperties: dietProperties,
+        },
+        authUser: authUser,
+      })
+      .then((result) => {
+        documentId = result;
+      })
+      .then(() => {
+        if (!callbackDone) {
+          return;
+        }
+        // Melden wenn fertig
+        const callback = (data) => {
+          if (data?.done) {
+            callbackDone(data);
+            unsubscribe();
+          }
+        };
+        const errorCallback = (error: Error) => {
+          throw error;
+        };
+
+        firebase.cloudFunction.convertMaterialToProduct
+          .listen({
+            uids: [documentId],
+            callback: callback,
+            errorCallback: errorCallback,
+          })
+          .then((result) => {
+            unsubscribe = result;
+          });
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  };
+  // =====================================================================
+  /**
+   * Produkte finden, mit dem ähnlichen Namen - die Liste mit ähnlichen
+   * Namen soll helfen, dass nicht gleiche Produkte erfasst werden
+   * @param Objekt mit Namen des Produktes und der Liste aller Produkte
+   * @returns Array mit Produkten, die ähnlich sind
+   */
+  static findSimilarProducts = ({
+    productName,
+    existingProducts,
+  }: FindSimilarProducts) => {
+    const threshold = 0.7;
+    const excludedWords = ["glutenfrei", "laktosefrei", "aha"]; // Wörter, die ausgeschlossen werden sollen
+
+    const similarProducts: {product: Product; similarity: number}[] = [];
+
+    let newProductWords = productName.toLowerCase().split(" ");
+    newProductWords = newProductWords.filter(
+      (word) => !excludedWords.includes(word)
+    );
+
+    for (const product of existingProducts) {
+      const productWords = product.name.toLowerCase().split(" ");
+
+      // Berechne die durchschnittliche Ähnlichkeit der einzelnen Wörter
+      const wordSimilaritySum = newProductWords.reduce((sum, word) => {
+        word.replace(",", "");
+
+        if (excludedWords.includes(word)) {
+          console.warn(word, product.name);
+          return sum;
+        }
+
+        const wordSimilarities = productWords.map((productWord) =>
+          Utils.jaccardIndex(word, productWord)
+        );
+        const maxSimilarity = Math.max(...wordSimilarities);
+        return sum + maxSimilarity;
+      }, 0);
+
+      const averageWordSimilarity = wordSimilaritySum / newProductWords.length;
+      if (averageWordSimilarity >= threshold) {
+        similarProducts.push({
+          product: product,
+          similarity: averageWordSimilarity,
+        });
+      }
+    }
+
+    // Sortieren der ähnlichen Produkte nach absteigender Ähnlichkeit
+    similarProducts.sort((a, b) => b.similarity - a.similarity);
+    return similarProducts.map((entry) => entry.product);
   };
 }

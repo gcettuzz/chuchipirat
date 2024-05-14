@@ -35,7 +35,7 @@ const PageTitle = ({
 }: PageTitleProps) => {
   const classes = useStyles();
 
-  document.title = windowTitle
+  window.document.title = windowTitle
     ? windowTitle
     : title
     ? title

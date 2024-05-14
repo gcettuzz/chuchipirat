@@ -74,7 +74,7 @@ import useStyles from "../../constants/styles";
 import Action from "../../constants/actions";
 
 import Product from "../Product/product.class";
-import Unit from "../Unit/unit.class";
+import Unit, {UnitDimension} from "../Unit/unit.class";
 import Utils from "../Shared/utils.class";
 import Department from "../Department/department.class";
 import AlertMessage from "../Shared/AlertMessage";
@@ -616,9 +616,9 @@ const RecipeEdit = ({
   });
 
   const {customDialog} = useCustomDialog();
-  if (!state.recipe.name && dbRecipe.name) {
+  if (!state.recipe.name && dbRecipe.name && !isEmbedded) {
     document.title = dbRecipe.name;
-  } else {
+  } else if (!isEmbedded) {
     document.title = state.recipe.name;
   }
 
@@ -655,7 +655,11 @@ const RecipeEdit = ({
       Unit.getAllUnits({firebase: firebase})
         .then((result) => {
           // leeres Feld gehört auch dazu
-          result.push({key: "", name: ""});
+          result.push({
+            key: "",
+            name: "",
+            dimension: UnitDimension.dimensionless,
+          });
 
           dispatch({
             type: ReducerActions.UNITS_FETCH_SUCCESS,
@@ -829,6 +833,7 @@ const RecipeEdit = ({
           name: productName,
           popUpOpen: true,
         });
+
         // ID der Position speichern, die das Ereignis
         // auslöst (im Falle eines Abbruchs)
         setTriggeredIngredientUid(ingredientUid);
@@ -1230,6 +1235,22 @@ const RecipeEdit = ({
       popUpOpen: false,
     });
   };
+  const onChooseExistingProductToAdd = (product: Product) => {
+    dispatch({
+      type: ReducerActions.ON_INGREDIENT_CHANGE,
+      payload: {
+        field: "product",
+        value: {uid: product.uid, name: product.name},
+        uid: triggeredIngredientUid,
+      },
+    });
+
+    setTriggeredIngredientUid("");
+    setProductAddPopupValues({
+      ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
+      popUpOpen: false,
+    });
+  };
   /* ------------------------------------------
   // PopUp Material Hinzufügen - 
   // ------------------------------------------ */
@@ -1357,9 +1378,6 @@ const RecipeEdit = ({
         break;
     }
   };
-  /* ------------------------------------------
-  // XXX
-  // ------------------------------------------ */
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <React.Fragment>
@@ -1473,6 +1491,7 @@ const RecipeEdit = ({
           dialogOpen={productAddPopupValues.popUpOpen}
           handleOk={onCreateProductToAdd}
           handleClose={onCloseProductToAdd}
+          handleChooseExisting={onChooseExistingProductToAdd}
           products={state.products}
           units={state.units}
           departments={state.departments}
@@ -1939,7 +1958,7 @@ const RecipeIngredients = ({
             size="small"
           />
         </Grid>
-        {/* Zutaten auflsiten */}
+        {/* Zutaten auflisten */}
         <Droppable
           droppableId={"ingredients"}
           type={DragDropTypes.INGREDIENT}
@@ -1995,7 +2014,7 @@ const RecipeIngredients = ({
                             />
                           ) : (
                             <IngredientPosition
-                              position={Recipe.definePostionSectionAdjusted({
+                              position={Recipe.definePositionSectionAdjusted({
                                 uid: ingredientUid,
                                 entries: recipe.ingredients.entries,
                                 order: recipe.ingredients.order,
@@ -2284,7 +2303,7 @@ const RecipePreparationSteps = ({
                               // Zubereitungsschritt
                               <PreparationStepPosition
                                 key={preparationStepUid}
-                                position={Recipe.definePostionSectionAdjusted({
+                                position={Recipe.definePositionSectionAdjusted({
                                   uid: preparationStepUid,
                                   entries: recipe.preparationSteps.entries,
                                   order: recipe.preparationSteps.order,

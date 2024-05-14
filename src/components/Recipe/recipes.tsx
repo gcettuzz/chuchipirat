@@ -86,9 +86,8 @@ import withEmailVerification from "../Session/withEmailVerification";
 import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import {CustomRouterProps} from "../Shared/global.interface";
-import ScrollDownOnKeyPress from "../Shared/ScrollDownOnKeyPress";
+import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 
-//TODO: alle kommentare löschen
 /* ===================================================================
 // ============================ Dispatcher ===========================
 // =================================================================== */
@@ -237,19 +236,14 @@ const RecipesBase: React.FC<
         });
       });
   }, [authUser]);
-  React.useEffect(() => {
-    // Prüfen ob die Daten aus dem Session-Storage wiederhergestellt werden müssen.
-    const history = window.history;
-    history.replaceState({isBackNavigation: true}, "");
-  }, []);
 
   if (!authUser) {
     return null;
   }
 
   /* ------------------------------------------
-    // Neues Rezept anlegen
-    // ------------------------------------------ */
+ // Neues Rezept anlegen
+ // ------------------------------------------ */
   const onNewClick = () => {
     push({
       pathname: ROUTE_RECIPE,
@@ -299,48 +293,6 @@ const RecipesBase: React.FC<
       payload: {},
     });
   };
-  // TODO: die interaktion mit der Search muss in die untere Komponente
-  // damit diese auch von andere nutzbar wird!
-
-  /* ------------------------------------------
-  // Rezepte suchen
-  // ------------------------------------------ */
-  // const onSearch = (
-  //   event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
-  // ) => {
-  // setSearchSettings({ ...searchSettings, searchString: event.target.value });
-  // setFilteredData(
-  //   filterRecipes({
-  //     searchSettings: { ...searchSettings, searchString: event.target.value },
-  //     recipes: state.recipes,
-  //   })
-  // );
-  // };
-  // const onSearchSettings = (updatedSearchSettings: SearchSettings) => {
-  // setSearchSettings(updatedSearchSettings);
-  // setFilteredData(
-  //   filterRecipes({
-  //     searchSettings: updatedSearchSettings,
-  //     recipes: state.recipes,
-  //   })
-  // );
-  // };
-  /* ------------------------------------------
-  // Suchstring löschen
-  // ------------------------------------------ */
-  // const onClearSearchString = () => {
-  // setSearchSettings({ ...searchSettings, searchString: "" });
-  // setFilteredData(state.recipes);
-  // };
-
-  // Alle Rezepte anzeigen, falls nichts gesucht wurde
-  // if (
-  //   searchSettings == INITIAL_SEARCH_SETTINGS &&
-  //   state.recipes.length > 0 &&
-  //   filteredData.length === 0
-  // ) {
-  //   setFilteredData(state.recipes);
-  // }
   return (
     <React.Fragment>
       <CssBaseline />
@@ -380,7 +332,6 @@ const RecipesBase: React.FC<
         snackbarOpen={state.snackbar.open}
         handleClose={handleSnackbarClose}
       />
-      <ScrollDownOnKeyPress />
     </React.Fragment>
   );
 };
@@ -389,14 +340,9 @@ const RecipesBase: React.FC<
 // // =================================================================== */
 interface RecipeSearchProps {
   recipes: RecipeShort[];
-  // filteredData: RecipeShort[];
   onNewClick: () => void;
   onCardClick: ({event, recipe}: OnRecipeCardClickProps) => void;
   onFabButtonClick?: ({event, recipe}: OnRecipeCardClickProps) => void;
-  // searchSettings: SearchSettings;
-  // onSearch: (event) => void;
-  // onSearchSettings: (searchSettings: SearchSettings) => void;
-  // onClearSearchString: () => void;
   embeddedMode?: boolean;
   fabButtonIcon?: JSX.Element;
   error?: Error | null;
@@ -419,15 +365,10 @@ interface SearchSettings {
 }
 
 export const RecipeSearch = ({
-  // filteredData = [],
   recipes,
   onNewClick: onNewClickSuper,
   onCardClick: onCardClickSuper,
   onFabButtonClick: onFabButtonClickSuper,
-  // searchSettings,
-  // onSearch,
-  // onSearchSettings,
-  // onClearSearchString,
   embeddedMode = false,
   fabButtonIcon,
   isLoading = false,
@@ -438,6 +379,7 @@ export const RecipeSearch = ({
     INITIAL_SEARCH_SETTINGS
   );
   const [filteredData, setFilteredData] = React.useState([] as RecipeShort[]);
+
   /* ------------------------------------------
   // Update der Sucheigenschaften
   // ------------------------------------------ */
@@ -450,6 +392,15 @@ export const RecipeSearch = ({
         searchString: searchString,
         showAdvancedSearch: false,
       });
+
+      SessionStorageHandler.deleteDocument({
+        storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
+        documentUid: "searchSettings",
+        prefix: "",
+      });
+
+      // Die Daten wieder alle anzeigen....
+      setFilteredData(recipes);
     } else {
       setSearchSettings({
         ...searchSettings,
@@ -471,21 +422,11 @@ export const RecipeSearch = ({
         recipes: recipes,
       })
     );
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-      value: newSearchSettings,
-    });
   };
   const onClearSearchString = () => {
     const newSearchSettings = {...searchSettings, searchString: ""};
     setSearchSettings(newSearchSettings);
     setFilteredData(recipes);
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-      value: newSearchSettings,
-    });
   };
   const onSearchSettingDietUpdate = (
     event: React.MouseEvent<HTMLElement>,
@@ -502,11 +443,6 @@ export const RecipeSearch = ({
         recipes: recipes,
       })
     );
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-      value: newSearchSettings,
-    });
   };
   const onSearchSettingAllergensUpdate = (
     event: React.MouseEvent<HTMLElement>,
@@ -542,11 +478,6 @@ export const RecipeSearch = ({
         recipes: recipes,
       })
     );
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-      value: newSearchSettings,
-    });
   };
   const onSearchSettingMenuTypeUpdate = (
     event: React.ChangeEvent<{[key: string]: any}>
@@ -578,11 +509,6 @@ export const RecipeSearch = ({
         recipes: recipes,
       })
     );
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-      value: newSearchSettings,
-    });
   };
   const onSearchSettingOutdoorKitchenSuitableUpdate = () => {
     const newSearchSettings = {
@@ -596,11 +522,6 @@ export const RecipeSearch = ({
         recipes: recipes,
       })
     );
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-      value: newSearchSettings,
-    });
   };
   const onSearchSettingRecipeTypeUpdate = (
     event: React.MouseEvent<HTMLElement>,
@@ -618,16 +539,11 @@ export const RecipeSearch = ({
         recipes: recipes,
       })
     );
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-      value: newSearchSettings,
-    });
   };
   const onSearchSettingShowOnlyMyRecipesUpdate = () => {
     const newSearchSettings: SearchSettings = {
       ...searchSettings,
-      showOnlyMyRecipes: !searchSettings.outdoorKitchenSuitable,
+      showOnlyMyRecipes: !searchSettings.showOnlyMyRecipes,
     };
     setSearchSettings(newSearchSettings);
     setFilteredData(
@@ -636,11 +552,6 @@ export const RecipeSearch = ({
         recipes: recipes,
       })
     );
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-      value: newSearchSettings,
-    });
   };
   /* ------------------------------------------
   // Card-Aktionen
@@ -648,7 +559,7 @@ export const RecipeSearch = ({
   const onCardClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     SessionStorageHandler.upsertDocument({
       storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
+      documentUid: "searchSettings",
       value: searchSettings,
     });
 
@@ -676,7 +587,7 @@ export const RecipeSearch = ({
     // Sucheinstellungen speichern
     SessionStorageHandler.upsertDocument({
       storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
+      documentUid: "searchSettings",
       value: searchSettings,
     });
 
@@ -686,70 +597,80 @@ export const RecipeSearch = ({
   // Rezepte filtern
   // ------------------------------------------ */
   const filterRecipes = ({searchSettings, recipes}: FilterRecipesProps) => {
-    let searchResult = recipes;
-    // Zuerst Text filtern
-    if (searchSettings.searchString) {
-      searchResult = searchResult.filter(
-        (recipe) =>
-          recipe.name
-            .toLowerCase()
-            .includes(searchSettings.searchString.toLowerCase()) ||
-          recipe.tags.filter(
-            (tag) =>
-              tag
-                .toLowerCase()
-                .includes(searchSettings.searchString.toLocaleLowerCase()) ||
-              recipe.variantName
-                ?.toLowerCase()
-                .includes(searchSettings.searchString.toLocaleLowerCase())
-          ).length > 0
-      );
-    }
+    return recipes.filter((recipe) => {
+      // Zuerst prüfen ob Text stimmt
+      if (
+        searchSettings.searchString &&
+        !recipe.name
+          .toLowerCase()
+          .includes(searchSettings.searchString.toLowerCase()) &&
+        recipe.tags.filter(
+          (tag) =>
+            tag
+              .toLowerCase()
+              .includes(searchSettings.searchString.toLocaleLowerCase()) ||
+            recipe.variantName
+              ?.toLowerCase()
+              .includes(searchSettings.searchString.toLocaleLowerCase())
+        ).length == 0
+      ) {
+        return false;
+      }
 
-    // Diät aufiltern
-    if (searchSettings.diet != Diet.Meat) {
-      searchResult = searchResult.filter(
-        (recipe) => recipe.dietProperties?.diet === searchSettings.diet
-      );
-    }
-    // Allergene ausfiltern
-    if (!searchSettings.allergens.includes(Allergen.None)) {
-      searchSettings.allergens.forEach((allergen) => {
-        searchResult = searchResult.filter(
-          (recipe) => !recipe.dietProperties.allergens.includes(allergen)
-        );
-      });
-    }
+      // prüfen ob Diät passt
+      if (
+        searchSettings.diet != Diet.Meat &&
+        recipe.dietProperties?.diet !== searchSettings.diet
+      ) {
+        return false;
+      }
 
-    // Menütypen ausfiltern
-    if (searchSettings.menuTypes.length > 0) {
-      searchResult = searchResult.filter((recipe) =>
-        // Some --> eines der gewählten Filterkriterien muss im Rezept vorkommen
-        searchSettings.menuTypes.some((menuType) =>
+      // prüfen ob Allergie passt
+      if (
+        !searchSettings.allergens.includes(Allergen.None) &&
+        searchSettings.allergens.filter((allergen) =>
+          recipe.dietProperties.allergens.includes(allergen)
+        ).length > 0
+      ) {
+        return false;
+      }
+
+      // prüfen ob Menütypen passen
+      if (
+        searchSettings.menuTypes.length > 0 &&
+        searchSettings.menuTypes.filter((menuType) =>
           recipe.menuTypes.includes(menuType)
-        )
-      );
-    }
-    // Geeignet für Outdoorküche
-    if (searchSettings.outdoorKitchenSuitable) {
-      searchResult = searchResult.filter(
-        (recipe) => recipe.outdoorKitchenSuitable
-      );
-    }
+        ).length == 0
+      ) {
+        return false;
+      }
 
-    // Rezepttypen
-    if (searchSettings.recipeType !== "all") {
-      searchResult = searchResult.filter(
-        (recipe) => recipe.type == searchSettings.recipeType
-      );
-    }
-    if (searchSettings.showOnlyMyRecipes) {
-      searchResult = searchResult.filter(
-        (recipe) => recipe.created.fromUid == authUser.uid
-      );
-    }
+      // prüfen ob Outdoorküche --> nur filtern wenn Schalter an
+      if (
+        searchSettings.outdoorKitchenSuitable &&
+        recipe.outdoorKitchenSuitable !== searchSettings.outdoorKitchenSuitable
+      ) {
+        return false;
+      }
 
-    return searchResult;
+      // prüfen über Rezept-Typ
+      if (
+        searchSettings.recipeType !== "all" &&
+        recipe.type !== searchSettings.recipeType
+      ) {
+        return false;
+      }
+
+      if (
+        searchSettings.showOnlyMyRecipes &&
+        recipe.created.fromUid !== authUser.uid
+      ) {
+        return false;
+      }
+
+      // Das Rezept hat allen Anforderungen entsprochen
+      return true;
+    });
   };
   /* ------------------------------------------
   // Select Menü - für Menütyp
@@ -773,11 +694,14 @@ export const RecipeSearch = ({
     filteredData.length == 0
   ) {
     // Schauen ob was im SessionStorage ist
-    const sessionStorage = SessionStorageHandler.getDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "recipes",
-    });
+    let sessionStorage: ValueObject | null = null;
 
+    if (!embeddedMode) {
+      sessionStorage = SessionStorageHandler.getDocument({
+        storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
+        documentUid: "searchSettings",
+      });
+    }
     if (sessionStorage) {
       setSearchSettings(sessionStorage as SearchSettings);
       setFilteredData(
@@ -932,7 +856,7 @@ export const RecipeSearch = ({
                 size="small"
               >
                 <FormControlLabel
-                  value={searchSettings.outdoorKitchenSuitable}
+                  checked={searchSettings.outdoorKitchenSuitable}
                   onChange={onSearchSettingOutdoorKitchenSuitableUpdate}
                   control={<Switch color="primary" />}
                   label={
@@ -992,7 +916,7 @@ export const RecipeSearch = ({
                 size="small"
               >
                 <FormControlLabel
-                  value={searchSettings.showOnlyMyRecipes}
+                  checked={searchSettings.showOnlyMyRecipes}
                   onChange={onSearchSettingShowOnlyMyRecipesUpdate}
                   control={<Switch color="primary" />}
                   label={

@@ -59,7 +59,7 @@ export class FirebaseDbMasterDataProducts extends FirebaseDbSuper {
     value.forEach((product) => {
       // Allergene nur speichern, wenn auch welche vorhanden
       const dietProperties = product.dietProperties;
-      if (product.dietProperties.allergens.length == 0) {
+      if (product.dietProperties?.allergens?.length == 0) {
         delete dietProperties.allergens;
       }
 

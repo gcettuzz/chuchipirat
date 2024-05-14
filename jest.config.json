@@ -1,0 +1,24 @@
+{
+  "preset": "ts-jest",
+  "testEnvironment": "jsdom",
+  "testMatch": ["**/__tests__/**/*.ts?(x)", "**/?(*.)+(spec|test).ts?(x)"],
+  "coverageDirectory": "coverage",
+  "collectCoverageFrom": ["src/**/*.ts"],
+  "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "json", "node"],
+  "reporters": [
+    "default",
+    [
+      "jest-html-reporters",
+      {
+        "publicPath": "./html-report",
+        "filename": "report.html",
+        "openReport": true
+      }
+    ]
+  ],
+  "watchPathIgnorePatterns": [
+    "html-report",
+    "jest_html_reporters.html",
+    "report.html"
+  ]
+}

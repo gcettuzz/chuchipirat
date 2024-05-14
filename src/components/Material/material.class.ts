@@ -12,7 +12,7 @@ import Product from "../Product/product.class";
 
 import {ERROR_PARAMETER_NOT_PASSED as TEXT_ERROR_PARAMETER_NOT_PASSED} from "../../constants/text";
 
-// ATTENTION:
+// HINT💡:
 // wird dies erweitert, muss auch im Cloud-Function File index
 // die Beschreibung angepasst werden. Sonst funktioniert der
 // Feed-Recap-Newsletter nicht.
@@ -54,6 +54,22 @@ interface GetAllMaterials {
   firebase: Firebase;
   onlyUsable?: boolean;
 }
+export interface MergeMaterialsCallbackDocument {
+  date: Date;
+  documentList: {document: string; name: string}[];
+  done: boolean;
+  materialToReplace: {uid: string; name: string};
+  materialToReplaceWith: {uid: string; name: string};
+}
+
+interface MergeMaterials {
+  firebase: Firebase;
+  authUser: AuthUser;
+  materialToReplace: {uid: string; name: string};
+  materialToReplaceWith: {uid: string; name: string};
+  callbackDone: (document: MergeMaterialsCallbackDocument) => void;
+}
+
 export default class Material {
   uid: string;
   name: string;
@@ -143,6 +159,7 @@ export default class Material {
       feedVisibility: Role.communityLeader,
       objectUid: material.uid,
       objectName: material.name,
+      textElements: [material.name],
     });
 
     // Statistik
@@ -194,11 +211,15 @@ export default class Material {
             unsubscribe();
           }
         };
+        const errorCallback = (error: Error) => {
+          throw error;
+        };
 
         firebase.cloudFunction.convertProductToMaterial
           .listen({
             uids: [documentId],
             callback: callback,
+            errorCallback: errorCallback,
           })
           .then((result) => {
             unsubscribe = result;
@@ -220,6 +241,31 @@ export default class Material {
     authUser,
   }: SaveAllMaterials) => {
     // Dokument updaten mit neuem Produkt
+    let triggerCloudFx = false;
+    const changedMaterials = [] as Material[];
+
+    await Material.getAllMaterials({
+      firebase: firebase,
+      onlyUsable: false,
+    })
+      .then((result) => {
+        materials.forEach((material) => {
+          const dbMaterial = result.find(
+            (dbMaterial) => dbMaterial.uid === material.uid
+          );
+
+          if (dbMaterial && dbMaterial.name != material.name) {
+            // Das Produkt hat eine Änderung erfahren, die über alle
+            // Dokumente nachgeführt werden muss
+            triggerCloudFx = true;
+            changedMaterials.push(material);
+          }
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
 
     firebase.masterdata.materials.update<Array<Material>>({
       uids: [""], // Wird in der Klasse bestimmt
@@ -227,6 +273,71 @@ export default class Material {
       authUser: authUser,
     });
 
+    if (triggerCloudFx) {
+      firebase.cloudFunction.updateMaterial.triggerCloudFunction({
+        values: {changedMaterials: changedMaterials},
+        authUser: authUser,
+      });
+    }
+
     return materials;
+  };
+  // =====================================================================
+  /**
+   * Zwei Materialien mergen
+   * Über eine Cloud-Function werden zwei Materialien zusammengeführt und
+   * in allen relevanten Dokumenten wird das nachgeführt
+   * @param Objekt - Referenz auf Firebase, AuthUser, Material zu erstetzen,
+   *                 Ersatz-material, Callback wenn Cloud-FX fertig.
+   */
+  static mergeMaterials = async ({
+    firebase,
+    authUser,
+    materialToReplace,
+    materialToReplaceWith,
+    callbackDone,
+  }: MergeMaterials) => {
+    if (!firebase || !materialToReplace || !materialToReplaceWith) {
+      throw new Error(TEXT_ERROR_PARAMETER_NOT_PASSED);
+    }
+    let unsubscribe: () => void;
+    let documentId = "";
+
+    firebase.cloudFunction.mergeMaterials
+      .triggerCloudFunction({
+        values: {
+          materialToReplace: materialToReplace,
+          materialToReplaceWith: materialToReplaceWith,
+        },
+        authUser: authUser,
+      })
+      .then((result) => {
+        documentId = result;
+      })
+      .then(() => {
+        // Melden wenn fertig
+        const callback = (data) => {
+          if (data?.done) {
+            callbackDone(data);
+            unsubscribe();
+          }
+        };
+        const errorCallback = (error: Error) => {
+          throw error;
+        };
+
+        firebase.cloudFunction.mergeMaterials
+          .listen({
+            uids: [documentId],
+            callback: callback,
+            errorCallback: errorCallback,
+          })
+          .then((result) => {
+            unsubscribe = result;
+          });
+      })
+      .catch((error) => {
+        throw error;
+      });
   };
 }

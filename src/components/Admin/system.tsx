@@ -19,7 +19,6 @@ import {
 
 import {
   Forward as ForwardIcon,
-  Delete as DeleteIcon,
   ZoomOutMap as ZoomOutMapIcon,
   CallMerge as CallMergeIcon,
   Tune as TuneIcon,
@@ -29,41 +28,58 @@ import {
   Fastfood as FastfoodIcon,
   FindInPage as FindInPageIcon,
   Cached as CachedIcon,
+  HeadsetMic as HeadsetMicIcon,
+  Mail as MailIcon,
+  Send as SendIcon,
+  Cloud as CloudIcon,
+  RssFeed as RssFeedIcon,
+  Build as BuildIcon,
+  Feedback as FeedbackIcon,
 } from "@material-ui/icons";
 
 import {
   ADMIN as TEXT_ADMIN,
   WELCOME_ON_THE_BRIDGE_CAPTAIN as TEXT_WELCOME_ON_THE_BRIDGE_CAPTAIN,
   GLOBAL_SETTINGS as TEXT_GLOBAL_SETTINGS,
-  SYSTEM_GLOBAL_DESCRIPTION as TEXT_SYSTEM_GLOBAL_DESCRIPTION,
-  DELETE_FEED as TEXT_DELETE_FEED,
-  DELETE_FEED_DESCRIPTION as TEXT_DELETE_FEED_DESCRIPTION,
   WHERE_USED as TEXT_WHERE_USED,
   WHERE_USED_DESCRIPTION as TEXT_WHERE_USED_DESCRIPTION,
-  MERGE_PRODUCTS as TEXT_MERGE_PRODUCTS,
-  MERGE_PRODUCT_DESCRIPTION as TEXT_MERGE_PRODUCT_DESCRIPTION,
-  CONVERT_PRODUCT_TO_MATERIAL as TEXT_CONVERT_PRODUCT_TO_MATERIAL,
-  CONVERT_PRODUCT_TO_MATERIAL_DESCRIPTION as TEXT_CONVERT_PRODUCT_TO_MATERIAL_DESCRIPTION,
+  MERGE_ITEMS as TEXT_MERGE_ITEMS,
+  MERGE_ITEMS_DESCRIPTION as TEXT_MERGE_ITEMS_DESCRIPTION,
+  CONVERT_ITEM as TEXT_CONVERT_ITEM,
+  CONVERT_PRODUCT_ITEM_DESCRIPTION as TEXT_CONVERT_PRODUCT_ITEM_DESCRIPTION,
   JOBS as TEXT_JOBS,
   JOBS_DESCRIPTION as TEXT_JOBS_DESCRIPTION,
   DB_INDICES as TEXT_DB_INDICES,
   DB_INDICES_DESCRIPTION as TEXT_DB_INDICES_DESCRIPTION,
-  OVERVIEW as TEXT_OVERVIEW,
+  OVERVIEW_DIFFERENT_ELEMENTS as TEXT_OVERVIEW_DIFFERENT_ELEMENTS,
   RECIPES as TEXT_RECIPES,
   EVENTS as TEXT_EVENTS,
+  ACTIVATE_SUPPORT_USER as TEXT_ACTIVATE_SUPPORT_USER,
+  ACTIVATE_SUPPORT_USER_DESCRIPTION as TEXT_ACTIVATE_SUPPORT_USER_DESCRIPTION,
+  MAIL_CONSOLE as TEXT_MAIL_CONSOLE,
+  MAIL_CONSOLE_DESCRIPTION as TEXT_MAIL_CONSOLE_DESCRIPTION,
+  MAILBOX as TEXT_MAILBOX,
+  CLOUD_FX as TEXT_CLOUD_FX,
+  FEEDS as TEXT_FEEDS,
+  SYSTEM_MESSAGE as TEXT_SYSTEM_MESSAGE,
 } from "../../constants/text";
 import Role from "../../constants/roles";
 import {
   SYSTEM_GLOBAL_SETTINGS as ROUTE_SYSTEM_GLOBAL_SETTINGS,
-  SYSTEM_FEED_DELETE as ROUTE_SYSTEM_FEED_DELETE,
   SYSTEM_WHERE_USED as ROUTE_SYSTEM_WHERE_USED,
   TEMP as ROUTE_TEMP,
-  SYSTEM_MERGE_PRODUCT as ROUTE_SYSTEM_MERGE_PRODUCT,
-  SYSTEM_CONVERT_PRODUCT_TO_MATERIAL as ROUTE_SYSTEM_CONVERT_PRODUCT_TO_MATERIAL,
+  SYSTEM_MERGE_ITEM as ROUTE_SYSTEM_MERGE_PRODUCT,
+  SYSTEM_CONVERT_ITEM as ROUTE_SYSTEM_CONVERT_ITEM,
   SYSTEM_JOBS as ROUTES_SYSTEM_JOBS,
   SYSTEM_DB_INDICES as ROUTE_SYSTEM_DB_INDICES,
   SYSTEM_OVERVIEW_RECIPES as ROUTE_SYSTEM_OVERVIEW_RECIPES,
   SYSTEM_OVERVIEW_EVENTS as ROUTE_SYSTEM_OVERVIEW_EVENTS,
+  SYSTEM_ACTIVATE_SUPPORT_USER as ROUTE_SYSTEM_ACTIVATE_SUPPORT_USER,
+  SYSTEM_MAIL_CONSOLE as ROUTE_SYSTEM_MAIL_CONSOLE,
+  SYSTEM_OVERVIEW_MAILBOX as ROUTE_SYSTEM_OVERVIEW_MAILBOX,
+  SYSTEM_OVERVIEW_CLOUDFX as ROUTE_SYSTEM_OVERVIEW_CLOUDFX,
+  SYSTEM_OVERVIEW_FEEDS as ROUTE_OVERVIEW_FEEDS,
+  SYSTEM_SYSTEM_MESSAGE as ROUTE_SYSTEM_SYSTEM_MESSAGE,
 } from "../../constants/routes";
 
 import useStyles from "../../constants/styles";
@@ -103,76 +119,14 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
   }
 
   /* ------------------------------------------
-  // Globale Einstelllungen
+  // Ziel ansteuern
   // ------------------------------------------ */
-  const goToGlobalSettings = () => {
+  const goToDestination = (routeDestination: string) => {
     push({
-      pathname: ROUTE_SYSTEM_GLOBAL_SETTINGS,
+      pathname: routeDestination,
     });
   };
 
-  /* ------------------------------------------
-  // Feed löschen
-  // ------------------------------------------ */
-  const goToDeleteFeed = () => {
-    push({
-      pathname: ROUTE_SYSTEM_FEED_DELETE,
-    });
-  };
-  // /* ------------------------------------------
-  // Verfolgungsnachweis
-  // ------------------------------------------ */
-  const goToWhereUsed = () => {
-    push({
-      pathname: ROUTE_SYSTEM_WHERE_USED,
-    });
-  };
-  /* ------------------------------------------
-  // Produkte mergen
-  // ------------------------------------------ */
-  const goToMergeProducts = () => {
-    push({
-      pathname: ROUTE_SYSTEM_MERGE_PRODUCT,
-    });
-  };
-  /* ------------------------------------------
-  // Produkte umwandeln
-  // ------------------------------------------ */
-  const goToConvertProductToMaterial = () => {
-    push({
-      pathname: ROUTE_SYSTEM_CONVERT_PRODUCT_TO_MATERIAL,
-    });
-  };
-
-  const goToTemp = () => {
-    push({
-      pathname: ROUTE_TEMP,
-    });
-  };
-  /* ------------------------------------------
-  // Job ausführen 
-  // ------------------------------------------ */
-  const goToJobs = () => {
-    push({
-      pathname: ROUTES_SYSTEM_JOBS,
-    });
-  };
-  const goToDbIndices = () => {
-    push({
-      pathname: ROUTE_SYSTEM_DB_INDICES,
-    });
-  };
-
-  const onShowRecipes = () => {
-    push({
-      pathname: ROUTE_SYSTEM_OVERVIEW_RECIPES,
-    });
-  };
-  const onShowEvents = () => {
-    push({
-      pathname: ROUTE_SYSTEM_OVERVIEW_EVENTS,
-    });
-  };
   return (
     <>
       {/*===== HEADER ===== */}
@@ -185,95 +139,106 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
         <Grid container spacing={2}>
           {authUser.roles.includes(Role.admin) && (
             <Grid item xs={12} md={6}>
-              <AdminTile
-                id={"globalSettings"}
-                text={TEXT_GLOBAL_SETTINGS}
-                description={TEXT_SYSTEM_GLOBAL_DESCRIPTION}
-                icon={<TuneIcon />}
-                action={goToGlobalSettings}
-              />
+              <SettingsTile goToDestination={goToDestination} />
             </Grid>
           )}
-
           <Grid item xs={12} md={6}>
             <OverviewTile
               id={"overview"}
-              onShowRecipes={onShowRecipes}
-              onShowEvents={onShowEvents}
+              onShowRecipes={goToDestination}
+              onShowEvents={goToDestination}
+              onShowMailbox={goToDestination}
+              onShowCloudFx={goToDestination}
+              onShowFeeds={goToDestination}
               icon={<ViewListIcon />}
+              authUser={authUser}
             />
           </Grid>
-          {authUser.roles.includes(Role.admin) && (
-            <Grid item xs={12} md={6}>
-              <AdminTile
-                id={"deleteFeeds"}
-                text={TEXT_DELETE_FEED}
-                description={TEXT_DELETE_FEED_DESCRIPTION}
-                icon={<DeleteIcon />}
-                action={goToDeleteFeed}
-              />
-            </Grid>
-          )}
+          <Grid item xs={12} md={6}>
+            <AdminTile
+              id={"support"}
+              text={TEXT_ACTIVATE_SUPPORT_USER}
+              description={TEXT_ACTIVATE_SUPPORT_USER_DESCRIPTION}
+              icon={<HeadsetMicIcon />}
+              action={goToDestination}
+              routeDestination={ROUTE_SYSTEM_ACTIVATE_SUPPORT_USER}
+            />
+          </Grid>
           <Grid item xs={12} md={6}>
             <AdminTile
               id={"whereUsed"}
               text={TEXT_WHERE_USED}
               description={TEXT_WHERE_USED_DESCRIPTION}
               icon={<ZoomOutMapIcon />}
-              action={goToWhereUsed}
+              action={goToDestination}
+              routeDestination={ROUTE_SYSTEM_WHERE_USED}
             />
           </Grid>
           <Grid item xs={12} md={6} lg={4}>
             <AdminTile
               id={"merge"}
-              text={TEXT_MERGE_PRODUCTS}
-              description={TEXT_MERGE_PRODUCT_DESCRIPTION}
+              text={TEXT_MERGE_ITEMS}
+              description={TEXT_MERGE_ITEMS_DESCRIPTION}
               icon={<CallMergeIcon />}
-              action={goToMergeProducts}
+              action={goToDestination}
+              routeDestination={ROUTE_SYSTEM_MERGE_PRODUCT}
             />
           </Grid>
           <Grid item xs={12} md={6} lg={4}>
             <AdminTile
               id={"convert"}
-              text={TEXT_CONVERT_PRODUCT_TO_MATERIAL}
-              description={TEXT_CONVERT_PRODUCT_TO_MATERIAL_DESCRIPTION}
+              text={TEXT_CONVERT_ITEM}
+              description={TEXT_CONVERT_PRODUCT_ITEM_DESCRIPTION}
               icon={<CachedIcon />}
-              action={goToConvertProductToMaterial}
+              action={goToDestination}
+              routeDestination={ROUTE_SYSTEM_CONVERT_ITEM}
             />
           </Grid>
           {authUser.roles.includes(Role.admin) && (
-            <Grid item xs={12} md={6} lg={4}>
-              <AdminTile
-                id={"jobs"}
-                text={TEXT_JOBS}
-                description={TEXT_JOBS_DESCRIPTION}
-                icon={<TimelapseIcon />}
-                action={goToJobs}
-              />
-            </Grid>
-          )}
-          {authUser.roles.includes(Role.admin) && (
-            <Grid item xs={12} md={6} lg={4}>
-              <AdminTile
-                id={"dbIndices"}
-                text={TEXT_DB_INDICES}
-                description={TEXT_DB_INDICES_DESCRIPTION}
-                icon={<FindInPageIcon />}
-                action={goToDbIndices}
-              />
-            </Grid>
-          )}
-          {authUser.roles.includes(Role.admin) && (
-            <Grid item xs={12} md={6} lg={4}>
-              <AdminTile
-                id={"temp"}
-                text={"Temp"}
-                description={""}
-                icon={<CallMergeIcon />}
-                action={goToTemp}
-              />
-            </Grid>
-          )}
+            <React.Fragment>
+              <Grid item xs={12} md={6} lg={4}>
+                <AdminTile
+                  id={"jobs"}
+                  text={TEXT_JOBS}
+                  description={TEXT_JOBS_DESCRIPTION}
+                  icon={<TimelapseIcon />}
+                  action={goToDestination}
+                  routeDestination={ROUTES_SYSTEM_JOBS}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6} lg={4}>
+                <AdminTile
+                  id={"dbIndices"}
+                  text={TEXT_DB_INDICES}
+                  description={TEXT_DB_INDICES_DESCRIPTION}
+                  icon={<FindInPageIcon />}
+                  action={goToDestination}
+                  routeDestination={ROUTE_SYSTEM_DB_INDICES}
+                />
+              </Grid>
+              <Grid item xs={12} md={6} lg={4}>
+                <AdminTile
+                  id={"mailConsole"}
+                  text={TEXT_MAIL_CONSOLE}
+                  description={TEXT_MAIL_CONSOLE_DESCRIPTION}
+                  icon={<MailIcon />}
+                  action={goToDestination}
+                  routeDestination={ROUTE_SYSTEM_MAIL_CONSOLE}
+                />
+              </Grid>
+              <Grid item xs={12} md={6} lg={4}>
+                <AdminTile
+                  id={"temp"}
+                  text={"Temp"}
+                  description={""}
+                  icon={<CallMergeIcon />}
+                  action={goToDestination}
+                  routeDestination={ROUTE_TEMP}
+                />
+              </Grid>
+            </React.Fragment>
+          )}{" "}
         </Grid>
       </Container>
     </>
@@ -287,14 +252,22 @@ interface AdminTileProps {
   text: string;
   description: string;
   icon: JSX.Element;
-  action: () => void;
+  action: (routeDestination: string) => void;
+  routeDestination: string;
 }
-const AdminTile = ({id, text, description, icon, action}: AdminTileProps) => {
+const AdminTile = ({
+  id,
+  text,
+  description,
+  icon,
+  action,
+  routeDestination,
+}: AdminTileProps) => {
   const classes = useStyles();
 
   return (
     <Card className={classes.card} key={"card_" + id}>
-      <CardActionArea onClick={action}>
+      <CardActionArea onClick={() => action(routeDestination)}>
         <CardHeader
           title={text}
           action={
@@ -310,28 +283,79 @@ const AdminTile = ({id, text, description, icon, action}: AdminTileProps) => {
     </Card>
   );
 };
+/* ===================================================================
+// ======================= Einstellungen Kachel ======================
+// =================================================================== */
+interface SettingsTileProps {
+  goToDestination: (route: string) => void;
+}
+const SettingsTile = ({goToDestination}: SettingsTileProps) => {
+  const classes = useStyles();
 
+  return (
+    <Card className={classes.card} key={"card_settings"}>
+      <CardHeader
+        title={TEXT_GLOBAL_SETTINGS}
+        action={
+          <IconButton aria-label={"settings Card "}>
+            <BuildIcon />
+          </IconButton>
+        }
+      />
+      <CardContent>
+        <List component="nav" aria-label="Mögliche Einstullen">
+          <ListItem button>
+            <ListItemIcon>
+              <TuneIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary={TEXT_GLOBAL_SETTINGS}
+              onClick={() => goToDestination(ROUTE_SYSTEM_GLOBAL_SETTINGS)}
+            />
+          </ListItem>
+          <ListItem button>
+            <ListItemIcon>
+              <FeedbackIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary={TEXT_SYSTEM_MESSAGE}
+              onClick={() => goToDestination(ROUTE_SYSTEM_SYSTEM_MESSAGE)}
+            />
+          </ListItem>
+        </List>
+      </CardContent>
+    </Card>
+  );
+};
 /* ===================================================================
 // ====================== Überblick Kachel Tile  =====================
 // =================================================================== */
 interface OverviewTileProps {
   id: string;
-  onShowRecipes: () => void;
-  onShowEvents: () => void;
+  onShowRecipes: (routeDestination: string) => void;
+  onShowEvents: (routeDestination: string) => void;
+  onShowMailbox: (routeDestination: string) => void;
+  onShowCloudFx: (routeDestination: string) => void;
+  onShowFeeds: (routeDestination: string) => void;
   icon: JSX.Element;
+  authUser: AuthUser;
 }
 const OverviewTile = ({
   id,
   onShowRecipes,
   onShowEvents,
+  onShowMailbox,
+  onShowCloudFx,
+  onShowFeeds,
   icon,
+  authUser,
 }: OverviewTileProps) => {
   const classes = useStyles();
 
   return (
     <Card className={classes.card} key={"card_" + id}>
       <CardHeader
-        title={TEXT_OVERVIEW}
+        title={TEXT_OVERVIEW_DIFFERENT_ELEMENTS}
         action={
           <IconButton aria-label={"admin Card "}>
             {icon ? icon : <ForwardIcon />}
@@ -344,14 +368,51 @@ const OverviewTile = ({
             <ListItemIcon>
               <FastfoodIcon />
             </ListItemIcon>
-            <ListItemText primary={TEXT_RECIPES} onClick={onShowRecipes} />
+            <ListItemText
+              primary={TEXT_RECIPES}
+              onClick={() => onShowRecipes(ROUTE_SYSTEM_OVERVIEW_RECIPES)}
+            />
           </ListItem>
           <ListItem button>
             <ListItemIcon>
               <EventIcon />
             </ListItemIcon>
-            <ListItemText primary={TEXT_EVENTS} onClick={onShowEvents} />
+            <ListItemText
+              primary={TEXT_EVENTS}
+              onClick={() => onShowEvents(ROUTE_SYSTEM_OVERVIEW_EVENTS)}
+            />
           </ListItem>
+          <ListItem button>
+            <ListItemIcon>
+              <RssFeedIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary={TEXT_FEEDS}
+              onClick={() => onShowFeeds(ROUTE_OVERVIEW_FEEDS)}
+            />
+          </ListItem>
+          {authUser.roles.includes(Role.admin) && (
+            <React.Fragment>
+              <ListItem button>
+                <ListItemIcon>
+                  <SendIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary={TEXT_MAILBOX}
+                  onClick={() => onShowMailbox(ROUTE_SYSTEM_OVERVIEW_MAILBOX)}
+                />
+              </ListItem>
+              <ListItem button>
+                <ListItemIcon>
+                  <CloudIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary={TEXT_CLOUD_FX}
+                  onClick={() => onShowCloudFx(ROUTE_SYSTEM_OVERVIEW_CLOUDFX)}
+                />
+              </ListItem>
+            </React.Fragment>
+          )}
         </List>
       </CardContent>
     </Card>

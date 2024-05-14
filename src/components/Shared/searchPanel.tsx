@@ -52,7 +52,7 @@ const SearchPanel = ({
                 aria-label="clear Search Term"
                 onClick={() => {
                   if (searchString) {
-                    onClearSearchString;
+                    onClearSearchString();
                   }
                 }}
                 edge="end"

@@ -40,5 +40,7 @@ yarn-error.log*
 imageRepository.js
 .firebaserc
 
-
+# Testing
+jest_html_reporters.html
+/html-report
 mailTemplates/

@@ -10,15 +10,18 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import FirebaseDbFeedLog from "./firebase.db.feed.log.class";
 
 export class FirebaseDbFeed extends FirebaseDbSuper {
   firebase: Firebase;
+  log: FirebaseDbFeedLog;
   /* =====================================================================
   // Constructor
   // ===================================================================== */
   constructor(firebase: Firebase) {
     super();
     this.firebase = firebase;
+    this.log = new FirebaseDbFeedLog(firebase);
   }
   /* =====================================================================
   // Collection holen

@@ -18,20 +18,26 @@ export const EVENT = "/event";
 export const EVENT_UID = "/event/:id";
 export const CREATE_NEW_EVENT = "/event/new";
 export const EVENTS = "/events";
+export const DONATE = "/donate";
 
-export const USERS = "/users";
 export const SYSTEM = "/system";
 export const SYSTEM_JOBS = "/system/jobs";
-export const SYSTEM_FEED_DELETE = "/system/feeddelete";
 export const SYSTEM_WHERE_USED = "/system/whereused";
-export const SYSTEM_MERGE_PRODUCT = "/system/mergeproducts";
-export const SYSTEM_CONVERT_PRODUCT_TO_MATERIAL =
-  "/system/convertproducttomaterial";
+export const SYSTEM_MERGE_ITEM = "/system/mergeitem";
+export const SYSTEM_CONVERT_ITEM = "/system/convertitem";
 export const SYSTEM_GLOBAL_SETTINGS = "/system/globalsettings";
+export const SYSTEM_SYSTEM_MESSAGE = "/system/systemmessage";
 export const SYSTEM_DB_INDICES = "/system/dbIndices";
+export const SYSTEM_ACTIVATE_SUPPORT_USER = "/system/activatesupportuser";
 
 export const SYSTEM_OVERVIEW_RECIPES = "/system/overview/recipes";
 export const SYSTEM_OVERVIEW_EVENTS = "/system/overview/events";
+export const SYSTEM_OVERVIEW_USERS = "/system/overview/users";
+export const SYSTEM_OVERVIEW_MAILBOX = "/system/overview/mailbox";
+export const SYSTEM_OVERVIEW_CLOUDFX = "/system/overview/cloudfx";
+export const SYSTEM_OVERVIEW_FEEDS = "/system/overview/feeds";
+
+export const SYSTEM_MAIL_CONSOLE = "/system/mailconsole";
 
 export const USER_PUBLIC_PROFILE = "/publicprofile";
 export const USER_PUBLIC_PROFILE_UID = "/publicprofile/:id";

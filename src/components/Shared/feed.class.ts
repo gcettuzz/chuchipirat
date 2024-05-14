@@ -49,6 +49,7 @@ interface GetNewestFeeds {
   limitTo: number;
   visibility: Role | "*";
   feedType?: FeedType;
+  daysOffset?: number;
 }
 interface DeleteFeedsDaysOffset {
   firebase: Firebase;
@@ -59,6 +60,22 @@ interface DeleteFeedsDaysOffset {
 interface DeleteFeed {
   feedUid: Feed["uid"];
   firebase: Firebase;
+}
+interface GetFeedsLog {
+  firebase: Firebase;
+}
+interface GetFeed {
+  firebase: Firebase;
+  feedUid: Feed["uid"];
+}
+
+export interface FeedLogEntry {
+  uid: string;
+  created: ChangeRecord;
+  text: Feed["text"];
+  title: Feed["text"];
+  type: Feed["type"];
+  visibility: Feed["visibility"];
 }
 // ==================================================================== */
 /**
@@ -117,7 +134,7 @@ export default class Feed {
    * @param objectUserDisplayName optional Anzeigename der Person, die im Feed erwähnt wird
    * @param objectUserPictureSrc optional Bildquelle, der Person, die im Feed erwähnt wird.
    */
-  static createFeedEntry({
+  static async createFeedEntry({
     firebase,
     authUser,
     feedType,
@@ -152,7 +169,7 @@ export default class Feed {
         : {
             uid: authUser.uid,
             displayName: authUser.publicProfile.displayName,
-            pictureSrc: authUser.publicProfile.pictureSrc.normalSize,
+            pictureSrc: authUser.publicProfile.pictureSrc.smallSize,
           },
       created: {
         date: new Date(),
@@ -160,7 +177,24 @@ export default class Feed {
         fromDisplayName: authUser.publicProfile.displayName,
       },
     };
-    firebase.feed.create<Feed>({value: feed, authUser: authUser});
+    await firebase.feed
+      .create<Feed>({value: feed, authUser: authUser})
+      .then((result) => {
+        // Log nachführen, dass ein Feed erstellt wurde
+        firebase.feed.log.update({
+          uids: [],
+          value: {
+            [result.documentUid]: {
+              created: feed.created,
+              type: feed.type,
+              visibility: feed.visibility,
+              title: feed.title,
+              text: feed.text,
+            },
+          },
+          authUser: authUser,
+        });
+      });
   }
   /* =====================================================================
   // Neuste X Feed holen
@@ -172,6 +206,7 @@ export default class Feed {
     limitTo = DEFAULT_VALUES.FEEDS_DISPLAY,
     visibility = Role.basic,
     feedType,
+    daysOffset,
   }: GetNewestFeeds) => {
     let feeds: Feed[] = [];
     let whereClause: Where[] = [];
@@ -192,6 +227,16 @@ export default class Feed {
         operator: Operator.EQ,
         value: feedType,
       });
+
+    if (daysOffset) {
+      const offsetDate = new Date();
+      offsetDate.setDate(offsetDate.getDate() - daysOffset);
+      whereClause.push({
+        field: "created.date",
+        operator: Operator.GE,
+        value: offsetDate,
+      });
+    }
 
     await firebase.feed
       .readCollection<Feed>({
@@ -236,6 +281,9 @@ export default class Feed {
         return TEXT_FEED_TITLE.SHOPPINGLIST_CREATED;
       case FeedType.menuplanCreated:
         return TEXT_FEED_TITLE.MENUPLAN_CREATED;
+      case FeedType.productCreated:
+      case FeedType.materialCreated:
+        return textElement[0];
       default:
         return "?";
     }
@@ -295,7 +343,7 @@ export default class Feed {
     let unsubscribe: () => void;
     let documentId = "";
 
-    await firebase.cloudFunction.feedsDelete
+    await firebase.cloudFunction.deleteFeeds
       .triggerCloudFunction({
         values: {daysOffset: daysOffset},
         authUser: authUser,
@@ -311,11 +359,15 @@ export default class Feed {
             unsubscribe();
           }
         };
+        const errorCallback = (error: Error) => {
+          throw error;
+        };
 
-        firebase.cloudFunction.feedsDelete
+        firebase.cloudFunction.deleteFeeds
           .listen({
             uids: [documentId],
             callback: callback,
+            errorCallback: errorCallback,
           })
           .then((result) => {
             unsubscribe = result;
@@ -336,9 +388,66 @@ export default class Feed {
       throw new Error(TEXT_ERROR_PARAMETER_NOT_PASSED);
     }
 
-    await firebase.feed.delete({uids: [feedUid]}).catch((error) => {
-      console.error(error);
-      throw error;
-    });
+    await firebase.feed
+      .delete({uids: [feedUid]})
+      .then(() => {
+        // Log-Eintrag auch löschen!
+        firebase.feed.log
+          .deleteField({fieldName: feedUid, uids: []})
+          .catch((error) => {
+            console.error(error);
+            throw error;
+          });
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  };
+  // ===================================================================== */
+  /**
+   * Log aller Feeds holen
+   * @param Object - Firebase
+   */
+  static getFeedsLog = async ({firebase}: GetFeedsLog) => {
+    const feedLog: FeedLogEntry[] = [];
+
+    if (!firebase) {
+      throw new Error(TEXT_ERROR_PARAMETER_NOT_PASSED);
+    }
+
+    await firebase.feed.log
+      .read({uids: []})
+      .then((result) => {
+        Object.entries(result).forEach(([key, value]) => {
+          feedLog.push({uid: key, ...value});
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+
+    return feedLog;
+  };
+  // ===================================================================== */
+  /**
+   * Einzelner Feed holen
+   * @param Object - Firebase und Feed-UID
+   */
+  static getFeed = async ({firebase, feedUid}: GetFeed) => {
+    if (!firebase) {
+      throw new Error(TEXT_ERROR_PARAMETER_NOT_PASSED);
+    }
+
+    return firebase.feed
+      .read<Feed>({uids: [feedUid]})
+      .then((result) => {
+        return result;
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
   };
 }

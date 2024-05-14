@@ -14,6 +14,7 @@ import EventGroupConfiguration, {
 import RecipeShort from "../../Recipe/recipeShort.class";
 import Unit from "../../Unit/unit.class";
 import _ from "lodash";
+import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
 interface MenuplanObjectStructure<T> {
   entries: {[key: string]: T};
   order: string[];
@@ -157,6 +158,15 @@ interface GetMenuplan {
   firebase: Firebase;
   uid: string;
   callback: (menuplan: Menuplan) => void;
+  errorCallback: (error: Error) => void;
+}
+interface GetMealsOfMenues {
+  menuplan: Menuplan;
+  menues: Menue["uid"][];
+}
+interface GetMenuesOfMeals {
+  menuplan: Menuplan;
+  meals: Meal["uid"][];
 }
 
 interface Save {
@@ -210,6 +220,7 @@ interface AddPlanToGood<T> {
 }
 
 interface RecalculatePortions {
+  firebase: Firebase;
   menuplan: Menuplan;
   groupConfig: EventGroupConfiguration;
 }
@@ -255,6 +266,7 @@ export default class Menuplan {
   products: Products;
   usedRecipes?: Recipe["uid"][];
   usedProducts?: Product["uid"][];
+  usedMaterials?: Material["uid"][];
 
   /* =====================================================================
    // Konstruktor
@@ -274,6 +286,9 @@ export default class Menuplan {
     this.products = {} as Products;
     this.created = {date: new Date(0), fromUid: "", fromDisplayName: ""};
     this.lastChange = {date: new Date(0), fromUid: "", fromDisplayName: ""};
+    this.usedRecipes = [];
+    this.usedProducts = [];
+    this.usedMaterials = [];
   }
 
   // ===================================================================== */
@@ -327,15 +342,12 @@ export default class Menuplan {
     firebase,
     uid,
     callback,
+    errorCallback,
   }: GetMenuplan) => {
     const menuplanCallback = (menuplan: Menuplan) => {
       // Menüplan mit UID anreichern
       menuplan.uid = uid;
       callback(menuplan);
-    };
-    const errorCallback = (error: Error) => {
-      console.error(error);
-      throw error;
     };
 
     return await firebase.event.menuplan
@@ -625,6 +637,45 @@ export default class Menuplan {
   };
   // ===================================================================== */
   /**
+   * Die Menüs bestimmen, die Mahlzeiten bestimmen, in denen die
+   * übergebenen Menüs sind.
+   * @param Objekt - Menüplan und Menues (als Array)
+   * @returns Array mit Meal-UID
+   */
+  static getMealsOfMenues = ({menuplan, menues}: GetMealsOfMenues) => {
+    const mealsOfMenues: Meal["uid"][] = [];
+
+    menues.forEach((menueUid) => {
+      const meal = Object.values(menuplan.meals).find((meal) =>
+        meal.menuOrder.includes(menueUid)
+      );
+
+      if (meal && !mealsOfMenues.includes(meal.uid)) {
+        mealsOfMenues.push(meal.uid);
+      }
+    });
+
+    return mealsOfMenues;
+  };
+  // ===================================================================== */
+  /**
+   * Die Menüs bestimmen, die in den Übergebenen Mahlzeiten sind.
+   * @param Objekt - Menüplan und Mahlzeiten (als Array)
+   * @returns Array mit Menue-UID
+   */
+  static getMenuesOfMeals = ({menuplan, meals}: GetMenuesOfMeals) => {
+    const menuesOfMeals: Menue["uid"][] = [];
+
+    meals.forEach((mealUid) => {
+      menuplan.meals[mealUid].menuOrder.forEach((menueUid) =>
+        menuesOfMeals.push(menueUid)
+      );
+    });
+
+    return menuesOfMeals;
+  };
+  // ===================================================================== */
+  /**
    * Ein neues Rezept, welches im Menüplan eingeplant wird erzeugen
    * @returns
    */
@@ -728,6 +779,7 @@ export default class Menuplan {
    * @returns Menuüplan
    */
   static recalculatePortions = ({
+    firebase,
     menuplan,
     groupConfig,
   }: RecalculatePortions) => {
@@ -807,6 +859,11 @@ export default class Menuplan {
         (plan) => plan.diet != "" && plan.intolerance != ""
       );
     });
+
+    // Analytics mitführen
+    firebase.analytics.logEvent(
+      FirebaseAnalyticEvent.eventGroupConifgRecalculated
+    );
 
     return menuplan;
   };

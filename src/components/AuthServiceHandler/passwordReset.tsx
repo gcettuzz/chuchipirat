@@ -26,6 +26,7 @@ import {
   RESET as TEXT_RESET,
   ALERT_TATSCH_BANG_DONE as TEXT_ALERT_TATSCH_BANG_DONE,
   PASSWORD_LINK_SENT as TEXT_PASSWORD_LINK_SENT,
+  HAVE_YOU_FORGOTEN_YOUR_PASSWORD as TEXT_HAVE_YOU_FORGOTEN_YOUR_PASSWORD,
 } from "../../constants/text";
 import {ImageRepository} from "../../constants/imageRepository";
 import {useHistory} from "react-router";
@@ -223,6 +224,7 @@ export const ForgotPasswordLink = () => {
 
   return (
     <Typography variant="body2">
+      {TEXT_HAVE_YOU_FORGOTEN_YOUR_PASSWORD}
       <Link onClick={goToPasswordReset}>{TEXT_PASSWORD_RESET}</Link>
     </Typography>
   );

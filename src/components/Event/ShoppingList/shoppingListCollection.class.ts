@@ -4,9 +4,9 @@ import Event from "../Event/event.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import Firebase from "../../Firebase/firebase.class";
 import Product from "../../Product/product.class";
-import Menuplan, {Menue} from "../Menuplan/menuplan.class";
+import Menuplan, {Meal, Menue} from "../Menuplan/menuplan.class";
 import Recipe from "../../Recipe/recipe.class";
-import ShoppingList, {ShoppingListItem} from "./shoppingList.class";
+import ShoppingList, {ItemType, ShoppingListItem} from "./shoppingList.class";
 import {
   UnitConversionBasic,
   UnitConversionProducts,
@@ -39,20 +39,22 @@ interface GetShoppingListCollectionListener {
 export interface ShoppingListProperties {
   uid: string;
   name: string;
-  selectedMenues: string[];
+  selectedMeals: Meal["uid"][];
+  selectedMenues: Menue["uid"][];
   generated: ChangeRecord;
   hasManuallyAddedItems: boolean;
 }
 
 interface CreateNewList {
   name: string;
-  selectedMenues: string[];
+  selectedMenues: Menue["uid"][];
   shoppingListCollection: ShoppingListCollection;
   menueplan: Menuplan;
   eventUid: Event["uid"];
   products: Product[];
   materials: Material[];
   departments: Department[];
+  units: Unit[];
   unitConversionBasic: UnitConversionBasic;
   unitConversionProducts: UnitConversionProducts;
   firebase: Firebase;
@@ -68,6 +70,7 @@ interface RefreshLists {
   products: Product[];
   materials: Material[];
   departments: Department[];
+  units: Unit[];
   unitConversionBasic: UnitConversionBasic;
   unitConversionProducts: UnitConversionProducts;
   firebase: Firebase;
@@ -81,6 +84,7 @@ export interface ProductTrace {
   quantity: number;
   unit: Unit["key"];
   manualAdd?: boolean;
+  itemType: ItemType;
 }
 
 interface DeleteList {
@@ -127,6 +131,7 @@ interface AddTraceEntry {
   quantity: number;
   unit: Unit["key"];
   addedManually?: boolean;
+  itemType: ItemType;
 }
 
 interface DeleteTraceEntry {
@@ -141,6 +146,8 @@ export default class ShoppingListCollection {
   lastChange: ChangeRecord;
   eventUid: Event["uid"];
   usedProducts?: Product["uid"][];
+  usedMaterials?: Material["uid"][];
+
   /* =====================================================================
   // Konstruktor
   // ===================================================================== */
@@ -260,6 +267,7 @@ export default class ShoppingListCollection {
     products,
     materials,
     departments,
+    units,
     unitConversionBasic,
     unitConversionProducts,
     firebase,
@@ -274,6 +282,7 @@ export default class ShoppingListCollection {
       products: products,
       materials: materials,
       departments: departments,
+      units: units,
       unitConversionBasic: unitConversionBasic,
       unitConversionProducts: unitConversionProducts,
       firebase: firebase,
@@ -296,6 +305,10 @@ export default class ShoppingListCollection {
             uid: shoppingList.uid,
             name: name,
             selectedMenues: selectedMenues,
+            selectedMeals: Menuplan.getMealsOfMenues({
+              menuplan: menueplan,
+              menues: selectedMenues,
+            }),
             generated: Utils.createChangeRecord(authUser),
             hasManuallyAddedItems: false,
           },
@@ -325,6 +338,7 @@ export default class ShoppingListCollection {
     quantity,
     unit,
     addedManually: addedManualy = false,
+    itemType,
   }: AddTraceEntry) => {
     if (!Object.prototype.hasOwnProperty.call(trace, item.uid)) {
       trace[item.uid] = [];
@@ -335,6 +349,7 @@ export default class ShoppingListCollection {
       recipe: recipe,
       quantity: quantity,
       unit: unit,
+      itemType: itemType,
     };
     if (planedPortions) {
       shoppingListItem.planedPortions = planedPortions;
@@ -378,6 +393,7 @@ export default class ShoppingListCollection {
     menueplan,
     products,
     materials,
+    units,
     unitConversionBasic,
     unitConversionProducts,
     departments,
@@ -393,6 +409,8 @@ export default class ShoppingListCollection {
     let updatedTrace = {} as ShoppingListTrace;
     let updatedShoppingList = {} as ShoppingList;
     let itemToInsert: ShoppingListItem | undefined = undefined;
+    const listToUpdate = updatedShoppingListCollection.lists[shoppingList.uid];
+
     if (keepManuallyAddedItems) {
       // die manuell hinzugefügten Elemente behalten
       manuallyAddedItems = _.cloneDeep(shoppingList.list);
@@ -425,15 +443,41 @@ export default class ShoppingListCollection {
       });
     }
 
+    // überprüfen ob die gewählten Menüs auch in den Mahlzeiten sind.
+    // Wenn die Menüs im Menüplan verschoben werden, müssen die Menüs neu definiert werden
+    // Anhand der Mahlzeiten (die mitgespeichert werden)
+    if (
+      !Utils.areStringArraysEqual(
+        listToUpdate.properties.selectedMeals,
+        Menuplan.getMealsOfMenues({
+          menuplan: menueplan,
+          menues: listToUpdate.properties.selectedMenues,
+        })
+      ) ||
+      // Sind neue Menü dazugekommen/ oder wurden Menüs aus der
+      // Auswahl entfernt
+      listToUpdate.properties.selectedMenues.length !==
+        Menuplan.getMenuesOfMeals({
+          menuplan: menueplan,
+          meals: listToUpdate.properties.selectedMeals,
+        }).length
+    ) {
+      // Die Menüs wurden geändert. Daher müssen wir jetzt
+      // die Menüs neu bestimmen anhand der Mahlzeiten
+      listToUpdate.properties.selectedMenues = Menuplan.getMenuesOfMeals({
+        menuplan: menueplan,
+        meals: listToUpdate.properties.selectedMeals,
+      });
+    }
+
     // Shopping Liste neu generieren
     await ShoppingList.createNewList({
-      selectedMenues:
-        shoppingListCollection.lists[shoppingList.uid].properties
-          .selectedMenues,
+      selectedMenues: listToUpdate.properties.selectedMenues,
       menueplan: menueplan,
       products: products,
       materials: materials,
       departments: departments,
+      units: units,
       unitConversionBasic: unitConversionBasic,
       unitConversionProducts: unitConversionProducts,
       firebase: firebase,

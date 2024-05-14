@@ -50,33 +50,13 @@ export class FirebaseDbStatsCounter extends FirebaseDbSuper {
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
-    return {
-      noEvents: value.noEvents,
-      noIngredients: value.noIngredients,
-      noMaterials: value.noMaterials,
-      noParticipants: value.noParticipants,
-      noRecipesPublic: value.noRecipesPublic,
-      noRecipesPrivate: value.noRecipesPrivate,
-      noRecipesVariants: value.noRecipesVariants,
-      noShoppingLists: value.noShoppingLists,
-      noUsers: value.noUsers,
-    };
+    return value as T;
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
-  prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
-    return {
-      noEvents: value.noEvents,
-      noIngredients: value.noIngredients,
-      noMaterials: value.noMaterials,
-      noParticipants: value.noParticipants,
-      noRecipesPublic: value.noRecipesPublic,
-      noRecipesPrivate: value.noRecipesPrivate,
-      noRecipesVariants: value.noRecipesVariants,
-      noShoppingLists: value.noShoppingLists,
-      noUsers: value.noUsers,
-    } as unknown as T;
+  prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
+    return value as unknown as T;
   }
   /* =====================================================================
   // Einstellungen für den Session Storage zurückgeben

@@ -53,25 +53,19 @@ export class FirebaseDbConfigurationGlobalSettings extends FirebaseDbSuper {
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
-    return {
-      allowSignUp: value.allowSignUp,
-      allowUserCreatePassword: value.allowUserCreatePassword,
-    };
+    return value;
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
   prepareDataForApp<T extends ValueObject>({value}: PrepareDataForApp) {
-    return {
-      allowSignUp: value.allowSignUp,
-      allowUserCreatePassword: value.allowUserCreatePassword,
-    } as unknown as T;
+    return value as unknown as T;
   }
   /* =====================================================================
   // Einstellungen für den Session Storage zurückgeben
   //===================================================================== */
   getSessionHandlerProperty(): StorageObjectProperty {
-    return STORAGE_OBJECT_PROPERTY.RECIPE;
+    return STORAGE_OBJECT_PROPERTY.GLOBAL_SETTINGS;
   }
 }
 export default FirebaseDbConfigurationGlobalSettings;

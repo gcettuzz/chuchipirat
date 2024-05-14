@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Grid,
 } from "@material-ui/core";
 
 import {
@@ -68,6 +69,7 @@ import {
   SingleTextInputResult,
   useCustomDialog,
 } from "../Shared/customDialogContext";
+import {AlertMaintenanceMode} from "../SignIn/signIn";
 
 // ===================================================================
 // ======================== globale Funktionen =======================
@@ -91,6 +93,7 @@ type State = {
   error: FirebaseError | null;
   showPassword: boolean;
   signUpAllowed: boolean;
+  maintenanceMode: boolean;
   allowUserCreatePassword: string;
 };
 
@@ -98,7 +101,8 @@ const inititialState: State = {
   signUpData: {firstName: "", lastName: "", email: "", password: ""},
   error: null,
   showPassword: false,
-  signUpAllowed: false,
+  signUpAllowed: true,
+  maintenanceMode: false,
   allowUserCreatePassword: "",
 };
 type DispatchAction = {
@@ -120,6 +124,7 @@ const signUpReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         signUpAllowed: action.payload.allowSignUp,
+        maintenanceMode: action.payload.maintenanceMode,
         allowUserCreatePassword: action.payload.allowUserCreatePassword,
       };
     case ReducerActions.GENERIC_ERROR:
@@ -250,14 +255,24 @@ const SignUpBase: React.FC<CustomRouterProps> = (props) => {
       <PageTitle subTitle={TEXT_WE_NEED_SOME_DETAILS_ABOUT_YOU} />
 
       <Container className={classes.container} component="main" maxWidth="xs">
-        <SignUpForm
-          signUpData={state.signUpData}
-          signUpAllowed={state.signUpAllowed}
-          error={state.error}
-          onFieldChange={onFieldChange}
-          onSignUp={onSignUp}
-          openDialog={onSmallPrintDialogOpen}
-        />
+        <Grid container spacing={2}>
+          {state.maintenanceMode && (
+            <Grid item xs={12}>
+              <AlertMaintenanceMode />
+            </Grid>
+          )}
+          <Grid item xs={12}>
+            <SignUpForm
+              signUpData={state.signUpData}
+              signUpAllowed={state.signUpAllowed}
+              maintenanceMode={state.maintenanceMode}
+              error={state.error}
+              onFieldChange={onFieldChange}
+              onSignUp={onSignUp}
+              openDialog={onSmallPrintDialogOpen}
+            />
+          </Grid>
+        </Grid>
       </Container>
       <DialogTermOfUse
         open={smallPrintDialogs.termOfUse}
@@ -277,6 +292,7 @@ const SignUpBase: React.FC<CustomRouterProps> = (props) => {
 interface SignUpFormProps {
   signUpData: SignUpData;
   signUpAllowed: boolean;
+  maintenanceMode: boolean;
   onFieldChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onSignUp: () => void;
   openDialog: (event: React.MouseEvent<HTMLAnchorElement>) => void;
@@ -285,6 +301,7 @@ interface SignUpFormProps {
 const SignUpForm = ({
   signUpData,
   signUpAllowed,
+  maintenanceMode,
   onFieldChange,
   onSignUp,
   openDialog,
@@ -329,6 +346,7 @@ const SignUpForm = ({
               body={TEXT_SIGN_UP_NOT_ALLOWED_TEXT}
             />
           )}
+
           {/* Vorname */}
           <TextField
             type="text"
@@ -342,7 +360,7 @@ const SignUpForm = ({
             autoFocus
             value={signUpData.firstName}
             onChange={onFieldChange}
-            disabled={!signUpAllowed}
+            disabled={!signUpAllowed || maintenanceMode}
           />
           {/* Nachname */}
           <TextField
@@ -355,7 +373,7 @@ const SignUpForm = ({
             autoComplete="lastname"
             value={signUpData.lastName}
             onChange={onFieldChange}
-            disabled={!signUpAllowed}
+            disabled={!signUpAllowed || maintenanceMode}
           />
           {/* Mailadresse */}
           <TextField
@@ -369,7 +387,7 @@ const SignUpForm = ({
             autoComplete="email"
             value={signUpData.email}
             onChange={onFieldChange}
-            disabled={!signUpAllowed}
+            disabled={!signUpAllowed || maintenanceMode}
           />
           {/* Passwort */}
           <TextField
@@ -383,7 +401,7 @@ const SignUpForm = ({
             autoComplete="new-password"
             value={signUpData.password}
             onChange={onFieldChange}
-            disabled={!signUpAllowed}
+            disabled={!signUpAllowed || maintenanceMode}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -426,6 +444,7 @@ const SignUpForm = ({
           </ul>
           <Button
             disabled={
+              maintenanceMode ||
               !signUpAllowed ||
               signUpData.password === "" ||
               signUpData.email === "" ||

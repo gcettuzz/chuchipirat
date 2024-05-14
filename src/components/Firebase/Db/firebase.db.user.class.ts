@@ -55,14 +55,20 @@ export class FirebaseDbUser extends FirebaseDbSuper {
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
-    return {
-      email: value.email,
+    const dbUser = {
+      email: value.email.toLocaleLowerCase(),
       firstName: value.firstName,
       lastLogin: value.lastLogin,
       lastName: value.lastName,
       noLogins: value.noLogins,
       roles: value.roles,
     };
+
+    if (Object.prototype.hasOwnProperty.call(value, "disabled")) {
+      dbUser["disabled"] = value.disabled;
+    }
+
+    return dbUser;
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten

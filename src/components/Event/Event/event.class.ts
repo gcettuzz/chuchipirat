@@ -43,6 +43,8 @@ import Recipe from "../../Recipe/recipe.class";
 import UsedRecipes from "../UsedRecipes/usedRecipes.class";
 import MaterialList from "../MaterialList/materialList.class";
 import EventGroupConfiguration from "../GroupConfiguration/groupConfiguration.class";
+import {getSupportUserUid} from "../../../constants/defaultValues";
+import {CloudFunctionActivateSupportUserDocumentStructure} from "../../Firebase/Db/firebase.db.cloudfunction.activateSupportUser.class";
 
 export const EVENT_TYPES = {
   TYPE_ACTUAL: "actual",
@@ -59,6 +61,7 @@ export enum EventRefDocuments {
   shoppingList,
   materialList,
   recipeVariants,
+  receipt,
 }
 
 export interface Cook extends AuthUserPublicProfile {
@@ -119,17 +122,22 @@ interface GetEvent {
   firebase: Firebase;
   uid: string;
 }
+
+interface GetAllEvents {
+  firebase: Firebase;
+}
 interface GetEventListener {
   firebase: Firebase;
   uid: string;
   callback: (event: Event) => void;
+  errorCallback: (error: Error) => void;
 }
 interface GetEvents {
   firebase: Firebase;
   userUid: string;
   eventType: EventType;
 }
-interface GetAllEvents {
+interface GetAllEventsOfUser {
   firebase: Firebase;
   userUid: string;
 }
@@ -140,6 +148,20 @@ interface AddRefDocument {
 interface CheckIfDeletedDayArePlanned {
   event: Event;
   menuplan: Menuplan;
+}
+
+interface RegisterSupportUser {
+  firebase: Firebase;
+  eventUid: Event["uid"];
+  authUser: AuthUser;
+  callback: ({
+    done,
+    errorMessage,
+    eventUid,
+    supportUserUid,
+    date,
+  }: CloudFunctionActivateSupportUserDocumentStructure) => void;
+  errorCallback: (error: Error) => void;
 }
 export default class Event {
   uid: string;
@@ -324,24 +346,6 @@ export default class Event {
     }
   }
   /* =====================================================================
-  // Eintrag in Array löschen
-  // ===================================================================== */
-  // static deleteEntry({
-  //   array,
-  //   fieldValue,
-  //   fieldName,
-  //   emptyObject,
-  //   renumberByField,
-  // }: DeleteEntry) {
-  //   array = array.filter((entry) => entry[fieldName] !== fieldValue);
-
-  //   if (array.length === 0) {
-  //     array.push(emptyObject);
-  //   }
-  //   array = Utils.renumberArray({array: array, field: renumberByField});
-  //   return array;
-  // }
-  /* =====================================================================
   // Person/Koch hinzufügen
   // ===================================================================== */
   /* istanbul ignore next */
@@ -441,13 +445,13 @@ export default class Event {
     eventData.dates = Event.deleteEmptyDates(eventData.dates);
     eventData = Event.prepareSave(eventData);
     Event.checkEventData(eventData);
-    console.log(localPicture);
+
     if (!eventData.uid) {
       newEvent = true;
       await firebase.event
         .create<Event>({value: eventData, authUser: authUser})
         .then(async (result) => {
-          eventData = result;
+          eventData = result.value;
 
           // Bild hochladen, wenn vorhanden
           if (localPicture instanceof File) {
@@ -509,10 +513,12 @@ export default class Event {
       // Event auslösen
       firebase.analytics.logEvent(FirebaseAnalyticEvent.eventCreated);
       // Statistik
-      Stats.incrementStat({
+      Stats.incrementStats({
         firebase: firebase,
-        field: StatsField.noEvents,
-        value: 1,
+        values: [
+          {field: StatsField.noEvents, value: 1},
+          {field: StatsField.noPlanedDays, value: eventData.numberOfDays},
+        ],
       });
 
       // Allen Teammitgliedern Credits geben
@@ -552,6 +558,11 @@ export default class Event {
       return date.to > max ? date.to : max;
     }, new Date());
 
+    event.maxDate = event.dates.reduce((maxDate, currentDate) => {
+      // Vergleiche das "To Date" des aktuellen Elements mit dem bisher höchsten "To Date"
+      return currentDate.to > maxDate.to ? currentDate : maxDate;
+    }, event.dates[0]).to;
+
     event.maxDate = new Date(event.maxDate.setHours(0, 0, 0, 0));
 
     // Anzahl Tage Total berechnen
@@ -566,9 +577,7 @@ export default class Event {
       array: event.dates,
       field: "pos",
     });
-
     event.authUsers = this.getAuthUsersFromCooks(event.cooks);
-
     return event;
   }
   // ===================================================================== */
@@ -657,10 +666,12 @@ export default class Event {
       })
       .then(async () => {
         // Statistik anpassen
-        Stats.incrementStat({
+        Stats.incrementStats({
           firebase: firebase,
-          field: StatsField.noEvents,
-          value: -1,
+          values: [
+            {field: StatsField.noEvents, value: -1},
+            {field: StatsField.noPlanedDays, value: event.numberOfDays * -1},
+          ],
         });
       })
       .then(async () => {
@@ -744,12 +755,11 @@ export default class Event {
   static async uploadPicture({firebase, file, event, authUser}: UploadPicture) {
     let pictureSrc = "";
     // const eventDoc = firebase.eventDoc(event.uid);
-    console.log(file);
+
     await firebase.fileStore.events
       .uploadFile({file: file, filename: event.uid})
       .then(async (result) => {
         // Redimensionierte Varianten holen
-        console.log(result);
         await firebase.fileStore.events
           .getPictureVariants({
             uid: event.uid,
@@ -820,6 +830,27 @@ export default class Event {
       });
     return event;
   };
+  /* =====================================================================
+  // Alle Events holen
+  // ===================================================================== */
+  static getAllEvents = async ({firebase}: GetAllEvents) => {
+    let eventList: Event[] = [];
+    await firebase.event
+      .readCollection<Event>({
+        uids: [],
+        orderBy: {field: "name", sortOrder: SortOrder.desc},
+        ignoreCache: true,
+      })
+      .then((result) => {
+        eventList = result;
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+    return eventList;
+  };
+
   // ===================================================================== */
   /**
    * Listener holen
@@ -830,6 +861,7 @@ export default class Event {
     firebase,
     uid,
     callback,
+    errorCallback,
   }: GetEventListener) => {
     let eventListener: (() => void) | undefined;
 
@@ -837,11 +869,6 @@ export default class Event {
       // Menüplan mit UID anreichern
       event.uid = uid;
       callback(event);
-    };
-
-    const errorCallback = (error: Error) => {
-      console.error(error);
-      throw error;
     };
 
     await firebase.event
@@ -924,7 +951,7 @@ export default class Event {
    * @param eventType Type der Events, die gelesen werden sollen (siehe enum EventType )
    */
   // ===================================================================== */
-  static async getAllEventsOfUser({firebase, userUid}: GetAllEvents) {
+  static async getAllEventsOfUser({firebase, userUid}: GetAllEventsOfUser) {
     let events: Event[] = [];
 
     await firebase.event
@@ -1003,5 +1030,59 @@ export default class Event {
       0
     );
     return Boolean(planedObjects !== 0);
+  };
+  // ===================================================================== */
+  /**
+   * Für den angegebenen Anlass den Support-User aktivieren
+   * Der Support User wird in die Auth-User des Anlasses eingefügt. Dieser
+   * wird dann im Daily-Summary wieder abgebaut.
+   * @param Object - Objekt Firebase und Event-UID, authUser und Callback
+   */
+  static activateSupportUser = async ({
+    firebase,
+    eventUid,
+    authUser,
+    callback,
+    errorCallback,
+  }: RegisterSupportUser) => {
+    let unsubscribe: () => void;
+    let documentId = "";
+
+    await firebase.cloudFunction.activateSupportUser
+      .triggerCloudFunction({
+        values: {
+          date: new Date(),
+          eventUid: eventUid,
+          supportUserUid: getSupportUserUid(),
+        },
+        authUser: authUser,
+      })
+      .then((result) => {
+        documentId = result;
+      })
+      .then(() => {
+        // Melden wenn fertig
+        const callbackCaller = (data) => {
+          if (data?.done) {
+            callback(data);
+            unsubscribe();
+          }
+        };
+
+        firebase.cloudFunction.activateSupportUser
+          .listen({
+            uids: [documentId],
+            callback: callbackCaller,
+            errorCallback: errorCallback,
+          })
+          .then((result) => {
+            console.warn(result);
+            unsubscribe = result;
+          });
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
   };
 }

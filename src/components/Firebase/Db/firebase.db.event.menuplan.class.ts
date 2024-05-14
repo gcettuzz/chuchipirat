@@ -14,8 +14,9 @@ import {
 import {
   MealRecipeDeletedPrefix,
   MealRecipes,
-  Products,
 } from "../../Event/Menuplan/menuplan.class";
+import Product from "../../Product/product.class";
+import Material from "../../Material/material.class";
 
 export class FirebaseDbEventMenuplan extends FirebaseDbSuper {
   firebase: Firebase;
@@ -63,17 +64,32 @@ export class FirebaseDbEventMenuplan extends FirebaseDbSuper {
     // Array.
     const usedRecipes: string[] = [];
     const usedProducts: string[] = [];
+    const usedMaterials: string[] = [];
 
     Object.values(value.mealRecipes as MealRecipes).forEach((mealRecipe) => {
       if (!mealRecipe.recipe.recipeUid.includes(MealRecipeDeletedPrefix)) {
-        if (!usedRecipes.includes(mealRecipe.recipe.recipeUid)) {
+        if (
+          !usedRecipes.includes(mealRecipe.recipe.recipeUid) &&
+          mealRecipe.recipe.recipeUid
+        ) {
           usedRecipes.push(mealRecipe.recipe.recipeUid);
         }
       }
     });
-    Object.values(value.products as Products).forEach((menuProduct) => {
-      if (!usedProducts.includes(menuProduct.productUid)) {
+    Object.values(value.products as Product).forEach((menuProduct) => {
+      if (
+        !usedProducts.includes(menuProduct.productUid) &&
+        menuProduct.productUid
+      ) {
         usedProducts.push(menuProduct.productUid);
+      }
+    });
+    Object.values(value.materials as Material).forEach((menuMaterial) => {
+      if (
+        !usedMaterials.includes(menuMaterial.materialUid) &&
+        menuMaterial.materialUid
+      ) {
+        usedMaterials.push(menuMaterial.materialUid);
       }
     });
 
@@ -90,6 +106,7 @@ export class FirebaseDbEventMenuplan extends FirebaseDbSuper {
       lastChange: value.lastChange,
       usedRecipes: usedRecipes,
       usedProducts: usedProducts,
+      usedMaterials: usedMaterials,
     };
   }
   /* =====================================================================

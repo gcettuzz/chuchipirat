@@ -1,5 +1,6 @@
 import React from "react";
 import {compose} from "react-recompose";
+import {useHistory} from "react-router";
 
 import {
   Container,
@@ -23,10 +24,13 @@ import {
   NAME as TEXT_NAME,
   REQUEST_CREATION_DATE as TEXT_REQUEST_CREATION_DATE,
   REQUEST_ASSIGNEE_DISPLAYNAME as TEXT_REQUEST_ASSIGNEE_DISPLAYNAME,
+  REQUEST_AUTHOR_DISPLAYNAME as TEXT_REQUEST_AUTHOR_DISPLAYNAME,
   ACTIVE_REQUESTS as TEXT_ACTIVE_REQUESTS,
   ALL_REQUESTS as TEXT_ALL_REQUESTS,
   NO_OPEN_REQUESTS_FOUND as TEXT_NO_OPEN_REQUESTS_FOUND,
 } from "../../constants/text";
+
+import {RECIPE as ROUTES_RECIPE} from "../../constants/routes";
 
 import useStyles from "../../constants/styles";
 import PageTitle from "../Shared/pageTitle";
@@ -236,6 +240,7 @@ const RequestOverviewBase: React.FC<
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
   const classes = useStyles();
+  const {push} = useHistory();
 
   const navigationValuesContext = React.useContext(NavigationValuesContext);
 
@@ -424,7 +429,7 @@ const RequestOverviewBase: React.FC<
         uid: recipeUid,
         authUser: authUser,
         // Das Rezept muss vom Author des Requests stammen.
-        userUid: requestPopupValues.selectedRequest.author.uid,
+        userUid: requestPopupValues.selectedRequest.requestObject.authorUid,
         type:
           requestPopupValues.selectedRequest.requestType ===
           RequestType.recipePublish
@@ -436,11 +441,23 @@ const RequestOverviewBase: React.FC<
       });
     }
 
-    setRecipeDrawerData({
-      ...recipeDrawerData,
-      recipe: recipe,
-      open: true,
-    });
+    // Wenn es der*die Autorin ist, auf die Seite abspringen --> um das Rezept
+    // allenfalls zu bearbeiten
+    if (requestPopupValues.selectedRequest.author.uid === authUser.uid) {
+      push({
+        pathname: `${ROUTES_RECIPE}/${requestPopupValues.selectedRequest.requestObject.uid}`,
+        state: {
+          action: Action.VIEW,
+          recipe: recipe,
+        },
+      });
+    } else {
+      setRecipeDrawerData({
+        ...recipeDrawerData,
+        recipe: recipe,
+        open: true,
+      });
+    }
   };
   const onRecipeDrawerClose = () => {
     setRecipeDrawerData({...recipeDrawerData, open: false});
@@ -560,6 +577,14 @@ const RequestTable = ({
       label: TEXT_REQUEST_ASSIGNEE_DISPLAYNAME,
       visible: true,
     },
+    {
+      id: "author.displayName",
+      type: TableColumnTypes.string,
+      textAlign: ColumnTextAlign.left,
+      disablePadding: false,
+      label: TEXT_REQUEST_AUTHOR_DISPLAYNAME,
+      visible: true,
+    },
   ];
   const classes = useStyles();
 
@@ -593,7 +618,8 @@ const RequestTable = ({
         (request) =>
           request.number.toString().includes(searchString) ||
           request.requestObject.name.toLowerCase().includes(searchString) ||
-          request.assignee.displayName.toLowerCase().includes(searchString)
+          request.assignee.displayName.toLowerCase().includes(searchString) ||
+          request.author.displayName.toLowerCase().includes(searchString)
       );
     } else {
       filteredRequests = requests;

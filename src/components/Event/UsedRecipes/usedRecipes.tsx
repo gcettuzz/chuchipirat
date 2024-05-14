@@ -11,8 +11,8 @@ import {
   List,
   Container,
   useTheme,
-  Box,
   Link,
+  Box,
 } from "@material-ui/core";
 
 import {
@@ -32,6 +32,7 @@ import {
   PLANED_RECIPES as TEXT_PLANED_RECIPES,
   LIST_ENTRY_MAYBE_OUT_OF_DATE as TEXT_LIST_ENTRY_MAYBE_OUT_OF_DATE,
   LIST as TEXT_LIST,
+  ERROR_NO_RECIPES_FOUND as TEXT_ERROR_NO_RECIPES_FOUND,
 } from "../../../constants/text";
 import {ImageRepository} from "../../../constants/imageRepository";
 
@@ -49,6 +50,7 @@ import {
 } from "../Menuplan/dialogSelectMenues";
 import Menuplan, {
   MealRecipe,
+  Menue,
   MenueCoordinates,
 } from "../Menuplan/menuplan.class";
 import {generatePlanedPortionsText} from "../Menuplan/menuplan";
@@ -78,7 +80,8 @@ import {
   UnitConversionProducts,
 } from "../../Unit/unitConversion.class";
 import {FetchMissingDataProps, FetchMissingDataType} from "../Event/event";
-import {EventListCard} from "../Event/eventSharedComponents";
+import {EventListCard, OperationType} from "../Event/eventSharedComponents";
+import Unit from "../../Unit/unit.class";
 
 /* ===================================================================
 // ============================ Dispatcher ===========================
@@ -113,6 +116,7 @@ const usedRecipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.SHOW_LOADING:
       return {
         ...state,
+        error: null,
         isLoading: action.payload.isLoading,
       };
     case ReducerActions.SET_SELECTED_LIST_ITEM:
@@ -121,6 +125,7 @@ const usedRecipesReducer = (state: State, action: DispatchAction): State => {
         selectedListItem: action.payload.uid,
         sortedMenueList: action.payload.sortedMenueList,
       };
+
     case ReducerActions.GENERIC_ERROR:
       return {
         ...state,
@@ -150,6 +155,14 @@ const usedRecipesReducer = (state: State, action: DispatchAction): State => {
       throw new Error();
   }
 };
+
+const DIALOG_SELECT_MENUE_DATA_INITIAL_DATA = {
+  open: false,
+  menues: {} as DialogSelectMenuesForRecipeDialogValues,
+  selectedListUid: "",
+  operationType: OperationType.none,
+};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
@@ -161,6 +174,7 @@ interface EventUsedRecipesPageProps {
   menuplan: Menuplan;
   usedRecipes: UsedRecipes;
   products: Product[];
+  units: Unit[] | null;
   unitConversionBasic: UnitConversionBasic | null;
   unitConversionProducts: UnitConversionProducts | null;
   fetchMissingData: ({type, recipeShort}: FetchMissingDataProps) => void;
@@ -174,6 +188,7 @@ const EventUsedRecipesPage = ({
   menuplan,
   usedRecipes,
   products,
+  units,
   unitConversionBasic,
   unitConversionProducts,
   fetchMissingData,
@@ -188,10 +203,9 @@ const EventUsedRecipesPage = ({
     usedRecipesReducer,
     inititialState
   );
-  const [dialogSelectMenueData, setDialogSelectMenueData] = React.useState({
-    open: false,
-    menues: {} as DialogSelectMenuesForRecipeDialogValues,
-  });
+  const [dialogSelectMenueData, setDialogSelectMenueData] = React.useState(
+    DIALOG_SELECT_MENUE_DATA_INITIAL_DATA
+  );
   /* ------------------------------------------
   // Navigation-Handler
   // ------------------------------------------ */
@@ -209,89 +223,142 @@ const EventUsedRecipesPage = ({
     if (!unitConversionBasic || !unitConversionProducts) {
       fetchMissingData({type: FetchMissingDataType.UNIT_CONVERSION});
     }
+    if (!units || units.length == 0) {
+      fetchMissingData({type: FetchMissingDataType.UNITS});
+    }
   }, []);
 
   /* ------------------------------------------
   // Dialog-Handling
   // ------------------------------------------ */
-  const onShowDialogSelectMenues = () => {
-    setDialogSelectMenueData({...dialogSelectMenueData, open: true});
+  const onCreateList = () => {
+    setDialogSelectMenueData({
+      ...dialogSelectMenueData,
+      open: true,
+      operationType: OperationType.Create,
+    });
   };
   const onCloseDialogSelectMenues = () => {
-    setDialogSelectMenueData({...dialogSelectMenueData, open: false});
+    setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
   };
   const onConfirmDialogSelectMenues = async (
     selectedMenues: DialogSelectMenuesForRecipeDialogValues
   ) => {
+    setDialogSelectMenueData({...dialogSelectMenueData, open: false});
+
     const userInput = (await customDialog({
       dialogType: DialogType.SingleTextInput,
       title: TEXT_NEW_LIST,
       text: TEXT_GIVE_THE_NEW_LIST_A_NAME,
       singleTextInputProperties: {
-        initialValue: "",
+        initialValue:
+          dialogSelectMenueData.operationType === OperationType.Update
+            ? usedRecipes.lists[dialogSelectMenueData.selectedListUid]
+                .properties.name
+            : "",
         textInputLabel: TEXT_NAME,
       },
     })) as SingleTextInputResult;
-    setDialogSelectMenueData({...dialogSelectMenueData, open: false});
 
     if (userInput.valid) {
       // Wait anzeigen
       dispatch({type: ReducerActions.SHOW_LOADING, payload: {isLoading: true}});
 
-      // Rezepte holen und berechnen
-      UsedRecipes.createNewList({
-        name: userInput.input,
-        selectedMenues: Object.keys(selectedMenues).map((menueUid) => menueUid),
-        menueplan: menuplan,
-        firebase: firebase,
-        authUser: authUser,
-      })
-        .then((result) => {
-          const newUsedRecipes = {...usedRecipes};
-          newUsedRecipes.lists[result.properties.uid] = result;
-          newUsedRecipes.noOfLists++;
-          newUsedRecipes.uid = event.uid;
-
-          onUsedRecipesUpdate(newUsedRecipes);
-
-          dispatch({
-            type: ReducerActions.SHOW_LOADING,
-            payload: {isLoading: false},
-          });
+      if (dialogSelectMenueData.operationType === OperationType.Create) {
+        // Rezepte holen und berechnen
+        UsedRecipes.createNewList({
+          name: userInput.input,
+          selectedMenues: Object.keys(selectedMenues),
+          menueplan: menuplan,
+          firebase: firebase,
+          authUser: authUser,
         })
-        .catch((error) => {
-          dispatch({
-            type: ReducerActions.GENERIC_ERROR,
-            payload: error,
+          .then((result) => {
+            const newUsedRecipes = {...usedRecipes};
+            newUsedRecipes.lists[result.properties.uid] = result;
+            newUsedRecipes.noOfLists++;
+            newUsedRecipes.uid = event.uid;
+
+            onUsedRecipesUpdate(newUsedRecipes);
+
+            dispatch({
+              type: ReducerActions.SHOW_LOADING,
+              payload: {isLoading: false},
+            });
+          })
+          .catch((error) => {
+            dispatch({
+              type: ReducerActions.GENERIC_ERROR,
+              payload: error,
+            });
           });
-        });
+      } else if (dialogSelectMenueData.operationType === OperationType.Update) {
+        onRefreshLists(userInput.input, Object.keys(selectedMenues));
+      }
+    } else {
+      // Abbruch wieder das andere anzeigen
+      setDialogSelectMenueData({
+        ...dialogSelectMenueData,
+        menues: selectedMenues,
+        open: true,
+      });
     }
   };
   /* ------------------------------------------
   // List-Handling
   // ------------------------------------------ */
-  const onRefreshLists = () => {
+  const onRefreshLists = (
+    newName?: string,
+    selectedMenues?: Menue["uid"][]
+  ) => {
     // Alle Liste aktualisieren
     dispatch({type: ReducerActions.SHOW_LOADING, payload: {isLoading: true}});
+    const usedRecipesToRefresh = {...usedRecipes};
+
+    if (dialogSelectMenueData.operationType === OperationType.Update) {
+      // Namen übernehmen
+      usedRecipesToRefresh.lists[
+        dialogSelectMenueData.selectedListUid
+      ].properties.name = newName!;
+
+      usedRecipesToRefresh.lists[
+        dialogSelectMenueData.selectedListUid
+      ].properties.selectedMenues = selectedMenues!;
+      usedRecipesToRefresh.lists[
+        dialogSelectMenueData.selectedListUid
+      ].properties.selectedMeals = Menuplan.getMealsOfMenues({
+        menuplan: menuplan,
+        menues: selectedMenues!,
+      });
+      setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
+    }
 
     // Rezepte holen und berechnen
     UsedRecipes.refreshLists({
-      usedRecipes: usedRecipes,
+      usedRecipes: usedRecipesToRefresh,
       menueplan: menuplan,
       firebase: firebase,
       authUser: authUser,
-    }).then((result) => {
-      onUsedRecipesUpdate(result);
-      dispatch({
-        type: ReducerActions.SHOW_LOADING,
-        payload: {isLoading: false},
+    })
+      .then((result) => {
+        onUsedRecipesUpdate(result);
+
+        dispatch({
+          type: ReducerActions.SHOW_LOADING,
+          payload: {isLoading: false},
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
       });
-    });
   };
+
   const onListElementSelect = async (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
     // Menües in der richtigen Reihenfolge aufbauen, damit diese dann auch richtig angezeigt werden
+
     const selectedListItem = event.currentTarget.id.split("_")[1];
     dispatch({
       type: ReducerActions.SET_SELECTED_LIST_ITEM,
@@ -327,34 +394,69 @@ const EventUsedRecipesPage = ({
     });
   };
   const onListElementEdit = async (event: React.MouseEvent<HTMLElement>) => {
-    const selectedList = event.currentTarget.id.split("_")[1];
-    if (!selectedList) {
+    const selectedListUid = event.currentTarget.id.split("_")[1];
+    if (!selectedListUid) {
       return;
     }
+    const selectedMenuesForDialog: DialogSelectMenuesForRecipeDialogValues = {};
 
-    const userInput = (await customDialog({
-      dialogType: DialogType.SingleTextInput,
-      title: "Namen anpassen",
-      singleTextInputProperties: {
-        initialValue: usedRecipes.lists[selectedList].properties.name,
-        textInputLabel: "Name",
-      },
-    })) as SingleTextInputResult;
+    let selectedMenues =
+      usedRecipes.lists[selectedListUid].properties.selectedMenues;
 
-    if (userInput.valid) {
-      const updatedUsedRecipes = UsedRecipes.editListName({
-        usedRecipes: usedRecipes,
-        listUidToEdit: selectedList,
-        newName: userInput.input,
-        authUser: authUser,
+    // Prüfen ob die Menüs immer noch gleich sind
+    if (
+      !Utils.areStringArraysEqual(
+        usedRecipes.lists[selectedListUid].properties.selectedMeals,
+        Menuplan.getMealsOfMenues({
+          menuplan: menuplan,
+          menues: usedRecipes.lists[selectedListUid].properties.selectedMenues,
+        })
+      ) ||
+      // Sind neue Menü dazugekommen/ oder wurden Menüs aus der
+      // Auswahl entfernt
+      usedRecipes.lists[selectedListUid].properties.selectedMenues.length !==
+        Menuplan.getMenuesOfMeals({
+          menuplan: menuplan,
+          meals: usedRecipes.lists[selectedListUid].properties.selectedMeals,
+        }).length
+    ) {
+      selectedMenues = Menuplan.getMenuesOfMeals({
+        menuplan: menuplan,
+        meals: usedRecipes.lists[selectedListUid].properties.selectedMeals,
       });
-      onUsedRecipesUpdate(updatedUsedRecipes);
     }
+
+    // Menues der Mahlzeiten holen und Objekt umwandeln
+    Menuplan.getMealsOfMenues({
+      menuplan: menuplan,
+      menues: usedRecipes.lists[selectedListUid].properties.selectedMeals,
+    }).forEach((menueUid) => (selectedMenues[menueUid] = true));
+
+    selectedMenues.forEach(
+      (menueUid) => (selectedMenuesForDialog[menueUid] = true)
+    );
+    setDialogSelectMenueData({
+      menues: selectedMenuesForDialog,
+      open: true,
+      selectedListUid: selectedListUid,
+      operationType: OperationType.Update,
+    });
   };
   /* ------------------------------------------
   // PDF erzeugen
   // ------------------------------------------ */
   const onGeneratePrintVersion = () => {
+    if (
+      Object.keys(usedRecipes.lists[state.selectedListItem!].recipes).length ===
+      0
+    ) {
+      dispatch({
+        type: ReducerActions.GENERIC_ERROR,
+        payload: new Error(TEXT_ERROR_NO_RECIPES_FOUND),
+      });
+      return;
+    }
+
     pdf(
       <UsedRecipesPdf
         list={usedRecipes.lists[state.selectedListItem!]}
@@ -362,6 +464,7 @@ const EventUsedRecipesPage = ({
         menueplan={menuplan}
         eventName={event.name}
         products={products}
+        units={units}
         unitConversionBasic={unitConversionBasic}
         unitConversionProducts={unitConversionProducts}
         authUser={authUser}
@@ -401,7 +504,7 @@ const EventUsedRecipesPage = ({
             lists={usedRecipes.lists}
             noOfLists={usedRecipes.noOfLists}
             menuplan={menuplan}
-            onShowDialogSelectMenues={onShowDialogSelectMenues}
+            onCreateList={onCreateList}
             onListElementSelect={onListElementSelect}
             onListElementDelete={onListElementDelete}
             onListElementEdit={onListElementEdit}
@@ -416,6 +519,7 @@ const EventUsedRecipesPage = ({
             menuplan={menuplan}
             groupConfiguration={groupConfiguration}
             products={products}
+            units={units}
             unitConversionBasic={unitConversionBasic}
             unitConversionProducts={unitConversionProducts}
           />
@@ -425,7 +529,7 @@ const EventUsedRecipesPage = ({
         open={dialogSelectMenueData.open}
         title={TEXT_WHICH_MENUES_FOR_RECIPE_GENERATION}
         dates={menuplan.dates}
-        preSelectedMenue={{}}
+        preSelectedMenue={dialogSelectMenueData.menues}
         mealTypes={menuplan.mealTypes}
         meals={menuplan.meals}
         menues={menuplan.menues}
@@ -446,6 +550,7 @@ interface EventUsedRecipesProps {
   menuplan: Menuplan;
   groupConfiguration: EventGroupConfiguration;
   products: Product[];
+  units: Unit[] | null;
   unitConversionBasic: UnitConversionBasic | null;
   unitConversionProducts: UnitConversionProducts | null;
 }
@@ -455,10 +560,12 @@ const EventUsedRecipes = ({
   menuplan,
   groupConfiguration,
   products,
+  units,
   unitConversionBasic,
   unitConversionProducts,
 }: EventUsedRecipesProps) => {
   const theme = useTheme();
+
   return (
     <Container style={{marginTop: theme.spacing(2)}}>
       <Grid container spacing={2} justifyContent="center" alignItems="center">
@@ -470,7 +577,10 @@ const EventUsedRecipes = ({
               (mealRecipeUid) =>
                 !menuplan.mealRecipes[mealRecipeUid].recipe.recipeUid.includes(
                   "[DELETED]"
-                ) && (
+                ) &&
+                usedRecipes[
+                  menuplan.mealRecipes[mealRecipeUid].recipe.recipeUid
+                ] && (
                   <EventUsedMealRecipe
                     recipe={
                       usedRecipes[
@@ -481,6 +591,7 @@ const EventUsedRecipes = ({
                     menueCoordinate={menueCoordinate}
                     groupConfiguration={groupConfiguration}
                     products={products}
+                    units={units}
                     unitConversionBasic={unitConversionBasic}
                     unitConversionProducts={unitConversionProducts}
                     key={"eventUsedRecipe_" + mealRecipeUid}
@@ -502,6 +613,7 @@ interface EventUsedMealRecipeProps {
   menueCoordinate: MenueCoordinates;
   groupConfiguration: EventGroupConfiguration;
   products: Product[];
+  units: Unit[] | null;
   unitConversionBasic: UnitConversionBasic | null;
   unitConversionProducts: UnitConversionProducts | null;
 }
@@ -511,6 +623,7 @@ const EventUsedMealRecipe = ({
   menueCoordinate,
   groupConfiguration,
   products,
+  units,
   unitConversionBasic,
   unitConversionProducts,
 }: EventUsedMealRecipeProps) => {
@@ -552,6 +665,7 @@ const EventUsedMealRecipe = ({
             recipe={recipe}
             mealRecipe={mealRecipe}
             products={products}
+            units={units}
             unitConversionBasic={unitConversionBasic}
             unitConversionProducts={unitConversionProducts}
           />
@@ -599,7 +713,7 @@ const EventUsedMealRecipe = ({
             <img
               className={classes.marginCenter}
               src={
-                ImageRepository.getEnviromentRelatedPicture().DIVIDER_ICON_SRC
+                ImageRepository.getEnviromentRelatedPicture().VECTOR_LOGO_GREY
               }
               alt=""
               width="50px"
@@ -736,6 +850,7 @@ interface EventUsedMealRecipeIngredientBlockProps {
   recipe: Recipe;
   mealRecipe: MealRecipe;
   products: Product[];
+  units: Unit[] | null;
   unitConversionBasic: UnitConversionBasic | null;
   unitConversionProducts: UnitConversionProducts | null;
 }
@@ -743,6 +858,7 @@ const EventUsedMealRecipeIngredientBlock = ({
   recipe,
   mealRecipe,
   products,
+  units,
   unitConversionBasic,
   unitConversionProducts,
 }: EventUsedMealRecipeIngredientBlockProps) => {
@@ -751,6 +867,7 @@ const EventUsedMealRecipeIngredientBlock = ({
     portionsToScale: mealRecipe.totalPortions,
     scalingOptions: {convertUnits: true}, // Hier fix WAHR
     products: products,
+    units: units,
     unitConversionBasic: unitConversionBasic,
     unitConversionProducts: unitConversionProducts,
   });

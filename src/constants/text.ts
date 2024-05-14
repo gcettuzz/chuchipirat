@@ -1,4 +1,4 @@
-"../../constants/text"; /* =====================================================================
+/* =====================================================================
 // App
 // ===================================================================== */
 export const APP_NAME = "chuchipirat";
@@ -16,14 +16,12 @@ export const BUTTON_SAVE = "Speichern";
 export const BUTTON_EDIT = "Bearbeiten";
 export const BUTTON_CANCEL = "Abbrechen";
 export const BUTTON_SHOW = "Anzeigen";
-export const BUTTON_CREATE = "Erstellen";
 export const BUTTON_ADD = "Hinzufügen";
 export const BUTTON_ADD_COMMENT = "Kommentar Hinzufügen";
 export const BUTTON_CHANGE = "Ändern";
 export const BUTTON_DELETE = "Löschen";
 export const BUTTON_SCALE = "Skalieren";
 export const BUTTON_OWN_VARIANT = "Eigene Variante erstellen";
-export const BUTTON_LINK = "Verknüpfen";
 export const ADD_DEPARTMENT = "Abteilung hinzufügen";
 export const BUTTON_ADD_PERSON = "Person hinzufügen";
 export const BUTTON_ADD_TO_EVENT = "Zu Anlass hinzufügen";
@@ -35,7 +33,7 @@ export const SIGN_IN = "Anmelden";
 export const BUTTON_SIGN_UP = "";
 export const SIGN_UP = "Registrieren";
 export const CHANGE_PASSWORD = "Passwort ändern";
-export const CHANGE_EMAIL = "E-Mailadresse ändern";
+export const CHANGE_EMAIL = "E-Mail-Adresse ändern";
 export const RESET = "Zurücksetzen";
 export const BUTTON_SEARCH = "Suche";
 export const BUTTON_MENUPLAN = "Menuplan";
@@ -49,7 +47,6 @@ export const BUTTON_LOAD_OLDER_COMMENTS = "... ältere Kommentare laden ....";
 export const BUTTON_SAVE_COMMENT = "Kommentar speichern";
 export const CREATE_RECIPE = "Neues Rezept anlegen";
 export const BUTTON_LOAD_MORE_RECIPES = "Weitere Rezepte laden";
-export const BUTTON_SHOPPINGLIST = "Postizettel";
 export const BUTTON_PRINTVERSION = "Druckversion";
 export const BUTTON_QUANTITY_CALCULATION = "Mengenberechnung";
 
@@ -65,8 +62,8 @@ export const DELETE_CHECKED_FEEDS = "markierte Feed-Einträge löschen";
 export const GET_FEEDS = "Feed-Einträge holen";
 export const BUTTON_TRACE = "Trace";
 export const BUTTON_CHOOSE_RECIPE = "Rezept auswählen";
-export const MERGE_PRODUCTS = "Produkte zusammenführen";
-export const CONVERT_PRODUCT_TO_MATERIAL = "Produkt zu Material umwandlen";
+export const MERGE_ITEMS = "Items zusammenführen";
+export const CONVERT_ITEM = "Produkt/Material umwandlen";
 export const BUTTON_CLOSE = "Schliessen";
 /* =====================================================================
 // Seiten Titel und Untertitel
@@ -107,16 +104,14 @@ export const USER_LIST = "User-Liste";
 export const PAGE_SUBTITLE_USERS = "";
 export const PAGE_TITLE_QUANTITY_CALCULATION = "Mengenberechnung";
 export const PAGE_SUBTITLE_QUANTITY_CALCULATION = "";
-export const PAGE_TITLE_SHOPPING_LIST = "Postizettel";
 export const PAGE_SUBTITLE_SHOPPING_LIST = "";
 export const HELLO_NAME = (name: string) => `Hoi ${name}`;
 export const SHOW_US_WHO_YOU_ARE = "Zeig uns wer Du bist.";
 export const REAUTHENTICATE_DIALOG_TITLE = "Ausweis bitte...";
-export const PAGE_TITLE_ADMIN_WHERE_USED = "Trace";
-export const PAGE_SUBTITLE_ADMIN_WHERE_USED = "Wo bist du?";
+export const TRACE = "Trace";
+export const WHERE_ARE_YOUR = "Wo bist du?";
 export const TIME_TO_CLEAN_UP = "Zeit aufzuräumen";
-export const PAGE_TITLE_GLOBAL_SETTINGS = "Globale Einstellungen";
-export const REQUESTS = "Anfragen";
+export const REQUESTS = "Anträge";
 /* =====================================================================
 // Tabellen Überschriften
 // ===================================================================== */
@@ -147,15 +142,18 @@ export const PANEL_COMMEINTRODUCE_YOURSELFNTS = "Kommentare";
 export const PANEL_PRODUCTS = "Produkte";
 export const INTRODUCE_YOURSELF = "Stell dich vor";
 export const GLOBAL_SETTINGS = "Globale Einstellungen";
+export const SYSTEM_MESSAGE = "Systemmeldung";
+export const ATENTION_IMPORTANT_ANNOUNCEMENT =
+  "Achtung, Achtung, wichtige Durchsage!";
 export const DELETE_FEED = "Feed-Einträge löschen";
 export const DELETE_FEED_BY_DAYS = "Feed-Einträge nach Tagen löschen";
 export const DELETE_FEED_SELECTIV = "Feed-Einträge selektiv löschen";
 export const WHERE_USED = "Verfolgungsnachweis";
 export const SYSTEM_GLOBAL_DESCRIPTION = "Sytemweite-Einstellungen verwalten.";
-export const MERGE_PRODUCT_DESCRIPTION =
-  "Produkte zusammenführen in Rezepten, Menüplänen, Einkaufslisten und Stammdaten.";
-export const CONVERT_PRODUCT_TO_MATERIAL_DESCRIPTION =
-  "Produkte zu einem Material umwandlen und die betroffenen Rezepte anpassen";
+export const MERGE_ITEMS_DESCRIPTION =
+  "Produkte/Materialien zusammenführen in Rezepten, Menüplänen, Einkaufslisten und Stammdaten.";
+export const CONVERT_PRODUCT_ITEM_DESCRIPTION =
+  "Produkte zu einem Material (oder umgekeht) umwandlen und die betroffenen Rezepte anpassen";
 
 export const DELETE_FEED_DESCRIPTION =
   "Feed-Einträge löschen, welche älter als X Tage sind.";
@@ -164,9 +162,27 @@ export const WHERE_USED_DESCRIPTION =
 export const JOBS = "Job-Übersicht";
 export const TEMP_JOBS = "Temporäre Job-Übersicht";
 export const JOBS_DESCRIPTION = "Jobs manuel ausführen.";
-export const OVERVIEW = "Übersicht diverser Elemente";
-export const OVERVIEW_RECIPES_DESCRIPTION = "Übericht über alle Rezepte";
-
+export const OVERVIEW_DIFFERENT_ELEMENTS = "Übersicht diverser Elemente";
+export const OVERVIEW_RECIPES_DESCRIPTION = "Übersicht über alle Rezepte";
+export const OVERVIEW_EVENTS_DESCRIPTION = "Übersicht über alle Alässe";
+export const MAIL_CONSOLE = "Mail-Konsole";
+export const MAIL_CONSOLE_DESCRIPTION =
+  "Versenden von E-Mail an unsere Nutzer*innen";
+export const BECAUSE_NEWSLETTER_ARE_ALWAYS_LOVED =
+  "Weil wir dachten, dein Posteingang könnte ein bisschen mehr Aufregung vertragen.";
+export const EDITOR = "Editor";
+export const SUBJECT = "Betreff";
+export const TITLE = "Titel";
+export const SUB_TITLE = "Untertitel";
+export const MAILTEXT = "E-Mail Nachricht";
+export const RECIPIENT_TYPE = {
+  0: "keine",
+  1: "E-Mail-Adresse",
+  2: "User-UID",
+  3: "Rolle",
+};
+export const DIVIDE_MULTIPLE_VALUES_BY_SEMICOLON =
+  "Trenne mehrere Werte mit Semmikolon.";
 /* =====================================================================
 // Felder
 // ===================================================================== */
@@ -175,8 +191,8 @@ export const FIELD_VARIANT_NAME = "Variantenname";
 export const FIELD_MOTTO = "Motto";
 export const FIELD_LOCATION = "Ort";
 export const FIELD_PARTICIPANTS = "Teilnehmende";
-export const FIELD_CREATED_FROM = "Erstellt von";
-export const FIELD_CREATED_AT = "Erstellt am";
+export const CREATED_FROM = "Erstellt von";
+export const CREATED_AT = "Erstellt am";
 export const FROM = "Von";
 export const TO = "Bis";
 export const FIELD_IMAGE_SOURCE = "Bildquelle";
@@ -293,6 +309,10 @@ export const MOTTO_HELPERTEXT = "Hat dein Anlass ein Motto?";
 export const LOCATION = "Ort";
 export const LOCATION_HELPERTEXT = "Wo findet der Anlass statt?";
 export const DATES = "Daten";
+export const START_DATE = "Start-Datum";
+export const END_DATE = "Ende-Datum";
+export const NO_OF_DAYS = "Anzahl Tage";
+export const NO_OF_COOKS = "Köche";
 export const DELETE_DATES = "Daten löschen.";
 export const ADD_IMAGE = "Bild hinzufügen";
 export const DELETE_IMAGE = "Bild löschen";
@@ -302,15 +322,15 @@ export const ADD_LOGO_OR_CAMP_PICTURE_HERE =
 export const CONTINUE = "Weiter";
 export const BACK_TO_OVERVIEW = "Zurück zur Übersicht";
 export const BACK_TO_GROUPCONFIG = "Zurück zur Gruppendefinition";
-export const KITCHENCREW = "Küchenmannschaft";
+export const KITCHENCREW = "Küchen-Crew";
 export const COOKING_IS_COMMUNITY_SPORT =
-  "Weil kochen ein Gesellschaftssport ist, füge hier deine Küchenmannschaft hinzu.";
+  "Weil kochen ein Gesellschaftssport ist, füge hier deine Küchen-Crew hinzu.";
 export const ADD_COOK_TO_EVENT = "Person zu Anlass hinzufügen";
 export const BACK_TO_EVENT_INFO = "Zurück zu Informationen";
 export const ERROR_EVENT_NAME_CANT_BE_EMPTY =
   "Der Name des Anlasses darf nicht leer sein.";
 export const ERROR_EVENT_MUST_HAVE_MIN_ONE_COOK =
-  "Der Anlass muss mindestens eine Person in der Küchenmannschaft haben.";
+  "Der Anlass muss mindestens eine Person in der Küchen-Crew haben.";
 export const ERROR_FROM_DATE_EMPTY = "Von-Datum darf nicht leer sein";
 export const ERROR_TO_DATE_EMPTY = "Bis-Datum darf nicht leer sein";
 export const ERROR_FROM_DATE_BIGGER_THAN_TO_DATE =
@@ -325,10 +345,36 @@ export const EVENT_IS_BEEING_SAVED = "Anlass wird gespeichert.";
 export const IMAGE_IS_BEEING_UPLOADED = "Bild wird hochgeladen.";
 export const RESUME_INTRODUCTION = (eventName: string) =>
   `Herzlichen Glückwunsch! Dein Anlass «${eventName}» wurde angelegt. Es geht gleich weiter. Gerne würden wir dich noch auf Folgendes hinweisen:`;
+export const DONATE = "Spenden";
 export const PLEASE_DONATE = "Spende erwünscht";
 export const WHY_DONATE =
   "Unser Team arbeitet ehrenamtlich, um die App kostenlos anzubieten. Wir sind auf Spenden angewiesen, um die laufenden Kosten zu decken. Wenn dir die App gefällt und dein Anlassbudget es zulässt, unterstütze uns gerne mit einer Spende von Fr. 5.00. Dein Beitrag hilft, das Angebot weiterhin kostenlos anbieten zu können sowie die App am Laufen zu halten und weiter zu verbessern.";
+export const NEED_A_RECEIPT =
+  "Wenn du eine Quittung für den gespendeten Betrag benötigst, melde dich bitte unter hallo@chuchipirat.ch mit folgenden Angaben: Eventname und Zahlungsdatum. Wir senden dir dann gerne eine Quittung zu.";
 export const THANK_YOU_1000 = "Merci 1000";
+export const ROLE_TYPES = {
+  admin: "Admin",
+  basic: "Basic",
+  communityLeader: "Community-Leader*in",
+};
+export const ROLES_UPDATED_SUCCSESSFULLY = "Berechtigung wurde aktualisiert";
+export const YOU_CANT_UPDATE_YOUR_OWN_AUTHORIZATION =
+  "Du kannst deine eigene Berechtigung nicht anpassen.";
+export const MAIL_HEADER_PICTURE_SRC = "Bild-URL für Header-Bild";
+export const PREVIEW = "Vorschau";
+export const TEST_MAIL_SENT =
+  "Testnachricht wurde versendet. Prüfe dein Postfach";
+export const MAIL_SENT_TO_RECIPIENTS =
+  "Mail wurde an gewählte Empfänger*innen versandt";
+export const SEND_TEST_MAIL = "Test Mail senden";
+export const SENDT_MAIL_TO_RECIPIENTS = "Mail senden";
+export const BUTTON_TEXT = "Button-Beschriftung";
+export const BUTTON_LINK = "Link für Button (Ziel)";
+export const RECIPIENTS = "Empfänger";
+export const NO_RECIPIENTS = "Anzahl Empfänger";
+export const MAIL_TEMPLATE = "Mail-Template";
+export const TIMESTAMP = "Timestamp";
+export const MAILS = "E-Mails";
 /* =====================================================================
 // Meldungen zur Gruppen-Konfiguration
 // ===================================================================== */
@@ -384,6 +430,7 @@ export const PRIVATE_RECIPES = "private Rezepte";
 export const MESSAGE_TO_REVIEW = "Nachricht für Review-Person";
 export const THANK_YOU_FOR_YOUR_RATING = "Danke für deine Bewertung";
 export const NEWEST_RECIPES = "Die neusten Rezepte";
+export const START_TRACE = "Trace starten";
 /* =====================================================================
 // Meldungen zum Produkt
 // ===================================================================== */
@@ -395,6 +442,18 @@ export const PRODUCT_ADD = "Neue Zutat erstellen";
 export const PRODUCT_EDIT = "Produkt anpassen";
 export const RECORD_INGREDIENT_WITH_NECCESSARY_INFO =
   "Erfasse die neue Zutat gleich mit den nötigen Infos.";
+export const GUIDELINES_NEW_PRODUCT = {
+  line1: `Bitte prüfe folgende Punkte, bevor du ein neues Produkt anlegst:`,
+  line2: `Das Produkt existiert im chuchipirat bislang nicht.`,
+  line3: `Das Produkt kann im Laden gekauft werden.`,
+  line4: `Der Produktnamen beinhaltet keine Marken, Mengen, Einheiten oder Zubereitungsformen.`,
+  line5: `Falls bei einer nachträglichen Kontrolle auffallen würde, dass das von dir angelegte Produkt nicht den Richtlinien entspricht, wird es ohne    Voranmeldung geändert/gelöscht, was zu unvollständigen/falschen privaten Rezepten führen kann.`,
+};
+export const SIMILAR_PRODUCTS = "Ähnliche Produkte";
+export const EXISTING_PRODUCTS = "Bestehende Produkte";
+export const THERE_ARE_SIMILAR_PRODUCTS =
+  "Es gibt bereits Produkte, die ähnliche Namen haben. Bitte überprüfe die angezeigte Liste und prüfe, ob das von dir gewünschte Produkt nicht bereits vorhanden ist. Falls du dein Produkt findest, kannst du dieses wählen. Ansonsten klicke auf den Button «Produkt erstellen», um ein neues Produkt zu erstellen.";
+export const NEW_PRODUCT = "Neues Produkt";
 export const WARNING_PRODUCT_1 =
   "Die Änderungen sind global und gelten für alle! ";
 export const WARNING_PRODUCT_2 =
@@ -440,6 +499,7 @@ export const DEPARTMENT_CREATED = (department: string) => {
 // Meldungen zum Feed
 // ===================================================================== */
 export const FEED = "Feed";
+export const SHOULD_FEED_ENTRY_BE_DELETED = "Feed-Eintrag löschen?";
 /* =====================================================================
 // Meldungen zu Material
 // ===================================================================== */
@@ -515,9 +575,9 @@ export const ALERT_TATSCH_BANG_DONE = "Tätsch-Bäng-Meringue: Erledigt!";
 export const BACKSPELLED = "Zurück-buchstabiert";
 export const CHANGE_UNDONE = "Die Änderung wurde rückgängig gemacht.";
 export const NEW_EMAIL_IDENTICAL =
-  "Die E-Mailadresse ist mit der bestehenden identisch.";
+  "Die E-Mail-Adresse ist mit der bestehenden identisch.";
 export const EMAIL_RECOVERED =
-  "Die alte E-Mailadresse ist wieder deine Login-Adresse. Sicherheitshalber wurdest du abgemeldet. Hier kannst du dich wieder anmelden:  ";
+  "Die alte E-Mail-Adresse ist wieder deine Login-Adresse. Sicherheitshalber wurdest du abgemeldet. Hier kannst du dich wieder anmelden:  ";
 export const ALERT_TEXT_IMAGE_SAVE_FIRST =
   "Bitte speichere den Anlass bevor du ein Bild hochlädst.";
 export const ALERT_TEXT_IMAGE_SOURCE =
@@ -536,20 +596,32 @@ export const DELETE_PICTURE = "Bild löschen";
 // ===================================================================== */
 export const TRACE_RESULT = "Trace Ergebnis";
 export const MERGE_PRODUCT_SELECTION = "Produkteauswahl";
-export const MERGE_PRODUCT_EXPLANATION =
-  "Das Produkt A wird zu Produkt B. Alle Vorkommnisse des Produktes A (Rezepte, Menüplan, Einkaufslisten) werden angepasst. Nach erfolgreicher Änderungen der betroffenen Objekte wird das Produkt A gelöscht und steht nicht mehr zur Verfügung.";
-export const CONVERT_PRODUCT_TO_MATERIAL_EXPLANATION =
-  "Das gewählte Produkt wird in ein Material umgewandelt. Dabei werden alle Rezepte, Menüpläne, Einkauf- und Materiallisten angepasst. ";
+export const MERGE_MATERIAL_SELECTION = "Materialauswahl";
+
+export const MERGE_ITEM_EXPLANATION = (item: string) =>
+  `Das ${item} A wird zu ${item} B. Alle Vorkommnisse des ${item} A (Rezepte, Menüplan, Einkaufslisten) werden angepasst. Nach erfolgreicher Änderungen der betroffenen Objekte wird das ${item} A gelöscht und steht nicht mehr zur Verfügung.`;
+export const CONVERT_ITEM_EXPLANATION = (fromItem: string, toItem: string) =>
+  `Das gewählte ${fromItem} wird in ein ${toItem} umgewandelt. Dabei werden alle Rezepte, Menüpläne, Einkauf- und Materiallisten angepasst.`;
 export const MERGE_PRODUCT_A = "Produkt A";
 export const MERGE_PRODUCT_B = "Produkt B";
 export const CHANGED_DOCUMENTS = "Geänderte Dokumente";
-
-export const MERGE_ERROR_SAME_PRODUCTS =
-  "Produkt A und Produkt B sind identisch. Ein Zusammenführen macht daher keinen Sinn.";
+export const FOUND_DOCUMENTS = "Gefundene Dokumente";
+export const MERGE_ERROR_SAME_ITEMS = (item: string) =>
+  `${item} A und ${item} B sind identisch. Ein Zusammenführen macht daher keinen Sinn.`;
 export const GLOBAL_SETTINGS_ALLOW_SIGNUP_LABEL = "Neu-Anmeldung ermöglichen";
 export const GLOBAL_SETTINGS_ALLOW_SIGNUP_DESCRIPTION =
-  "Neue User können sich für den chuchipirat anmelden.";
-
+  "Personen können ein Login für den chuchipirat erstellen (Neuanmeldung/Registrierung).";
+export const GLOBAL_SETTINGS_MAINTENANCE_MODE_LABEL = "Wartungsmodus";
+export const GLOBAL_SETTINGS_MAINTENANCE_MODE_DESCRIPTION =
+  "Im Wartungsmodus ist eine (Neu-)Anmeldung nicht möglich.";
+export const ACTIVATE_SUPPORT_USER = "Support-User aktivieren";
+export const ACTIVATE_SUPPORT_USER_DESCRIPTION =
+  "Den Support-User für einen Anlass berechtigen.";
+export const SIGN_OUT_ALL_USERS = "Alle Benutzer*innen abmelden";
+export const SIGN_OUT_ALL_USERS_DESCRIPTION =
+  "Für alle Benutzer*innen (ausser Admin) ein Log-Out durchführen.";
+export const SIGN_OUT_EVERYBODY = "Alle abmelden";
+export const USERS_ARE_LOGGED_OUT = "Benutzer*innen werden abgemeldet.";
 /* =====================================================================
 // Diverse (längere) Texte
 // ===================================================================== */
@@ -565,10 +637,10 @@ export const NAVIGATION_UNITS = "Mengeneinheiten";
 export const NAVIGATION_UNIT_CONVERSION = "Mengenumrechnungen";
 export const NAVIGATION_PRODUCTS = "Produkte";
 export const NAVIGATION_DEPARTMENTS = "Abteilungen (Einkauf)";
-export const NAVIGATION_SIGN_OUT = "Abmelden";
+export const SIGN_OUT = "Abmelden";
 // export const NAVIGATION_SIGN_IN = "Anmelden";
 export const NAVIGATION_USER_PROFILE = "Profil";
-export const NAVIGATION_REQUEST_OVERVIEW = "Anfragen";
+export const NAVIGATION_REQUEST_OVERVIEW = "Anträge";
 export const NAVIGATION_SYSTEM = "System";
 export const NAVIGATION_ADMIN = "Admin";
 export const NAVIGATION_USERS = "Users";
@@ -576,38 +648,46 @@ export const NAVIGATION_HELP = "Hilfe";
 export const REFRESH_APP_TILE = "Neue Version verfügbar";
 export const REFRESH_APP_TEXT =
   "Es gibt eine neue Version des chuchipirat. Um die App zu aktualisieren, muss ein Refresh durchgeführt werden. Sichere daher vorher allfällige Änderungen. Mit OK bestätigst du, dass die Seite neu geladen werden kann.";
+
 /* =====================================================================
 // Statistik 
 // ===================================================================== */
 export const STATS = "Statistik";
 export const HOME_STATS_CAPTIONS = {
-  USERS: "Köche",
-  EVENTS: "Anlässe",
-  INGREDIENTS: "Lebensmittel",
-  RECIPES_PUBLIC: "öffentliche Rezepte",
-  RECIPES_PRIVATE: "private Rezepte",
-  RECIPES_VARIANTS: "Anlassvarianten Rezepte",
-  SHOPPING_LISTS: "Generierte Postizettel",
-  PARTICIPANTS: "bekochte Personen",
-  MATERIALS: "Materialien",
+  noUsers: "Köche",
+  noEvents: "Anlässe",
+  noIngredients: "Lebensmittel",
+  noRecipesPublic: "öffentliche Rezepte",
+  noRecipesPrivate: "private Rezepte",
+  noRecipesVariants: "Anlassvarianten Rezepte",
+  noShoppingLists: "Generierte Einkaufslisten",
+  noParticipants: "bekochte Personen",
+  noPortions: "Geplante Portionen",
+  noPlanedDays: "Geplante Anlasstage",
+  noMaterials: "Materialien",
+  noMaterialLists: "Generierte Materiallisten",
 };
 /* =====================================================================
 // Meldungen rund um SignIn/SignUp
 // ===================================================================== */
 export const VERIFY_YOUR_EMAIL =
-  "Kontrolliere bitte deine E-Mail: Schau in deinem Postfach nach (auch im Spam-Ordner), ob du eine Nachricht bekommen hast. Klicke auf den Link in der E-Mail, um deine E-Mailadresse zu bestätigen. Falls nötig, kannst du die Bestätigungs-E-Mail erneut anfordern.";
+  "Kontrolliere bitte deine E-Mail: Schau in deinem Postfach nach (auch im Spam-Ordner), ob du eine Nachricht bekommen hast. Klicke auf den Link in der E-Mail, um deine E-Mail-Adresse zu bestätigen. Falls nötig, kannst du die Bestätigungs-E-Mail erneut anfordern.";
 export const VERIFICATION_EMAIL_SENT =
   "Die E-Mail zur Bestätigung wurde verschickt. Schau in deinen E-Mails (auch im Spam-Ordner) nach der Bestätigungs-E-Mail. Nachdem du die E-Mail bestätigt hast, aktualisiere bitte diese Seite.";
 export const NO_AUTH_REDIRECT_TO_HOME =
   "Für die angeforderte Seite hast du keine Berechtigung. Du wirst automatisch umgeleitet.";
 export const NOT_REGISTERED_YET_SIGN_UP = "Noch keinen Account? Melde dich an!";
-export const EMAIL_HAS_BEEN_CHANGED = "Deine E-Mailadresse wurden geändert. ";
+export const EMAIL_HAS_BEEN_CHANGED = "Deine E-Mail-Adresse wurden geändert. ";
 export const LOGIN_CHANGE_ARE_YOU_READY = "Bereit für ein neues Login?";
 export const SIGN_IN_WHY_REAUTHENTICATE = "Bitte authentifiziere dich erneut.";
 export const LOGIN_SUCCESSFULL = "Login erfolgreich";
 export const SIGN_UP_NOT_ALLOWED_TITLE = "Wohin des Weges Pirat?";
 export const SIGN_UP_NOT_ALLOWED_TEXT =
   "Der chuchipirat befindet sich in der Beta-Phase. Die Anmeldung ist daher auf wenige Personen eingeschränkt. Melde dich unter hallo@chuchipirat für mehr Infos.";
+export const MAINTENANCE_MODE_SIGN_UP_NOT_ALLOWED =
+  "chuchipirat macht Pause: Wartungsmodus aktiviert";
+export const MAINTENANCE_MODE_SIGN_UP_NOT_ALLOWED_TEXT =
+  "Oh-oh! Der chuchipirat macht gerade eine kleine Pause, um seine digitalen Schaltkreise zu überprüfen und ein paar virtuelle Schrauben nachzuziehen. Bitte warte einen Moment, während er seine Wartungsarbeiten durchführt und dann mit frischer Energie zurückkehrt!";
 /* =====================================================================
 // Meldungen zu Password
 // ===================================================================== */
@@ -623,6 +703,8 @@ export const PASSWORD_WHERE_SEND_MAGIC_LINK =
   "Wohin soll der magische Link zugestellt werden?";
 export const PASSWORD_CHANGE = "Passwort ändern";
 export const PASSWORD_RESET = "Passwort zurücksetzen";
+export const HAVE_YOU_FORGOTEN_YOUR_PASSWORD =
+  "Hast du möglicherweise dein Passwort vergessen? ";
 
 export const PASSWORD_HOW_STRONG_IS_IT = "Wie stark ist dein Passwort: ";
 export const PASSWORD_STRENGTH_METER = {
@@ -704,6 +786,7 @@ export const FOUND_TREASURES = "Gefundene Schätze";
 export const RECIPES_CREATED_PUBLIC = "erfasste öffentliche Rezepte";
 export const RECIPES_CREATED_PRIVATE = "erfasste private Rezepte";
 export const EVENTS_PARTICIPATED = "bekochte Anlässe";
+export const FOUND_BUGS = "Gefundene Bugs";
 export const COMMENTS_LEFT = "hinterlassene Kommentare";
 export const USER_PROFILE_ERROR_DISPLAYNAME_MISSING =
   "Bitte gib einen Anzeigename an.";
@@ -723,20 +806,7 @@ export const CREATE_NEW_UNIT_CONVERSION = "Neue Einheitenumrechnung anlegen";
 export const METRIC_SYSTEM = "Metrisches System";
 export const HINT_CREATE_IN_METRIC_SYSTEM =
   "Bitte erfasse die Umrechung mit einer Zieleinheit im metrischen Einheitssystem.";
-/* =====================================================================
-// Meldungen zu Einkaufsliste
-// ===================================================================== */
-export const SHOPPING_LIST_CHOSEN_PERIOD = "gewählter Zeitraum";
-export const DIALOG_TITLE_GENERATE_SHOPPING_LIST = "Postizettel generieren";
-export const SHOPPING_LIST_WARNING_EXISTING_WILL_BE_OVERWRITEN =
-  "Bestehender Postizettel wird überschrieben.";
-export const SHOPPING_LIST_GENERATED_ON = "Generiert am: ";
-export const SHOPPING_LIST_GENERATED_FROM = "von: ";
-export const DIALOG_TITLE_SHOPPING_LIST_ADD_ITEM = "Produkt hinzufügen";
-export const DIALOG_TITLE_SHOPPING_LIST_EDIT_ITEM = "Eintrag ändern";
-export const DIALOG_TITLE_ITEM_TRACE = "Nachverfolgung Produkt";
-export const ERROR_ADD_ITEM_PRODUCT_UNKNOWN =
-  "Produkt unbekannt. Hast du es angelegt?";
+
 /* =====================================================================
 // Meldungen zu Mengenberechnung
 // ===================================================================== */
@@ -782,7 +852,7 @@ export const FEED_TITLE = {
   RECIPE_PUBLISHED: "Neues Rezept",
   RECIPE_RATED: "Neues Rating für",
   EVENT_CREATED: "Gut geplant ist halb gewonnen",
-  EVENT_COOK_ADDED: "Küchenmannschaft vergrössert",
+  EVENT_COOK_ADDED: "Küchen-Crew vergrössert",
   MENUPLAN_CREATED: "Was wird wann gekocht?",
   SHOPPINGLIST_CREATED: "Einkaufen ist angesagt",
 };
@@ -904,6 +974,8 @@ export const FIREBASE_MESSAGES = {
     "Dieser Vorgang ist sensibel und erfordert eine aktuelle Authentifizierung. Melde dich erneut an, bevor du diese Anfrage erneut versuchst.",
   TOO_MANY_REQUESTS:
     "Der Zugriff auf dieses Konto wurde aufgrund vieler fehlgeschlagener Anmeldeversuche vorübergehend deaktiviert. Du kannst das Konto entsperren, indem du dein Passwort zurücksetzt, oder du kannst es später erneut versuchen.",
+  INTERNAL_ERROR:
+    "Fehler bei der Anmeldung: Die eingegebenen Anmeldeinformationen sind ungültig.",
 };
 /* =====================================================================
 // Texte zum Admin-Bereich 
@@ -933,6 +1005,7 @@ export const CONSIDER_INTOLERANCES = "Unverträglichkeit berücksichtigen";
 export const RESTRICTIONS = "Einschränkungen";
 export const NEW_RECIPE = "Neues Rezept";
 export const INGREDIENTS = "Zutaten";
+export const ALLERGENS = "Allergene";
 export const PRODUCT = "Produkt";
 export const PRODUCTS = "Produkte";
 export const QUANTITY_CALCULATION = "Mengenberechnung";
@@ -950,10 +1023,15 @@ export const SCALED = "skaliert";
 export const PREPARATION = "Zubereitung";
 export const MATERIAL = "Material";
 export const MATERIAL_TYPE = "Materialtyp";
-export const OUTDOOR_KITCHEN_SUITABLE = "Geeigent für Outdoor-Küche";
-export const SHOW_ONLY_MY_RECIPES = "Nur meine Rezepte anzeigen";
 export const MATERIAL_TYPE_CONSUMABLE = "Verbrauchsmaterial";
 export const MATERIAL_TYPE_USAGE = "Gebrauchsmaterial";
+export const MATERIAL_TYPE_KEY_TEXT = {
+  0: "-",
+  1: MATERIAL_TYPE_CONSUMABLE,
+  2: MATERIAL_TYPE_USAGE,
+};
+export const OUTDOOR_KITCHEN_SUITABLE = "Geeignet für Outdoor-Küche";
+export const SHOW_ONLY_MY_RECIPES = "Nur meine Rezepte anzeigen";
 export const ORIGINAL_QUANTITIES = "Original Mengen";
 export const SCALED_QUANTITIES = "Hochgerechnete Mengen";
 export const CONVERT_UNITS = "Einheiten umrechnen";
@@ -974,6 +1052,12 @@ export const DIALOG_SUBTITLE_DELETION_CONFIRMATION =
   "Dadurch werden alle Daten endgültig gelöscht. Dieser Schritt kann nicht rückgängig gemacht werden.";
 export const DIALOG_TEXT_DELETION_CONFIRMATION =
   "Bestätige, dass du diese Daten löschen möchtest. Gib dazu die folgende ID ein:";
+export const DIALOG_SIGNOUT_USERS_CONFIRMATION = "Alle Users abmelden?";
+export const DIALOG_SUBTITLE_SIGNOUT_USERS_CONFIRMATION =
+  "Dadurch werden Benutzer*innen (ausser Admins) vom chuchipirat abgemeldet.";
+export const DIALOG_TEXT_SIGNOUT_USERS_CONFIRMATION =
+  "Bestätige, dass du alle abmelden möchtest. Gib dazu die folgende ID ein:";
+
 export const REQUIRED = "Erforderlich";
 export const DIALOG_DELETION_CONFIRMATION_STRING_DOES_NOT_MATCH =
   "Die angegebene ID ist nicht korrekt";
@@ -1005,6 +1089,11 @@ export const ALLERGENS_FREE_TYPES = {
   1: "Laktosefrei",
   2: "Glutenfrei",
 };
+export const ALLERGEN_KEY_TEXT = {
+  0: "-",
+  1: LACTOSE,
+  2: GLUTEN,
+};
 export const RENAME = "Umbenennen";
 export const DELETE = "Löschen";
 export const CANCEL = "Abbrechen";
@@ -1016,6 +1105,10 @@ export const APPLY = "Übernehmenen";
 export const PER_PORTION = "pro Portion";
 export const VARIANT = "Variante";
 export const VARIANT_NOTE = "Varianten-Notiz";
+export const SHOW_ONLY_NEWEST_PRODUCTS = "Zeige nur Neuste Produkte";
+export const NO_NEWEST_PRODUCTS_FOUND =
+  "Es wurden keine Produkte gefunden, die die letzten 10 Tage angelegt wurden.";
+export const SHOW_ALL_PRODUCTS = "Zeige alle Produkte";
 export const EXPLANATION_DIALOG_GOODS_TYPE_PRODUCT =
   "Hier kannst du einzelne Produkte dem Menü hinzufügen. Diese werden ebenfalls für die Einkaufsliste berücksichtigt.";
 export const EXPLANATION_DIALOG_GOODS_TYPE_MATERIAL =
@@ -1041,12 +1134,14 @@ export const PORTIONS_RECALCULATED =
 export const RECIPE_WIHOUT_PORTIONPLAN =
   "Dieses Rezept besitzt keine Einplanung";
 export const AND = "und";
+export const OR = " oder";
 export const SAVE = "Speichern";
+export const OPEN = "Öffnen";
 export const MENUE_SELECTION = "Auswahl Menüs";
 export const USED_RECIPES_MENUE_SELECTION_DESCRIPTION =
-  "Hier kannst du bereits generierte Listen anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltete alle verwendeten Rezepte der gewählten Menüs. Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
+  "Hier kannst du bereits generierte Listen anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltet alle verwendeten Rezepte der gewählten Menüs. Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
 export const SHOPPING_LIST_MENUE_SELECTION_DESCRIPTION =
-  "Hier kannst du bereits generierte Einkaufslisten anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltete alle Zutaten, Gebrauchsmaterialien der gewählten Menüs (inklusive einzelne hinzugefügte Produkte). Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
+  "Hier kannst du bereits generierte Einkaufslisten anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltet alle Zutaten, Gebrauchsmaterialien der gewählten Menüs (inklusive einzelne hinzugefügte Produkte). Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
 export const REFRESH = "Aktualisieren";
 export const SELECT_MENUES = "Menüs auswählen";
 export const WHICH_MENUES_FOR_RECIPE_GENERATION =
@@ -1066,6 +1161,7 @@ export const PLANED_FOR = "Geplant für";
 export const FOR_DATIVE = "zum";
 export const UNIT = "Einheit";
 export const UNITS = "Einheiten";
+export const DIMENSION = "Dimension";
 export const UNIT_ABREVIATION = "Einheit (Abkürzung)";
 export const UID = "UID";
 export const DENOMINATOR = "Menge von";
@@ -1106,7 +1202,7 @@ export const KEEP_MANUALLY_ADDED_PRODUCTS = (listName: string) =>
   `Diese ${listName} beinhaltet manuell hinzugefügte Artikel. Sollen diese bei der Aktualisierung beibehalten oder sollen sie aus der Liste gelöscht werden?`;
 export const KEEP = "Behalten";
 export const MATERIAL_LIST_MENUE_SELECTION_DESCRIPTION =
-  " Hier kannst du bereits generierte Materiallisten anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltete alle Materialien vom Typ «Gebrauchsmaterial» der gewählten Menüs. Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
+  " Hier kannst du bereits generierte Materiallisten anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltet alle Materialien vom Typ «Gebrauchsmaterial» der gewählten Menüs. Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
 export const LIST = "Liste";
 export const ATTENTION_ABOUT_TO_DELETE_PLANED_DAYS =
   "Achtung – Geplante Tage werden gelöscht!";
@@ -1128,6 +1224,57 @@ export const PRIVATE = "Privat";
 export const PUBLIC_RECIPE = "Öffentliches Rezept";
 export const ARE_YOU_SURE_YOU_WANT_TO_CHANGE =
   "Bist du sicher, dass du dieses Objekt ändern willst?";
+export const EDIT_AUTHORIZATION = "Berechtigung bearbeiten";
+export const EDIT_AUTHORIZATION_DESCRIPTION =
+  "Alle darunterliegenden Berechtigungen werden automatisch mit vergeben.";
+export const RE_SIGN_IN_REQUIRED = "Neu-Anmeldung nötig";
+export const RE_SIGN_IN_REQUIRED_AFTER_ROLES_ASSIGNMENT =
+  "Die vergebenen Rechte sind erst nach einer erneuten Anmeldung aktiv.";
+export const THIS_RECIPE_IS_PLANNED_FOR = "Dieses Rezept ist geplant für:";
+export const EVENT_UID = "Event-UID";
+export const ACTIVATE_SUPPORT_MODE = "Support-Modus aktivieren";
+export const ACTIVATE_SUPPORT_MODE_DESCRIPTION =
+  "Um den Support-Modus zu aktivieren, kannst du die UID eines Anlasses hier eingeben. Danach wird der Support-User für den angegebenen Anlass bis 01:00 Uhr Morgen früh berechtigt.";
+export const SUPPORT_USER_REGISTERED =
+  "Support-User wurde für Anlass berechtigt.";
+export const MAILBOX = "Mailbox";
+export const MONITOR = "Monitor";
+export const OVERVIEW = "Übersicht";
+export const RECIPIENT_TO = "An";
+export const RECIPIENT_BCC = "BCC";
+export const MAIL_DATA = "E-Mail-Inhalt";
+export const DELETE_MAIL_PROTOCOLS = "Mailprotokolle löschen";
+export const DELETE_MAIL_PROTOCOLS_OLDER_THAN =
+  "Mailprotokolle löschen, die älter als X Tage sind";
+export const MAIL_PROTOCOLS = "Mailprotokolle";
+export const MAIL_PROTOCOLS_DELETED = "Mailprotokolle gelöscht";
+export const CLOUD_FX = "Cloud-Functions";
+export const DELETE_CLOUD_FX_TRIGGER_DOCS = "Cloud-FX Dokumente löschen";
+export const DELETE_CLOUD_FX_TRIGGER_DOCS_OLDER_THAN =
+  "Cloud-FX Dokumente löschen, die älter als X Tage sind";
+export const CLOUD_FX_TRIGGER_DOCS = "Cloud-FX Triggerdokumente";
+export const CLOUD_FX_TRIGGER_DOCS_DELETED = "Mailprotokolle gelöscht";
+export const DATE = "Datum";
+export const INVOKED = "Ausgeführt";
+export const PROCESSED_DOCUMENTS = "Verarbeitete Dokumente";
+export const UNIT_DIMENSION = {
+  VOL: "Volumen",
+  MAS: "Masse",
+  DLS: "Dimensionslos",
+};
+export const FEEDS = "Feed-Einträge";
+export const RECEIPT = "Quittung";
+export const CREATE_RECEIPT = "Quittung erstellen";
+export const PAY_DATE = "Bezahlt am";
+export const DONOR = "Spender*in";
+export const AMOUNT = "Betrag";
+export const RECEIPT_THANK_YOU =
+  "Danke für deine Spende. Deine Spende ermöglicht es, den chuchipirat weiterzuentwickeln und weiterhin kostenlos anzubieten.";
+export const ASSOCIATION = "Verein";
+export const TYPE = "Typ";
+export const INVOLVED_EVENTS = "Beteiligte Anlässe lesen";
+export const VALID_TO = "Gültig bis";
+export const HOME_DASHBOARD = "Home-Dashboard";
 /* =====================================================================
 // Abkürzungen
 // ===================================================================== */
@@ -1139,6 +1286,11 @@ export const ERROR_WRONG_DB_CLASS =
   "Falsche DB Klasse angesprochen. Prüfe die Klassen mit Vererbung. ";
 export const ERROR_NOT_IMPLEMENTED_YET = "☠️ Not implemented yet! ☠️";
 export const ERROR_NO_RECIPES_FOUND = "Die Auswahl beinhaltet keine Rezepte.";
+export const ERROR_NO_MATERIALS_FOUND =
+  "Die Auwahl beinhaltet keine Materialien.";
+export const ERROR_NO_PRODUCTS_FOUND = "Die Auwahl beinhaltet keine Produkte.";
+export const ERROR_NO_RECIPE_PRODUCT_MATERIAL_FOUND =
+  "Die Auswahl beinhaltet keine Artikel.";
 /* =====================================================================
 // Workflow
 // ===================================================================== */
@@ -1151,8 +1303,8 @@ export const STATUS_NAME = {
 };
 export const REQUEST_STATUS_TRANSITION_PUBLISH_RECIPE = {
   created: {
-    inReview: {description: "Anfrage prüfen"},
-    declined: {description: "Anfrage ablehnen"},
+    inReview: {description: "Antrag prüfen"},
+    declined: {description: "Antrag ablehnen"},
     backToAuthor: {description: "Zurück zu Author*in"},
     done: {description: "Rezept publizieren"},
   },
@@ -1168,7 +1320,7 @@ export const REQUEST_STATUS_TRANSITION_REPORT_ERROR = {
 /* =====================================================================
 // Request
 // ===================================================================== */
-export const REQUEST = "Anfrage";
+export const REQUEST = "Antrag";
 export const REQUEST_TYPE = {
   recipePublish: "Rezeptveröffentlichung",
   reportError: "Fehler im Rezept",
@@ -1183,7 +1335,8 @@ export const REQUEST_NEXT_POSSIBLE_TRANSITION_LABEL =
   "Nächster möglicher Schritt";
 export const REQUEST_NEXT_POSSIBLES_TRANSITIONS_LABEL =
   "Nächste mögliche Schitte";
-export const REQUEST_ASSIGN_TO_ME_LABEL = "Anfrage mir zuweisen";
-export const NO_OPEN_REQUESTS_FOUND = "Keine offenen Anfragen gefunden.";
-export const ACTIVE_REQUESTS = "Aktive Anfragen";
-export const ALL_REQUESTS = "Alle Anfragen";
+export const REQUEST_ASSIGN_TO_ME_LABEL = "Antrag mir zuweisen";
+export const NO_OPEN_REQUESTS_FOUND = "Keine offenen Anträge gefunden.";
+export const ACTIVE_REQUESTS = "Aktive Anträge";
+export const ALL_REQUESTS = "Alle Anträge";
+export const WRONG_ASIGNEE = "Der Antrag ist nicht dir zugewiesen.";

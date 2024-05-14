@@ -1,6 +1,13 @@
 import React from "react";
 import clsx from "clsx";
-import {makeStyles, Theme, createStyles} from "@material-ui/core/styles";
+import {
+  makeStyles,
+  Theme,
+  createStyles,
+  useTheme,
+} from "@material-ui/core/styles";
+import {pdf} from "@react-pdf/renderer";
+import fileSaver from "file-saver";
 
 import {
   Card,
@@ -20,6 +27,7 @@ import {
   Avatar,
   ListItemText,
   ListItemSecondaryAction,
+  useMediaQuery,
 } from "@material-ui/core";
 import {Alert} from "@material-ui/lab";
 import {
@@ -59,12 +67,15 @@ import {
   ADD_COOK_TO_EVENT as TEXT_ADD_COOK_TO_EVENT,
   QUESTION_DELETE_IMAGE as TEXT_QUESTION_DELETE_IMAGE,
   DELETE as TEXT_DELETE,
+  RECEIPT as TEXT_RECEIPT,
+  CREATE_RECEIPT as TEXT_CREATE_RECEIPT,
+  SUFFIX_PDF as TEXT_SUFFIX_PDF,
 } from "../../../constants/text";
 
 import useStyles from "../../../constants/styles";
 import {ImageRepository} from "../../../constants/imageRepository";
 
-import Event from "./event.class";
+import Event, {EventRefDocuments} from "./event.class";
 import User from "../../User/user.class";
 
 import Firebase from "../../Firebase/firebase.class";
@@ -81,6 +92,8 @@ import {
   NavigationValuesContext,
 } from "../../Navigation/navigationContext";
 import Action from "../../../constants/actions";
+import Receipt from "./receipt.class";
+import EventReceiptPdf from "./eventRecipePdf";
 
 /* ===================================================================
 // ============================== Global =============================
@@ -118,7 +131,6 @@ const EventInfoPage = ({
   // Hier damit der AuthUser übergeben werden kann
   const [dialogAddUserOpen, setDialogAddUserOpen] = React.useState(false);
   const {customDialog} = useCustomDialog();
-
   /* ------------------------------------------
   // Navigation-Handler
   // ------------------------------------------ */
@@ -252,6 +264,35 @@ const EventInfoPage = ({
         onError && onError(error);
       });
   };
+  /* ------------------------------------------
+  // Quittung
+  // ------------------------------------------ */
+  const onDownloadReceipt = async () => {
+    await Receipt.getReceipt({firebase: firebase, eventUid: event.uid})
+      .then((result) => {
+        pdf(<EventReceiptPdf receiptData={result} authUser={authUser} />)
+          .toBlob()
+          .then((result) => {
+            fileSaver.saveAs(
+              result,
+              event.name + TEXT_CREATE_RECEIPT + TEXT_SUFFIX_PDF
+            );
+          })
+          .catch((error) => {
+            console.error(error);
+            if (onError) {
+              onError(error);
+            }
+          });
+      })
+      .catch((error) => {
+        console.error(error);
+        if (onError) {
+          onError(error);
+        }
+      });
+  };
+
   return (
     <React.Fragment>
       <Grid container spacing={2}>
@@ -267,6 +308,7 @@ const EventInfoPage = ({
             previewPictureUrl={
               localPicture ? URL.createObjectURL(localPicture) : ""
             }
+            onDownloadReceipt={onDownloadReceipt}
           />
         </Grid>
         <Grid item xs={12}>
@@ -300,6 +342,7 @@ interface EventBasicInfoCardProps {
   onDateDeleteClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
   onImageUpload: (file: File | null) => void;
   onImageDelete: () => void;
+  onDownloadReceipt: () => void;
   previewPictureUrl: string | null;
 }
 const EventBasicInfoCard = ({
@@ -310,11 +353,14 @@ const EventBasicInfoCard = ({
   onDateDeleteClick,
   onImageUpload,
   onImageDelete,
+  onDownloadReceipt,
   previewPictureUrl,
 }: EventBasicInfoCardProps) => {
   const classes = useStyles();
+  const theme = useTheme();
 
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 
   const handleFileChange = async (
     actionEvent: React.ChangeEvent<HTMLInputElement>
@@ -335,6 +381,21 @@ const EventBasicInfoCard = ({
       <CardHeader
         title={TEXT_EVENT_INFO}
         subheader={TEXT_DEFINE_BASIC_EVENT_DATA}
+        action={
+          event.refDocuments?.includes(EventRefDocuments.receipt) ? (
+            <Button
+              color="primary"
+              variant="outlined"
+              style={{
+                marginTop: theme.spacing(1),
+                marginRight: theme.spacing(0.6),
+              }}
+              onClick={onDownloadReceipt}
+            >
+              {TEXT_RECEIPT}
+            </Button>
+          ) : null
+        }
       />
       <CardContent>
         <Grid container spacing={2}>
@@ -519,7 +580,7 @@ const EventBasicInfoCard = ({
                     backgroundRepeat: "no-repeat",
                     backgroundSize: "contain",
                     borderRadius: "4px",
-                    mixBlendMode: "multiply",
+                    mixBlendMode: prefersDarkMode ? "normal" : "multiply",
                   }}
                 />
               </Grid>

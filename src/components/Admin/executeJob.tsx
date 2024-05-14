@@ -13,16 +13,12 @@ import CardContent from "@material-ui/core/CardContent";
 
 import {
   JOBS as TEXT_JOBS,
-  TEMP_JOBS as TEXT_TEMP_JOBS,
+  // TEMP_JOBS as TEXT_TEMP_JOBS,
 } from "../../constants/text";
 
 import {rebuildFile000AllRecipes} from "../../jobs/rebuildFile000AllRecipes";
 import {rebuildFile000AllUsers} from "../../jobs/rebuildFile000AllUsers";
-
-import {restructureRecipeDocuments} from "../../jobs/TS_Migration_restructureRecipes";
-// import {restructurePrivateRecipeDocuments} from "../../jobs/TS_Migration_restructurePrivateRecipes";
-import {restructureUserPublicProfile} from "../../jobs/TS_Migration_restructureUserPublicProfile";
-import {restructureEventDocuments} from "../../jobs/TS_Migration_restructureEvents";
+import {rebuildFile000AllEvents} from "../../jobs/rebuildFile000AllEvents";
 
 import useStyles from "../../constants/styles";
 
@@ -35,6 +31,7 @@ import AuthUser from "../Firebase/Authentication/authUser.class";
 import withEmailVerification from "../Session/withEmailVerification";
 import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
 import {CustomRouterProps} from "../Shared/global.interface";
+import Stats from "../Shared/stats.class";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -44,6 +41,8 @@ interface DocumentCounter {
   privateRecipes: number;
   allRecipes: number;
   allUsers: number;
+  allEvents: number;
+  statsCounter: number;
   publicUserProfile: number;
   restructeredEvents: number;
   restructureProducts: number;
@@ -55,6 +54,8 @@ interface JobMonitor {
   privateRecipes: boolean;
   allRecipes: boolean;
   allUsers: boolean;
+  allEvents: boolean;
+  statsCounter: boolean;
   publicUserProfile: boolean;
   restructeredEvents: boolean;
   restructureProducts: boolean;
@@ -86,6 +87,8 @@ const ExecuteJobBase: React.FC<
       privateRecipes: 0,
       allRecipes: 0,
       allUsers: 0,
+      allEvents: 0,
+      statsCounter: 0,
       publicUserProfile: 0,
       restructeredEvents: 0,
       restructureProducts: 0,
@@ -98,6 +101,8 @@ const ExecuteJobBase: React.FC<
     privateRecipes: false,
     allRecipes: false,
     allUsers: false,
+    allEvents: false,
+    statsCounter: false,
     publicUserProfile: false,
     restructeredEvents: false,
     restructureProducts: false,
@@ -107,20 +112,6 @@ const ExecuteJobBase: React.FC<
   if (!authUser) {
     return <React.Fragment></React.Fragment>;
   }
-
-  /* ------------------------------------------
-  // Rezepte (Dokumente) der neuen Struktur anpassen
-  // ------------------------------------------ */
-  const onRestructureRecipeDocuments = async () => {
-    await restructureRecipeDocuments(firebase).then((result) => {
-      setDocumentCounter({...documentCounter, restructeredRecipes: result});
-    });
-  };
-  // const onMovePriveRecipeDocuments = async () => {
-  //   await restructurePrivateRecipeDocuments(firebase).then((result) => {
-  //     setDocumentCounter({...documentCounter, privateRecipes: result});
-  //   });
-  // };
 
   const onRebuildFile000AllRecipes = async () => {
     await rebuildFile000AllRecipes(firebase).then((result) => {
@@ -134,20 +125,24 @@ const ExecuteJobBase: React.FC<
     });
   };
 
-  const onRestructePublicUserProfile = async () => {
-    setJobMonitor({...jobMonitor, publicUserProfile: true});
-    await restructureUserPublicProfile(firebase).then((result) => {
-      setDocumentCounter({...documentCounter, publicUserProfile: result});
-      setJobMonitor({...jobMonitor, publicUserProfile: false});
+  const onRebuildFile000AllEvents = async () => {
+    await rebuildFile000AllEvents(firebase, authUser).then((result) => {
+      setDocumentCounter({...documentCounter, allEvents: result});
     });
   };
-
-  const onRestructeEvents = async () => {
-    setJobMonitor({...jobMonitor, restructeredEvents: true});
-    await restructureEventDocuments(firebase, authUser).then((result) => {
-      setDocumentCounter({...documentCounter, restructeredEvents: result});
-      setJobMonitor({...jobMonitor, restructeredEvents: false});
-    });
+  const onRebuildStatsCounter = async () => {
+    setJobMonitor({...jobMonitor, statsCounter: true});
+    Stats.rebuildStats({
+      firebase: firebase,
+      authUser: authUser,
+      callback: (document) => {
+        setDocumentCounter({
+          ...documentCounter,
+          statsCounter: document.processedDocuments,
+        });
+        setJobMonitor({...jobMonitor, statsCounter: false});
+      },
+    }).catch((error) => console.error(error));
   };
 
   return (
@@ -161,18 +156,8 @@ const ExecuteJobBase: React.FC<
             <PanelJobList
               onRebuild000AllRecipes={onRebuildFile000AllRecipes}
               onRebuild000AllUsers={onRebuildFile000AllUsers}
-              documentCounter={documentCounter}
-              jobMonitor={jobMonitor}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <PanelTempJobList
-              onRestructureRecipeDocuments={onRestructureRecipeDocuments}
-              // onMovePriveRecipeDocuments={onMovePriveRecipeDocuments}
-              onRestructurePublicUserProfile={onRestructePublicUserProfile}
-              onRestructureEvents={onRestructeEvents}
-              // onRestructureProducts={onRestructureProducts}
-              // onFixEvents={onFixEvent}
+              onRebuild000AllEvents={onRebuildFile000AllEvents}
+              onRebuildStatsCounter={onRebuildStatsCounter}
               documentCounter={documentCounter}
               jobMonitor={jobMonitor}
             />
@@ -188,6 +173,8 @@ const ExecuteJobBase: React.FC<
 interface JobListProps {
   onRebuild000AllRecipes: () => void;
   onRebuild000AllUsers: () => void;
+  onRebuild000AllEvents: () => void;
+  onRebuildStatsCounter: () => void;
   documentCounter: DocumentCounter;
   jobMonitor: JobMonitor;
 }
@@ -195,6 +182,8 @@ interface JobListProps {
 const PanelJobList = ({
   onRebuild000AllRecipes,
   onRebuild000AllUsers,
+  onRebuild000AllEvents,
+  onRebuildStatsCounter,
   documentCounter,
   jobMonitor,
 }: JobListProps) => {
@@ -213,6 +202,7 @@ const PanelJobList = ({
           changedRecords={documentCounter.allRecipes}
           successMessage={`Dokument 000_allRecipes mit ${documentCounter.allRecipes} Rezepten neu aufgebaut.`}
         />
+        <br />
         <JobEntry
           onClick={onRebuild000AllUsers}
           jobName={"000_allUsers neu aufbauen"}
@@ -221,112 +211,24 @@ const PanelJobList = ({
           changedRecords={documentCounter.allUsers}
           successMessage={`Dokument 000_alUsers mit ${documentCounter.allUsers} Users neu aufgebaut.`}
         />
-      </CardContent>
-    </Card>
-  );
-};
-
-/* ===================================================================
-// ========================== Liste aller Jobs =======================
-// =================================================================== */
-interface PanelTempJobListProps {
-  onRestructureRecipeDocuments: () => void;
-  // onMovePriveRecipeDocuments: () => void;
-  onRestructurePublicUserProfile: () => void;
-  onRestructureEvents: () => void;
-  // onRestructureProducts: () => void;
-  // onFixEvents: () => void;
-  documentCounter: DocumentCounter;
-  jobMonitor: JobMonitor;
-}
-const PanelTempJobList = ({
-  onRestructureRecipeDocuments,
-  // onMovePriveRecipeDocuments,
-  onRestructurePublicUserProfile,
-  onRestructureEvents,
-  // onRestructureProducts,
-  // onFixEvents,
-  documentCounter,
-  jobMonitor,
-}: PanelTempJobListProps) => {
-  const classes = useStyles();
-  return (
-    <Card className={classes.card} key={"cardTempJobs"}>
-      <CardContent className={classes.cardContent} key={"cardContentTempJobs"}>
-        <Typography gutterBottom={true} variant="h5" component="h2">
-          {TEXT_TEMP_JOBS}
-        </Typography>
-        <Typography>
-          Folgende Jobs sind für die Umstellung der Datenstruktur (Migratiom
-          Typescript) angedacht. Diese dürfen nur <strong>EINMAL</strong>{" "}
-          ausgeführt werden.
-        </Typography>
-        <Typography color="error">
-          <strong>
-            Vor der Migration auf Firebase unbedingt die Berechtigungen
-            ausschalten, sodass ich als Admin alles darf.
-          </strong>
-        </Typography>
-        <br></br>
-        {/* <JobEntry
-          onClick={onRestructureProducts}
-          jobName={"Produkte restrukturieren"}
-          jobDescription={"Produkte in neue Strutkur umbiegen."}
-          jobIsRunning={jobMonitor.restructureProducts}
-          changedRecords={documentCounter.restructureProducts}
-          successMessage={`${documentCounter.restructureProducts} Produkte wurden angepasst.`}
-        />
-        <br></br> */}
+        <br />
         <JobEntry
-          onClick={onRestructureRecipeDocuments}
-          jobName={"Rezepte restrukturieren"}
-          jobDescription={
-            "Alle Rezept-Dokumente in Firebase nach der neuen File-Struktur umbiegen und in die privaten Verzeichnisse verschieben."
-          }
-          jobIsRunning={jobMonitor.restructeredRecipes}
-          changedRecords={documentCounter.restructeredRecipes}
-          successMessage={`${documentCounter.restructeredRecipes} Dokumente wurden angepasst.`}
+          onClick={onRebuild000AllEvents}
+          jobName={"000_allEvents neu aufbauen"}
+          jobDescription={"Dokument 000_allEvents neu aufbauen."}
+          jobIsRunning={jobMonitor.allEvents}
+          changedRecords={documentCounter.allEvents}
+          successMessage={`Dokument 000_alEvents mit ${documentCounter.allEvents} Events neu aufgebaut.`}
         />
-        <br></br>
-        {/* <JobEntry
-          onClick={onMovePriveRecipeDocuments}
-          jobName={"Private Rezepte verschieben"}
-          jobDescription={
-            "Alle privaten Rezepte in neuer Firebase Struktur verschieben."
-          }
-          jobIsRunning={jobMonitor.privateRecipes}
-          changedRecords={documentCounter.privateRecipes}
-          successMessage={`${documentCounter.privateRecipes} Dokumente wurden angepasst.`}
-        /> 
-        <br></br>*/}
+        <br />
         <JobEntry
-          onClick={onRestructurePublicUserProfile}
-          jobName={"Öffentliches User Profil umstrukturieren"}
-          jobDescription={
-            "Die Felder des öffentlichen User Profil der neuen Struktur anpassen."
-          }
-          jobIsRunning={jobMonitor.publicUserProfile}
-          changedRecords={documentCounter.publicUserProfile}
-          successMessage={`${documentCounter.publicUserProfile} Dokumente wurden angepasst.`}
+          onClick={onRebuildStatsCounter}
+          jobName={"Stats-Counter neu aufbauen"}
+          jobDescription={"Dokument stats/counter und Statistik neu berechnen."}
+          jobIsRunning={jobMonitor.statsCounter}
+          changedRecords={documentCounter.statsCounter}
+          successMessage={`Dokument stats/counter mit ${documentCounter.statsCounter} gelesenen Dokumenten neu aufgebaut.`}
         />
-        <br></br>
-        <JobEntry
-          onClick={onRestructureEvents}
-          jobName={"Anlässe restukturieren"}
-          jobDescription={"Anlässe in neue Struktur umbiegen"}
-          jobIsRunning={jobMonitor.restructeredEvents}
-          changedRecords={documentCounter.restructeredEvents}
-          successMessage={`${documentCounter.restructeredEvents} Dokumente wurden angepasst.`}
-        />
-        <br></br>
-        {/* <JobEntry
-          onClick={onFixEvents}
-          jobName={"Alter Anlass wiederherstellen"}
-          jobDescription={"JSON einfügen um alten Anlass wiederherzustellen"}
-          jobIsRunning={jobMonitor.fixEvent}
-          changedRecords={documentCounter.fixEvents}
-          successMessage={`${documentCounter.fixEvents} Dokumente wurden angepasst.`}
-        /> */}
       </CardContent>
     </Card>
   );

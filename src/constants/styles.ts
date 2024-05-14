@@ -1,7 +1,7 @@
 import {makeStyles} from "@material-ui/core/styles";
 import {alpha} from "@material-ui/core/styles/colorManipulator";
 
-import "typeface-roboto";
+// import "typeface-roboto";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -73,11 +73,6 @@ const useStyles = makeStyles((theme) => ({
     height: 0,
     paddingTop: "56.25%", // 16:9
   },
-  cardMediaQrCode: {
-    height: "100%",
-    margin: "auto",
-    maxWidth: "30%",
-  },
   cardContent: {
     flexGrow: 1,
   },
@@ -102,6 +97,8 @@ const useStyles = makeStyles((theme) => ({
   },
   cardActionRight: {
     justifyContent: "flex-end",
+    marginBottom: theme.spacing(2),
+    marginTop: theme.spacing(2),
   },
   alignGridItemContentRight: {
     justifyContent: "flex-end",
@@ -243,7 +240,7 @@ const useStyles = makeStyles((theme) => ({
   typographyCode: {
     fontFamily: "Roboto Mono",
   },
-  userProfileCardNameOnImageBackground: {
+  textOnCardMediaImage: {
     width: "100%",
     position: "absolute",
     bottom: "5%",
@@ -299,6 +296,16 @@ const useStyles = makeStyles((theme) => ({
   goBackButtonIcon: {
     marginLeft: theme.spacing(0.9),
   },
+  closeDrawerIconButton: {
+    flexGrow: 1,
+    position: "fixed",
+    margin: theme.spacing(1),
+    top: theme.spacing(1),
+    right: theme.spacing(1),
+    zIndex: 1000,
+    background: alpha(theme.palette.background.paper, 0.7), // color: theme.palette.primary.main,
+  },
+
   title: {
     flexGrow: 1,
   },
@@ -401,6 +408,9 @@ const useStyles = makeStyles((theme) => ({
   deleteButton: {
     color: "#C62828",
     borderColor: "#C62828",
+  },
+  dataGridDisabled: {
+    color: theme.palette.text.disabled,
   },
   /* ------------------------------------------
   // Rezept
@@ -508,6 +518,7 @@ const useStyles = makeStyles((theme) => ({
     alignContent: "flex-end",
     // paddingRight: "2%",
   },
+
   /* ------------------------------------------
   // Menüplan
   // ------------------------------------------ */
@@ -522,8 +533,20 @@ const useStyles = makeStyles((theme) => ({
   },
   menuplanRow: {
     display: "flex",
+    flexDirection: "row",
     padding: 0,
   },
+  menuplanRowOnDrag: {
+    display: "flex",
+    flexDirection: "row",
+    padding: 0,
+  },
+  menuplanRowNoDrag: {
+    display: "flex",
+    flexDirection: "row",
+    padding: 0,
+  },
+
   menuplanItem: {
     flexGrow: 1,
     flexBasis: 0,
@@ -575,6 +598,14 @@ const useStyles = makeStyles((theme) => ({
     transition: "background-color 0.2s ease",
   },
   ListNoDrop: {
+    backgroundColor: "inherit",
+    transition: "background-color 0.2s ease",
+  },
+  mealRowOnDrop: {
+    backgroundColor: theme.palette.action.hover,
+    transition: "background-color 0.2s ease",
+  },
+  mealRowNoDrop: {
     backgroundColor: "inherit",
     transition: "background-color 0.2s ease",
   },
@@ -705,16 +736,16 @@ const useStyles = makeStyles((theme) => ({
   // Worfklow Chips
   // ------------------------------------------ */
   workflowChipActive: {
-    backgroundColor: "#01579B",
-    color: "white",
+    backgroundColor: "#01579B !important",
+    color: "white !important",
   },
   workflowChipDone: {
-    backgroundColor: "#1B5E20",
-    color: "white",
+    backgroundColor: "#1B5E20 !important",
+    color: "white !important",
   },
   workflowChipAborted: {
-    backgroundColor: "#B71C1C",
-    color: "white",
+    backgroundColor: "#B71C1C !important",
+    color: "white !important",
   },
   /* ------------------------------------------
   // Request 
@@ -749,6 +780,34 @@ const useStyles = makeStyles((theme) => ({
     height: theme.spacing(7),
     alignItems: "flex-end",
     display: "flex",
+  },
+  /* ------------------------------------------
+  // Twint Button
+  // ------------------------------------------ */
+  cardMediaQrCode: {
+    height: "100%",
+    margin: "auto",
+    maxWidth: "350px",
+  },
+  twintButton: {
+    textTransform: "none",
+    maxWidth: "420px",
+  },
+  twintButtonLightMode: {
+    backgroundColor: "#262626",
+    color: "#fff",
+    "&:hover": {
+      backgroundColor: "#262626", // Hintergrundfarbe beim Hover-Effekt
+      boxShadow: "#fff", // Schatten beim Hover-Effekt
+    },
+  },
+  twintButtonDarkMode: {
+    backgroundColor: "#fff",
+    color: "#000",
+    "&:hover": {
+      backgroundColor: "#fff", // Hintergrundfarbe beim Hover-Effekt
+      boxShadow: "#000", // Schatten beim Hover-Effekt
+    },
   },
 }));
 export default useStyles;

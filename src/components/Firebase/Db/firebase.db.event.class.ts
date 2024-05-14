@@ -17,6 +17,7 @@ import FirebaseDbEventUsedRecipes from "./firebase.db.event.usedRecipes.class";
 import FirebaseDbEventShoppingList from "./firebase.db.event.shoppingList";
 import FirebaseDbEventShoppingListCollection from "./firebase.db.event.shoppingListCollection.class";
 import FirebaseDbEventMaterialList from "./firebase.db.event.materialList.class";
+import FirebaseDbEventReceipt from "./firebase.db.event.receipt.class";
 
 export class FirebaseDbEvent extends FirebaseDbSuper {
   firebase: Firebase;
@@ -26,6 +27,7 @@ export class FirebaseDbEvent extends FirebaseDbSuper {
   shoppingList: FirebaseDbEventShoppingList;
   shoppingListCollection: FirebaseDbEventShoppingListCollection;
   materialList: FirebaseDbEventMaterialList;
+  receipt: FirebaseDbEventReceipt;
   /* =====================================================================
   // Constructor
   // ===================================================================== */
@@ -40,6 +42,7 @@ export class FirebaseDbEvent extends FirebaseDbSuper {
       firebase
     );
     this.materialList = new FirebaseDbEventMaterialList(firebase);
+    this.receipt = new FirebaseDbEventReceipt(firebase);
   }
   /* =====================================================================
   // Collection holen

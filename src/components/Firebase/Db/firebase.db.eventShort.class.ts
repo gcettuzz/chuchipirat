@@ -51,19 +51,7 @@ export class FirebaseDbEventShort extends FirebaseDbSuper {
   // Daten für DB-Strutkur vorbereiten
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
-    const eventShort = {
-      [value.uid]: {
-        name: value.name,
-        motto: value.motto,
-        location: value.location,
-        noOfCooks: value.noOfCooks,
-        numberOfDays: value.numberOfDays,
-        startDate: value.startDate,
-        created: value.created,
-      },
-    };
-
-    return eventShort;
+    return value;
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten

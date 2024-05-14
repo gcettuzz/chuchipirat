@@ -35,6 +35,7 @@ interface ConvertQuantity {
   productUid?: Product["uid"];
   fromUnit: Unit["key"];
   toUnit: Unit["key"];
+  units: Unit[];
   unitConversionBasic: UnitConversionBasic;
   unitConversionProducts?: UnitConversionProducts;
 }
@@ -216,17 +217,19 @@ export default class UnitConversion {
     productUid,
     fromUnit,
     toUnit,
+    units,
     unitConversionBasic,
     unitConversionProducts,
   }: ConvertQuantity): {convertedQuantity: number; convertedUnit: string} => {
     let convertedUnit: Unit["key"];
     let convertedQuantity = 0;
 
+    const toUnitDimension = Unit.getDimensionOfUnit(units, toUnit);
+
     if (toUnit == fromUnit) {
       // Umrechnen
       return {convertedQuantity: quantity, convertedUnit: toUnit};
     }
-
     let conversionRule:
       | SingleUnitConversionProduct
       | SingleUnitConversionBasic
@@ -242,9 +245,15 @@ export default class UnitConversion {
     if (!productUid || !conversionRule) {
       // Kein Produkt oder keine Produkt-spezifische Umrechung gefunden
       // Basis Umrechnung suchen
-      conversionRule = Object.values(unitConversionBasic).find(
-        (rule) => rule.fromUnit === fromUnit
-      );
+      conversionRule = Object.values(unitConversionBasic).find((rule) => {
+        // Bei der Umrechnung muss die Dimension berücksichtigt werden
+        // Wir können von EL (Masse) nicht in die Einkaufseinheit Volumen umrechnen.
+        const ruleDimension = Unit.getDimensionOfUnit(units, rule.fromUnit);
+
+        if (rule.fromUnit === fromUnit && ruleDimension === toUnitDimension) {
+          return true;
+        }
+      });
     }
 
     if (conversionRule) {
@@ -267,6 +276,7 @@ export default class UnitConversion {
         quantity: convertedQuantity,
         fromUnit: conversionRule.toUnit,
         toUnit: toUnit,
+        units: units,
         unitConversionBasic: unitConversionBasic,
       });
     }

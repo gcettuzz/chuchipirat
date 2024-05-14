@@ -1,5 +1,4 @@
 import React from "react";
-import {useHistory} from "react-router";
 
 import {Container, Grid, Card, Typography, CardMedia} from "@material-ui/core";
 
@@ -38,20 +37,41 @@ import useStyles from "../../constants/styles";
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
 import {HOME as ROUTE_HOME} from "../../constants/routes";
+import {AuthUserContext} from "../Session/authUserContext";
+import {CustomRouterProps} from "../Shared/global.interface";
+import AuthUser from "../Firebase/Authentication/authUser.class";
+
+/* ===================================================================
+// ================================ Page =============================
+// =================================================================== */
+const LandingPage = (props) => {
+  return (
+    <AuthUserContext.Consumer>
+      {(authUser) => <LandingBase {...props} authUser={authUser} />}
+    </AuthUserContext.Consumer>
+  );
+};
 
 /* ===================================================================
 // ================================ Base =============================
 // =================================================================== */
-const LandingPage = () => {
-  // const authUser = useAuthUser();
+export const LandingBase: React.FC<
+  CustomRouterProps & {authUser: AuthUser | null}
+> = ({authUser, history}) => {
   const classes = useStyles();
-  const authUser = null;
-  const {push} = useHistory();
+  // const {push} = useHistory();
 
   // Wenn angemeldet direkt weiterleiten
-  if (authUser) {
-    push({pathname: ROUTE_HOME});
-  }
+  // if (authUser) {
+  //   push({pathname: ROUTE_HOME});
+  // }
+  React.useEffect(() => {
+    // Wenn angemeldet direkt weiterleiten
+    if (authUser) {
+      history.push({pathname: ROUTE_HOME});
+    }
+  }, [authUser, history]);
+
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}
@@ -67,7 +87,7 @@ const LandingPage = () => {
             variant: "contained",
             color: "primary",
             onClick: () => {
-              push({pathname: ROUTE_SIGN_IN});
+              history.push({pathname: ROUTE_SIGN_IN});
             },
           },
           {
@@ -78,7 +98,7 @@ const LandingPage = () => {
             variant: "outlined",
             color: "primary",
             onClick: () => {
-              push({pathname: ROUTE_SIGN_UP});
+              history.push({pathname: ROUTE_SIGN_UP});
             },
           },
         ]}

@@ -16,6 +16,7 @@ import {Diet} from "../../Product/product.class";
 import {
   Ingredient,
   PositionType,
+  RecipeMaterialPosition,
   RecipeObjectStructure,
   RecipeType,
 } from "../../Recipe/recipe.class";
@@ -23,6 +24,7 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+
 export class FirebaseDbRecipe extends FirebaseDbSuper {
   firebase: Firebase;
   comment: FirebaseDbRecipeComment;
@@ -39,6 +41,7 @@ export class FirebaseDbRecipe extends FirebaseDbSuper {
   /* =====================================================================
   // Collection holen
   // ===================================================================== */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getCollection(uids: string[]) {
     throw Error(ERROR_WRONG_DB_CLASS);
     return this.firebase.db.collection("recipes");
@@ -71,6 +74,7 @@ export class FirebaseDbRecipe extends FirebaseDbSuper {
     // Für die DB braucht es ein Array mit UsedProduct (für diverse Suchen)
     // da dies nur auf der DB benötigt wird, wird das auch nur hier generiert
     const usedProducts: string[] = [];
+    const usedMaterials: string[] = [];
 
     Object.values(
       value.ingredients.entries as RecipeObjectStructure<Ingredient>["entries"]
@@ -79,6 +83,15 @@ export class FirebaseDbRecipe extends FirebaseDbSuper {
         usedProducts.push(ingredient.product.uid);
       }
     });
+
+    if (value.materials.order.length > 0) {
+      Object.values(
+        value.materials
+          .entries as RecipeObjectStructure<RecipeMaterialPosition>["entries"]
+      ).forEach((material) => {
+        usedMaterials.push(material.material.uid);
+      });
+    }
 
     const recipe = {
       ingredients: value.ingredients,
@@ -103,6 +116,7 @@ export class FirebaseDbRecipe extends FirebaseDbSuper {
         cooking: value.times.cooking,
       },
       usedProducts: usedProducts,
+      usedMaterials: usedMaterials,
       isInReview: value.isInReview ? value.isInReview : false,
       created: value.created,
       lastChange: value.lastChange,

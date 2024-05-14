@@ -337,30 +337,6 @@ const UserProfileBase: React.FC<
     const selectedFile = event.target.files?.[0] || null;
 
     dispatch({type: ReducerActions.USER_PICTURE_SET, payload: selectedFile});
-    // Upload Start...
-    // dispatchUserProfile({
-    //   type: ReducerActions.PICTURE_UPLOAD_INIT,
-    // });
-    // console.log(state.data);
-    // console.log(file);
-    // await User.uploadPicture({
-    //   firebase: firebase,
-    //   file: file,
-    //   userProfile: state.data,
-    //   authUser: authUser,
-    // })
-    //   .then((downloadURL) => {
-    //     dispatchUserProfile({
-    //       type: ReducerActions.PICTURE_UPLOAD_SUCCESS,
-    //       payload: downloadURL,
-    //     });
-    //   })
-    //   .catch((error) => {
-    //     dispatchUserProfile({
-    //       type: ReducerActions.GENERIC_ERROR,
-    //       payload: error,
-    //     });
-    //   });
   };
   /* ------------------------------------------
   // Bild löschen
@@ -568,7 +544,7 @@ const ProfileCard = ({
               : userProfile.displayName
           }
         />
-        <div className={classes.userProfileCardNameOnImageBackground}>
+        <div className={classes.textOnCardMediaImage}>
           {editMode && (
             <div>
               <input

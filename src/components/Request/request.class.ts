@@ -17,6 +17,7 @@ import {
 import Role from "../../constants/roles";
 import MailTemplate from "../../constants/mailTemplates";
 import _ from "lodash";
+import {RecipientType} from "../Admin/mailConsole.class";
 export interface GetActiveRequests {
   firebase: Firebase;
   authUser: AuthUser;
@@ -38,6 +39,11 @@ interface CreateRequest<T> {
   firebase: Firebase;
   requestObject: T;
   messageForReview: string;
+  authUser: AuthUser;
+}
+
+interface CreateShortRequest {
+  request: Request;
   authUser: AuthUser;
 }
 interface PrepareRequestData<T> {
@@ -206,7 +212,7 @@ export abstract class Request {
         await firebase.request.active
           .create<Request>({value: this, uids: [], authUser: authUser})
           .then((result) => {
-            this.uid = result.uid;
+            this.uid = result.documentUid;
           })
           .catch((error) => {
             throw error;
@@ -225,24 +231,20 @@ export abstract class Request {
           });
       })
       .then(async () => {
-        // Log-File mit neu erzeugtem Request
-        await firebase.request.log.update({
-          uids: [],
-          value: {
-            uid: this.uid,
-            number: this.number,
-            requestObject: this.requestObject,
-            status: this.status,
-            author: {
-              uid: authUser.uid,
-              displayName: authUser.publicProfile.displayName,
-              firstName: authUser.firstName,
-              lastName: authUser.lastName,
-              email: authUser.email,
+        await firebase.request
+          .update({
+            uids: ["active"],
+            value: {
+              [this.uid]: Request.createShortRequest({
+                request: this,
+                authUser: authUser,
+              }),
             },
-          },
-          authUser: authUser,
-        });
+            authUser: authUser,
+          })
+          .catch((error) => {
+            throw error;
+          });
       })
       .then(() => {
         // Post-Function auslösen
@@ -258,6 +260,27 @@ export abstract class Request {
       });
     return this.number;
   }
+  // ===================================================================== */
+  /**
+   * Kurzform generieren für Übersichtsfile active/closed.
+   * @param param0 - Request
+   */
+  static createShortRequest = ({request, authUser}: CreateShortRequest) => {
+    return {
+      requestType: request.requestType,
+      number: request.number,
+      requestObject: request.requestObject,
+      status: request.status,
+      author: {
+        uid: authUser.uid,
+        displayName: authUser.publicProfile.displayName,
+        firstName: authUser.firstName,
+        lastName: authUser.lastName,
+        email: authUser.email,
+      },
+    };
+  };
+
   // ===================================================================== */
   /**
    * Definition der möglichen Übergänge.
@@ -293,7 +316,10 @@ export abstract class Request {
         throw new Error("RequestType unbekannt.");
     }
 
-    if (request.status === RequestStatus.done) {
+    if (
+      request.status === RequestStatus.done ||
+      request.status === RequestStatus.declined
+    ) {
       Request.closeRequest({
         request: request,
         firebase: firebase,
@@ -319,7 +345,9 @@ export abstract class Request {
       firstName: authUser.firstName,
       lastName: authUser.lastName,
       email: authUser.email,
-      pictureSrc: authUser.publicProfile.pictureSrc.normalSize,
+      pictureSrc: authUser.publicProfile?.pictureSrc?.normalSize
+        ? authUser.publicProfile.pictureSrc.normalSize
+        : "",
     };
     this.assignee = {
       uid: "",
@@ -425,7 +453,7 @@ export abstract class Request {
         .readCollection<Request>({
           uids: [],
           orderBy: {field: "number", sortOrder: SortOrder.asc},
-          limit: 100,
+          limit: 1000,
         })
         .then((result) => (requests = result));
     } else {
@@ -461,7 +489,7 @@ export abstract class Request {
         .readCollection<Request>({
           uids: [],
           orderBy: {field: "number", sortOrder: SortOrder.asc},
-          limit: 100,
+          limit: 1000,
         })
         .then((result) => (requests = result));
     } else {
@@ -502,23 +530,35 @@ export abstract class Request {
       newValue: {status: request.status},
     });
 
-    firebase.request.active.updateFields({
-      uids: [request.uid],
-      values: {
-        status: request.status,
-        changeLog: request.changeLog,
-      },
-      authUser: authUser,
-    });
+    firebase.request.active
+      .updateFields({
+        uids: [request.uid],
+        values: {
+          status: request.status,
+          changeLog: request.changeLog,
+        },
+        authUser: authUser,
+      })
+      .then(async () => {
+        // Index-File updaten
+        await firebase.request
+          .update({
+            uids: ["active"],
+            value: {
+              [request.uid]: Request.createShortRequest({
+                request: request,
+                authUser: authUser,
+              }),
+            },
+            authUser: authUser,
+          })
+          .catch((error) => {
+            throw error;
+          });
+      });
 
     const logField = {};
     logField[`${request.uid}.status`] = request.status;
-
-    firebase.request.log.updateFields({
-      uids: [],
-      values: logField,
-      authUser: authUser,
-    });
 
     // PostFunction...
     Request.transitionPostFunction({
@@ -589,14 +629,32 @@ export abstract class Request {
       newValue: {asignee: request.assignee},
     });
 
-    firebase.request.active.updateFields({
-      uids: [request.uid],
-      values: {
-        assignee: request.assignee,
-        changeLog: request.changeLog,
-      },
-      authUser: authUser,
-    });
+    firebase.request.active
+      .updateFields({
+        uids: [request.uid],
+        values: {
+          assignee: request.assignee,
+          changeLog: request.changeLog,
+        },
+        authUser: authUser,
+      })
+      .then(() => {
+        // Indexfile updaten
+        firebase.request
+          .update({
+            uids: ["active"],
+            value: {
+              [request.uid]: Request.createShortRequest({
+                request: request,
+                authUser: authUser,
+              }),
+            },
+            authUser: authUser,
+          })
+          .catch((error) => {
+            throw error;
+          });
+      });
 
     return request;
   }
@@ -624,8 +682,8 @@ export abstract class Request {
       .then(() => {
         // Mail auslösen, dass neuer Kommentar erfasst wurde
         // Der Empfänger ist jeweils die andere Partei Author*in <--> Bearbeiter*in
-        if (request.assignee.uid && request.assignee.uid) {
-          firebase.cloudFunction.mailUser.triggerCloudFunction({
+        if (request.assignee.uid && request.author.uid) {
+          firebase.cloudFunction.sendMail.triggerCloudFunction({
             values: {
               templateData: {
                 headerPictureSrc: request.requestObject.pictureSrc,
@@ -633,10 +691,11 @@ export abstract class Request {
                 commentAuthor: authUser.publicProfile.displayName,
                 comment: comment,
               },
-              recipientUid:
+              recipients:
                 request.author.uid === authUser.uid
                   ? request.assignee.uid
                   : request.author.uid,
+              recipientType: RecipientType.uid,
               mailTemplate: MailTemplate.requestNewComment,
             },
             authUser: authUser,
@@ -662,6 +721,34 @@ export abstract class Request {
         value: request,
         authUser: authUser,
       })
+      .then(() => {
+        // IndexFile anpassen
+        firebase.request
+          .deleteField({
+            uids: ["active"],
+            fieldName: request.uid,
+          })
+          .catch((error) => {
+            console.error(error);
+            throw error;
+          });
+
+        // IndexFile anpassen
+        firebase.request
+          .update({
+            uids: ["closed"],
+            value: {
+              [request.uid]: Request.createShortRequest({
+                request: request,
+                authUser: authUser,
+              }),
+            },
+            authUser: authUser,
+          })
+          .catch((error) => {
+            throw error;
+          });
+      })
       .catch((error) => {
         console.error(error);
         throw error;
@@ -671,16 +758,5 @@ export abstract class Request {
     // Log updaten
     const logField = {};
     logField[`${request.uid}.status`] = request.status;
-
-    firebase.request.log
-      .updateFields({
-        uids: [],
-        values: logField,
-        authUser: authUser,
-      })
-      .catch((error) => {
-        console.error(error);
-        throw error;
-      });
   }
 }

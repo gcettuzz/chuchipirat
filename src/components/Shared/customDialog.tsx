@@ -15,11 +15,11 @@ import {
 import WarningIcon from "@material-ui/icons/Warning";
 
 import {
-  CANCEL as TEXT_CANCEL,
-  DELETE as TEXT_DELETE,
-  DIALOG_TITLE_DELETION_CONFIRMATION as TEXT_DIALOG_TITLE_DELETION_CONFIRMATION,
-  DIALOG_SUBTITLE_DELETION_CONFIRMATION as TEXT_DIALOG_SUBTITLE_DELETION_CONFIRMATION,
-  DIALOG_TEXT_DELETION_CONFIRMATION as TEXT_DIALOG_TEXT_DELETION_CONFIRMATION,
+  // CANCEL as TEXT_CANCEL,
+  // DELETE as TEXT_DELETE,
+  // DIALOG_TITLE_DELETION_CONFIRMATION as TEXT_DIALOG_TITLE_DELETION_CONFIRMATION,
+  // DIALOG_SUBTITLE_DELETION_CONFIRMATION as TEXT_DIALOG_SUBTITLE_DELETION_CONFIRMATION,
+  // DIALOG_TEXT_DELETION_CONFIRMATION as TEXT_DIALOG_TEXT_DELETION_CONFIRMATION,
   DIALOG_DELETION_CONFIRMATION_STRING_DOES_NOT_MATCH as TEXT_DIALOG_DELETION_CONFIRMATION_STRING_DOES_NOT_MATCH,
   REQUIRED as TEXT_REQUIRED,
 } from "../../constants/text";
@@ -45,6 +45,7 @@ const CustomDialog = () => {
   const {dialogState, onConfirm, onCancel} = useCustomDialog();
   const portalElement = document.getElementById("portal");
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [confirmDeletionValidation, setConfirmDeletionValidation] =
     React.useState({
       confirmationString: {hasError: false, errorText: ""},
@@ -207,7 +208,7 @@ const CustomDialog = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    ) : dialogState.dialogType == DialogType.ConfirmDeletion ? (
+    ) : dialogState.dialogType == DialogType.ConfirmSecure ? (
       // Löschung bestätigen
       <Dialog
         open={dialogState.visible}
@@ -228,14 +229,14 @@ const CustomDialog = () => {
             <WarningIcon
               className={classes.dialogDeletionConfirmationWarningIcon}
             />
-            <span>{TEXT_DIALOG_TITLE_DELETION_CONFIRMATION}</span>
+            <span>{dialogState.title}</span>
           </div>
           <DialogContentText className={classes.dialogDeletionConfirmationText}>
-            {TEXT_DIALOG_SUBTITLE_DELETION_CONFIRMATION}
+            {dialogState.subtitle}
           </DialogContentText>
         </DialogTitle>
         <DialogContent>
-          {TEXT_DIALOG_TEXT_DELETION_CONFIRMATION}{" "}
+          {dialogState.text}{" "}
           <strong>
             {dialogState.deletionDialogProperties?.confirmationString}
           </strong>
@@ -258,14 +259,16 @@ const CustomDialog = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={onCancelConfirmDeletion}>{TEXT_CANCEL}</Button>
+          <Button onClick={onCancelConfirmDeletion}>
+            {dialogState.buttonTextCancel}
+          </Button>
           <Button
             className={classes.dialogDeletedeleteButton}
             disabled={!formFields.inputMatches}
             onClick={onOkConfirmDeletion}
             variant="contained"
           >
-            {TEXT_DELETE}
+            {dialogState.buttonTextConfirm}
           </Button>
         </DialogActions>
       </Dialog>

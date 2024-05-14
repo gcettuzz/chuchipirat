@@ -112,6 +112,18 @@ interface UpdateEmail {
   newEmail: string;
   authUser: AuthUser;
 }
+interface UpdateRoles {
+  firebase: Firebase;
+  userUid: User["uid"];
+  newRoles: User["roles"];
+  authUser: AuthUser;
+}
+// interface SetDisabled {
+//   firebase: Firebase;
+//   userUid: User["uid"];
+//   disabled: boolean;
+//   authUser: AuthUser;
+// }
 
 export default class User {
   uid: string;
@@ -121,7 +133,6 @@ export default class User {
   lastLogin: Date;
   noLogins: number;
   roles: Role[];
-  deactivated?: boolean;
   /* =====================================================================
   // Konstruktor
   // ===================================================================== */
@@ -189,7 +200,7 @@ export default class User {
     user.uid = uid;
     user.firstName = firstName;
     user.lastName = lastName;
-    user.email = email;
+    user.email = email.toLocaleLowerCase();
     user.noLogins = 0;
     user.roles = [Role.basic];
 
@@ -451,6 +462,10 @@ export default class User {
   }: SaveFullProfile) => {
     let pictureSrc = userProfile.pictureSrc;
 
+    if (userProfile.displayName == "") {
+      userProfile.displayName = userProfile.firstName;
+    }
+
     // Alte werte holen um zu vergleichen ob die Cloud Function gestartet werden muss
     let actualPublicProfile = <UserPublicProfile>{};
     await firebase.user.public.profile
@@ -527,7 +542,7 @@ export default class User {
         });
       }
       if (actualPublicProfile.motto !== userProfile.motto) {
-        firebase.cloudFunction.userMotto.triggerCloudFunction({
+        firebase.cloudFunction.updateUserMotto.triggerCloudFunction({
           values: {
             uid: userProfile.uid,
             newValue: userProfile.motto,
@@ -592,7 +607,7 @@ export default class User {
       });
 
     // CloudFunction Triggern
-    firebase.cloudFunction.userPictureSrc.triggerCloudFunction({
+    firebase.cloudFunction.updateUserPictureSrc.triggerCloudFunction({
       values: {
         uid: authUser.uid,
         pictureSrc: {smallSize: "", normalSize: "", fullSize: ""} as Picture,
@@ -632,4 +647,48 @@ export default class User {
       });
     firebase.analytics.logEvent(FirebaseAnalyticEvent.userChangedEmail);
   };
+  /* =====================================================================
+  // Berechtigungen aktualiseiren
+  // ===================================================================== */
+  static updateRoles = async ({
+    firebase,
+    userUid,
+    newRoles,
+    authUser,
+  }: UpdateRoles) => {
+    firebase.user
+      .updateFields({
+        uids: [userUid],
+        values: {roles: newRoles},
+        authUser: authUser,
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  };
+  /* =====================================================================
+  // User aktiv/oder inaktiv schalten
+  // ===================================================================== */
+  // static setDisabledState = async ({
+  //   firebase,
+  //   userUid,
+  //   disabled,
+  //   authUser,
+  // }: SetDisabled) => {
+  //   firebase.auth
+  //     .updateUser(userUid, {disabled: disabled})
+  //     .then(() => {
+  //       // Auf dem Datensatz nachführen
+  //       firebase.user.updateFields({
+  //         uids: [userUid],
+  //         values: {disabled: disabled},
+  //         authUser: authUser,
+  //       });
+  //     })
+  //     .catch((error) => {
+  //       console.error(error);
+  //       throw error;
+  //     });
+  // };
 }

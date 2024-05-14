@@ -39,6 +39,13 @@ import {
   IMAGE_IS_BEEING_UPLOADED as TEXT_IMAGE_IS_BEEING_UPLOADED,
   EVENT_IS_BEEING_SAVED as TEXT_EVENT_IS_BEEING_SAVED,
   DELETE_EVENT as TEXT_DELETE_EVENT,
+  ALERT_TITLE_UUPS as TEXT_ALERT_TITLE_UUPS,
+  DIALOG_TITLE_DELETION_CONFIRMATION as TEXT_DIALOG_TITLE_DELETION_CONFIRMATION,
+  DIALOG_SUBTITLE_DELETION_CONFIRMATION as TEXT_DIALOG_SUBTITLE_DELETION_CONFIRMATION,
+  DIALOG_TEXT_DELETION_CONFIRMATION as TEXT_DIALOG_TEXT_DELETION_CONFIRMATION,
+  CANCEL as TEXT_CANCEL,
+  DELETE as TEXT_DELETE,
+  DB_DOCUMENT_DELETED as TEXT_DB_DOCUMENT_DELETED,
 } from "../../../constants/text";
 
 import {HOME as ROUTE_HOME} from "../../../constants/routes";
@@ -84,6 +91,8 @@ import {
 } from "../../Session/authUserContext";
 import {CustomRouterProps} from "../../Shared/global.interface";
 import withEmailVerification from "../../Session/withEmailVerification";
+import AlertMessage from "../../Shared/AlertMessage";
+import Stats, {StatsField} from "../../Shared/stats.class";
 
 /* ===================================================================
 // ============================== Global =============================
@@ -225,7 +234,6 @@ type State = {
     departments: boolean;
     unitCoversion: boolean;
   };
-  isError: boolean;
   error: Error | null;
 };
 
@@ -585,9 +593,9 @@ const eventReducer = (state: State, action: DispatchAction): State => {
       };
     case ReducerActions.GENERIC_ERROR:
       // Allgemeiner Fehler
+      console.warn(action.payload);
       return {
         ...state,
-        isError: true,
         isLoading: false,
         error: action.payload as Error,
       };
@@ -632,7 +640,6 @@ const INITITIAL_STATE: State = {
     departments: false,
     unitCoversion: false,
   },
-  isError: false,
   error: null,
 };
 
@@ -701,6 +708,9 @@ const EventBase: React.FC<
             payload: event,
           });
         },
+        errorCallback: (error) => {
+          dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+        },
       })
         .then((result) => {
           unsubscribe = result;
@@ -717,22 +727,29 @@ const EventBase: React.FC<
     //Group-Config
     let unsubscribe: (() => void) | undefined;
     dispatch({type: ReducerActions.GROUP_CONFIG_FETCH_INIT, payload: {}});
-    EventGroupConfiguration.getGroupConfigurationListener({
-      firebase: firebase,
-      uid: eventUid,
-      callback: (groupConfigruation) => {
-        dispatch({
-          type: ReducerActions.GROUP_CONFIG_FETCH_SUCCESS,
-          payload: groupConfigruation,
-        });
-      },
-    })
-      .then((result) => {
-        unsubscribe = result;
+    try {
+      EventGroupConfiguration.getGroupConfigurationListener({
+        firebase: firebase,
+        uid: eventUid,
+        callback: (groupConfigruation) => {
+          dispatch({
+            type: ReducerActions.GROUP_CONFIG_FETCH_SUCCESS,
+            payload: groupConfigruation,
+          });
+        },
+        errorCallback: (error) => {
+          dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+        },
       })
-      .catch((error) => {
-        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
-      });
+        .then((result) => {
+          unsubscribe = result;
+        })
+        .catch((error) => {
+          dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+        });
+    } catch (error) {
+      dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+    }
     return function cleanup() {
       unsubscribe && unsubscribe();
     };
@@ -742,6 +759,7 @@ const EventBase: React.FC<
     let unsubscribe: (() => void) | undefined;
     if (!state.menuplan.uid) {
       dispatch({type: ReducerActions.MENUPLAN_FETCH_INIT, payload: {}});
+
       Menuplan.getMenuplanListener({
         firebase: firebase,
         uid: eventUid,
@@ -750,6 +768,9 @@ const EventBase: React.FC<
             type: ReducerActions.MENUPLAN_FETCH_SUCCESS,
             payload: menuplan,
           });
+        },
+        errorCallback: (error) => {
+          dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
         },
       })
         .then((result) => {
@@ -768,7 +789,6 @@ const EventBase: React.FC<
     // ShoppingList-Collection
     if (
       activeTab == EventTabs.shoppingList &&
-      !state.shoppingListCollection.eventUid &&
       state.event.refDocuments?.includes(EventRefDocuments.shoppingList)
     ) {
       let unsubscribe: (() => void) | undefined;
@@ -929,7 +949,6 @@ const EventBase: React.FC<
     // Verwendete Rezepte
     if (
       activeTab == EventTabs.usedRecipes &&
-      !state.usedRecipes.uid &&
       state.event.refDocuments?.includes(EventRefDocuments.usedRecipes)
     ) {
       let unsubscribe: () => void;
@@ -942,6 +961,9 @@ const EventBase: React.FC<
             type: ReducerActions.USED_RECIPES_FETCH_SUCCESS,
             payload: usedRecipes,
           });
+        },
+        errorCallback: (error) => {
+          dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
         },
       })
         .then((result) => {
@@ -959,7 +981,6 @@ const EventBase: React.FC<
     // Materialliste
     if (
       activeTab == EventTabs.materialList &&
-      !state.materialList.uid &&
       state.event.refDocuments?.includes(EventRefDocuments.materialList)
     ) {
       let unsubscribe: () => void;
@@ -972,6 +993,9 @@ const EventBase: React.FC<
             type: ReducerActions.MATERIALLIST_FETCH_SUCCESS,
             payload: materialList,
           });
+        },
+        errorCallback: (error) => {
+          dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
         },
       })
         .then((result) => {
@@ -1030,18 +1054,13 @@ const EventBase: React.FC<
     const menuplan = Menuplan.recalculatePortions({
       menuplan: state.menuplan,
       groupConfig: groupConfiguration,
+      firebase: firebase,
     });
 
     // neuer Menüplan speichern
     onMenuplanUpdate(menuplan);
 
     // Kein zurückschreiben in den State, da der Listener, das wieder erhält....
-
-    // // neue GroupConfig in State aufnehmen
-    // dispatch({
-    //   type: ReducerActions.GROUP_CONFIG_FETCH_SUCCESS,
-    //   payload: groupConfiguration,
-    // });
   };
   const onShoppingListUpdate = (shoppingList: ShoppingList) => {
     ShoppingList.save({
@@ -1188,6 +1207,13 @@ const EventBase: React.FC<
       existingEvent: state.event,
     });
 
+    // Statistik anpassen
+    Stats.incrementStat({
+      firebase: firebase,
+      field: StatsField.noPlanedDays,
+      value: eventDraft.event.numberOfDays - state.event.numberOfDays,
+    });
+
     onMenuplanUpdate(updatedMenuplan);
     onEventSave(eventDraft.event);
     dispatch({
@@ -1200,8 +1226,13 @@ const EventBase: React.FC<
   };
   const onEventDelete = async () => {
     const isConfirmed = await customDialog({
-      dialogType: DialogType.ConfirmDeletion,
+      dialogType: DialogType.ConfirmSecure,
       deletionDialogProperties: {confirmationString: state.event.name},
+      title: TEXT_DIALOG_TITLE_DELETION_CONFIRMATION,
+      subtitle: TEXT_DIALOG_SUBTITLE_DELETION_CONFIRMATION,
+      text: TEXT_DIALOG_TEXT_DELETION_CONFIRMATION,
+      buttonTextCancel: TEXT_CANCEL,
+      buttonTextConfirm: TEXT_DELETE,
     });
     if (!isConfirmed) {
       return;
@@ -1431,6 +1462,11 @@ const EventBase: React.FC<
               payload: shoppingList,
             });
           },
+          errorCallback: (error) => {
+            if (error.message !== TEXT_DB_DOCUMENT_DELETED) {
+              dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+            }
+          },
         })
           .then((result) => {
             dispatch({
@@ -1499,7 +1535,7 @@ const EventBase: React.FC<
             ? TEXT_MATERIAL_LIST
             : activeTab === EventTabs.eventInfo
             ? TEXT_EVENT_INFO_SHORT
-            : ""
+            : "xx"
         }`}
       />
       {/* ===== BODY ===== */}
@@ -1538,169 +1574,181 @@ const EventBase: React.FC<
             </Grid>
           </Grid>
         </Backdrop>
-        <div className={classes.menuplanTabsContainer}>
-          <Tabs
-            value={activeTab}
-            className={classes.menuplanTabs}
-            style={{
-              marginBottom: "1rem",
-              display: "flex",
-              justifyContent: "center",
-            }}
-            onChange={onTabChange}
-            indicatorColor="primary"
-            textColor="primary"
-            variant="scrollable"
-            scrollButtons="auto"
-            aria-label="Menuplan Tabs"
-          >
-            <Tab label={TEXT_MENUPLAN} {...tabProps(0)} />
-            <Tab label={TEXT_QUANTITY_CALCULATION} {...tabProps(1)} />
-            <Tab label={TEXT_PLANED_RECIPES} {...tabProps(2)} />
-            <Tab label={TEXT_SHOPPING_LIST} {...tabProps(3)} />
-            <Tab label={TEXT_MATERIAL_LIST} {...tabProps(4)} />
-            <Tab label={TEXT_EVENT_INFO_SHORT} {...tabProps(5)} />
-          </Tabs>
-        </div>
-        {activeTab == EventTabs.menuplan ? (
-          <Container
-            maxWidth="lg"
-            style={{
-              overflowX: "scroll",
-              display: "flex",
-              flexDirection: "row",
-            }}
-          >
-            <MenuplanPage
-              menuplan={state.menuplan}
-              groupConfiguration={state.groupConfig}
-              event={state.event}
-              recipeList={state.recipeList}
-              recipes={state.recipes}
-              units={state.units}
-              products={state.products}
-              materials={state.materials}
-              departments={state.departments}
-              firebase={firebase}
-              authUser={authUser}
-              onMenuplanUpdate={onMenuplanUpdate}
-              fetchMissingData={fetchMissingData}
-              onMasterdataCreate={onMasterdataCreate}
-              onRecipeUpdate={onRecipeUpdate}
-            />
-          </Container>
-        ) : activeTab == EventTabs.quantityCalculation ? (
-          <Container>
-            <EventGroupConfigurationPage
-              firebase={firebase}
-              authUser={authUser}
-              event={state.event}
-              groupConfiguration={state.groupConfig}
-              // onConfirm=(()=>())
-              // onCancel=(()=>())
-              onGroupConfigurationUpdate={onGroupConfigurationUpdate}
-            />
-          </Container>
-        ) : activeTab == EventTabs.usedRecipes ? (
-          <Container>
-            <EventUsedRecipesPage
-              firebase={firebase}
-              authUser={authUser}
-              event={state.event}
-              groupConfiguration={state.groupConfig}
-              menuplan={state.menuplan}
-              usedRecipes={state.usedRecipes}
-              products={state.products}
-              unitConversionBasic={state.unitConversionBasic}
-              unitConversionProducts={state.unitConversionProducts}
-              fetchMissingData={fetchMissingData}
-              onUsedRecipesUpdate={onUsedRecipesUpdate}
-            />
-          </Container>
-        ) : activeTab == EventTabs.shoppingList ? (
-          <Container>
-            <EventShoppingListPage
-              firebase={firebase}
-              authUser={authUser}
-              menuplan={state.menuplan}
-              event={state.event}
-              products={state.products}
-              materials={state.materials}
-              units={state.units}
-              departments={state.departments}
-              recipes={state.recipes}
-              unitConversionBasic={state.unitConversionBasic}
-              unitConversionProducts={state.unitConversionProducts}
-              shoppingListCollection={state.shoppingListCollection}
-              shoppingList={state.shoppingList.value}
-              fetchMissingData={fetchMissingData}
-              onShoppingListUpdate={onShoppingListUpdate}
-              onShoppingCollectionUpdate={onShoppingCollectionUpdate}
-              onMasterdataCreate={onMasterdataCreate}
-            />
-          </Container>
-        ) : activeTab == EventTabs.materialList ? (
-          <Container>
-            <EventMaterialListPage
-              firebase={firebase}
-              authUser={authUser}
-              materialList={state.materialList}
-              event={state.event}
-              groupConfiguration={state.groupConfig}
-              menuplan={state.menuplan}
-              materials={state.materials}
-              recipes={state.recipes}
-              unitConversionBasic={state.unitConversionBasic}
-              unitConversionProducts={state.unitConversionProducts}
-              fetchMissingData={fetchMissingData}
-              onMaterialListUpdate={onMaterialListUpdate}
-              onMasterdataCreate={onMasterdataCreate}
-            />
-          </Container>
+        {state.error ? (
+          <AlertMessage
+            error={state.error}
+            severity="error"
+            messageTitle={TEXT_ALERT_TITLE_UUPS}
+          />
         ) : (
-          <Container>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <EventInfoPage
-                  event={eventDraft.event}
-                  localPicture={eventDraft.localPicture}
-                  formValidation={eventDraft.formValidation}
+          <React.Fragment>
+            <div className={classes.menuplanTabsContainer}>
+              <Tabs
+                value={activeTab}
+                className={classes.menuplanTabs}
+                style={{
+                  marginBottom: "1rem",
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+                onChange={onTabChange}
+                indicatorColor="primary"
+                textColor="primary"
+                variant="scrollable"
+                scrollButtons="auto"
+                aria-label="Menuplan Tabs"
+              >
+                <Tab label={TEXT_MENUPLAN} {...tabProps(0)} />
+                <Tab label={TEXT_QUANTITY_CALCULATION} {...tabProps(1)} />
+                <Tab label={TEXT_PLANED_RECIPES} {...tabProps(2)} />
+                <Tab label={TEXT_SHOPPING_LIST} {...tabProps(3)} />
+                <Tab label={TEXT_MATERIAL_LIST} {...tabProps(4)} />
+                <Tab label={TEXT_EVENT_INFO_SHORT} {...tabProps(5)} />
+              </Tabs>
+            </div>
+            {activeTab == EventTabs.menuplan ? (
+              <Container
+                maxWidth="xl"
+                style={{
+                  overflowX: "scroll",
+                  // display: "flex",
+                  // flexDirection: "row",
+                }}
+                id="menuplan_page_containter"
+              >
+                <MenuplanPage
+                  menuplan={state.menuplan}
+                  groupConfiguration={state.groupConfig}
+                  event={state.event}
+                  recipeList={state.recipeList}
+                  recipes={state.recipes}
+                  units={state.units}
+                  products={state.products}
+                  materials={state.materials}
+                  departments={state.departments}
                   firebase={firebase}
                   authUser={authUser}
-                  onUpdateEvent={onEventUpdate}
-                  onUpdatePicture={onEventPictureUpdate}
+                  onMenuplanUpdate={onMenuplanUpdate}
+                  fetchMissingData={fetchMissingData}
+                  onMasterdataCreate={onMasterdataCreate}
+                  onRecipeUpdate={onRecipeUpdate}
                 />
-              </Grid>
-              {state.event != eventDraft.event && (
-                <Grid item xs={12} container justifyContent="flex-end">
-                  <Button
-                    className={classes.deleteButton}
-                    variant="outlined"
-                    onClick={onEventDelete}
-                  >
-                    {TEXT_DELETE_EVENT}
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    style={{marginLeft: "1rem"}}
-                    onClick={onEventDiscardChanges}
-                  >
-                    {TEXT_DISCARD_CHANGES}
-                  </Button>
+              </Container>
+            ) : activeTab == EventTabs.quantityCalculation ? (
+              <Container>
+                <EventGroupConfigurationPage
+                  firebase={firebase}
+                  authUser={authUser}
+                  event={state.event}
+                  groupConfiguration={state.groupConfig}
+                  // onConfirm=(()=>())
+                  // onCancel=(()=>())
+                  onGroupConfigurationUpdate={onGroupConfigurationUpdate}
+                />
+              </Container>
+            ) : activeTab == EventTabs.usedRecipes ? (
+              <Container>
+                <EventUsedRecipesPage
+                  firebase={firebase}
+                  authUser={authUser}
+                  event={state.event}
+                  groupConfiguration={state.groupConfig}
+                  menuplan={state.menuplan}
+                  usedRecipes={state.usedRecipes}
+                  products={state.products}
+                  units={state.units}
+                  unitConversionBasic={state.unitConversionBasic}
+                  unitConversionProducts={state.unitConversionProducts}
+                  fetchMissingData={fetchMissingData}
+                  onUsedRecipesUpdate={onUsedRecipesUpdate}
+                />
+              </Container>
+            ) : activeTab == EventTabs.shoppingList ? (
+              <Container>
+                <EventShoppingListPage
+                  firebase={firebase}
+                  authUser={authUser}
+                  menuplan={state.menuplan}
+                  event={state.event}
+                  products={state.products}
+                  materials={state.materials}
+                  units={state.units}
+                  departments={state.departments}
+                  recipes={state.recipes}
+                  unitConversionBasic={state.unitConversionBasic}
+                  unitConversionProducts={state.unitConversionProducts}
+                  shoppingListCollection={state.shoppingListCollection}
+                  shoppingList={state.shoppingList.value}
+                  fetchMissingData={fetchMissingData}
+                  onShoppingListUpdate={onShoppingListUpdate}
+                  onShoppingCollectionUpdate={onShoppingCollectionUpdate}
+                  onMasterdataCreate={onMasterdataCreate}
+                />
+              </Container>
+            ) : activeTab == EventTabs.materialList ? (
+              <Container>
+                <EventMaterialListPage
+                  firebase={firebase}
+                  authUser={authUser}
+                  materialList={state.materialList}
+                  event={state.event}
+                  groupConfiguration={state.groupConfig}
+                  menuplan={state.menuplan}
+                  materials={state.materials}
+                  recipes={state.recipes}
+                  unitConversionBasic={state.unitConversionBasic}
+                  unitConversionProducts={state.unitConversionProducts}
+                  fetchMissingData={fetchMissingData}
+                  onMaterialListUpdate={onMaterialListUpdate}
+                  onMasterdataCreate={onMasterdataCreate}
+                />
+              </Container>
+            ) : (
+              <Container>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <EventInfoPage
+                      event={eventDraft.event}
+                      localPicture={eventDraft.localPicture}
+                      formValidation={eventDraft.formValidation}
+                      firebase={firebase}
+                      authUser={authUser}
+                      onUpdateEvent={onEventUpdate}
+                      onUpdatePicture={onEventPictureUpdate}
+                    />
+                  </Grid>
+                  {state.event != eventDraft.event && (
+                    <Grid item xs={12} container justifyContent="flex-end">
+                      <Button
+                        className={classes.deleteButton}
+                        variant="outlined"
+                        onClick={onEventDelete}
+                      >
+                        {TEXT_DELETE_EVENT}
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        style={{marginLeft: "1rem"}}
+                        onClick={onEventDiscardChanges}
+                      >
+                        {TEXT_DISCARD_CHANGES}
+                      </Button>
 
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    style={{marginLeft: "1rem"}}
-                    onClick={onEventSaveChanges}
-                  >
-                    {TEXT_SAVE}
-                  </Button>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        style={{marginLeft: "1rem"}}
+                        onClick={onEventSaveChanges}
+                      >
+                        {TEXT_SAVE}
+                      </Button>
+                    </Grid>
+                  )}
                 </Grid>
-              )}
-            </Grid>
-          </Container>
+              </Container>
+            )}
+          </React.Fragment>
         )}
       </Container>
       <CustomSnackbar

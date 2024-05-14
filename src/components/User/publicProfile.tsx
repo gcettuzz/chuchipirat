@@ -16,6 +16,7 @@ import TodayIcon from "@material-ui/icons/Today";
 import LocalActivityIcon from "@material-ui/icons/LocalActivity";
 import HowToRegIcon from "@material-ui/icons/HowToReg";
 import FastfoodIcon from "@material-ui/icons/Fastfood";
+import BugReportIcon from "@material-ui/icons/BugReport";
 
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
@@ -32,6 +33,7 @@ import {
   RECIPES_CREATED_PUBLIC as TEXT_RECIPES_CREATED_PUBLIC,
   RECIPES_CREATED_PRIVATE as TEXT_RECIPES_CREATED_PRIVATE,
   EVENTS_PARTICIPATED as TEXT_EVENTS_PARTICIPATED,
+  FOUND_BUGS as TEXT_FOUND_BUGS,
 } from "../../constants/text";
 import Action from "../../constants/actions";
 import * as ROUTES from "../../constants/routes";
@@ -209,14 +211,14 @@ const PublicProfileBase: React.FC<
                   <CardMedia
                     className={classes.cardMedia}
                     image={
-                      state.publicProfile.pictureSrc.fullSize
-                        ? state.publicProfile.pictureSrc.fullSize
+                      state.publicProfile.pictureSrc.normalSize
+                        ? state.publicProfile.pictureSrc.normalSize
                         : ImageRepository.getEnviromentRelatedPicture()
                             .CARD_PLACEHOLDER_MEDIA
                     }
                     title={state.publicProfile.displayName}
                   />
-                  <div className={classes.userProfileCardNameOnImageBackground}>
+                  <div className={classes.textOnCardMediaImage}>
                     <Grid
                       container
                       direction="row"
@@ -309,14 +311,14 @@ export const AchievedRewardsList = ({
       <FormListItem
         id={"noRecipesPrivate"}
         key={"noRecipesPrivate"}
-        value={userProfile.stats.noRecipesPublic}
+        value={userProfile.stats.noRecipesPublic.toLocaleString("de-CH")}
         label={TEXT_RECIPES_CREATED_PUBLIC}
         icon={<FastfoodIcon fontSize="small" />}
       />
       <FormListItem
         id={"noRecipesPublic"}
         key={"noRecipesPublic"}
-        value={userProfile.stats.noRecipesPrivate}
+        value={userProfile.stats.noRecipesPrivate.toLocaleString("de-CH")}
         label={TEXT_RECIPES_CREATED_PRIVATE}
         icon={<FastfoodIcon fontSize="small" />}
       />
@@ -324,11 +326,19 @@ export const AchievedRewardsList = ({
       <FormListItem
         id={"noEvents"}
         key={"noEvents"}
-        value={userProfile.stats.noEvents}
+        value={userProfile.stats.noEvents.toLocaleString("de-CH")}
         label={TEXT_EVENTS_PARTICIPATED}
         icon={<TodayIcon fontSize="small" />}
       />
-
+      {userProfile.stats?.noFoundBugs > 0 && (
+        <FormListItem
+          id={"noFoundBungs"}
+          key={"noFoundBungs"}
+          value={userProfile.stats.noFoundBugs.toLocaleString("de-CH")}
+          label={TEXT_FOUND_BUGS}
+          icon={<BugReportIcon fontSize="small" />}
+        />
+      )}
       {/* <FormListItem
         id={"noComments"}
         key={"noComments"}

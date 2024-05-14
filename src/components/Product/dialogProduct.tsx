@@ -7,11 +7,10 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogActions from "@material-ui/core/DialogActions";
-import {Alert} from "@material-ui/lab";
+import {Alert, AlertTitle} from "@material-ui/lab";
 
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
-import Autocomplete from "@material-ui/lab/Autocomplete";
 import Checkbox from "@material-ui/core/Checkbox";
 
 import {
@@ -20,6 +19,9 @@ import {
   FormGroup,
   RadioGroup,
   Radio,
+  ListItem,
+  List,
+  Typography,
 } from "@material-ui/core";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
@@ -38,14 +40,13 @@ import {
   WARNING_PRODUCT_1 as TEXT_WARNING_PRODUCT_1,
   WARNING_PRODUCT_2 as TEXT_WARNING_PRODUCT_2,
   WARNING_PRODUCT_3 as TEXT_WARNING_PRODUCT_3,
-  DEPARTMENT as TEXT_DEPARTMENT,
   SHOPPING_UNIT_INFO as TEXT_SHOPPING_UNIT_INFO,
   USABLE as TEXT_USABLE,
   INTOLERANCES as TEXT_INTOLERANCES,
   HAS_LACTOSE as TEXT_HAS_LACTOSE,
   HAS_GLUTEN as TEXT_HAS_GLUTEN,
   PRODUCT_PROPERTY as TEXT_PRODUCT_PROPERTY,
-  RECORD_INGREDIENT_WITH_NECCESSARY_INFO as TEXT_RECORD_INGREDIENT_WITH_NECCESSARY_INFO,
+  // RECORD_INGREDIENT_WITH_NECCESSARY_INFO as TEXT_RECORD_INGREDIENT_WITH_NECCESSARY_INFO,
   IS_MEAT as TEXT_IS_MEAT,
   IS_VEGETARIAN as TEXT_IS_VEGETARIAN,
   IS_VEGAN as TEXT_IS_VEGAN,
@@ -53,14 +54,20 @@ import {
   CANCEL as TEXT_CANCEL,
   OK as TEXT_OK,
   CREATE as TEXT_CREATE,
+  GUIDELINES_NEW_PRODUCT as TEXT_GUIDELINES_NEW_PRODUCT,
+  NEW_PRODUCT as TEXT_NEW_PRODUCT,
+  SIMILAR_PRODUCTS as TEXT_SIMILAR_PRODUCTS,
+  EXISTING_PRODUCTS as TEXT_EXISTING_PRODUCTS,
+  THERE_ARE_SIMILAR_PRODUCTS as TEXT_THERE_ARE_SIMILAR_PRODUCTS,
 } from "../../constants/text";
 import Department from "../Department/department.class";
-import Unit from "../Unit/unit.class";
+import Unit, {UnitDimension} from "../Unit/unit.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import UnitAutocomplete from "../Unit/unitAutocomplete";
 
 import Firebase from "../Firebase/firebase.class";
 import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
+import DepartmentAutocomplete from "../Department/departmentAutocomplete";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
@@ -77,6 +84,10 @@ export const PRODUCT_POP_UP_VALUES_INITIAL_STATE = {
   clear: false,
   showNameWarning: false,
   roundtripDone: false,
+};
+export const SIMILIAR_PRODCTUS_POP_UP_VALUES_INITIAL_STATE = {
+  similarProducts: [] as Product[],
+  popUpOpen: false,
 };
 
 export enum ProductDialog {
@@ -103,6 +114,7 @@ interface DialogProductProps {
   dialogOpen: boolean;
   handleOk: (product: Product) => void;
   handleClose: () => void;
+  handleChooseExisting: (product: Product) => void;
   selectedDepartment?: Department;
   selectedUnit?: Unit;
   usable?: boolean;
@@ -121,8 +133,9 @@ const DialogProduct = ({
   dialogOpen,
   handleOk,
   handleClose,
+  handleChooseExisting,
   selectedDepartment = {} as Department,
-  selectedUnit = {key: "", name: ""},
+  selectedUnit = {key: "", name: "", dimension: UnitDimension.dimensionless},
   usable = true,
   departments = [],
   units = [],
@@ -131,6 +144,9 @@ const DialogProduct = ({
   const [productPopUpValues, setProductPopUpValues] = React.useState(
     PRODUCT_POP_UP_VALUES_INITIAL_STATE
   );
+  const [similarProductPopupValues, setSimilarProductPopupValues] =
+    React.useState(SIMILIAR_PRODCTUS_POP_UP_VALUES_INITIAL_STATE);
+
   const [validation, setValidation] = React.useState({
     name: {hasError: false, errorText: ""},
     department: {hasError: false, errorText: ""},
@@ -156,11 +172,19 @@ const DialogProduct = ({
 
     switch (field) {
       case "unit_shoppingUnit":
-        value = newValue;
+        if (action !== "clear") {
+          value = newValue;
+        } else {
+          value = "";
+        }
         field = "shoppingUnit";
         break;
       case "department":
-        value = newValue;
+        if (action !== "clear") {
+          value = newValue;
+        } else {
+          value = "";
+        }
         break;
       case "name":
         value = event.target.value;
@@ -224,14 +248,6 @@ const DialogProduct = ({
       dietProperties: dietProperties,
     });
   };
-  // const onChangeUsableCheckbox = (
-  //   event: React.ChangeEvent<HTMLInputElement>
-  // ) => {
-  //   setProductPopUpValues({
-  //     ...productPopUpValues,
-  //     usable: event.target.checked,
-  //   });
-  // };
 
   /* ------------------------------------------
   // PopUp Abbrechen
@@ -248,7 +264,6 @@ const DialogProduct = ({
   const onOkClick = () => {
     // Prüfung Abteilung und Name gesetzt
     let hasError = false;
-
     if (!productPopUpValues.name) {
       setValidation({
         ...validation,
@@ -256,7 +271,13 @@ const DialogProduct = ({
       });
       hasError = true;
     }
-    if (!productPopUpValues.department) {
+    if (
+      !productPopUpValues.department ||
+      !Object.prototype.hasOwnProperty.call(
+        productPopUpValues.department,
+        "name"
+      )
+    ) {
       setValidation({
         ...validation,
         department: {
@@ -305,13 +326,11 @@ const DialogProduct = ({
           dietProperties: productPopUpValues.dietProperties,
           authUser: authUser,
         }).then((result) => {
-          setProductPopUpValues({...productPopUpValues, uid: result.uid});
-
+          handleOk(result);
           setProductPopUpValues({
             ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
             clear: true,
           });
-          handleOk(result);
         });
         break;
       case PRODUCT_DIALOG_TYPE.EDIT:
@@ -351,10 +370,25 @@ const DialogProduct = ({
 
   // Werte setzen, wenn das erste Mal PopUp geöffnet wird
   if (
-    !productPopUpValues.name &&
+    productPopUpValues.name === "" &&
     productName &&
     !productPopUpValues.roundtripDone
   ) {
+    // Prüfen ob es bereits ein ähnliches Produkt gibt, wenn ja, dann
+    // die Liste mit diesen Produkten über diesen Dialog anzeigen.
+    const similarProducts = Product.findSimilarProducts({
+      productName: productName,
+      existingProducts: products,
+    });
+
+    if (similarProducts.length !== 0) {
+      // Liste zeigen mit den möglichen Produkten
+      setSimilarProductPopupValues({
+        similarProducts: similarProducts,
+        popUpOpen: true,
+      });
+    }
+
     setProductPopUpValues({
       ...productPopUpValues,
       uid: productUid,
@@ -372,200 +406,255 @@ const DialogProduct = ({
       usable: usable,
     });
   }
+  /* ------------------------------------------
+  // Similar Product PopUp - Handling
+  // ------------------------------------------ */
+  const onSimilarProductPopUpChooseProduct = (
+    event: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ) => {
+    const proudctUid = event.currentTarget.id.split("_")[1];
+    const product = products.find((product) => product.uid === proudctUid);
 
+    if (!product) {
+      return;
+    }
+
+    handleChooseExisting(product);
+    setSimilarProductPopupValues(SIMILIAR_PRODCTUS_POP_UP_VALUES_INITIAL_STATE);
+    setProductPopUpValues({
+      ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
+      clear: true,
+    });
+  };
+  const onSimilarProductPopUpClose = () => {
+    setSimilarProductPopupValues(SIMILIAR_PRODCTUS_POP_UP_VALUES_INITIAL_STATE);
+  };
   return (
-    <Dialog
-      open={dialogOpen}
-      onClose={onClose}
-      aria-labelledby="dialogAddProduct"
-      maxWidth="sm"
-    >
-      <DialogTitle id="dialogAddProduct">
-        {dialogType === PRODUCT_DIALOG_TYPE.CREATE
-          ? TEXT_PRODUCT_ADD
-          : TEXT_PRODUCT_EDIT}
-      </DialogTitle>
+    <React.Fragment>
+      <Dialog
+        open={dialogOpen}
+        onClose={onClose}
+        aria-labelledby="dialogAddProduct"
+        maxWidth="sm"
+      >
+        <DialogTitle id="dialogAddProduct">
+          {dialogType === PRODUCT_DIALOG_TYPE.CREATE
+            ? TEXT_PRODUCT_ADD
+            : TEXT_PRODUCT_EDIT}
+        </DialogTitle>
 
-      <DialogContent>
-        <Alert severity="info">
+        <DialogContent>
+          {/* <Alert severity="info">
           {TEXT_RECORD_INGREDIENT_WITH_NECCESSARY_INFO}
         </Alert>
-        <br />
-        <DialogContentText>
-          {dialogType === PRODUCT_DIALOG_TYPE.CREATE && TEXT_PRODUCT}
-        </DialogContentText>
-        {dialogType === PRODUCT_DIALOG_TYPE.EDIT &&
-          productPopUpValues.showNameWarning && (
-            <AlertMessage
-              severity="warning"
-              messageTitle={TEXT_ATTENTION}
-              body={
-                <React.Fragment>
-                  {TEXT_WARNING_PRODUCT_1}
-                  <strong>{TEXT_WARNING_PRODUCT_2}</strong>
-                  {TEXT_WARNING_PRODUCT_3}
-                </React.Fragment>
-              }
-            />
-          )}
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <TextField
-              error={validation.name.hasError}
-              margin="dense"
-              id="name"
-              name="name"
-              value={productPopUpValues.name}
-              required
-              fullWidth
-              onChange={onChangeField}
-              label={TEXT_PRODUCT}
-              type="text"
-              helperText={validation.name.errorText}
-              autoFocus
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <FormControl fullWidth>
-              <Autocomplete
-                id={"department"}
-                value={productPopUpValues.department}
-                options={departments}
-                autoSelect
-                autoHighlight
-                getOptionLabel={(department) => department.name}
-                onChange={(event, newValue, action) => {
-                  onChangeField(
-                    event as React.ChangeEvent<HTMLInputElement>,
-                    newValue,
-                    action,
-                    "department"
-                  );
-                }}
-                fullWidth
-                renderInput={(params) => (
-                  <TextField
-                    error={validation.department.hasError}
-                    {...params}
-                    required
-                    label={TEXT_DEPARTMENT}
-                    size="small"
-                    helperText={validation.department.errorText}
-                  />
-                )}
-              />
-            </FormControl>
-          </Grid>
-          <Grid item xs={dialogType === PRODUCT_DIALOG_TYPE.EDIT ? 6 : 12}>
-            <FormControl fullWidth>
-              <UnitAutocomplete
-                componentKey={"shoppingUnit"}
-                unitKey={productPopUpValues.shoppingUnit.key}
-                units={units}
-                onChange={onChangeField}
-              />
-              <FormHelperText>{TEXT_SHOPPING_UNIT_INFO}</FormHelperText>
-            </FormControl>
-          </Grid>
-          {dialogType === PRODUCT_DIALOG_TYPE.EDIT && (
-            <Grid item xs={6}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    id="usable"
-                    checked={productPopUpValues.usable}
-                    onChange={onChangeField}
-                    name="usable"
-                    color="primary"
-                  />
-                }
-                label={TEXT_USABLE}
-              />
-            </Grid>
-          )}
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <FormLabel component="legend">{TEXT_INTOLERANCES}</FormLabel>
-              <FormGroup>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={productPopUpValues.dietProperties?.allergens?.includes(
-                        Allergen.Lactose
-                      )}
-                      onChange={onChangeDietCheckbox}
-                      name="dietProperties.allergens.containsLactose"
-                      id="dietProperties.allergens.containsLactose"
-                      color="primary"
-                    />
-                  }
-                  label={TEXT_HAS_LACTOSE}
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={productPopUpValues.dietProperties?.allergens?.includes(
-                        Allergen.Gluten
-                      )}
-                      onChange={onChangeDietCheckbox}
-                      name="dietProperties.allergens.containsGluten"
-                      id="dietProperties.allergens.containsGluten"
-                      color="primary"
-                    />
-                  }
-                  label={TEXT_HAS_GLUTEN}
-                />
-              </FormGroup>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <FormGroup>
-                <FormLabel component="legend">
-                  {TEXT_PRODUCT_PROPERTY}
-                </FormLabel>
-                <RadioGroup
-                  aria-label="Diät"
-                  name={"radioGroup_Diet"}
-                  key={"radioGroup_Diet"}
-                  value={productPopUpValues.dietProperties.diet}
-                  onChange={onChangeDietRadioButton}
-                >
-                  <FormControlLabel
-                    value={Diet.Meat}
-                    control={<Radio size="small" color="primary" />}
-                    label={TEXT_IS_MEAT}
-                  />
-                  <FormControlLabel
-                    value={Diet.Vegetarian}
-                    control={<Radio size="small" color="primary" />}
-                    label={TEXT_IS_VEGETARIAN}
-                  />
-                  <FormControlLabel
-                    value={Diet.Vegan}
-                    control={<Radio size="small" color="primary" />}
-                    label={TEXT_IS_VEGAN}
-                  />
-                </RadioGroup>
-              </FormGroup>
-            </FormControl>
-          </Grid>
+        <br /> */}
           {dialogType === ProductDialog.CREATE && (
-            <Grid item xs={12}>
-              <FormHelperText>{TEXT_INFO_DIET_PROPERTIES}</FormHelperText>
-            </Grid>
+            <Alert severity="warning">
+              <AlertTitle>{`${TEXT_NEW_PRODUCT}?`}</AlertTitle>
+              <div>
+                {TEXT_GUIDELINES_NEW_PRODUCT.line1}
+                <ul>
+                  <li>{TEXT_GUIDELINES_NEW_PRODUCT.line2}</li>
+                  <li>{TEXT_GUIDELINES_NEW_PRODUCT.line3}</li>
+                  <li>{TEXT_GUIDELINES_NEW_PRODUCT.line4}</li>
+                </ul>
+                {TEXT_GUIDELINES_NEW_PRODUCT.line5}
+              </div>
+            </Alert>
           )}
-        </Grid>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onCancelClick} color="primary" variant="outlined">
-          {TEXT_CANCEL}
-        </Button>
-        <Button onClick={onOkClick} color="primary" variant="contained">
-          {dialogType === PRODUCT_DIALOG_TYPE.CREATE ? TEXT_CREATE : TEXT_OK}
-        </Button>
-      </DialogActions>
-    </Dialog>
+          <DialogContentText>
+            {dialogType === PRODUCT_DIALOG_TYPE.CREATE && TEXT_PRODUCT}
+          </DialogContentText>
+          {dialogType === PRODUCT_DIALOG_TYPE.EDIT &&
+            productPopUpValues.showNameWarning && (
+              <AlertMessage
+                severity="warning"
+                messageTitle={TEXT_ATTENTION}
+                body={
+                  <React.Fragment>
+                    {TEXT_WARNING_PRODUCT_1}
+                    <strong>{TEXT_WARNING_PRODUCT_2}</strong>
+                    {TEXT_WARNING_PRODUCT_3}
+                  </React.Fragment>
+                }
+              />
+            )}
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                error={validation.name.hasError}
+                margin="dense"
+                id="name"
+                name="name"
+                value={productPopUpValues.name}
+                required
+                fullWidth
+                onChange={onChangeField}
+                label={TEXT_PRODUCT}
+                type="text"
+                helperText={validation.name.errorText}
+                autoFocus
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <DepartmentAutocomplete
+                  department={productPopUpValues.department}
+                  departments={departments}
+                  disabled={false}
+                  onChange={onChangeField}
+                />
+              </FormControl>
+            </Grid>
+            <Grid item xs={dialogType === PRODUCT_DIALOG_TYPE.EDIT ? 6 : 12}>
+              <FormControl fullWidth>
+                <UnitAutocomplete
+                  componentKey={"shoppingUnit"}
+                  unitKey={productPopUpValues.shoppingUnit.key}
+                  units={units}
+                  onChange={onChangeField}
+                />
+                <FormHelperText>{TEXT_SHOPPING_UNIT_INFO}</FormHelperText>
+              </FormControl>
+            </Grid>
+            {dialogType === PRODUCT_DIALOG_TYPE.EDIT && (
+              <Grid item xs={6}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      id="usable"
+                      checked={productPopUpValues.usable}
+                      onChange={onChangeField}
+                      name="usable"
+                      color="primary"
+                    />
+                  }
+                  label={TEXT_USABLE}
+                />
+              </Grid>
+            )}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <FormLabel component="legend">{TEXT_INTOLERANCES}</FormLabel>
+                <FormGroup>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={productPopUpValues.dietProperties?.allergens?.includes(
+                          Allergen.Lactose
+                        )}
+                        onChange={onChangeDietCheckbox}
+                        name="dietProperties.allergens.containsLactose"
+                        id="dietProperties.allergens.containsLactose"
+                        color="primary"
+                      />
+                    }
+                    label={TEXT_HAS_LACTOSE}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={productPopUpValues.dietProperties?.allergens?.includes(
+                          Allergen.Gluten
+                        )}
+                        onChange={onChangeDietCheckbox}
+                        name="dietProperties.allergens.containsGluten"
+                        id="dietProperties.allergens.containsGluten"
+                        color="primary"
+                      />
+                    }
+                    label={TEXT_HAS_GLUTEN}
+                  />
+                </FormGroup>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <FormGroup>
+                  <FormLabel component="legend">
+                    {TEXT_PRODUCT_PROPERTY}
+                  </FormLabel>
+                  <RadioGroup
+                    aria-label="Diät"
+                    name={"radioGroup_Diet"}
+                    key={"radioGroup_Diet"}
+                    value={productPopUpValues.dietProperties.diet}
+                    onChange={onChangeDietRadioButton}
+                  >
+                    <FormControlLabel
+                      value={Diet.Meat}
+                      control={<Radio size="small" color="primary" />}
+                      label={TEXT_IS_MEAT}
+                    />
+                    <FormControlLabel
+                      value={Diet.Vegetarian}
+                      control={<Radio size="small" color="primary" />}
+                      label={TEXT_IS_VEGETARIAN}
+                    />
+                    <FormControlLabel
+                      value={Diet.Vegan}
+                      control={<Radio size="small" color="primary" />}
+                      label={TEXT_IS_VEGAN}
+                    />
+                  </RadioGroup>
+                </FormGroup>
+              </FormControl>
+            </Grid>
+            {dialogType === ProductDialog.CREATE && (
+              <Grid item xs={12}>
+                <FormHelperText>{TEXT_INFO_DIET_PROPERTIES}</FormHelperText>
+              </Grid>
+            )}
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onCancelClick} color="primary" variant="outlined">
+            {TEXT_CANCEL}
+          </Button>
+          <Button onClick={onOkClick} color="primary" variant="contained">
+            {dialogType === PRODUCT_DIALOG_TYPE.CREATE ? TEXT_CREATE : TEXT_OK}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={similarProductPopupValues.popUpOpen}
+        aria-labelledby="similarProducts"
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle id="dialogSimilarProducts">
+          {TEXT_SIMILAR_PRODUCTS}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            {TEXT_THERE_ARE_SIMILAR_PRODUCTS}
+          </Typography>
+          <br />
+          <Typography variant="h6">{TEXT_EXISTING_PRODUCTS}</Typography>
+          <List dense>
+            {similarProductPopupValues.similarProducts.map((product) => (
+              <ListItem
+                key={"similarProduct_" + product.uid}
+                id={"similarProduct_" + product.uid}
+                button
+                onClick={onSimilarProductPopUpChooseProduct}
+              >
+                {product.name}
+              </ListItem>
+            ))}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={onSimilarProductPopUpClose}
+            color="primary"
+            variant="contained"
+          >
+            {`${TEXT_PRODUCT} ${TEXT_CREATE}`}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </React.Fragment>
   );
 };
 

@@ -14,24 +14,6 @@ export interface InsertArrayElementAtPosition<T> {
   newElement: T;
 }
 /**
- * Schnittstelle für Util.moveArrayElementDown
- * @param array - Array das geändert werden soll
- * @param indexToMoveUDown- Index der Zeile, die um eine Position runter verschoben werden soll
- */
-export interface MoveArrayElementDown<T> {
-  array: T[];
-  indexToMoveDown: number;
-}
-/**
- * Schnittstelle für Util.moveArrayElementUp
- * @param array - Array das geändert werden soll
- * @param indexToMoveUp - Index der Zeile, die um eine Position hoch verschoben werden soll
- */
-export interface MoveArrayElementUp<T> {
-  array: T[];
-  indexToMoveUp: number;
-}
-/**
  * Schnittstelle für Util.RenumberArray
  * @param array - Array
  * @param field - Name des Object.Key
@@ -154,55 +136,6 @@ export default class Utils {
     listPartAfterInsert = array.slice(indexToInsert + 1);
 
     return listPartPreInsert.concat(listNewElement, listPartAfterInsert);
-  }
-  /* =====================================================================
-  // Array-Element Position runter schieben
-  // ===================================================================== */
-  static moveArrayElementDown<T>({
-    array,
-    indexToMoveDown,
-  }: MoveArrayElementDown<T>) {
-    let listPartPreMove: T[] = [];
-
-    if (indexToMoveDown + 1 === array.length) {
-      return array;
-    }
-
-    if (indexToMoveDown !== 0) {
-      listPartPreMove = array.slice(0, indexToMoveDown);
-    }
-    const listElementSwapDown: T = array[indexToMoveDown];
-    const listElementSwapUp: T = array[indexToMoveDown + 1];
-    const listPartRest: T[] = array.slice(indexToMoveDown + 2);
-
-    return listPartPreMove.concat(
-      listElementSwapUp,
-      listElementSwapDown,
-      listPartRest
-    ) as T[];
-  }
-  /* =====================================================================
-  // Array-Element Position runter schieben
-  // ===================================================================== */
-  static moveArrayElementUp<T>({array, indexToMoveUp}: MoveArrayElementUp<T>) {
-    if (indexToMoveUp === 0) {
-      // Erste Position kann nicht weiter hochgeschoben werden
-      return array;
-    }
-
-    const listPartPreMove: T[] = array.slice(0, indexToMoveUp - 1);
-    const listElementSwapUp: T = array[indexToMoveUp];
-    const listElementSwapDown: T = array[indexToMoveUp - 1];
-
-    let listPartRest: T[] = [];
-    if (indexToMoveUp !== array.length) {
-      listPartRest = array.slice(indexToMoveUp + 1);
-    }
-    return listPartPreMove.concat(
-      listElementSwapUp,
-      listElementSwapDown,
-      listPartRest
-    ) as T[];
   }
   /* =====================================================================
   // Array nach bestimmten Feld neu Nummerieren
@@ -405,7 +338,7 @@ export default class Utils {
   static deriveIsLoading = (loadingComponents: {[key: string]: boolean}) => {
     return (
       Object.values(loadingComponents).filter((isLoading) => isLoading === true)
-        .length === 1
+        .length >= 1
     );
   };
   // ===================================================================== */
@@ -475,4 +408,83 @@ export default class Utils {
       fromDisplayName: authUser.publicProfile.displayName,
     } as ChangeRecord;
   };
+  // ===================================================================== */
+  /**
+   * Überprüfen ob zwei Array die gleichen Werte enthalen (egal in welcher
+   * Reihenfolge).
+   * @result Boolean
+   */
+  static areStringArraysEqual = (array1: string[], array2: string[]) => {
+    if (array1.length !== array2.length) {
+      return false; // Die Arrays haben unterschiedliche Längen, daher können sie nicht identisch sein.
+    }
+
+    const sortedArray1 = array1.slice().sort();
+    const sortedArray2 = array2.slice().sort();
+    for (let i = 0; i < sortedArray1.length; i++) {
+      if (sortedArray1[i] !== sortedArray2[i]) {
+        return false; // Einträge an der gleichen Position sind unterschiedlich, daher sind die Arrays nicht identisch.
+      }
+    }
+
+    return true; // Die Arrays sind identisch.
+  };
+  // ===================================================================== */
+  /**
+   * Überprüfen ob zwei Array die gleichen Werte enthalen (egal in welcher
+   * Reihenfolge).
+   * @result Boolean
+   */
+  static areArraysIdentical<T>(array1: T[], array2: T[]): boolean {
+    if (!Array.isArray(array1) || !Array.isArray(array2)) {
+      return false;
+    }
+    if (array1.length !== array2.length) {
+      // Überprüfe, ob die Arrays die gleiche Länge haben
+      return false;
+    }
+
+    // Vergleiche Element für Element
+    for (let i = 0; i < array1.length; i++) {
+      // Wenn ein Element nicht übereinstimmt, sind die Arrays nicht identisch
+      if (array1[i] !== array2[i]) {
+        return false;
+      }
+    }
+
+    // Alle Elemente stimmen überein, daher sind die Arrays identisch
+    return true;
+  }
+  // ===================================================================== */
+  /**
+   * Überprüfen zwei Daten den gleichen Tag sind (Zeit wird ignoriert)
+   * @result Boolean
+   */
+  static areDatesIdentical(date1: Date, date2: Date): boolean {
+    return (
+      date1.getDate() === date2.getDate() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getFullYear() === date2.getFullYear()
+    );
+  }
+  // ===================================================================== */
+  /**
+   * Jaccard-Index-Algorithmus - Prozent bestimmen, wie ähnlich sich zwei
+   * Strings sind
+   * @param a: String 1
+   * @param b: String 2
+   * @result Number -  Prozent wie fest sie sich überschneiden
+   */
+  static jaccardIndex(a: string, b: string): number {
+    // Normalisiere die Eingabestrings, indem Leerzeichen entfernt und in Kleinbuchstaben umgewandelt werden
+    const normalizedA = a.trim().toLowerCase();
+    const normalizedB = b.trim().toLowerCase();
+
+    const setA = new Set(normalizedA);
+    const setB = new Set(normalizedB);
+    const intersectionSize = new Set([...setA].filter((char) => setB.has(char)))
+      .size;
+    const unionSize = new Set([...setA, ...setB]).size;
+    return intersectionSize / unionSize;
+  }
 }

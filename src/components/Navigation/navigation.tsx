@@ -44,6 +44,7 @@ import GroupIcon from "@material-ui/icons/Group";
 import NewReleasesIcon from "@material-ui/icons/NewReleases";
 import DescriptionIcon from "@material-ui/icons/Description";
 import BuildIcon from "@material-ui/icons/Build";
+import HomeIcon from "@material-ui/icons/Home";
 
 import Action from "../../constants/actions";
 import * as ROUTES from "../../constants/routes";
@@ -66,6 +67,7 @@ import {withFirebase} from "../Firebase/firebaseContext";
 
 // import Environment from "../Shared/enviroment.class";
 import Utils from "../Shared/utils.class";
+import {DonateIcon} from "../Shared/icons";
 // ===================================================================
 // ============================= Global =============================
 // ===================================================================
@@ -140,7 +142,6 @@ const NavigationAuthBase = (props) => {
   const classes = useStyles();
   const firebase = props.firebase;
   const authUser = props.authUser;
-
   // const authUser = useAuthUser();
   // const firebase = useFirebase();
 
@@ -184,7 +185,6 @@ const NavigationAuthBase = (props) => {
   //   const todayString = `${String(today.getFullYear())}-${String(
   //     today.getMonth() + 1
   //   ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-  //   console.log(localStorageVersion);
   //   if (
   //     !localStorageVersion ||
   //     localStorageVersion?.lastCheck !== todayString
@@ -278,7 +278,7 @@ const NavigationAuthBase = (props) => {
       setDrawerState({...state, [anchor]: open});
     };
 
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+  const handleMenuClick = async (event: React.MouseEvent<HTMLElement>) => {
     const pressedButton = event.currentTarget.id.split("_");
 
     switch (pressedButton[0]) {
@@ -291,6 +291,12 @@ const NavigationAuthBase = (props) => {
       case BUTTONTEXT.SIGNOUT:
         firebase.signOut();
         localStorage.removeItem(LocalStorageKey.AUTH_USER);
+
+        // Kurz warten, damit der Auth-Context nach mag
+        await new Promise(function (resolve) {
+          setTimeout(resolve, 1000);
+        });
+
         push({
           pathname: ROUTES.LANDING,
         });
@@ -331,70 +337,86 @@ const NavigationAuthBase = (props) => {
       onKeyDown={toggleDrawer(anchor, false)}
     >
       <List>
-        <ListItem button key="Recipes">
+        <ListItem button key="Home" onClick={() => push(ROUTES.HOME)}>
+          <ListItemIcon>
+            <HomeIcon />
+          </ListItemIcon>
+          <ListItemText primary={TEXT.HOME_DASHBOARD} />
+        </ListItem>
+      </List>
+      <Divider />
+      <List>
+        <ListItem button key="Recipes" onClick={() => push(ROUTES.RECIPES)}>
           <ListItemIcon>
             <FastfoodIcon />
           </ListItemIcon>
-          <ListItemText
-            primary={TEXT.RECIPES}
-            onClick={() => push(ROUTES.RECIPES)}
-          />
+          <ListItemText primary={TEXT.RECIPES} />
         </ListItem>
         <ListItem button key="Events">
-          <ListItemIcon>
+          <ListItemIcon onClick={() => push(ROUTES.EVENTS)}>
             <EventIcon />
           </ListItemIcon>
-          <ListItemText
-            primary={TEXT.EVENTS}
-            onClick={() => push(ROUTES.EVENTS)}
-          />
+          <ListItemText primary={TEXT.EVENTS} />
         </ListItem>
       </List>
       <Divider />
       <List>
-        <ListItem button key="UnitConversion">
+        <ListItem
+          button
+          key="UnitConversion"
+          onClick={() => push(ROUTES.UNITCONVERSION)}
+        >
           <ListItemIcon>
             <SwapHorizIcon />
           </ListItemIcon>
-          <ListItemText
-            primary={TEXT.NAVIGATION_UNIT_CONVERSION}
-            onClick={() => push(ROUTES.UNITCONVERSION)}
-          />
+          <ListItemText primary={TEXT.NAVIGATION_UNIT_CONVERSION} />
         </ListItem>
       </List>
       <Divider />
       <List>
-        <ListItem button key="requestOverview">
+        <ListItem
+          button
+          key="requestOverview"
+          onClick={() => push(ROUTES.REQUEST_OVERVIEW)}
+        >
           <ListItemIcon>
             <DescriptionIcon />
           </ListItemIcon>
-          <ListItemText
-            primary={TEXT.NAVIGATION_REQUEST_OVERVIEW}
-            onClick={() => push(ROUTES.REQUEST_OVERVIEW)}
-          />
+          <ListItemText primary={TEXT.NAVIGATION_REQUEST_OVERVIEW} />
+        </ListItem>
+      </List>
+      <Divider />
+      <List>
+        <ListItem button key="donate" onClick={() => push(ROUTES.DONATE)}>
+          <ListItemIcon>
+            <DonateIcon />
+          </ListItemIcon>
+          <ListItemText primary={TEXT.DONATE} />
         </ListItem>
       </List>
       {authUser.roles?.includes(Role.communityLeader) && (
         <React.Fragment>
           <Divider />
           <List>
-            <ListItem button key="Products">
+            <ListItem
+              button
+              key="Products"
+              onClick={() => push(ROUTES.PRODUCTS)}
+            >
               <ListItemIcon>
                 <LoyaltyIcon />
               </ListItemIcon>
-              <ListItemText
-                primary={TEXT.NAVIGATION_PRODUCTS}
-                onClick={() => push(ROUTES.PRODUCTS)}
-              />
+              <ListItemText primary={TEXT.NAVIGATION_PRODUCTS} />
             </ListItem>
-            <ListItem button key="Materials">
+            <ListItem
+              button
+              key="Materials"
+              onClick={() => push(ROUTES.MATERIALS)}
+            >
               <ListItemIcon>
                 <BuildIcon />
               </ListItemIcon>
-              <ListItemText
-                primary={TEXT.MATERIALS}
-                onClick={() => push(ROUTES.MATERIALS)}
-              />
+              <ListItemText primary={TEXT.MATERIALS} />
             </ListItem>
             <ListItem button key="departments">
               <ListItemIcon>
@@ -410,35 +432,30 @@ const NavigationAuthBase = (props) => {
       )}
       {authUser.roles?.includes(Role.communityLeader) && (
         <React.Fragment>
-          <ListItem button key="Units">
+          <ListItem button key="Units" onClick={() => push(ROUTES.UNITS)}>
             <ListItemIcon>
               <StraightenIcon />
             </ListItemIcon>
-            <ListItemText
-              primary={TEXT.NAVIGATION_UNITS}
-              onClick={() => push(ROUTES.UNITS)}
-            />
+            <ListItemText primary={TEXT.NAVIGATION_UNITS} />
           </ListItem>
           <Divider />
           <List>
-            <ListItem button key="Admin">
+            <ListItem button key="Admin" onClick={() => push(ROUTES.SYSTEM)}>
               <ListItemIcon>
                 <SettingsIcon />
               </ListItemIcon>
-              <ListItemText
-                primary={TEXT.NAVIGATION_SYSTEM}
-                onClick={() => push(ROUTES.SYSTEM)}
-              />
+              <ListItemText primary={TEXT.NAVIGATION_SYSTEM} />
             </ListItem>
             {authUser.roles?.includes(Role.admin) && (
-              <ListItem button key="Users">
+              <ListItem
+                button
+                key="Users"
+                onClick={() => push(ROUTES.SYSTEM_OVERVIEW_USERS)}
+              >
                 <ListItemIcon>
                   <GroupIcon />
                 </ListItemIcon>
-                <ListItemText
-                  primary={TEXT.NAVIGATION_USERS}
-                  onClick={() => push(ROUTES.USERS)}
-                />
+                <ListItemText primary={TEXT.NAVIGATION_USERS} />
               </ListItem>
             )}
           </List>
@@ -529,7 +546,7 @@ const NavigationAuthBase = (props) => {
 
               {/* <MenuItem>Einstellungen</MenuItem> */}
               <MenuItem id={BUTTONTEXT.SIGNOUT} onClick={handleMenuClick}>
-                {TEXT.NAVIGATION_SIGN_OUT}
+                {TEXT.SIGN_OUT}
               </MenuItem>
             </Menu>
           </div>

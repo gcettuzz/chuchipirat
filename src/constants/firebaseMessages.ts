@@ -5,6 +5,7 @@ export enum AuthMessages {
   USER_DISABLED = "auth/user-disabled",
   USER_NOT_FOUND = "auth/user-not-found",
   WRONG_PASSWORD = "auth/wrong-password",
+  INTERNAL_ERROR = "auth/internal-error",
   EXPIRED_ACTION_CODE = "auth/expired-action-code",
   INVALID_ACTION_CODE = "auth/invalid-action-code",
   ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL = "auth/account-exists-with-different-credential",

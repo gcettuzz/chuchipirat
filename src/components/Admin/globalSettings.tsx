@@ -15,7 +15,26 @@ import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
 
-import * as TEXT from "../../constants/text";
+import {
+  SAVE_SUCCESS as TEXT_SAVE_SUCCESS,
+  GLOBAL_SETTINGS as TEXT_GLOBAL_SETTINGS,
+  EDIT as TEXT_EDIT,
+  SAVE as TEXT_SAVE,
+  CANCEL as TEXT_CANCEL,
+  SIGN_OUT as TEXT_SIGN_OUT,
+  ALERT_TITLE_UUPS as TEXT_ALERT_TITLE_UUPS,
+  GLOBAL_SETTINGS_ALLOW_SIGNUP_LABEL as TEXT_GLOBAL_SETTINGS_ALLOW_SIGNUP_LABEL,
+  GLOBAL_SETTINGS_ALLOW_SIGNUP_DESCRIPTION as TEXT_GLOBAL_SETTINGS_ALLOW_SIGNUP_DESCRIPTION,
+  GLOBAL_SETTINGS_MAINTENANCE_MODE_LABEL as TEXT_GLOBAL_SETTINGS_MAINTENANCE_MODE_LABEL,
+  GLOBAL_SETTINGS_MAINTENANCE_MODE_DESCRIPTION as TEXT_GLOBAL_SETTINGS_MAINTENANCE_MODE_DESCRIPTION,
+  SIGN_OUT_ALL_USERS as TEXT_SIGN_OUT_ALL_USERS,
+  SIGN_OUT_ALL_USERS_DESCRIPTION as TEXT_SIGN_OUT_ALL_USERS_DESCRIPTION,
+  SIGN_OUT_EVERYBODY as TEXT_SIGN_OUT_EVERYBODY,
+  DIALOG_SIGNOUT_USERS_CONFIRMATION as TEXT_DIALOG_SIGNOUT_USERS_CONFIRMATION,
+  DIALOG_SUBTITLE_SIGNOUT_USERS_CONFIRMATION as TEXT_DIALOG_SUBTITLE_SIGNOUT_USERS_CONFIRMATION,
+  DIALOG_TEXT_SIGNOUT_USERS_CONFIRMATION as TEXT_DIALOG_TEXT_SIGNOUT_USERS_CONFIRMATION,
+  USERS_ARE_LOGGED_OUT as TEXT_USERS_ARE_LOGGED_OUT,
+} from "../../constants/text";
 
 import GlobalSettings from "./globalSettings.class";
 import useStyles from "../../constants/styles";
@@ -32,6 +51,8 @@ import withEmailVerification from "../Session/withEmailVerification";
 import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
 import {withFirebase} from "../Firebase/firebaseContext";
 import {CustomRouterProps} from "../Shared/global.interface";
+import {Button, ListItem, useTheme} from "@material-ui/core";
+import {DialogType, useCustomDialog} from "../Shared/customDialogContext";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -41,6 +62,7 @@ enum ReducerActions {
   GLOBAL_SETTINGS_FETCH_SUCCESS,
   GLOBAL_SETTINGS_SAVE_SUCCESS,
   GLOBAL_SETTINGS_ON_CHANGE,
+  SIGN_OUT_ALL_USERS,
   CLOSE_SNACKBAR,
   GENERIC_ERROR,
 }
@@ -76,10 +98,7 @@ const globalSettingsReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.GLOBAL_SETTINGS_FETCH_SUCCESS:
       return {
         ...state,
-        globalSettings: {
-          ...state.globalSettings,
-          allowSignUp: action.payload.allowSignUp,
-        },
+        globalSettings: action.payload as GlobalSettings,
         isLoading: false,
         isError: false,
       };
@@ -88,7 +107,7 @@ const globalSettingsReducer = (state: State, action: DispatchAction): State => {
         ...state,
         globalSettings: {
           ...state.globalSettings,
-          [action.payload.field]: action.payload.value,
+          ...action.payload,
         },
       };
     case ReducerActions.GENERIC_ERROR:
@@ -105,7 +124,18 @@ const globalSettingsReducer = (state: State, action: DispatchAction): State => {
         error: null,
         snackbar: {
           severity: "success",
-          message: TEXT.SAVE_SUCCESS,
+          message: TEXT_SAVE_SUCCESS,
+          open: true,
+        },
+      };
+    case ReducerActions.SIGN_OUT_ALL_USERS:
+      return {
+        ...state,
+        isError: false,
+        error: null,
+        snackbar: {
+          severity: "success",
+          message: TEXT_USERS_ARE_LOGGED_OUT,
           open: true,
         },
       };
@@ -142,6 +172,7 @@ const GlobalSettingsBase: React.FC<
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
   const classes = useStyles();
+  const {customDialog} = useCustomDialog();
 
   const [editMode, setEditMode] = React.useState(false);
 
@@ -183,18 +214,46 @@ const GlobalSettingsBase: React.FC<
   // Feldwert ändern
   // ------------------------------------------ */
   const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    let newValue;
+    // let newValue;
 
-    if (event.target.name === "allowSignUp") {
-      newValue = event.target.checked;
-    } else {
-      newValue = event.target.value;
-    }
+    // if (event.target.name === "allowSignUp") {
+    //   newValue = event.target.checked;
+    // } else {
+    //   newValue = event.target.value;
+    // }
 
     dispatch({
       type: ReducerActions.GLOBAL_SETTINGS_ON_CHANGE,
-      payload: {field: event.target.name, value: newValue},
+      payload: {[event.target.name]: event.target.checked},
     });
+  };
+  /* ------------------------------------------
+  // Alle abmelden
+  // ------------------------------------------ */
+  const onSignOutAllUsers = async () => {
+    // Löschung wurde bestätigt. Löschen kann losgehen
+    const isConfirmed = await customDialog({
+      dialogType: DialogType.ConfirmSecure,
+      deletionDialogProperties: {confirmationString: "logoff"},
+      title: TEXT_DIALOG_SIGNOUT_USERS_CONFIRMATION,
+      subtitle: TEXT_DIALOG_SUBTITLE_SIGNOUT_USERS_CONFIRMATION,
+      text: TEXT_DIALOG_TEXT_SIGNOUT_USERS_CONFIRMATION,
+      buttonTextCancel: TEXT_CANCEL,
+      buttonTextConfirm: TEXT_SIGN_OUT,
+    });
+    if (!isConfirmed) {
+      return;
+    }
+    GlobalSettings.signOutAllUsers({firebase: firebase, authUser: authUser!})
+      .then(() => {
+        dispatch({
+          type: ReducerActions.SIGN_OUT_ALL_USERS,
+          payload: {},
+        });
+      })
+      .catch((error) => {
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+      });
   };
   /* ------------------------------------------
   // Einstellungen speichern
@@ -234,7 +293,7 @@ const GlobalSettingsBase: React.FC<
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}
-      <PageTitle title={TEXT.PAGE_TITLE_GLOBAL_SETTINGS} />
+      <PageTitle title={TEXT_GLOBAL_SETTINGS} />
 
       <ButtonRow
         key="buttons_edit"
@@ -244,7 +303,7 @@ const GlobalSettingsBase: React.FC<
             hero: true,
             visible: true,
 
-            label: TEXT.BUTTON_EDIT,
+            label: TEXT_EDIT,
             variant: "contained",
             color: "primary",
             onClick: toggleEditMode,
@@ -253,7 +312,7 @@ const GlobalSettingsBase: React.FC<
             id: "save",
             hero: true,
             visible: true,
-            label: TEXT.BUTTON_SAVE,
+            label: TEXT_SAVE,
             variant: "outlined",
             color: "primary",
             disabled: !editMode,
@@ -272,7 +331,7 @@ const GlobalSettingsBase: React.FC<
             <Grid item key={"error"} xs={12}>
               <AlertMessage
                 error={state.error!}
-                messageTitle={TEXT.ALERT_TITLE_UUPS}
+                messageTitle={TEXT_ALERT_TITLE_UUPS}
               />
             </Grid>
           )}
@@ -281,6 +340,7 @@ const GlobalSettingsBase: React.FC<
               editMode={editMode}
               globalSettings={state.globalSettings}
               onChange={onChange}
+              onSignOutAllUsers={onSignOutAllUsers}
             />
           </Grid>
         </Grid>
@@ -301,31 +361,67 @@ interface PanelGlobalSettingsProps {
   editMode: boolean;
   globalSettings: GlobalSettings;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onSignOutAllUsers: () => void;
 }
 const PanelGlobalSettings = ({
   editMode,
   globalSettings,
   onChange,
+  onSignOutAllUsers,
 }: PanelGlobalSettingsProps) => {
   const classes = useStyles();
-
+  const theme = useTheme();
   return (
     <Card className={classes.card} key={"cardInfo"}>
       <CardContent className={classes.cardContent} key={"cardContentInfo"}>
         <List>
-          <ListItemText
-            primary={TEXT.GLOBAL_SETTINGS_ALLOW_SIGNUP_LABEL}
-            secondary={TEXT.GLOBAL_SETTINGS_ALLOW_SIGNUP_DESCRIPTION}
-          />
-          <ListItemSecondaryAction>
-            <Switch
-              checked={globalSettings.allowSignUp}
-              onChange={onChange}
-              name={"allowSignUp"}
-              color="primary"
-              disabled={!editMode}
+          <ListItem>
+            <ListItemText
+              primary={TEXT_GLOBAL_SETTINGS_ALLOW_SIGNUP_LABEL}
+              secondary={TEXT_GLOBAL_SETTINGS_ALLOW_SIGNUP_DESCRIPTION}
             />
-          </ListItemSecondaryAction>
+            <ListItemSecondaryAction>
+              <Switch
+                checked={globalSettings.allowSignUp}
+                onChange={onChange}
+                name={"allowSignUp"}
+                id={"allowSignUp"}
+                color="primary"
+                disabled={!editMode}
+              />
+            </ListItemSecondaryAction>
+          </ListItem>
+          <ListItem>
+            <ListItemText
+              primary={TEXT_GLOBAL_SETTINGS_MAINTENANCE_MODE_LABEL}
+              secondary={TEXT_GLOBAL_SETTINGS_MAINTENANCE_MODE_DESCRIPTION}
+            />
+            <ListItemSecondaryAction>
+              <Switch
+                checked={globalSettings.maintenanceMode}
+                onChange={onChange}
+                name={"maintenanceMode"}
+                id={"maintenanceMode"}
+                color="primary"
+                disabled={!editMode}
+              />
+            </ListItemSecondaryAction>
+          </ListItem>
+          <ListItem>
+            <ListItemText
+              primary={TEXT_SIGN_OUT_ALL_USERS}
+              secondary={TEXT_SIGN_OUT_ALL_USERS_DESCRIPTION}
+            />
+            <ListItemSecondaryAction>
+              <Button
+                variant="outlined"
+                style={{color: theme.palette.error.main}}
+                onClick={onSignOutAllUsers}
+              >
+                {TEXT_SIGN_OUT_EVERYBODY}
+              </Button>
+            </ListItemSecondaryAction>
+          </ListItem>
         </List>
       </CardContent>
     </Card>

@@ -55,6 +55,7 @@ import {
   ITEM as TEXT_ITEM,
   CHANGE as TEXT_CHANGE,
   USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE as TEXT_USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE,
+  ERROR_NO_PRODUCTS_FOUND as TEXT_ERROR_NO_PRODUCTS_FOUND,
 } from "../../../constants/text";
 import {MoreVert as MoreVertIcon} from "@material-ui/icons";
 
@@ -91,7 +92,7 @@ import ShoppingList, {
 import {
   DialogSelectMenues,
   DialogSelectMenuesForRecipeDialogValues,
-  decodeSelectedMenues,
+  decodeSelectedMeals,
 } from "../Menuplan/dialogSelectMenues";
 import Product from "../../Product/product.class";
 import {
@@ -131,6 +132,7 @@ import {
   DialogTraceItem,
   EventListCard,
   PositionContextMenu,
+  OperationType,
 } from "../Event/eventSharedComponents";
 import Material from "../../Material/material.class";
 
@@ -184,6 +186,7 @@ const usedRecipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.SHOW_LOADING:
       return {
         ...state,
+        error: null,
         isLoading: action.payload.isLoading,
       };
     case ReducerActions.SET_SELECTED_LIST_ITEM:
@@ -222,6 +225,14 @@ const usedRecipesReducer = (state: State, action: DispatchAction): State => {
       throw new Error();
   }
 };
+
+const DIALOG_SELECT_MENUE_DATA_INITIAL_DATA = {
+  open: false,
+  menues: {} as DialogSelectMenuesForRecipeDialogValues,
+  selectedListUid: "",
+  operationType: OperationType.none,
+};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
@@ -285,10 +296,9 @@ const EventShoppingListPage = ({
     usedRecipesReducer,
     inititialState
   );
-  const [dialogSelectMenueData, setDialogSelectMenueData] = React.useState({
-    open: false,
-    menues: {} as DialogSelectMenuesForRecipeDialogValues,
-  });
+  const [dialogSelectMenueData, setDialogSelectMenueData] = React.useState(
+    DIALOG_SELECT_MENUE_DATA_INITIAL_DATA
+  );
   const [contextMenuSelectedItem, setContextMenuSelectedItem] = React.useState(
     CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE
   );
@@ -343,84 +353,110 @@ const EventShoppingListPage = ({
   /* ------------------------------------------
   // Dialog-Handling
   // ------------------------------------------ */
-  const onShowDialogSelectMenues = () => {
-    setDialogSelectMenueData({...dialogSelectMenueData, open: true});
+  const onCreateList = () => {
+    setDialogSelectMenueData({
+      ...dialogSelectMenueData,
+      open: true,
+      operationType: OperationType.Create,
+    });
   };
   const onCloseDialogSelectMenues = () => {
-    setDialogSelectMenueData({...dialogSelectMenueData, open: false});
+    setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
   };
   const onConfirmDialogSelectMenues = async (
     selectedMenues: DialogSelectMenuesForRecipeDialogValues
   ) => {
+    setDialogSelectMenueData({...dialogSelectMenueData, open: false});
+
     const userInput = (await customDialog({
       dialogType: DialogType.SingleTextInput,
       title: TEXT_NEW_LIST,
       text: GIVE_THE_NEW_SHOPPINGLIST_A_NAME,
       singleTextInputProperties: {
-        initialValue: "",
+        initialValue:
+          dialogSelectMenueData.operationType === OperationType.Update
+            ? shoppingListCollection.lists[
+                dialogSelectMenueData.selectedListUid
+              ].properties.name
+            : "",
         textInputLabel: TEXT_NAME,
       },
     })) as SingleTextInputResult;
-    setDialogSelectMenueData({...dialogSelectMenueData, open: false});
 
     if (userInput.valid) {
       // Wait anzeigen
       dispatch({type: ReducerActions.SHOW_LOADING, payload: {isLoading: true}});
 
-      // Rezepte holen und Liste erstellen
-      await ShoppingListCollection.createNewList({
-        name: userInput.input,
-        shoppingListCollection: shoppingListCollection,
-        selectedMenues: Object.keys(selectedMenues).map((menueUid) => menueUid),
-        menueplan: menuplan,
-        eventUid: event.uid,
-        products: products,
-        materials: materials,
-        departments: departments,
-        unitConversionBasic: unitConversionBasic!,
-        unitConversionProducts: unitConversionProducts!,
-        firebase: firebase,
-        authUser: authUser,
-      })
-        .then(async (result) => {
-          await onShoppingCollectionUpdate(result.shoppingListCollection);
-
-          fetchMissingData({
-            type: FetchMissingDataType.SHOPPING_LIST,
-            objectUid: result.shoppingListUid,
-          });
-          // liste gleich anzeigen!
-
-          dispatch({
-            type: ReducerActions.SET_SELECTED_LIST_ITEM,
-            payload: {uid: result},
-          });
+      if (dialogSelectMenueData.operationType === OperationType.Create) {
+        // Rezepte holen und Liste erstellen
+        await ShoppingListCollection.createNewList({
+          name: userInput.input,
+          shoppingListCollection: shoppingListCollection,
+          selectedMenues: Object.keys(selectedMenues),
+          menueplan: menuplan,
+          eventUid: event.uid,
+          products: products,
+          materials: materials,
+          departments: departments,
+          units: units,
+          unitConversionBasic: unitConversionBasic!,
+          unitConversionProducts: unitConversionProducts!,
+          firebase: firebase,
+          authUser: authUser,
         })
-        .catch((error) => {
-          if (error.toString().includes(TEXT_ERROR_NO_RECIPES_FOUND)) {
-            dispatch({
-              type: ReducerActions.SNACKBAR_SHOW,
-              payload: {
-                severity: "info",
-                message: TEXT_ERROR_NO_RECIPES_FOUND,
-                open: true,
-              },
+          .then(async (result) => {
+            await onShoppingCollectionUpdate(result.shoppingListCollection);
+
+            fetchMissingData({
+              type: FetchMissingDataType.SHOPPING_LIST,
+              objectUid: result.shoppingListUid,
             });
-          } else {
-            console.error(error);
+
+            // liste gleich anzeigen!
             dispatch({
-              type: ReducerActions.GENERIC_ERROR,
-              payload: error,
+              type: ReducerActions.SET_SELECTED_LIST_ITEM,
+              payload: {uid: result.shoppingListUid},
             });
-          }
-        });
+          })
+          .catch((error) => {
+            if (error.toString().includes(TEXT_ERROR_NO_RECIPES_FOUND)) {
+              dispatch({
+                type: ReducerActions.SNACKBAR_SHOW,
+                payload: {
+                  severity: "info",
+                  message: TEXT_ERROR_NO_RECIPES_FOUND,
+                  open: true,
+                },
+              });
+            } else {
+              console.error(error);
+              dispatch({
+                type: ReducerActions.GENERIC_ERROR,
+                payload: error,
+              });
+            }
+          });
+      } else if (dialogSelectMenueData.operationType === OperationType.Update) {
+        onRefreshLists(userInput.input, Object.keys(selectedMenues));
+      }
+    } else {
+      // Abbruch wieder das andere anzeigen
+      setDialogSelectMenueData({
+        ...dialogSelectMenueData,
+        menues: selectedMenues,
+        open: true,
+      });
     }
   };
   /* ------------------------------------------
   // Listen aktualisieren
   // ------------------------------------------ */
-  const onRefreshLists = async () => {
+  const onRefreshLists = async (
+    newName?: string,
+    selectedMenues?: Menue["uid"][]
+  ) => {
     let keepManuallyAddedItems = false;
+    const shoppingListCollectionToRefresh = {...shoppingListCollection};
 
     if (
       shoppingList &&
@@ -445,15 +481,35 @@ const EventShoppingListPage = ({
 
     dispatch({type: ReducerActions.SHOW_LOADING, payload: {isLoading: true}});
 
+    if (dialogSelectMenueData.operationType === OperationType.Update) {
+      // die neu gewählten Menüs und Name setzen
+      shoppingListCollectionToRefresh.lists[
+        dialogSelectMenueData.selectedListUid
+      ].properties.name = newName!;
+
+      shoppingListCollectionToRefresh.lists[
+        dialogSelectMenueData.selectedListUid
+      ].properties.selectedMenues = Object.keys(selectedMenues!);
+
+      shoppingListCollectionToRefresh.lists[
+        dialogSelectMenueData.selectedListUid
+      ].properties.selectedMeals = Menuplan.getMealsOfMenues({
+        menuplan: menuplan,
+        menues: selectedMenues!,
+      });
+
+      setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
+    }
     // Alle Listen aktualisieren
     ShoppingListCollection.refreshList({
-      shoppingListCollection: shoppingListCollection,
+      shoppingListCollection: shoppingListCollectionToRefresh,
       shoppingList: shoppingList!,
       keepManuallyAddedItems: keepManuallyAddedItems,
       menueplan: menuplan,
       eventUid: event.uid,
       products: products,
       materials: materials,
+      units: units,
       unitConversionBasic: unitConversionBasic!,
       unitConversionProducts: unitConversionProducts!,
       departments: departments,
@@ -478,14 +534,25 @@ const EventShoppingListPage = ({
   // PDF generieren
   // ------------------------------------------ */
   const onGeneratePrintVersion = () => {
+    if (
+      Object.keys(shoppingListCollection.lists[state.selectedListItem!].trace)
+        .length === 0
+    ) {
+      dispatch({
+        type: ReducerActions.GENERIC_ERROR,
+        payload: new Error(TEXT_ERROR_NO_PRODUCTS_FOUND),
+      });
+      return;
+    }
+
     pdf(
       <ShoppingListPdf
         shoppingList={shoppingList!}
         shoppingListName={
           shoppingListCollection.lists[state.selectedListItem!].properties.name
         }
-        shoppingListSelectedTimeSlice={decodeSelectedMenues({
-          selectedMenues:
+        shoppingListSelectedTimeSlice={decodeSelectedMeals({
+          selectedMeals:
             shoppingListCollection.lists[state.selectedListItem!].properties
               .selectedMenues,
           menuplan: menuplan,
@@ -575,32 +642,81 @@ const EventShoppingListPage = ({
   const onListElementEdit = async (
     actionEvent: React.MouseEvent<HTMLElement>
   ) => {
-    const selectedList = actionEvent.currentTarget.id.split("_")[1];
-    if (!selectedList) {
+    const selectedListUid = actionEvent.currentTarget.id.split("_")[1];
+    if (!selectedListUid) {
       return;
     }
+    // Element selektieren, damit der Fetch passiert und danach
+    // die Shoppingliste aktualisiert werden kann.
+    onListElementSelect(
+      actionEvent as React.MouseEvent<HTMLDivElement, MouseEvent>
+    );
+    const selectedMenuesForDialog: DialogSelectMenuesForRecipeDialogValues = {};
 
-    const userInput = (await customDialog({
-      dialogType: DialogType.SingleTextInput,
-      title: "Namen anpassen",
-      singleTextInputProperties: {
-        initialValue:
-          shoppingListCollection.lists[selectedList].properties.name,
-        textInputLabel: "Name",
-      },
-    })) as SingleTextInputResult;
+    let selectedMenues =
+      shoppingListCollection.lists[selectedListUid].properties.selectedMenues;
 
-    if (userInput.valid) {
-      const updatedShoppingListCollection = ShoppingListCollection.editListName(
-        {
-          shoppingListCollection: shoppingListCollection,
-          listUidToEdit: selectedList,
-          newName: userInput.input,
-          authUser: authUser,
-        }
-      );
-      onShoppingCollectionUpdate(updatedShoppingListCollection);
+    // Prüfen ob die Menüs immer noch gleich sind
+    if (
+      !Utils.areStringArraysEqual(
+        shoppingListCollection.lists[selectedListUid].properties.selectedMeals,
+        Menuplan.getMealsOfMenues({
+          menuplan: menuplan,
+          menues:
+            shoppingListCollection.lists[selectedListUid].properties
+              .selectedMenues,
+        })
+      ) ||
+      // Sind neue Menü dazugekommen/ oder wurden Menüs aus der
+      // Auswahl entfernt
+      shoppingListCollection.lists[selectedListUid].properties.selectedMenues
+        .length !==
+        Menuplan.getMenuesOfMeals({
+          menuplan: menuplan,
+          meals:
+            shoppingListCollection.lists[selectedListUid].properties
+              .selectedMeals,
+        }).length
+    ) {
+      selectedMenues = Menuplan.getMenuesOfMeals({
+        menuplan: menuplan,
+        meals:
+          shoppingListCollection.lists[selectedListUid].properties
+            .selectedMeals,
+      });
     }
+
+    // Menues der Mahlzeiten holen und Objekt umwandeln
+    Menuplan.getMealsOfMenues({
+      menuplan: menuplan,
+      menues:
+        shoppingListCollection.lists[selectedListUid].properties.selectedMeals,
+    }).forEach((menueUid) => (selectedMenues[menueUid] = true));
+
+    selectedMenues.forEach(
+      (menueUid) => (selectedMenuesForDialog[menueUid] = true)
+    );
+
+    setDialogSelectMenueData({
+      menues: selectedMenuesForDialog,
+      open: true,
+      selectedListUid: selectedListUid,
+      operationType: OperationType.Update,
+    });
+
+    // const selectedMenues: DialogSelectMenuesForRecipeDialogValues = {};
+    // shoppingListCollection.lists[
+    //   selectedListUid
+    // ].properties.selectedMenues.forEach(
+    //   (menueUid) => (selectedMenues[menueUid] = true)
+    // );
+
+    setDialogSelectMenueData({
+      menues: selectedMenuesForDialog,
+      open: true,
+      selectedListUid: selectedListUid,
+      operationType: OperationType.Update,
+    });
   };
   const onCheckboxClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     // Umschiessen und speichern!
@@ -641,6 +757,7 @@ const EventShoppingListPage = ({
     let updatedShoppingList: ShoppingList;
     let updatedTrace: ShoppingListTrace;
     let updatedShoppingListCollection: ShoppingListCollection;
+
     switch (pressedButton[1]) {
       case Action.EDIT:
         quantity = shoppingList?.list[
@@ -820,6 +937,7 @@ const EventShoppingListPage = ({
           quantity: quantity,
           unit: unit,
           addedManually: true,
+          itemType: item.itemType,
         });
       }
       if (trace) {
@@ -878,7 +996,8 @@ const EventShoppingListPage = ({
   // Artikel Trace Dialog
   // ------------------------------------------ */
   const onDialogTraceItemClose = () => {
-    setTraceItemDialogValues({...traceItemDialogValues, open: false});
+    setTraceItemDialogValues(TRACE_ITEM_DIALOG_INITIAL_VALUES);
+    setContextMenuSelectedItem(CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE);
   };
   /* ------------------------------------------
   // Recipe-Drawer-Handler
@@ -965,7 +1084,7 @@ const EventShoppingListPage = ({
             lists={shoppingListCollection.lists}
             noOfLists={shoppingListCollection.noOfLists}
             menuplan={menuplan}
-            onShowDialogSelectMenues={onShowDialogSelectMenues}
+            onCreateList={onCreateList}
             onListElementSelect={onListElementSelect}
             onListElementDelete={onListElementDelete}
             onListElementEdit={onListElementEdit}
@@ -994,7 +1113,7 @@ const EventShoppingListPage = ({
         open={dialogSelectMenueData.open}
         title={TEXT_WHICH_MENUES_FOR_SHOPPING_LIST_GENERATION}
         dates={menuplan.dates}
-        preSelectedMenue={{}}
+        preSelectedMenue={dialogSelectMenueData.menues}
         mealTypes={menuplan.mealTypes}
         meals={menuplan.meals}
         menues={menuplan.menues}
@@ -1012,6 +1131,7 @@ const EventShoppingListPage = ({
         units={units}
         departments={departments}
         editMode={handleItemDialogValues.item.uid ? true : false}
+        firebase={firebase}
         authUser={authUser}
         handleOk={onDialogHandleItemOk}
         handleClose={onDialogHandleItemClose}
@@ -1030,13 +1150,12 @@ const EventShoppingListPage = ({
         snackbarOpen={state.snackbar.open}
         handleClose={handleSnackbarClose}
       />
-
       {state.selectedListItem && contextMenuSelectedItem.productUid && (
         // kann nur generiert werden, wenn auch etwas ausgewählt ist
         <DialogTraceItem
           dialogOpen={traceItemDialogValues.open}
           trace={
-            shoppingListCollection.lists[state.selectedListItem!]?.trace[
+            shoppingListCollection.lists[state.selectedListItem!].trace[
               contextMenuSelectedItem.productUid
             ]
           }
@@ -1253,6 +1372,7 @@ interface DialogHandleItemProps {
   units: Unit[];
   departments: Department[];
   editMode: boolean;
+  firebase: Firebase;
   authUser: AuthUser;
   handleOk: ({item, quantity, unit}: OnDialogAddItemOk) => void;
   handleClose: () => void;
@@ -1264,10 +1384,15 @@ interface OnDialogAddItemOk {
   quantity: number;
   unit: Unit["key"];
 }
-const DIALOG_VALUES_INITIAL_STATE = {
+interface DialogValues {
+  quantity: string;
+  unit: Unit["key"];
+  item: ProductItem | MaterialItem | null;
+}
+const DIALOG_VALUES_INITIAL_STATE: DialogValues = {
   quantity: "",
   unit: "",
-  item: {} as ProductItem | MaterialItem | null,
+  item: {...new Product(), itemType: ItemType.none},
 };
 const DIALOG_VALUES_VALIDATION_INITIAL_STATE = {
   isError: false,
@@ -1283,6 +1408,7 @@ const DialogHandleItem = ({
   units,
   departments,
   editMode,
+  firebase,
   authUser,
   handleOk: handleOkSuper,
   handleClose: handleCloseSuper,
@@ -1323,7 +1449,6 @@ const DialogHandleItem = ({
     if (typeof newValue === "string" || !newValue) {
       return;
     }
-
     if (newValue.name.endsWith(TEXT_ADD)) {
       // Herausfinden ob ein Produkt oder Material angelegt werden soll
       const userInput = (await customDialog({
@@ -1435,13 +1560,23 @@ const DialogHandleItem = ({
     });
     onProductCreateSuper(product);
   };
-  const onCloseDialogProduct = () => {
+
+  const onProductChooseExisting = (product: Product) => {
+    const item: ProductItem = {...product, itemType: ItemType.food};
+    setDialogValues({...dialogValues, item: item});
+
     setProductAddPopupValues({
       ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
       popUpOpen: false,
     });
   };
 
+  const onCloseDialogProduct = () => {
+    setProductAddPopupValues({
+      ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
+      popUpOpen: false,
+    });
+  };
   return (
     <React.Fragment>
       <Dialog open={dialogOpen} onClose={handleClose} maxWidth="xs" fullWidth>
@@ -1508,9 +1643,11 @@ const DialogHandleItem = ({
         dialogOpen={materialAddPopupValues.popUpOpen}
         handleOk={onMaterialCreate}
         handleClose={onCloseDialogMaterial}
+        firebase={firebase}
         authUser={authUser}
       />
       <DialogProduct
+        firebase={firebase}
         productName={productAddPopupValues.name}
         productUid={productAddPopupValues.uid}
         productUsable={productAddPopupValues.usable}
@@ -1519,6 +1656,7 @@ const DialogHandleItem = ({
         dialogOpen={productAddPopupValues.popUpOpen}
         handleOk={onProductCreate}
         handleClose={onCloseDialogProduct}
+        handleChooseExisting={onProductChooseExisting}
         products={products}
         units={units}
         departments={departments}

@@ -5,7 +5,7 @@ import Unit from "../../Unit/unit.class";
 import Menuplan, {MealRecipeDeletedPrefix} from "../Menuplan/menuplan.class";
 import UsedRecipes from "../UsedRecipes/usedRecipes.class";
 import {
-  ERROR_NO_RECIPES_FOUND as TEXT_ERROR_NO_RECIPES_FOUND,
+  ERROR_NO_RECIPE_PRODUCT_MATERIAL_FOUND as TEXT_ERROR_NO_RECIPE_PRODUCT_MATERIAL_FOUND,
   ERROR_PARAMETER_NOT_PASSED as TEXT_ERROR_PARAMETER_NOT_PASSED,
 } from "../../../constants/text";
 import Recipe, {
@@ -56,6 +56,7 @@ interface CreateNewList {
   products: Product[];
   materials: Material[];
   departments: Department[];
+  units: Unit[];
   unitConversionBasic: UnitConversionBasic;
   unitConversionProducts: UnitConversionProducts;
   firebase: Firebase;
@@ -99,6 +100,7 @@ interface GetShoppingListListener {
   eventUid: Event["uid"];
   shoppingListUid: ShoppingList["uid"];
   callback: (shoppingList: ShoppingList) => void;
+  errorCallback: (error: Error) => void;
 }
 
 interface GetShoppingList {
@@ -143,6 +145,7 @@ export default class ShoppingList {
     products,
     materials,
     departments,
+    units,
     unitConversionBasic,
     unitConversionProducts,
     firebase,
@@ -154,108 +157,72 @@ export default class ShoppingList {
 
     const shoppingList = {list: {}, uid: ""} as ShoppingList;
     let trace = {} as ShoppingListTrace;
-
-    if (recipeList == undefined || recipeList.length == 0) {
-      throw new Error(TEXT_ERROR_NO_RECIPES_FOUND);
-    }
+    let itemCounter = 0;
     // Alle Rezepte holen
-    await Recipe.getMultipleRecipes({
-      firebase: firebase,
-      recipes: recipeList,
-    })
-      .then((result) => {
-        // Über gewählte Menüs loopen
-        selectedMenues.forEach((menueUid) => {
-          // Über alle Rezepte dieses Menü loopen
-          menueplan.menues[menueUid].mealRecipeOrder.forEach(
-            (mealRecipeUid) => {
-              if (
-                menueplan.mealRecipes[mealRecipeUid].recipe.recipeUid.includes(
-                  MealRecipeDeletedPrefix
-                )
-              ) {
-                return;
-              }
-
-              // Alle Zutaten und Materiale holen
-              const scaledIngredients = Recipe.scaleIngredients({
-                recipe:
-                  result[menueplan.mealRecipes[mealRecipeUid].recipe.recipeUid],
-                portionsToScale:
-                  menueplan.mealRecipes[mealRecipeUid].totalPortions,
-                scalingOptions: {convertUnits: true},
-                unitConversionBasic: unitConversionBasic,
-                unitConversionProducts: unitConversionProducts,
-                products: products,
-              });
-              const scaledMaterials = Recipe.scaleMaterials({
-                recipe:
-                  result[menueplan.mealRecipes[mealRecipeUid].recipe.recipeUid],
-                portionsToScale:
-                  menueplan.mealRecipes[mealRecipeUid].totalPortions,
-              });
-
-              // Alle skalierten Zutaten hinzufügen
-              Object.values(scaledIngredients).forEach(
-                (ingredient: Ingredient) => {
-                  const product = products.find(
-                    (product) => product.uid == ingredient.product.uid
-                  );
-                  const department = departments.find(
-                    (department) => department.uid == product?.department.uid
-                  );
-                  ShoppingList.addItem({
-                    shoppingListReference: shoppingList,
-                    item: product!,
-                    quantity: ingredient.quantity,
-                    unit: ingredient.unit,
-                    department: department!,
-                    itemType: ItemType.food,
-                  });
-
-                  trace = ShoppingListCollection.addTraceEntry({
-                    trace: trace,
-                    item: product!,
-                    menueUid: menueUid,
-                    recipe: {
-                      uid: menueplan.mealRecipes[mealRecipeUid].recipe
-                        .recipeUid,
-                      name: menueplan.mealRecipes[mealRecipeUid].recipe.name,
-                    },
-                    planedPortions:
-                      menueplan.mealRecipes[mealRecipeUid].totalPortions,
-                    quantity: ingredient.quantity,
-                    unit: ingredient.unit,
-                  });
+    if (recipeList.length !== 0) {
+      await Recipe.getMultipleRecipes({
+        firebase: firebase,
+        recipes: recipeList,
+      })
+        .then((result) => {
+          // Über gewählte Menüs loopen
+          selectedMenues.forEach((menueUid) => {
+            // Über alle Rezepte dieses Menü loopen
+            menueplan.menues[menueUid].mealRecipeOrder.forEach(
+              (mealRecipeUid) => {
+                if (
+                  menueplan.mealRecipes[
+                    mealRecipeUid
+                  ].recipe.recipeUid.includes(MealRecipeDeletedPrefix)
+                ) {
+                  return;
                 }
-              );
-              // Alle skalierten Materialien hinzufügen
-              Object.values(scaledMaterials).forEach(
-                (recipeMaterial: RecipeMaterialPosition) => {
-                  // Prüfen ob ein Verbauchsmaterial
-                  const material = materials.find(
-                    (materialRecord) =>
-                      materialRecord.uid == recipeMaterial.material.uid
-                  );
 
-                  const department = departments.find(
-                    // Material geht fix in die Non-Food Abteilung
-                    (department) => department.name.toUpperCase() == "NON FOOD"
-                  );
+                // Alle Zutaten und Materiale holen
+                const scaledIngredients = Recipe.scaleIngredients({
+                  recipe:
+                    result[
+                      menueplan.mealRecipes[mealRecipeUid].recipe.recipeUid
+                    ],
+                  portionsToScale:
+                    menueplan.mealRecipes[mealRecipeUid].totalPortions,
+                  scalingOptions: {convertUnits: true},
+                  units: units,
+                  unitConversionBasic: unitConversionBasic,
+                  unitConversionProducts: unitConversionProducts,
+                  products: products,
+                });
+                const scaledMaterials = Recipe.scaleMaterials({
+                  recipe:
+                    result[
+                      menueplan.mealRecipes[mealRecipeUid].recipe.recipeUid
+                    ],
+                  portionsToScale:
+                    menueplan.mealRecipes[mealRecipeUid].totalPortions,
+                });
 
-                  if (material?.type == MaterialType.consumable) {
+                // Alle skalierten Zutaten hinzufügen
+                Object.values(scaledIngredients).forEach(
+                  (ingredient: Ingredient) => {
+                    const product = products.find(
+                      (product) => product.uid == ingredient.product.uid
+                    );
+                    const department = departments.find(
+                      (department) => department.uid == product?.department.uid
+                    );
                     ShoppingList.addItem({
                       shoppingListReference: shoppingList,
-                      item: material!,
-                      quantity: recipeMaterial.quantity,
-                      unit: "",
-                      // materials: materials,
-                      department: department,
-                      itemType: ItemType.material,
+                      item: product!,
+                      quantity: ingredient.quantity,
+                      unit: ingredient.unit,
+                      department: department!,
+                      itemType: ItemType.food,
                     });
-                    ShoppingListCollection.addTraceEntry({
+                    itemCounter++;
+
+                    trace = ShoppingListCollection.addTraceEntry({
                       trace: trace,
-                      item: material!,
+                      item: product!,
                       menueUid: menueUid,
                       recipe: {
                         uid: menueplan.mealRecipes[mealRecipeUid].recipe
@@ -264,82 +231,138 @@ export default class ShoppingList {
                       },
                       planedPortions:
                         menueplan.mealRecipes[mealRecipeUid].totalPortions,
-                      quantity: recipeMaterial.quantity,
-                      unit: "",
+                      quantity: ingredient.quantity,
+                      unit: ingredient.unit,
+                      itemType: ItemType.food,
                     });
                   }
-                }
-              );
-            }
-          );
-          // Produkte // Material aus dem Menü ebenefalls hinzufügen
-          menueplan.menues[menueUid].productOrder.forEach((productMenuUid) => {
-            const menuPlanProductEntry = menueplan.products[productMenuUid];
+                );
+                // Alle skalierten Materialien hinzufügen
+                Object.values(scaledMaterials).forEach(
+                  (recipeMaterial: RecipeMaterialPosition) => {
+                    // Prüfen ob ein Verbauchsmaterial
+                    const material = materials.find(
+                      (materialRecord) =>
+                        materialRecord.uid == recipeMaterial.material.uid
+                    );
 
-            const product = products.find(
-              (product) => product.uid == menuPlanProductEntry.productUid
-            );
-            const department = departments.find(
-              (department) => department.uid == product?.department.uid
-            );
+                    const department = departments.find(
+                      // Material geht fix in die Non-Food Abteilung
+                      (department) =>
+                        department.name.toUpperCase() == "NON FOOD"
+                    );
 
-            ShoppingList.addItem({
-              shoppingListReference: shoppingList,
-              item: product!,
-              quantity: menuPlanProductEntry.totalQuantity,
-              unit: menuPlanProductEntry.unit,
-              department: department!,
-              itemType: ItemType.food,
-            });
-            // Trace nachführen
-            trace = ShoppingListCollection.addTraceEntry({
-              trace: trace,
-              item: product!,
-              menueUid: menueUid,
-              recipe: {} as Recipe,
-              quantity: menuPlanProductEntry.totalQuantity,
-              unit: menuPlanProductEntry.unit,
-            });
-          });
+                    if (material?.type == MaterialType.consumable) {
+                      ShoppingList.addItem({
+                        shoppingListReference: shoppingList,
+                        item: material!,
+                        quantity: recipeMaterial.quantity,
+                        unit: "",
+                        // materials: materials,
+                        department: department,
+                        itemType: ItemType.material,
+                      });
+                      itemCounter++;
 
-          menueplan.menues[menueUid].materialOrder.forEach(
-            (materialMenuUid) => {
-              const menuPlanMaterialEntry =
-                menueplan.materials[materialMenuUid];
-
-              const material = materials.find(
-                (material) => material.uid == menuPlanMaterialEntry.materialUid
-              );
-              const department = departments.find(
-                (department) => department.name.toUpperCase() == "NON FOOD"
-              );
-
-              if (material?.type == MaterialType.consumable) {
-                ShoppingList.addItem({
-                  shoppingListReference: shoppingList,
-                  item: material,
-                  quantity: menuPlanMaterialEntry.totalQuantity,
-                  unit: menuPlanMaterialEntry.unit,
-                  department: department,
-                  itemType: ItemType.material,
-                });
-                ShoppingListCollection.addTraceEntry({
-                  trace: trace,
-                  item: material!,
-                  menueUid: menueUid,
-                  recipe: {} as Recipe,
-                  quantity: menuPlanMaterialEntry.totalQuantity,
-                  unit: menuPlanMaterialEntry.unit,
-                });
+                      ShoppingListCollection.addTraceEntry({
+                        trace: trace,
+                        item: material!,
+                        menueUid: menueUid,
+                        recipe: {
+                          uid: menueplan.mealRecipes[mealRecipeUid].recipe
+                            .recipeUid,
+                          name: menueplan.mealRecipes[mealRecipeUid].recipe
+                            .name,
+                        },
+                        planedPortions:
+                          menueplan.mealRecipes[mealRecipeUid].totalPortions,
+                        quantity: recipeMaterial.quantity,
+                        unit: "",
+                        itemType: ItemType.material,
+                      });
+                    }
+                  }
+                );
               }
-            }
-          );
+            );
+          });
+        })
+        .catch((error) => {
+          console.error(error);
+          throw error;
         });
-      })
-      .catch((error) => {
-        console.error(error);
-        throw error;
+    }
+    // alle Produkte und Materialien holen
+    // Produkte // Material aus dem Menü ebenefalls hinzufügen
+    selectedMenues.forEach((menueUid) => {
+      menueplan.menues[menueUid].productOrder.forEach((productMenuUid) => {
+        const menuPlanProductEntry = menueplan.products[productMenuUid];
+
+        const product = products.find(
+          (product) => product.uid == menuPlanProductEntry.productUid
+        );
+        const department = departments.find(
+          (department) => department.uid == product?.department.uid
+        );
+        ShoppingList.addItem({
+          shoppingListReference: shoppingList,
+          item: product!,
+          quantity: menuPlanProductEntry.totalQuantity,
+          unit: menuPlanProductEntry.unit,
+          department: department!,
+          itemType: ItemType.food,
+        });
+        itemCounter++;
+
+        // Trace nachführen
+        trace = ShoppingListCollection.addTraceEntry({
+          trace: trace,
+          item: product!,
+          menueUid: menueUid,
+          recipe: {} as Recipe,
+          quantity: menuPlanProductEntry.totalQuantity,
+          unit: menuPlanProductEntry.unit,
+          itemType: ItemType.food,
+        });
       });
+
+      menueplan.menues[menueUid].materialOrder.forEach((materialMenuUid) => {
+        const menuPlanMaterialEntry = menueplan.materials[materialMenuUid];
+
+        const material = materials.find(
+          (material) => material.uid == menuPlanMaterialEntry.materialUid
+        );
+        const department = departments.find(
+          (department) => department.name.toUpperCase() == "NON FOOD"
+        );
+
+        if (material?.type == MaterialType.consumable) {
+          ShoppingList.addItem({
+            shoppingListReference: shoppingList,
+            item: material,
+            quantity: menuPlanMaterialEntry.totalQuantity,
+            unit: menuPlanMaterialEntry.unit,
+            department: department,
+            itemType: ItemType.material,
+          });
+          itemCounter++;
+
+          ShoppingListCollection.addTraceEntry({
+            trace: trace,
+            item: material!,
+            menueUid: menueUid,
+            recipe: {} as Recipe,
+            quantity: menuPlanMaterialEntry.totalQuantity,
+            unit: menuPlanMaterialEntry.unit,
+            itemType: ItemType.material,
+          });
+        }
+      });
+    });
+
+    if (itemCounter == 0) {
+      throw new Error(TEXT_ERROR_NO_RECIPE_PRODUCT_MATERIAL_FOUND);
+    }
 
     return {shoppingList, trace};
   };
@@ -391,10 +414,14 @@ export default class ShoppingList {
     let shoppingListItem = shoppingListReference.list[
       department.pos
     ].items.find(
-      (listItem: ShoppingListItem) => listItem.item.uid === item!.uid
+      (listItem: ShoppingListItem) =>
+        listItem.item.uid === item!.uid && listItem.unit === unit
     );
 
-    if (!shoppingListItem || shoppingListItem.unit != unit) {
+    if (shoppingListItem) {
+      // Gibt es schon -- Addieren
+      shoppingListItem.quantity = shoppingListItem.quantity + quantity;
+    } else {
       // Neu -- hinzufügen || Andere Einheit, gleich behandeln, wie neues Produkt
       shoppingListItem = {
         checked: false,
@@ -410,12 +437,7 @@ export default class ShoppingList {
 
       shoppingListReference.list[department.pos].items.push(shoppingListItem);
       return;
-    } else if (shoppingListItem.unit == unit) {
-      // Gibt es schon -- Addieren
-      shoppingListItem.quantity = shoppingListItem.quantity + quantity;
     }
-
-    // shoppingListReference.list[department.pos].items.push(shoppingListItem);
   };
   // ===================================================================== */
   /**
@@ -445,92 +467,7 @@ export default class ShoppingList {
     }
     return updatedShoppingList;
   };
-  // ===================================================================== */
-  /**
-   * Material der Liste hinzufügen
-   * In die Liste (Referenz) das Maerial hinzufügen. Falls der Eintrag bereits
-   * vorhanden ist, wird dazu addiert.
-   * @param object - Objekt mit Referenz zur List, Material, die hinzugefügt
-   *                 werden soll, Material- und Abteilungsliste
-   * @returns VOID : Da Liste als Referenz
-   */
-  // static addMaterial = ({
-  //   shoppingListReference,
-  //   material,
-  //   // materials,
-  //   quantity,
-  //   unit,
-  //   department,
-  //   addedManualy = false,
-  // }: AddMaterial) => {
-  //   if (!material) {
-  //     return;
-  //   }
 
-  //   // let materialRecord = materials.find(
-  //   //   (materialRecord) => (material.material.uid = materialRecord.uid)
-  //   // );
-
-  //   if (material.type == MaterialType.usage) {
-  //     // Verbrauchsmaterial
-  //     return;
-  //   }
-  //   // let department = departments.find(
-  //   //   // Material geht fix in die Non-Food Abteilung
-  //   //   (department) => department.name.toUpperCase() == "NON FOOD"
-  //   // );
-
-  //   if (!department) {
-  //     // Lieber falsch zuordnen, als nicht aufführen
-  //     department = {
-  //       uid: "NotIdetifiable",
-  //       name: "Keine Zuordnung möglich",
-  //       pos: 99,
-  //       usable: true,
-  //     };
-  //   }
-
-  //   if (!shoppingListReference.list.hasOwnProperty(department.pos)) {
-  //     // Neue Abteilung hinzufügen
-  //     shoppingListReference.list[department.pos] = {
-  //       departmentUid: department.uid,
-  //       departmentName: department?.name,
-  //       items: [],
-  //     };
-  //   }
-  //   let shoppingListItem = shoppingListReference.list[
-  //     department.pos
-  //   ].items.find((item: ShoppingListItem) => item.item.uid === material!.uid);
-  //   if (!shoppingListItem) {
-  //     // Neu -- hinzufügen
-  //     shoppingListItem = {
-  //       checked: false,
-  //       quantity: quantity,
-  //       unit: unit,
-  //       item: {uid: material.uid, name: material.name},
-  //       type: ItemType.material,
-  //     };
-  //     shoppingListReference.list[department.pos].items.push(shoppingListItem);
-  //     return;
-  //   }
-  //   if (shoppingListItem.unit == "") {
-  //     // Gibt es schon -- Addieren
-  //     shoppingListItem.quantity = shoppingListItem.quantity + quantity;
-  //   } else {
-  //     // Andere Einheit, gleich behandeln, wie neues Produkt
-  //     shoppingListItem = {
-  //       checked: false,
-  //       quantity: quantity,
-  //       unit: unit,
-  //       item: {uid: material.uid, name: material.name},
-  //       type: ItemType.material,
-  //     };
-  //     if (addedManualy) {
-  //       shoppingListItem.addedManualy = true;
-  //     }
-  //     shoppingListReference.list[department.pos].items.push(shoppingListItem);
-  //   }
-  // };
   // ===================================================================== */
   /**
    * Einkaufsliste speichern
@@ -547,7 +484,7 @@ export default class ShoppingList {
           authUser: authUser,
         })
         .then((result) => {
-          shoppingList = result;
+          shoppingList = result.value;
 
           // Feed Eintrag
           const indexList = Object.keys(shoppingList.list);
@@ -559,7 +496,6 @@ export default class ShoppingList {
             randomDepartment[
               Math.floor(Math.random() * randomDepartment.length)
             ];
-
           Feed.createFeedEntry({
             firebase: firebase,
             authUser: authUser,
@@ -613,15 +549,12 @@ export default class ShoppingList {
     eventUid,
     shoppingListUid,
     callback,
+    errorCallback,
   }: GetShoppingListListener) => {
     const shoppingListCallback = (shoppingList: ShoppingList) => {
       // Menüplan mit UID anreichern
       shoppingList.uid = shoppingListUid;
       callback(shoppingList);
-    };
-    const errorCallback = (error: Error) => {
-      console.error(error);
-      throw error;
     };
     return await firebase.event.shoppingList
       .listen<ShoppingList>({

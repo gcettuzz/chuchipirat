@@ -5,6 +5,7 @@ import {ChangeRecord} from "../../Shared/global.interface";
 import Utils from "../../Shared/utils.class";
 import Event from "../Event/event.class";
 import Menuplan, {
+  Meal,
   MealRecipeDeletedPrefix,
   Menue,
 } from "../Menuplan/menuplan.class";
@@ -17,6 +18,7 @@ import Recipe, {RecipeMaterialPosition} from "../../Recipe/recipe.class";
 import {ProductTrace} from "../ShoppingList/shoppingListCollection.class";
 import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
 import Stats, {StatsField} from "../../Shared/stats.class";
+import {ItemType} from "../ShoppingList/shoppingList.class";
 
 export interface MaterialListEntry {
   properties: ListProperties;
@@ -37,7 +39,8 @@ export interface MaterialListMaterial {
 interface ListProperties {
   uid: string;
   name: string;
-  selectedMenues: string[];
+  selectedMeals: Meal["uid"][];
+  selectedMenues: Menue["uid"][];
   generated: ChangeRecord;
 }
 
@@ -54,6 +57,7 @@ interface GetMaterialListListener {
   firebase: Firebase;
   uid: string;
   callback: (materialList: MaterialList) => void;
+  errorCallback: (error: Error) => void;
 }
 interface Factory {
   event: Event;
@@ -61,7 +65,7 @@ interface Factory {
 }
 interface CreateNewList {
   name: string;
-  selectedMenues: string[];
+  selectedMenues: Menue["uid"][];
   menueplan: Menuplan;
   materials: Material[];
   firebase: Firebase;
@@ -187,15 +191,12 @@ export default class MaterialList {
     firebase,
     uid,
     callback,
+    errorCallback,
   }: GetMaterialListListener) => {
     const materialListCallback = (materialList: MaterialList) => {
       // Menüplan mit UID anreichern
       materialList.uid = uid;
       callback(materialList);
-    };
-    const errorCallback = (error: Error) => {
-      console.error(error);
-      throw error;
     };
 
     return await firebase.event.materialList
@@ -227,10 +228,17 @@ export default class MaterialList {
     firebase,
     authUser,
   }: CreateNewList) => {
+    // Es wird mit den Menüs gearbeitet. Aber gespeichert werden die
+    // Mahlzeiten. --> Wenn die Menüs verschoben werden, müssen die
+    // Augrund der gewählten Mahlzeit neu bestimmt werden.
     const listEntry = {
       properties: {
         uid: Utils.generateUid(5),
         name: name,
+        selectedMeals: Menuplan.getMealsOfMenues({
+          menuplan: menueplan,
+          menues: selectedMenues,
+        }),
         selectedMenues: selectedMenues,
         generated: Utils.createChangeRecord(authUser),
       },
@@ -307,7 +315,6 @@ export default class MaterialList {
             }
           );
           // Material aus dem Menü ebenefalls hinzufügen
-
           menueplan.menues[menueUid].materialOrder.forEach(
             (materialMenuUid) => {
               const menuPlanMaterialEntry =
@@ -316,8 +323,7 @@ export default class MaterialList {
               const material = materials.find(
                 (material) => material.uid == menuPlanMaterialEntry.materialUid
               );
-
-              if (material?.type == MaterialType.consumable) {
+              if (material?.type == MaterialType.usage) {
                 listEntry.items = MaterialList.addMaterialToList({
                   material: material,
                   list: listEntry.items,
@@ -420,6 +426,7 @@ export default class MaterialList {
         quantity: quantity,
         unit: "",
         manualAdd: manuelAdd,
+        itemType: ItemType.material,
       });
     } else {
       list.push({
@@ -436,6 +443,7 @@ export default class MaterialList {
             quantity: quantity,
             unit: "",
             manualAdd: manuelAdd,
+            itemType: ItemType.material,
           },
         ],
       });
@@ -482,6 +490,34 @@ export default class MaterialList {
         material.trace.some((trace) => trace.manualAdd == true)
       );
     }
+
+    // überprüfen ob die gewählten Menüs auch in den Mahlzeiten sind.
+    // Wenn die Menüs im Menüplan verschoben werden, müssen die Menüs neu definiert werden
+    // Anhand der Mahlzeiten (die mitgespeichert werden)
+    if (
+      !Utils.areStringArraysEqual(
+        listToUpdate.properties.selectedMeals,
+        Menuplan.getMealsOfMenues({
+          menuplan: menueplan,
+          menues: listToUpdate.properties.selectedMenues,
+        })
+      ) ||
+      // Sind neue Menü dazugekommen/ oder wurden Menüs aus der
+      // Auswahl entfernt
+      listToUpdate.properties.selectedMenues.length !==
+        Menuplan.getMenuesOfMeals({
+          menuplan: menueplan,
+          meals: listToUpdate.properties.selectedMeals,
+        }).length
+    ) {
+      // Die Menüs wurden geändert. Daher müssen wir jetzt
+      // die Menüs neu bestimmen anhand der Mahlzeiten
+      listToUpdate.properties.selectedMenues = Menuplan.getMenuesOfMeals({
+        menuplan: menueplan,
+        meals: listToUpdate.properties.selectedMeals,
+      });
+    }
+
     await MaterialList.createNewList({
       name: listToUpdate.properties.name,
       selectedMenues: listToUpdate.properties.selectedMenues,
@@ -491,6 +527,11 @@ export default class MaterialList {
       authUser: authUser,
     })
       .then((result) => {
+        // Die selectedMeals werden im CreateNewList neu bestimmt
+        // da dies ein Refresh ist, müssen wir da die alten wieder
+        // überklatschen
+        result.properties.selectedMeals = listToUpdate.properties.selectedMeals;
+
         if (keepManuallyAddedItems) {
           updatedMaterialList.lists[listUidToRefresh] = {
             properties: result.properties,
@@ -513,6 +554,11 @@ export default class MaterialList {
           field: StatsField.noMaterialLists,
           value: -1,
         });
+      })
+      .then(() => {
+        firebase.analytics.logEvent(
+          FirebaseAnalyticEvent.materialListGenerated
+        );
       })
       .catch((error) => {
         console.error(error);

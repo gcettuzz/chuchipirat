@@ -34,7 +34,7 @@ import {
   DIALOG_EXPLANATION_MATERIAL_TYPE_USAGE,
   FORM_GIVE_MATERIAL,
   FORM_GIVE_MATERIAL_TYPE,
-  BUTTON_CREATE,
+  CREATE as TEXT_CREATE,
   BUTTON_SAVE,
   BUTTON_CANCEL,
   ERROR_MATERIAL_WITH_THIS_NAME_ALREADY_EXISTS,
@@ -226,11 +226,11 @@ const DialogMaterial = ({
             type: materialPopUpValues.type,
             authUser: authUser,
           }).then((result) => {
+            handleOk(result);
             setMaterialPopUpValues({
               ...MATERIAL_POP_UP_VALUES_INITIAL_STATE,
               clear: true,
             });
-            handleOk(result);
           });
 
           break;
@@ -364,7 +364,7 @@ const DialogMaterial = ({
         </Button>
         <Button onClick={onOkClick} color="primary" variant="contained">
           {dialogType === MATERIAL_DIALOG_TYPE.CREATE
-            ? BUTTON_CREATE
+            ? TEXT_CREATE
             : BUTTON_SAVE}
         </Button>
       </DialogActions>
@@ -372,10 +372,4 @@ const DialogMaterial = ({
   );
 };
 
-// const condition = (authUser: AuthUser) => !!authUser;
-
-// export default compose(
-//   withAuthorization(condition),
-//   withFirebase
-// )(DialogMaterial);
 export default DialogMaterial;

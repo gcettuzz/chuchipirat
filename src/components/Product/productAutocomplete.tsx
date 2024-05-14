@@ -18,9 +18,10 @@ interface ProductAutocompleteProps {
   product: Product | IngredientProduct;
   products: Product[];
   label?: string;
+  allowCreateNewProduct?: boolean;
   onChange: (
     event: React.ChangeEvent<HTMLInputElement>,
-    newValue: string | Product,
+    newValue: string | Product | null,
     action: AutocompleteChangeReason,
     objectId: string
   ) => void;
@@ -53,10 +54,10 @@ const ProductAutocomplete = ({
   products,
   label = INGREDIENT,
   onChange,
+  allowCreateNewProduct = true,
 }: ProductAutocompleteProps) => {
   // Handler für Zutaten/Produkt hinzufügen
   const filter = createFilterOptions<Product>();
-
   return (
     <Autocomplete
       id={"product_" + componentKey}
@@ -65,7 +66,7 @@ const ProductAutocomplete = ({
       options={products}
       autoSelect
       autoHighlight
-      getOptionSelected={(optionProduct) => optionProduct.name === product.name}
+      getOptionSelected={(option, value) => option.uid == value.uid}
       getOptionLabel={(option) => {
         if (typeof option === "string") {
           return option;
@@ -80,7 +81,6 @@ const ProductAutocomplete = ({
         return option.name;
       }}
       onChange={(event, newValue, action) =>
-        newValue &&
         onChange(
           event as unknown as React.ChangeEvent<HTMLInputElement>,
           newValue,
@@ -100,10 +100,12 @@ const ProductAutocomplete = ({
           ) === undefined &&
           !params.inputValue.endsWith(ADD)
         ) {
-          // Hinzufügen-Möglichkeit auch als Produkt reinschmuggeln
-          const newProduct = new Product();
-          newProduct.name = `"${params.inputValue}" ${ADD}`;
-          filtered.push(newProduct);
+          if (allowCreateNewProduct) {
+            // Hinzufügen-Möglichkeit auch als Produkt reinschmuggeln
+            const newProduct = new Product();
+            newProduct.name = `"${params.inputValue}" ${ADD}`;
+            filtered.push(newProduct);
+          }
         }
         // So sortieren, dass Zutaten, die mit den gleichen Zeichen beginnen
         // vorher angezeigt werden (Salz vor Erdnüsse, gesalzen)

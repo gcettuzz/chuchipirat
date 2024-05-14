@@ -22,7 +22,6 @@ export default class HelpCenter {
     const path = actualPath.split("/");
     let subdirectory = "";
     let page = "";
-
     switch (`/${path[1]}`) {
       case ROUTES.HOME:
         subdirectory = "home";
@@ -97,15 +96,74 @@ export default class HelpCenter {
         subdirectory = "masterdata";
         page = "departments";
         break;
+      case ROUTES.USER_PROFILE:
+        subdirectory = "user";
+        page = "profile";
+        break;
+      case ROUTES.PASSWORD_CHANGE:
+        subdirectory = "user";
+        page = "profile";
+        break;
       case ROUTES.SYSTEM:
         subdirectory = "admin";
-        page = "admin";
+        if (path.length > 2) {
+          switch (actualPath) {
+            case ROUTES.SYSTEM_WHERE_USED:
+              page = "where_used";
+              break;
+            case ROUTES.SYSTEM_ACTIVATE_SUPPORT_USER:
+              page = "activate_support_user";
+              break;
+            case ROUTES.SYSTEM_OVERVIEW_MAILBOX:
+              page = "mailbox_overview";
+              break;
+            case ROUTES.SYSTEM_OVERVIEW_EVENTS:
+              page = "event_overview";
+              break;
+            case ROUTES.SYSTEM_OVERVIEW_RECIPES:
+              page = "recipe_overview";
+              break;
+            case ROUTES.SYSTEM_OVERVIEW_CLOUDFX:
+              page = "cloudfx_overview";
+              break;
+            case ROUTES.SYSTEM_OVERVIEW_FEEDS:
+              page = "feeds_overview";
+              break;
+            case ROUTES.SYSTEM_MAIL_CONSOLE:
+              page = "mailconsole";
+              break;
+            case ROUTES.SYSTEM_MERGE_ITEM:
+              page = "merge_items";
+              break;
+            case ROUTES.SYSTEM_CONVERT_ITEM:
+              page = "convert_items";
+              break;
+            case ROUTES.SYSTEM_SYSTEM_MESSAGE:
+              page = "system_message";
+              break;
+            case ROUTES.SYSTEM_JOBS:
+              page = "jobs";
+              break;
+            default:
+              console.info(actualPath);
+              page = "system";
+          }
+        } else {
+          page = "system";
+        }
+        break;
+      case ROUTES.SYSTEM_OVERVIEW_USERS:
+        subdirectory = "admin";
+        page = "users";
         break;
       default:
         console.info(path[1]);
         subdirectory = "";
     }
-
-    return `${HELPCENTER_URL}/docs/${subdirectory}/${page}`;
+    if (subdirectory === "" && page === "") {
+      return `${HELPCENTER_URL}`;
+    } else {
+      return `${HELPCENTER_URL}/docs/${subdirectory}/${page}`;
+    }
   };
 }
