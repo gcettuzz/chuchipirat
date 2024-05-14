@@ -456,7 +456,7 @@ export default class Product {
     productName,
     existingProducts,
   }: FindSimilarProducts) => {
-    const threshold = 0.7;
+    const threshold = 0.8;
     const excludedWords = ["glutenfrei", "laktosefrei", "aha"]; // Wörter, die ausgeschlossen werden sollen
 
     const similarProducts: {product: Product; similarity: number}[] = [];
@@ -474,7 +474,6 @@ export default class Product {
         word.replace(",", "");
 
         if (excludedWords.includes(word)) {
-          console.warn(word, product.name);
           return sum;
         }
 
@@ -487,6 +486,7 @@ export default class Product {
 
       const averageWordSimilarity = wordSimilaritySum / newProductWords.length;
       if (averageWordSimilarity >= threshold) {
+        // console.log(product.name, averageWordSimilarity);
         similarProducts.push({
           product: product,
           similarity: averageWordSimilarity,

@@ -376,17 +376,19 @@ const DialogProduct = ({
   ) {
     // Prüfen ob es bereits ein ähnliches Produkt gibt, wenn ja, dann
     // die Liste mit diesen Produkten über diesen Dialog anzeigen.
-    const similarProducts = Product.findSimilarProducts({
-      productName: productName,
-      existingProducts: products,
-    });
-
-    if (similarProducts.length !== 0) {
-      // Liste zeigen mit den möglichen Produkten
-      setSimilarProductPopupValues({
-        similarProducts: similarProducts,
-        popUpOpen: true,
+    if (dialogType === ProductDialog.CREATE) {
+      const similarProducts = Product.findSimilarProducts({
+        productName: productName,
+        existingProducts: products,
       });
+
+      if (similarProducts.length !== 0) {
+        // Liste zeigen mit den möglichen Produkten
+        setSimilarProductPopupValues({
+          similarProducts: similarProducts,
+          popUpOpen: true,
+        });
+      }
     }
 
     setProductPopUpValues({
