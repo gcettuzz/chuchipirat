@@ -2100,7 +2100,8 @@ export const RecipeMaterial = ({
                     key={"material_quantity_original_" + materialUid}
                     color="textSecondary"
                   >
-                    {Number.isNaN(material.quantity) || material.quantity == 0
+                    {Number.isNaN(material.quantity) || material.quantity == 0 ||
+                      material.quantity == null
                       ? ""
                       : material.quantity.toLocaleString("de-CH")}
                   </Typography>
@@ -2127,7 +2128,7 @@ export const RecipeMaterial = ({
                           "de-CH"
                         )
                     : Number.isNaN(material?.quantity) ||
-                      material?.quantity == 0
+                      material?.quantity == 0  || material?.quantity == null
                     ? ""
                     : material?.quantity.toLocaleString("de-CH")}
                 </Typography>
