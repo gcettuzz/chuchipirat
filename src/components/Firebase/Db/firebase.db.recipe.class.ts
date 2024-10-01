@@ -179,7 +179,6 @@ export class FirebaseDbRecipe extends FirebaseDbSuper {
       // Nur hinzufügen, wenn auch vorhanden
       delete recipe.variantProperties;
     }
-
     return recipe;
   }
   /* =====================================================================
