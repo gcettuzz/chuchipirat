@@ -352,8 +352,8 @@ const NavigationAuthBase = (props) => {
           </ListItemIcon>
           <ListItemText primary={TEXT.RECIPES} />
         </ListItem>
-        <ListItem button key="Events">
-          <ListItemIcon onClick={() => push(ROUTES.EVENTS)}>
+        <ListItem button key="Events" onClick={() => push(ROUTES.EVENTS)}>
+          <ListItemIcon >
             <EventIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.EVENTS} />
