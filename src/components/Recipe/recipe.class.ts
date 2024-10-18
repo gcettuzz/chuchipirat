@@ -1825,7 +1825,12 @@ export default class Recipe {
           // Leere positionen interessieren uns nicht
 
           const scaledIngredient = {...ingredient};
-
+          console.log(
+            "portionToScale",
+            portionsToScale,
+            "original",
+            recipe.portions
+          );
           if (
             !scaledIngredient.scalingFactor ||
             scaledIngredient.scalingFactor > 1
@@ -1834,10 +1839,11 @@ export default class Recipe {
           }
 
           if (ingredient.quantity) {
+            // Mit Logarithmus wird dem Skalierungsfaktor Rechnung getragen
             scaledIngredient.quantity =
-              (ingredient.quantity / recipe.portions) *
               ingredient.scalingFactor *
-              portionsToScale;
+                Math.log2(portionsToScale / recipe.portions) +
+              1;
           }
           scaledIngredients[ingredient.uid] = scaledIngredient;
           if (scalingOptions?.convertUnits) {
