@@ -443,8 +443,8 @@ export default class User {
   /* =====================================================================
   // Daten prüfen
   // ===================================================================== */
-  static checkUserProfileData(userProfile: UserPublicProfile) {
-    if (!userProfile.displayName) {
+  static checkUserProfileData(userProfile: UserFullProfile) {
+    if (!userProfile.displayName && !userProfile.firstName) {
       throw new Error(TEXT_USER_PROFILE_ERROR_DISPLAYNAME_MISSING);
     }
   }

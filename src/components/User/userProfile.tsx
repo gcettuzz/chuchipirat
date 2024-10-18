@@ -292,6 +292,15 @@ const UserProfileBase: React.FC<
   // Werte speichern
   // ------------------------------------------ */
   const onSaveClick = () => {
+    // Prüfung ob auch alles in Ordung ist.
+    try {
+      User.checkUserProfileData(state.userProfile);
+    } catch (error) {
+      console.error(error);
+      dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+      return;
+    }
+
     User.saveFullProfile({
       firebase: firebase,
       userProfile: state.userProfile,
