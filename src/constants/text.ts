@@ -1174,7 +1174,7 @@ export const GIVE_THE_NEW_SHOPPINGLIST_A_NAME =
   "Gib dieser Einkaufsliste einen Namen.";
 export const CHANGE = "Ändern";
 export const WHERE_DOES_THIS_ITEM_COME_FROM = (itemType: string) =>
-  `Woher stammt dieses ${itemType}?`;
+  `Woher stammt ${itemType == ITEM ? "dieser" : "dieses"} ${itemType}?`;
 export const CREATE_NEW_LIST = "Neue Liste erstellen";
 export const ADD_ITEM = "Artikel hinzufügen";
 export const ITEM = "Artikel";
