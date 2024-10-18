@@ -951,7 +951,12 @@ export default class Recipe {
     });
 
     Object.values(recipe.materials.entries).forEach((material) => {
-      if (!isNaN(material.quantity)) {
+      if (
+        isNaN(material.quantity) ||
+        (material.quantity as number | string) === ""
+      ) {
+        material.quantity = 0;
+      } else {
         material.quantity = parseFloat(`${material.quantity}`);
       }
     });

@@ -2094,14 +2094,16 @@ export const RecipeMaterial = ({
                 className={classes.centerRight}
                 xs={2}
               >
-                {scaledPortions && (
+                {scaledPortions && material && (
                   // Original Menge
                   <Typography
                     key={"material_quantity_original_" + materialUid}
                     color="textSecondary"
                   >
-                    {Number.isNaN(material.quantity) || material.quantity == 0 ||
-                      material.quantity == null
+                    {Number.isNaN(material.quantity) ||
+                    material.quantity == 0 ||
+                    material.quantity == null ||
+                    material.quantity == undefined
                       ? ""
                       : material.quantity.toLocaleString("de-CH")}
                   </Typography>
@@ -2128,7 +2130,8 @@ export const RecipeMaterial = ({
                           "de-CH"
                         )
                     : Number.isNaN(material?.quantity) ||
-                      material?.quantity == 0  || material?.quantity == null
+                      material?.quantity == 0 ||
+                      material?.quantity == null
                     ? ""
                     : material?.quantity.toLocaleString("de-CH")}
                 </Typography>
