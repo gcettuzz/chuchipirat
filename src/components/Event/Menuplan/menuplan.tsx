@@ -3249,12 +3249,19 @@ const DialogPlanPortions = ({
       menueList = dialogValues.menueList;
     }
 
-    if (!dialogValues.selectedDiets) {
+    if (!dialogValues.selectedDiets && planedMealRecipe.length === 0) {
       menueList.forEach((menueUid) => {
         dietButtons[menueUid] = PlanedDiet.ALL;
       });
+    } else if (
+      dialogValues.selectedDiets == null &&
+      planedMealRecipe.length > 0
+    ) {
+      dietButtons[menueList[0]] = planedMealRecipe[0].diet;
     } else {
-      dietButtons = dialogValues.selectedDiets;
+      dietButtons = dialogValues.selectedDiets as {
+        [key: Menue["uid"]]: PortionPlan["diet"];
+      };
     }
 
     let plan = {};
@@ -3263,6 +3270,7 @@ const DialogPlanPortions = ({
     } else {
       plan = dialogValues.plan;
     }
+
     // Zuerst die Alle und Fix Portionen
     Object.keys(plan).forEach((menuUid) => {
       if (plan[menuUid] == null) {
