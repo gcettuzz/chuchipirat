@@ -27,9 +27,14 @@ import {
   YOU_CANT_UPDATE_YOUR_OWN_AUTHORIZATION as TEXT_YOU_CANT_UPDATE_YOUR_OWN_AUTHORIZATION,
   INVOLVED_EVENTS as TEXT_INVOLVED_EVENTS,
   EVENTS as TEXT_EVENTS,
+  STATS as TEXT_STATS,
 } from "../../constants/text";
 
-import {OpenInNew as OpenInNewIcon} from "@material-ui/icons";
+import {
+  OpenInNew as OpenInNewIcon,
+  Add as AddIcon,
+  Remove as RemoveIcon,
+} from "@material-ui/icons";
 
 import PageTitle from "../Shared/pageTitle";
 
@@ -98,6 +103,7 @@ enum ReducerActions {
   USER_EVENTS_FETCH_INIT,
   USER_EVENTS_FETCH_SUCCESS,
   USER_UPDATE,
+  USER_UPDATE_STATS,
   SNACKBAR_SET,
   SNACKBAR_CLOSE,
   SET_LOADING,
@@ -173,6 +179,23 @@ const usersReducer = (state: State, action: DispatchAction): State => {
         ...state,
         isLoading: false,
         eventsOfUsers: {...state.eventsOfUsers, ...action.payload},
+      };
+    case ReducerActions.USER_UPDATE_STATS:
+      return {
+        ...state,
+        userProfiles: {
+          ...state.userProfiles,
+          [action.payload.userUid]: {
+            ...state.userProfiles[action.payload.userUid],
+            stats: {
+              ...state.userProfiles[action.payload.userUid].stats,
+              [action.payload.statsField]:
+                state.userProfiles[action.payload.userUid].stats[
+                  action.payload.statsField
+                ] + action.payload.statsValue,
+            },
+          },
+        },
       };
     case ReducerActions.SNACKBAR_SET:
       return {
@@ -262,13 +285,7 @@ const OverviewUsersBase: React.FC<
       return;
     }
 
-    // const onOpenDialog = async (
-    //   event: React.MouseEvent<HTMLSpanElement, MouseEvent>,
-    //   user: UserOverviewStructure
-    // ) => {
-
     // Prüfen ob wir dieses Profil bereits gelesen haben.
-
     if (!Object.prototype.hasOwnProperty.call(state.userProfiles, userUid)) {
       dispatch({
         type: ReducerActions.USER_FULL_PROFILE_FETCH_INIT,
@@ -336,6 +353,52 @@ const OverviewUsersBase: React.FC<
   };
   const showRoleDialog = (userUid: User["uid"]) => {
     setRoleDialog({open: true, userUid: userUid});
+  };
+  /* ------------------------------------------
+  // Statistik des Users anpassen
+  // ------------------------------------------ */
+  const onChangeStats = (event: React.MouseEvent<HTMLElement>) => {
+    const pushedButton = event.currentTarget.id.split("_");
+
+    if (pushedButton.length !== 2) {
+      return;
+    }
+
+    const statsField = pushedButton[1];
+    const statsValue = pushedButton[0] === "add" ? 1 : -1;
+    const oldStatsValue = !dialogValues.selectedUser.stats[statsField]
+      ? 0
+      : dialogValues.selectedUser.stats[statsField];
+    User.updateStats({
+      firebase: firebase,
+      userUid: dialogValues.selectedUser.uid,
+      statsField: statsField,
+      statsValue: statsValue,
+    })
+      .then(() => {
+        setDialogValues({
+          ...dialogValues,
+          selectedUser: {
+            ...dialogValues.selectedUser,
+            stats: {
+              ...dialogValues.selectedUser.stats,
+              [statsField]: oldStatsValue + statsValue,
+            },
+          },
+        });
+        dispatch({
+          type: ReducerActions.USER_UPDATE_STATS,
+          payload: {
+            userUid: dialogValues.selectedUser.uid,
+            statsField: statsField,
+            statsValue: statsValue,
+          },
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+      });
   };
 
   /* ------------------------------------------
@@ -422,6 +485,7 @@ const OverviewUsersBase: React.FC<
         handleClose={onDialogClose}
         userFullProfile={dialogValues.selectedUser}
         eventOfUser={dialogValues.eventsOfUser}
+        onChangeStatsClick={onChangeStats}
         // onDeactivateUser={deactivateUser}
         // onResetPassword={resetPassword}
         onEditRoles={showRoleDialog}
@@ -645,6 +709,7 @@ interface DialogUserProps {
   userFullProfile: UserFullProfile;
   eventOfUser: Event[];
   handleClose: () => void;
+  onChangeStatsClick: (event: React.MouseEvent<HTMLElement>) => void;
   // onResetPassword: (userUid: User["uid"]) => void;
   // onDeactivateUser: (userUid: User["uid"]) => void;
   onEditRoles: (userUid: User["uid"]) => void;
@@ -655,6 +720,7 @@ const DialogUser = ({
   userFullProfile,
   eventOfUser,
   handleClose,
+  onChangeStatsClick,
   // onResetPassword,
   // onDeactivateUser,
   onEditRoles,
@@ -662,6 +728,7 @@ const DialogUser = ({
 }: DialogUserProps) => {
   const classes = useStyles();
   const theme = useTheme();
+
   return (
     <Dialog
       open={dialogOpen}
@@ -753,6 +820,41 @@ const DialogUser = ({
               label={TEXT_ROLES}
             />
           </List>
+          {userFullProfile?.stats && (
+            <React.Fragment>
+              <Typography variant="h6">{TEXT_STATS}</Typography>
+              <List style={{marginBottom: theme.spacing(2)}}>
+                {Object.keys(userFullProfile?.stats).map((key) => (
+                  <FormListItem
+                    key={key}
+                    id={key}
+                    value={userFullProfile.stats[key]}
+                    label={key}
+                    secondaryAction={
+                      <React.Fragment>
+                        <IconButton
+                          id={"add_" + key}
+                          size="small"
+                          aria-label={"add " + key}
+                          onClick={onChangeStatsClick}
+                        >
+                          <AddIcon />
+                        </IconButton>
+                        <IconButton
+                          id={"remove_" + key}
+                          size="small"
+                          aria-label={"remove " + key}
+                          onClick={onChangeStatsClick}
+                        >
+                          <RemoveIcon />
+                        </IconButton>
+                      </React.Fragment>
+                    }
+                  />
+                ))}
+              </List>
+            </React.Fragment>
+          )}
 
           {eventOfUser.length > 0 && (
             <React.Fragment>

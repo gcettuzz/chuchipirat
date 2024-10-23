@@ -1825,12 +1825,6 @@ export default class Recipe {
           // Leere positionen interessieren uns nicht
 
           const scaledIngredient = {...ingredient};
-          console.log(
-            "portionToScale",
-            portionsToScale,
-            "original",
-            recipe.portions
-          );
           if (
             !scaledIngredient.scalingFactor ||
             scaledIngredient.scalingFactor > 1

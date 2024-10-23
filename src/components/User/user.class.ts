@@ -118,6 +118,13 @@ interface UpdateRoles {
   newRoles: User["roles"];
   authUser: AuthUser;
 }
+
+interface UpdateStats {
+  firebase: Firebase;
+  userUid: User["uid"];
+  statsField: string;
+  statsValue: number;
+}
 // interface SetDisabled {
 //   firebase: Firebase;
 //   userUid: User["uid"];
@@ -661,6 +668,26 @@ export default class User {
         uids: [userUid],
         values: {roles: newRoles},
         authUser: authUser,
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  };
+  /* =====================================================================
+  // Statistikfeld hoch- bzw. runterzählen
+  // ===================================================================== */
+  static updateStats = async ({
+    firebase,
+    userUid,
+    statsField,
+    statsValue,
+  }: UpdateStats) => {
+    firebase.user.public.profile
+      .incrementField({
+        uids: [userUid],
+        field: `stats.${statsField}`,
+        value: statsValue,
       })
       .catch((error) => {
         console.error(error);
