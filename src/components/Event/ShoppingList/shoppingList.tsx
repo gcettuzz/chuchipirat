@@ -554,7 +554,7 @@ const EventShoppingListPage = ({
         shoppingListSelectedTimeSlice={decodeSelectedMeals({
           selectedMeals:
             shoppingListCollection.lists[state.selectedListItem!].properties
-              .selectedMenues,
+              .selectedMeals,
           menuplan: menuplan,
         })}
         eventName={event.name}
