@@ -22,7 +22,7 @@ import RecipeShort from "./recipeShort.class";
 import RecipeRating, {Rating} from "./recipe.rating.class";
 import RecipeComment from "./recipe.comment.class";
 import {ChangeRecord} from "../Shared/global.interface";
-import Unit from "../Unit/unit.class";
+import Unit, {UnitDimension} from "../Unit/unit.class";
 import {RequestPublishRecipe, RequestReportError} from "../Request/internal";
 
 import Product, {Diet, DietProperties} from "../Product/product.class";
@@ -1833,11 +1833,26 @@ export default class Recipe {
           }
 
           if (ingredient.quantity) {
-            // Mit Logarithmus wird dem Skalierungsfaktor Rechnung getragen
-            scaledIngredient.quantity =
-              ingredient.scalingFactor *
-                Math.log2(portionsToScale / recipe.portions) +
-              1;
+            if (scaledIngredient.scalingFactor === 1) {
+              scaledIngredient.quantity =
+                (ingredient.quantity / recipe.portions) * portionsToScale;
+            } else {
+              // Die Ursprungsmenge * Skalierungsfaktor, dann hochrechnen
+              scaledIngredient.quantity =
+                (ingredient.scalingFactor *
+                  ingredient.quantity *
+                  portionsToScale) /
+                recipe.portions;
+
+              if (
+                portionsToScale > recipe.portions &&
+                scaledIngredient.quantity < ingredient.quantity
+              ) {
+                // Wenn zwar mehr Portionen zubereitet werden, aber die Menge weniger
+                // ist als mit den Originalmengen übernehmen wir die Originalmenge.
+                scaledIngredient.quantity = ingredient.quantity;
+              }
+            }
           }
           scaledIngredients[ingredient.uid] = scaledIngredient;
           if (scalingOptions?.convertUnits) {
@@ -1847,7 +1862,7 @@ export default class Recipe {
             const product = products?.find(
               (product) => product.uid == scaledIngredient.product.uid
             );
-            const {convertedQuantity, convertedUnit} =
+            let {convertedQuantity, convertedUnit} =
               UnitConversion.convertQuantity({
                 quantity: scaledIngredient.quantity,
                 productUid: scaledIngredient.product.uid,
@@ -1857,6 +1872,73 @@ export default class Recipe {
                 unitConversionBasic: unitConversionBasic!,
                 unitConversionProducts: unitConversionProducts!,
               });
+            if (
+              convertedUnit === scaledIngredient.unit &&
+              scaledIngredient.unit !== product?.shoppingUnit
+            ) {
+              // Die Umrechnung hat nicht geklappt, nochmals versuchen:
+              // Möglicherweise muss zuerst von TL nach EL konvertiert werden
+              if (
+                Unit.getDimensionOfUnit(units!, scaledIngredient.unit) ===
+                UnitDimension.volume
+              ) {
+                let conversionFound = false;
+                let tempConvertedQuantity: number;
+                let tempConvertedUnit: string;
+
+                Object.values(unitConversionBasic!).forEach(
+                  (conversionRule) => {
+                    if (
+                      conversionFound === false &&
+                      conversionRule.fromUnit === scaledIngredient.unit &&
+                      Unit.getDimensionOfUnit(
+                        units!,
+                        conversionRule.fromUnit
+                      ) === UnitDimension.volume
+                    ) {
+                      // Umrechnen ohne Produkt
+                      let {convertedQuantity, convertedUnit} =
+                        UnitConversion.convertQuantity({
+                          quantity: scaledIngredient.quantity,
+                          fromUnit: scaledIngredient.unit,
+                          toUnit: conversionRule.toUnit,
+                          units: units!,
+                          unitConversionBasic: unitConversionBasic!,
+                        });
+
+                      if (convertedUnit == conversionRule.toUnit) {
+                        tempConvertedQuantity = convertedQuantity;
+                        tempConvertedUnit = convertedUnit;
+
+                        // Die Umrechnung nochmals versuchen. Diesmal mit
+                        // der neuen Einheit
+                        ({convertedQuantity, convertedUnit} =
+                          UnitConversion.convertQuantity({
+                            quantity: tempConvertedQuantity,
+                            productUid: scaledIngredient.product.uid,
+                            fromUnit: tempConvertedUnit,
+                            toUnit: product!.shoppingUnit!,
+                            units: units!,
+                            unitConversionBasic: unitConversionBasic!,
+                            unitConversionProducts: unitConversionProducts!,
+                          }));
+                        if (convertedUnit === product?.shoppingUnit) {
+                          tempConvertedQuantity = convertedQuantity;
+                          tempConvertedUnit = convertedUnit;
+                          conversionFound = true;
+                        }
+                      }
+                    }
+                  }
+                );
+
+                if (conversionFound) {
+                  convertedQuantity = tempConvertedQuantity!;
+                  convertedUnit = tempConvertedUnit!;
+                }
+              }
+            }
+
             if (convertedQuantity != undefined && convertedUnit != undefined) {
               // Nur übernehmen, wenn konsistent
               scaledIngredient.quantity = convertedQuantity;

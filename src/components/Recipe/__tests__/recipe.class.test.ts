@@ -1,7 +1,7 @@
 import Recipe, {PositionType, RecipeType} from "../recipe.class";
 import recipe from "../__mocks__/recipe.mock";
 import products from "../../Product/__mocks__/products.mock";
-
+import units from "../../Unit/__mocks__/units.mock";
 import {Allergen, Diet} from "../../Product/product.class";
 import {
   RECIPE_NAME_CANT_BE_EMPTY as TEXT_RECIPE_NAME_CANT_BE_EMPTY,
@@ -15,6 +15,8 @@ import {
   ERROR_PRODUCT_UNKNOWN as TEXT_ERROR_PRODUCT_UNKNOWN,
 } from "../../../constants/text";
 import _ from "lodash";
+import unitConversionBasic from "../../Unit/__mocks__/unitConversionBasic.mock";
+import unitConversionProducts from "../../Unit/__mocks__/unitConversionProducts.mock";
 /* =====================================================================
 // Kostruktor
 // ===================================================================== */
@@ -148,8 +150,8 @@ test("Recipe.createEmptyListEntries(), leere Einträge erzeugen", () => {
   expect(Array.isArray(recipeWithEmptyEntries.materials.order)).toBe(true);
   expect(typeof recipeWithEmptyEntries.materials.entries).toBe("object");
 
-  // Prüfen ob ein Eintrag eingefügt wurde (Mock = 4)
-  expect(recipeWithEmptyEntries.ingredients.order).toHaveLength(5);
+  // Prüfen ob ein Eintrag eingefügt wurde
+  expect(recipeWithEmptyEntries.ingredients.order).toHaveLength(8);
 
   recipeMock = _.cloneDeep(recipe);
   recipeMock.ingredients = {
@@ -438,9 +440,11 @@ describe("Recipe.preparesave()", () => {
       products: productsMock,
     });
 
-    expect(recipeMock.ingredients.order).toHaveLength(4);
+    expect(recipeMock.ingredients.order).toHaveLength(
+      recipe.ingredients.order.length - 1
+    );
     expect(recipeMock.preparationSteps.order).toHaveLength(3);
-    expect(recipeMock.materials.order).toHaveLength(1);
+    expect(recipeMock.materials.order).toHaveLength(2);
   });
   test("Exception bei fehlerhaften Rezept", () => {
     const recipeMock = _.cloneDeep(recipe);
@@ -460,8 +464,8 @@ describe("Recipe.defineDietProperties()", () => {
   test("unknown Product", () => {
     const recipeMock = _.cloneDeep(recipe);
     const productsMock = _.cloneDeep(products);
-    (recipeMock.ingredients.entries.abcde = {
-      uid: "abcde",
+    (recipeMock.ingredients.entries.abc = {
+      uid: "abc",
       product: {uid: "123", name: "Fake"},
       posType: PositionType.ingredient,
       quantity: 42,
@@ -757,8 +761,174 @@ describe("Recipe.createEmptySection()", () => {
 // Skalieren
 // ===================================================================== */
 describe("Recipe.scaleIngredients()", () => {
-  test("x", () => {});
+  test("linear skalieren, gleiche Einheit", () => {
+    const recipeMock = _.cloneDeep(recipe);
+
+    const scaledIngredients = Recipe.scaleIngredients({
+      recipe: recipeMock,
+      portionsToScale: 44,
+    });
+
+    expect(scaledIngredients["abc"].quantity).toBe(462);
+  });
+  test("linear skalieren, andere Einheit", () => {
+    const recipeMock = _.cloneDeep(recipe);
+    const productsMock = _.cloneDeep(products);
+    const unitsMock = _.cloneDeep(units);
+    const unitConversionMock = _.cloneDeep(unitConversionBasic);
+    const unitConversionProductsMock = _.cloneDeep(unitConversionProducts);
+
+    const scaledIngredients = Recipe.scaleIngredients({
+      recipe: recipeMock,
+      portionsToScale: 44,
+      scalingOptions: {convertUnits: true},
+      products: productsMock,
+      units: unitsMock,
+      unitConversionBasic: unitConversionMock,
+      unitConversionProducts: unitConversionProductsMock,
+    });
+    expect(scaledIngredients["def"].quantity).toBe(1.32);
+    expect(scaledIngredients["def"].unit).toBe("kg");
+  });
+  test("linear skalieren, skalierung ohne Umrechnung - ScalingOption = Off", () => {
+    const recipeMock = _.cloneDeep(recipe);
+    const productsMock = _.cloneDeep(products);
+    const unitsMock = _.cloneDeep(units);
+    const unitConversionMock = _.cloneDeep(unitConversionBasic);
+    const unitConversionProductsMock = _.cloneDeep(unitConversionProducts);
+
+    const scaledIngredients = Recipe.scaleIngredients({
+      recipe: recipeMock,
+      portionsToScale: 44,
+      scalingOptions: {convertUnits: false},
+      products: productsMock,
+      units: unitsMock,
+      unitConversionBasic: unitConversionMock,
+      unitConversionProducts: unitConversionProductsMock,
+    });
+    expect(scaledIngredients["def"].quantity).toBe(1320);
+    expect(scaledIngredients["def"].unit).toBe("g");
+  });
+  test("Produktspezifisch skalieren", () => {
+    const recipeMock = _.cloneDeep(recipe);
+    const productsMock = _.cloneDeep(products);
+    const unitsMock = _.cloneDeep(units);
+    const unitConversionMock = _.cloneDeep(unitConversionBasic);
+    const unitConversionProductsMock = _.cloneDeep(unitConversionProducts);
+
+    const scaledIngredients = Recipe.scaleIngredients({
+      recipe: recipeMock,
+      portionsToScale: 44,
+      scalingOptions: {convertUnits: true},
+      products: productsMock,
+      units: unitsMock,
+      unitConversionBasic: unitConversionMock,
+      unitConversionProducts: unitConversionProductsMock,
+    });
+    // von EL nach L.
+    expect(scaledIngredients["mno"].quantity).toBe(0.495);
+    expect(scaledIngredients["mno"].unit).toBe("l");
+  });
+  test("Keine Umrechung gefunden", () => {
+    const recipeMock = _.cloneDeep(recipe);
+    const productsMock = _.cloneDeep(products);
+    const unitsMock = _.cloneDeep(units);
+    const unitConversionMock = _.cloneDeep(unitConversionBasic);
+    const unitConversionProductsMock = _.cloneDeep(unitConversionProducts);
+
+    const scaledIngredients = Recipe.scaleIngredients({
+      recipe: recipeMock,
+      portionsToScale: 44,
+      scalingOptions: {convertUnits: true},
+      products: productsMock,
+      units: unitsMock,
+      unitConversionBasic: unitConversionMock,
+      unitConversionProducts: unitConversionProductsMock,
+    });
+    // Keine Produktspezifische Umrechnung von EL --> -Kg
+    expect(scaledIngredients["pqr"].quantity).toBe(22);
+    expect(scaledIngredients["pqr"].unit).toBe("EL");
+  });
+  test("Von TL nach EL nach KG", () => {
+    const recipeMock = _.cloneDeep(recipe);
+    const productsMock = _.cloneDeep(products);
+    const unitsMock = _.cloneDeep(units);
+    const unitConversionMock = _.cloneDeep(unitConversionBasic);
+    const unitConversionProductsMock = _.cloneDeep(unitConversionProducts);
+
+    const scaledIngredients = Recipe.scaleIngredients({
+      recipe: recipeMock,
+      portionsToScale: 44,
+      scalingOptions: {convertUnits: true},
+      products: productsMock,
+      units: unitsMock,
+      unitConversionBasic: unitConversionMock,
+      unitConversionProducts: unitConversionProductsMock,
+    });
+    // von TL muss zuerst auf EL und dann in KG umgerechnet werden
+    // (von Basic -> zu EL -> über Produktspezifisch nach KG)
+    expect(scaledIngredients["stu"].quantity).toBe(0.22);
+    expect(scaledIngredients["stu"].unit).toBe("kg");
+  });
+  test("linear skalieren mit Skalierungsfaktor", () => {
+    const recipeMock = _.cloneDeep(recipe);
+    const productsMock = _.cloneDeep(products);
+    const unitsMock = _.cloneDeep(units);
+    const unitConversionMock = _.cloneDeep(unitConversionBasic);
+    const unitConversionProductsMock = _.cloneDeep(unitConversionProducts);
+
+    const scaledIngredients = Recipe.scaleIngredients({
+      recipe: recipeMock,
+      portionsToScale: 44,
+      scalingOptions: {convertUnits: true},
+      products: productsMock,
+      units: unitsMock,
+      unitConversionBasic: unitConversionMock,
+      unitConversionProducts: unitConversionProductsMock,
+    });
+    expect(scaledIngredients["ghi"].quantity).toBe(11);
+    expect(scaledIngredients["ghi"].unit).toBe("");
+  });
+  test("linear skalieren mit Skalierungsfaktor - kleine Menge", () => {
+    // angenommen es wird skaliert, aber die skalierte Menge ist weniger
+    // als die Menge mit der Originalmenge, dann belassen wir die Originalmenge
+    const recipeMock = _.cloneDeep(recipe);
+    const productsMock = _.cloneDeep(products);
+    const unitsMock = _.cloneDeep(units);
+    const unitConversionMock = _.cloneDeep(unitConversionBasic);
+    const unitConversionProductsMock = _.cloneDeep(unitConversionProducts);
+
+    const scaledIngredients = Recipe.scaleIngredients({
+      recipe: recipeMock,
+      portionsToScale: 6,
+      scalingOptions: {convertUnits: true},
+      products: productsMock,
+      units: unitsMock,
+      unitConversionBasic: unitConversionMock,
+      unitConversionProducts: unitConversionProductsMock,
+    });
+    expect(scaledIngredients["ghi"].quantity).toBe(2);
+    expect(scaledIngredients["ghi"].unit).toBe("");
+  });
 });
+
 describe("Recipe.scaleMaterials()", () => {
-  test("x", () => {});
+  test("Material skalieren, mit Mengen", () => {
+    const recipeMock = _.cloneDeep(recipe);
+    const scaledMaterials = Recipe.scaleMaterials({
+      recipe: recipeMock,
+      portionsToScale: 42,
+    });
+
+    expect(scaledMaterials["xxx"].quantity).toBe(10.5);
+  });
+  test("Material skalieren, ohne Mengen", () => {
+    const recipeMock = _.cloneDeep(recipe);
+    const scaledMaterials = Recipe.scaleMaterials({
+      recipe: recipeMock,
+      portionsToScale: 42,
+    });
+
+    expect(scaledMaterials["yyy"].quantity).toBe(0);
+  });
 });
