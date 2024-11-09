@@ -5,7 +5,6 @@ import {useHistory} from "react-router";
 
 import {Alert, AlertTitle} from "@material-ui/lab";
 import Container from "@material-ui/core/Container";
-import Link from "@material-ui/core/Link";
 import {withFirebase} from "../Firebase/firebaseContext";
 import FirebaseMessageHandler from "../Firebase/firebaseMessageHandler.class";
 
@@ -13,10 +12,6 @@ import * as ROUTES from "../../constants/routes";
 import {
   WELCOME_ON_BOARD as TEXT_WELCOME_ON_BOARD,
   WELCOME_ON_BOARD_REDIRECT as TEXT_WELCOME_ON_BOARD_REDIRECT,
-  REDIRECTION_IN as TEXT_REDIRECTION_IN,
-  OR_CLICK as TEXT_OR_CLICK,
-  HERE as TEXT_HERE,
-  IF_YOU_ARE_IMPATIENT as TEXT_IF_YOU_ARE_IMPATIENT,
   ALERT_TITLE_UUPS as TEXT_ALERT_TITLE_UUPS,
   AYE_AYE_CAPTAIN as TEXT_AYE_AYE_CAPTAIN,
   THANK_YOU_FOR_VERIFYING_YOUR_EMAIL as TEXT_THANK_YOU_FOR_VERIFYING_YOUR_EMAIL,
@@ -26,6 +21,7 @@ import PageTitle from "../Shared/pageTitle";
 import {Typography} from "@material-ui/core";
 import qs from "qs";
 import {CustomRouterProps} from "../Shared/global.interface";
+import User from "../User/user.class";
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
@@ -48,15 +44,32 @@ const VerifyEmailPage: React.FC<CustomRouterProps> = ({...props}) => {
 
   // Verifizierung ausführen
   React.useEffect(() => {
+    // Zuerst Infos holen, damit wir anhand des Action-Codes
+    // Die E-Mailadresse des Users erhalten
     firebase
-      .applyActionCode(oobCode)
-      .then(() => {
-        setIsVerified(true);
-        // damit die der Authuser sauber nochmals gelesen wird,
-        // ist eine erneute Anmeldung nötig.
-        firebase.signOut();
-        setForwardDestination(ROUTES.SIGN_IN);
-        setTimer(9);
+      .checkActionCode(oobCode)
+      .then(async (actionCodeInfo) => {
+        await firebase
+          .applyActionCode(oobCode)
+          .then(async () => {
+            setIsVerified(true);
+            await User.createUserPublicData({
+              firebase: firebase,
+              email: actionCodeInfo.data.email,
+            });
+          })
+          .then(() => {
+            //TODO: Text anpassen, "wir bereiten im HIntergrund alles vor - in X Sekunden kannst du das Schiff betretten... oder so..."
+            // damit die der Authuser sauber nochmals gelesen wird,
+            // ist eine erneute Anmeldung nötig.
+            firebase.signOut();
+            setForwardDestination(ROUTES.SIGN_IN);
+            setTimer(9);
+          })
+          .catch((error) => {
+            console.error(error);
+            setError(error);
+          });
       })
       .catch((error) => {
         console.error(error);
@@ -89,19 +102,8 @@ const VerifyEmailPage: React.FC<CustomRouterProps> = ({...props}) => {
           </Alert>
         ) : (
           <Alert severity="info">
-            <AlertTitle>
-              {TEXT_WELCOME_ON_BOARD} - {TEXT_REDIRECTION_IN} {timer}
-            </AlertTitle>
-            <Typography>
-              {TEXT_WELCOME_ON_BOARD_REDIRECT}
-              <br />
-              {TEXT_OR_CLICK}
-              <Link onClick={() => push({pathname: ROUTES.HOME})}>
-                {TEXT_HERE}
-              </Link>
-              {", "}
-              {TEXT_IF_YOU_ARE_IMPATIENT}.
-            </Typography>
+            <AlertTitle>{TEXT_WELCOME_ON_BOARD}</AlertTitle>
+            <Typography>{TEXT_WELCOME_ON_BOARD_REDIRECT(timer)}</Typography>
           </Alert>
         )}
       </Container>

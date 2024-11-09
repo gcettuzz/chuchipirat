@@ -626,8 +626,8 @@ export const USERS_ARE_LOGGED_OUT = "Benutzer*innen werden abgemeldet.";
 // Diverse (längere) Texte
 // ===================================================================== */
 export const ENTRY_DELETED = "Eintrag gelöscht.";
-export const WELCOME_ON_BOARD_REDIRECT =
-  "Wir erwarten dich auf der Brücke. Bitte melde dich auf der nächsten Seite erneut an.";
+export const WELCOME_ON_BOARD_REDIRECT = (seconds: number) =>
+  `Schön, bist du dabei. Wir erwarten dich auf der Brücke. Bitte gedulde dich noch ${seconds} Sekunden. Wir bereiten in dieser Zeit alles für dich vor.`;
 /* =====================================================================
 // Navigation
 // ===================================================================== */

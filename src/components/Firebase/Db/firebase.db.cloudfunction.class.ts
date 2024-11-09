@@ -31,6 +31,7 @@ import FirebaseDbCloudFunctionDeclineRecipeRequest from "./firebase.db.cloudfunc
 import FirebaseDbCloudFunctionUpdateMaterial from "./firebase.db.cloudfunction.updateMaterial";
 import FirebaseDbCloudFunctionMergeMaterials from "./firebase.db.cloudfunction.mergeMaterials.class";
 import FirebaseDbCloudFunctionConvertMaterialToProduct from "./firebase.db.cloudfunction.convertMaterialToProduct.class copy";
+import FirebaseDbCloudFunctionCreateUserPublicData from "./firebase.db.cloudfunction.createUserPublicData.class";
 export class FirebaseDbCloudFunction extends FirebaseDbSuper {
   firebase: Firebase;
   log: FirebaseDbCloudFunctionLog;
@@ -53,6 +54,7 @@ export class FirebaseDbCloudFunction extends FirebaseDbSuper {
   activateSupportUser: FirebaseDbCloudFunctionActivateSupportUser;
   signOutAllUsers: FirebaseDbCloudFunctionSignOutAllUsers;
   rebuildStats: FirebaseDbCloudFunctionRebuildStats;
+  createUserPublicData: FirebaseDbCloudFunctionCreateUserPublicData;
   /* =====================================================================
   // Constructor
   // ===================================================================== */
@@ -90,6 +92,9 @@ export class FirebaseDbCloudFunction extends FirebaseDbSuper {
     );
     this.signOutAllUsers = new FirebaseDbCloudFunctionSignOutAllUsers(firebase);
     this.rebuildStats = new FirebaseDbCloudFunctionRebuildStats(firebase);
+    this.createUserPublicData = new FirebaseDbCloudFunctionCreateUserPublicData(
+      firebase
+    );
   }
   /* =====================================================================
   // Collection holen

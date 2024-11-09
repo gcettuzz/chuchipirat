@@ -16,13 +16,15 @@ import {AuthUser} from "../Firebase/Authentication/authUser.class";
 import UserPublicProfile from "./user.public.profile.class";
 import UserPublicSearchFields from "./user.public.searchFields.class";
 import {Operator, SortOrder} from "../Firebase/Db/firebase.db.super.class";
-import {StatsField} from "../Shared/stats.class";
-import Feed, {FeedType} from "../Shared/feed.class";
+// import {StatsField} from "../Shared/stats.class";
+// import Feed, {FeedType} from "../Shared/feed.class";
 import {Picture} from "../Shared/global.interface";
 import {
   IMAGES_SUFFIX,
   ImageSize,
 } from "../Firebase/Storage/firebase.storage.super.class";
+// import {result} from "lodash";
+// import authUser from "../Firebase/Authentication/__mocks__/authuser.mock";
 
 /**
  * User Aufbau (kurz)
@@ -63,6 +65,10 @@ interface CreateUser {
   uid: string;
   firstName: string;
   lastName: string;
+  email: string;
+}
+interface CreateUserPublicData {
+  firebase: Firebase;
   email: string;
 }
 interface RegisterSignIn {
@@ -211,68 +217,25 @@ export default class User {
     user.noLogins = 0;
     user.roles = [Role.basic];
 
-    // wird hier erzeugt. User wurde gerade angelegt. Der AuthUser existiert noch nicht richtig
-    const authUser = new AuthUser();
-    authUser.email = user.email;
-    authUser.uid = user.uid;
-    authUser.firstName = user.firstName;
-    authUser.lastName = user.lastName;
-    authUser.roles = user.roles;
-    authUser.publicProfile.displayName = firstName;
-
-    const userPublicProfile = new UserPublicProfile();
-    userPublicProfile.uid = uid;
-    userPublicProfile.displayName = firstName;
-    userPublicProfile.memberSince = new Date();
-
-    const userPublicSearchFields = new UserPublicSearchFields();
-    userPublicSearchFields.uid = uid;
-    userPublicSearchFields.email = email;
-
     await firebase.user
       .set({uids: [user.uid], value: user, authUser: {} as AuthUser})
-      .then(async () => {
-        // Öffentliches Profil anlegen
-        await firebase.user.public.profile
-          .set<UserPublicProfile>({
-            value: userPublicProfile,
-            authUser: authUser,
-            uids: [user.uid],
-          })
-          .catch((error) => {
-            console.error(error);
-            throw error;
-          });
-      })
-      .then(async () => {
-        // Durchsuchbare Felder
-        await firebase.user.public.searchFields.set({
-          value: userPublicSearchFields,
-          authUser: authUser,
-          uids: [user.uid],
-        });
-      })
-      .then(async () => {
-        // Statistik
-        await firebase.stats.counter.incrementField({
-          uids: [""],
-          field: StatsField.noUsers,
-          value: 1,
-        });
-      })
-      .then(async () => {
-        //Feed
-        Feed.createFeedEntry({
-          firebase: firebase,
-          authUser: authUser,
-          feedType: FeedType.userCreated,
-          feedVisibility: Role.basic,
-          objectUid: uid,
-          objectName: authUser.publicProfile.displayName,
-        });
-      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+  }
+  /* =====================================================================
+  // Öffentliches Profil anlegen
+  // ===================================================================== */
+  // Öffentlich zugängliche Daten anlegen.
+  static async createUserPublicData({firebase, email}: CreateUserPublicData) {
+    const anonymousUser = new AuthUser();
+    anonymousUser.email = email;
+    anonymousUser.publicProfile.displayName = email;
+
+    await firebase.cloudFunction.createUserPublicData
+      .triggerCloudFunction({values: {email: email}, authUser: anonymousUser})
       .then(() => {
-        // Google Analytics
         firebase.analytics.logEvent(FirebaseAnalyticEvent.userCreated);
       })
       .catch((error) => {

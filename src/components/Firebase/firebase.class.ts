@@ -346,4 +346,7 @@ export default class Firebase {
   applyActionCode = (objectCode) => {
     return this.auth.applyActionCode(objectCode);
   };
+  checkActionCode = (objectCode) => {
+    return this.auth.checkActionCode(objectCode);
+  };
 }
