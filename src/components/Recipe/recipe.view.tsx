@@ -1065,7 +1065,6 @@ const RecipeButtonRow = ({
       startIcon: <AddIcon />,
       onClick: onAddToEvent,
     });
-
   buttons.push({
     id: "edit",
     label: TEXT_EDIT,
@@ -1081,9 +1080,11 @@ const RecipeButtonRow = ({
           // der*m Commnunity-Leader*in angepasst weden können
           (recipe.isInReview &&
             authUser.roles.includes(Role.communityLeader)))) ||
+      // Bei der Rezeptvariante, sollen alle anpassen können
+      // Die DB-Regel fängt das ab, dass das Rezept nur angezeigt wird
+      // wenn man auch Teil des Teams ist.
       (recipe.type === RecipeType.variant &&
-        (recipe.created.fromUid === authUser.uid ||
-          authUser.roles.includes(Role.admin))),
+        (authUser.uid !== "" || authUser.roles.includes(Role.admin))),
     variant: "outlined",
     color: "primary",
     onClick: switchEditMode!,
