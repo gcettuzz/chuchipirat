@@ -1107,10 +1107,7 @@ const ProductsTable = ({
     );
   }
 
-  if (
-    (!searchString && products.length > 0 && filteredProductsUi.length === 0) ||
-    products.length !== filteredProductsUi.length
-  ) {
+  if (!searchString && products.length > 0 && filteredProductsUi.length === 0) {
     // Initialer Aufbau
     setFilteredProductsUi(
       prepareProductsListForUi(filterProducts(products, ""))
