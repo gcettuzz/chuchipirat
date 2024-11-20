@@ -72,6 +72,7 @@ import {CustomRouterProps} from "../Shared/global.interface";
 import Utils from "../Shared/utils.class";
 import SystemMessage from "../Admin/systemMessage.class";
 import {AlertSystemMessage} from "../Admin/systemMessage";
+import {General} from "../../constants/firebaseMessages";
 /* ===================================================================
 // ============================ Dispatcher ===========================
 // =================================================================== */
@@ -282,9 +283,19 @@ const HomeBase: React.FC<
           payload: result,
         });
       })
-      .catch((error) =>
-        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error})
-      );
+      .catch((error) => {
+        if (error.code != General.PERMISSION_DENIED) {
+          console.error(error);
+          dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+        } else {
+          // Wenn der User sich zum ersten anmeldet, gibt es keine
+          // Anlässe. Daher wird dieser Fehler aktiv unterbunden
+          dispatch({
+            type: ReducerActions.EVENTS_FETCH_SUCCESS,
+            payload: [],
+          });
+        }
+      });
   }, [authUser]);
   React.useEffect(() => {
     //Neuster freigegebene Rezepte
@@ -302,9 +313,10 @@ const HomeBase: React.FC<
           payload: result,
         });
       })
-      .catch((error) =>
-        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error})
-      );
+      .catch((error) => {
+        console.error(error);
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+      });
   }, []);
   React.useEffect(() => {
     //Feed Einträge
@@ -321,9 +333,10 @@ const HomeBase: React.FC<
           payload: result,
         });
       })
-      .catch((error) =>
-        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error})
-      );
+      .catch((error) => {
+        console.error(error);
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+      });
   }, []);
   React.useEffect(() => {
     //Statistik Einträge
@@ -336,9 +349,10 @@ const HomeBase: React.FC<
           payload: result,
         });
       })
-      .catch((error) =>
-        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error})
-      );
+      .catch((error) => {
+        console.error(error);
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+      });
   }, []);
   React.useEffect(() => {
     SystemMessage.getSystemMessage({
