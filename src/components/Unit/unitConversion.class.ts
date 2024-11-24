@@ -261,6 +261,7 @@ export default class UnitConversion {
         (quantity * conversionRule.numerator) / conversionRule.denominator;
       convertedUnit = conversionRule.toUnit;
     } else {
+      // Nichts gefunden...
       return {convertedQuantity: quantity, convertedUnit: fromUnit};
     }
 

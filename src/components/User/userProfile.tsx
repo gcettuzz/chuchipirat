@@ -81,6 +81,7 @@ enum ReducerActions {
   USER_PROFILE_ON_SAVE,
   USER_PICTURE_SET,
   USER_PICTURE_DELETED,
+  SET_IS_LOADING,
   SNACKBAR_CLOSE,
   GENERIC_ERROR,
 }
@@ -146,6 +147,7 @@ const userProfileReducer = (state: State, action: DispatchAction): State => {
       // Daten gespeichern
       return {
         ...state,
+        isLoading: false,
         snackbar: {
           severity: "success",
           message: TEXT_USER_PROFILE_SUCCESSFULLY_UPDATED,
@@ -171,6 +173,11 @@ const userProfileReducer = (state: State, action: DispatchAction): State => {
           message: TEXT_PICTURE_HAS_BEEN_DELETED,
           open: true,
         },
+      };
+    case ReducerActions.SET_IS_LOADING:
+      return {
+        ...state,
+        isLoading: action.payload,
       };
     // case ReducerActions.PICTURE_UPLOAD_INIT:
     //   // Bild wird hochgeladen
@@ -300,6 +307,8 @@ const UserProfileBase: React.FC<
       dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
       return;
     }
+
+    dispatch({type: ReducerActions.SET_IS_LOADING, payload: true});
 
     User.saveFullProfile({
       firebase: firebase,

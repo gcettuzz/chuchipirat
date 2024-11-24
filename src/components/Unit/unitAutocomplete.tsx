@@ -44,7 +44,7 @@ const UnitAutocomplete = ({
       id={componentKey ? "unit_" + componentKey : "unit"}
       value={{key: unitKey, name: "", dimension: UnitDimension.dimensionless}}
       options={units}
-      autoSelect={!unitKey}
+      autoSelect
       autoHighlight
       // getOptionSelected={(unit) => unit.key === unitKey}
       getOptionSelected={(option) => option.key === unitKey}

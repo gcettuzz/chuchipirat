@@ -44,3 +44,4 @@ imageRepository.js
 jest_html_reporters.html
 /html-report
 mailTemplates/
+.vscode/launch.json

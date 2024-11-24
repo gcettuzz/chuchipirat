@@ -10,7 +10,7 @@ interface UploadFile {
 interface GetPictureVariants {
   uid: string;
   sizes: ImageSize[];
-  oldDownloadUrl: string;
+  // oldDownloadUrl: string;
 }
 
 export enum ImageSize {
@@ -54,14 +54,14 @@ export abstract class FirebaseStorageSuper {
   /**
    * Datei hochladen
    */
-  uploadFile({file, filename}: UploadFile): Promise<string> {
+  uploadFile({file, filename}: UploadFile): Promise<void> {
     const suffix = Utils.getFileSuffix(file.name);
     filename = filename + "." + suffix;
 
     const storageRef = this.firebase.storage.ref();
     const folder = this.getFolder();
 
-    // aktuell werden nur Bilder hochgeladen
+    // es werden nur Bilder hochgeladen
     const metadata = {
       contentType: "image/jpeg",
     };
@@ -71,26 +71,28 @@ export abstract class FirebaseStorageSuper {
     });
 
     return new Promise((resolve, reject) => {
-      const uploadTask = storageRef
-        .child(folder + filename)
-        .put(file, metadata);
+      try {
+        const uploadTask = storageRef
+          .child(folder + filename)
+          .put(file, metadata);
 
-      uploadTask.on(
-        "state_changed",
-        function (snapshot) {
-          console.info("File wird hochgeladen:", snapshot.metadata.name);
-        },
-        function error(error) {
-          console.error(error);
-          reject();
-        },
-        function complete() {
-          console.info(`File ${filename} hochgeladen`);
-          uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-            resolve(downloadURL);
-          });
-        }
-      );
+        uploadTask.on(
+          "state_changed",
+          function (snapshot) {
+            console.info("File wird hochgeladen:", snapshot.metadata.name);
+          },
+          function error(error) {
+            console.error(error);
+            reject(error);
+          },
+          function complete() {
+            console.info(`Datei ${filename} erfolgreich hochgeladen.`);
+            resolve(); // Upload abgeschlossen
+          }
+        );
+      } catch (error) {
+        console.warn("fehler", error);
+      }
     });
   }
   // ===================================================================== */
@@ -104,8 +106,8 @@ export abstract class FirebaseStorageSuper {
   async getPictureVariants({
     uid,
     sizes = [],
-    oldDownloadUrl,
-  }: GetPictureVariants) {
+  }: // oldDownloadUrl,
+  GetPictureVariants) {
     let counter = 0;
     let fileFound = false;
     const fileVariants: {size: number; downloadURL: string}[] = [];
@@ -129,15 +131,14 @@ export abstract class FirebaseStorageSuper {
         .ref(checkFile)
         .getDownloadURL()
         .then(async (result: string) => {
-          if (result === oldDownloadUrl) {
-            // Wenn das File ersetzt wird, kann das etwas dauern
-            // darum muss überprüft werden, dass der neue Down-
-            // loadlink nicht der selbe ist
+          if (result.match("_d+xd+.jpeg")) {
+            // Das File hat einer der erlaubten Suffix
+            fileFound = true;
+          } else {
             fileFound = false;
             await this.delay(1);
-          } else {
-            // gefunden
-            fileFound = true;
+            counter++;
+            // Wir warten solange, bis das erste File mit dem richtigen Suffix vorhanden ist
           }
         })
         .catch(async () => {

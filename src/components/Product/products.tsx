@@ -1019,6 +1019,9 @@ const ProductsTable = ({
       return;
     }
     onConvertProductToMaterialSuper(product);
+    setProducts(
+      dbProducts.filter((product) => product.uid !== contextMenuProductUid)
+    );
     setContextMenuAnchorElement(null);
     setContextMenuProductUid("");
   };
@@ -1103,6 +1106,7 @@ const ProductsTable = ({
       })
     );
   }
+
   if (!searchString && products.length > 0 && filteredProductsUi.length === 0) {
     // Initialer Aufbau
     setFilteredProductsUi(

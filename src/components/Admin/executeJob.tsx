@@ -19,6 +19,7 @@ import {
 import {rebuildFile000AllRecipes} from "../../jobs/rebuildFile000AllRecipes";
 import {rebuildFile000AllUsers} from "../../jobs/rebuildFile000AllUsers";
 import {rebuildFile000AllEvents} from "../../jobs/rebuildFile000AllEvents";
+import {rebuildFile000AllFeeds} from "../../jobs/rebuildFile000AllFeeds";
 
 import useStyles from "../../constants/styles";
 
@@ -43,6 +44,7 @@ interface DocumentCounter {
   allUsers: number;
   allEvents: number;
   statsCounter: number;
+  allFeeds: number;
   publicUserProfile: number;
   restructeredEvents: number;
   restructureProducts: number;
@@ -55,6 +57,7 @@ interface JobMonitor {
   allRecipes: boolean;
   allUsers: boolean;
   allEvents: boolean;
+  allFeeds: boolean;
   statsCounter: boolean;
   publicUserProfile: boolean;
   restructeredEvents: boolean;
@@ -88,6 +91,7 @@ const ExecuteJobBase: React.FC<
       allRecipes: 0,
       allUsers: 0,
       allEvents: 0,
+      allFeeds: 0,
       statsCounter: 0,
       publicUserProfile: 0,
       restructeredEvents: 0,
@@ -102,6 +106,7 @@ const ExecuteJobBase: React.FC<
     allRecipes: false,
     allUsers: false,
     allEvents: false,
+    allFeeds: false,
     statsCounter: false,
     publicUserProfile: false,
     restructeredEvents: false,
@@ -130,6 +135,11 @@ const ExecuteJobBase: React.FC<
       setDocumentCounter({...documentCounter, allEvents: result});
     });
   };
+  const onRebuildFile000AllFeeds = async () => {
+    await rebuildFile000AllFeeds(firebase).then((result) => {
+      setDocumentCounter({...documentCounter, allFeeds: result});
+    });
+  };
   const onRebuildStatsCounter = async () => {
     setJobMonitor({...jobMonitor, statsCounter: true});
     Stats.rebuildStats({
@@ -144,7 +154,6 @@ const ExecuteJobBase: React.FC<
       },
     }).catch((error) => console.error(error));
   };
-
   return (
     <React.Fragment>
       {/*===== HEADER ===== */}
@@ -157,6 +166,7 @@ const ExecuteJobBase: React.FC<
               onRebuild000AllRecipes={onRebuildFile000AllRecipes}
               onRebuild000AllUsers={onRebuildFile000AllUsers}
               onRebuild000AllEvents={onRebuildFile000AllEvents}
+              onRebuild000AllFeeds={onRebuildFile000AllFeeds}
               onRebuildStatsCounter={onRebuildStatsCounter}
               documentCounter={documentCounter}
               jobMonitor={jobMonitor}
@@ -174,6 +184,7 @@ interface JobListProps {
   onRebuild000AllRecipes: () => void;
   onRebuild000AllUsers: () => void;
   onRebuild000AllEvents: () => void;
+  onRebuild000AllFeeds: () => void;
   onRebuildStatsCounter: () => void;
   documentCounter: DocumentCounter;
   jobMonitor: JobMonitor;
@@ -183,6 +194,7 @@ const PanelJobList = ({
   onRebuild000AllRecipes,
   onRebuild000AllUsers,
   onRebuild000AllEvents,
+  onRebuild000AllFeeds,
   onRebuildStatsCounter,
   documentCounter,
   jobMonitor,
@@ -219,6 +231,15 @@ const PanelJobList = ({
           jobIsRunning={jobMonitor.allEvents}
           changedRecords={documentCounter.allEvents}
           successMessage={`Dokument 000_alEvents mit ${documentCounter.allEvents} Events neu aufgebaut.`}
+        />
+        <br />
+        <JobEntry
+          onClick={onRebuild000AllFeeds}
+          jobName={"000_allFeeds neu aufbauen"}
+          jobDescription={"Dokument 000_allFeeds neu aufbauen."}
+          jobIsRunning={jobMonitor.allFeeds}
+          changedRecords={documentCounter.allFeeds}
+          successMessage={`Dokument 000_alFeeds mit ${documentCounter.allFeeds} Feeds neu aufgebaut.`}
         />
         <br />
         <JobEntry

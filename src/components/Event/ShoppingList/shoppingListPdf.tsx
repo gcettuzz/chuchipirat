@@ -18,8 +18,8 @@ import {ShoppingListProperties} from "./shoppingListCollection.class";
 // =================================================================== */
 // Anzahl Zeilen, die pro Seite platz haben
 const LINES_PER_PAGE = {
-  FIRST: 33,
-  REST: 35,
+  FIRST: 31,
+  REST: 33,
 };
 
 enum Column {
@@ -343,6 +343,7 @@ const ShoppingListList = ({
                 style={{
                   ...styles.tableCellBold,
                   ...styles.tableCellAlignLeft,
+                  ...styles.tableCellMarginTop,
                 }}
               >
                 {item.left.name}
@@ -424,6 +425,7 @@ const ShoppingListList = ({
                 style={{
                   ...styles.tableCellBold,
                   ...styles.tableCellAlignLeft,
+                  ...styles.tableCellMarginTop,
                 }}
               >
                 {item.right.name}

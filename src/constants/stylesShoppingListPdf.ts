@@ -75,6 +75,9 @@ export default class PdfStyles {
         fontWeight: 700,
         fontSize: 11,
       },
+      tableCellMarginTop: {
+        marginTop: 6,
+      },
       tableCellAlignLeft: {
         textAlign: "left",
       },
