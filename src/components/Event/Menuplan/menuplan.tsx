@@ -3025,7 +3025,6 @@ const RecipeSearchDrawer = ({
     >
       <IconButton
         color="inherit"
-        size="small"
         aria-label="close"
         className={classes.closeDrawerIconButton}
         onClick={onClose}
@@ -3107,7 +3106,6 @@ export const RecipeDrawer = ({
     >
       <IconButton
         color="inherit"
-        size="small"
         aria-label="close"
         className={classes.closeDrawerIconButton}
         onClick={onClose}
