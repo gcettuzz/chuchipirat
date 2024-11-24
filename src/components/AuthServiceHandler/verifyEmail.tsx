@@ -59,7 +59,6 @@ const VerifyEmailPage: React.FC<CustomRouterProps> = ({...props}) => {
             });
           })
           .then(() => {
-            //TODO: Text anpassen, "wir bereiten im HIntergrund alles vor - in X Sekunden kannst du das Schiff betretten... oder so..."
             // damit die der Authuser sauber nochmals gelesen wird,
             // ist eine erneute Anmeldung nötig.
             firebase.signOut();
