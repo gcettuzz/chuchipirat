@@ -486,7 +486,6 @@ export default class Product {
 
       const averageWordSimilarity = wordSimilaritySum / newProductWords.length;
       if (averageWordSimilarity >= threshold) {
-        // console.log(product.name, averageWordSimilarity);
         similarProducts.push({
           product: product,
           similarity: averageWordSimilarity,

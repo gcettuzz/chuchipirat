@@ -16,15 +16,12 @@ import {AuthUser} from "../Firebase/Authentication/authUser.class";
 import UserPublicProfile from "./user.public.profile.class";
 import UserPublicSearchFields from "./user.public.searchFields.class";
 import {Operator, SortOrder} from "../Firebase/Db/firebase.db.super.class";
-// import {StatsField} from "../Shared/stats.class";
-// import Feed, {FeedType} from "../Shared/feed.class";
+
 import {Picture} from "../Shared/global.interface";
 import {
   IMAGES_SUFFIX,
   ImageSize,
 } from "../Firebase/Storage/firebase.storage.super.class";
-// import {result} from "lodash";
-// import authUser from "../Firebase/Authentication/__mocks__/authuser.mock";
 
 /**
  * User Aufbau (kurz)
@@ -452,7 +449,13 @@ export default class User {
     if (localPicture instanceof File) {
       if (userProfile.pictureSrc) {
         // Vorhandenes Bild löschen
-        await User.deletePicture({firebase: firebase, authUser: authUser});
+        await User.deletePicture({
+          firebase: firebase,
+          authUser: authUser,
+        }).catch(() => {
+          // Nichts tun - wenn das Bild nicht vorhanden ist, kanne es nicht gelöscht werden.
+          return;
+        });
       }
 
       await User.uploadPicture({
@@ -533,13 +536,13 @@ export default class User {
 
     await firebase.fileStore.users
       .uploadFile({file: file, filename: authUser.uid})
-      .then(async (result) => {
+      .then(async () => {
         // Redimensionierte Varianten holen
         await firebase.fileStore.users
           .getPictureVariants({
             uid: authUser.uid,
             sizes: [ImageSize.size_600, ImageSize.size_50],
-            oldDownloadUrl: result,
+            // oldDownloadUrl: result,
           })
           .then((result) => {
             // Wir wollen nur eine Grösse
@@ -570,6 +573,17 @@ export default class User {
             console.error(error);
             throw error;
           });
+      })
+      .catch((error) => {
+        console.error(error);
+        throw error;
+      });
+
+    await firebase.user.public.profile
+      .updateFields({
+        uids: [authUser.uid],
+        values: {pictureSrc: {fullSize: "", normalSize: "", smallSize: ""}},
+        authUser: authUser,
       })
       .catch((error) => {
         console.error(error);

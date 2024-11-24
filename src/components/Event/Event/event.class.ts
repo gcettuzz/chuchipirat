@@ -758,13 +758,13 @@ export default class Event {
 
     await firebase.fileStore.events
       .uploadFile({file: file, filename: event.uid})
-      .then(async (result) => {
+      .then(async () => {
         // Redimensionierte Varianten holen
         await firebase.fileStore.events
           .getPictureVariants({
             uid: event.uid,
             sizes: [ImageSize.size_500],
-            oldDownloadUrl: result,
+            // oldDownloadUrl: result,
           })
           .then((result) => {
             // Wir wollen nur eine Grösse
