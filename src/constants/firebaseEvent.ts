@@ -35,5 +35,6 @@ export enum FirebaseAnalyticEvent {
   deletePicture = "delete_picture",
   appForceRefresh = "app_force_refresh",
   cloudFunctionExecuted = "cloud_function_executed",
+  exception = "exception",
 }
 export default FirebaseAnalyticEvent;

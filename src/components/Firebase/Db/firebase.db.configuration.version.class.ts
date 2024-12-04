@@ -10,6 +10,8 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {collection, collectionGroup, doc} from "firebase/firestore";
+
 export class FirebaseDbConfigurationVersion extends FirebaseDbSuper {
   firebase: Firebase;
   /* =====================================================================
@@ -23,20 +25,20 @@ export class FirebaseDbConfigurationVersion extends FirebaseDbSuper {
   // Collection holen
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("_configuration");
+    return collection(this.firebase.firestore, `_configuration`);
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument() {
-    return this.firebase.db.doc(`_configuration/version`);
+    return doc(this.firebase.firestore, this.getCollection().path, `version`);
   }
   /* =====================================================================
   // Dokumente holen

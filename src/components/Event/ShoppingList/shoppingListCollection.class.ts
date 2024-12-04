@@ -17,6 +17,7 @@ import _ from "lodash";
 import Utils from "../../Shared/utils.class";
 import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
 import Stats, {StatsField} from "../../Shared/stats.class";
+import {logEvent} from "firebase/analytics";
 
 interface Factory {
   event: Event;
@@ -535,7 +536,8 @@ export default class ShoppingListCollection {
           shoppingList.uid
         ].properties.generated = Utils.createChangeRecord(authUser);
 
-        firebase.analytics.logEvent(
+        logEvent(
+          firebase.analytics,
           FirebaseAnalyticEvent.shoppingListRefreshed
         );
       })

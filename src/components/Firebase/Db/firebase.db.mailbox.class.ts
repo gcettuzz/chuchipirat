@@ -12,6 +12,7 @@ import {
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
 import FirebaseDbMailboxShort from "./firebase.db.mailboxShort.class";
+import {collection, collectionGroup, doc} from "firebase/firestore";
 
 export class FirebaseDbMailbox extends FirebaseDbSuper {
   firebase: Firebase;
@@ -28,20 +29,20 @@ export class FirebaseDbMailbox extends FirebaseDbSuper {
   // Collection holen
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("_mailbox");
+    return collection(this.firebase.firestore, `_mailbox`);
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
-    return this.firebase.db.doc(`_mailbox/${uids[0]}`);
+    return doc(this.firebase.firestore, this.getCollection().path, uids[0]);
   }
   /* =====================================================================
   // Dokumente holen

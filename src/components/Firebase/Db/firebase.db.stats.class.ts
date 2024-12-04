@@ -12,6 +12,7 @@ import {
 import FirebaseDbStatsCounter from "./firebase.db.stats.counter.class";
 import FirebaseDbStatsRecipeVariants from "./firebase.db.stats.recipeVariants.class";
 import FirebaseDbStatsRecipesInMenuplan from "./firebase.db.stats.recipesInMenuplan.class";
+import {collection, collectionGroup, doc} from "firebase/firestore";
 
 export class FirebaseDbStats extends FirebaseDbSuper {
   firebase: Firebase;
@@ -33,21 +34,21 @@ export class FirebaseDbStats extends FirebaseDbSuper {
   // ===================================================================== */
   getCollection() {
     throw Error(ERROR_WRONG_DB_CLASS);
-    return this.firebase.db.collection("stats");
+    return collection(this.firebase.firestore, `stats`);
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
     throw Error(ERROR_WRONG_DB_CLASS);
-    return this.firebase.db.doc(`stats/${uids[0]}`);
+    return doc(this.firebase.firestore, this.getCollection().path, uids[0]);
   }
   /* =====================================================================
   // Dokumente holen

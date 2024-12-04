@@ -7,6 +7,7 @@ import {
   PrepareDataForDb,
   ValueObject,
 } from "./firebase.db.super.class";
+import {collection, doc} from "firebase/firestore";
 
 export class FirebaseDbCloudFunctionTraceObject extends FirebaseDbCloudFunctionSuper {
   firebase: Firebase;
@@ -21,15 +22,17 @@ export class FirebaseDbCloudFunctionTraceObject extends FirebaseDbCloudFunctionS
   // Dokument holen, das die Cloudfunction triggert
   // ===================================================================== */
   getDocument(uids: string[]) {
-    return this.firebase.db.doc(
-      `_cloudFunctions/functions/traceObject/${uids[0]}`
-    );
+    return doc(this.firebase.firestore, this.getCollection().path, uids[0]);
   }
   /* =====================================================================
   // Trigger für CloudFunction
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("_cloudFunctions/functions/traceObject");
+    return collection(
+      this.firebase.firestore,
+      super.getCollection().path,
+      `functions/traceObject`
+    );
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten

@@ -15,6 +15,7 @@ import RecipeShort from "../../Recipe/recipeShort.class";
 import Unit from "../../Unit/unit.class";
 import _ from "lodash";
 import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
+import {logEvent} from "firebase/analytics";
 interface MenuplanObjectStructure<T> {
   entries: {[key: string]: T};
   order: string[];
@@ -861,7 +862,8 @@ export default class Menuplan {
     });
 
     // Analytics mitführen
-    firebase.analytics.logEvent(
+    logEvent(
+      firebase.analytics,
       FirebaseAnalyticEvent.eventGroupConifgRecalculated
     );
 

@@ -3,6 +3,7 @@ import Firebase from "../Firebase/firebase.class";
 import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import FirebaseAnalyticEvent from "../../constants/firebaseEvent";
+import {logEvent} from "firebase/analytics";
 
 interface GetAllDepartments {
   firebase: Firebase;
@@ -92,7 +93,7 @@ export default class Department {
         authUser: authUser,
       })
       .then(() => {
-        firebase.analytics.logEvent(FirebaseAnalyticEvent.departmentCreated);
+        logEvent(firebase.analytics, FirebaseAnalyticEvent.departmentCreated);
       })
       .catch((error) => {
         console.error(error);

@@ -17,6 +17,8 @@ import {
 import {FirebaseDbConfigurationGlobalSettings} from "./firebase.db.configuration.globalSettings.class";
 import FirebaseDbConfigurationVersion from "./firebase.db.configuration.version.class";
 import FirebaseDbConfigurationSystemMessage from "./firebase.db.configuration.systemMessage.class";
+import {collection, collectionGroup, doc} from "firebase/firestore";
+
 export class FirebaseDbConfiguration extends FirebaseDbSuper {
   firebase: Firebase;
   globalSettings: FirebaseDbConfigurationGlobalSettings;
@@ -36,21 +38,21 @@ export class FirebaseDbConfiguration extends FirebaseDbSuper {
   // Collection holen
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("_configuration");
+    return collection(this.firebase.firestore, `_configuration`);
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument() {
     throw Error(ERROR_WRONG_DB_CLASS);
-    return this.firebase.db.doc(``);
+    return doc(this.firebase.firestore, this.getCollection().path, ``);
   }
   /* =====================================================================
   // Dokumente holen
@@ -64,7 +66,7 @@ export class FirebaseDbConfiguration extends FirebaseDbSuper {
   // ===================================================================== */
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
     throw Error(ERROR_WRONG_DB_CLASS);
-
+    console.info(value);
     return {} as T;
   }
   /* =====================================================================
@@ -72,6 +74,7 @@ export class FirebaseDbConfiguration extends FirebaseDbSuper {
   // ===================================================================== */
   prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
     throw Error(ERROR_WRONG_DB_CLASS);
+    console.info(uid, value);
     return {} as T;
   }
   /* =====================================================================

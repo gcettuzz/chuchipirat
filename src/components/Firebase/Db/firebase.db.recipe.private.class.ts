@@ -11,6 +11,7 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {collection, collectionGroup, doc} from "firebase/firestore";
 
 export class FirebaseDbRecipePrivate extends FirebaseDbRecipe {
   firebase: Firebase;
@@ -29,7 +30,8 @@ export class FirebaseDbRecipePrivate extends FirebaseDbRecipe {
   // Collection holen
   // ===================================================================== */
   getCollection(uids: string[]) {
-    return this.firebase.db.collection(
+    return collection(
+      this.firebase.firestore,
       `recipes/private/users/${uids[0]}/recipes`
     );
   }
@@ -38,18 +40,20 @@ export class FirebaseDbRecipePrivate extends FirebaseDbRecipe {
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
     if (uids.length !== 0) {
-      return this.firebase.db.doc(
-        `recipes/private/users/${uids[0]}/recipes/${uids[1]}`
+      return doc(
+        this.firebase.firestore,
+        this.getCollection(uids).path,
+        uids[1]
       );
     } else {
-      return this.firebase.db.doc(`recipes/private`);
+      return doc(this.firebase.firestore, `recipes/private`);
     }
   }
   /* =====================================================================

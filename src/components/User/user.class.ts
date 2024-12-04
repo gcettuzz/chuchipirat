@@ -5,6 +5,8 @@
 import {Role} from "../../constants/roles";
 
 import Firebase from "../Firebase/firebase.class";
+import {Timestamp, increment} from "firebase/firestore";
+import {logEvent} from "firebase/analytics";
 
 import {
   USER_NOT_IDENTIFIED_BY_EMAIL as TEXT_USER_NOT_IDENTIFIED_BY_EMAIL,
@@ -233,7 +235,7 @@ export default class User {
     await firebase.cloudFunction.createUserPublicData
       .triggerCloudFunction({values: {email: email}, authUser: anonymousUser})
       .then(() => {
-        firebase.analytics.logEvent(FirebaseAnalyticEvent.userCreated);
+        logEvent(firebase.analytics, FirebaseAnalyticEvent.userCreated);
       })
       .catch((error) => {
         console.error(error);
@@ -306,8 +308,8 @@ export default class User {
     firebase.user.updateFields({
       uids: [authUser.uid],
       values: {
-        lastLogin: firebase.timestamp.fromDate(new Date()),
-        noLogins: firebase.fieldValue.increment(1),
+        lastLogin: Timestamp.fromDate(new Date()),
+        noLogins: increment(1),
       },
       authUser: authUser,
     });
@@ -523,7 +525,7 @@ export default class User {
           authUser: authUser,
         });
       }
-      firebase.analytics.logEvent(FirebaseAnalyticEvent.cloudFunctionExecuted);
+      logEvent(firebase.analytics, FirebaseAnalyticEvent.cloudFunctionExecuted);
     }
   };
   /* =====================================================================
@@ -629,7 +631,7 @@ export default class User {
         console.error(error);
         throw error;
       });
-    firebase.analytics.logEvent(FirebaseAnalyticEvent.userChangedEmail);
+    logEvent(firebase.analytics, FirebaseAnalyticEvent.userChangedEmail);
   };
   /* =====================================================================
   // Berechtigungen aktualiseiren

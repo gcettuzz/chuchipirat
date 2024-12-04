@@ -19,6 +19,7 @@ import {ProductTrace} from "../ShoppingList/shoppingListCollection.class";
 import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
 import Stats, {StatsField} from "../../Shared/stats.class";
 import {ItemType} from "../ShoppingList/shoppingList.class";
+import {logEvent} from "firebase/analytics";
 
 export interface MaterialListEntry {
   properties: ListProperties;
@@ -343,7 +344,8 @@ export default class MaterialList {
           value: 1,
         });
 
-        firebase.analytics.logEvent(
+        logEvent(
+          firebase.analytics,
           FirebaseAnalyticEvent.materialListGenerated
         );
       })
@@ -543,7 +545,8 @@ export default class MaterialList {
         updatedMaterialList.lists[listUidToRefresh].properties.uid =
           listUidToRefresh;
         updatedMaterialList.lastChange = Utils.createChangeRecord(authUser);
-        firebase.analytics.logEvent(
+        logEvent(
+          firebase.analytics,
           FirebaseAnalyticEvent.materialListRefreshed
         );
       })
@@ -556,7 +559,8 @@ export default class MaterialList {
         });
       })
       .then(() => {
-        firebase.analytics.logEvent(
+        logEvent(
+          firebase.analytics,
           FirebaseAnalyticEvent.materialListGenerated
         );
       })

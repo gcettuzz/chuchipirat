@@ -68,6 +68,7 @@ import {withFirebase} from "../Firebase/firebaseContext";
 // import Environment from "../Shared/enviroment.class";
 import Utils from "../Shared/utils.class";
 import {DonateIcon} from "../Shared/icons";
+import {logEvent} from "firebase/analytics";
 // ===================================================================
 // ============================= Global =============================
 // ===================================================================
@@ -316,7 +317,7 @@ const NavigationAuthBase = (props) => {
   // ------------------------------------------ */
   const onUpdateAppOk = () => {
     // Event auslösen
-    firebase.analytics.logEvent(FirebaseAnalyticEvent.appForceRefresh);
+    logEvent(firebase.analytics, FirebaseAnalyticEvent.appForceRefresh);
     window.localStorage.clear();
     window.location.reload();
     setShowDialogRefreshApp(false);
@@ -353,7 +354,7 @@ const NavigationAuthBase = (props) => {
           <ListItemText primary={TEXT.RECIPES} />
         </ListItem>
         <ListItem button key="Events" onClick={() => push(ROUTES.EVENTS)}>
-          <ListItemIcon >
+          <ListItemIcon>
             <EventIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.EVENTS} />

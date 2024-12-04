@@ -110,6 +110,7 @@ import Recipe, {Recipes} from "../../Recipe/recipe.class";
 import RecipeShort from "../../Recipe/recipeShort.class";
 import MaterialListPdf from "./materialListPdf";
 import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
+import {logEvent} from "firebase/analytics";
 
 /* ===================================================================
 // ============================ Dispatcher ===========================
@@ -430,7 +431,7 @@ const EventMaterialListPage = ({
             list: materialList.lists[state.selectedListItem!].items,
             materialUid: contextMenuSelectedItem.materialUid,
           });
-        firebase.analytics.logEvent(FirebaseAnalyticEvent.materialListDeleted);
+        logEvent(firebase.analytics, FirebaseAnalyticEvent.materialListDeleted);
         onMaterialListUpdate(materialList);
         break;
       case Action.TRACE:

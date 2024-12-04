@@ -7,6 +7,7 @@ import {
   PrepareDataForDb,
   ValueObject,
 } from "./firebase.db.super.class";
+import {collection, doc} from "firebase/firestore";
 
 export class FirebaseDbCloudFunctionDeleteFeeds extends FirebaseDbCloudFunctionSuper {
   firebase: Firebase;
@@ -21,15 +22,17 @@ export class FirebaseDbCloudFunctionDeleteFeeds extends FirebaseDbCloudFunctionS
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
-    return this.firebase.db.doc(
-      `_cloudFunctions/functions/deleteFeeds/${uids[0]}`
-    );
+    return doc(this.firebase.firestore, this.getCollection().path, uids[0]);
   }
   /* =====================================================================
   // Trigger für CloudFunction
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("_cloudFunctions/functions/deleteFeeds");
+    return collection(
+      this.firebase.firestore,
+      super.getCollection().path,
+      `functions/deleteFeeds`
+    );
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten

@@ -14,6 +14,7 @@ import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 import Material from "../Material/material.class";
 
 import {ERROR_PARAMETER_NOT_PASSED as TEXT_ERROR_PARAMETER_NOT_PASSED} from "../../constants/text";
+import {logEvent} from "firebase/analytics";
 
 interface GetAllProducts {
   firebase: Firebase;
@@ -239,7 +240,7 @@ export default class Product {
     });
 
     // Event auslösen
-    firebase.analytics.logEvent(FirebaseAnalyticEvent.ingredientCreated);
+    logEvent(firebase.analytics, FirebaseAnalyticEvent.ingredientCreated);
 
     // interner Feed-Eintrag
     Feed.createFeedEntry({

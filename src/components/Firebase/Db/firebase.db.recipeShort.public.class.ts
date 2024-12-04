@@ -8,6 +8,7 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {collection, collectionGroup, doc} from "firebase/firestore";
 
 export class FirebaseDbRecipeShortPublic extends FirebaseDbRecipeShort {
   firebase: Firebase;
@@ -22,20 +23,21 @@ export class FirebaseDbRecipeShortPublic extends FirebaseDbRecipeShort {
   // Collection holen
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("recipes/public/recipes");
+    return collection(this.firebase.firestore, `recipes/public/recipes`);
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument() {
-    return this.firebase.db.doc(`recipes/public`);
+    // return this.firebase.firestore.doc(`recipes/public`);
+    return doc(this.firebase.firestore, `recipes/public`);
   }
   /* =====================================================================
   // Dokumente holen

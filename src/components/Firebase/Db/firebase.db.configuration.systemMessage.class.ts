@@ -1,9 +1,9 @@
 import Firebase from "../firebase.class";
 import {
-  FirebaseDbSuper,
   ValueObject,
   PrepareDataForDb,
   PrepareDataForApp,
+  FirebaseDbSuper,
 } from "./firebase.db.super.class";
 
 import {
@@ -14,6 +14,8 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {collection, collectionGroup, doc} from "firebase/firestore";
+
 export class FirebaseDbConfigurationSystemMessage extends FirebaseDbSuper {
   firebase: Firebase;
   /* =====================================================================
@@ -27,20 +29,24 @@ export class FirebaseDbConfigurationSystemMessage extends FirebaseDbSuper {
   // Collection holen
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("_configuration");
+    return collection(this.firebase.firestore, `_configuration`);
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument() {
-    return this.firebase.db.doc(`_configuration/systemMessage`);
+    return doc(
+      this.firebase.firestore,
+      this.getCollection().path,
+      `systemMessage`
+    );
   }
   /* =====================================================================
   // Dokumente holen
