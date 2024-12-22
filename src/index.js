@@ -13,6 +13,7 @@ import "@fontsource/roboto-mono";
 import {CustomDialogContextProvider} from "./components/Shared/customDialogContext";
 import {NavigationContextProvider} from "./components/Navigation/navigationContext";
 import Firebase from "./components/Firebase/firebase.class";
+import ErrorInfo from "./components/500/500";
 
 Sentry.init({
   dsn: process.env.REACT_APP_SENTRY_DSN,
@@ -23,8 +24,7 @@ Sentry.init({
     Sentry.replayIntegration(),
   ],
   // Tracing
-  tracesSampleRate: 1.0, //  Capture 100% of the transactions
-  // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
+  tracesSampleRate: 1.0,
   tracePropagationTargets: [
     "localhost",
     /^https:\/\/chuchipirat\.ch/,
@@ -36,7 +36,7 @@ Sentry.init({
 
 ReactDOM.render(
   <React.StrictMode>
-    <Sentry.ErrorBoundary fallback={<p>An error has occurred</p>}>
+    <Sentry.ErrorBoundary fallback={<ErrorInfo />}>
       <FirebaseContext.Provider value={new Firebase()}>
         <CustomDialogContextProvider>
           <NavigationContextProvider>

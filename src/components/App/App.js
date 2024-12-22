@@ -17,7 +17,7 @@ import Footer from "../Footer/footer";
 import LandingPage from "../Landing/landing";
 import AuthServiceHandler from "../AuthServiceHandler/authServiceHandler";
 
-import {MuiThemeProvider, useMediaQuery} from "@material-ui/core";
+import {MuiThemeProvider, useMediaQuery, useTheme} from "@material-ui/core";
 import {createTheme} from "@material-ui/core/styles";
 import useStyles from "../../constants/styles";
 import NotFound from "../404/404";
@@ -32,10 +32,14 @@ import CustomTheme from "./customTheme.class";
 // Für nachträglicher Load --> Code Splitting
 import SignUpPage from "../SignUp/signUp";
 import SignInPage from "../SignIn/signIn";
+import Fab from "@material-ui/core/Fab";
+import {FeedbackIcon} from "../Shared/icons";
+import * as Sentry from "@sentry/react";
 
 import {withAuthentication} from "../Session/authUserContext";
 import {SessionStorageHandler} from "../Firebase/Db/sessionStorageHandler.class";
-import donate from "../Donate/donate";
+import {FEEDBACK as TEXT_FEEDBACK} from "../../constants/text";
+// import FeedbackFab from "../Navigation/feedbackFAB";
 
 const PasswordChange = lazy(() => import("../PasswordChange/passwordChange"));
 const Units = lazy(() => import("../Unit/units"));
@@ -80,7 +84,6 @@ const MailConsole = lazy(() => import("../Admin/mailConsole"));
 const App = () => {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const classes = useStyles();
-
   /* ------------------------------------------
   // Theme für App
   // ------------------------------------------ */
@@ -104,6 +107,43 @@ const App = () => {
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
+  }, []);
+
+  React.useEffect(async () => {
+    const feedback = Sentry.feedbackIntegration({autoInject: false});
+    const button = document.getElementById("custom-feedback-button");
+
+    if (button) {
+      feedback.attachTo(button, {
+        formTitle: TEXT_FEEDBACK.title,
+        colorScheme: "system",
+        showBranding: false,
+        submitButtonLabel: TEXT_FEEDBACK.submitButton,
+        cancelButtonLabel: TEXT_FEEDBACK.cancelButton,
+        addScreenshotButtonLabel: TEXT_FEEDBACK.addScreenshotButton,
+        removeScreenshotButtonLabel: TEXT_FEEDBACK.removeScreenshotButton,
+        namePlaceholder: TEXT_FEEDBACK.namePlaceholder,
+        emailPlaceholder: TEXT_FEEDBACK.emailPlaceholder,
+        messageLabel: TEXT_FEEDBACK.messageLabel,
+        messagePlaceholder: TEXT_FEEDBACK.messagePlaceholder,
+        successMessageText: TEXT_FEEDBACK.successMessage,
+        isRequiredLabel: TEXT_FEEDBACK.isRequired,
+        themeLight: {
+          foreground: theme.palette.text.primary,
+          background: theme.palette.background.default,
+          accentBackground: theme.palette.primary.main,
+          successColor: theme.palette.success.main,
+          errorColor: theme.palette.error.main,
+        },
+        themeDark: {
+          foreground: "#fff",
+          background: "#424242",
+          accentBackground: "#00bcd4",
+          successColor: "#4caf50",
+          errorColor: "#f44336",
+        },
+      });
+    }
   }, []);
 
   return (
@@ -140,6 +180,36 @@ const App = () => {
           </MobileView>
           <div className={classes.content}>
             <Suspense fallback={<FallbackLoading />}>
+              <Route
+                path={[
+                  ROUTES.HOME,
+                  ROUTES.SIGN_IN,
+                  ROUTES.PASSWORD_CHANGE,
+                  ROUTES.PASSWORD_RESET,
+                  ROUTES.AUTH_SERVICE_HANDLER,
+                  ROUTES.CREATE_NEW_EVENT,
+                  ROUTES.EVENTS,
+                  ROUTES.EVENT_UID,
+                  ROUTES.RECIPES,
+                  ROUTES.RECIPE,
+                  ROUTES.RECIPE_UID,
+                  ROUTES.RECIPE_USER_UID,
+                  ROUTES.USER_PROFILE,
+                  ROUTES.USER_PROFILE_UID,
+                  ROUTES.USER_PUBLIC_PROFILE,
+                  ROUTES.USER_PUBLIC_PROFILE_UID,
+                  ROUTES.UNITS,
+                  ROUTES.UNITCONVERSION,
+                  ROUTES.PRODUCTS,
+                  ROUTES.MATERIALS,
+                  ROUTES.DEPARTMENTS,
+                  ROUTES.REQUEST_OVERVIEW,
+                  ROUTES.REQUEST_OVERVIEW_UID,
+                  ROUTES.NOT_FOUND,
+                  ROUTES.NO_AUTH,
+                ]}
+                component={FeedbackFab}
+              />
               <Switch>
                 <Route exact path={ROUTES.LANDING} component={LandingPage} />
                 <Route path={ROUTES.SIGN_IN} component={SignInPage} />
@@ -300,6 +370,22 @@ const App = () => {
       </Router>
       <CustomDialog />
     </MuiThemeProvider>
+  );
+};
+
+const FeedbackFab = () => {
+  const classes = useStyles();
+
+  return (
+    <Fab
+      id="custom-feedback-button"
+      color="secondary"
+      size="small"
+      aria-label="Feedback geben"
+      className={classes.fabBottom}
+    >
+      <FeedbackIcon />
+    </Fab>
   );
 };
 
