@@ -11,6 +11,8 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {collection, collectionGroup, doc, Timestamp} from "firebase/firestore";
+
 export class FirebaseDbRecipeComment extends FirebaseDbSuper {
   firebase: Firebase;
   /* =====================================================================
@@ -24,8 +26,9 @@ export class FirebaseDbRecipeComment extends FirebaseDbSuper {
   // Collection holen
   // ===================================================================== */
   getCollection(uids: string[]) {
-    return this.firebase.db.collection(
-      `recipes/public/recipes/${uids[0]}/comments/`
+    return collection(
+      this.firebase.firestore,
+      `recipes/public/recipes/${uids[0]}/comments`
     );
   }
   /* =====================================================================
@@ -33,15 +36,13 @@ export class FirebaseDbRecipeComment extends FirebaseDbSuper {
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
-    return this.firebase.db.doc(
-      `recipes/public/recipes/${uids[0]}/comments/${uids[1]}`
-    );
+    return doc(this.firebase.firestore, this.getCollection(uids).path, uids[1]);
   }
   /* =====================================================================
   // Dokumente holen
@@ -55,7 +56,7 @@ export class FirebaseDbRecipeComment extends FirebaseDbSuper {
   prepareDataForDb<T extends ValueObject>({value}: PrepareDataForDb<T>) {
     return {
       comment: value.comment,
-      createdAt: this.firebase.timestamp.fromDate(value.createdAt),
+      createdAt: Timestamp.fromDate(value.createdAt),
       userUid: value.userUid,
       displayName: value.displayName,
       pictureSrc: value.picutreSrc,

@@ -2,6 +2,13 @@ import Firebase from "../firebase.class";
 import Utils from "../../Shared/utils.class";
 import {ERROR_PARAMETER_NOT_PASSED} from "../../../constants/text";
 import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
+import {
+  ref,
+  deleteObject,
+  getDownloadURL,
+  uploadBytesResumable,
+} from "firebase/storage";
+import {logEvent} from "firebase/analytics";
 
 interface UploadFile {
   file: File;
@@ -56,45 +63,50 @@ export abstract class FirebaseStorageSuper {
    */
   uploadFile({file, filename}: UploadFile): Promise<void> {
     const suffix = Utils.getFileSuffix(file.name);
-    filename = filename + "." + suffix;
+    filename = `${filename}.${suffix}`;
 
-    const storageRef = this.firebase.storage.ref();
     const folder = this.getFolder();
+    const filePath = `${folder}${filename}`;
 
-    // es werden nur Bilder hochgeladen
+    // Es werden nur Bilder hochgeladen
     const metadata = {
       contentType: "image/jpeg",
     };
 
-    this.firebase.analytics.logEvent(FirebaseAnalyticEvent.uploadPicture, {
-      folder: this.getFolder(),
+    logEvent(this.firebase.analytics, FirebaseAnalyticEvent.uploadPicture, {
+      folder: folder,
     });
 
     return new Promise((resolve, reject) => {
       try {
-        const uploadTask = storageRef
-          .child(folder + filename)
-          .put(file, metadata);
+        const storageRef = ref(this.firebase.storage, filePath);
+        const uploadTask = uploadBytesResumable(storageRef, file, metadata);
 
         uploadTask.on(
           "state_changed",
-          function (snapshot) {
-            console.info("File wird hochgeladen:", snapshot.metadata.name);
+          (snapshot) => {
+            console.info(
+              "File wird hochgeladen:",
+              snapshot.totalBytes,
+              "Bytes"
+            );
           },
-          function error(error) {
-            console.error(error);
+          (error) => {
+            console.error("Upload-Fehler:", error);
             reject(error);
           },
-          function complete() {
+          () => {
             console.info(`Datei ${filename} erfolgreich hochgeladen.`);
             resolve(); // Upload abgeschlossen
           }
         );
       } catch (error) {
-        console.warn("fehler", error);
+        console.error("Fehler beim Hochladen:", error);
+        reject(error);
       }
     });
   }
+
   // ===================================================================== */
   /**
    * Geänderte Bild-Varianten holen
@@ -108,64 +120,64 @@ export abstract class FirebaseStorageSuper {
     sizes = [],
   }: // oldDownloadUrl,
   GetPictureVariants) {
-    let counter = 0;
-    let fileFound = false;
-    const fileVariants: {size: number; downloadURL: string}[] = [];
-    const docRefs: Promise<string>[] = [];
-    let downloadUrls: any[] = [];
-
-    // Info: die oldDownloadUrl muss auch der ersten Size entsprechen
-    // sonst funtkioniert das nicht
-
     if (sizes.length === 0) {
       throw new Error(ERROR_PARAMETER_NOT_PASSED);
     }
 
     const folder = this.getFolder();
+    const fileVariants: {size: number; downloadURL: string}[] = [];
+    let counter = 0;
+    let fileFound = false;
 
-    // Warten bis das erste Bild vorhanden ist
     const checkFile = `${folder}${uid}${this.getImageFileSuffix(sizes[0])}`;
 
+    // Warten, bis das erste Bild vorhanden ist
     do {
-      await this.firebase.storage
-        .ref(checkFile)
-        .getDownloadURL()
-        .then(async (result: string) => {
-          if (result.match("_d+xd+.jpeg")) {
-            // Das File hat einer der erlaubten Suffix
-            fileFound = true;
-          } else {
-            fileFound = false;
-            await this.delay(1);
-            counter++;
-            // Wir warten solange, bis das erste File mit dem richtigen Suffix vorhanden ist
-          }
-        })
-        .catch(async () => {
+      try {
+        const downloadURL = await getDownloadURL(
+          ref(this.firebase.storage, checkFile)
+        );
+        if (downloadURL.match("_d+xd+.jpeg")) {
+          fileFound = true;
+        } else {
           await this.delay(1);
           counter++;
-        });
-    } while (fileFound === false && counter <= 10);
+        }
+      } catch {
+        await this.delay(1);
+        counter++;
+      }
+    } while (!fileFound && counter <= 10);
 
-    // Alle URLs für die geforderten Grössen holen
-    sizes.forEach((size) => {
-      docRefs.push(
-        this.firebase.storage
-          .ref(`${folder}${uid}${this.getImageFileSuffix(size)}`)
-          .getDownloadURL()
-      );
-    });
+    // Alle URLs für die geforderten Größen holen
+    const docRefs = sizes.map((size) =>
+      getDownloadURL(
+        ref(
+          this.firebase.storage,
+          `${folder}${uid}${this.getImageFileSuffix(size)}`
+        )
+      )
+    );
 
-    downloadUrls = await Promise.all(docRefs);
+    const downloadUrls = await Promise.allSettled(docRefs);
 
-    downloadUrls.forEach((downloadURL) => {
-      const sizeType = Object.values(IMAGES_SUFFIX).find((sizeType) =>
-        downloadURL.includes(sizeType.suffix)
-      );
-      if (sizeType) {
-        fileVariants.push({size: sizeType.size, downloadURL: downloadURL});
+    downloadUrls.forEach((result, index) => {
+      if (result.status === "fulfilled") {
+        const downloadURL = result.value;
+        const sizeType = Object.values(IMAGES_SUFFIX).find((sizeType) =>
+          downloadURL.includes(sizeType.suffix)
+        );
+        if (sizeType) {
+          fileVariants.push({size: sizeType.size, downloadURL});
+        }
+      } else {
+        console.error(
+          `Failed to fetch URL for size ${sizes[index]}:`,
+          result.reason
+        );
       }
     });
+
     return fileVariants;
   }
   // ===================================================================== */
@@ -176,17 +188,21 @@ export abstract class FirebaseStorageSuper {
    *        wird anhand der Klasse ermittelt
    */
   async deleteFile(filename: string) {
-    this.firebase.storage
-      .ref(`${this.getFolder()}${filename}`)
-      .delete()
-      .then(() => {
-        this.firebase.analytics.logEvent(FirebaseAnalyticEvent.deletePicture, {
-          folder: this.getFolder(),
-        });
-      })
-      .catch((error) => {
-        throw error;
+    try {
+      const fileRef = ref(
+        this.firebase.storage,
+        `${this.getFolder()}${filename}`
+      );
+      await deleteObject(fileRef);
+
+      // Loggen des Events
+      logEvent(this.firebase.analytics, FirebaseAnalyticEvent.deletePicture, {
+        folder: this.getFolder(),
       });
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      throw error;
+    }
   }
   // ===================================================================== */
   /**

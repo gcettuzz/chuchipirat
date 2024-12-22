@@ -10,6 +10,7 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {collection, collectionGroup, doc} from "firebase/firestore";
 
 export class FirebaseDbStatsRecipesInMenuplan extends FirebaseDbSuper {
   firebase: Firebase;
@@ -24,20 +25,24 @@ export class FirebaseDbStatsRecipesInMenuplan extends FirebaseDbSuper {
   // Collection holen
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("stats");
+    return collection(this.firebase.firestore, `stats`);
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument() {
-    return this.firebase.db.doc("stats/recipesInMenuplan");
+    return doc(
+      this.firebase.firestore,
+      this.getCollection().path,
+      `recipesInMenuplan`
+    );
   }
   /* =====================================================================
   // Dokumente holen

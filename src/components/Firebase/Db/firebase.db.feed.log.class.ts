@@ -13,6 +13,7 @@ import {
 import {ChangeRecord} from "../../Shared/global.interface";
 import Feed, {FeedType} from "../../Shared/feed.class";
 import Role from "../../../constants/roles";
+import {collection, collectionGroup, doc} from "firebase/firestore";
 
 export interface FeedLogDocumemntStructure {
   created: ChangeRecord;
@@ -35,20 +36,20 @@ export class FirebaseDbFeedLog extends FirebaseDbSuper {
   // Collection holen
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("feeds");
+    return collection(this.firebase.firestore, `feeds`);
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument() {
-    return this.firebase.db.doc(`feeds/000_log`);
+    return doc(this.firebase.firestore, this.getCollection().path, `000_log`);
   }
   /* =====================================================================
   // Dokumente holen

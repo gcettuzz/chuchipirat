@@ -5,7 +5,6 @@ export const authUser: AuthUser = {
   uid: "RvLIR9NDGOWPwos8PrSZVgfIZvj9",
   email: "test@chuchipirat.ch",
   emailVerified: true,
-  providerData: [],
   firstName: "Test",
   lastName: "Jest",
   roles: [Role.basic],

@@ -12,6 +12,7 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {collection, collectionGroup, doc} from "firebase/firestore";
 
 export class FirebaseDbRecipeVariant extends FirebaseDbRecipe {
   firebase: Firebase;
@@ -30,7 +31,8 @@ export class FirebaseDbRecipeVariant extends FirebaseDbRecipe {
   // Collection holen
   // ===================================================================== */
   getCollection(uids: string[]) {
-    return this.firebase.db.collection(
+    return collection(
+      this.firebase.firestore,
       `recipes/variants/events/${uids[0]}/recipes`
     );
   }
@@ -39,15 +41,13 @@ export class FirebaseDbRecipeVariant extends FirebaseDbRecipe {
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
-    return this.firebase.db.doc(
-      `recipes/variants/events/${uids[0]}/recipes/${uids[1]}`
-    );
+    return doc(this.firebase.firestore, this.getCollection(uids).path, uids[1]);
   }
   /* =====================================================================
   // Dokumente holen

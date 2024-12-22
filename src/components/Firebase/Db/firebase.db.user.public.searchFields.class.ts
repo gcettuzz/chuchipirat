@@ -10,6 +10,7 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {collection, collectionGroup, doc} from "firebase/firestore";
 
 export class FirebaseUserPublicSearchFields extends FirebaseDbSuper {
   firebase: Firebase;
@@ -24,19 +25,23 @@ export class FirebaseUserPublicSearchFields extends FirebaseDbSuper {
   // Collection holen
   // ===================================================================== */
   getCollection(uids: string[]) {
-    return this.firebase.db.collection(`users/${uids[0]}/public`);
+    return collection(this.firebase.firestore, `users/${uids[0]}/public`);
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
-    return this.firebase.db.collectionGroup("public");
+    return collectionGroup(this.firebase.firestore, `public`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
-    return this.firebase.db.doc(`users/${uids[0]}/public/searchFields`);
+    return doc(
+      this.firebase.firestore,
+      this.getCollection(uids).path,
+      `searchFields`
+    );
   }
   /* =====================================================================
   // Dokumente holen

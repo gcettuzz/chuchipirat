@@ -10,6 +10,7 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {collection, collectionGroup, doc} from "firebase/firestore";
 export class FirebaseDummy extends FirebaseDbSuper {
   firebase: Firebase;
   /* =====================================================================
@@ -24,21 +25,21 @@ export class FirebaseDummy extends FirebaseDbSuper {
   // ===================================================================== */
   getCollection() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collection("XYZ");
+    return collection(this.firebase.firestore, `XYZ`);
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.doc(`XYU/${uids[0]}`);
+    return doc(this.firebase.firestore, this.getCollection().path, uids[0]);
   }
   /* =====================================================================
   // Dokumente holen
@@ -57,6 +58,7 @@ export class FirebaseDummy extends FirebaseDbSuper {
   // ===================================================================== */
   prepareDataForApp<T extends ValueObject>({uid, value}: PrepareDataForApp) {
     return value as unknown as T;
+    console.log(uid);
   }
   /* =====================================================================
   // Einstellungen für den Session Storage zurückgeben

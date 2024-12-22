@@ -1,9 +1,7 @@
-// // import Ingredient from "./ingredient";
 import Utils from "../Shared/utils.class";
 
 import Firebase from "../Firebase/firebase.class";
 import {AuthUser} from "../Firebase/Authentication/authUser.class";
-import {DocumentSnapshot} from "@firebase/firestore-types";
 
 import UserPublicProfile, {
   UserPublicProfileStatsFields,
@@ -12,10 +10,6 @@ import Stats, {StatsField} from "../Shared/stats.class";
 import Feed, {FeedType} from "../Shared/feed.class";
 
 import FirebaseAnalyticEvent from "../../constants/firebaseEvent";
-// import {
-//   File,
-//   IMAGES_SUFFIX,
-// } from "../Firebase/Storage/firebase.storage.super.class";
 import {SortOrder} from "../Firebase/Db/firebase.db.super.class";
 import * as TEXT from "../../constants/text";
 import RecipeShort from "./recipeShort.class";
@@ -36,6 +30,8 @@ import UnitConversion, {
   UnitConversionProducts,
 } from "../Unit/unitConversion.class";
 import Material from "../Material/material.class";
+import {logEvent} from "firebase/analytics";
+import {arrayUnion, DocumentSnapshot, getDoc} from "firebase/firestore";
 
 export interface RecipeObjectStructure<T> {
   entries: {[key: string]: T};
@@ -673,7 +669,7 @@ export default class Recipe {
         authUser: authUser,
       });
     }
-    firebase.analytics.logEvent(FirebaseAnalyticEvent.cloudFunctionExecuted);
+    logEvent(firebase.analytics, FirebaseAnalyticEvent.cloudFunctionExecuted);
 
     return recipe;
   };
@@ -749,9 +745,7 @@ export default class Recipe {
           firebase.recipePrivate.updateFields({
             uids: [],
             values: {
-              userWithPrivateRecipes: firebase.fieldValue.arrayUnion(
-                authUser.uid
-              ),
+              userWithPrivateRecipes: arrayUnion(authUser.uid),
             },
             authUser: authUser,
           });
@@ -763,7 +757,7 @@ export default class Recipe {
 
     if (newRecipe) {
       // Event auslösen
-      firebase.analytics.logEvent(FirebaseAnalyticEvent.recipeCreated);
+      logEvent(firebase.analytics, FirebaseAnalyticEvent.recipeCreated);
       // Stats anzahl Private Rezepte
 
       // Counter für Stats herunterzählen
@@ -802,7 +796,7 @@ export default class Recipe {
         authUser: authUser,
       });
     }
-    firebase.analytics.logEvent(FirebaseAnalyticEvent.cloudFunctionExecuted);
+    logEvent(firebase.analytics, FirebaseAnalyticEvent.cloudFunctionExecuted);
 
     return recipe;
   };
@@ -875,7 +869,7 @@ export default class Recipe {
 
     if (newRecipe) {
       // Event auslösen
-      firebase.analytics.logEvent(FirebaseAnalyticEvent.recipeVariantCreated);
+      logEvent(firebase.analytics, FirebaseAnalyticEvent.recipeVariantCreated);
       Stats.incrementStat({
         firebase: firebase,
         field: StatsField.noRecipesVariants,
@@ -1602,20 +1596,23 @@ export default class Recipe {
       }
       switch (recipe.recipeType) {
         case RecipeType.public:
-          docRefs.push(firebase.recipePublic.getDocument([recipe.uid]).get());
+          docRefs.push(getDoc(firebase.recipePublic.getDocument([recipe.uid])));
           break;
         case RecipeType.private:
           docRefs.push(
-            firebase.recipePrivate
-              .getDocument([recipe.createdFromUid, recipe.uid])
-              .get()
+            getDoc(
+              firebase.recipePrivate.getDocument([
+                recipe.createdFromUid,
+                recipe.uid,
+              ])
+            )
           );
           break;
         case RecipeType.variant:
           docRefs.push(
-            firebase.recipeVariant
-              .getDocument([recipe.eventUid, recipe.uid])
-              .get()
+            getDoc(
+              firebase.recipeVariant.getDocument([recipe.eventUid, recipe.uid])
+            )
           );
           break;
       }
@@ -1768,7 +1765,7 @@ export default class Recipe {
       console.error(error);
       throw error;
     });
-    firebase.analytics.logEvent(FirebaseAnalyticEvent.recipeRatingSet);
+    logEvent(firebase.analytics, FirebaseAnalyticEvent.recipeRatingSet);
     return recipe.rating;
   };
   /* =====================================================================
@@ -1799,7 +1796,7 @@ export default class Recipe {
       });
 
     // Bitzeli Analytics
-    firebase.analytics.logEvent(FirebaseAnalyticEvent.recipeCommentCreated);
+    logEvent(firebase.analytics, FirebaseAnalyticEvent.recipeCommentCreated);
     // Timestamp umwandeln
     return comment;
   };

@@ -17,6 +17,7 @@ import {
 } from "../../Event/Menuplan/menuplan.class";
 import Product from "../../Product/product.class";
 import Material from "../../Material/material.class";
+import {collection, collectionGroup, doc, Timestamp} from "firebase/firestore";
 
 export class FirebaseDbEventMenuplan extends FirebaseDbSuper {
   firebase: Firebase;
@@ -30,21 +31,25 @@ export class FirebaseDbEventMenuplan extends FirebaseDbSuper {
   /* =====================================================================
   // Collection holen
   // ===================================================================== */
-  getCollection() {
-    return this.firebase.db.collection("events/docs");
+  getCollection(uids: string[]) {
+    return collection(this.firebase.firestore, `events/${uids[0]}/docs`);
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
-    return this.firebase.db.doc(`events/${uids[0]}/docs/menuplan`);
+    return doc(
+      this.firebase.firestore,
+      this.getCollection(uids).path,
+      `menuplan`
+    );
   }
   /* =====================================================================
   // Dokumente holen
@@ -94,7 +99,7 @@ export class FirebaseDbEventMenuplan extends FirebaseDbSuper {
     });
 
     return {
-      dates: value.dates.map((date) => this.firebase.timestamp.fromDate(date)),
+      dates: value.dates.map((date) => Timestamp.fromDate(date)),
       mealTypes: value.mealTypes,
       notes: value.notes,
       mealRecipes: value.mealRecipes,

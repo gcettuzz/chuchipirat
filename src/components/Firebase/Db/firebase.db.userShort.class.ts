@@ -11,6 +11,7 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {collection, collectionGroup, doc} from "firebase/firestore";
 
 export class FirebaseDbUserShort extends FirebaseDbSuper {
   firebase: Firebase;
@@ -25,20 +26,24 @@ export class FirebaseDbUserShort extends FirebaseDbSuper {
   // Collection holen
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("users");
+    return collection(this.firebase.firestore, `users`);
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument() {
-    return this.firebase.db.doc(`users/000_allUsers`);
+    return doc(
+      this.firebase.firestore,
+      this.getCollection().path,
+      `000_allUsers`
+    );
   }
   /* =====================================================================
   // Dokumente holen

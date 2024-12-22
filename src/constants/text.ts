@@ -74,6 +74,12 @@ export const WE_NEED_SOME_DETAILS_ABOUT_YOU =
   "Wir brauchen noch 2, 3 Dinge von dir...";
 export const PAGE_TITLE_404 = "404";
 export const PAGE_SUBTITLE_404 = "Hier gibt es nichts Pirat.";
+export const PAGE_TITLE_500 = "Arrr! Person über Bord.";
+export const PAGE_TEXT_1_500 =
+  "Ein unerwarteter Fehler ist aufgetreten. Damit wir den Fehler sehen und reparieren können, überprüfe bitte, ob du einen Adblocker aktiviert hast und deaktiviere ihn. Wir spammen dich auch nicht mit Werbung zu. Versprochen!";
+export const PAGE_TEXT_2_500 =
+  "Lade danach die Seite neu, damit der Fehler automatisch zu unserer Crew geschickt wird. Wir kümmern uns darum, dass dies in Zukunft nicht mehr passiert!";
+export const PAGE_TEXT_3_500 = "Danke für dein Verständniss";
 export const PAGE_TITLE_HOME = (name: string) => `Hoi ${name}`;
 export const PAGE_SUBTITLE_HOME = "Lass uns kochen";
 export const PAGE_TITLE_EVENTS = "Anlässe";
@@ -1340,3 +1346,20 @@ export const NO_OPEN_REQUESTS_FOUND = "Keine offenen Anträge gefunden.";
 export const ACTIVE_REQUESTS = "Aktive Anträge";
 export const ALL_REQUESTS = "Alle Anträge";
 export const WRONG_ASIGNEE = "Der Antrag ist nicht dir zugewiesen.";
+/* =====================================================================
+// Sentry Feedback
+// ===================================================================== */
+export const FEEDBACK = {
+  title: "Feedback",
+  submitButton: "Meldung senden",
+  cancelButton: "Abbrechen",
+  addScreenshotButton: "Screenshot hinzufügen",
+  removeScreenshotButton: "Screenshot löschen",
+  namePlaceholder: "Dein Name",
+  emailPlaceholder: "deine.email@beispiel.ch",
+  messageLabel: "Beschreibung",
+  messagePlaceholder:
+    "Was möchtest du uns melden? Bitte beschreibe den Wunsch/Fehler so genau wie möglich.",
+  successMessage: "Danke für deine Rückmeldung.",
+  isRequired: "(erforderliche Angabe)",
+};

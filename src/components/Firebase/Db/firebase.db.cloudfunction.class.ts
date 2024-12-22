@@ -32,6 +32,8 @@ import FirebaseDbCloudFunctionUpdateMaterial from "./firebase.db.cloudfunction.u
 import FirebaseDbCloudFunctionMergeMaterials from "./firebase.db.cloudfunction.mergeMaterials.class";
 import FirebaseDbCloudFunctionConvertMaterialToProduct from "./firebase.db.cloudfunction.convertMaterialToProduct.class copy";
 import FirebaseDbCloudFunctionCreateUserPublicData from "./firebase.db.cloudfunction.createUserPublicData.class";
+import {collection, collectionGroup, doc} from "firebase/firestore";
+
 export class FirebaseDbCloudFunction extends FirebaseDbSuper {
   firebase: Firebase;
   log: FirebaseDbCloudFunctionLog;
@@ -100,20 +102,20 @@ export class FirebaseDbCloudFunction extends FirebaseDbSuper {
   // Collection holen
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("_cloudFunctions");
+    return collection(this.firebase.firestore, `_cloudFunctions`);
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
-    return this.firebase.db.doc(`_cloudFunctions/${uids[0]}`);
+    return doc(this.firebase.firestore, this.getCollection().path, uids[0]);
   }
   /* =====================================================================
   // Dokumente holen

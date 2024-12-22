@@ -11,6 +11,8 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {collection, collectionGroup, doc} from "firebase/firestore";
+
 export class FirebaseDbMasterDataMaterials extends FirebaseDbSuper {
   firebase: Firebase;
   /* =====================================================================
@@ -24,20 +26,20 @@ export class FirebaseDbMasterDataMaterials extends FirebaseDbSuper {
   // Collection holen
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("masterData");
+    return collection(this.firebase.firestore, `masterData`);
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument() {
-    return this.firebase.db.doc("masterData/materials");
+    return doc(this.firebase.firestore, this.getCollection().path, `materials`);
   }
   /* =====================================================================
   // Dokumente holen

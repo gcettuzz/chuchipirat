@@ -11,11 +11,11 @@ import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 
 import CssBaseline from "@material-ui/core/CssBaseline";
-import useScrollTrigger from "@material-ui/core/useScrollTrigger";
+// import useScrollTrigger from "@material-ui/core/useScrollTrigger";
 
-import Fab from "@material-ui/core/Fab";
-import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
-import Zoom from "@material-ui/core/Zoom";
+// import Fab from "@material-ui/core/Fab";
+// import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
+// import Zoom from "@material-ui/core/Zoom";
 import IconButton from "@material-ui/core/IconButton";
 import MenuIcon from "@material-ui/icons/Menu";
 import AccountCircle from "@material-ui/icons/AccountCircle";
@@ -68,6 +68,7 @@ import {withFirebase} from "../Firebase/firebaseContext";
 // import Environment from "../Shared/enviroment.class";
 import Utils from "../Shared/utils.class";
 import {DonateIcon} from "../Shared/icons";
+import {logEvent} from "firebase/analytics";
 // ===================================================================
 // ============================= Global =============================
 // ===================================================================
@@ -76,43 +77,43 @@ type Anchor = "top" | "left" | "bottom" | "right";
 // ===================================================================
 // ========================== Scroll to Top  =========================
 // ===================================================================
-interface ScrollTopProps {
-  children: React.ReactElement;
-  window?: () => Window;
-}
+// interface ScrollTopProps {
+//   children: React.ReactElement;
+//   window?: () => Window;
+// }
 
-function ScrollTop(props: ScrollTopProps) {
-  const {children, window} = props;
-  const classes = useStyles();
+// function ScrollTop(props: ScrollTopProps) {
+//   const {children, window} = props;
+//   const classes = useStyles();
 
-  const trigger = useScrollTrigger({
-    target: window ? window() : undefined,
-    disableHysteresis: true,
-    threshold: 100,
-  });
+//   const trigger = useScrollTrigger({
+//     target: window ? window() : undefined,
+//     disableHysteresis: true,
+//     threshold: 100,
+//   });
 
-  const handleTopClick = (event) => {
-    const anchor = (event.target.ownerDocument || document).querySelector(
-      "#back-to-top-anchor"
-    );
-    if (anchor) {
-      anchor.scrollIntoView({behavior: "smooth", block: "center"});
-    }
-  };
+//   const handleTopClick = (event) => {
+//     const anchor = (event.target.ownerDocument || document).querySelector(
+//       "#back-to-top-anchor"
+//     );
+//     if (anchor) {
+//       anchor.scrollIntoView({behavior: "smooth", block: "center"});
+//     }
+//   };
 
-  return (
-    <Zoom in={trigger}>
-      <div
-        key={"backToTop"}
-        onClick={handleTopClick}
-        role="presentation"
-        className={classes.fabBottom}
-      >
-        {children}
-      </div>
-    </Zoom>
-  );
-}
+//   return (
+//     <Zoom in={trigger}>
+//       <div
+//         key={"backToTop"}
+//         onClick={handleTopClick}
+//         role="presentation"
+//         className={classes.fabBottom}
+//       >
+//         {children}
+//       </div>
+//     </Zoom>
+//   );
+// }
 
 // ===================================================================
 // ======================= Navigation Komponente =====================
@@ -316,7 +317,7 @@ const NavigationAuthBase = (props) => {
   // ------------------------------------------ */
   const onUpdateAppOk = () => {
     // Event auslösen
-    firebase.analytics.logEvent(FirebaseAnalyticEvent.appForceRefresh);
+    logEvent(firebase.analytics, FirebaseAnalyticEvent.appForceRefresh);
     window.localStorage.clear();
     window.location.reload();
     setShowDialogRefreshApp(false);
@@ -353,7 +354,7 @@ const NavigationAuthBase = (props) => {
           <ListItemText primary={TEXT.RECIPES} />
         </ListItem>
         <ListItem button key="Events" onClick={() => push(ROUTES.EVENTS)}>
-          <ListItemIcon >
+          <ListItemIcon>
             <EventIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.EVENTS} />
@@ -572,11 +573,11 @@ const NavigationAuthBase = (props) => {
         {/* ))} */}
       </div>
 
-      <ScrollTop {...props}>
+      {/* <ScrollTop {...props}>
         <Fab color="secondary" size="small" aria-label="scroll back to top">
           <KeyboardArrowUpIcon />
         </Fab>
-      </ScrollTop>
+      </ScrollTop> */}
       <DialogRefreshApp
         dialogOpen={showDialogRefreshApp}
         handleOk={onUpdateAppOk}

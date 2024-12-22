@@ -11,6 +11,7 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {collection, collectionGroup, doc} from "firebase/firestore";
 
 export class FirebaseDbRequestNumberStorage extends FirebaseDbSuper {
   firebase: Firebase;
@@ -25,20 +26,24 @@ export class FirebaseDbRequestNumberStorage extends FirebaseDbSuper {
   // Collection holen
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("requests");
+    return collection(this.firebase.firestore, `requests`);
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument() {
-    return this.firebase.db.doc(`requests/000_globalCounter`);
+    return doc(
+      this.firebase.firestore,
+      this.getCollection().path,
+      `000_globalCounter`
+    );
   }
   /* =====================================================================
   // Dokumente holen

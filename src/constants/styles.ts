@@ -277,8 +277,8 @@ const useStyles = makeStyles((theme) => ({
     flexGrow: 1,
     margin: theme.spacing(1),
     position: "fixed",
-    bottom: theme.spacing(6),
-    right: theme.spacing(3),
+    bottom: theme.spacing(4),
+    right: theme.spacing(4),
     zIndex: 1000,
   },
   goBackFabButton: {

@@ -6,8 +6,6 @@ import FirebaseDbFeed from "./firebase.db.feed.class";
 import FirebaseDbRecipe from "./firebase.db.recipe.class";
 import FirebaseDbStatsCounter from "./firebase.db.stats.counter.class";
 import FirebaseDbUser from "./firebase.db.user.class";
-
-import {} from "firebase/";
 export class FirebaseDb {
   event: FirebaseDbEvent;
   recipe: FirebaseDbRecipe;

@@ -45,6 +45,7 @@ import MaterialList from "../MaterialList/materialList.class";
 import EventGroupConfiguration from "../GroupConfiguration/groupConfiguration.class";
 import {getSupportUserUid} from "../../../constants/defaultValues";
 import {CloudFunctionActivateSupportUserDocumentStructure} from "../../Firebase/Db/firebase.db.cloudfunction.activateSupportUser.class";
+import {logEvent} from "firebase/analytics";
 
 export const EVENT_TYPES = {
   TYPE_ACTUAL: "actual",
@@ -394,7 +395,7 @@ export default class Event {
         objectUserDisplayName: cookPublicProfile.displayName,
         objectUserPictureSrc: cookPublicProfile.pictureSrc.normalSize,
       });
-      firebase.analytics.logEvent(FirebaseAnalyticEvent.eventCookAdded);
+      logEvent(firebase.analytics, FirebaseAnalyticEvent.eventCookAdded);
     }
     // Analytik
 
@@ -432,7 +433,7 @@ export default class Event {
         throw error;
       });
     }
-    firebase.analytics.logEvent(FirebaseAnalyticEvent.eventCookRemoved);
+    logEvent(firebase.analytics, FirebaseAnalyticEvent.eventCookRemoved);
 
     return event.cooks;
   };
@@ -511,7 +512,7 @@ export default class Event {
 
     if (newEvent) {
       // Event auslösen
-      firebase.analytics.logEvent(FirebaseAnalyticEvent.eventCreated);
+      logEvent(firebase.analytics, FirebaseAnalyticEvent.eventCreated);
       // Statistik
       Stats.incrementStats({
         firebase: firebase,
@@ -702,7 +703,7 @@ export default class Event {
         });
       });
 
-    firebase.analytics.logEvent(FirebaseAnalyticEvent.eventDeleted);
+    logEvent(firebase.analytics, FirebaseAnalyticEvent.eventDeleted);
   };
   /* =====================================================================
   // Dauer des Event bestimmen
@@ -906,12 +907,12 @@ export default class Event {
     switch (eventType) {
       case EventType.actual:
         // Analytik
-        firebase.analytics.logEvent(FirebaseAnalyticEvent.eventGetActual);
+        logEvent(firebase.analytics, FirebaseAnalyticEvent.eventGetActual);
         whereOperator = Operator.GE;
         break;
       case EventType.history:
         // Analytik
-        firebase.analytics.logEvent(FirebaseAnalyticEvent.eventGetHistory);
+        logEvent(firebase.analytics, FirebaseAnalyticEvent.eventGetHistory);
         whereOperator = Operator.LE;
         break;
     }

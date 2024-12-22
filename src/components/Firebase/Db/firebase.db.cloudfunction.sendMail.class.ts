@@ -15,6 +15,7 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {collection, collectionGroup, doc} from "firebase/firestore";
 
 export interface CloudFunctionSendMailDocumentStructure
   extends BaseDocumentStructure {
@@ -37,22 +38,24 @@ export class FirebaseDbCloudFunctionSendMail extends FirebaseDbCloudFunctionSupe
   // Dokument holen, das die Cloudfunction triggert
   // ===================================================================== */
   getDocument(uids: string[]) {
-    return this.firebase.db.doc(
-      `_cloudFunctions/functions/sendMail/${uids[0]}`
-    );
+    return doc(this.firebase.firestore, this.getCollection().path, uids[0]);
   }
   /* =====================================================================
   // Trigger für CloudFunction
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("_cloudFunctions/functions/sendMail");
+    return collection(
+      this.firebase.firestore,
+      super.getCollection().path,
+      `functions/sendMail`
+    );
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokumente holen

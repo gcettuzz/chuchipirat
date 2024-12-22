@@ -1,5 +1,3 @@
-// import {DocumentReference} from "@firebase/firestore-types";
-// import {ERROR_PARAMETER_NOT_PASSED} from "../../../constants/text";
 import {ERROR_NOT_IMPLEMENTED_YET} from "../../../constants/text";
 
 import Firebase from "../firebase.class";
@@ -15,6 +13,14 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {
+  collection,
+  collectionGroup,
+  doc,
+  increment,
+  Timestamp,
+} from "firebase/firestore";
+import {logEvent} from "firebase/analytics";
 
 //HINT: Aufbau verbNomen
 export enum CloudFunctionType {
@@ -74,22 +80,21 @@ export abstract class FirebaseDbCloudFunctionSuper extends FirebaseDbSuper {
   // Collection holen
   // ===================================================================== */
   getCollection() {
-    throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collection("");
+    return collection(this.firebase.firestore, `_cloudFunctions`);
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.doc(`events/${uids[0]}`);
+    return doc(this.firebase.firestore, this.getCollection().path, uids[0]);
   }
   /* =====================================================================
   // Dokumente holen
@@ -126,7 +131,7 @@ export abstract class FirebaseDbCloudFunctionSuper extends FirebaseDbSuper {
         value: {
           [uid]: {
             cloudFunctionType: cloudFunctionType,
-            date: this.firebase.timestamp.fromDate(new Date()),
+            date: Timestamp.fromDate(new Date()),
             invokedBy: {
               uid: authUser.uid,
               displayName: authUser.publicProfile.displayName,
@@ -150,7 +155,7 @@ export abstract class FirebaseDbCloudFunctionSuper extends FirebaseDbSuper {
       .update({
         uids: ["functions"],
         value: {
-          [cloudFunctionType]: this.firebase.fieldValue.increment(1),
+          [cloudFunctionType]: increment(1),
         },
         authUser: {} as AuthUser,
       })
@@ -184,7 +189,8 @@ export abstract class FirebaseDbCloudFunctionSuper extends FirebaseDbSuper {
         throw error;
       });
 
-    this.firebase.analytics.logEvent(
+    logEvent(
+      this.firebase.analytics,
       FirebaseAnalyticEvent.cloudFunctionExecuted,
       {
         function: this.getCloudFunctionType(),

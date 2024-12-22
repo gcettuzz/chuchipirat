@@ -93,7 +93,7 @@ export class SystemMessage {
     const today = new Date();
     today.setHours(23, 59, 59, 0);
 
-    if (mustBeValid && systemMessage.validTo < today) {
+    if (mustBeValid && new Date(systemMessage.validTo) < today) {
       return null;
     } else {
       return systemMessage;

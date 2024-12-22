@@ -1,5 +1,3 @@
-
-
 /* ===================================================================
 // ============================ Input Fields =========================
 // =================================================================== */
@@ -45,7 +43,7 @@ input[type="number"] {
   height: 0;
   border-right: 1.5rem solid transparent;
   border-left: 1.5rem solid transparent;
-  border-top: 1.5rem ;
+  border-top: 1.5rem;
   position: absolute;
   top: 4rem;
   left: 0;
@@ -91,8 +89,6 @@ input[type="number"] {
 .ribbon--purple:after {
   border-top: 1.5rem solid #7e3794;
 }
-
-
 
 /* ===================================================================
 // =========================== Corner Ribbon =========================
@@ -431,7 +427,6 @@ input[type="number"] {
   }
 }
 
-
 /* Test umgebung */
 /* .ql-active {
   color: #AB47BC !important;
@@ -442,3 +437,10 @@ input[type="number"] {
     color: #6a1b9a !important;
   }
 } */
+/* ===================================================================
+// =========================== Sentry Input ==========================
+// =================================================================== */
+#sentry-feedback {
+  --font-family: "Roboto", "Helvetica", "Arial";
+  --dialog-border-radius: 4px;
+}

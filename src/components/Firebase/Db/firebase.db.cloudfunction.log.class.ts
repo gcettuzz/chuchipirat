@@ -7,6 +7,7 @@ import {
   PrepareDataForDb,
   ValueObject,
 } from "./firebase.db.super.class";
+import {doc} from "firebase/firestore";
 
 export class FirebaseDbCloudFunctionLog extends FirebaseDbCloudFunctionSuper {
   firebase: Firebase;
@@ -21,13 +22,13 @@ export class FirebaseDbCloudFunctionLog extends FirebaseDbCloudFunctionSuper {
   // Dokument holen, das die Cloudfunction triggert
   // ===================================================================== */
   getDocument() {
-    return this.firebase.db.doc(`_cloudFunctions/log`);
+    return doc(this.firebase.firestore, this.getCollection().path, `log`);
   }
   /* =====================================================================
   // Trigger für CloudFunction
   // ===================================================================== */
   getCollection() {
-    return this.firebase.db.collection("_cloudFunctions");
+    return super.getCollection();
   }
   /* =====================================================================
   // Daten für DB-Strutkur vorbereiten

@@ -11,6 +11,7 @@ import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 import Product from "../Product/product.class";
 
 import {ERROR_PARAMETER_NOT_PASSED as TEXT_ERROR_PARAMETER_NOT_PASSED} from "../../constants/text";
+import {logEvent} from "firebase/analytics";
 
 // HINT💡:
 // wird dies erweitert, muss auch im Cloud-Function File index
@@ -149,7 +150,7 @@ export default class Material {
     });
 
     // Event auslösen
-    firebase.analytics.logEvent(FirebaseAnalyticEvent.materialCreated);
+    logEvent(firebase.analytics, FirebaseAnalyticEvent.materialCreated);
 
     // interner Feed-Eintrag
     Feed.createFeedEntry({

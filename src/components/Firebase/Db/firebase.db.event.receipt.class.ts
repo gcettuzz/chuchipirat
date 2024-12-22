@@ -11,6 +11,7 @@ import {
   STORAGE_OBJECT_PROPERTY,
   StorageObjectProperty,
 } from "./sessionStorageHandler.class";
+import {collection, collectionGroup, doc} from "firebase/firestore";
 
 export class FirebaseDbEventReceipt extends FirebaseDbSuper {
   firebase: Firebase;
@@ -24,21 +25,25 @@ export class FirebaseDbEventReceipt extends FirebaseDbSuper {
   /* =====================================================================
   // Collection holen
   // ===================================================================== */
-  getCollection() {
-    return this.firebase.db.collection("events/docs");
+  getCollection(uids: string[]) {
+    return collection(this.firebase.firestore, `events/${uids[0]}/docs`);
   }
   /* =====================================================================
   // Collection-Group holen
   // ===================================================================== */
   getCollectionGroup() {
     throw Error(ERROR_NOT_IMPLEMENTED_YET);
-    return this.firebase.db.collectionGroup("none");
+    return collectionGroup(this.firebase.firestore, `none`);
   }
   /* =====================================================================
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
-    return this.firebase.db.doc(`events/${uids[0]}/docs/receipt`);
+    return doc(
+      this.firebase.firestore,
+      this.getCollection(uids).path,
+      `receipt`
+    );
   }
   /* =====================================================================
   // Dokumente holen

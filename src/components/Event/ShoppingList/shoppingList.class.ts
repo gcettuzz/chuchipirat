@@ -27,6 +27,7 @@ import Stats, {StatsField} from "../../Shared/stats.class";
 import Feed, {FeedType} from "../../Shared/feed.class";
 import Role from "../../../constants/roles";
 import _ from "lodash";
+import {logEvent} from "firebase/analytics";
 
 export enum ItemType {
   none = 0,
@@ -513,7 +514,8 @@ export default class ShoppingList {
             value: 1,
           });
 
-          firebase.analytics.logEvent(
+          logEvent(
+            firebase.analytics,
             FirebaseAnalyticEvent.shoppingListGenerated
           );
         })
@@ -612,7 +614,7 @@ export default class ShoppingList {
         throw error;
       });
 
-    firebase.analytics.logEvent(FirebaseAnalyticEvent.shoppingListDeleted);
+    logEvent(firebase.analytics, FirebaseAnalyticEvent.shoppingListDeleted);
   };
   // ===================================================================== */
   /**
