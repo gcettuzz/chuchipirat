@@ -17,8 +17,8 @@ import Footer from "../Footer/footer";
 import LandingPage from "../Landing/landing";
 import AuthServiceHandler from "../AuthServiceHandler/authServiceHandler";
 
-import {MuiThemeProvider, useMediaQuery, useTheme} from "@material-ui/core";
-import {createTheme} from "@material-ui/core/styles";
+import {ThemeProvider, createMuiTheme} from "@material-ui/core/styles";
+
 import useStyles from "../../constants/styles";
 import NotFound from "../404/404";
 import FallbackLoading from "../Shared/fallbackLoading";
@@ -39,6 +39,7 @@ import * as Sentry from "@sentry/react";
 import {withAuthentication} from "../Session/authUserContext";
 import {SessionStorageHandler} from "../Firebase/Db/sessionStorageHandler.class";
 import {FEEDBACK as TEXT_FEEDBACK} from "../../constants/text";
+import {useMediaQuery} from "@material-ui/core";
 // import FeedbackFab from "../Navigation/feedbackFAB";
 
 const PasswordChange = lazy(() => import("../PasswordChange/passwordChange"));
@@ -83,12 +84,11 @@ const MailConsole = lazy(() => import("../Admin/mailConsole"));
 
 const App = () => {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-  const classes = useStyles();
   /* ------------------------------------------
   // Theme für App
   // ------------------------------------------ */
   const theme = React.useMemo(
-    () => createTheme({palette: CustomTheme.getTheme(prefersDarkMode)}),
+    () => createMuiTheme({palette: CustomTheme.getTheme(prefersDarkMode)}),
     [prefersDarkMode]
   );
 
@@ -147,10 +147,10 @@ const App = () => {
   }, []);
 
   return (
-    <MuiThemeProvider theme={theme}>
+    <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
-        <div className={classes.pageContainer}>
+        <div>
           <Navigation />
           <ScrollToTop />
           <MobileView>
@@ -178,7 +178,7 @@ const App = () => {
               component={GoBackFab}
             />
           </MobileView>
-          <div className={classes.content}>
+          <div>
             <Suspense fallback={<FallbackLoading />}>
               <Route
                 path={[
@@ -344,7 +344,7 @@ const App = () => {
               </Switch>
             </Suspense>
           </div>
-          <div className={classes.footer}>
+          <div>
             <Route
               path={[
                 ROUTES.LANDING,
@@ -369,7 +369,7 @@ const App = () => {
         </div>
       </Router>
       <CustomDialog />
-    </MuiThemeProvider>
+    </ThemeProvider>
   );
 };
 
