@@ -1,14 +1,14 @@
 import React from "react";
 import {compose} from "react-recompose";
 
-import CssBaseline from "@material-ui/core/CssBaseline";
-import Container from "@material-ui/core/Container";
-import Backdrop from "@material-ui/core/Backdrop";
-import CircularProgress from "@material-ui/core/CircularProgress";
+import CssBaseline from "@mui/material/CssBaseline";
+import Container from "@mui/material/Container";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import Typography from "@material-ui/core/Typography";
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
+import Typography from "@mui/material/Typography";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
 import {
   // FormControlLabel,
   // RadioGroup,
@@ -20,7 +20,7 @@ import {
   IconButton,
   useTheme,
   Box,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import {
   DEPARTMENT as TEXT_DEPARTMENT,
@@ -70,7 +70,7 @@ import {
   MoreVert as MoreVertIcon,
   Cached as CachedIcon,
   // OpenInNew as OpenInNewIcon,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
 import useStyles from "../../constants/styles";

@@ -57,10 +57,10 @@ import {
   FormLabel,
   FormGroup,
   Checkbox,
-} from "@material-ui/core";
+} from "@mui/material";
 import AlertMessage from "../Shared/AlertMessage";
 import ProductAutocomplete from "../Product/productAutocomplete";
-import {AutocompleteChangeReason} from "@material-ui/lab";
+import {AutocompleteChangeReason} from "@mui/lab";
 import Material, {
   ConvertProductToMaterialCallbackDocument,
   MaterialType,

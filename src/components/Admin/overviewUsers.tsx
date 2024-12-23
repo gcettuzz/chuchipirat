@@ -34,7 +34,7 @@ import {
   OpenInNew as OpenInNewIcon,
   Add as AddIcon,
   Remove as RemoveIcon,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 import PageTitle from "../Shared/pageTitle";
 
@@ -70,7 +70,7 @@ import {
   Switch,
   Typography,
   useTheme,
-} from "@material-ui/core";
+} from "@mui/material";
 import AlertMessage from "../Shared/AlertMessage";
 import SearchPanel from "../Shared/searchPanel";
 
@@ -88,7 +88,7 @@ import {
   GridValueFormatterParams,
   deDE,
 } from "@mui/x-data-grid";
-import {Alert, AlertTitle} from "@material-ui/lab";
+import {Alert, AlertTitle} from "@mui/lab";
 import Event from "../Event/Event/event.class";
 import isEqual from "lodash/isEqual";
 

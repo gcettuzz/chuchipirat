@@ -1,5 +1,5 @@
 import React from "react";
-import {useTheme} from "@material-ui/core/styles";
+import {useTheme} from "@mui/material/styles";
 import {compose} from "react-recompose";
 
 import {useHistory} from "react-router";
@@ -22,11 +22,10 @@ import {
   ListItemAvatar,
   Avatar,
   Link,
-} from "@material-ui/core";
+  Box,
+} from "@mui/material";
 
-import {Skeleton} from "@material-ui/lab";
-
-import useStyles from "../../constants/styles";
+import {Skeleton} from "@mui/lab";
 
 import PageTitle from "../Shared/pageTitle";
 import AlertMessage from "../Shared/AlertMessage";
@@ -73,6 +72,7 @@ import Utils from "../Shared/utils.class";
 import SystemMessage from "../Admin/systemMessage.class";
 import {AlertSystemMessage} from "../Admin/systemMessage";
 import {General} from "../../constants/firebaseMessages";
+import useCustomStyles from "../../constants/styles";
 /* ===================================================================
 // ============================ Dispatcher ===========================
 // =================================================================== */
@@ -235,7 +235,7 @@ const HomeBase: React.FC<
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
 
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {push} = useHistory();
 
   const navigationValuesContext = React.useContext(NavigationValuesContext);
@@ -497,7 +497,7 @@ const HomeBase: React.FC<
   return (
     <React.Fragment>
       <HomeHeader authUser={authUser} />
-      <Container className={classes.container} component="main" maxWidth="md">
+      <Container sx={classes.container} component="main" maxWidth="md">
         <Grid container spacing={2} justifyContent="center">
           {state.error && (
             <Grid item key={"error"} xs={12}>
@@ -609,7 +609,7 @@ const HomeNextEvents = ({
   onCardClick,
   onCreateNewEvent,
 }: HomeNextEventsProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   return (
     <React.Fragment>
       <Grid container spacing={2} justifyContent="center">
@@ -635,9 +635,9 @@ const HomeNextEvents = ({
           </Grid>
         ))}
         <Grid item xs={12} sm={6} md={4} lg={3}>
-          <Card className={classes.card} key={"eventCardNew"}>
+          <Card sx={classes.card} key={"eventCardNew"}>
             <CardMedia
-              className={classes.cardMedia}
+              sx={classes.cardMedia}
               image={
                 ImageRepository.getEnviromentRelatedPicture()
                   .CARD_PLACEHOLDER_MEDIA
@@ -672,7 +672,7 @@ const HomePassedEvents = ({
   isLoadingPassedEvents,
   onShowPassedEvents,
 }: HomePassedEventsProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const [showLoadPassedEvents, setShowLoadPassedEvents] = React.useState(true);
   /* ------------------------------------------
@@ -698,17 +698,17 @@ const HomePassedEvents = ({
     <React.Fragment>
       <Grid container spacing={2} justifyContent="center">
         {showLoadPassedEvents ? (
-          <Grid item xs={12} className={classes.centerCenter}>
+          <Grid item xs={12} sx={classes.centerCenter}>
             <Button
               color="primary"
-              className={classes.button}
+              sx={classes.button}
               onClick={loadPassedEvents}
             >
               {TEXT_EVENT_SHOW_PAST_EVENTS}{" "}
             </Button>
           </Grid>
         ) : (
-          <Grid item xs={12} className={classes.centerCenter}>
+          <Grid item xs={12} sx={classes.centerCenter}>
             <Typography
               variant="h5"
               align="center"
@@ -775,7 +775,7 @@ const HomeNewestRecipes = ({
   isLoadingRecipes,
   onCardClick,
 }: HomeNewestRecipesProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const [hover, setHover] = React.useState({recipeUid: "", hover: false});
   /* ------------------------------------------
   // Hover-Effekt Karte
@@ -808,7 +808,7 @@ const HomeNewestRecipes = ({
       {recipes.map((recipe) => (
         <Grid item xs={12} key={"recipeGrid_" + recipe.uid}>
           <Card
-            className={classes.card}
+            sx={classes.card}
             onMouseOver={() => handleHover(recipe.uid)}
             onMouseOut={handleMouseOut}
             key={"recipeCard_" + recipe.uid}
@@ -818,10 +818,10 @@ const HomeNewestRecipes = ({
               onClick={onCardClick}
               style={{height: "100%"}}
             >
-              <div className={classes.card}>
+              <Box component={"div"} sx={classes.card}>
                 <div style={{overflow: "hidden"}}>
                   <CardMedia
-                    className={classes.cardMedia}
+                    sx={classes.cardMedia}
                     image={
                       recipe.sourceObject.pictureSrc
                         ? recipe.sourceObject.pictureSrc
@@ -839,7 +839,7 @@ const HomeNewestRecipes = ({
                   />
                 </div>
                 <CardHeader title={recipe.sourceObject.name} />
-              </div>
+              </Box>
             </CardActionArea>
           </Card>
         </Grid>
@@ -856,7 +856,7 @@ interface HomeFeedProps {
   onListEntryClick: (event) => void;
 }
 const HomeFeed = ({feed, isLoadingFeed, onListEntryClick}: HomeFeedProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   return (
     <Grid container spacing={2} justifyContent="center">
       <Grid item xs={12}>
@@ -870,7 +870,7 @@ const HomeFeed = ({feed, isLoadingFeed, onListEntryClick}: HomeFeedProps) => {
         </Typography>
       </Grid>
       <Grid item xs={12}>
-        <Card className={classes.card}>
+        <Card sx={classes.card}>
           <List>
             {isLoadingFeed &&
               [...Array(DEFAULT_VALUES_FEEDS_DISPLAY).keys()].map(
@@ -940,7 +940,7 @@ interface HomeStatsProps {
   isLoadingStats: boolean;
 }
 const HomeStats = ({stats, isLoadingStats}: HomeStatsProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   return (
     <Grid container spacing={2} justifyContent="center">
       <Grid item xs={12}>
@@ -954,7 +954,7 @@ const HomeStats = ({stats, isLoadingStats}: HomeStatsProps) => {
         </Typography>
       </Grid>
       <Grid item xs={12}>
-        <Card className={classes.card}>
+        <Card sx={classes.card}>
           <List>
             {isLoadingStats
               ? stats.map((emptyElement) => (

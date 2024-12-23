@@ -1,7 +1,7 @@
 import React from "react";
 import {compose} from "react-recompose";
 
-import CssBaseline from "@material-ui/core/CssBaseline";
+import CssBaseline from "@mui/material/CssBaseline";
 
 import {
   Container,
@@ -16,9 +16,9 @@ import {
   IconButton,
   Tabs,
   Tab,
-} from "@material-ui/core";
+} from "@mui/material";
 
-import DeleteIcon from "@material-ui/icons/Delete";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 import {
   SAVE_SUCCESS as TEXT_SAVE_SUCCESS,

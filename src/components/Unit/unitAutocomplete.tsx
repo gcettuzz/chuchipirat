@@ -1,16 +1,15 @@
 import React from "react";
-import {useTheme} from "@material-ui/core/styles";
+import {useTheme} from "@mui/material/styles";
 
-import useMediaQuery from "@material-ui/core/useMediaQuery";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
-import TextField from "@material-ui/core/TextField";
-import Autocomplete, {
-  AutocompleteChangeReason,
-} from "@material-ui/lab/Autocomplete";
+import TextField from "@mui/material/TextField";
+import Autocomplete from "@mui/lab/Autocomplete";
 
 import Unit, {UnitDimension} from "./unit.class";
 
 import {FIELD_UNIT, ABBREVIATION_UNIT} from "../../constants/text";
+import {AutocompleteChangeReason} from "@mui/material";
 
 interface UnitAutocompleteProps {
   componentKey?: string;

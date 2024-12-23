@@ -1,15 +1,15 @@
 import React from "react";
 import {compose} from "react-recompose";
 
-import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
+import Container from "@mui/material/Container";
+import Grid from "@mui/material/Grid";
 
-import Typography from "@material-ui/core/Typography";
-import Link from "@material-ui/core/Link";
-import LinearProgress from "@material-ui/core/LinearProgress";
+import Typography from "@mui/material/Typography";
+import Link from "@mui/material/Link";
+import LinearProgress from "@mui/material/LinearProgress";
 
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
 
 import {
   JOBS as TEXT_JOBS,

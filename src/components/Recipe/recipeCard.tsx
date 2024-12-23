@@ -12,10 +12,10 @@ import {
   Grid,
   CardActionArea,
   Fab,
-} from "@material-ui/core";
-import {Info as InfoIcon, Add as AddIcon} from "@material-ui/icons";
+} from "@mui/material";
+import {Info as InfoIcon, Add as AddIcon} from "@mui/icons-material";
 
-import {Skeleton, Rating} from "@material-ui/lab";
+import {Skeleton, Rating} from "@mui/lab";
 import RecipeShort from "./recipeShort.class";
 import {ImageRepository} from "../../constants/imageRepository";
 import {OnRecipeCardClickProps} from "./recipes";

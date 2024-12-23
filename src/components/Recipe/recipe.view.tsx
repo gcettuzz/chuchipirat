@@ -41,17 +41,16 @@ import {
   CardContent,
   List,
   ListItemText,
-} from "@material-ui/core";
-
-import Rating from "@material-ui/lab/Rating";
+  Rating,
+} from "@mui/material";
 
 import {FormListItem} from "../Shared/formListItem";
 import ButtonRow, {CustomButton} from "../Shared/buttonRow";
 
-import AddIcon from "@material-ui/icons/Add";
-import ExpandLess from "@material-ui/icons/ExpandLess";
-import ExpandMore from "@material-ui/icons/ExpandMore";
-import EditIcon from "@material-ui/icons/Edit";
+import AddIcon from "@mui/icons-material/Add";
+import ExpandLess from "@mui/icons-material/ExpandLess";
+import ExpandMore from "@mui/icons-material/ExpandMore";
+import EditIcon from "@mui/icons-material/Edit";
 
 import {
   VARIANT_NOTE as TEXT_VARIANT_NOTE,

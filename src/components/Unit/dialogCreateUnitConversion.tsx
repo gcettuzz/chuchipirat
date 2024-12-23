@@ -1,18 +1,18 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
+import Grid from "@mui/material/Grid";
 
-import Dialog from "@material-ui/core/Dialog";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogActions from "@material-ui/core/DialogActions";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
 
-import Autocomplete from "@material-ui/lab/Autocomplete";
+import Autocomplete from "@mui/lab/Autocomplete";
 
-import FormControl from "@material-ui/core/FormControl";
-import Button from "@material-ui/core/Button";
-import TextField from "@material-ui/core/TextField";
+import FormControl from "@mui/material/FormControl";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
 
-import {Alert, AlertTitle} from "@material-ui/lab";
+import {Alert, AlertTitle} from "@mui/lab";
 
 import useStyles from "../../constants/styles";
 import {

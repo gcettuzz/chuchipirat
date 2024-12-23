@@ -1,7 +1,7 @@
 import React from "react";
 import {compose} from "react-recompose";
 
-import CssBaseline from "@material-ui/core/CssBaseline";
+import CssBaseline from "@mui/material/CssBaseline";
 
 import {
   Container,
@@ -12,7 +12,7 @@ import {
   CardContent,
   CardMedia,
   Link,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import PageTitle from "../Shared/pageTitle";
 import useStyles from "../../constants/styles";

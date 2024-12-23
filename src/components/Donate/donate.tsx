@@ -1,13 +1,7 @@
 import React from "react";
 import {compose} from "react-recompose";
 
-import {
-  Container,
-  Grid,
-  Card,
-  CardContent,
-  Typography,
-} from "@material-ui/core";
+import {Container, Grid, Card, CardContent, Typography} from "@mui/material";
 
 import {
   DONATE as TEXT_DONATE,

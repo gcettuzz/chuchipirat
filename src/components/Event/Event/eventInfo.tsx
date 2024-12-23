@@ -1,11 +1,6 @@
 import React from "react";
 import clsx from "clsx";
-import {
-  makeStyles,
-  Theme,
-  createStyles,
-  useTheme,
-} from "@material-ui/core/styles";
+import {makeStyles, Theme, createStyles, useTheme} from "@mui/material/styles";
 import {pdf} from "@react-pdf/renderer";
 import fileSaver from "file-saver";
 
@@ -28,13 +23,13 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   useMediaQuery,
-} from "@material-ui/core";
-import {Alert} from "@material-ui/lab";
+} from "@mui/material";
+import {Alert} from "@mui/lab";
 import {
   Delete as DeleteIcon,
   Add as AddIcon,
   ExpandMore as ExpandMoreIcon,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 import {
   KeyboardDatePicker,

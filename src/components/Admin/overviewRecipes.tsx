@@ -14,15 +14,15 @@ import {
   Radio,
   RadioGroup,
   FormControlLabel,
-} from "@material-ui/core";
+} from "@mui/material";
 
-import {IconButton, Typography, useTheme} from "@material-ui/core";
+import {IconButton, Typography, useTheme} from "@mui/material";
 
 import {
   OpenInNew as OpenInNewIcon,
   Lock as LockIcon,
   LockOpen as LockOpenIcon,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 import PageTitle from "../Shared/pageTitle";
 // import EnhancedTable, {

@@ -1,6 +1,6 @@
 import React from "react";
 
-import {Container, Grid, Card, Typography, CardMedia} from "@material-ui/core";
+import {Container, Grid, Card, Typography, CardMedia} from "@mui/material";
 
 import {
   SIGN_IN as ROUTE_SIGN_IN,

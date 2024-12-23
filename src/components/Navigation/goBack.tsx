@@ -1,9 +1,9 @@
 import React from "react";
 
-import Fab from "@material-ui/core/Fab";
+import Fab from "@mui/material/Fab";
 import useStyles from "../../constants/styles";
 
-import ArrowBackIosIcon from "@material-ui/icons/ArrowBackIos";
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import {useHistory} from "react-router";
 
 // ===================================================================

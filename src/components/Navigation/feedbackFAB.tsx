@@ -1,6 +1,6 @@
 import React from "react";
-import Fab from "@material-ui/core/Fab";
-import FeedbackIcon from "@material-ui/icons/Feedback";
+import Fab from "@mui/material/Fab";
+import FeedbackIcon from "@mui/icons-material/Feedback";
 import * as Sentry from "@sentry/react";
 import useStyles from "../../constants/styles";
 

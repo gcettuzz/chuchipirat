@@ -3,8 +3,8 @@ import {compose} from "react-recompose";
 
 import {useHistory} from "react-router";
 
-import {Alert, AlertTitle} from "@material-ui/lab";
-import Container from "@material-ui/core/Container";
+import {Alert, AlertTitle} from "@mui/lab";
+import Container from "@mui/material/Container";
 import {withFirebase} from "../Firebase/firebaseContext";
 import FirebaseMessageHandler from "../Firebase/firebaseMessageHandler.class";
 
@@ -18,7 +18,7 @@ import {
 } from "../../constants/text";
 import useStyles from "../../constants/styles";
 import PageTitle from "../Shared/pageTitle";
-import {Typography} from "@material-ui/core";
+import {Typography} from "@mui/material";
 import qs from "qs";
 import {CustomRouterProps} from "../Shared/global.interface";
 import User from "../User/user.class";

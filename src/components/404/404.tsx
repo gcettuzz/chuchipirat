@@ -3,7 +3,7 @@ import {
   PAGE_TITLE_404 as TEXT_PAGE_TITLE_404,
   PAGE_SUBTITLE_404 as TEXT_PAGE_SUBTITLE_404,
 } from "../../constants/text";
-import Typography from "@material-ui/core/Typography";
+import Typography from "@mui/material/Typography";
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */

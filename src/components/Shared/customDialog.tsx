@@ -10,9 +10,9 @@ import {
   Button,
   Typography,
   TextField,
-} from "@material-ui/core";
+} from "@mui/material";
 
-import WarningIcon from "@material-ui/icons/Warning";
+import WarningIcon from "@mui/icons-material/Warning";
 
 import {
   // CANCEL as TEXT_CANCEL,

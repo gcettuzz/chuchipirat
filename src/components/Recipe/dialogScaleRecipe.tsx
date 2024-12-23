@@ -11,9 +11,9 @@ import {
   Typography,
   Grid,
   useTheme,
-} from "@material-ui/core";
+} from "@mui/material";
 
-import {Alert, AlertTitle} from "@material-ui/lab";
+import {Alert, AlertTitle} from "@mui/lab";
 
 import {
   PORTIONS_TO_SCALE as TEXT_PORTIONS_TO_SCALE,

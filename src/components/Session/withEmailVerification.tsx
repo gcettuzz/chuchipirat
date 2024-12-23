@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 
-import {Container, Grid} from "@material-ui/core";
+import {Container, Grid} from "@mui/material";
 
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
@@ -13,7 +13,7 @@ import {
 import LocalStorageKey from "../../constants/localStorage";
 import {withFirebase} from "../Firebase/firebaseContext";
 import {AuthUserContext} from "./authUserContext";
-import {Alert} from "@material-ui/lab";
+import {Alert} from "@mui/lab";
 import Firebase from "../Firebase/firebase.class";
 import useStyles from "../../constants/styles";
 

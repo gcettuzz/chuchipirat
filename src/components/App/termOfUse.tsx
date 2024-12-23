@@ -5,7 +5,7 @@ import {
   Card,
   CardHeader,
   CardContent,
-} from "@material-ui/core";
+} from "@mui/material";
 import PageTitle from "../Shared/pageTitle";
 import {
   TERM_OF_USE as TEXT_TERM_OF_USE,

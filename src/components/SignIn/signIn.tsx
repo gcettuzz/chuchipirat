@@ -1,19 +1,19 @@
 import React from "react";
 import {compose} from "react-recompose";
 
-import Button from "@material-ui/core/Button";
-import IconButton from "@material-ui/core/IconButton";
-import TextField from "@material-ui/core/TextField";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import TextField from "@mui/material/TextField";
 
-import Typography from "@material-ui/core/Typography";
-import Container from "@material-ui/core/Container";
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-import CardMedia from "@material-ui/core/CardMedia";
+import Typography from "@mui/material/Typography";
+import Container from "@mui/material/Container";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardMedia from "@mui/material/CardMedia";
 import useStyles from "../../constants/styles";
-import Visibility from "@material-ui/icons/Visibility";
-import VisibilityOff from "@material-ui/icons/VisibilityOff";
-import InputAdornment from "@material-ui/core/InputAdornment";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import InputAdornment from "@mui/material/InputAdornment";
 
 import PageTitle from "../Shared/pageTitle";
 import {SignUpLink} from "../SignUp/signUp";
@@ -39,7 +39,7 @@ import User from "../User/user.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import {useHistory} from "react-router";
 import Utils from "../Shared/utils.class";
-import {Backdrop, CircularProgress, Grid} from "@material-ui/core";
+import {Backdrop, CircularProgress, Grid} from "@mui/material";
 import {CustomRouterProps} from "../Shared/global.interface";
 import GlobalSettings from "../Admin/globalSettings.class";
 

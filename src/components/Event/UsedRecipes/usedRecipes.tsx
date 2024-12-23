@@ -13,7 +13,7 @@ import {
   useTheme,
   Link,
   Box,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,

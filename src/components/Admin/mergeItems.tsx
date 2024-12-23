@@ -3,19 +3,19 @@ import {compose} from "react-recompose";
 
 import useStyles from "../../constants/styles";
 
-import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-import Typography from "@material-ui/core/Typography";
-import LinearProgress from "@material-ui/core/LinearProgress";
-import Backdrop from "@material-ui/core/Backdrop";
-import CircularProgress from "@material-ui/core/CircularProgress";
+import Container from "@mui/material/Container";
+import Grid from "@mui/material/Grid";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Typography from "@mui/material/Typography";
+import LinearProgress from "@mui/material/LinearProgress";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 import {AutocompleteChangeReason} from "@material-ui/lab/Autocomplete";
-import Button from "@material-ui/core/Button";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListSubheader from "@material-ui/core/ListSubheader";
+import Button from "@mui/material/Button";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListSubheader from "@mui/material/ListSubheader";
 
 import PageTitle from "../Shared/pageTitle";
 import AlertMessage from "../Shared/AlertMessage";
@@ -52,7 +52,7 @@ import Product, {MergeProductsCallbackDocument} from "../Product/product.class";
 import {withFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import ProductAutocomplete from "../Product/productAutocomplete";
-import {ListItemText, Tab, Tabs, useTheme} from "@material-ui/core";
+import {ListItemText, Tab, Tabs, useTheme} from "@mui/material";
 import {
   STORAGE_OBJECT_PROPERTY,
   SessionStorageHandler,

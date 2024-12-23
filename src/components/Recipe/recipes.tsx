@@ -5,10 +5,10 @@ import {compose} from "react-recompose";
 
 import {useHistory} from "react-router";
 
-import CssBaseline from "@material-ui/core/CssBaseline";
+import CssBaseline from "@mui/material/CssBaseline";
 
-import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
+import Container from "@mui/material/Container";
+import Grid from "@mui/material/Grid";
 import {
   Button,
   Collapse,
@@ -25,11 +25,11 @@ import {
   Typography,
   Backdrop,
   CircularProgress,
-} from "@material-ui/core";
+} from "@mui/material";
 
-import {ToggleButton, ToggleButtonGroup} from "@material-ui/lab";
+import {ToggleButton, ToggleButtonGroup} from "@mui/lab";
 
-import AddIcon from "@material-ui/icons/Add";
+import AddIcon from "@mui/icons-material/Add";
 
 import {RECIPE as ROUTE_RECIPE} from "../../constants/routes";
 import Action from "../../constants/actions";
@@ -74,7 +74,7 @@ import RecipeCard, {RecipeCardLoading} from "./recipeCard";
 import AlertMessage from "../Shared/AlertMessage";
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
 
-import {Lock as LockIcon, Category as CategoryIcon} from "@material-ui/icons";
+import {Lock as LockIcon, Category as CategoryIcon} from "@mui/icons-material";
 
 import {withFirebase} from "../Firebase/firebaseContext";
 import {Allergen, Diet} from "../Product/product.class";

@@ -11,9 +11,9 @@ import {
   CardContent,
   Chip,
   Typography,
-} from "@material-ui/core";
+} from "@mui/material";
 
-import {ToggleButton, ToggleButtonGroup} from "@material-ui/lab";
+import {ToggleButton, ToggleButtonGroup} from "@mui/lab";
 
 import {
   REQUESTS as TEXT_REQUESTS,

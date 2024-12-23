@@ -5,8 +5,8 @@ import {
   PAGE_TEXT_2_500 as TEXT_PAGE_TEXT_2_500,
   PAGE_TEXT_3_500 as TEXT_PAGE_TEXT_3_500,
 } from "../../constants/text";
-import Typography from "@material-ui/core/Typography";
-import {Container, Grid} from "@material-ui/core";
+import Typography from "@mui/material/Typography";
+import {Container, Grid} from "@mui/material";
 import {ImageRepository} from "../../constants/imageRepository";
 /* ===================================================================
 // =============================== Page ==============================

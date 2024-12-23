@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import {
   MENUE_SELECTION as TEXT_MENUE_SELECTION,
@@ -44,7 +44,7 @@ import {
   ErrorOutline as ErrorOutlineIcon,
   CallSplit as CallSplitIcon,
   Info as InfoIcon,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 import {decodeSelectedMeals} from "../Menuplan/dialogSelectMenues";
 import ShoppingListCollection, {

@@ -20,14 +20,14 @@ import {
   MenuItem,
   ListItemIcon,
   useTheme,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import {
   Add as AddIcon,
   MoreVert as MoreVertIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,

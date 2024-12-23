@@ -3,7 +3,7 @@ import {useHistory} from "react-router";
 import {compose} from "react-recompose";
 
 import Action from "../../constants/actions";
-import {Container, Divider} from "@material-ui/core";
+import {Container, Divider} from "@mui/material";
 import Recipe, {RecipeType} from "./recipe.class";
 
 import RecipeView from "./recipe.view";

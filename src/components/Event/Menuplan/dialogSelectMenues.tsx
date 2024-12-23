@@ -13,14 +13,14 @@ import {
   FormControlLabel,
   Checkbox,
   CardActions,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import Menuplan, {Menue, Meal, MealType} from "./menuplan.class";
 import Utils from "../../Shared/utils.class";
 import useStyles from "../../../constants/styles";
 import {FormValidationFieldError} from "../../Shared/fieldValidation.error.class";
 
-import {DoneAll as DoneAllIcon} from "@material-ui/icons";
+import {DoneAll as DoneAllIcon} from "@mui/icons-material";
 
 import {
   NO_MENUES_MARKED as TEXT_NO_MENUES_MARKED,

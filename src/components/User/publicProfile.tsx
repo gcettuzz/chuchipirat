@@ -2,21 +2,21 @@ import React from "react";
 import {useHistory} from "react-router";
 import {compose} from "react-recompose";
 
-import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
-import Backdrop from "@material-ui/core/Backdrop";
-import CircularProgress from "@material-ui/core/CircularProgress";
+import Container from "@mui/material/Container";
+import Grid from "@mui/material/Grid";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-import CardMedia from "@material-ui/core/CardMedia";
-import List from "@material-ui/core/List";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardMedia from "@mui/material/CardMedia";
+import List from "@mui/material/List";
 
-import TodayIcon from "@material-ui/icons/Today";
-import LocalActivityIcon from "@material-ui/icons/LocalActivity";
-import HowToRegIcon from "@material-ui/icons/HowToReg";
-import FastfoodIcon from "@material-ui/icons/Fastfood";
-import BugReportIcon from "@material-ui/icons/BugReport";
+import TodayIcon from "@mui/icons-material/Today";
+import LocalActivityIcon from "@mui/icons-material/LocalActivity";
+import HowToRegIcon from "@mui/icons-material/HowToReg";
+import FastfoodIcon from "@mui/icons-material/Fastfood";
+import BugReportIcon from "@mui/icons-material/BugReport";
 
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
@@ -40,7 +40,7 @@ import * as ROUTES from "../../constants/routes";
 import {ImageRepository} from "../../constants/imageRepository";
 
 import {withFirebase} from "../Firebase/firebaseContext";
-import {Typography} from "@material-ui/core";
+import {Typography} from "@mui/material";
 import UserPublicProfile from "./user.public.profile.class";
 import {FormListItem} from "../Shared/formListItem";
 import withEmailVerification from "../Session/withEmailVerification";

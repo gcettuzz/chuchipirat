@@ -6,15 +6,15 @@ import {compose} from "react-recompose";
 
 // import initialData, {InitialData, ColumnProps, TaskProps} from "./initial-data";
 
-import Typography from "@material-ui/core/Typography";
-// import TextField from "@material-ui/core/TextField";
-// import SearchIcon from "@material-ui/icons/Search";
-// import ClearIcon from "@material-ui/icons/Clear";
-// import IconButton from "@material-ui/core/IconButton";
-// import InputAdornment from "@material-ui/core/InputAdornment";
-// import OutlinedInput from "@material-ui/core/OutlinedInput";
-// import InputLabel from "@material-ui/core/InputLabel";
-// import FormControl from "@material-ui/core/FormControl";
+import Typography from "@mui/material/Typography";
+// import TextField from "@mui/material/TextField";
+// import SearchIcon from "@mui/icons-material/Search";
+// import ClearIcon from "@mui/icons-material/Clear";
+// import IconButton from "@mui/material/IconButton";
+// import InputAdornment from "@mui/material/InputAdornment";
+// import OutlinedInput from "@mui/material/OutlinedInput";
+// import InputLabel from "@mui/material/InputLabel";
+// import FormControl from "@mui/material/FormControl";
 
 // import {
 //   DialogType,
@@ -34,11 +34,11 @@ import {
   // ListItemText,
   // Divider,
   Grid,
-} from "@material-ui/core";
+} from "@mui/material";
 
-import Button from "@material-ui/core/Button";
-// import Input from "@material-ui/core/Input";
-// import Link from "@material-ui/core/Link";
+import Button from "@mui/material/Button";
+// import Input from "@mui/material/Input";
+// import Link from "@mui/material/Link";
 import Role from "../../constants/roles";
 
 import {withFirebase} from "../Firebase/firebaseContext";
@@ -48,7 +48,6 @@ import withEmailVerification from "../Session/withEmailVerification";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import {CustomRouterProps} from "../Shared/global.interface";
 import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {Request} from "../Request/request.class";
 import Feed from "../Shared/feed.class";
 // import {
 //   Ingredient,

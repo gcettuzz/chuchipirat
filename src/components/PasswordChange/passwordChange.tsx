@@ -3,19 +3,19 @@ import {compose} from "react-recompose";
 
 import {Link} from "react-router-dom";
 
-import Container from "@material-ui/core/Container";
-import Button from "@material-ui/core/Button";
-import IconButton from "@material-ui/core/IconButton";
-import TextField from "@material-ui/core/TextField";
-import {Alert, AlertTitle} from "@material-ui/lab";
-import Typography from "@material-ui/core/Typography";
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-import CardMedia from "@material-ui/core/CardMedia";
-import InputAdornment from "@material-ui/core/InputAdornment";
+import Container from "@mui/material/Container";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import TextField from "@mui/material/TextField";
+import {Alert, AlertTitle} from "@mui/lab";
+import Typography from "@mui/material/Typography";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardMedia from "@mui/material/CardMedia";
+import InputAdornment from "@mui/material/InputAdornment";
 
-import Visibility from "@material-ui/icons/Visibility";
-import VisibilityOff from "@material-ui/icons/VisibilityOff";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 import PasswordStrengthMeter from "../Shared/passwordStrengthMeter";
 import PageTitle from "../Shared/pageTitle";

@@ -1,19 +1,19 @@
 import React from "react";
 import {compose} from "react-recompose";
 
-import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
+import Container from "@mui/material/Container";
+import Grid from "@mui/material/Grid";
 
-import Backdrop from "@material-ui/core/Backdrop";
-import CircularProgress from "@material-ui/core/CircularProgress";
-import Switch from "@material-ui/core/Switch";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
+import Switch from "@mui/material/Switch";
 
-import List from "@material-ui/core/List";
-import ListItemText from "@material-ui/core/ListItemText";
-import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
+import List from "@mui/material/List";
+import ListItemText from "@mui/material/ListItemText";
+import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction";
 
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
 
 import {
   SAVE_SUCCESS as TEXT_SAVE_SUCCESS,
@@ -51,7 +51,7 @@ import withEmailVerification from "../Session/withEmailVerification";
 import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
 import {withFirebase} from "../Firebase/firebaseContext";
 import {CustomRouterProps} from "../Shared/global.interface";
-import {Button, ListItem, useTheme} from "@material-ui/core";
+import {Button, ListItem, useTheme} from "@mui/material";
 import {DialogType, useCustomDialog} from "../Shared/customDialogContext";
 
 /* ===================================================================

@@ -3,8 +3,8 @@ import {compose} from "react-recompose";
 
 import {useHistory, withRouter} from "react-router";
 
-import {Container, Link} from "@material-ui/core";
-import {Alert, AlertTitle} from "@material-ui/lab";
+import {Container, Link} from "@mui/material";
+import {Alert, AlertTitle} from "@mui/lab";
 
 import PageTitle from "../Shared/pageTitle";
 

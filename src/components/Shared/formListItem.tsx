@@ -1,14 +1,14 @@
 import React from "react";
 import useStyles from "../../constants/styles";
 
-import ListItem from "@material-ui/core/ListItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import ListItemText from "@material-ui/core/ListItemText";
-import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
+import ListItem from "@mui/material/ListItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction";
 
-import Divider from "@material-ui/core/Divider";
+import Divider from "@mui/material/Divider";
 
-import TextField from "@material-ui/core/TextField";
+import TextField from "@mui/material/TextField";
 
 interface FormListItemProps {
   value: string | number | Date | JSX.Element | JSX.Element[];

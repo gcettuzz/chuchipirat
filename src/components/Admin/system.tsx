@@ -15,7 +15,7 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import {
   Forward as ForwardIcon,
@@ -35,7 +35,7 @@ import {
   RssFeed as RssFeedIcon,
   Build as BuildIcon,
   Feedback as FeedbackIcon,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 import {
   ADMIN as TEXT_ADMIN,

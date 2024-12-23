@@ -17,7 +17,7 @@ import {
   List,
   ListItem,
   ListItemText,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import {
   TRACE as TEXT_TRACE,
@@ -55,7 +55,7 @@ import ItemAutocomplete, {
 } from "../Event/ShoppingList/itemAutocomplete";
 import WhereUsed, {TraceObject} from "./whereUsed.class";
 import Recipe from "../Recipe/recipe.class";
-import {AutocompleteChangeReason, Skeleton} from "@material-ui/lab";
+import {AutocompleteChangeReason, Skeleton} from "@mui/lab";
 import {ItemType} from "../Event/ShoppingList/shoppingList.class";
 
 /* ===================================================================

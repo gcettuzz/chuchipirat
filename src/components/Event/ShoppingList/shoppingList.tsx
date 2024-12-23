@@ -23,7 +23,7 @@ import {
   DialogContent,
   TextField,
   FormControl,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
@@ -57,7 +57,7 @@ import {
   USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE as TEXT_USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE,
   ERROR_NO_PRODUCTS_FOUND as TEXT_ERROR_NO_PRODUCTS_FOUND,
 } from "../../../constants/text";
-import {MoreVert as MoreVertIcon} from "@material-ui/icons";
+import {MoreVert as MoreVertIcon} from "@mui/icons-material";
 
 import useStyles from "../../../constants/styles";
 

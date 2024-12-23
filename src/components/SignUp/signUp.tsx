@@ -2,7 +2,7 @@ import React from "react";
 import {useHistory, withRouter} from "react-router";
 import {compose} from "react-recompose";
 
-import CssBaseline from "@material-ui/core/CssBaseline";
+import CssBaseline from "@mui/material/CssBaseline";
 
 import {
   Button,
@@ -20,12 +20,12 @@ import {
   DialogContent,
   DialogActions,
   Grid,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 import {ForgotPasswordLink} from "../AuthServiceHandler/passwordReset";
 

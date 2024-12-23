@@ -1,6 +1,6 @@
-import {PaletteColorOptions} from "@material-ui/core";
+import {PaletteColorOptions} from "@mui/material";
 import Utils, {Enviroment} from "../Shared/utils.class";
-import red from "@material-ui/core/colors/red";
+import red from "@mui/material/colors/red";
 
 interface CustomColorPalette {
   type: string;

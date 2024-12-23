@@ -34,9 +34,9 @@ import {
   createStyles,
   Collapse,
   CardMedia,
-} from "@material-ui/core";
+} from "@mui/material";
 
-import {ExpandMore as ExpandMoreIcon} from "@material-ui/icons";
+import {ExpandMore as ExpandMoreIcon} from "@mui/icons-material";
 
 import MailConsole, {Mail, RecipientType} from "./mailConsole.class";
 

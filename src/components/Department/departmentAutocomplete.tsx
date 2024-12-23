@@ -1,8 +1,8 @@
 import React from "react";
-import TextField from "@material-ui/core/TextField";
-import Autocomplete, {
-  AutocompleteChangeReason,
-} from "@material-ui/lab/Autocomplete";
+import TextField from "@mui/material/TextField";
+
+import Autocomplete from "@mui/lab/Autocomplete";
+import {AutocompleteChangeReason} from "@mui/material";
 
 import {ITEM_CANT_BE_CHANGED, DEPARTMENT} from "../../constants/text";
 import Department from "./department.class";

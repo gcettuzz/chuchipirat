@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardContent,
   useMediaQuery,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import {
   CREATE_YOUR_EVENT as TEXT_CREATE_YOUR_EVENT,

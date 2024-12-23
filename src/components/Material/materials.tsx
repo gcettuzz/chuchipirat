@@ -1,17 +1,17 @@
 import React from "react";
 import {compose} from "react-recompose";
 
-import CssBaseline from "@material-ui/core/CssBaseline";
-import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
-import Backdrop from "@material-ui/core/Backdrop";
-import CircularProgress from "@material-ui/core/CircularProgress";
+import CssBaseline from "@mui/material/CssBaseline";
+import Container from "@mui/material/Container";
+import Grid from "@mui/material/Grid";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import Typography from "@material-ui/core/Typography";
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
+import Typography from "@mui/material/Typography";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
 
-import {FormControlLabel, RadioGroup, Radio, Checkbox} from "@material-ui/core";
+import {FormControlLabel, RadioGroup, Radio, Checkbox} from "@mui/material";
 
 import * as TEXT from "../../constants/text";
 import Roles, {Role} from "../../constants/roles";
@@ -25,7 +25,7 @@ import EnhancedTable, {
 import DialogMaterial, {MaterialDialog} from "./dialogMaterial";
 import AlertMessage from "../Shared/AlertMessage";
 
-import EditIcon from "@material-ui/icons/Edit";
+import EditIcon from "@mui/icons-material/Edit";
 
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
 import useStyles from "../../constants/styles";

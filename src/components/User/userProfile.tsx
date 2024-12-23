@@ -15,7 +15,7 @@ import {
   Fab,
   LinearProgress,
   List,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import {
   LocalActivity as LocalActivityIcon,
@@ -23,7 +23,7 @@ import {
   AssignmentInd as AssignmentIndIcon,
   PhotoCamera as PhotoCameraIcon,
   Delete as DeleteIcon,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 import {PASSWORD_CHANGE as ROUTE_PASSWORD_CHANGE} from "../../constants/routes";
 import {

@@ -1,50 +1,48 @@
 /* eslint-disable react/prop-types */
 import React from "react";
 import {useLocation} from "react-router-dom";
-import {useMediaQuery} from "@material-ui/core";
+import {useMediaQuery} from "@mui/material";
 import {useHistory} from "react-router";
 import {compose} from "react-recompose";
 import {withRouter} from "react-router-dom";
 
-import AppBar from "@material-ui/core/AppBar";
-import Toolbar from "@material-ui/core/Toolbar";
-import Typography from "@material-ui/core/Typography";
+import AppBar from "@mui/material/AppBar";
+import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
 
-import CssBaseline from "@material-ui/core/CssBaseline";
-// import useScrollTrigger from "@material-ui/core/useScrollTrigger";
+import CssBaseline from "@mui/material/CssBaseline";
+// import useScrollTrigger from "@mui/material/useScrollTrigger";
 
-// import Fab from "@material-ui/core/Fab";
-// import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
-// import Zoom from "@material-ui/core/Zoom";
-import IconButton from "@material-ui/core/IconButton";
-import MenuIcon from "@material-ui/icons/Menu";
-import AccountCircle from "@material-ui/icons/AccountCircle";
-import MenuItem from "@material-ui/core/MenuItem";
-import Menu from "@material-ui/core/Menu";
-import Link from "@material-ui/core/Link";
+// import Fab from "@mui/material/Fab";
+// import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+// import Zoom from "@mui/material/Zoom";
+import IconButton from "@mui/material/IconButton";
+import MenuIcon from "@mui/icons-material/Menu";
+import AccountCircle from "@mui/icons-material/AccountCircle";
+import MenuItem from "@mui/material/MenuItem";
+import Menu from "@mui/material/Menu";
+import Link from "@mui/material/Link";
 
-import clsx from "clsx";
+import Divider from "@mui/material/Divider";
+import Drawer from "@mui/material/Drawer";
 
-import Divider from "@material-ui/core/Divider";
-import Drawer from "@material-ui/core/Drawer";
-
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import EventIcon from "@material-ui/icons/Event";
-import FastfoodIcon from "@material-ui/icons/Fastfood";
-import ListItemText from "@material-ui/core/ListItemText";
-import HelpOutlineIcon from "@material-ui/icons/HelpOutline";
-import StraightenIcon from "@material-ui/icons/Straighten";
-import SwapHorizIcon from "@material-ui/icons/SwapHoriz";
-import ShoppingCartIcon from "@material-ui/icons/ShoppingCart";
-import LoyaltyIcon from "@material-ui/icons/Loyalty";
-import SettingsIcon from "@material-ui/icons/Settings";
-import GroupIcon from "@material-ui/icons/Group";
-import NewReleasesIcon from "@material-ui/icons/NewReleases";
-import DescriptionIcon from "@material-ui/icons/Description";
-import BuildIcon from "@material-ui/icons/Build";
-import HomeIcon from "@material-ui/icons/Home";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import EventIcon from "@mui/icons-material/Event";
+import FastfoodIcon from "@mui/icons-material/Fastfood";
+import ListItemText from "@mui/material/ListItemText";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import StraightenIcon from "@mui/icons-material/Straighten";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import LoyaltyIcon from "@mui/icons-material/Loyalty";
+import SettingsIcon from "@mui/icons-material/Settings";
+import GroupIcon from "@mui/icons-material/Group";
+import NewReleasesIcon from "@mui/icons-material/NewReleases";
+import DescriptionIcon from "@mui/icons-material/Description";
+import BuildIcon from "@mui/icons-material/Build";
+import HomeIcon from "@mui/icons-material/Home";
 
 import Action from "../../constants/actions";
 import * as ROUTES from "../../constants/routes";
@@ -59,8 +57,6 @@ import DialogRefreshApp from "./dialogRefreshApp";
 
 import Role from "../../constants/roles";
 
-import useStyles from "../../constants/styles";
-
 import {NavigationValuesContext} from "../Navigation/navigationContext";
 import {AuthUserContext} from "../Session/authUserContext";
 import {withFirebase} from "../Firebase/firebaseContext";
@@ -69,6 +65,7 @@ import {withFirebase} from "../Firebase/firebaseContext";
 import Utils from "../Shared/utils.class";
 import {DonateIcon} from "../Shared/icons";
 import {logEvent} from "firebase/analytics";
+import useCustomStyles from "../../constants/styles";
 // ===================================================================
 // ============================= Global =============================
 // ===================================================================
@@ -140,7 +137,7 @@ const NavigationComponent = () => {
 // ===================================================================
 const NavigationAuthBase = (props) => {
   const location = useLocation();
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const firebase = props.firebase;
   const authUser = props.authUser;
   // const authUser = useAuthUser();
@@ -330,9 +327,6 @@ const NavigationAuthBase = (props) => {
   };
   const list = (anchor: Anchor) => (
     <div
-      className={clsx(classes.navigationList, {
-        [classes.navigationFullList]: anchor === "top" || anchor === "bottom",
-      })}
       role="presentation"
       onClick={toggleDrawer(anchor, false)}
       onKeyDown={toggleDrawer(anchor, false)}
@@ -469,13 +463,11 @@ const NavigationAuthBase = (props) => {
   return (
     <React.Fragment>
       <CssBaseline />
-      <AppBar className={prefersDarkMode ? classes.appBarDark : classes.appBar}>
-        <Toolbar
-          className={prefersDarkMode ? classes.appBarDark : classes.appBar}
-        >
+      <AppBar sx={prefersDarkMode ? classes.appBarDark : classes.appBar}>
+        <Toolbar sx={prefersDarkMode ? classes.appBarDark : classes.appBar}>
           <IconButton
             edge="start"
-            className={classes.navigationMenuButton}
+            sx={classes.navigationMenuButton}
             color="inherit"
             aria-label="menu"
             onClick={toggleDrawer("left", true)}
@@ -483,10 +475,10 @@ const NavigationAuthBase = (props) => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" className={classes.navigationTitle}>
+          <Typography variant="h6" sx={classes.navigationTitle}>
             <Link
               component="button"
-              className={classes.navigationTitle}
+              sx={classes.navigationTitle}
               variant="h6"
               color="inherit"
               underline="none"
@@ -500,12 +492,6 @@ const NavigationAuthBase = (props) => {
             </Link>
           </Typography>
           {Utils.isTestEnviroment() ? <TestTenantRibbon /> : null}
-          {/* {!isVersionUpToDate ? (
-            <UpdateRibbon onClick={onClickUpdateRibon} />
-          ) : Utils.isTestTenant(window.location.toString()) ? (
-            <TestTenantRibbon />
-          ) : null}
- */}
           <div>
             <IconButton
               aria-label="go to Helppage"
@@ -525,7 +511,6 @@ const NavigationAuthBase = (props) => {
             >
               <AccountCircle />
             </IconButton>
-            {/* )} */}
             <Menu
               id="menu-appbar"
               anchorEl={anchorEl}
@@ -544,8 +529,6 @@ const NavigationAuthBase = (props) => {
               <MenuItem id={BUTTONTEXT.ACCOUNT} onClick={handleMenuClick}>
                 {TEXT.NAVIGATION_USER_PROFILE}
               </MenuItem>
-
-              {/* <MenuItem>Einstellungen</MenuItem> */}
               <MenuItem id={BUTTONTEXT.SIGNOUT} onClick={handleMenuClick}>
                 {TEXT.SIGN_OUT}
               </MenuItem>
@@ -553,13 +536,7 @@ const NavigationAuthBase = (props) => {
           </div>
         </Toolbar>
       </AppBar>
-      {/* <div id="back-to-top-anchor" /> */}
-      <Toolbar
-        className={classes.toolbar}
-        id="back-to-top-anchor"
-        disableGutters
-      />
-
+      <Toolbar sx={classes.toolbar} id="back-to-top-anchor" disableGutters />
       <div>
         <React.Fragment key={"left"}>
           <Drawer
@@ -572,12 +549,6 @@ const NavigationAuthBase = (props) => {
         </React.Fragment>
         {/* ))} */}
       </div>
-
-      {/* <ScrollTop {...props}>
-        <Fab color="secondary" size="small" aria-label="scroll back to top">
-          <KeyboardArrowUpIcon />
-        </Fab>
-      </ScrollTop> */}
       <DialogRefreshApp
         dialogOpen={showDialogRefreshApp}
         handleOk={onUpdateAppOk}
@@ -589,20 +560,18 @@ const NavigationAuthBase = (props) => {
 // ===================================================================
 // ================== Navigation ohne Berechtigung ===================
 // ===================================================================
-// Komponente für Navigation ohne Login//Ohne Berechtigunge
+// Komponente für Navigation ohne Login//Ohne Berechtigungen
 export function NavigationNoAuthBase() {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {push} = useHistory();
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 
   return (
     <React.Fragment>
       <CssBaseline />
-      <AppBar className={prefersDarkMode ? classes.appBarDark : classes.appBar}>
-        <Toolbar
-          className={prefersDarkMode ? classes.appBarDark : classes.appBar}
-        >
-          <Typography variant="h6" className={classes.navigationTitle}>
+      <AppBar sx={prefersDarkMode ? classes.appBarDark : classes.appBar}>
+        <Toolbar sx={prefersDarkMode ? classes.appBarDark : classes.appBar}>
+          <Typography variant="h6" sx={classes.navigationTitle}>
             <Link
               variant="h6"
               component="button"
@@ -619,7 +588,7 @@ export function NavigationNoAuthBase() {
           </Typography>
           {Utils.isTestEnviroment() ? <TestTenantRibbon /> : null}
           <div>
-            <Typography variant="h6" className={classes.navigationTitle}>
+            <Typography variant="h6" sx={classes.navigationTitle}>
               <Link
                 variant="body1"
                 component="button"

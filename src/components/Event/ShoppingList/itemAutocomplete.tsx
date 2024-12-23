@@ -1,9 +1,7 @@
 import React from "react";
-import TextField from "@material-ui/core/TextField";
-import Autocomplete, {
-  AutocompleteChangeReason,
-  createFilterOptions,
-} from "@material-ui/lab/Autocomplete";
+import TextField from "@mui/material/TextField";
+import Autocomplete from "@mui/lab/Autocomplete";
+import {AutocompleteChangeReason} from "@mui/material";
 
 import Material, {MaterialType} from "../../Material/material.class";
 import Utils from "../../Shared/utils.class";

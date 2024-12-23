@@ -24,7 +24,7 @@ import {
   CLOSE as TEXT_CLOSE,
 } from "../../constants/text";
 
-import {OpenInNew as OpenInNewIcon} from "@material-ui/icons";
+import {OpenInNew as OpenInNewIcon} from "@mui/icons-material";
 
 import PageTitle from "../Shared/pageTitle";
 
@@ -60,7 +60,7 @@ import {
   Button,
   TextField,
   DialogActions,
-} from "@material-ui/core";
+} from "@mui/material";
 import AlertMessage from "../Shared/AlertMessage";
 import SearchPanel from "../Shared/searchPanel";
 

@@ -1,8 +1,9 @@
 import React from "react";
-import {Color} from "@material-ui/lab";
-import MuiAlert from "@material-ui/lab/Alert";
-import Snackbar from "@material-ui/core/Snackbar";
-import Fade from "@material-ui/core/Fade";
+import {Color} from "@mui/lab";
+
+import {Alert} from "@mui/lab";
+import Snackbar from "@mui/material/Snackbar";
+import Fade from "@mui/material/Fade";
 
 import useStyles from "../../constants/styles";
 
@@ -42,7 +43,7 @@ function CustomSnackbar({
   const classes = useStyles();
 
   const Alert = (props) => {
-    return <MuiAlert elevation={6} {...props} />;
+    return <Alert elevation={6} {...props} />;
   };
 
   return (

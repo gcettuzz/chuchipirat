@@ -24,7 +24,7 @@ import {
   OutlinedInput,
   useTheme,
   CardActions,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import format from "date-fns/format";
 import deLocale from "date-fns/locale/de";
@@ -59,7 +59,7 @@ import {
   KeyboardDatePicker,
   MuiPickersUtilsProvider,
 } from "@material-ui/pickers";
-import {Alert, AlertTitle} from "@material-ui/lab";
+import {Alert, AlertTitle} from "@mui/lab";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================

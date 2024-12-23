@@ -1,7 +1,7 @@
 import React from "react";
 import PageTitle from "../Shared/pageTitle";
-import {Container, Link, Typography} from "@material-ui/core";
-import {Alert, AlertTitle} from "@material-ui/lab";
+import {Container, Link, Typography} from "@mui/material";
+import {Alert, AlertTitle} from "@mui/lab";
 import {
   HOME as ROUTE_HOME,
   SIGN_IN as ROUTE_SIGN_IN,

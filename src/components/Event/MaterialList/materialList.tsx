@@ -20,7 +20,7 @@ import {
   IconButton,
   Container,
   Checkbox,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
@@ -46,7 +46,7 @@ import {
   ERROR_NO_MATERIALS_FOUND as TEXT_ERROR_NO_MATERIALS_FOUND,
 } from "../../../constants/text";
 
-import {MoreVert as MoreVertIcon} from "@material-ui/icons";
+import {MoreVert as MoreVertIcon} from "@mui/icons-material";
 
 import useStyles from "../../../constants/styles";
 
@@ -100,7 +100,7 @@ import DialogMaterial, {
   MaterialDialog,
 } from "../../Material/dialogMaterial";
 import MaterialAutocomplete from "../../Material/materialAutocomplete";
-// import {AutocompleteChangeReason} from "@material-ui/lab";
+// import {AutocompleteChangeReason} from "@mui/lab";
 import {
   RECIPE_DRAWER_DATA_INITIAL_VALUES,
   RecipeDrawer,

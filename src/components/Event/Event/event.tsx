@@ -14,7 +14,7 @@ import {
   Grid,
   Button,
   Typography,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import useStyles from "../../../constants/styles";
 

@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import {MobileView} from "react-device-detect";
 
-import CssBaseline from "@material-ui/core/CssBaseline";
+import CssBaseline from "@mui/material/CssBaseline";
 import "./App.css";
 
 import Navigation from "../Navigation/navigation";
@@ -17,7 +17,7 @@ import Footer from "../Footer/footer";
 import LandingPage from "../Landing/landing";
 import AuthServiceHandler from "../AuthServiceHandler/authServiceHandler";
 
-import {ThemeProvider, createMuiTheme} from "@material-ui/core/styles";
+import {ThemeProvider, createTheme} from "@mui/material/styles";
 
 import useStyles from "../../constants/styles";
 import NotFound from "../404/404";
@@ -32,14 +32,14 @@ import CustomTheme from "./customTheme.class";
 // Für nachträglicher Load --> Code Splitting
 import SignUpPage from "../SignUp/signUp";
 import SignInPage from "../SignIn/signIn";
-import Fab from "@material-ui/core/Fab";
+import Fab from "@mui/material/Fab";
 import {FeedbackIcon} from "../Shared/icons";
 import * as Sentry from "@sentry/react";
 
 import {withAuthentication} from "../Session/authUserContext";
 import {SessionStorageHandler} from "../Firebase/Db/sessionStorageHandler.class";
 import {FEEDBACK as TEXT_FEEDBACK} from "../../constants/text";
-import {useMediaQuery} from "@material-ui/core";
+import {useMediaQuery} from "@mui/material";
 // import FeedbackFab from "../Navigation/feedbackFAB";
 
 const PasswordChange = lazy(() => import("../PasswordChange/passwordChange"));
@@ -88,7 +88,7 @@ const App = () => {
   // Theme für App
   // ------------------------------------------ */
   const theme = React.useMemo(
-    () => createMuiTheme({palette: CustomTheme.getTheme(prefersDarkMode)}),
+    () => createTheme({palette: CustomTheme.getTheme(prefersDarkMode)}),
     [prefersDarkMode]
   );
 

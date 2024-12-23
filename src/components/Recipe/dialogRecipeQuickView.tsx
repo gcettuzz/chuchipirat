@@ -1,18 +1,18 @@
 import React from "react";
 import useStyles from "../../constants/styles";
 
-import Button from "@material-ui/core/Button";
-import Backdrop from "@material-ui/core/Backdrop";
-import CircularProgress from "@material-ui/core/CircularProgress";
+import Button from "@mui/material/Button";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import Dialog from "@material-ui/core/Dialog";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogActions from "@material-ui/core/DialogActions";
-import CardMedia from "@material-ui/core/CardMedia";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogActions from "@mui/material/DialogActions";
+import CardMedia from "@mui/material/CardMedia";
 
 import RecipeShort from "./recipeShort.class";
 import Recipe from "./recipe.class";
-import {DialogContent, Link, List} from "@material-ui/core";
+import {DialogContent, Link, List} from "@mui/material";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import {FormListItem} from "../Shared/formListItem";
 import Utils from "../Shared/utils.class";

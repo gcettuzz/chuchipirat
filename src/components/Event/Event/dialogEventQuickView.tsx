@@ -10,7 +10,7 @@ import {
   DialogContent,
   Link,
   List,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import {FormListItem} from "../../Shared/formListItem";
 

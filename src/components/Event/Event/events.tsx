@@ -13,7 +13,7 @@ import {
   CssBaseline,
   Grid,
   Typography,
-} from "@material-ui/core";
+} from "@mui/material";
 import PageTitle from "../../Shared/pageTitle";
 
 import {

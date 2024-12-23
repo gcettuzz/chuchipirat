@@ -1,5 +1,4 @@
 import React from "react";
-import useStyles from "../../../constants/styles";
 
 import {
   Typography,
@@ -7,11 +6,13 @@ import {
   CardMedia,
   CardHeader,
   CardActionArea,
-} from "@material-ui/core";
-import {Skeleton} from "@material-ui/lab";
+  Box,
+} from "@mui/material";
+import {Skeleton} from "@mui/lab";
 
 import Event from "./event.class";
 import {ImageRepository} from "../../../constants/imageRepository";
+import useCustomStyles from "../../../constants/styles";
 interface EventCardProps {
   event: Event;
   onCardClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
@@ -24,7 +25,7 @@ interface EventCardProps {
  */
 
 const EventCard = ({event, onCardClick}: EventCardProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const [hover, setHover] = React.useState(false);
 
   /* ------------------------------------------
@@ -38,7 +39,7 @@ const EventCard = ({event, onCardClick}: EventCardProps) => {
   };
   return (
     <Card
-      className={classes.card}
+      sx={classes.card}
       onMouseOver={handleHover}
       onMouseOut={handleMouseOut}
       key={"eventcard_" + event.uid}
@@ -48,10 +49,10 @@ const EventCard = ({event, onCardClick}: EventCardProps) => {
         onClick={onCardClick}
         style={{height: "100%"}}
       >
-        <div className={classes.card}>
+        <Box component="div" sx={classes.card}>
           <div style={{overflow: "hidden"}}>
             <CardMedia
-              className={classes.cardMedia}
+              sx={classes.cardMedia}
               image={
                 event.pictureSrc
                   ? event.pictureSrc
@@ -78,7 +79,7 @@ const EventCard = ({event, onCardClick}: EventCardProps) => {
               </Typography>
             }
           />
-        </div>
+        </Box>
       </CardActionArea>
     </Card>
   );
@@ -87,15 +88,15 @@ const EventCard = ({event, onCardClick}: EventCardProps) => {
 // =====================Rezept Karte am laden ========================
 // =================================================================== */
 const EventCardLoading = () => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
-    <Card className={classes.card}>
+    <Card sx={classes.card}>
       {/* Card Media */}
-      <Skeleton animation="wave" variant="rect" className={classes.cardMedia} />
+      <Skeleton animation="wave" variant="rectangular" sx={classes.cardMedia} />
 
       <CardHeader
-        className={classes.cardContent}
+        sx={classes.cardContent}
         title={
           <Typography gutterBottom={true} variant="h5" component="h2">
             <Skeleton />

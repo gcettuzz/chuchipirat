@@ -1,7 +1,7 @@
 import React from "react";
 import {compose} from "react-recompose";
 
-import CssBaseline from "@material-ui/core/CssBaseline";
+import CssBaseline from "@mui/material/CssBaseline";
 import {
   DEPARTMENTS as TEXT_DEPARTMENTS,
   SO_YOU_DONT_GET_LOST_IN_THE_STORE as TEXT_SO_YOU_DONT_GET_LOST_IN_THE_STORE,
@@ -43,7 +43,7 @@ import {
   Select,
   TextField,
   Typography,
-} from "@material-ui/core";
+} from "@mui/material";
 import AlertMessage from "../Shared/AlertMessage";
 import EnhancedTable, {
   Column,

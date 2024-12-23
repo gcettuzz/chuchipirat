@@ -1,5 +1,5 @@
 import React from "react";
-import {Alert, AlertTitle, Color} from "@material-ui/lab";
+import {Alert, AlertTitle, Color} from "@mui/lab";
 import FirebaseMessageHandler from "../Firebase/firebaseMessageHandler.class";
 import useStyles from "../../constants/styles";
 

@@ -16,7 +16,7 @@ import {
   Typography,
   Link,
   Divider,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import PageTitle from "../Shared/pageTitle";
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";

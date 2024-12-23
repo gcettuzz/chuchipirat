@@ -23,13 +23,13 @@ import {
   DialogActions,
   Button,
   TextField,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import {
   OpenInNew as OpenInNewIcon,
   MoreVert as MoreVertIcon,
   Receipt as ReceiptIcon,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 import PageTitle from "../Shared/pageTitle";
 

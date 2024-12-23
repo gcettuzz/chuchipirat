@@ -12,7 +12,7 @@ import {
   CardContent,
   useTheme,
   LinearProgress,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import {
   ACTIVATE_SUPPORT_USER as TEXT_ACTIVATE_SUPPORT_USER,
@@ -32,7 +32,7 @@ import {CustomRouterProps} from "../Shared/global.interface";
 import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
 import PageTitle from "../Shared/pageTitle";
 import Event from "../Event/Event/event.class";
-import {Alert} from "@material-ui/lab";
+import {Alert} from "@mui/lab";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */

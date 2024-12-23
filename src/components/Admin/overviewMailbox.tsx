@@ -24,7 +24,7 @@ import {
   MAIL_PROTOCOLS_DELETED as TEXT_MAIL_PROTOCOLS_DELETED,
 } from "../../constants/text";
 
-import {OpenInNew as OpenInNewIcon} from "@material-ui/icons";
+import {OpenInNew as OpenInNewIcon} from "@mui/icons-material";
 
 import PageTitle from "../Shared/pageTitle";
 
@@ -53,7 +53,7 @@ import {
   LinearProgress,
   Button,
   TextField,
-} from "@material-ui/core";
+} from "@mui/material";
 import AlertMessage from "../Shared/AlertMessage";
 import SearchPanel from "../Shared/searchPanel";
 

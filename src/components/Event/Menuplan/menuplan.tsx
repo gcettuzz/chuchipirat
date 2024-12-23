@@ -34,10 +34,11 @@ import {
   Divider,
   ListItemText,
   CssBaseline,
-} from "@material-ui/core";
-import {alpha} from "@material-ui/core/styles/colorManipulator";
+} from "@mui/material";
 
-import {ToggleButtonGroup, ToggleButton} from "@material-ui/lab";
+import {alpha} from "@mui/system/colorManipulator";
+
+import {ToggleButtonGroup, ToggleButton} from "@mui/lab";
 
 import {
   MoreVert as MoreVertIcon,
@@ -51,7 +52,7 @@ import {
   Notes as NotesIcon,
   Edit,
   DeleteSweep as DeleteSweepIcon,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 import useStyles from "../../../constants/styles";
 

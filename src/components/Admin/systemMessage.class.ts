@@ -1,4 +1,4 @@
-import {Color} from "@material-ui/lab";
+import {Color} from "@mui/lab";
 import Firebase from "../Firebase/firebase.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 

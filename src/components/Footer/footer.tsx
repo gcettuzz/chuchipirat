@@ -1,10 +1,10 @@
 import React from "react";
 
-import Link from "@material-ui/core/Link";
-import Grid from "@material-ui/core/Grid";
+import Link from "@mui/material/Link";
+import Grid from "@mui/material/Grid";
 
-import Typography from "@material-ui/core/Typography";
-import Divider from "@material-ui/core/Divider";
+import Typography from "@mui/material/Typography";
+import Divider from "@mui/material/Divider";
 
 import useStyles from "../../constants/styles";
 
@@ -22,8 +22,8 @@ import {
   TERM_OF_USE as ROUTE_TERM_OF_USE,
   PRIVACY_POLICY as ROUTE_PRIVACY_POLICY,
 } from "../../constants/routes";
-import {IconButton} from "@material-ui/core";
-import {Instagram as IconInstagram} from "@material-ui/icons";
+import {IconButton} from "@mui/material";
+import {Instagram as IconInstagram} from "@mui/icons-material";
 import packageJson from "../../../package.json";
 import {useHistory} from "react-router";
 

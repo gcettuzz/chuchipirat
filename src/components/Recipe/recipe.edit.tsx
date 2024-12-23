@@ -1,7 +1,7 @@
 import React from "react";
 import {useHistory} from "react-router";
-import {useTheme} from "@material-ui/core/styles";
-import useMediaQuery from "@material-ui/core/useMediaQuery";
+import {useTheme} from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
 import Recipe, {
   Ingredient,
@@ -46,14 +46,14 @@ import {
   Select,
   Checkbox,
   Link,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import {AutocompleteChangeReason} from "@material-ui/lab/Autocomplete";
 
-import AddIcon from "@material-ui/icons/Add";
-import MoreVertIcon from "@material-ui/icons/MoreVert";
-import ViewDayIcon from "@material-ui/icons/ViewDay";
-import DeleteIcon from "@material-ui/icons/Delete";
+import AddIcon from "@mui/icons-material/Add";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import ViewDayIcon from "@mui/icons-material/ViewDay";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
 import ButtonRow from "../Shared/buttonRow";

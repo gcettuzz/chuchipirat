@@ -8,7 +8,7 @@ import {
   Typography,
   Button,
   TextField,
-} from "@material-ui/core";
+} from "@mui/material";
 import {
   REPORT_ERROR as TEXT_REPORT_ERROR,
   REPORT_ERROR_DESCIRPTION as TEXT_REPORT_ERROR_DESCIRPTION,
