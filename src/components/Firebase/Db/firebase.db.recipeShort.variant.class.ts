@@ -39,7 +39,7 @@ export class FirebaseDbRecipeShortVariant extends FirebaseDbRecipeShort {
   // Dokument holen
   // ===================================================================== */
   getDocument(uids: string[]) {
-    return doc(this.firebase.firestore, this.getCollection(uids).path, uids[1]);
+    return doc(this.firebase.firestore, this.getCollection(uids).path, uids[0]);
   }
   /* =====================================================================
   // Dokumente holen
