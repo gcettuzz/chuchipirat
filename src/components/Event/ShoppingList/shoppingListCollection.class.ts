@@ -532,6 +532,9 @@ export default class ShoppingListCollection {
           });
         }
 
+        updatedShoppingListCollection.lists[shoppingList.uid].trace =
+          updatedTrace;
+
         updatedShoppingListCollection.lists[
           shoppingList.uid
         ].properties.generated = Utils.createChangeRecord(authUser);
