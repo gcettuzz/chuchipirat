@@ -69,7 +69,10 @@ import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ViewDayIcon from "@mui/icons-material/ViewDay";
 import DeleteIcon from "@mui/icons-material/Delete";
-
+import {
+  ArrowUpward as ArrowUpwardIcon,
+  ArrowDownward as ArrowDownwardIcon,
+} from "@mui/icons-material";
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
 import ButtonRow from "../Shared/buttonRow";
 import {FormListItem} from "../Shared/formListItem";
@@ -226,6 +229,7 @@ enum RecipeBlock {
   prepartionSteps = "preparationSteps",
   materials = "materials",
 }
+type RecipeBlockNotNone = Exclude<RecipeBlock, RecipeBlock.none>;
 
 const recipesReducer = (state: State, action: DispatchAction): State => {
   let field: string;
@@ -679,6 +683,8 @@ interface RecipeEditProps {
 interface PositionMenuSelectedItem {
   type: RecipeBlock; // In welchem Abschnitt wurde das Menü geöffnet
   uid: string; // UID des Eintrages
+  firstElement: boolean;
+  lastElement: boolean;
 }
 const RecipeEdit = ({
   dbRecipe,
@@ -703,6 +709,8 @@ const RecipeEdit = ({
     useState<PositionMenuSelectedItem>({
       type: RecipeBlock.none,
       uid: "",
+      firstElement: false,
+      lastElement: false,
     });
   const [positionMenuAnchorElement, setPositionMenuAnchorElement] =
     useState<HTMLElement | null>(null);
@@ -1305,9 +1313,18 @@ const RecipeEdit = ({
     // 1 = Abschnitt in dem er geklickt wurde (ingredients)
     // 2 = UID der Position
 
+    console.log(pressedButton);
+
     setPositionMenuSelectedItem({
       type: pressedButton[1] as RecipeBlock,
       uid: pressedButton[2],
+      firstElement:
+        state.recipe[pressedButton[1] as RecipeBlockNotNone].order[0] ===
+        pressedButton[2],
+      lastElement:
+        state.recipe[pressedButton[1] as RecipeBlockNotNone].order[
+          state.recipe[pressedButton[1] as RecipeBlockNotNone].order.length - 1
+        ] === pressedButton[2],
     });
     setPositionMenuAnchorElement(event.currentTarget);
   };
@@ -1315,12 +1332,15 @@ const RecipeEdit = ({
     event: React.MouseEvent<HTMLElement>
   ) => {
     let indexToInsert = 0;
+    let indexToRemove = 0;
     const pressedButton = event.currentTarget.id.split("_");
     // // 0 = in Welchem Block (Ingredient/PreparationStep/Materials )
     // // 1 = Aktion (Add, Delete)
     // // 2 = UID des Elements
 
-    const entriesToUpdate = {...state.recipe[pressedButton[0]]} as
+    const entriesToUpdate = {
+      ...state.recipe[pressedButton[0] as RecipeBlockNotNone],
+    } as
       | RecipeObjectStructure<Ingredient | Section>
       | RecipeObjectStructure<PreparationStep | Section>
       | RecipeObjectStructure<RecipeMaterialPosition | Section>;
@@ -1370,6 +1390,36 @@ const RecipeEdit = ({
           (uid) => uid !== pressedButton[2]
         );
         break;
+      case Action.MOVEUP:
+      case Action.MOVEDOWN:
+        indexToRemove = entriesToUpdate.order.indexOf(
+          pressedButton[2] as RecipeBlockNotNone
+        );
+
+        if (indexToRemove === -1) return;
+        if (pressedButton[1] === Action.MOVEUP && indexToRemove === 0) return; // schon oben
+        if (
+          pressedButton[1] === Action.MOVEDOWN &&
+          indexToRemove === entriesToUpdate.order.length - 1
+        )
+          return; // schon unten
+        indexToInsert = indexToRemove - 1;
+        indexToInsert =
+          pressedButton[1] === Action.MOVEUP
+            ? indexToRemove - 1
+            : indexToRemove + 1;
+
+        [
+          entriesToUpdate.order[indexToRemove],
+          entriesToUpdate.order[indexToInsert],
+        ] = [
+          entriesToUpdate.order[indexToInsert],
+          entriesToUpdate.order[indexToRemove],
+        ];
+
+        break;
+      default:
+        console.error("Aktion unbekannt:", pressedButton[1]);
     }
 
     dispatch({
@@ -1606,6 +1656,8 @@ const RecipeEdit = ({
         handleMenuClose={onPositionMoreContextMenuClose}
         recipeBlock={positionMenuSelectedItem.type}
         uid={positionMenuSelectedItem.uid}
+        firstElement={positionMenuSelectedItem.firstElement}
+        lastElement={positionMenuSelectedItem.lastElement}
         // positionType={positionMenuSelectedItem.positionType}
         // noListEntries={positionMenuSelectedItem.noOfPostitions}
       />
@@ -3346,6 +3398,8 @@ interface PositionMoreClickContextMenuProps {
   handleMenuClose: () => void;
   recipeBlock: RecipeBlock;
   uid: string;
+  firstElement?: boolean;
+  lastElement?: boolean;
 }
 const PositionMoreClickContextMenu = ({
   anchorEl,
@@ -3353,6 +3407,8 @@ const PositionMoreClickContextMenu = ({
   handleMenuClose,
   recipeBlock,
   uid,
+  firstElement,
+  lastElement,
 }: PositionMoreClickContextMenuProps) => {
   return (
     <Menu
@@ -3391,6 +3447,30 @@ const PositionMoreClickContextMenu = ({
         </ListItemIcon>
         <Typography variant="inherit" noWrap>
           {TEXT.BUTTON_DELETE}
+        </Typography>
+      </MenuItem>
+      <MenuItem
+        id={recipeBlock + "_" + Action.MOVEUP + "_" + uid}
+        onClick={handleMenuClick}
+        disabled={firstElement}
+      >
+        <ListItemIcon>
+          <ArrowUpwardIcon fontSize="small" />
+        </ListItemIcon>
+        <Typography variant="inherit" noWrap>
+          {TEXT.TOOLTIP_MOVE_UP}
+        </Typography>
+      </MenuItem>
+      <MenuItem
+        id={recipeBlock + "_" + Action.MOVEDOWN + "_" + uid}
+        onClick={handleMenuClick}
+        disabled={lastElement}
+      >
+        <ListItemIcon>
+          <ArrowDownwardIcon fontSize="small" />
+        </ListItemIcon>
+        <Typography variant="inherit" noWrap>
+          {TEXT.TOOLTIP_MOVE_DOWN}
         </Typography>
       </MenuItem>
     </Menu>
