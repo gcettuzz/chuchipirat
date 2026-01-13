@@ -3,7 +3,7 @@ import {pdf} from "@react-pdf/renderer";
 import fileSaver from "file-saver";
 
 import {
-  Grid,
+  Stack,
   Button,
   Backdrop,
   CircularProgress,
@@ -20,6 +20,8 @@ import {
   IconButton,
   Container,
   Checkbox,
+  useTheme,
+  Box,
 } from "@mui/material";
 
 import {
@@ -48,7 +50,7 @@ import {
 
 import {MoreVert as MoreVertIcon} from "@mui/icons-material";
 
-import useStyles from "../../../constants/styles";
+import useCustomStyles from "../../../constants/styles";
 
 import Firebase from "../../Firebase/firebase.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
@@ -242,7 +244,8 @@ const EventMaterialListPage = ({
   onMaterialListUpdate,
   onMasterdataCreate,
 }: EventMaterialListPageProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
+  const theme = useTheme();
 
   const navigationValuesContext = React.useContext(NavigationValuesContext);
   const {customDialog} = useCustomDialog();
@@ -615,11 +618,6 @@ const EventMaterialListPage = ({
     }
 
     // Menues der Mahlzeiten holen und Objekt umwandeln
-    Menuplan.getMealsOfMenues({
-      menuplan: menuplan,
-      menues: materialList.lists[selectedListUid].properties.selectedMeals,
-    }).forEach((menueUid) => (selectedMenues[menueUid] = true));
-
     selectedMenues.forEach(
       (menueUid) => (selectedMenuesForDialog[menueUid] = true)
     );
@@ -768,62 +766,61 @@ const EventMaterialListPage = ({
       });
   };
   return (
-    <React.Fragment>
+    <Stack spacing={2}>
       {state.isError && (
-        <Grid item key={"error"} xs={12}>
-          <AlertMessage
-            error={state.error!}
-            messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
-          />
-        </Grid>
+        <AlertMessage
+          error={state.error!}
+          messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
+        />
       )}
-
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Backdrop className={classes.backdrop} open={state.isLoading}>
-            <CircularProgress color="inherit" />
-          </Backdrop>
-        </Grid>
-        <Grid item xs={12}>
-          <EventListCard
-            cardTitle={TEXT_MATERIAL_LIST}
-            cardDescription={TEXT_MATERIAL_LIST_MENUE_SELECTION_DESCRIPTION}
-            outOfDateWarnMessage={TEXT_LIST_ENTRY_MAYBE_OUT_OF_DATE(
-              TEXT_MATERIAL_LIST
-            )}
-            selectedListItem={state.selectedListItem}
-            lists={materialList.lists}
-            noOfLists={materialList.noOfLists}
-            menuplan={menuplan}
-            onCreateList={onCreateList}
-            onListElementSelect={onListElementSelect}
-            onListElementDelete={onListElementDelete}
-            onListElementEdit={onListElementEdit}
-            onRefreshLists={onRefreshLists}
-            onGeneratePrintVersion={onGeneratePrintVersion}
-          />
-        </Grid>
-        {state.selectedListItem && materialList && (
-          <React.Fragment>
-            <Grid item container justifyContent="center" xs={12}>
-              <Button color="primary" onClick={onAddMaterialClick}>
-                {TEXT_ADD_ITEM}
-              </Button>
-            </Grid>
-            <Grid item xs={12}>
-              <EventMaterialListList
-                materialList={materialList.lists[state.selectedListItem]}
-                menuplan={menuplan}
-                groupConfiguration={groupConfiguration}
-                unitConversionBasic={unitConversionBasic}
-                unitConversionProducts={unitConversionProducts}
-                onCheckboxClick={onCheckboxClick}
-                onOpenContexMenü={onOpenContextMenu}
-              />
-            </Grid>
-          </React.Fragment>
+      <Backdrop sx={classes.backdrop} open={state.isLoading}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
+      <EventListCard
+        cardTitle={TEXT_MATERIAL_LIST}
+        cardDescription={TEXT_MATERIAL_LIST_MENUE_SELECTION_DESCRIPTION}
+        outOfDateWarnMessage={TEXT_LIST_ENTRY_MAYBE_OUT_OF_DATE(
+          TEXT_MATERIAL_LIST
         )}
-      </Grid>
+        selectedListItem={state.selectedListItem}
+        lists={materialList.lists}
+        noOfLists={materialList.noOfLists}
+        menuplan={menuplan}
+        onCreateList={onCreateList}
+        onListElementSelect={onListElementSelect}
+        onListElementDelete={onListElementDelete}
+        onListElementEdit={onListElementEdit}
+        onRefreshLists={onRefreshLists}
+        onGeneratePrintVersion={onGeneratePrintVersion}
+      />
+      {state.selectedListItem && materialList && (
+        <React.Fragment>
+          <Box component="div" sx={{justifyContent: "center", display: "flex"}}>
+            <Button
+              color="primary"
+              onClick={onAddMaterialClick}
+              variant="outlined"
+              sx={{
+                alignSelf: "flex-start",
+                marginTop: theme.spacing(2),
+              }}
+            >
+              {TEXT_ADD_ITEM}
+            </Button>
+          </Box>
+          <Box component="div" sx={{justifyContent: "center", display: "flex"}}>
+            <EventMaterialListList
+              materialList={materialList.lists[state.selectedListItem]}
+              menuplan={menuplan}
+              groupConfiguration={groupConfiguration}
+              unitConversionBasic={unitConversionBasic}
+              unitConversionProducts={unitConversionProducts}
+              onCheckboxClick={onCheckboxClick}
+              onOpenContexMenü={onOpenContextMenu}
+            />
+          </Box>
+        </React.Fragment>
+      )}
       <DialogSelectMenues
         open={dialogSelectMenueData.open}
         title={TEXT_WHICH_MENUES_FOR_MATERIAL_LIST_GENERATION}
@@ -854,7 +851,6 @@ const EventMaterialListPage = ({
         authUser={authUser}
         firebase={firebase}
       />
-
       {state.selectedListItem && contextMenuSelectedItem.materialUid && (
         // kann nur generiert werden, wenn auch etwas ausgewählt ist
         <DialogTraceItem
@@ -888,7 +884,7 @@ const EventMaterialListPage = ({
           onClose={onRecipeDrawerClose}
         />
       )}
-    </React.Fragment>
+    </Stack>
   );
 };
 /* ===================================================================
@@ -908,96 +904,87 @@ const EventMaterialListList = ({
   onCheckboxClick,
   onOpenContexMenü,
 }: EventMaterialListListProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   return (
     <Container
-      className={classes.container}
       component="main"
       maxWidth="sm"
       key={"MaterialListContainer"}
+      sx={classes.container}
     >
-      <Grid container spacing={2} justifyContent="center" alignItems="center">
-        <Grid item xs={12}>
-          <List className={classes.listShoppingList} key={"materialList"}>
-            {Utils.sortArray({
-              array: materialList.items,
-              attributeName: "name",
-            }).map((material) => (
-              <ListItem
-                key={"shoppingListItem_" + material.uid}
-                className={classes.listShoppingListItem}
-              >
-                <ListItemIcon>
-                  <Checkbox
-                    key={"checkbox_" + material.uid}
-                    name={"checkbox_" + material.uid}
-                    onChange={onCheckboxClick}
-                    checked={material.checked}
-                    color={"primary"}
-                    disableRipple
-                  />
-                </ListItemIcon>
-                <ListItemText
-                  className={classes.shoppingListItemTextQuantity}
-                  primaryTypographyProps={
-                    material.checked
-                      ? {color: "textSecondary"}
-                      : {color: "textPrimary"}
-                  }
-                  key={"quantity" + material.uid}
-                  primary={
-                    material.checked ? (
-                      <del>
-                        {Number.isNaN(material.quantity) ||
-                        material.quantity == 0
-                          ? ""
-                          : new Intl.NumberFormat("de-CH", {
-                              maximumSignificantDigits: 3,
-                            }).format(material.quantity)}
-                      </del>
-                    ) : Number.isNaN(material.quantity) ||
-                      material.quantity == 0 ? (
-                      ""
-                    ) : (
-                      new Intl.NumberFormat("de-CH", {
-                        maximumSignificantDigits: 3,
-                      }).format(material.quantity)
-                    )
-                  }
+      <Stack spacing={2}>
+        <List sx={[classes.eventList]} key={"materialList"}>
+          {Utils.sortArray({
+            array: materialList.items,
+            attributeName: "name",
+          }).map((material) => (
+            <ListItem
+              key={"shoppingListItem_" + material.uid}
+              sx={classes.eventListItem}
+            >
+              <ListItemIcon>
+                <Checkbox
+                  key={"checkbox_" + material.uid}
+                  name={"checkbox_" + material.uid}
+                  onChange={onCheckboxClick}
+                  checked={material.checked}
+                  disableRipple
                 />
-                <ListItemText
-                  className={classes.shoppingListItemTextProduct}
-                  primaryTypographyProps={
-                    material.checked
-                      ? {color: "textSecondary"}
-                      : {color: "textPrimary"}
-                  }
-                  key={"itemName_" + material.uid}
-                  primary={
-                    material.checked ? (
-                      <del>{material.name}</del>
-                    ) : (
-                      material.name
-                    )
-                  }
-                />
-                <ListItemSecondaryAction
-                  key={"SecondaryAction_" + material.uid}
+              </ListItemIcon>
+              <ListItemText
+                sx={classes.eventListItemTextQuantity}
+                primaryTypographyProps={
+                  material.checked
+                    ? {color: "textSecondary"}
+                    : {color: "textPrimary"}
+                }
+                key={"quantity" + material.uid}
+                primary={
+                  material.checked ? (
+                    <del>
+                      {Number.isNaN(material.quantity) || material.quantity == 0
+                        ? ""
+                        : new Intl.NumberFormat("de-CH", {
+                            maximumSignificantDigits: 3,
+                          }).format(material.quantity)}
+                    </del>
+                  ) : Number.isNaN(material.quantity) ||
+                    material.quantity == 0 ? (
+                    ""
+                  ) : (
+                    new Intl.NumberFormat("de-CH", {
+                      maximumSignificantDigits: 3,
+                    }).format(material.quantity)
+                  )
+                }
+              />
+              <ListItemText
+                sx={classes.eventListItemTextProduct}
+                primaryTypographyProps={
+                  material.checked
+                    ? {color: "textSecondary"}
+                    : {color: "textPrimary"}
+                }
+                key={"itemName_" + material.uid}
+                primary={
+                  material.checked ? <del>{material.name}</del> : material.name
+                }
+              />
+              <ListItemSecondaryAction key={"SecondaryAction_" + material.uid}>
+                <IconButton
+                  key={"MoreBtn_" + material.uid}
+                  id={"MoreBtn_" + material.uid}
+                  aria-label="settings"
+                  onClick={onOpenContexMenü}
+                  size="large"
                 >
-                  <IconButton
-                    key={"MoreBtn_" + material.uid}
-                    id={"MoreBtn_" + material.uid}
-                    aria-label="settings"
-                    onClick={onOpenContexMenü}
-                  >
-                    <MoreVertIcon />
-                  </IconButton>
-                </ListItemSecondaryAction>
-              </ListItem>
-            ))}
-          </List>
-        </Grid>
-      </Grid>
+                  <MoreVertIcon />
+                </IconButton>
+              </ListItemSecondaryAction>
+            </ListItem>
+          ))}
+        </List>
+      </Stack>
     </Container>
   );
 };
@@ -1040,6 +1027,8 @@ const DialogHandleMaterial = ({
   handleClose: handleCloseSuper,
   onMaterialCreate: onMaterialCreateSuper,
 }: DialogHandleMaterialProps) => {
+  const theme = useTheme();
+
   const [dialogValues, setDialogValues] = React.useState(
     DIALOG_VALUES_INITIAL_STATE
   );
@@ -1138,9 +1127,9 @@ const DialogHandleMaterial = ({
       <Dialog open={dialogOpen} onClose={handleClose} maxWidth="xs" fullWidth>
         <DialogTitle>{TEXT_ADD_ITEM}</DialogTitle>
         <DialogContent>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              {/* Material */}
+          <Stack spacing={2}>
+            {/* Material */}
+            <Box component={"div"} sx={{paddingTop: theme.spacing(1)}}>
               <MaterialAutocomplete
                 componentKey=""
                 material={dialogValues.material}
@@ -1149,22 +1138,20 @@ const DialogHandleMaterial = ({
                 onChange={onChangeMaterial}
                 error={dialogValidation}
               />
-            </Grid>
+            </Box>
             {/* Menge */}
-            <Grid item xs={12}>
-              <TextField
-                margin="normal"
-                id={"quantity"}
-                key={"quantity"}
-                type="number"
-                label={TEXT_QUANTITY}
-                name={"quantity"}
-                value={dialogValues.quantity}
-                fullWidth
-                onChange={onQuantityChange}
-              />
-            </Grid>
-          </Grid>
+            <TextField
+              margin="normal"
+              id={"quantity"}
+              key={"quantity"}
+              type="number"
+              label={TEXT_QUANTITY}
+              name={"quantity"}
+              value={dialogValues.quantity}
+              fullWidth
+              onChange={onQuantityChange}
+            />
+          </Stack>
         </DialogContent>
         <DialogActions>
           <Button color="primary" variant="outlined" onClick={handleClose}>

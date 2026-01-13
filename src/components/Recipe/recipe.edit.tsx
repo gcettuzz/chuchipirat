@@ -1,4 +1,14 @@
-import React from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useContext,
+  useReducer,
+  createContext,
+  useCallback,
+  useMemo,
+} from "react";
+
 import {useHistory} from "react-router";
 import {useTheme} from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -25,7 +35,6 @@ import {
   TextField,
   Typography,
   Tooltip,
-  Grid,
   GridSize,
   Card,
   CardContent,
@@ -42,13 +51,19 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Input,
   Select,
   Checkbox,
   Link,
+  Box,
+  SelectChangeEvent,
+  OutlinedInput,
+  Divider,
+  SnackbarCloseReason,
+  Alert,
 } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 
-import {AutocompleteChangeReason} from "@material-ui/lab/Autocomplete";
+import {AutocompleteChangeReason} from "@mui/material/Autocomplete";
 
 import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -70,13 +85,14 @@ import {
 import UnitAutocomplete from "../Unit/unitAutocomplete";
 import MaterialAutocomplete from "../Material/materialAutocomplete";
 
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 import Action from "../../constants/actions";
 
 import Product from "../Product/product.class";
 import Unit, {UnitDimension} from "../Unit/unit.class";
 import Utils from "../Shared/utils.class";
 import Department from "../Department/department.class";
+import RecipeShort from "./recipeShort.class";
 import AlertMessage from "../Shared/AlertMessage";
 
 import {ImageRepository} from "../../constants/imageRepository";
@@ -96,15 +112,38 @@ import EventGroupConfiguration from "../Event/GroupConfiguration/groupConfigurat
 import {PlanedMealsRecipe} from "../Event/Menuplan/menuplan.class";
 import {DialogType, useCustomDialog} from "../Shared/customDialogContext";
 import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-  DropResult,
-} from "react-beautiful-dnd";
+  attachClosestEdge,
+  type Edge,
+  extractClosestEdge,
+} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import {DropIndicator} from "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box";
+import invariant from "tiny-invariant";
+import {combine} from "@atlaskit/pragmatic-drag-and-drop/combine";
+import {
+  draggable,
+  dropTargetForElements,
+  monitorForElements,
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import {reorder} from "@atlaskit/pragmatic-drag-and-drop/reorder";
+import {triggerPostMoveFlash} from "@atlaskit/pragmatic-drag-and-drop-flourish/trigger-post-move-flash";
+import {getReorderDestinationIndex} from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/get-reorder-destination-index";
+import mergeRefs from "@atlaskit/ds-lib/merge-refs";
+
+import {
+  DraggableState,
+  idleState,
+  draggingState,
+  ListContextValue,
+  ItemEntry,
+  LastCardMoved,
+} from "../../constants/dragAndDrop";
+import Fuse, {FuseResult} from "fuse.js";
+
 import {
   NavigationValuesContext,
   NavigationObject,
 } from "../Navigation/navigationContext";
+import {HELPCENTER_URL} from "../../constants/defaultValues";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
@@ -118,6 +157,8 @@ enum ReducerActions {
   DEPARTMENTS_FETCH_SUCCESS = "DEPARTMENTS_FETCH_SUCCESS",
   MATERIALS_FETCH_INIT = "MATERIALS_FETCH_INIT",
   MATERIALS_FETCH_SUCCESS = "MATERIALS_FETCH_SUCCESS",
+  PUBLIC_RECIPES_FETCH_INIT = "PUBLIC_RECIPES_FETCH_INIT",
+  PUBLIC_RECIPES_FETCH_SUCCESS = "PUBLIC_RECIPES_FETCH_SUCCESS",
   DRAG_AND_DROP_UDPATE = "DRAG_AND_DROP_UDPATE",
   ON_FIELD_CHANGE = "ON_FIELD_CHANGE",
   ON_INGREDIENT_CHANGE = "ON_INGREDIENT_CHANGE",
@@ -140,50 +181,43 @@ type DispatchAction = {
 };
 type State = {
   recipe: Recipe;
-  // recipeSavedVersion: Recipe;
   units: Unit[];
   products: Product[];
   departments: Department[];
   materials: Material[];
-  // scaledPortions: number;
-  // scaledIngredients: Ingredient[];
-  // allRecipes: [],
-  isLoading: boolean;
+  publicRecipes: RecipeShort[];
   error: Error | null;
   snackbar: Snackbar;
-  // _loadingRecipe: boolean;
-  _loadingUnits: boolean;
-  _loadingProducts: boolean;
-  _loadingDepartments: boolean;
-  _loadingMaterials: boolean;
-  // _loadingRecipes: boolean;
+  loadCollector: {
+    units: boolean;
+    products: boolean;
+    departments: boolean;
+    materials: boolean;
+    publicRecipes: boolean;
+  };
 };
 
 const inititialState: State = {
   recipe: new Recipe(),
-  // recipeSavedVersion: new Recipe(),
   units: [],
   products: [],
   departments: [],
   materials: [],
-  // scaledPortions: 0,
-  // scaledIngredients: [],
-  // allRecipes: [],
-  isLoading: false,
+  publicRecipes: [],
   error: null,
   snackbar: {open: false, severity: "success", message: ""},
-  // _loadingRecipe: false,
-  _loadingUnits: false,
-  _loadingProducts: false,
-  _loadingDepartments: false,
-  _loadingMaterials: false,
-  // _loadingRecipes: false,
+  loadCollector: {
+    units: false,
+    products: false,
+    departments: false,
+    materials: false,
+    publicRecipes: false,
+  },
 };
-
 enum DragDropTypes {
-  INGREDIENT = "INGREDIENT",
-  PREPARATIONSTEP = "PREPARATIONSTEPS",
-  MATERIAL = "MATERIAL",
+  INGREDIENT = "ingredients",
+  PREPARATIONSTEP = "preparationSteps",
+  MATERIAL = "materials",
 }
 
 enum RecipeBlock {
@@ -215,7 +249,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
         // 💥 Achtung! Funktioniert nur mit einer Verschachtelungs-
         //             tiefe von 1.
         field = action.payload.field.split(".")[0];
-        value = state.recipe[field];
+        value = state.recipe[field as keyof Recipe];
         value[action.payload.field.split(".")[1]] = action.payload.value;
       } else {
         field = action.payload.field;
@@ -230,11 +264,12 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
       };
     case ReducerActions.ON_INGREDIENT_CHANGE:
       tmpIngredients = {...state.recipe.ingredients};
-      tmpIngredients.entries[action.payload.uid][action.payload.field] =
-        action.payload.value;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (tmpIngredients.entries[action.payload.uid as string] as any)[
+        action.payload.field
+      ] = action.payload.value;
 
       // Prüfen ob es das Produkt in der Liste gibt. Sonst hizufügen
-
       // Wenn das die letzte Zutat (also kein Abschnitt) ist, automatisch eine neue einfügen
       if (
         action.payload.uid ==
@@ -300,13 +335,13 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
         ...state,
         recipe: {
           ...state.recipe,
-          [action.payload.fieldName]: action.payload.value,
+          [action.payload.fieldName as keyof Recipe]: action.payload.value,
         },
       };
     case ReducerActions.ON_PREPARATIONSTEP_CHANGE:
       preparationStepsToUpdate = {...state.recipe.preparationSteps};
 
-      preparationStepsToUpdate.entries[action.payload.uid][
+      (preparationStepsToUpdate.entries[action.payload.uid] as any)[
         action.payload.fieldName
       ] = action.payload.value;
       // Wenn das die letzte Zeile ist, automatisch eine neue einfügen
@@ -340,7 +375,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.ON_MATERIAL_CHANGE:
       tmpMaterials = {...state.recipe.materials};
 
-      tmpMaterials.entries[action.payload.uid][action.payload.field] =
+      (tmpMaterials.entries[action.payload.uid] as any)[action.payload.field] =
         action.payload.value;
 
       // Wenn das die letzte Zeile ist, automatisch eine neue einfügen
@@ -394,75 +429,87 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.UNITS_FETCH_INIT:
       return {
         ...state,
-        isLoading: true,
-        _loadingUnits: true,
+        loadCollector: {
+          ...state.loadCollector,
+          units: true,
+        },
       };
     case ReducerActions.UNITS_FETCH_SUCCESS:
       return {
         ...state,
-        isLoading: deriveIsLoading(
-          state._loadingProducts,
-          false,
-          state._loadingDepartments,
-          state._loadingMaterials
-        ),
         units: action.payload as Unit[],
-        _loadingUnits: false,
+        loadCollector: {
+          ...state.loadCollector,
+          units: false,
+        },
       };
     case ReducerActions.PRODUCTS_FETCH_INIT:
       return {
         ...state,
-        isLoading: true,
-        _loadingProducts: true,
+        loadCollector: {
+          ...state.loadCollector,
+          products: true,
+        },
       };
     case ReducerActions.PRODUCTS_FETCH_SUCCESS:
       return {
         ...state,
-        isLoading: deriveIsLoading(
-          false,
-          state._loadingUnits,
-          state._loadingDepartments,
-          state._loadingMaterials
-        ),
         products: action.payload as Product[],
-        _loadingProducts: false,
+        loadCollector: {
+          ...state.loadCollector,
+          products: false,
+        },
       };
     case ReducerActions.DEPARTMENTS_FETCH_INIT:
       return {
         ...state,
-        isLoading: true,
-        _loadingDepartments: true,
+        loadCollector: {
+          ...state.loadCollector,
+          departments: true,
+        },
       };
     case ReducerActions.DEPARTMENTS_FETCH_SUCCESS:
       return {
         ...state,
-        isLoading: deriveIsLoading(
-          state._loadingProducts,
-
-          state._loadingUnits,
-          false,
-          state._loadingMaterials
-        ),
         departments: action.payload as Department[],
-        _loadingDepartments: false,
+        loadCollector: {
+          ...state.loadCollector,
+          departments: false,
+        },
       };
     case ReducerActions.MATERIALS_FETCH_INIT:
       return {
         ...state,
-        isLoading: true,
-        _loadingMaterials: true,
+        loadCollector: {
+          ...state.loadCollector,
+          materials: true,
+        },
       };
     case ReducerActions.MATERIALS_FETCH_SUCCESS:
       return {
         ...state,
-        isLoading: deriveIsLoading(
-          state._loadingProducts,
-          state._loadingUnits,
-          state._loadingDepartments,
-          false
-        ),
         materials: action.payload as Material[],
-        _loadingMaterials: false,
+        loadCollector: {
+          ...state.loadCollector,
+          materials: false,
+        },
+      };
+    case ReducerActions.PUBLIC_RECIPES_FETCH_INIT:
+      return {
+        ...state,
+        loadCollector: {
+          ...state.loadCollector,
+          publicRecipes: true,
+        },
+      };
+    case ReducerActions.PUBLIC_RECIPES_FETCH_SUCCESS:
+      return {
+        ...state,
+        publicRecipes: action.payload as RecipeShort[],
+        loadCollector: {
+          ...state.loadCollector,
+          publicRecipes: false,
+        },
       };
     case ReducerActions.SNACKBAR_SHOW:
       return {
@@ -496,7 +543,13 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.GENERIC_ERROR:
       return {
         ...state,
-        isLoading: false,
+        loadCollector: {
+          units: false,
+          products: false,
+          departments: false,
+          materials: false,
+          publicRecipes: false,
+        },
         error: action.payload as Error,
       };
     case ReducerActions.CLEAR_STATE:
@@ -507,23 +560,74 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
       throw new Error();
   }
 };
-const deriveIsLoading = (
-  loadingProducts: boolean,
-  loadingUnits: boolean,
-  loadingDepartment: boolean,
-  loadingMaterials: boolean
-) => {
-  if (
-    loadingProducts === false &&
-    loadingUnits === false &&
-    loadingDepartment === false &&
-    loadingMaterials === false
-  ) {
-    return false;
-  } else {
-    return true;
-  }
+const PreparationListContext = createContext<ListContextValue | null>(null);
+const IngredientListContext = createContext<ListContextValue | null>(null);
+const MaterialListContext = createContext<ListContextValue | null>(null);
+
+function usePreparationListContext() {
+  const listContext = useContext(PreparationListContext);
+  invariant(listContext !== null);
+  return listContext;
+}
+function useIngredientListContext() {
+  const listContext = useContext(IngredientListContext);
+  invariant(listContext !== null);
+  return listContext;
+}
+
+function useMaterialListContext() {
+  const listContext = useContext(MaterialListContext);
+  invariant(listContext !== null);
+  return listContext;
+}
+const itemKey = Symbol("item");
+type ItemData<Item> = {
+  [itemKey]: true;
+  item: Item;
+  index: number;
+  instanceId: symbol;
 };
+
+function getItemData<Item>({
+  item,
+  index,
+  instanceId,
+}: {
+  item: Item;
+  index: number;
+  instanceId: symbol;
+}): ItemData<Item> {
+  return {
+    [itemKey]: true,
+    item,
+    index,
+    instanceId,
+  };
+}
+
+function isItemData<T>(
+  data: Record<string | symbol, unknown>
+): data is ItemData<T> {
+  return data[itemKey] === true;
+}
+function getItemRegistry() {
+  const registry = new Map<string, HTMLElement>();
+
+  function register({itemUiId, element}: ItemEntry) {
+    registry.set(itemUiId, element);
+
+    return function unregister() {
+      registry.delete(itemUiId);
+    };
+  }
+
+  function getElement(itemId: string): HTMLElement | null {
+    return registry.get(itemId) ?? null;
+  }
+
+  return {register, getElement};
+}
+
 interface ColumnSizeTypes {
   xs: GridSize;
   sm: GridSize;
@@ -535,7 +639,6 @@ interface GridSizeColums {
   scalingFactor: ColumnSizeTypes;
   product: ColumnSizeTypes;
   detail: ColumnSizeTypes;
-  buttons: ColumnSizeTypes;
 }
 interface ColumnSizes {
   ScaleFactorOff: GridSizeColums;
@@ -543,22 +646,20 @@ interface ColumnSizes {
 }
 const GRIDSIZE_COLUMNS: ColumnSizes = {
   ScaleFactorOff: {
-    pos: {xs: 1, sm: 1},
-    quantity: {xs: 2, sm: 2},
-    unit: {xs: 2, sm: 1},
-    scalingFactor: {xs: 1, sm: 1},
-    product: {xs: 4, sm: 4},
-    detail: {xs: 3, sm: 3},
-    buttons: {xs: 1, sm: 1},
+    pos: {xs: 0, sm: 1},
+    quantity: {xs: 7, sm: 2},
+    unit: {xs: 5, sm: 2},
+    scalingFactor: {xs: 0, sm: 0},
+    product: {xs: 7, sm: 4},
+    detail: {xs: 5, sm: 3},
   },
   ScaleFactorOn: {
-    pos: {xs: 1, sm: 1},
+    pos: {xs: 0, sm: 1},
     quantity: {xs: 5, sm: 2},
-    unit: {xs: 4, sm: 1},
+    unit: {xs: 5, sm: 1},
     scalingFactor: {xs: 2, sm: 1},
-    product: {xs: 6, sm: 3},
+    product: {xs: 7, sm: 4},
     detail: {xs: 5, sm: 3},
-    buttons: {xs: 1, sm: 1},
   },
 };
 /* ===================================================================
@@ -590,30 +691,33 @@ const RecipeEdit = ({
   onUpdateRecipe,
   authUser,
 }: RecipeEditProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {replace} = useHistory();
-  const navigationValuesContext = React.useContext(NavigationValuesContext);
 
-  const [state, dispatch] = React.useReducer(recipesReducer, inititialState);
-  const [tagAddDialogOpen, setTagAddDialogOpen] = React.useState(false);
-  const [triggeredIngredientUid, setTriggeredIngredientUid] =
-    React.useState("");
+  const navigationValuesContext = useContext(NavigationValuesContext);
+
+  const [state, dispatch] = useReducer(recipesReducer, inititialState);
+  const [tagAddDialogOpen, setTagAddDialogOpen] = useState(false);
+  const [triggeredIngredientUid, setTriggeredIngredientUid] = useState("");
   const [positionMenuSelectedItem, setPositionMenuSelectedItem] =
-    React.useState<PositionMenuSelectedItem>({
+    useState<PositionMenuSelectedItem>({
       type: RecipeBlock.none,
       uid: "",
     });
   const [positionMenuAnchorElement, setPositionMenuAnchorElement] =
-    React.useState<HTMLElement | null>(null);
-  const [productAddPopupValues, setProductAddPopupValues] = React.useState({
+    useState<HTMLElement | null>(null);
+  const [productAddPopupValues, setProductAddPopupValues] = useState({
     ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
     ...{popUpOpen: false},
   });
-  const [triggeredMaterialUid, setTriggeredMaterialUid] = React.useState("");
-  const [materialAddPopupValues, setMaterialAddPopupValues] = React.useState({
+  const [triggeredMaterialUid, setTriggeredMaterialUid] = useState("");
+  const [materialAddPopupValues, setMaterialAddPopupValues] = useState({
     ...MATERIAL_POP_UP_VALUES_INITIAL_STATE,
     ...{popUpOpen: false},
   });
+  const [possibleDuplicateRecipes, setPossibleDuplicateRecipes] = useState<
+    FuseResult<RecipeShort>[]
+  >([]);
 
   const {customDialog} = useCustomDialog();
   if (!state.recipe.name && dbRecipe.name && !isEmbedded) {
@@ -625,7 +729,7 @@ const RecipeEdit = ({
   /* ------------------------------------------
   // Navigation-Handler
   // ------------------------------------------ */
-  React.useEffect(() => {
+  useEffect(() => {
     navigationValuesContext?.setNavigationValues({
       action: Action.EDIT,
       object: NavigationObject.usedRecipes,
@@ -634,7 +738,7 @@ const RecipeEdit = ({
   /* ------------------------------------------
   // Rezept, dass übergeben wurde in eigenen State speichern
   // ------------------------------------------ */
-  React.useEffect(() => {
+  useEffect(() => {
     dispatch({
       type: ReducerActions.SET_RECIPE,
       payload: {
@@ -645,7 +749,7 @@ const RecipeEdit = ({
   /* ------------------------------------------
   // Daten aus der DB lesen
   // ------------------------------------------ */
-  React.useEffect(() => {
+  useEffect(() => {
     if (state.units.length === 0) {
       dispatch({
         type: ReducerActions.UNITS_FETCH_INIT,
@@ -737,23 +841,48 @@ const RecipeEdit = ({
           });
         });
     }
+    if (state.publicRecipes.length === 0) {
+      dispatch({
+        type: ReducerActions.PUBLIC_RECIPES_FETCH_INIT,
+        payload: {},
+      });
+      RecipeShort.getShortRecipesPublic({firebase: firebase})
+        .then((result) => {
+          dispatch({
+            type: ReducerActions.PUBLIC_RECIPES_FETCH_SUCCESS,
+            payload: result,
+          });
+        })
+        .catch((error) => {
+          console.error(error);
+          dispatch({
+            type: ReducerActions.GENERIC_ERROR,
+            payload: error,
+          });
+        });
+    }
   }, []);
   /* ------------------------------------------
   // Feldwert ändern - onChange
   // ------------------------------------------ */
   const onChangeField = (
-    event:
-      | React.ChangeEvent<HTMLInputElement>
-      | React.ChangeEvent<{[key: string]: any}>
+    event: SelectChangeEvent<MenuType[]> | React.ChangeEvent<HTMLInputElement>
   ) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let value: any;
 
-    if (event.target.name === "outdoorKitchenSuitable") {
+    if (
+      event.target instanceof HTMLInputElement &&
+      event.target.name === "outdoorKitchenSuitable"
+    ) {
       value = event.target.checked;
-    } else if (event.target.name === "menuTypes") {
-      let selectedMenuTypes: MenuType[] = event.target.value.map(
-        (value: string) => parseInt(value)
-      );
+    } else if (
+      Array.isArray(event.target.value) &&
+      event.target.name === "menuTypes"
+    ) {
+      let selectedMenuTypes: MenuType[] = (
+        event.target.value as unknown as string[]
+      ).map((value: string) => parseInt(value));
 
       let newValue: MenuType;
       // Der Wert wird als String zurückgegeben, wir speichern ihn aber als Number
@@ -783,6 +912,36 @@ const RecipeEdit = ({
         value: value,
       },
     });
+  };
+  // Prüfen ob es das Rezept bereits gibt
+  const onBlurRecipeName = (event: React.FocusEvent<HTMLInputElement>) => {
+    // Die Prüfung macht nur Sinn, wenn es sich um ein neues Rezept handelt
+    if (state.recipe.uid) {
+      return;
+    }
+
+    const newRecipeName = event.target.value;
+
+    const fuseOptions = {
+      // isCaseSensitive: false,
+      // includeScore: false,
+      // ignoreDiacritics: false,
+      // shouldSort: true,
+      // includeMatches: false,
+      // findAllMatches: false,
+      // minMatchCharLength: 1,
+      // location: 0,
+      threshold: 0.5,
+      // distance: 100,
+      // useExtendedSearch: false,
+      // ignoreLocation: false,
+      // ignoreFieldNorm: false,
+      // fieldNormWeight: 1,
+      keys: ["name"],
+    };
+
+    const fuse = new Fuse(state.publicRecipes, fuseOptions);
+    setPossibleDuplicateRecipes(fuse.search(newRecipeName));
   };
   const onChangeIngredient = (
     event?: React.ChangeEvent<HTMLInputElement>,
@@ -817,7 +976,7 @@ const RecipeEdit = ({
 
     let value: string | IngredientProduct;
     if (
-      (action === "select-option" || action === "blur") &&
+      (action === "selectOption" || action === "blur") &&
       objectId?.startsWith("product_") &&
       typeof newValue == "object"
     ) {
@@ -913,7 +1072,7 @@ const RecipeEdit = ({
     let value: string | RecipeProduct;
 
     if (
-      (action === "select-option" || action === "blur") &&
+      (action === "selectOption" || action === "blur") &&
       objectId?.startsWith("material_")
     ) {
       // Prüfen ob neues Material angelegt wird
@@ -960,8 +1119,8 @@ const RecipeEdit = ({
   // Snackback 
   // ------------------------------------------ */
   const handleSnackbarClose = (
-    event: React.SyntheticEvent | React.MouseEvent,
-    reason?: string
+    event: Event | React.SyntheticEvent<any, Event>,
+    reason: SnackbarCloseReason
   ) => {
     if (reason === "clickaway") {
       return;
@@ -975,6 +1134,40 @@ const RecipeEdit = ({
   // Save // Cancel
   // ------------------------------------------ */
   const onSave = async () => {
+    if (state.recipe.uid === "") {
+      // Wenn nur eine Zutat Hinweis auf Doku
+      console.log(state.recipe);
+      if (
+        Object.values(state.recipe.ingredients.entries).filter(
+          (entry) =>
+            entry.posType == PositionType.ingredient &&
+            entry.product?.uid !== ""
+        ).length == 1
+      ) {
+        const doSave = await customDialog({
+          dialogType: DialogType.Confirm,
+          title: TEXT.PRO_TIP,
+          text: (
+            <Typography>
+              {TEXT.PRO_TIP_ADD_ITEM_TO_MENUPLAN}
+              <Link
+                href={`${HELPCENTER_URL}/docs/event/menueplan/#produkte-und-materialien`}
+                target="_blank"
+              >
+                Anleitung
+              </Link>
+            </Typography>
+          ),
+          buttonTextConfirm: "Speichern",
+          buttonTextCancel: "Abbrechen",
+        });
+        // Pro-Tipp:
+        if (!doSave) {
+          return;
+        }
+      }
+    }
+
     try {
       Recipe.checkRecipeData(state.recipe);
     } catch (error) {
@@ -1298,231 +1491,166 @@ const RecipeEdit = ({
   /* ------------------------------------------
   // Drag & Drop Handler
   // ------------------------------------------ */
-  const onDragEnd = (result: DropResult) => {
-    const {destination, source, type} = result;
-    let draggableId = result.draggableId;
-
-    if (draggableId.includes("_")) {
-      draggableId = draggableId.split("_")[1];
-    }
-    // GateKeeper
-    if (!destination) {
-      return;
-    }
-    if (
-      destination?.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
-      return;
-    }
-
-    if (destination.droppableId.includes("_")) {
-      destination.droppableId = destination.droppableId.split("_")[0];
-    }
-    if (source.droppableId.includes("_")) {
-      source.droppableId = source.droppableId.split("_")[0];
-    }
-
-    let newIngredientsOrder: string[];
-    let newPreparationStepsOrder: string[];
-    let newMaterialsOrder: string[];
-    switch (type) {
-      case DragDropTypes.INGREDIENT:
-        newIngredientsOrder = [...state.recipe.ingredients.order];
-
-        if (source.droppableId === destination.droppableId) {
-          // Reihenfolge in der gleichen Box angepasst
-          newIngredientsOrder.splice(source.index, 1);
-          newIngredientsOrder.splice(destination?.index, 0, draggableId);
-
-          dispatch({
-            type: ReducerActions.DRAG_AND_DROP_UDPATE,
-            payload: {field: "ingredients", value: newIngredientsOrder},
-          });
-        } else {
-          throw Error("Drag&Drop Error");
-        }
-        break;
-      case DragDropTypes.PREPARATIONSTEP:
-        newPreparationStepsOrder = [...state.recipe.preparationSteps.order];
-        if (source.droppableId === destination.droppableId) {
-          // Reihenfolge in der gleichen Box angepasst
-          newPreparationStepsOrder.splice(source.index, 1);
-          newPreparationStepsOrder.splice(destination?.index, 0, draggableId);
-
-          dispatch({
-            type: ReducerActions.DRAG_AND_DROP_UDPATE,
-            payload: {
-              field: "preparationSteps",
-              value: newPreparationStepsOrder,
-            },
-          });
-        } else {
-          throw Error("Drag&Drop Error");
-        }
-        break;
-      case DragDropTypes.MATERIAL:
-        newMaterialsOrder = [...state.recipe.materials.order];
-        if (source.droppableId === destination.droppableId) {
-          // Reihenfolge in der gleichen Box angepasst
-          newMaterialsOrder.splice(source.index, 1);
-          newMaterialsOrder.splice(destination?.index, 0, draggableId);
-
-          dispatch({
-            type: ReducerActions.DRAG_AND_DROP_UDPATE,
-            payload: {field: "materials", value: newMaterialsOrder},
-          });
-        } else {
-          throw Error("Drag&Drop Error");
-        }
-        break;
-    }
+  const onDragAndDropUpdate = (
+    newOrder: string[],
+    dragAndDropListType: DragDropTypes
+  ) => {
+    dispatch({
+      type: ReducerActions.DRAG_AND_DROP_UDPATE,
+      payload: {field: dragAndDropListType, value: newOrder},
+    });
   };
+
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <React.Fragment>
-        {/* wenn Variante auch Komponenten aus dem View holen!*/}
-        {state.recipe.type == RecipeType.variant ? (
-          <RecipeHeaderVariant recipe={state.recipe} onChange={onChangeField} />
-        ) : (
-          <RecipeHeader recipe={state.recipe} onChange={onChangeField} />
-        )}
+    // <DragDropContext onDragEnd={onDragEnd}>
+    <React.Fragment>
+      {/* wenn Variante auch Komponenten aus dem View holen!*/}
+      {state.recipe.type == RecipeType.variant ? (
+        <RecipeHeaderVariant recipe={state.recipe} onChange={onChangeField} />
+      ) : (
+        <RecipeHeader
+          recipe={state.recipe}
+          possibleDuplicateRecipes={possibleDuplicateRecipes}
+          onChange={onChangeField}
+          onBlur={onBlurRecipeName}
+        />
+      )}
 
-        <RecipeButtonRow onSave={onSave} onCancel={onCancel} />
-        <RecipeDivider />
-        <Container className={classes.container} component="main" maxWidth="md">
-          <Backdrop className={classes.backdrop} open={isLoading}>
-            <CircularProgress color="inherit" />
-          </Backdrop>
+      <RecipeButtonRow onSave={onSave} onCancel={onCancel} />
+      <RecipeDivider />
+      <Container sx={classes.container} component="main" maxWidth="lg">
+        <Backdrop sx={classes.backdrop} open={isLoading}>
+          <CircularProgress color="inherit" />
+        </Backdrop>
 
-          <Grid container spacing={4} justifyContent="center">
-            {state.error && (
-              <Grid item key={"error"} xs={12}>
-                <AlertMessage
-                  error={state.error}
-                  messageTitle={TEXT.ALERT_TITLE_WAIT_A_MINUTE}
-                />
-              </Grid>
-            )}
-            {mealPlan.length > 0 && groupConfiguration && (
-              <Grid item xs={12} sm={6}>
-                <MealPlanPanelView
-                  mealPlan={mealPlan}
-                  groupConfiguration={groupConfiguration}
-                />
-              </Grid>
-            )}
-            <Grid item xs={12} sm={6}>
-              {state.recipe.type == RecipeType.variant ? (
-                // Die Variante darf die generellen Infos nicht anpassen
-                <RecipeInfoPanelView
-                  recipe={state.recipe}
-                  onTagDelete={onTagDelete}
-                  onTagAdd={onTagAdd}
-                  authUser={authUser}
-                />
-              ) : (
-                <RecipeInfoPanel
-                  recipe={state.recipe}
-                  onTagDelete={onTagDelete}
-                  onTagAdd={onTagAdd}
-                  onChange={onChangeField}
-                />
-              )}
-            </Grid>
-            <RecipeDivider style={{marginTop: "1em", marginBottom: "1em"}} />
-            <Grid item xs={12}>
-              <RecipeIngredients
-                recipe={state.recipe}
-                units={state.units}
-                products={state.products}
-                onChangeField={onChangeField}
-                onChangeIngredient={onChangeIngredient}
-                // onChangeSection={onChangeSection}
-                onPositionMoreClick={onPositionMoreClick}
+        <Grid container spacing={4} justifyContent="center">
+          {state.error && (
+            <Grid key={"error"} xs={12}>
+              <AlertMessage
+                error={state.error}
+                messageTitle={TEXT.ALERT_TITLE_WAIT_A_MINUTE}
               />
             </Grid>
-            <RecipeDivider style={{marginTop: "1em", marginBottom: "1em"}} />
-            <Grid item xs={12}>
-              <RecipePreparationSteps
-                recipe={state.recipe}
-                onChange={onChangePreparationStep}
-                // onChangeSection={onChangeSection}
-                onPositionMoreClick={onPositionMoreClick}
+          )}
+          {mealPlan.length > 0 && groupConfiguration && (
+            <Grid xs={12} md={6}>
+              <MealPlanPanelView
+                mealPlan={mealPlan}
+                groupConfiguration={groupConfiguration}
               />
             </Grid>
-            <RecipeDivider style={{marginTop: "1em", marginBottom: "1em"}} />
-            <Grid item xs={12}>
-              <RecipeMaterial
+          )}
+          <Grid xs={12} md={6}>
+            {state.recipe.type == RecipeType.variant ? (
+              // Die Variante darf die generellen Infos nicht anpassen
+              <RecipeInfoPanelView
                 recipe={state.recipe}
-                materials={state.materials}
-                onChange={onChangeMaterial}
-                // onChangeSection={onChangeSection}
-                onPositionMoreClick={onPositionMoreClick}
+                onTagDelete={onTagDelete}
+                onTagAdd={onTagAdd}
+                authUser={authUser}
               />
-            </Grid>
-            {state.recipe.type == RecipeType.variant && (
-              <Grid item xs={12}>
-                <RecipeVariantNote
-                  recipe={state.recipe}
-                  onChange={onChangeField}
-                />
-              </Grid>
+            ) : (
+              <RecipeInfoPanel
+                recipe={state.recipe}
+                onTagDelete={onTagDelete}
+                onTagAdd={onTagAdd}
+                onChange={onChangeField}
+              />
             )}
           </Grid>
-          <RecipeButtonRow onSave={onSave} onCancel={onCancel} />
-        </Container>
-        <PositionMoreClickContextMenu
-          anchorEl={positionMenuAnchorElement}
-          handleMenuClick={onPostionMoreContextMenuClick}
-          handleMenuClose={onPositionMoreContextMenuClose}
-          recipeBlock={positionMenuSelectedItem.type}
-          uid={positionMenuSelectedItem.uid}
-          // positionType={positionMenuSelectedItem.positionType}
-          // noListEntries={positionMenuSelectedItem.noOfPostitions}
-        />
-        <DialogProduct
-          firebase={firebase}
-          productName={productAddPopupValues.name}
-          productUid={productAddPopupValues.uid}
-          productDietProperties={productAddPopupValues.dietProperties}
-          productUsable={productAddPopupValues.usable}
-          dialogType={ProductDialog.CREATE}
-          dialogOpen={productAddPopupValues.popUpOpen}
-          handleOk={onCreateProductToAdd}
-          handleClose={onCloseProductToAdd}
-          handleChooseExisting={onChooseExistingProductToAdd}
-          products={state.products}
-          units={state.units}
-          departments={state.departments}
-          authUser={authUser}
-        />
-        <DialogMaterial
-          firebase={firebase}
-          materialName={materialAddPopupValues.name}
-          materialUid={materialAddPopupValues.uid}
-          materialType={materialAddPopupValues.type}
-          materialUsable={materialAddPopupValues.usable}
-          materials={state.materials}
-          dialogType={MaterialDialog.CREATE}
-          dialogOpen={materialAddPopupValues.popUpOpen}
-          handleOk={onCreateMaterialToAdd}
-          handleClose={onCloseMaterialToAdd}
-          authUser={authUser}
-        />
-        <DialogTagAdd
-          dialogOpen={tagAddDialogOpen}
-          handleClose={handleTagAddDialogClose}
-          handleAddTags={handleTagAddDialogAdd}
-        />
-        <CustomSnackbar
-          message={state.snackbar.message}
-          severity={state.snackbar.severity}
-          snackbarOpen={state.snackbar.open}
-          handleClose={handleSnackbarClose}
-        />
-      </React.Fragment>
-    </DragDropContext>
+          <RecipeDivider style={{marginTop: "1em", marginBottom: "1em"}} />
+          <Grid xs={12}>
+            <RecipeIngredients
+              recipe={state.recipe}
+              units={state.units}
+              products={state.products}
+              onChangeField={onChangeField}
+              onChangeIngredient={onChangeIngredient}
+              onDragAndDropUpdate={onDragAndDropUpdate}
+              onPositionMoreClick={onPositionMoreClick}
+            />
+          </Grid>
+          <RecipeDivider style={{marginTop: "1em", marginBottom: "1em"}} />
+          <Grid xs={12}>
+            <RecipePreparationSteps
+              recipe={state.recipe}
+              onChange={onChangePreparationStep}
+              onDragAndDropUpdate={onDragAndDropUpdate}
+              onPositionMoreClick={onPositionMoreClick}
+            />
+          </Grid>
+          <RecipeDivider style={{marginTop: "1em", marginBottom: "1em"}} />
+          <Grid xs={12}>
+            <RecipeMaterials
+              recipe={state.recipe}
+              materials={state.materials}
+              onChange={onChangeMaterial}
+              onDragAndDropUpdate={onDragAndDropUpdate}
+              onPositionMoreClick={onPositionMoreClick}
+            />
+          </Grid>
+          {state.recipe.type == RecipeType.variant && (
+            <Grid xs={12}>
+              <RecipeVariantNote
+                recipe={state.recipe}
+                onChange={onChangeField}
+              />
+            </Grid>
+          )}
+        </Grid>
+        <RecipeButtonRow onSave={onSave} onCancel={onCancel} />
+      </Container>
+      <PositionMoreClickContextMenu
+        anchorEl={positionMenuAnchorElement}
+        handleMenuClick={onPostionMoreContextMenuClick}
+        handleMenuClose={onPositionMoreContextMenuClose}
+        recipeBlock={positionMenuSelectedItem.type}
+        uid={positionMenuSelectedItem.uid}
+        // positionType={positionMenuSelectedItem.positionType}
+        // noListEntries={positionMenuSelectedItem.noOfPostitions}
+      />
+      <DialogProduct
+        firebase={firebase}
+        productName={productAddPopupValues.name}
+        productUid={productAddPopupValues.uid}
+        productDietProperties={productAddPopupValues.dietProperties}
+        productUsable={productAddPopupValues.usable}
+        dialogType={ProductDialog.CREATE}
+        dialogOpen={productAddPopupValues.popUpOpen}
+        handleOk={onCreateProductToAdd}
+        handleClose={onCloseProductToAdd}
+        handleChooseExisting={onChooseExistingProductToAdd}
+        products={state.products}
+        units={state.units}
+        departments={state.departments}
+        authUser={authUser}
+      />
+      <DialogMaterial
+        firebase={firebase}
+        materialName={materialAddPopupValues.name}
+        materialUid={materialAddPopupValues.uid}
+        materialType={materialAddPopupValues.type}
+        materialUsable={materialAddPopupValues.usable}
+        materials={state.materials}
+        dialogType={MaterialDialog.CREATE}
+        dialogOpen={materialAddPopupValues.popUpOpen}
+        handleOk={onCreateMaterialToAdd}
+        handleClose={onCloseMaterialToAdd}
+        authUser={authUser}
+      />
+      <DialogTagAdd
+        dialogOpen={tagAddDialogOpen}
+        handleClose={handleTagAddDialogClose}
+        handleAddTags={handleTagAddDialogAdd}
+      />
+      <CustomSnackbar
+        message={state.snackbar.message}
+        severity={state.snackbar.severity}
+        snackbarOpen={state.snackbar.open}
+        handleClose={handleSnackbarClose}
+      />
+    </React.Fragment>
+    // </DragDropContext>
   );
 };
 /* ===================================================================
@@ -1530,17 +1658,24 @@ const RecipeEdit = ({
 // =================================================================== */
 interface RecipeHeaderProps {
   recipe: Recipe;
+  possibleDuplicateRecipes: FuseResult<RecipeShort>[];
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur: (event: React.FocusEvent<HTMLInputElement>) => void;
 }
-const RecipeHeader = ({recipe, onChange}: RecipeHeaderProps) => {
-  const classes = useStyles();
+const RecipeHeader = ({
+  recipe,
+  possibleDuplicateRecipes,
+  onChange,
+  onBlur,
+}: RecipeHeaderProps) => {
+  const classes = useCustomStyles();
   // document.title = recipe.name ? recipe.name : TEXT.NEW_RECIPE;
 
   return (
     <React.Fragment>
       <Container
         maxWidth="md"
-        className={classes.recipeHeader}
+        sx={classes.recipeHeader}
         style={{
           display: "flex",
           position: "relative",
@@ -1555,7 +1690,7 @@ const RecipeHeader = ({recipe, onChange}: RecipeHeaderProps) => {
           backgroundRepeat: "no-repeat",
         }}
       >
-        <div className={classes.recipeHeaderTitle}>
+        <Box component="div" sx={classes.recipeHeaderTitle}>
           <TextField
             id="name"
             key="name"
@@ -1565,9 +1700,28 @@ const RecipeHeader = ({recipe, onChange}: RecipeHeaderProps) => {
             label={TEXT.FIELD_NAME}
             value={recipe.name}
             onChange={onChange}
+            onBlur={onBlur}
             autoFocus
-            style={{marginBottom: "2ex"}}
+            style={{marginBottom: "1ex"}}
           />
+          {!recipe.uid && possibleDuplicateRecipes.length > 0 && (
+            <Alert severity="warning" style={{marginBottom: "1ex"}}>
+              {TEXT.POSSIBLE_DUPLICATE_FOUND}
+              {/* <br /> */}
+              <ul>
+                {possibleDuplicateRecipes.map((duplicate) => (
+                  <li key={duplicate.item.uid} style={{textAlign: "left"}}>
+                    <Link
+                      key={duplicate.item.uid}
+                      href={`../recipe/${duplicate.item.uid}`}
+                    >
+                      {duplicate.item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Alert>
+          )}
           <Tooltip title={TEXT.TOOLTIP_RECIPE_IMAGE_SOURCE} arrow>
             <TextField
               id="pictureSrc"
@@ -1578,9 +1732,10 @@ const RecipeHeader = ({recipe, onChange}: RecipeHeaderProps) => {
               value={recipe.pictureSrc}
               onChange={onChange}
               helperText={TEXT.HELPERTEXT_RECIPE_IMAGE_SOURCE}
+              style={{marginTop: "1ex"}}
             />
           </Tooltip>
-        </div>
+        </Box>
       </Container>
     </React.Fragment>
   );
@@ -1593,13 +1748,13 @@ interface RecipeHeaderVariantProps {
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 const RecipeHeaderVariant = ({recipe, onChange}: RecipeHeaderVariantProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
     <React.Fragment>
       <Container
         maxWidth="md"
-        className={classes.recipeHeader}
+        sx={classes.recipeHeader}
         style={{
           display: "flex",
           position: "relative",
@@ -1614,7 +1769,7 @@ const RecipeHeaderVariant = ({recipe, onChange}: RecipeHeaderVariantProps) => {
           backgroundRepeat: "no-repeat",
         }}
       >
-        <div className={classes.recipeHeaderTitle}>
+        <Box component="div" sx={classes.recipeHeaderTitle}>
           <Typography
             component="h1"
             variant="h2"
@@ -1638,9 +1793,9 @@ const RecipeHeaderVariant = ({recipe, onChange}: RecipeHeaderVariantProps) => {
             autoFocus
             style={{marginBottom: "2ex"}}
           />
-        </div>
+        </Box>
         {recipe.pictureSrc && (
-          <div className={classes.recipeHeaderPictureSource}>
+          <Box component="div" sx={classes.recipeHeaderPictureSource}>
             <Tooltip title={TEXT.IMAGE_MAY_BE_SUBJECT_OF_COPYRIGHT} arrow>
               <Typography variant="body2">
                 {TEXT.IMAGE_SOURCE}
@@ -1649,7 +1804,7 @@ const RecipeHeaderVariant = ({recipe, onChange}: RecipeHeaderVariantProps) => {
                 </Link>
               </Typography>
             </Tooltip>
-          </div>
+          </Box>
         )}
       </Container>
     </React.Fragment>
@@ -1699,11 +1854,7 @@ interface RecipeInfoPanelProps {
   recipe: Recipe;
   onTagDelete: (tagToDelete: string) => void;
   onTagAdd: () => void;
-  onChange: (
-    event:
-      | React.ChangeEvent<HTMLInputElement>
-      | React.ChangeEvent<{value: unknown}>
-  ) => void;
+  onChange: (event: SelectChangeEvent<MenuType[]>) => void;
 }
 const RecipeInfoPanel = ({
   recipe,
@@ -1711,14 +1862,8 @@ const RecipeInfoPanel = ({
   onTagAdd,
   onChange,
 }: RecipeInfoPanelProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
-  // const [tipsAndTagsSectionOpen, setTipsAndTagsSectionOpen] =
-  //   React.useState(false);
-
-  // const handleOnTipsAndTagsClick = () => {
-  //   setTipsAndTagsSectionOpen(!tipsAndTagsSectionOpen);
-  // };
   const ITEM_HEIGHT = 48;
   const ITEM_PADDING_TOP = 8;
   const MenuProps = {
@@ -1731,8 +1876,8 @@ const RecipeInfoPanel = ({
   };
 
   return (
-    <Card className={classes.card}>
-      <CardContent className={classes.cardContent}>
+    <Card sx={classes.card}>
+      <CardContent sx={classes.cardContent}>
         <List dense>
           {/* Quelle */}
           <FormListItem
@@ -1781,8 +1926,8 @@ const RecipeInfoPanel = ({
             }
           />
           {/* Menüarten */}
-          <ListItem>
-            <FormControl className={classes.formControl} fullWidth>
+          <ListItem key={"listitem_menuTypes"}>
+            <FormControl sx={classes.formControl} fullWidth>
               <InputLabel id="menuTypesLabel">{TEXT.MENU_TYPE}</InputLabel>
               <Select
                 labelId="menuTypesLabel"
@@ -1792,7 +1937,7 @@ const RecipeInfoPanel = ({
                 multiple
                 value={recipe.menuTypes}
                 onChange={onChange}
-                input={<Input fullWidth />}
+                input={<OutlinedInput label={TEXT.MENU_TYPE} />}
                 renderValue={(selected) => {
                   const selectedValues = selected as unknown as string[];
                   const textArray = selectedValues.map(
@@ -1811,7 +1956,6 @@ const RecipeInfoPanel = ({
                           checked={
                             recipe.menuTypes.indexOf(parseInt(menuType)) > -1
                           }
-                          color="primary"
                         />
                         <ListItemText primary={TEXT.MENU_TYPES[menuType]} />
                       </MenuItem>
@@ -1830,7 +1974,6 @@ const RecipeInfoPanel = ({
                 name={"outdoorKitchenSuitable"}
                 key={"outdoorKitchenSuitable"}
                 id={"outdoorKitchenSuitable"}
-                color="primary"
               />
             </ListItemSecondaryAction>
           </ListItem>
@@ -1855,7 +1998,7 @@ const RecipeInfoPanel = ({
                     key={tag}
                     label={tag}
                     onDelete={() => onTagDelete(tag)}
-                    className={classes.chip}
+                    sx={classes.chip}
                     size="small"
                   />
                 ))}
@@ -1866,18 +2009,13 @@ const RecipeInfoPanel = ({
                 edge="end"
                 aria-label="Tag hinzufügen"
                 onClick={onTagAdd}
+                size="large"
               >
                 <AddIcon />
               </IconButton>
             }
             label={TEXT.FIELD_TAGS}
           />
-          {/* <Switch
-        checked={state.checkedA}
-        onChange={handleChange}
-        name="checkedA"
-        inputProps={{ 'aria-label': 'secondary checkbox' }}
-      /> */}
         </List>
       </CardContent>
     </Card>
@@ -1897,7 +2035,11 @@ interface RecipeIngredientsProps {
     action?: AutocompleteChangeReason,
     objectId?: string
   ) => void;
-  // onChangeSection: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onDragAndDropUpdate: (
+    newOrder: string[],
+    dragAndDropList: DragDropTypes
+  ) => void;
+
   onPositionMoreClick: (event: React.MouseEvent<HTMLElement>) => void;
 }
 const RecipeIngredients = ({
@@ -1906,15 +2048,125 @@ const RecipeIngredients = ({
   products,
   onChangeField,
   onChangeIngredient,
-  // onChangeSection,
+  onDragAndDropUpdate,
   onPositionMoreClick,
 }: RecipeIngredientsProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
+  const theme = useTheme();
+  const breakpointIsXs = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const [gridSize, setGridSize] = React.useState(
-    GRIDSIZE_COLUMNS.ScaleFactorOff
+  const [gridSize, setGridSize] = useState(GRIDSIZE_COLUMNS.ScaleFactorOff);
+  const [showScaleFactors, setShowScaleFactors] = useState(false);
+
+  const [registry] = useState(getItemRegistry);
+  const [lastCardMoved, setLasCardMoved] =
+    useState<LastCardMoved<Ingredient | Section>>(null);
+
+  // Isolated instances of this component from one another
+  const [instanceId] = useState(() => Symbol("instance-id"));
+  const reorderItem = useCallback(
+    ({
+      startIndex,
+      indexOfTarget,
+      closestEdgeOfTarget,
+    }: {
+      startIndex: number;
+      indexOfTarget: number;
+      closestEdgeOfTarget: Edge | null;
+    }) => {
+      const finishIndex = getReorderDestinationIndex({
+        startIndex,
+        closestEdgeOfTarget,
+        indexOfTarget,
+        axis: "vertical",
+      });
+
+      if (finishIndex === startIndex) {
+        // Keine Änderung, Kein Update
+        return;
+      }
+
+      const itemKey = recipe.ingredients.order[startIndex];
+      const item = recipe.ingredients.entries[itemKey];
+
+      onDragAndDropUpdate(
+        reorder({
+          list: recipe.ingredients.order,
+          startIndex,
+          finishIndex,
+        }),
+        DragDropTypes.INGREDIENT
+      );
+      setLasCardMoved({
+        item,
+        previousIndex: startIndex,
+        currentIndex: finishIndex,
+        numberOfItems: recipe.ingredients.order.length,
+      });
+    },
+    [recipe.ingredients]
   );
-  const [showScaleFactors, setShowScaleFactors] = React.useState(false);
+
+  useEffect(() => {
+    return monitorForElements({
+      canMonitor({source}) {
+        return isItemData(source.data) && source.data.instanceId === instanceId;
+      },
+      onDrop({location, source}) {
+        const target = location.current.dropTargets[0];
+        if (!target) {
+          return;
+        }
+
+        const sourceData = source.data;
+        const targetData = target.data;
+        if (!isItemData(sourceData) || !isItemData(targetData)) {
+          return;
+        }
+
+        const indexOfTarget = recipe.ingredients.order.findIndex(
+          (itemUiId) =>
+            itemUiId === (targetData.item as Ingredient | Section).uid
+        );
+        if (indexOfTarget < 0) {
+          return;
+        }
+
+        const closestEdgeOfTarget = extractClosestEdge(targetData);
+        reorderItem({
+          startIndex: sourceData.index,
+          indexOfTarget,
+          closestEdgeOfTarget,
+        });
+      },
+    });
+  }, [instanceId, recipe.ingredients.order, reorderItem]);
+
+  // Drag beendet, Abschlussarbeiten
+  useEffect(() => {
+    if (lastCardMoved === null) {
+      return;
+    }
+    const {item} = lastCardMoved;
+    const element = registry.getElement(item.uid);
+    if (element) {
+      triggerPostMoveFlash(element);
+    }
+  }, [lastCardMoved, registry]);
+
+  const getListLength = useCallback(
+    () => recipe.ingredients.order.length,
+    [recipe.ingredients.order.length]
+  );
+
+  const contextValue: ListContextValue = useMemo(() => {
+    return {
+      registerItem: registry.register,
+      reorderItem,
+      instanceId,
+      getListLength,
+    };
+  }, [registry.register, reorderItem, instanceId, getListLength]);
 
   const onToggleScaleFactors = () => {
     showScaleFactors
@@ -1934,7 +2186,7 @@ const RecipeIngredients = ({
         {TEXT.INGREDIENTS}
       </Typography>
       <Grid container spacing={2} alignItems="center">
-        <Grid item className={classes.centerCenter} xs={6}>
+        <Grid sx={classes.centerCenter} xs={6}>
           <TextField
             id={"portions"}
             key={"portions"}
@@ -1946,7 +2198,7 @@ const RecipeIngredients = ({
             disabled={recipe.type == RecipeType.variant}
           />
         </Grid>
-        <Grid item className={classes.centerCenter} xs={6}>
+        <Grid sx={classes.centerCenter} xs={6}>
           <Typography variant="body2">
             {TEXT.FIELD_SHOW_SCALE_FACTORS}
           </Typography>
@@ -1954,98 +2206,195 @@ const RecipeIngredients = ({
             checked={showScaleFactors}
             onChange={onToggleScaleFactors}
             name="checkedShowScaleFactors"
-            color="primary"
-            size="small"
           />
         </Grid>
-        {/* Zutaten auflisten */}
-        <Droppable
-          droppableId={"ingredients"}
-          type={DragDropTypes.INGREDIENT}
-          key={"droppable_ingredients"}
-        >
-          {(provided, snapshot) => (
-            <Grid item className={classes.centerCenter} xs={12}>
-              <List
-                key={"listIngredients"}
-                innerRef={provided.innerRef}
-                {...provided.droppableProps}
-                className={
-                  snapshot.isDraggingOver
-                    ? classes.ListOnDrop
-                    : classes.ListNoDrop
-                }
-                style={{flexGrow: 1}}
-              >
-                {recipe.ingredients.order.map((ingredientUid, counter) => {
-                  return (
-                    <Draggable
-                      draggableId={ingredientUid}
-                      index={counter}
-                      key={"draggableIngredient" + ingredientUid}
-                      isDragDisabled={recipe.ingredients.order.length <= 1}
-                    >
-                      {(provided, snapshot) => (
-                        <ListItem
-                          key={"listitem_ingredient" + ingredientUid}
-                          id={"listitem_ingredient" + ingredientUid}
-                          innerRef={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className={
-                            snapshot.isDragging
-                              ? classes.listItemOnDrag
-                              : classes.listItemNoDrag
-                          }
-                        >
-                          {recipe.ingredients.entries[ingredientUid].posType ==
-                          PositionType.section ? (
-                            <SectionPosition
-                              key={ingredientUid}
-                              counter={counter}
-                              section={
-                                recipe.ingredients.entries[
-                                  ingredientUid
-                                ] as Section
-                              }
-                              recipeBock={RecipeBlock.ingredients}
-                              onChangeSection={onChangeIngredient}
-                              onPositionMoreClick={onPositionMoreClick}
-                            />
-                          ) : (
-                            <IngredientPosition
-                              position={Recipe.definePositionSectionAdjusted({
-                                uid: ingredientUid,
-                                entries: recipe.ingredients.entries,
-                                order: recipe.ingredients.order,
-                              })}
-                              key={ingredientUid}
-                              ingredient={
-                                recipe.ingredients.entries[
-                                  ingredientUid
-                                ] as Ingredient
-                              }
-                              units={units}
-                              products={products}
-                              gridSize={gridSize}
-                              showScaleFactors={showScaleFactors}
-                              onChangeIngredient={onChangeIngredient}
-                              onPositionMoreClick={onPositionMoreClick}
-                            />
-                          )}
-                        </ListItem>
-                      )}
-                    </Draggable>
-                  );
-                })}
-              </List>
-            </Grid>
-          )}
-        </Droppable>
+
+        <Grid sx={classes.centerCenter} xs={12}>
+          <IngredientListContext.Provider value={contextValue}>
+            <List key={"listIngredients"} style={{flexGrow: 1}}>
+              {recipe.ingredients.order.map((ingredientUid, index) => (
+                <React.Fragment key={"ingredient_" + ingredientUid}>
+                  <IngredientListEntry
+                    key={"ingredientStep_" + ingredientUid}
+                    ingredient={recipe.ingredients.entries[ingredientUid]}
+                    index={index}
+                    recipe={recipe}
+                    units={units}
+                    products={products}
+                    gridSize={gridSize}
+                    showScaleFactors={showScaleFactors}
+                    onChangeIngredient={onChangeIngredient}
+                    onPositionMoreClick={onPositionMoreClick}
+                  />
+                  {breakpointIsXs && <Divider variant="middle" />}
+                </React.Fragment>
+              ))}
+            </List>
+          </IngredientListContext.Provider>
+        </Grid>
       </Grid>
     </React.Fragment>
   );
 };
+/* ===================================================================
+// ========================= Zutaten Position ========================
+// =================================================================== */
+interface IngredientListEntryProps {
+  ingredient: Ingredient | Section;
+  index: number;
+  recipe: Recipe;
+  units: Unit[];
+  products: Product[];
+  gridSize: GridSizeColums;
+  showScaleFactors: boolean;
+  onChangeIngredient: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onPositionMoreClick: (event: React.MouseEvent<HTMLElement>) => void;
+}
+const IngredientListEntry = ({
+  ingredient,
+  index,
+  recipe,
+  units,
+  products,
+  gridSize,
+  showScaleFactors,
+  onChangeIngredient,
+  onPositionMoreClick,
+}: IngredientListEntryProps) => {
+  const {registerItem, instanceId} = useIngredientListContext();
+
+  const ref = useRef<HTMLDivElement>(null);
+  const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
+
+  const dragHandleRef = useRef<HTMLButtonElement>(null);
+
+  const [draggableState, setDraggableState] =
+    useState<DraggableState>(idleState);
+
+  useEffect(() => {
+    const element = ref.current;
+    const dragHandle = dragHandleRef.current;
+    invariant(element);
+    invariant(dragHandle);
+
+    // Instance-ID (Liste in dem das Drag & drop Stattfindet)
+    const data = getItemData({item: ingredient, index, instanceId});
+
+    return combine(
+      registerItem({itemUiId: ingredient.uid, element}),
+      draggable({
+        element: dragHandle,
+        getInitialData: () => data,
+
+        onDragStart() {
+          setDraggableState(draggingState);
+        },
+        onDrop() {
+          setDraggableState(idleState);
+        },
+      }),
+      dropTargetForElements({
+        element,
+        canDrop({source}) {
+          return (
+            isItemData<Ingredient | Section>(source.data) &&
+            source.data.instanceId === instanceId
+          );
+        },
+        getData({input}) {
+          return attachClosestEdge(data, {
+            element,
+            input,
+            allowedEdges: ["top", "bottom"],
+          });
+        },
+        onDrag({self, source}) {
+          const isSource = source.element === element;
+          if (isSource) {
+            setClosestEdge(null);
+            return;
+          }
+
+          const closestEdge = extractClosestEdge(self.data);
+
+          const sourceIndex = source.data.index;
+          invariant(typeof sourceIndex === "number");
+
+          const isItemBeforeSource = index === sourceIndex - 1;
+          const isItemAfterSource = index === sourceIndex + 1;
+
+          const isDropIndicatorHidden =
+            (isItemBeforeSource && closestEdge === "bottom") ||
+            (isItemAfterSource && closestEdge === "top");
+
+          if (isDropIndicatorHidden) {
+            setClosestEdge(null);
+            return;
+          }
+
+          setClosestEdge(closestEdge);
+        },
+        onDragLeave() {
+          setClosestEdge(null);
+        },
+        onDrop() {
+          setClosestEdge(null);
+        },
+      })
+    );
+  }, [instanceId, ingredient, index, registerItem]);
+
+  return (
+    <ListItem
+      key={"listitem_ingredient" + ingredient.uid}
+      id={"listitem_ingredient" + ingredient.uid}
+      sx={[draggableState === draggingState && {opacity: 0.4}]}
+      ref={mergeRefs([ref, dragHandleRef])}
+      secondaryAction={
+        <IconButton
+          id={"MoreBtn_" + RecipeBlock.ingredients + "_" + ingredient.uid}
+          aria-label="position-options"
+          onClick={onPositionMoreClick}
+          size="small"
+        >
+          <MoreVertIcon />
+        </IconButton>
+      }
+      className="custom-drop-trigger-post-move-flash"
+    >
+      {ingredient.posType == PositionType.section ? (
+        <SectionPosition
+          key={ingredient.uid}
+          index={index}
+          section={ingredient as Section}
+          // recipeBlock={RecipeBlock.ingredients}
+          onChangeSection={onChangeIngredient}
+        />
+      ) : (
+        <IngredientPosition
+          position={Recipe.definePositionSectionAdjusted({
+            uid: ingredient.uid,
+            entries: recipe.ingredients.entries,
+            order: recipe.ingredients.order,
+          })}
+          key={ingredient.uid}
+          ingredient={ingredient as Ingredient}
+          units={units}
+          products={products}
+          gridSize={gridSize}
+          showScaleFactors={showScaleFactors}
+          onChangeIngredient={onChangeIngredient}
+        />
+      )}
+      {closestEdge && (
+        <Box component="div" className="custom-drop-indicator">
+          <DropIndicator edge={closestEdge} gap="1px" />
+        </Box>
+      )}
+    </ListItem>
+  );
+};
+
 /* ===================================================================
 // ========================= Zutaten Position ========================
 // =================================================================== */
@@ -2062,7 +2411,6 @@ interface IngredientPositionProps {
     action?: AutocompleteChangeReason,
     objectId?: string
   ) => void;
-  onPositionMoreClick: (event: React.MouseEvent<HTMLElement>) => void;
 }
 const IngredientPosition = ({
   position,
@@ -2072,137 +2420,120 @@ const IngredientPosition = ({
   showScaleFactors,
   gridSize,
   onChangeIngredient,
-  onPositionMoreClick,
 }: IngredientPositionProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const theme = useTheme();
-  const breakpointIsXs = useMediaQuery(theme.breakpoints.down("xs"));
+  const breakpointIsXs = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
-    <React.Fragment>
-      <ListItemText>
-        <Grid container spacing={2} alignItems="center">
-          {!breakpointIsXs && (
-            <Grid
-              item
-              key={"ingredient_pos_grid_" + ingredient.uid}
-              xs={gridSize.pos.xs}
-              sm={gridSize.pos.sm}
-              className={classes.centerCenter}
+    <ListItemText>
+      <Grid container spacing={2} alignItems="center">
+        {!breakpointIsXs && (
+          <Grid
+            key={"ingredient_pos_grid_" + ingredient.uid}
+            xs={gridSize.pos.xs}
+            sm={gridSize.pos.sm}
+            sx={classes.centerCenter}
+          >
+            <Typography
+              key={"ingredient_pos_" + ingredient.uid}
+              color="primary"
             >
-              <Typography
-                key={"ingredient_pos_" + ingredient.uid}
-                color="primary"
-              >
-                {position}
-              </Typography>
-            </Grid>
-          )}
-          <Grid
-            item
-            key={"ingredient_quantity_grid_" + ingredient.uid}
-            xs={gridSize.quantity.xs}
-            sm={gridSize.quantity.sm}
-          >
-            <TextField
-              key={"quantity_" + ingredient.uid}
-              id={"quantity_" + ingredient.uid}
-              value={
-                Number.isNaN(ingredient.quantity) || ingredient.quantity === 0
-                  ? ""
-                  : ingredient.quantity
-              }
-              label={TEXT.FIELD_QUANTITY}
-              type="number"
-              inputProps={{min: 0}}
-              onChange={onChangeIngredient}
-              fullWidth
-            />
+              {position}
+            </Typography>
           </Grid>
-
-          {/* Einheit */}
-          <Grid
-            item
-            key={"ingredient_unit_grid_" + ingredient.uid}
-            xs={gridSize.unit.xs}
-            sm={gridSize.unit.sm}
-          >
-            <UnitAutocomplete
-              componentKey={ingredient.uid}
-              unitKey={ingredient.unit}
-              units={units}
-              onChange={onChangeIngredient}
-            />
-          </Grid>
-          {/* Skalierungsfaktor */}
-          {showScaleFactors && (
-            <Grid
-              item
-              key={"ingredient_scalingFractor_grid_" + ingredient.uid}
-              xs={gridSize.scalingFactor.xs}
-              sm={gridSize.scalingFactor.sm}
-            >
-              <TextField
-                value={ingredient.scalingFactor}
-                id={"scalingFactor_" + ingredient.uid}
-                key={"scalingFactor_" + ingredient.uid}
-                label={TEXT.FIELD_SCALING_FACTOR}
-                type="number"
-                onChange={onChangeIngredient}
-                size="small"
-                fullWidth
-                inputProps={{
-                  min: "0.1",
-                  max: "1",
-                  step: "0.1",
-                }}
-              />
-            </Grid>
-          )}
-
-          <Grid
-            item
-            key={"ingredient_product_grid_" + ingredient.uid}
-            xs={gridSize.product.xs}
-            sm={gridSize.product.sm}
-          >
-            <ProductAutocomplete
-              componentKey={ingredient.uid}
-              product={ingredient.product}
-              products={products}
-              onChange={onChangeIngredient}
-            />
-          </Grid>
-          <Grid
-            item
-            key={"ingredient_detail_grid_" + ingredient.uid}
-            xs={gridSize.detail.xs}
-            sm={gridSize.detail.sm}
-          >
-            <TextField
-              value={ingredient.detail}
-              key={"detail_" + ingredient.uid}
-              id={"detail_" + ingredient.uid}
-              label={TEXT.FIELD_DETAILS}
-              onChange={onChangeIngredient}
-              size="small"
-              fullWidth
-            />
-          </Grid>
-        </Grid>
-      </ListItemText>
-
-      <ListItemSecondaryAction>
-        <IconButton
-          id={"MoreBtn_" + RecipeBlock.ingredients + "_" + ingredient.uid + "_"}
-          aria-label="position-options"
-          onClick={onPositionMoreClick}
+        )}
+        <Grid
+          key={"ingredient_quantity_grid_" + ingredient.uid}
+          xs={gridSize.quantity.xs}
+          sm={gridSize.quantity.sm}
         >
-          <MoreVertIcon />
-        </IconButton>
-      </ListItemSecondaryAction>
-    </React.Fragment>
+          <TextField
+            key={"quantity_" + ingredient.uid}
+            id={"quantity_" + ingredient.uid}
+            value={
+              Number.isNaN(ingredient.quantity) || ingredient.quantity === 0
+                ? ""
+                : ingredient.quantity
+            }
+            label={TEXT.FIELD_QUANTITY}
+            type="number"
+            inputProps={{min: 0}}
+            onChange={onChangeIngredient}
+            fullWidth
+          />
+        </Grid>
+
+        {/* Einheit */}
+        <Grid
+          key={"ingredient_unit_grid_" + ingredient.uid}
+          xs={gridSize.unit.xs}
+          sm={gridSize.unit.sm}
+          sx={[!showScaleFactors && {paddingRight: theme.spacing(2)}]}
+        >
+          <UnitAutocomplete
+            componentKey={ingredient.uid}
+            unitKey={ingredient.unit}
+            units={units}
+            onChange={onChangeIngredient}
+          />
+        </Grid>
+        {/* Skalierungsfaktor */}
+        {showScaleFactors && (
+          <Grid
+            key={"ingredient_scalingFractor_grid_" + ingredient.uid}
+            xs={gridSize.scalingFactor.xs}
+            sm={gridSize.scalingFactor.sm}
+            sx={{paddingRight: theme.spacing(2)}}
+          >
+            <TextField
+              value={ingredient.scalingFactor}
+              id={"scalingFactor_" + ingredient.uid}
+              key={"scalingFactor_" + ingredient.uid}
+              label={TEXT.FIELD_SCALING_FACTOR}
+              type="number"
+              onChange={onChangeIngredient}
+              fullWidth
+              inputProps={{
+                min: "0.1",
+                max: "1",
+                step: "0.1",
+              }}
+            />
+          </Grid>
+        )}
+
+        <Grid
+          key={"ingredient_product_grid_" + ingredient.uid}
+          xs={gridSize.product.xs}
+          sm={gridSize.product.sm}
+        >
+          <ProductAutocomplete
+            componentKey={ingredient.uid}
+            product={ingredient.product}
+            products={products}
+            onChange={onChangeIngredient}
+          />
+        </Grid>
+        <Grid
+          key={"ingredient_detail_grid_" + ingredient.uid}
+          xs={gridSize.detail.xs}
+          sm={gridSize.detail.sm}
+          // Sonst crasht das Feld in den Secondary-Action-Button
+          sx={{paddingRight: theme.spacing(2)}}
+        >
+          <TextField
+            value={ingredient.detail}
+            key={"detail_" + ingredient.uid}
+            id={"detail_" + ingredient.uid}
+            label={TEXT.FIELD_DETAILS}
+            onChange={onChangeIngredient}
+            fullWidth
+          />
+        </Grid>
+      </Grid>
+    </ListItemText>
   );
 };
 /* ===================================================================
@@ -2216,17 +2547,131 @@ interface RecipePreparationStepsProps {
     action?: AutocompleteChangeReason,
     objectId?: string
   ) => void;
-  // onChangeSection: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onDragAndDropUpdate: (
+    newOrder: string[],
+    dragAndDropList: DragDropTypes
+  ) => void;
   onPositionMoreClick: (event: React.MouseEvent<HTMLElement>) => void;
 }
 
 const RecipePreparationSteps = ({
   recipe,
   onChange,
-  // onChangeSection,
+  onDragAndDropUpdate,
   onPositionMoreClick,
 }: RecipePreparationStepsProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
+
+  const [registry] = useState(getItemRegistry);
+  const [lastCardMoved, setLasCardMoved] =
+    useState<LastCardMoved<PreparationStep | Section>>(null);
+
+  // Isolated instances of this component from one another
+  const [instanceId] = useState(() => Symbol("instance-id"));
+  const reorderItem = useCallback(
+    ({
+      startIndex,
+      indexOfTarget,
+      closestEdgeOfTarget,
+    }: {
+      startIndex: number;
+      indexOfTarget: number;
+      closestEdgeOfTarget: Edge | null;
+    }) => {
+      const finishIndex = getReorderDestinationIndex({
+        startIndex,
+        closestEdgeOfTarget,
+        indexOfTarget,
+        axis: "vertical",
+      });
+
+      if (finishIndex === startIndex) {
+        // Keine Änderung, Kein Update
+        return;
+      }
+
+      const itemKey = recipe.preparationSteps.order[startIndex];
+      const item = recipe.preparationSteps.entries[itemKey];
+
+      onDragAndDropUpdate(
+        reorder({
+          list: recipe.preparationSteps.order,
+          startIndex,
+          finishIndex,
+        }),
+        DragDropTypes.PREPARATIONSTEP
+      );
+      setLasCardMoved({
+        item,
+        previousIndex: startIndex,
+        currentIndex: finishIndex,
+        numberOfItems: recipe.preparationSteps.order.length,
+      });
+    },
+    [recipe.preparationSteps]
+  );
+
+  useEffect(() => {
+    return monitorForElements({
+      canMonitor({source}) {
+        return isItemData(source.data) && source.data.instanceId === instanceId;
+      },
+      onDrop({location, source}) {
+        const target = location.current.dropTargets[0];
+        if (!target) {
+          return;
+        }
+
+        const sourceData = source.data;
+        const targetData = target.data;
+        if (!isItemData(sourceData) || !isItemData(targetData)) {
+          return;
+        }
+
+        const indexOfTarget = recipe.preparationSteps.order.findIndex(
+          (itemUiId) =>
+            itemUiId === (targetData.item as PreparationStep | Section).uid
+        );
+        if (indexOfTarget < 0) {
+          return;
+        }
+
+        const closestEdgeOfTarget = extractClosestEdge(targetData);
+        reorderItem({
+          startIndex: sourceData.index,
+          indexOfTarget,
+          closestEdgeOfTarget,
+        });
+      },
+    });
+  }, [instanceId, recipe.preparationSteps.order, reorderItem]);
+
+  // Drag beendet, Abschlussarbeiten
+  useEffect(() => {
+    if (lastCardMoved === null) {
+      return;
+    }
+    const {item} = lastCardMoved;
+    const element = registry.getElement(item.uid);
+    if (element) {
+      triggerPostMoveFlash(element);
+    }
+  }, [lastCardMoved, registry]);
+
+  const getListLength = useCallback(
+    () => recipe.preparationSteps.order.length,
+    [recipe.preparationSteps.order.length]
+  );
+
+  const contextValue: ListContextValue = useMemo(() => {
+    return {
+      registerItem: registry.register,
+      reorderItem,
+      instanceId,
+      getListLength,
+    };
+  }, [registry.register, reorderItem, instanceId, getListLength]);
+
   return (
     <React.Fragment>
       <Typography
@@ -2239,98 +2684,179 @@ const RecipePreparationSteps = ({
         {TEXT.PREPARATION}
       </Typography>
       <Grid container spacing={2} alignItems="center">
-        <Droppable
-          droppableId={"preparationSteps"}
-          type={DragDropTypes.PREPARATIONSTEP}
-          key={"droppable_preparationSteps"}
-        >
-          {(provided, snapshot) => (
-            <Grid item className={classes.centerCenter} xs={12}>
-              <List
-                key={"listPreparationSteps"}
-                innerRef={provided.innerRef}
-                {...provided.droppableProps}
-                className={
-                  snapshot.isDraggingOver
-                    ? classes.ListOnDrop
-                    : classes.ListNoDrop
-                }
-                style={{flexGrow: 1}}
-              >
-                {/* Zutaten auflsiten */}
-                {recipe.preparationSteps.order.map(
-                  (preparationStepUid, mapCounter) => {
-                    return (
-                      <Draggable
-                        draggableId={preparationStepUid}
-                        index={mapCounter}
-                        key={"draggablePreparationStep" + preparationStepUid}
-                        isDragDisabled={
-                          recipe.preparationSteps.order.length <= 1
-                        }
-                      >
-                        {(provided, snapshot) => (
-                          <ListItem
-                            key={
-                              "listitem_preparationStep" + preparationStepUid
-                            }
-                            id={"listitem_preparationStep" + preparationStepUid}
-                            innerRef={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={
-                              snapshot.isDragging
-                                ? classes.listItemOnDrag
-                                : classes.listItemNoDrag
-                            }
-                          >
-                            {recipe.preparationSteps.entries[preparationStepUid]
-                              .posType == PositionType.section ? (
-                              // Abschnitt anzeigen
-                              <SectionPosition
-                                key={preparationStepUid}
-                                counter={mapCounter}
-                                section={
-                                  recipe.preparationSteps.entries[
-                                    preparationStepUid
-                                  ] as Section
-                                }
-                                recipeBock={RecipeBlock.prepartionSteps}
-                                onChangeSection={onChange}
-                                onPositionMoreClick={onPositionMoreClick}
-                              />
-                            ) : (
-                              // Zubereitungsschritt
-                              <PreparationStepPosition
-                                key={preparationStepUid}
-                                position={Recipe.definePositionSectionAdjusted({
-                                  uid: preparationStepUid,
-                                  entries: recipe.preparationSteps.entries,
-                                  order: recipe.preparationSteps.order,
-                                })}
-                                preparationStep={
-                                  recipe.preparationSteps.entries[
-                                    preparationStepUid
-                                  ] as PreparationStep
-                                }
-                                onChange={onChange}
-                                onPositionMoreClick={onPositionMoreClick}
-                              />
-                            )}
-                          </ListItem>
-                        )}
-                      </Draggable>
-                    );
-                  }
-                )}
-              </List>
-            </Grid>
-          )}
-        </Droppable>
+        <Grid sx={classes.centerCenter} xs={12}>
+          <PreparationListContext.Provider value={contextValue}>
+            <List key={"listPreparationSteps"} style={{flexGrow: 1}}>
+              {/* Zutaten auflsiten */}
+              {recipe.preparationSteps.order.map(
+                (preparationStepUid, index) => (
+                  <PreparationStepListEntry
+                    key={"preparationStep_" + preparationStepUid}
+                    preparationStep={
+                      recipe.preparationSteps.entries[preparationStepUid]
+                    }
+                    index={index}
+                    recipe={recipe}
+                    onChange={onChange}
+                    onPositionMoreClick={onPositionMoreClick}
+                  />
+                )
+              )}
+            </List>
+          </PreparationListContext.Provider>
+        </Grid>
       </Grid>
     </React.Fragment>
   );
 };
+/* ===================================================================
+// ======================= Zubereitung Position ======================
+// =================================================================== */
+interface PreparationStepListEntryProps {
+  preparationStep: PreparationStep | Section;
+  index: number;
+  recipe: Recipe;
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onPositionMoreClick: (event: React.MouseEvent<HTMLElement>) => void;
+}
+const PreparationStepListEntry = ({
+  preparationStep,
+  index,
+  recipe,
+  onChange,
+  onPositionMoreClick,
+}: PreparationStepListEntryProps) => {
+  const {registerItem, instanceId} = usePreparationListContext();
+
+  const ref = useRef<HTMLDivElement>(null);
+  const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
+
+  const dragHandleRef = useRef<HTMLButtonElement>(null);
+
+  const [draggableState, setDraggableState] =
+    useState<DraggableState>(idleState);
+
+  useEffect(() => {
+    const element = ref.current;
+    const dragHandle = dragHandleRef.current;
+    invariant(element);
+    invariant(dragHandle);
+
+    // Instance-ID (Liste in dem das Drag & drop Stattfindet)
+    const data = getItemData({item: preparationStep, index, instanceId});
+
+    return combine(
+      registerItem({itemUiId: preparationStep.uid, element}),
+      draggable({
+        element: dragHandle,
+        getInitialData: () => data,
+
+        onDragStart() {
+          setDraggableState(draggingState);
+        },
+        onDrop() {
+          setDraggableState(idleState);
+        },
+      }),
+      dropTargetForElements({
+        element,
+        canDrop({source}) {
+          return (
+            isItemData<PreparationStep | Section>(source.data) &&
+            source.data.instanceId === instanceId
+          );
+        },
+        getData({input}) {
+          return attachClosestEdge(data, {
+            element,
+            input,
+            allowedEdges: ["top", "bottom"],
+          });
+        },
+        onDrag({self, source}) {
+          const isSource = source.element === element;
+          if (isSource) {
+            setClosestEdge(null);
+            return;
+          }
+
+          const closestEdge = extractClosestEdge(self.data);
+
+          const sourceIndex = source.data.index;
+          invariant(typeof sourceIndex === "number");
+
+          const isItemBeforeSource = index === sourceIndex - 1;
+          const isItemAfterSource = index === sourceIndex + 1;
+
+          const isDropIndicatorHidden =
+            (isItemBeforeSource && closestEdge === "bottom") ||
+            (isItemAfterSource && closestEdge === "top");
+
+          if (isDropIndicatorHidden) {
+            setClosestEdge(null);
+            return;
+          }
+
+          setClosestEdge(closestEdge);
+        },
+        onDragLeave() {
+          setClosestEdge(null);
+        },
+        onDrop() {
+          setClosestEdge(null);
+        },
+      })
+    );
+  }, [instanceId, preparationStep, index, registerItem]);
+
+  return (
+    <ListItem
+      key={"listitem_preparationStep" + preparationStep.uid}
+      id={"listitem_preparationStep" + preparationStep.uid}
+      secondaryAction={
+        <IconButton
+          id={
+            "MoreBtn_" + RecipeBlock.prepartionSteps + "_" + preparationStep.uid
+          }
+          aria-label="position-options"
+          onClick={onPositionMoreClick}
+          size="small"
+        >
+          <MoreVertIcon />
+        </IconButton>
+      }
+      sx={[draggableState === draggingState && {opacity: 0.4}]}
+      ref={mergeRefs([ref, dragHandleRef])}
+      className="custom-drop-trigger-post-move-flash"
+    >
+      {preparationStep.posType == PositionType.section ? (
+        <SectionPosition
+          key={preparationStep.uid}
+          index={index}
+          section={preparationStep as Section}
+          onChangeSection={onChange}
+        />
+      ) : (
+        <PreparationStepPosition
+          key={preparationStep.uid}
+          position={Recipe.definePositionSectionAdjusted({
+            uid: preparationStep.uid,
+            entries: recipe.preparationSteps.entries,
+            order: recipe.preparationSteps.order,
+          })}
+          preparationStep={preparationStep as PreparationStep}
+          onChange={onChange}
+        />
+      )}
+      {closestEdge && (
+        <Box component="div" className="custom-drop-indicator">
+          <DropIndicator edge={closestEdge} gap="1px" />
+        </Box>
+      )}
+    </ListItem>
+  );
+};
+
 /* ===================================================================
 // ================== Zubereitungsschritt Position ===================
 // =================================================================== */
@@ -2338,25 +2864,23 @@ interface PreparationStepPositionProps {
   position: number;
   preparationStep: PreparationStep;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onPositionMoreClick: (event: React.MouseEvent<HTMLElement>) => void;
 }
 const PreparationStepPosition = ({
   position,
   preparationStep,
   onChange,
-  onPositionMoreClick,
 }: PreparationStepPositionProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
+  const theme = useTheme();
 
   return (
     <React.Fragment>
       <ListItemText>
         <Grid container spacing={2} alignItems="center">
           <Grid
-            item
             key={"preparationstep_pos_grid_" + preparationStep.uid}
             xs={1}
-            className={classes.centerCenter}
+            sx={classes.centerCenter}
           >
             <Typography
               key={"preparationstep_pos_" + preparationStep.uid}
@@ -2367,9 +2891,10 @@ const PreparationStepPosition = ({
           </Grid>
 
           <Grid
-            item
             key={"preparationstep_step_grid_" + preparationStep.uid}
-            xs={10}
+            xs={11}
+            // Sonst crasht das Feld in den Secondary-Action-Button
+            sx={{paddingRight: theme.spacing(2)}}
           >
             {"step" in preparationStep ? (
               <TextField
@@ -2387,24 +2912,13 @@ const PreparationStepPosition = ({
           </Grid>
         </Grid>
       </ListItemText>
-      <ListItemSecondaryAction>
-        <IconButton
-          id={
-            "MoreBtn_" + RecipeBlock.prepartionSteps + "_" + preparationStep.uid
-          }
-          aria-label="position-options"
-          onClick={onPositionMoreClick}
-        >
-          <MoreVertIcon />
-        </IconButton>
-      </ListItemSecondaryAction>
     </React.Fragment>
   );
 };
 /* ===================================================================
 // ============================= Material  ===========================
 // =================================================================== */
-interface RecipeMaterialProps {
+interface RecipeMaterialsProps {
   recipe: Recipe;
   materials: Material[];
   onChange: (
@@ -2413,17 +2927,131 @@ interface RecipeMaterialProps {
     action?: AutocompleteChangeReason,
     objectId?: string
   ) => void;
-  // onChangeSection: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onDragAndDropUpdate: (
+    newOrder: string[],
+    dragAndDropList: DragDropTypes
+  ) => void;
   onPositionMoreClick: (event: React.MouseEvent<HTMLElement>) => void;
 }
 
-const RecipeMaterial = ({
+const RecipeMaterials = ({
   recipe,
   materials,
   onChange,
+  onDragAndDropUpdate,
   onPositionMoreClick,
-}: RecipeMaterialProps) => {
-  const classes = useStyles();
+}: RecipeMaterialsProps) => {
+  const classes = useCustomStyles();
+
+  const [registry] = useState(getItemRegistry);
+  const [lastCardMoved, setLasCardMoved] =
+    useState<LastCardMoved<RecipeMaterialPosition>>(null);
+
+  // Isolated instances of this component from one another
+  const [instanceId] = useState(() => Symbol("instance-id"));
+  const reorderItem = useCallback(
+    ({
+      startIndex,
+      indexOfTarget,
+      closestEdgeOfTarget,
+    }: {
+      startIndex: number;
+      indexOfTarget: number;
+      closestEdgeOfTarget: Edge | null;
+    }) => {
+      const finishIndex = getReorderDestinationIndex({
+        startIndex,
+        closestEdgeOfTarget,
+        indexOfTarget,
+        axis: "vertical",
+      });
+
+      if (finishIndex === startIndex) {
+        // Keine Änderung, Kein Update
+        return;
+      }
+
+      const itemKey = recipe.materials.order[startIndex];
+      const item = recipe.materials.entries[itemKey];
+
+      onDragAndDropUpdate(
+        reorder({
+          list: recipe.materials.order,
+          startIndex,
+          finishIndex,
+        }),
+        DragDropTypes.MATERIAL
+      );
+      setLasCardMoved({
+        item,
+        previousIndex: startIndex,
+        currentIndex: finishIndex,
+        numberOfItems: recipe.materials.order.length,
+      });
+    },
+    [recipe.materials]
+  );
+
+  useEffect(() => {
+    return monitorForElements({
+      canMonitor({source}) {
+        return isItemData(source.data) && source.data.instanceId === instanceId;
+      },
+      onDrop({location, source}) {
+        const target = location.current.dropTargets[0];
+        if (!target) {
+          return;
+        }
+
+        const sourceData = source.data;
+        const targetData = target.data;
+        if (!isItemData(sourceData) || !isItemData(targetData)) {
+          return;
+        }
+
+        const indexOfTarget = recipe.materials.order.findIndex(
+          (itemUiId) =>
+            itemUiId === (targetData.item as RecipeMaterialPosition).uid
+        );
+        if (indexOfTarget < 0) {
+          return;
+        }
+
+        const closestEdgeOfTarget = extractClosestEdge(targetData);
+        reorderItem({
+          startIndex: sourceData.index,
+          indexOfTarget,
+          closestEdgeOfTarget,
+        });
+      },
+    });
+  }, [instanceId, recipe.materials.order, reorderItem]);
+
+  // Drag beendet, Abschlussarbeiten
+  useEffect(() => {
+    if (lastCardMoved === null) {
+      return;
+    }
+    const {item} = lastCardMoved;
+    const element = registry.getElement(item.uid);
+    if (element) {
+      triggerPostMoveFlash(element);
+    }
+  }, [lastCardMoved, registry]);
+
+  const getListLength = useCallback(
+    () => recipe.materials.order.length,
+    [recipe.materials.order.length]
+  );
+
+  const contextValue: ListContextValue = useMemo(() => {
+    return {
+      registerItem: registry.register,
+      reorderItem,
+      instanceId,
+      getListLength,
+    };
+  }, [registry.register, reorderItem, instanceId, getListLength]);
 
   return (
     <React.Fragment>
@@ -2437,62 +3065,157 @@ const RecipeMaterial = ({
         {TEXT.MATERIAL}
       </Typography>
       <Grid container spacing={2} alignItems="center">
-        <Droppable
-          droppableId={"materials"}
-          type={DragDropTypes.MATERIAL}
-          key={"droppable_materials"}
-        >
-          {(provided, snapshot) => (
-            <Grid item className={classes.centerCenter} xs={12}>
-              <List
-                key={"listMaterials"}
-                innerRef={provided.innerRef}
-                {...provided.droppableProps}
-                className={
-                  snapshot.isDraggingOver
-                    ? classes.ListOnDrop
-                    : classes.ListNoDrop
-                }
-                style={{flexGrow: 1}}
-              >
-                {recipe.materials.order.map((materialUid, counter) => (
-                  <Draggable
-                    draggableId={materialUid}
-                    index={counter}
-                    key={"draggableMaterial" + materialUid}
-                    isDragDisabled={recipe.materials.order.length <= 1}
-                  >
-                    {(provided, snapshot) => (
-                      <ListItem
-                        key={"listitem_materials_" + materialUid}
-                        id={"listitem_materials_" + materialUid}
-                        innerRef={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        className={
-                          snapshot.isDragging
-                            ? classes.listItemOnDrag
-                            : classes.listItemNoDrag
-                        }
-                      >
-                        <MaterialPosition
-                          position={counter + 1}
-                          key={materialUid}
-                          material={recipe.materials.entries[materialUid]}
-                          materials={materials}
-                          onChangeMaterial={onChange}
-                          onPositionMoreClick={onPositionMoreClick}
-                        />
-                      </ListItem>
-                    )}
-                  </Draggable>
-                ))}
-              </List>
-            </Grid>
-          )}
-        </Droppable>
+        <Grid sx={classes.centerCenter} xs={12}>
+          <MaterialListContext.Provider value={contextValue}>
+            <List key={"listMaterials"} style={{flexGrow: 1}}>
+              {recipe.materials.order.map((materialUid, index) => (
+                <MaterialListEntry
+                  key={"material_" + materialUid}
+                  material={recipe.materials.entries[materialUid]}
+                  materials={materials}
+                  index={index}
+                  onChange={onChange}
+                  onPositionMoreClick={onPositionMoreClick}
+                />
+              ))}
+            </List>
+          </MaterialListContext.Provider>
+        </Grid>
       </Grid>
     </React.Fragment>
+  );
+};
+/* ===================================================================
+// ===================== Materiallisteneintrag =======================
+// =================================================================== */
+interface MaterialListEntryProps {
+  material: RecipeMaterialPosition;
+  materials: Material[];
+  index: number;
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onPositionMoreClick: (event: React.MouseEvent<HTMLElement>) => void;
+}
+const MaterialListEntry = ({
+  material,
+  materials,
+  index,
+  onChange,
+  onPositionMoreClick,
+}: MaterialListEntryProps) => {
+  const {registerItem, instanceId} = useMaterialListContext();
+
+  const ref = useRef<HTMLDivElement>(null);
+  const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
+
+  const dragHandleRef = useRef<HTMLButtonElement>(null);
+
+  const [draggableState, setDraggableState] =
+    useState<DraggableState>(idleState);
+
+  useEffect(() => {
+    const element = ref.current;
+    const dragHandle = dragHandleRef.current;
+    invariant(element);
+    invariant(dragHandle);
+
+    // Instance-ID (Liste in dem das Drag & drop Stattfindet)
+    const data = getItemData({item: material, index, instanceId});
+
+    return combine(
+      registerItem({itemUiId: material.uid, element}),
+      draggable({
+        element: dragHandle,
+        getInitialData: () => data,
+
+        onDragStart() {
+          setDraggableState(draggingState);
+        },
+        onDrop() {
+          setDraggableState(idleState);
+        },
+      }),
+      dropTargetForElements({
+        element,
+        canDrop({source}) {
+          return (
+            isItemData<RecipeMaterialPosition>(source.data) &&
+            source.data.instanceId === instanceId
+          );
+        },
+        getData({input}) {
+          return attachClosestEdge(data, {
+            element,
+            input,
+            allowedEdges: ["top", "bottom"],
+          });
+        },
+        onDrag({self, source}) {
+          const isSource = source.element === element;
+          if (isSource) {
+            setClosestEdge(null);
+            return;
+          }
+
+          const closestEdge = extractClosestEdge(self.data);
+
+          const sourceIndex = source.data.index;
+          invariant(typeof sourceIndex === "number");
+
+          const isItemBeforeSource = index === sourceIndex - 1;
+          const isItemAfterSource = index === sourceIndex + 1;
+
+          const isDropIndicatorHidden =
+            (isItemBeforeSource && closestEdge === "bottom") ||
+            (isItemAfterSource && closestEdge === "top");
+
+          if (isDropIndicatorHidden) {
+            setClosestEdge(null);
+            return;
+          }
+
+          setClosestEdge(closestEdge);
+        },
+        onDragLeave() {
+          setClosestEdge(null);
+        },
+        onDrop() {
+          setClosestEdge(null);
+        },
+      })
+    );
+  }, [instanceId, material, index, registerItem]);
+
+  return (
+    <ListItem
+      key={"listitem_materials_" + material.uid}
+      id={"listitem_materials_" + material.uid}
+      secondaryAction={
+        <IconButton
+          id={"MoreBtn_" + RecipeBlock.prepartionSteps + "_" + material.uid}
+          aria-label="position-options"
+          onClick={onPositionMoreClick}
+          size="small"
+        >
+          <MoreVertIcon />
+        </IconButton>
+      }
+      sx={[draggableState === draggingState && {opacity: 0.4}]}
+      ref={mergeRefs([ref, dragHandleRef])}
+      className="custom-drop-trigger-post-move-flash"
+    >
+      <MaterialPosition
+        position={index + 1}
+        key={material.uid}
+        material={material}
+        materials={materials}
+        onChangeMaterial={onChange}
+      />
+      {closestEdge && (
+        <Box component="div" className="custom-drop-indicator">
+          <DropIndicator edge={closestEdge} gap="1px" />
+        </Box>
+      )}
+    </ListItem>
   );
 };
 /* ===================================================================
@@ -2503,33 +3226,31 @@ interface MaterialPositionProps {
   material: RecipeMaterialPosition;
   materials: Material[];
   onChangeMaterial: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onPositionMoreClick: (event: React.MouseEvent<HTMLElement>) => void;
 }
 const MaterialPosition = ({
   position,
   material,
   materials,
   onChangeMaterial,
-  onPositionMoreClick,
 }: MaterialPositionProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
+  const theme = useTheme();
 
   return (
     <React.Fragment>
       <ListItemText>
         <Grid container spacing={2} alignItems="center">
           <Grid
-            item
             key={"material_pos_grid_" + material.uid}
             xs={1}
-            className={classes.centerCenter}
+            sx={classes.centerCenter}
           >
             <Typography key={"material_pos_" + material.uid} color="primary">
               {position}
             </Typography>
           </Grid>
 
-          <Grid item key={"material_quantity_grid_" + material.uid} xs={2}>
+          <Grid key={"material_quantity_grid_" + material.uid} xs={2}>
             <TextField
               key={"quantity_" + material.uid}
               id={"quantity_" + material.uid}
@@ -2545,7 +3266,12 @@ const MaterialPosition = ({
               fullWidth
             />
           </Grid>
-          <Grid item key={"material_name_grid_" + material.uid} xs={8}>
+          <Grid
+            key={"material_name_grid_" + material.uid}
+            xs={9}
+            // Sonst crasht das Feld in den Secondary-Action-Button
+            sx={{paddingRight: theme.spacing(2)}}
+          >
             <MaterialAutocomplete
               componentKey={material.uid}
               material={material.material}
@@ -2556,15 +3282,6 @@ const MaterialPosition = ({
           </Grid>
         </Grid>
       </ListItemText>
-      <ListItemSecondaryAction>
-        <IconButton
-          id={"MoreBtn_" + RecipeBlock.materials + "_" + material.uid}
-          aria-label="position-options"
-          onClick={onPositionMoreClick}
-        >
-          <MoreVertIcon />
-        </IconButton>
-      </ListItemSecondaryAction>
     </React.Fragment>
   );
 };
@@ -2573,39 +3290,39 @@ const MaterialPosition = ({
 // ================ Abschnitt für Zutaten/Zubereitung ================
 // =================================================================== */
 interface SectionPositionProps {
-  counter: number;
+  index: number;
   section: Section;
-  recipeBock: RecipeBlock;
   onChangeSection: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onPositionMoreClick: (event: React.MouseEvent<HTMLElement>) => void;
 }
 const SectionPosition = ({
-  counter,
+  index,
   section,
-  recipeBock,
   onChangeSection,
-  onPositionMoreClick,
 }: SectionPositionProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
-  const breakpointIsXs = useMediaQuery(theme.breakpoints.down("xs"));
-
+  const breakpointIsXs = useMediaQuery(theme.breakpoints.down("sm"));
   return (
     <React.Fragment>
       <ListItemText>
         <Grid container spacing={2} alignItems="center">
-          {counter !== 1 && <Grid item xs={12} style={{marginTop: "0.5em"}} />}
+          {index !== 1 && <Grid xs={12} style={{marginTop: "0.5em"}} />}
           {!breakpointIsXs && (
             <Grid
-              item
               key={"section_pos_grid_" + section.uid}
               xs={1}
               sm={1}
-              className={classes.centerCenter}
+              sx={classes.centerCenter}
             />
           )}
 
-          <Grid item key={"section_name_grid_" + section.uid} xs={11} sm={10}>
+          <Grid
+            key={"section_name_grid_" + section.uid}
+            xs={breakpointIsXs ? 12 : 11}
+            sm={breakpointIsXs ? 12 : 11}
+            // Sonst crasht das Feld in den Secondary-Action-Button
+            sx={{paddingRight: theme.spacing(2)}}
+          >
             <TextField
               key={"name" + section.uid}
               id={"name_" + section.uid}
@@ -2617,15 +3334,6 @@ const SectionPosition = ({
           </Grid>
         </Grid>
       </ListItemText>
-      <ListItemSecondaryAction>
-        <IconButton
-          id={"MoreBtn_" + recipeBock + "_" + section.uid}
-          aria-label="position-options"
-          onClick={onPositionMoreClick}
-        >
-          <MoreVertIcon />
-        </IconButton>
-      </ListItemSecondaryAction>
     </React.Fragment>
   );
 };
@@ -2708,8 +3416,8 @@ const RecipeVariantNote = ({recipe, onChange}: RecipeVariantNoteProps) => {
         {TEXT.VARIANT_NOTE}
       </Typography>
       <Grid container spacing={2} alignItems="center">
-        <Grid item key={"grid_pos_note"} xs={1} />
-        <Grid item key={"grid_note_note"} xs={11}>
+        <Grid key={"grid_pos_note"} xs={1} />
+        <Grid key={"grid_note_note"} xs={11}>
           <TextField
             id="variantProperties.note"
             key="variantProperties.note"

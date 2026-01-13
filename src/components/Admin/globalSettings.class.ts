@@ -59,7 +59,10 @@ class GlobalSettings {
   // ===================================================================== */
   static signOutAllUsers = async ({firebase, authUser}: SignOutAllUsers) => {
     await firebase.cloudFunction.signOutAllUsers
-      .triggerCloudFunction({values: {}, authUser: authUser})
+      .triggerCloudFunction({
+        values: {timestamp: new Date()},
+        authUser: authUser,
+      })
       .catch((error) => {
         console.error(error);
         throw error;

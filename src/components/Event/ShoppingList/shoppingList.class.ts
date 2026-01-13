@@ -2,7 +2,10 @@ import Department from "../../Department/department.class";
 import Firebase from "../../Firebase/firebase.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import Unit from "../../Unit/unit.class";
-import Menuplan, {MealRecipeDeletedPrefix} from "../Menuplan/menuplan.class";
+import Menuplan, {
+  MealRecipeDeletedPrefix,
+  Menue,
+} from "../Menuplan/menuplan.class";
 import UsedRecipes from "../UsedRecipes/usedRecipes.class";
 import {
   ERROR_NO_RECIPE_PRODUCT_MATERIAL_FOUND as TEXT_ERROR_NO_RECIPE_PRODUCT_MATERIAL_FOUND,
@@ -52,7 +55,8 @@ export interface ShoppingListDepartment {
 }
 
 interface CreateNewList {
-  selectedMenues: string[];
+  selectedMenues: Menue["uid"][];
+  selectedDepartments: Department["uid"][];
   menueplan: Menuplan;
   products: Product[];
   materials: Material[];
@@ -142,6 +146,7 @@ export default class ShoppingList {
    */
   static createNewList = async ({
     selectedMenues,
+    selectedDepartments,
     menueplan,
     products,
     materials,
@@ -211,31 +216,41 @@ export default class ShoppingList {
                     const department = departments.find(
                       (department) => department.uid == product?.department.uid
                     );
-                    ShoppingList.addItem({
-                      shoppingListReference: shoppingList,
-                      item: product!,
-                      quantity: ingredient.quantity,
-                      unit: ingredient.unit,
-                      department: department!,
-                      itemType: ItemType.food,
-                    });
-                    itemCounter++;
 
-                    trace = ShoppingListCollection.addTraceEntry({
-                      trace: trace,
-                      item: product!,
-                      menueUid: menueUid,
-                      recipe: {
-                        uid: menueplan.mealRecipes[mealRecipeUid].recipe
-                          .recipeUid,
-                        name: menueplan.mealRecipes[mealRecipeUid].recipe.name,
-                      },
-                      planedPortions:
-                        menueplan.mealRecipes[mealRecipeUid].totalPortions,
-                      quantity: ingredient.quantity,
-                      unit: ingredient.unit,
-                      itemType: ItemType.food,
-                    });
+                    if (
+                      !department ||
+                      selectedDepartments.includes(department!.uid)
+                    ) {
+                      // Nur hinzufügen, wenn die Abteilung ausgewählt wurde
+                      // oder die Abteilung nicht identifiziert werden konnte.
+                      // Better Save than sorry
+                      ShoppingList.addItem({
+                        shoppingListReference: shoppingList,
+                        item: product!,
+                        quantity: ingredient.quantity,
+                        unit: ingredient.unit,
+                        department: department!,
+                        itemType: ItemType.food,
+                      });
+                      itemCounter++;
+
+                      trace = ShoppingListCollection.addTraceEntry({
+                        trace: trace,
+                        item: product!,
+                        menueUid: menueUid,
+                        recipe: {
+                          uid: menueplan.mealRecipes[mealRecipeUid].recipe
+                            .recipeUid,
+                          name: menueplan.mealRecipes[mealRecipeUid].recipe
+                            .name,
+                        },
+                        planedPortions:
+                          menueplan.mealRecipes[mealRecipeUid].totalPortions,
+                        quantity: ingredient.quantity,
+                        unit: ingredient.unit,
+                        itemType: ItemType.food,
+                      });
+                    }
                   }
                 );
                 // Alle skalierten Materialien hinzufügen
@@ -253,7 +268,12 @@ export default class ShoppingList {
                         department.name.toUpperCase() == "NON FOOD"
                     );
 
-                    if (material?.type == MaterialType.consumable) {
+                    if (
+                      !department ||
+                      (material?.type == MaterialType.consumable &&
+                        selectedDepartments.includes(department!.uid))
+                    ) {
+                      // Nur hinzufügen, wenn die Abteilung ausgewählt wurde
                       ShoppingList.addItem({
                         shoppingListReference: shoppingList,
                         item: material!,
@@ -305,26 +325,29 @@ export default class ShoppingList {
         const department = departments.find(
           (department) => department.uid == product?.department.uid
         );
-        ShoppingList.addItem({
-          shoppingListReference: shoppingList,
-          item: product!,
-          quantity: menuPlanProductEntry.totalQuantity,
-          unit: menuPlanProductEntry.unit,
-          department: department!,
-          itemType: ItemType.food,
-        });
-        itemCounter++;
+        if (!department || selectedDepartments.includes(department!.uid)) {
+          // Nur hinzufügen, wenn die Abteilung ausgewählt wurde
+          ShoppingList.addItem({
+            shoppingListReference: shoppingList,
+            item: product!,
+            quantity: menuPlanProductEntry.totalQuantity,
+            unit: menuPlanProductEntry.unit,
+            department: department!,
+            itemType: ItemType.food,
+          });
+          itemCounter++;
 
-        // Trace nachführen
-        trace = ShoppingListCollection.addTraceEntry({
-          trace: trace,
-          item: product!,
-          menueUid: menueUid,
-          recipe: {} as Recipe,
-          quantity: menuPlanProductEntry.totalQuantity,
-          unit: menuPlanProductEntry.unit,
-          itemType: ItemType.food,
-        });
+          // Trace nachführen
+          trace = ShoppingListCollection.addTraceEntry({
+            trace: trace,
+            item: product!,
+            menueUid: menueUid,
+            recipe: {} as Recipe,
+            quantity: menuPlanProductEntry.totalQuantity,
+            unit: menuPlanProductEntry.unit,
+            itemType: ItemType.food,
+          });
+        }
       });
 
       menueplan.menues[menueUid].materialOrder.forEach((materialMenuUid) => {
@@ -337,10 +360,13 @@ export default class ShoppingList {
           (department) => department.name.toUpperCase() == "NON FOOD"
         );
 
-        if (material?.type == MaterialType.consumable) {
+        if (
+          (!department || selectedDepartments.includes(department!.uid)) &&
+          material?.type == MaterialType.consumable
+        ) {
           ShoppingList.addItem({
             shoppingListReference: shoppingList,
-            item: material,
+            item: material!,
             quantity: menuPlanMaterialEntry.totalQuantity,
             unit: menuPlanMaterialEntry.unit,
             department: department,

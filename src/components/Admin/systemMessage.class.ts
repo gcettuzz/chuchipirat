@@ -1,6 +1,6 @@
-import {Color} from "@mui/lab";
 import Firebase from "../Firebase/firebase.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
+import {AlertColor} from "@mui/material";
 
 interface Save {
   firebase: Firebase;
@@ -22,7 +22,7 @@ interface GetSystemMessage {
 export class SystemMessage {
   title: string;
   text: string;
-  type: Color;
+  type: AlertColor;
   validTo: Date;
 
   // ===================================================================== */

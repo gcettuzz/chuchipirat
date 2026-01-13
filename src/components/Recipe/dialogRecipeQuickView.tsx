@@ -1,14 +1,15 @@
 import React from "react";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
-import Button from "@mui/material/Button";
-import Backdrop from "@mui/material/Backdrop";
-import CircularProgress from "@mui/material/CircularProgress";
-
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogActions from "@mui/material/DialogActions";
-import CardMedia from "@mui/material/CardMedia";
+import {
+  Button,
+  Backdrop,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogActions,
+  CardMedia,
+} from "@mui/material";
 
 import RecipeShort from "./recipeShort.class";
 import Recipe from "./recipe.class";
@@ -61,7 +62,7 @@ const DialogRecipeQuickView = ({
   const [recipe, setRecipe] = React.useState<Recipe>(new Recipe());
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {push} = useHistory();
 
   if (recipeShort.uid && !recipe.uid) {
@@ -85,13 +86,13 @@ const DialogRecipeQuickView = ({
       open={dialogOpen}
       scroll={"paper"}
     >
-      <Backdrop className={classes.backdrop} open={isLoading}>
+      <Backdrop sx={classes.backdrop} open={isLoading}>
         <CircularProgress color="inherit" />
       </Backdrop>
 
       {recipeShort.pictureSrc && (
         <CardMedia
-          className={classes.cardMedia}
+          sx={classes.cardMedia}
           image={recipeShort.pictureSrc}
           title={"Bild " + recipeShort.name}
         />

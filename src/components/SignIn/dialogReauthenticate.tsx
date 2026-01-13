@@ -1,14 +1,15 @@
 import React from "react";
 
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
-
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import IconButton from "@mui/material/IconButton";
-import InputAdornment from "@mui/material/InputAdornment";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  IconButton,
+  InputAdornment,
+} from "@mui/material";
 
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
@@ -233,6 +234,7 @@ const DialogReauthenticate = ({
                   aria-label={TEXT_SHOW_PASSWORD}
                   onClick={handleClickShowPassword}
                   onMouseDown={handleMouseDownPassword}
+                  size="large"
                 >
                   {showPassword ? <Visibility /> : <VisibilityOff />}
                 </IconButton>

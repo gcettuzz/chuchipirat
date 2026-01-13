@@ -1,21 +1,12 @@
-/* eslint-disable react/prop-types */
 import React from "react";
 import {useLocation} from "react-router-dom";
-import {useMediaQuery} from "@mui/material";
 import {useHistory} from "react-router";
-import {compose} from "react-recompose";
 import {withRouter} from "react-router-dom";
 
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 
-import CssBaseline from "@mui/material/CssBaseline";
-// import useScrollTrigger from "@mui/material/useScrollTrigger";
-
-// import Fab from "@mui/material/Fab";
-// import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-// import Zoom from "@mui/material/Zoom";
 import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
 import AccountCircle from "@mui/icons-material/AccountCircle";
@@ -26,8 +17,8 @@ import Link from "@mui/material/Link";
 import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
+import {Box, List, ListItemButton} from "@mui/material";
+
 import ListItemIcon from "@mui/material/ListItemIcon";
 import EventIcon from "@mui/icons-material/Event";
 import FastfoodIcon from "@mui/icons-material/Fastfood";
@@ -61,15 +52,22 @@ import {NavigationValuesContext} from "../Navigation/navigationContext";
 import {AuthUserContext} from "../Session/authUserContext";
 import {withFirebase} from "../Firebase/firebaseContext";
 
-// import Environment from "../Shared/enviroment.class";
 import Utils from "../Shared/utils.class";
 import {DonateIcon} from "../Shared/icons";
 import {logEvent} from "firebase/analytics";
 import useCustomStyles from "../../constants/styles";
+import AuthUser from "../Firebase/Authentication/authUser.class";
+import Firebase from "../Firebase/firebase.class";
+
 // ===================================================================
 // ============================= Global =============================
 // ===================================================================
 type Anchor = "top" | "left" | "bottom" | "right";
+
+interface NavigationAuthProps {
+  authUser: AuthUser;
+  firebase: Firebase;
+}
 
 // ===================================================================
 // ========================== Scroll to Top  =========================
@@ -115,7 +113,7 @@ type Anchor = "top" | "left" | "bottom" | "right";
 // ===================================================================
 // ======================= Navigation Komponente =====================
 // ===================================================================
-const NavigationComponent = () => {
+const NavigationComponent: React.FC = () => {
   // const authUser = useAuthUser();
   return (
     <div>
@@ -135,13 +133,11 @@ const NavigationComponent = () => {
 // ===================================================================
 // ==================== Navigation mit Berechtigung ==================
 // ===================================================================
-const NavigationAuthBase = (props) => {
+const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
   const location = useLocation();
   const classes = useCustomStyles();
   const firebase = props.firebase;
   const authUser = props.authUser;
-  // const authUser = useAuthUser();
-  // const firebase = useFirebase();
 
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
   const navigationValuesContext = React.useContext(NavigationValuesContext);
@@ -150,8 +146,6 @@ const NavigationAuthBase = (props) => {
     left: false,
   });
   const open = Boolean(anchorEl);
-
-  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 
   // const [loadedVersionIsUpToDate, setLoadedVersionIsUpToDate] =
   // React.useState(false);
@@ -326,38 +320,37 @@ const NavigationAuthBase = (props) => {
     setShowDialogRefreshApp(false);
   };
   const list = (anchor: Anchor) => (
-    <div
+    <Box
       role="presentation"
       onClick={toggleDrawer(anchor, false)}
       onKeyDown={toggleDrawer(anchor, false)}
     >
       <List>
-        <ListItem button key="Home" onClick={() => push(ROUTES.HOME)}>
+        <ListItemButton key="Home" onClick={() => push(ROUTES.HOME)}>
           <ListItemIcon>
             <HomeIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.HOME_DASHBOARD} />
-        </ListItem>
+        </ListItemButton>
       </List>
       <Divider />
       <List>
-        <ListItem button key="Recipes" onClick={() => push(ROUTES.RECIPES)}>
+        <ListItemButton key="Recipes" onClick={() => push(ROUTES.RECIPES)}>
           <ListItemIcon>
             <FastfoodIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.RECIPES} />
-        </ListItem>
-        <ListItem button key="Events" onClick={() => push(ROUTES.EVENTS)}>
+        </ListItemButton>
+        <ListItemButton key="Events" onClick={() => push(ROUTES.EVENTS)}>
           <ListItemIcon>
             <EventIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.EVENTS} />
-        </ListItem>
+        </ListItemButton>
       </List>
       <Divider />
       <List>
-        <ListItem
-          button
+        <ListItemButton
           key="UnitConversion"
           onClick={() => push(ROUTES.UNITCONVERSION)}
         >
@@ -365,12 +358,11 @@ const NavigationAuthBase = (props) => {
             <SwapHorizIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.NAVIGATION_UNIT_CONVERSION} />
-        </ListItem>
+        </ListItemButton>
       </List>
       <Divider />
       <List>
-        <ListItem
-          button
+        <ListItemButton
           key="requestOverview"
           onClick={() => push(ROUTES.REQUEST_OVERVIEW)}
         >
@@ -378,23 +370,22 @@ const NavigationAuthBase = (props) => {
             <DescriptionIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.NAVIGATION_REQUEST_OVERVIEW} />
-        </ListItem>
+        </ListItemButton>
       </List>
       <Divider />
       <List>
-        <ListItem button key="donate" onClick={() => push(ROUTES.DONATE)}>
+        <ListItemButton key="donate" onClick={() => push(ROUTES.DONATE)}>
           <ListItemIcon>
             <DonateIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.DONATE} />
-        </ListItem>
+        </ListItemButton>
       </List>
       {authUser.roles?.includes(Role.communityLeader) && (
         <React.Fragment>
           <Divider />
           <List>
-            <ListItem
-              button
+            <ListItemButton
               key="Products"
               onClick={() => push(ROUTES.PRODUCTS)}
             >
@@ -402,9 +393,8 @@ const NavigationAuthBase = (props) => {
                 <LoyaltyIcon />
               </ListItemIcon>
               <ListItemText primary={TEXT.NAVIGATION_PRODUCTS} />
-            </ListItem>
-            <ListItem
-              button
+            </ListItemButton>
+            <ListItemButton
               key="Materials"
               onClick={() => push(ROUTES.MATERIALS)}
             >
@@ -412,8 +402,8 @@ const NavigationAuthBase = (props) => {
                 <BuildIcon />
               </ListItemIcon>
               <ListItemText primary={TEXT.MATERIALS} />
-            </ListItem>
-            <ListItem button key="departments">
+            </ListItemButton>
+            <ListItemButton key="departments">
               <ListItemIcon>
                 <ShoppingCartIcon />
               </ListItemIcon>
@@ -421,29 +411,28 @@ const NavigationAuthBase = (props) => {
                 primary={TEXT.NAVIGATION_DEPARTMENTS}
                 onClick={() => push(ROUTES.DEPARTMENTS)}
               />
-            </ListItem>
+            </ListItemButton>
           </List>
         </React.Fragment>
       )}
       {authUser.roles?.includes(Role.communityLeader) && (
         <React.Fragment>
-          <ListItem button key="Units" onClick={() => push(ROUTES.UNITS)}>
+          <ListItemButton key="Units" onClick={() => push(ROUTES.UNITS)}>
             <ListItemIcon>
               <StraightenIcon />
             </ListItemIcon>
             <ListItemText primary={TEXT.NAVIGATION_UNITS} />
-          </ListItem>
+          </ListItemButton>
           <Divider />
           <List>
-            <ListItem button key="Admin" onClick={() => push(ROUTES.SYSTEM)}>
+            <ListItemButton key="Admin" onClick={() => push(ROUTES.SYSTEM)}>
               <ListItemIcon>
                 <SettingsIcon />
               </ListItemIcon>
               <ListItemText primary={TEXT.NAVIGATION_SYSTEM} />
-            </ListItem>
+            </ListItemButton>
             {authUser.roles?.includes(Role.admin) && (
-              <ListItem
-                button
+              <ListItemButton
                 key="Users"
                 onClick={() => push(ROUTES.SYSTEM_OVERVIEW_USERS)}
               >
@@ -451,20 +440,19 @@ const NavigationAuthBase = (props) => {
                   <GroupIcon />
                 </ListItemIcon>
                 <ListItemText primary={TEXT.NAVIGATION_USERS} />
-              </ListItem>
+              </ListItemButton>
             )}
           </List>
           <Divider />
         </React.Fragment>
       )}
-    </div>
+    </Box>
   );
 
   return (
     <React.Fragment>
-      <CssBaseline />
-      <AppBar sx={prefersDarkMode ? classes.appBarDark : classes.appBar}>
-        <Toolbar sx={prefersDarkMode ? classes.appBarDark : classes.appBar}>
+      <AppBar color="primary">
+        <Toolbar>
           <IconButton
             edge="start"
             sx={classes.navigationMenuButton}
@@ -472,6 +460,7 @@ const NavigationAuthBase = (props) => {
             aria-label="menu"
             onClick={toggleDrawer("left", true)}
             disabled={!authUser.emailVerified}
+            size="large"
           >
             <MenuIcon />
           </IconButton>
@@ -499,6 +488,7 @@ const NavigationAuthBase = (props) => {
               aria-haspopup="false"
               color="inherit"
               onClick={handleHelp}
+              size="large"
             >
               <HelpOutlineIcon />
             </IconButton>
@@ -508,6 +498,7 @@ const NavigationAuthBase = (props) => {
               aria-haspopup="true"
               onClick={handleMenu}
               color="inherit"
+              size="large"
             >
               <AccountCircle />
             </IconButton>
@@ -561,16 +552,14 @@ const NavigationAuthBase = (props) => {
 // ================== Navigation ohne Berechtigung ===================
 // ===================================================================
 // Komponente für Navigation ohne Login//Ohne Berechtigungen
-export function NavigationNoAuthBase() {
+const NavigationNoAuthBase: React.FC = () => {
   const classes = useCustomStyles();
   const {push} = useHistory();
-  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 
   return (
     <React.Fragment>
-      <CssBaseline />
-      <AppBar sx={prefersDarkMode ? classes.appBarDark : classes.appBar}>
-        <Toolbar sx={prefersDarkMode ? classes.appBarDark : classes.appBar}>
+      <AppBar color="primary">
+        <Toolbar>
           <Typography variant="h6" sx={classes.navigationTitle}>
             <Link
               variant="h6"
@@ -609,7 +598,7 @@ export function NavigationNoAuthBase() {
       <Toolbar id="back-to-top-anchor" />
     </React.Fragment>
   );
-}
+};
 /* ===================================================================
 // =============================== Ribbon ============================
 // =================================================================== */
@@ -638,15 +627,8 @@ export const UpdateRibbon = ({onClick}: UpdateRibbonProps) => {
     </div>
   );
 };
-// const NavigationAuth = compose(withRouter, withFirebase)(NavigationAuthBase);
-// const NavigationNoAuth = compose(
-//   withRouter,
-//   withFirebase
-// )(NavigationNoAuthBase);
 
-const NavigationAuth = compose(withRouter, withFirebase)(NavigationAuthBase);
-const NavigationNoAuth = compose(
-  withRouter,
-  withFirebase
-)(NavigationNoAuthBase);
+const NavigationAuth = withRouter(withFirebase(NavigationAuthBase));
+const NavigationNoAuth = withRouter(withFirebase(NavigationNoAuthBase));
+
 export default NavigationComponent;

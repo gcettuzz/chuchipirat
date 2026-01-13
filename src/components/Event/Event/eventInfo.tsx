@@ -1,6 +1,5 @@
 import React from "react";
-import clsx from "clsx";
-import {makeStyles, Theme, createStyles, useTheme} from "@mui/material/styles";
+import {useTheme} from "@mui/material/styles";
 import {pdf} from "@react-pdf/renderer";
 import fileSaver from "file-saver";
 
@@ -15,7 +14,6 @@ import {
   Tooltip,
   IconButton,
   Button,
-  Collapse,
   List,
   ListItem,
   ListItemAvatar,
@@ -23,22 +21,11 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   useMediaQuery,
+  Box,
+  Stack,
 } from "@mui/material";
 import {Alert} from "@mui/lab";
-import {
-  Delete as DeleteIcon,
-  Add as AddIcon,
-  ExpandMore as ExpandMoreIcon,
-} from "@mui/icons-material";
-
-import {
-  KeyboardDatePicker,
-  MuiPickersUtilsProvider,
-} from "@material-ui/pickers";
-
-import format from "date-fns/format";
-import deLocale from "date-fns/locale/de";
-import DateFnsUtils from "@date-io/date-fns";
+import {Delete as DeleteIcon, Add as AddIcon} from "@mui/icons-material";
 
 import {
   DEFINE_BASIC_EVENT_DATA as TEXT_DEFINE_BASIC_EVENT_DATA,
@@ -67,7 +54,8 @@ import {
   SUFFIX_PDF as TEXT_SUFFIX_PDF,
 } from "../../../constants/text";
 
-import useStyles from "../../../constants/styles";
+import useCustomStyles from "../../../constants/styles";
+
 import {ImageRepository} from "../../../constants/imageRepository";
 
 import Event, {EventRefDocuments} from "./event.class";
@@ -89,15 +77,12 @@ import {
 import Action from "../../../constants/actions";
 import Receipt from "./receipt.class";
 import EventReceiptPdf from "./eventRecipePdf";
+import {DatePicker} from "@mui/x-date-pickers";
 
 /* ===================================================================
 // ============================== Global =============================
 // =================================================================== */
-class DeLocalizedUtils extends DateFnsUtils {
-  getDatePickerHeaderText(date) {
-    return format(date, "dd.MM.yyyy", {locale: this.locale});
-  }
-}
+
 /* ===================================================================
 // ============================ Event-Info ===========================
 // =================================================================== */
@@ -290,32 +275,28 @@ const EventInfoPage = ({
 
   return (
     <React.Fragment>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <EventBasicInfoCard
-            event={event}
-            formValidation={formValidation}
-            onFieldUpdate={onFieldUpdate}
-            onDatePickerUpdate={onDatePickerUpdate}
-            onDateDeleteClick={onDateDeleteClick}
-            onImageUpload={onUpdatePicture}
-            onImageDelete={onImageDelete}
-            previewPictureUrl={
-              localPicture ? URL.createObjectURL(localPicture) : ""
-            }
-            onDownloadReceipt={onDownloadReceipt}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <EventCookingTeamCard
-            event={event}
-            formValidation={formValidation}
-            authUser={authUser}
-            onAddCook={onOpenDialogAddUserDialog}
-            onDeleteCook={onDeleteCook}
-          />
-        </Grid>
-      </Grid>
+      <Stack spacing={2}>
+        <EventBasicInfoCard
+          event={event}
+          formValidation={formValidation}
+          onFieldUpdate={onFieldUpdate}
+          onDatePickerUpdate={onDatePickerUpdate}
+          onDateDeleteClick={onDateDeleteClick}
+          onImageUpload={onUpdatePicture}
+          onImageDelete={onImageDelete}
+          previewPictureUrl={
+            localPicture ? URL.createObjectURL(localPicture) : ""
+          }
+          onDownloadReceipt={onDownloadReceipt}
+        />
+        <EventCookingTeamCard
+          event={event}
+          formValidation={formValidation}
+          authUser={authUser}
+          onAddCook={onOpenDialogAddUserDialog}
+          onDeleteCook={onDeleteCook}
+        />
+      </Stack>
       <DialogAddUser
         firebase={firebase}
         authUser={authUser}
@@ -351,7 +332,7 @@ const EventBasicInfoCard = ({
   onDownloadReceipt,
   previewPictureUrl,
 }: EventBasicInfoCardProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
 
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -372,7 +353,7 @@ const EventBasicInfoCard = ({
   };
 
   return (
-    <Card className={classes.card}>
+    <Card sx={classes.card}>
       <CardHeader
         title={TEXT_EVENT_INFO}
         subheader={TEXT_DEFINE_BASIC_EVENT_DATA}
@@ -448,100 +429,83 @@ const EventBasicInfoCard = ({
                   </Grid>
                   {event.dates.map((eventDate, counter) => (
                     <React.Fragment key={"date_" + eventDate.uid}>
-                      <MuiPickersUtilsProvider
-                        utils={DeLocalizedUtils}
-                        locale={deLocale}
-                      >
-                        <Grid item xs={5}>
-                          <KeyboardDatePicker
-                            disableToolbar
-                            inputVariant="outlined"
-                            format="dd.MM.yyyy"
-                            // margin="normal"
-                            id={"dateFrom_" + eventDate.uid}
-                            key={"dateFrom_" + eventDate.uid}
-                            label={TEXT_FROM}
-                            value={
-                              eventDate.from?.getTime() == new Date(0).getTime()
-                                ? null
-                                : eventDate.from
-                            }
-                            error={FormValidatorUtil.isFieldErroneous(
-                              formValidation,
-                              "dateFrom_" + eventDate.uid
-                            )}
-                            helperText={FormValidatorUtil.getHelperText(
-                              formValidation,
-                              "dateFrom_" + eventDate.uid,
-                              ""
-                            )}
-                            fullWidth
-                            onChange={(date) =>
-                              onDatePickerUpdate(date, "from_" + eventDate.uid)
-                            }
-                            KeyboardButtonProps={{
-                              "aria-label": "Von Datum",
-                            }}
-                          />
-                        </Grid>
-                        <Grid item xs={1} className={classes.centerCenter}>
-                          <Typography>-</Typography>
-                        </Grid>
-                        <Grid item xs={5}>
-                          <KeyboardDatePicker
-                            disableToolbar
-                            inputVariant="outlined"
-                            format="dd.MM.yyyy"
-                            id={"to_" + eventDate.uid}
-                            key={"to_" + eventDate.uid}
-                            label={TEXT_TO}
-                            value={
-                              eventDate.to?.getTime() == new Date(0).getTime()
-                                ? null
-                                : eventDate.to
-                            }
-                            error={FormValidatorUtil.isFieldErroneous(
-                              formValidation,
-                              "dateTo_" + eventDate.uid
-                            )}
-                            helperText={FormValidatorUtil.getHelperText(
-                              formValidation,
-                              "dateTo_" + eventDate.uid,
-                              ""
-                            )}
-                            fullWidth
-                            onChange={(date) =>
-                              onDatePickerUpdate(date, "to_" + eventDate.uid)
-                            }
-                            KeyboardButtonProps={{
-                              "aria-label": "Bis Datum",
-                            }}
-                          />
-                        </Grid>
-                        <Grid item xs={1} className={classes.centerCenter}>
-                          <React.Fragment>
-                            <Tooltip title={TEXT_DELETE_DATES}>
-                              <span>
-                                <IconButton
-                                  id={"dateDelete_" + eventDate.uid}
-                                  aria-label="delete"
-                                  onClick={onDateDeleteClick}
-                                  color="primary"
-                                  disabled={
-                                    // 1970 = leeres Datum
-                                    (eventDate.from?.getFullYear() == 1970 &&
-                                      eventDate.to?.getFullYear() == 1970) ||
-                                    (eventDate.pos == 1 &&
-                                      event.dates.length == 1)
-                                  }
-                                >
-                                  <DeleteIcon fontSize="small" />
-                                </IconButton>
-                              </span>
-                            </Tooltip>
-                          </React.Fragment>
-                        </Grid>
-                      </MuiPickersUtilsProvider>
+                      <Grid item xs={5}>
+                        <DatePicker
+                          key={"dateFrom_" + eventDate.uid}
+                          label={TEXT_FROM}
+                          inputFormat="dd.MM.yyyy"
+                          value={
+                            eventDate.from?.getTime() == new Date(0).getTime()
+                              ? null
+                              : eventDate.from
+                          }
+                          onChange={(date) =>
+                            onDatePickerUpdate(date, "from_" + eventDate.uid)
+                          }
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              helperText={FormValidatorUtil.getHelperText(
+                                formValidation,
+                                "dateFrom_" + eventDate.uid,
+                                ""
+                              )}
+                            />
+                          )}
+                        />
+                      </Grid>
+                      <Grid item xs={1} sx={classes.centerCenter}>
+                        <Typography>-</Typography>
+                      </Grid>
+                      <Grid item xs={5}>
+                        <DatePicker
+                          key={"dateTo_" + eventDate.uid}
+                          label={TEXT_TO}
+                          inputFormat="dd.MM.yyyy"
+                          value={
+                            eventDate.to?.getTime() == new Date(0).getTime()
+                              ? null
+                              : eventDate.to
+                          }
+                          onChange={(date) =>
+                            onDatePickerUpdate(date, "to_" + eventDate.uid)
+                          }
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              helperText={FormValidatorUtil.getHelperText(
+                                formValidation,
+                                "dateTo_" + eventDate.uid,
+                                ""
+                              )}
+                            />
+                          )}
+                        />
+                      </Grid>
+                      <Grid item xs={1} sx={classes.centerCenter}>
+                        <React.Fragment>
+                          <Tooltip title={TEXT_DELETE_DATES}>
+                            <span>
+                              <IconButton
+                                id={"dateDelete_" + eventDate.uid}
+                                aria-label="delete"
+                                onClick={onDateDeleteClick}
+                                color="primary"
+                                disabled={
+                                  // 1970 = leeres Datum
+                                  (eventDate.from?.getFullYear() == 1970 &&
+                                    eventDate.to?.getFullYear() == 1970) ||
+                                  (eventDate.pos == 1 &&
+                                    event.dates.length == 1)
+                                }
+                                size="large"
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        </React.Fragment>
+                      </Grid>
                       {event.dates.length - 1 != counter ? (
                         <Grid item xs={12}>
                           <Divider />
@@ -560,8 +524,9 @@ const EventBasicInfoCard = ({
             </Typography>
             <Grid container spacing={1}>
               <Grid item xs={12}>
-                <div
-                  className={`${classes.cardMedia} ${classes.backgroundGrey}`}
+                <Box
+                  component="div"
+                  sx={[classes.cardMedia, classes.backgroundGrey]}
                   style={{
                     backgroundImage: `url('${
                       previewPictureUrl
@@ -619,29 +584,8 @@ const EventBasicInfoCard = ({
   );
 };
 /* ===================================================================
-// ========================== Kochmannschaft =========================
+// ============================ Koch-Team ============================
 // =================================================================== */
-const useStylesCookingTeam = makeStyles((theme: Theme) =>
-  createStyles({
-    root: {
-      maxWidth: 345,
-    },
-    media: {
-      height: 0,
-      paddingTop: "56.25%", // 16:9
-    },
-    expand: {
-      transform: "rotate(0deg)",
-      marginLeft: "auto",
-      transition: theme.transitions.create("transform", {
-        duration: theme.transitions.duration.shortest,
-      }),
-    },
-    expandOpen: {
-      transform: "rotate(180deg)",
-    },
-  })
-);
 interface EventCookingTeamCardProps {
   event: Event;
   formValidation: FormValidationFieldError[];
@@ -657,30 +601,12 @@ const EventCookingTeamCard = ({
   onAddCook,
   onDeleteCook,
 }: EventCookingTeamCardProps) => {
-  const classesCookingTeam = useStylesCookingTeam();
-  const [expanded, setExpanded] = React.useState(false);
-
-  const handleExpandClick = () => {
-    setExpanded(!expanded);
-  };
-
+  const classes = useCustomStyles();
   return (
     <Card>
       <CardHeader
         title={TEXT_KITCHENCREW}
         subheader={TEXT_COOKING_IS_COMMUNITY_SPORT}
-        action={
-          <IconButton
-            className={clsx(classesCookingTeam.expand, {
-              [classesCookingTeam.expandOpen]: expanded,
-            })}
-            onClick={handleExpandClick}
-            aria-expanded={expanded}
-            aria-label="zeig mehr"
-          >
-            <ExpandMoreIcon />
-          </IconButton>
-        }
       />
       {FormValidatorUtil.isFieldErroneous(formValidation, "cooks") && (
         <CardContent>
@@ -689,73 +615,72 @@ const EventCookingTeamCard = ({
           </Alert>
         </CardContent>
       )}
-      <Collapse in={expanded} timeout="auto" unmountOnExit>
-        <CardContent>
-          <List key={"cookList"}>
-            {event.cooks.map((cook, counter) => (
-              <React.Fragment key={"cook_" + cook.uid}>
-                {counter > 0 && <Divider component="li" />}
-                <ListItem
-                  alignItems="flex-start"
-                  key={"cookListItem_" + cook.uid}
-                  id={"cookListItem_" + cook.uid}
-                >
-                  <ListItemAvatar>
-                    {cook.pictureSrc.smallSize ? (
-                      <Avatar
-                        alt={cook.displayName}
-                        src={String(cook.pictureSrc.smallSize)}
-                      />
-                    ) : (
-                      <Avatar alt={cook.displayName}>
-                        {cook.displayName.charAt(0)}
-                      </Avatar>
-                    )}
-                  </ListItemAvatar>
+      <CardContent>
+        <List key={"cookList"}>
+          {event.cooks.map((cook, counter) => (
+            <React.Fragment key={"cook_" + cook.uid}>
+              {counter > 0 && <Divider component="li" />}
+              <ListItem
+                alignItems="flex-start"
+                key={"cookListItem_" + cook.uid}
+                id={"cookListItem_" + cook.uid}
+              >
+                <ListItemAvatar>
+                  {cook.pictureSrc.smallSize ? (
+                    <Avatar
+                      alt={cook.displayName}
+                      src={String(cook.pictureSrc.smallSize)}
+                    />
+                  ) : (
+                    <Avatar alt={cook.displayName}>
+                      {cook.displayName.charAt(0)}
+                    </Avatar>
+                  )}
+                </ListItemAvatar>
 
-                  <ListItemText
-                    primary={cook.displayName}
-                    secondary={
-                      <React.Fragment>
-                        <Typography
-                          component="span"
-                          variant="body2"
-                          color="textSecondary"
-                        >
-                          {cook.motto}
-                        </Typography>
-                      </React.Fragment>
-                    }
-                  />
-                  {event.cooks.length > 1 && cook.uid !== authUser.uid ? (
-                    <ListItemSecondaryAction>
-                      <IconButton
-                        edge="end"
-                        aria-label="delete cook"
-                        id={"deleteCook_" + cook.uid}
-                        color="primary"
-                        onClick={onDeleteCook}
+                <ListItemText
+                  primary={cook.displayName}
+                  secondary={
+                    <React.Fragment>
+                      <Typography
+                        component="span"
+                        variant="body2"
+                        color="textSecondary"
                       >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </ListItemSecondaryAction>
-                  ) : null}
-                </ListItem>
-              </React.Fragment>
-            ))}
-          </List>
-          <Grid container spacing={2} justifyContent="center">
-            <Button
-              size="small"
-              color="primary"
-              onClick={onAddCook}
-              startIcon={<AddIcon />}
-            >
-              {TEXT_ADD_COOK_TO_EVENT}
-            </Button>
-          </Grid>
-        </CardContent>
-      </Collapse>
+                        {cook.motto}
+                      </Typography>
+                    </React.Fragment>
+                  }
+                />
+                {event.cooks.length > 1 && cook.uid !== authUser.uid ? (
+                  <ListItemSecondaryAction>
+                    <IconButton
+                      edge="end"
+                      aria-label="delete cook"
+                      id={"deleteCook_" + cook.uid}
+                      color="primary"
+                      onClick={onDeleteCook}
+                      size="large"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </ListItemSecondaryAction>
+                ) : null}
+              </ListItem>
+            </React.Fragment>
+          ))}
+        </List>
+        <Box component="div" sx={classes.centerCenter}>
+          <Button
+            size="small"
+            color="primary"
+            onClick={onAddCook}
+            startIcon={<AddIcon />}
+          >
+            {TEXT_ADD_COOK_TO_EVENT}
+          </Button>
+        </Box>
+      </CardContent>
     </Card>
   );
 };

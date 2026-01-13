@@ -1,14 +1,18 @@
 import React from "react";
 import TextField from "@mui/material/TextField";
 
-import Autocomplete from "@mui/lab/Autocomplete";
-import {AutocompleteChangeReason} from "@mui/material";
+import {
+  Autocomplete,
+  AutocompleteChangeReason,
+  createFilterOptions,
+} from "@mui/material";
 
 import {RecipeProduct} from "../Recipe/recipe.class";
 import Material, {MaterialType} from "./material.class";
 import Utils from "../Shared/utils.class";
 
 import {MATERIAL, ADD, ITEM_CANT_BE_CHANGED} from "../../constants/text";
+import {TextFieldSize} from "../../constants/defaultValues";
 
 interface MaterialAutocompleteProps {
   componentKey?: string;
@@ -24,6 +28,7 @@ interface MaterialAutocompleteProps {
     objectId: string
   ) => void;
   error?: {isError: boolean; errorText: string};
+  size?: TextFieldSize;
 }
 interface filterHelpWithSortRank {
   uid: string;
@@ -48,44 +53,24 @@ const MaterialAutocomplete = ({
   allowCreateNewMaterial = true,
   onChange,
   error,
+  size = TextFieldSize.medium,
 }: MaterialAutocompleteProps) => {
   // Handler für Zutaten/Produkt hinzufügen
   const filter = createFilterOptions<Material>();
 
   return (
     <Autocomplete
-      key={componentKey ? "material_" + componentKey : "material"}
       id={componentKey ? "material_" + componentKey : "material"}
+      key={componentKey ? "material_" + componentKey : "material"}
       value={material?.name}
-      options={materials}
-      disabled={disabled}
-      autoSelect
-      autoHighlight
-      getOptionSelected={(optionMaterial) =>
-        optionMaterial.name === material?.name
-      }
-      getOptionLabel={(option) => {
-        if (typeof option === "string") {
-          return option;
-        }
-
-        if (option.name.endsWith(ADD)) {
-          const words = option.name.match('".*"');
-          if (words && words.length >= 0) {
-            return words[0].slice(1, -1);
-          }
-        }
-        return option.name;
-      }}
-      onChange={(event, newValue, action) =>
+      onChange={(event, newValue, reason) =>
         onChange(
           event as unknown as React.ChangeEvent<HTMLInputElement>,
           newValue,
-          action,
+          reason,
           componentKey ? "material_" + componentKey : "material"
         )
       }
-      fullWidth
       filterOptions={(options, params) => {
         let filtered = filter(options, params) as Material[];
         if (
@@ -131,13 +116,44 @@ const MaterialAutocomplete = ({
         });
         return filtered;
       }}
-      renderOption={(option) => option.name}
+      selectOnFocus
+      clearOnBlur
+      handleHomeEndKeys
+      options={materials}
+      getOptionLabel={(option) => {
+        if (typeof option === "string") {
+          return option;
+        }
+
+        if (option.name.endsWith(ADD)) {
+          const words = option.name.match('".*"');
+          if (words && words.length >= 0) {
+            return words[0].slice(1, -1);
+          }
+        }
+        return option.name;
+      }}
+      renderOption={(props, option) => {
+        // eslint-disable-next-line react/prop-types
+        const {key, ...optionProps} = props;
+        return (
+          <li key={key} {...optionProps}>
+            {option.name}
+          </li>
+        );
+      }}
       freeSolo
+      autoSelect
+      autoHighlight
+      disabled={disabled}
+      isOptionEqualToValue={(optionMaterial) =>
+        optionMaterial.name === material?.name
+      }
+      fullWidth
       renderInput={(params) => (
         <TextField
           {...params}
           label={label}
-          size="small"
           error={error?.isError}
           helperText={
             error?.isError
@@ -146,6 +162,7 @@ const MaterialAutocomplete = ({
               ? ITEM_CANT_BE_CHANGED
               : ""
           }
+          size={size}
         />
       )}
     />

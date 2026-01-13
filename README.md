@@ -22,6 +22,7 @@ Willst du als Entwickler\*in am chuchipirat mitarbeiten? Hier findest du alle n�
 - **Datenbank**: [Firebase](https://firebase.google.com/)
 - **Build-Tools**: [z. B.: Webpack, Babel]
 - **Test-Frameworks**: [Jest](https://jestjs.io/)
+- **Bug-Monitor**: [Sentry](https://sentry.io)
 
 # Projektdokumentation
 
@@ -87,6 +88,13 @@ npm run test
 ```
 
 Das Test-Framework führt dann alle definierten Tests in der Datei `tests/` aus.
+
+## Genutzte Pakete
+
+Vielen Dank für die grossartige Software:
+
+- [Fuse.js](https://www.fusejs.io/) - Fuzzy-Search
+- [Sentry](https://sentry.io) - automatisches überwachen von Fehlern
 
 ## License
 

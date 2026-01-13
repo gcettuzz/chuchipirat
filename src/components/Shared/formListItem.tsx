@@ -1,14 +1,14 @@
 import React from "react";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
-import ListItem from "@mui/material/ListItem";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction";
-
-import Divider from "@mui/material/Divider";
-
-import TextField from "@mui/material/TextField";
+import {
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  ListItemSecondaryAction,
+  Divider,
+  TextField,
+} from "@mui/material";
 
 interface FormListItemProps {
   value: string | number | Date | JSX.Element | JSX.Element[];
@@ -45,13 +45,11 @@ export const FormListItem = ({
   secondaryAction,
   endAdornment,
 }: FormListItemProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   return (
     <React.Fragment>
       <ListItem key={"listItem_" + id}>
-        {icon && (
-          <ListItemIcon className={classes.listItemIcon}>{icon}</ListItemIcon>
-        )}
+        {icon && <ListItemIcon sx={classes.listItemIcon}>{icon}</ListItemIcon>}
         {editMode ? (
           <TextField
             id={id}
@@ -71,31 +69,30 @@ export const FormListItem = ({
             multiline={multiLine}
             helperText={helperText}
             fullWidth
+            margin="dense"
           />
         ) : (
           <React.Fragment>
             {/* Nur Möglichkeit von JSX Element oder von einfachem Text.. alles andere wird overhead */}
-            <ListItemText className={classes.listItemTitle} secondary={label} />
+            <ListItemText sx={classes.listItemTitle} secondary={label} />
             {typeof value === "string" ? (
               <ListItemText
-                className={
+                sx={
                   !displayAsCode
                     ? classes.listItemContent
-                    : `${classes.listItemContent} ${classes.typographyCode}`
+                    : [classes.listItemContent, classes.typographyCode]
                 }
                 disableTypography={displayAsCode}
                 primary={value}
               />
             ) : value instanceof Date ? (
-              <ListItemText className={classes.listItemContent}>
+              <ListItemText sx={classes.listItemContent}>
                 {value.toLocaleString("de-CH", {
                   dateStyle: "medium",
                 })}
               </ListItemText>
             ) : (
-              <ListItemText className={classes.listItemContent}>
-                {value}
-              </ListItemText>
+              <ListItemText sx={classes.listItemContent}>{value}</ListItemText>
             )}
             {secondaryAction && (
               <ListItemSecondaryAction>

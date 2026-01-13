@@ -8,7 +8,7 @@ import {Alert, AlertTitle} from "@mui/lab";
 
 import PageTitle from "../Shared/pageTitle";
 
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
 import FirebaseMessageHandler from "../Firebase/firebaseMessageHandler.class";
 import {withFirebase} from "../Firebase/firebaseContext";
@@ -25,6 +25,7 @@ import {
 import LocalStorageKey from "../../constants/localStorage";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import {CustomRouterProps} from "../Shared/global.interface";
+import {checkActionCode} from "firebase/auth";
 
 // ===================================================================
 // =============================== Page ==============================
@@ -37,7 +38,7 @@ const RecoverEmailPage: React.FC<
   const [error, setError] = React.useState<Error | null>(null);
   const [isRecovered, setIsRecovered] = React.useState(false);
   const {push} = useHistory();
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   /* ------------------------------------------
   // E-Mail-Wechsel zurückbuchstabieren
@@ -52,15 +53,19 @@ const RecoverEmailPage: React.FC<
       return;
     }
 
-    firebase.auth.checkActionCode(actionCode).then((actionCodeInfo) => {
+    if (!actionCode) {
+      return;
+    }
+
+    checkActionCode(firebase.auth, actionCode).then((actionCodeInfo) => {
       // Update muss vorher passieren. Nach Eingabe des Action-Code geschieht
       // automatisch der Log-Off. Somit kann die DB nicht mehr geändert werden
       User.updateEmail({
         firebase: firebase,
-        newEmail: actionCodeInfo.data.email,
+        newEmail: actionCodeInfo.data.email as string,
         authUser: authUser!,
       });
-      updateLocalStorage(actionCodeInfo.data.email);
+      updateLocalStorage(actionCodeInfo.data.email as string);
 
       firebase
         .applyActionCode(actionCode)
@@ -94,7 +99,7 @@ const RecoverEmailPage: React.FC<
         title={TEXT_BACKSPELLED}
         // subTitle={TEXT.ALERT_TITLE_EMAIL_RECOVERED}
       />
-      <Container className={classes.container} component="main" maxWidth="xs">
+      <Container sx={classes.container} component="main" maxWidth="xs">
         {error && (
           <Alert severity="error">
             <AlertTitle>{TEXT_ALERT_TITLE_UUPS}</AlertTitle>

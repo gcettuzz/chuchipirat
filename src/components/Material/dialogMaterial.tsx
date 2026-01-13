@@ -1,24 +1,23 @@
 import React from "react";
 
-import Grid from "@mui/material/Grid";
-
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogActions from "@mui/material/DialogActions";
-
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import Checkbox from "@mui/material/Checkbox";
-
-import Radio from "@mui/material/Radio";
-import RadioGroup from "@mui/material/RadioGroup";
-
-import FormControl from "@mui/material/FormControl";
-import FormLabel from "@mui/material/FormLabel";
-import FormHelperText from "@mui/material/FormHelperText";
-import FormControlLabel from "@mui/material/FormControlLabel";
+import {
+  Stack,
+  Button,
+  TextField,
+  Checkbox,
+  Radio,
+  RadioGroup,
+  FormControl,
+  FormLabel,
+  FormControlLabel,
+  FormHelperText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  useTheme,
+} from "@mui/material";
 
 import Material, {MaterialType} from "./material.class";
 
@@ -103,6 +102,8 @@ const DialogMaterial = ({
   handleClose,
   authUser,
 }: DialogMaterialProps) => {
+  const theme = useTheme();
+
   const [materialPopUpValues, setMaterialPopUpValues] = React.useState(
     MATERIAL_POP_UP_VALUES_INITIAL_STATE
   );
@@ -285,78 +286,70 @@ const DialogMaterial = ({
       </DialogTitle>
 
       <DialogContent>
-        {/* <Alert severity="info">{TEXT.DIALOG_ALERT_TEXT_ADD_PRODUCT}</Alert>
-        <br /> */}
-        <DialogContentText>
+        <DialogContentText sx={{marginBottom: theme.spacing(2)}}>
           {dialogType === MATERIAL_DIALOG_TYPE.CREATE && DIALOG_TEXT_MATERIAL}
         </DialogContentText>
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <TextField
-              autoComplete="off"
-              error={validation.name.hasError}
-              margin="dense"
-              id="name"
-              name="name"
-              value={materialPopUpValues.name}
-              required
-              fullWidth
-              onChange={onChangeField}
-              label={MATERIAL}
-              type="text"
-              helperText={validation.name.errorText}
-              autoFocus
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <FormControl component="fieldset" error={validation.type.hasError}>
-              <FormLabel component="legend">{MATERIAL_TYPE}</FormLabel>
-              <RadioGroup
-                aria-label="materialtyp"
-                name="materialtype"
-                id="materialtype"
-                value={materialPopUpValues.type}
-                onChange={onChangeRadioButton}
-                row
-              >
-                <FormControlLabel
-                  value={MaterialType.consumable}
-                  control={<Radio color="primary" required />}
-                  label={MATERIAL_TYPE_CONSUMABLE}
-                  id="materialtype"
-                />
-                <FormControlLabel
-                  value={MaterialType.usage}
-                  control={<Radio color="primary" required />}
-                  label={MATERIAL_TYPE_USAGE}
-                  id="materialtype"
-                />
-              </RadioGroup>
-              <FormHelperText>{validation.type.errorText}</FormHelperText>
-            </FormControl>
-            <FormHelperText>
-              {DIALOG_EXPLANATION_MATERIAL_TYPE_CONSUMABLE}
-            </FormHelperText>
-            <FormHelperText>
-              {DIALOG_EXPLANATION_MATERIAL_TYPE_USAGE}
-            </FormHelperText>
-          </Grid>
-          {dialogType == MATERIAL_DIALOG_TYPE.EDIT && (
-            <Grid xs={12}>
+        <Stack spacing={2}>
+          <TextField
+            autoComplete="off"
+            error={validation.name.hasError}
+            margin="dense"
+            id="name"
+            name="name"
+            value={materialPopUpValues.name}
+            required
+            fullWidth
+            onChange={onChangeField}
+            label={MATERIAL}
+            type="text"
+            helperText={validation.name.errorText}
+            autoFocus
+          />
+
+          <FormControl component="fieldset" error={validation.type.hasError}>
+            <FormLabel component="legend">{MATERIAL_TYPE}</FormLabel>
+            <RadioGroup
+              aria-label="materialtyp"
+              name="materialtype"
+              id="materialtype"
+              value={materialPopUpValues.type}
+              onChange={onChangeRadioButton}
+              row
+            >
               <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={materialPopUpValues.usable}
-                    onChange={onChangeCheckbox}
-                    name="usable"
-                    color="primary"
-                  />
-                }
-                label={USABLE}
+                value={MaterialType.consumable}
+                control={<Radio required />}
+                label={MATERIAL_TYPE_CONSUMABLE}
+                id="materialtype"
               />
-            </Grid>
+              <FormControlLabel
+                value={MaterialType.usage}
+                control={<Radio required />}
+                label={MATERIAL_TYPE_USAGE}
+                id="materialtype"
+              />
+            </RadioGroup>
+            <FormHelperText>{validation.type.errorText}</FormHelperText>
+          </FormControl>
+          <FormHelperText>
+            {DIALOG_EXPLANATION_MATERIAL_TYPE_CONSUMABLE}
+          </FormHelperText>
+          <FormHelperText>
+            {DIALOG_EXPLANATION_MATERIAL_TYPE_USAGE}
+          </FormHelperText>
+          {dialogType == MATERIAL_DIALOG_TYPE.EDIT && (
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={materialPopUpValues.usable}
+                  onChange={onChangeCheckbox}
+                  name="usable"
+                />
+              }
+              label={USABLE}
+            />
           )}
-        </Grid>
+        </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={onCancelClick} color="primary" variant="outlined">

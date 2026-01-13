@@ -43,6 +43,7 @@ interface CreateFeedEntry {
   objectUserUid?: string;
   objectUserDisplayName?: string;
   objectUserPictureSrc?: string;
+  additionalData?: {[key: string]: number | string | boolean};
 }
 interface GetNewestFeeds {
   firebase: Firebase;
@@ -97,7 +98,13 @@ export default class Feed {
   text: string;
   type: FeedType;
   visibility: Role;
-  sourceObject: {uid: string; name: string; pictureSrc: string; type?: string};
+  sourceObject: {
+    uid: string;
+    name: string;
+    pictureSrc: string;
+    type?: string;
+    additionalData?: {[key: string]: number | string | boolean};
+  };
   user: {uid: string; displayName: string; pictureSrc: string};
   created: ChangeRecord;
 
@@ -147,6 +154,7 @@ export default class Feed {
     objectUserUid = "",
     objectUserDisplayName = "",
     objectUserPictureSrc = "",
+    additionalData,
   }: CreateFeedEntry) {
     const feed: Feed = {
       uid: "",
@@ -177,6 +185,11 @@ export default class Feed {
         fromDisplayName: authUser.publicProfile.displayName,
       },
     };
+
+    if (additionalData) {
+      feed.sourceObject.additionalData = additionalData;
+    }
+
     await firebase.feed
       .create<Feed>({value: feed, authUser: authUser})
       .then((result) => {

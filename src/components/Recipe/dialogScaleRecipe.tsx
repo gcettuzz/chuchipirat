@@ -9,9 +9,9 @@ import {
   TextField,
   Switch,
   Typography,
-  Grid,
   useTheme,
 } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 
 import {Alert, AlertTitle} from "@mui/lab";
 
@@ -114,7 +114,7 @@ const DialogScaleRecipe = ({
       </DialogTitle>
       <DialogContent>
         <Grid container alignItems="center" spacing={1}>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <TextField
               margin="dense"
               id="scaledPortions"
@@ -127,22 +127,21 @@ const DialogScaleRecipe = ({
               type="number"
             />
           </Grid>
-          <Grid item xs={10}>
+          <Grid xs={10}>
             <Typography variant="body1">{TEXT_CONVERT_UNITS}</Typography>
           </Grid>
-          <Grid item xs={2} style={{textAlign: "right"}}>
+          <Grid xs={2} style={{textAlign: "right"}}>
             <Switch
               checked={formFields.convertUnits}
               onChange={onChangeSwitch}
-              color="primary"
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <Typography variant="body2" color="textSecondary">
               {TEXT_CONVERT_UNITS_EXPLANATION}
             </Typography>
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <Alert severity="info" style={{marginTop: theme.spacing(1)}}>
               <AlertTitle>{TEXT_INFO_PANEL_TITLE_SCALE}</AlertTitle>
               {TEXT_INFO_PANEL_TEXT_SCALE}

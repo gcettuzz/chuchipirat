@@ -405,9 +405,11 @@ const MenuplanMealRow = ({
                                 }
                           }
                         >
-                          {mealRecipes[recipeUid].recipe.name}
+                          {/* Kann sein, dass das Menü nicht mehr existiert (aber der Index-Eintrag).
+                              Daher wird mit ? gearbeietet, damit es keine Exception auslöst. */}
+                          {mealRecipes[recipeUid]?.recipe.name}
                           {/* Variante anzeigen, falls eine! */}
-                          {mealRecipes[recipeUid].recipe.type ==
+                          {mealRecipes[recipeUid]?.recipe.type ==
                             RecipeType.variant && (
                             <Text style={{...styles.gray}}>
                               {` [${mealRecipes[recipeUid].recipe.variantName}]`}

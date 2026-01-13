@@ -10,10 +10,12 @@ import {
   CardMedia,
   CircularProgress,
   Container,
-  CssBaseline,
-  Grid,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
+
 import PageTitle from "../../Shared/pageTitle";
 
 import {
@@ -24,7 +26,7 @@ import {
   CREATE_EVENT as TEXT_CREATE_EVENT,
 } from "../../../constants/text";
 import Event from "./event.class";
-import useStyles from "../../../constants/styles";
+import useCustomStyles from "../../../constants/styles";
 import AlertMessage from "../../Shared/AlertMessage";
 import {withFirebase} from "../../Firebase/firebaseContext";
 import EventCard, {EventCardLoading} from "./eventCard";
@@ -100,7 +102,7 @@ const EventsBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
   ...props
 }) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {push} = useHistory();
   const [state, dispatch] = React.useReducer(eventsReducer, inititialState);
   const actualDate = new Date(new Date().setHours(23, 59, 59, 999));
@@ -145,12 +147,11 @@ const EventsBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
   };
   return (
     <React.Fragment>
-      <CssBaseline />
       {/*===== HEADER ===== */}
       <PageTitle title={TEXT_EVENTS} />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="lg">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="lg">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
         {state.error && (
@@ -212,7 +213,20 @@ const EventsGrid = ({
   onCreateNewEvent,
   showCreateNewCard = false,
 }: EventGridProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
+  const theme = useTheme();
+  let rowSize = 12;
+
+  if (useMediaQuery(theme.breakpoints.down("xs"))) {
+    rowSize = 12;
+  } else if (useMediaQuery(theme.breakpoints.down("sm"))) {
+    rowSize = 6;
+  } else if (useMediaQuery(theme.breakpoints.down("md"))) {
+    rowSize = 4;
+  } else {
+    rowSize = 3;
+  }
+
   return (
     <Grid
       container
@@ -221,12 +235,12 @@ const EventsGrid = ({
       style={{marginBottom: "3rem"}}
     >
       {isLoading && (
-        <Grid item xs={12} sm={6} md={4} lg={3}>
+        <Grid xs={12} sm={6} md={4} lg={3}>
           <EventCardLoading key={"loadingEventCard"} />
         </Grid>
       )}
       {events.map((event) => (
-        <Grid item xs={12} sm={6} md={4} lg={3} key={"eventGrid_" + event.uid}>
+        <Grid xs={12} sm={6} md={4} lg={3} key={"eventGrid_" + event.uid}>
           <EventCard
             event={event}
             onCardClick={onCardClick}
@@ -234,11 +248,16 @@ const EventsGrid = ({
           />
         </Grid>
       ))}
+      {/* Leere Grids erzeugen, damit die Karten in einem Tabellenlayout angezeigt werden */}
+      {Array.from({length: events.length % rowSize}).map((index) => (
+        <Grid xs={12} sm={6} md={4} lg={3} key={"eventGridEmpty_" + index} />
+      ))}
+
       {showCreateNewCard && (
-        <Grid item xs={12} sm={6} md={4} lg={3}>
-          <Card className={classes.card} key={"eventCardNew"}>
+        <Grid xs={12} sm={6} md={4} lg={3}>
+          <Card sx={classes.card} key={"eventCardNew"}>
             <CardMedia
-              className={classes.cardMedia}
+              sx={classes.cardMedia}
               image={
                 ImageRepository.getEnviromentRelatedPicture()
                   .CARD_PLACEHOLDER_MEDIA

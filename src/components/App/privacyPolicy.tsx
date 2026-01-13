@@ -8,7 +8,6 @@ import {
   CardContent,
   Box,
 } from "@mui/material";
-// import {makeStyles} from "@mui/material";
 import {PRIVACY_POLICY as ROUTE_PRIVACY_POLICY} from "../../constants/routes";
 import {useHistory} from "react-router";
 import PageTitle from "../Shared/pageTitle";

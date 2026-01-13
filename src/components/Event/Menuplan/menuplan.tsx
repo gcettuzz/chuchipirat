@@ -1,12 +1,24 @@
-import React from "react";
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  createContext,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import {pdf} from "@react-pdf/renderer";
-import fileSaver from "file-saver";
+import {saveAs} from "file-saver";
 
+//FIXME: Kommentare und nicht benötige imports löschen
+// TODO: Syntax Error beheben.
 import {
-  Grid,
+  Box,
   Container,
   Switch,
   Button,
+  ToggleButton,
+  ToggleButtonGroup,
   Card,
   FormGroup,
   FormControlLabel,
@@ -33,28 +45,29 @@ import {
   Tooltip,
   Divider,
   ListItemText,
-  CssBaseline,
+  useMediaQuery,
 } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 
 import {alpha} from "@mui/system/colorManipulator";
-
-import {ToggleButtonGroup, ToggleButton} from "@mui/lab";
 
 import {
   MoreVert as MoreVertIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
-  ShoppingCart as ShoppingCartIcon,
-  Build as BuildIcon,
+  // ShoppingCart as ShoppingCartIcon,
+  // Build as BuildIcon,
   Close as CloseIcon,
   Info as InfoIcon,
-  Notes as NotesIcon,
+  // Notes as NotesIcon,
   Edit,
-  DeleteSweep as DeleteSweepIcon,
+  // DeleteSweep as DeleteSweepIcon,
+  ArrowDownward as ArrowDownwardIcon,
+  ArrowUpward as ArrowUpwardIcon,
 } from "@mui/icons-material";
 
-import useStyles from "../../../constants/styles";
+import useCustomStyles from "../../../constants/styles";
 
 import Menuplan, {
   MealType,
@@ -71,13 +84,22 @@ import Menuplan, {
   MenuplanMaterial,
   MenuplanProduct,
   MealRecipes,
-  MealRecipeDeletedPrefix,
+  // MealRecipeDeletedPrefix,
+  MenueListOrderTypes,
 } from "./menuplan.class";
-import {AutocompleteChangeReason} from "@material-ui/lab/Autocomplete";
+import {
+  isMenueCardData,
+  isDraggingAMenueCard,
+  MenueListOfMeal,
+  isMenueCardDropTargetData,
+  isMenueCardContainerDropTargetData,
+} from "./menuplan.menucard";
+import {AutocompleteChangeReason} from "@mui/material/Autocomplete";
 
 import {OnRecipeCardClickProps} from "../../Recipe/recipes";
 import {
   SHOW_DETAILS as TEXT_SHOW_DETAILS,
+  ENABLE_DRAG_AND_DROP as TEXT_ENABLE_DRAG_AND_DROP,
   ADD_MEAL as TEXT_ADD_MEAL,
   RENAME as TEXT_RENAME,
   DELETE as TEXT_DELETE,
@@ -89,15 +111,15 @@ import {
   CANCEL as TEXT_CANCEL,
   APPLY as TEXT_APPLY,
   NEW_MENU as TEXT_NEW_MENU,
-  ADD_RECIPE as TEXT_ADD_RECIPE,
-  EDIT_MENUE as TEXT_EDIT_MENUE,
-  ADD_PRODUCT as TEXT_ADD_PRODUCT,
-  ADD_MATERIAL as TEXT_ADD_MATERIAL,
+  // ADD_RECIPE as TEXT_ADD_RECIPE,
+  // EDIT_MENUE as TEXT_EDIT_MENUE,
+  // ADD_PRODUCT as TEXT_ADD_PRODUCT,
+  // ADD_MATERIAL as TEXT_ADD_MATERIAL,
   PRODUCTS as TEXT_PRODUCTS,
   MATERIAL as TEXT_MATERIAL,
   RECIPES as TEXT_RECIPES,
   RECIPES_DRAWER_TITLE as TEXT_RECIPES_DRAWER_TITLE,
-  MENUE as TEXT_MENUE,
+  // MENUE as TEXT_MENUE,
   DIALOG_PLAN_RECIPE_PORTIONS_TITLE as TEXT_DIALOG_PLAN_RECIPE_PORTIONS_TITLE,
   DIALOG_PLAN_GOODS_PORTIONS_TITLE as TEXT_DIALOG_PLAN_GOODS_PORTIONS_TITLE,
   ALL as TEXT_ALL,
@@ -116,7 +138,7 @@ import {
   MISSING_FACTOR as TEXT_MISSING_FACTOR,
   NO_GROUP_SELECTED as TEXT_NO_GROUP_SELECTED,
   NO_PORTIONS_GIVEN as TEXT_NO_PORTIONS_GIVEN,
-  DELETE_MENUE as TEXT_DELETE_MENUE,
+  // DELETE_MENUE as TEXT_DELETE_MENUE,
   TOTAL as TEXT_TOTAL,
   PER_PORTION as TEXT_PER_PORTION,
   EXPLANATION_DIALOG_GOODS_TYPE_PRODUCT as TEXT_EXPLANATION_DIALOG_GOODS_TYPE_PRODUCT,
@@ -131,9 +153,12 @@ import {
   ATTENTION as TEXT_ATTENTION,
   ALL_RECIPES_AND_VALUES_WILL_BE_DELETED as TEXT_ALL_RECIPES_AND_VALUES_WILL_BE_DELETED,
   VARIANT as TEXT_VARIANT,
-  RECIPE_WIHOUT_PORTIONPLAN as TEXT_RECIPE_WIHOUT_PORTIONPLAN,
+  // RECIPE_WIHOUT_PORTIONPLAN as TEXT_RECIPE_WIHOUT_PORTIONPLAN,
   DIALOG_CHOOSE_MENUES_TITLE as TEXT_DIALOG_CHOOSE_MENUES_TITLE,
+  DIALOG_CHOOSE_MEALS_TITLE as TEXT_DIALOG_CHOOSE_MEALS_TITLE,
   PRODUCT as TEXT_PRODUCT,
+  TOOLTIP_MOVE_UP as TEXT_TOOLTIP_MOVE_UP,
+  TOOLTIP_MOVE_DOWN as TEXT_TOOLTIP_MOVE_DOWN,
 } from "../../../constants/text";
 import {
   FetchMissingDataType,
@@ -142,13 +167,38 @@ import {
   MasterDataCreateType,
 } from "../Event/event";
 import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-  DropResult,
-  DraggableProvided,
-  DraggableStateSnapshot,
-} from "react-beautiful-dnd";
+  DraggableState,
+  idleState,
+  draggingState,
+  ListContextValue,
+  ItemEntry,
+  LastCardMoved,
+} from "../../../constants/dragAndDrop";
+import invariant from "tiny-invariant";
+import {
+  draggable,
+  dropTargetForElements,
+  monitorForElements,
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import {
+  attachClosestEdge,
+  type Edge,
+  extractClosestEdge,
+} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import {reorder} from "@atlaskit/pragmatic-drag-and-drop/reorder";
+import {combine} from "@atlaskit/pragmatic-drag-and-drop/combine";
+import {reorderWithEdge} from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/reorder-with-edge";
+
+import {triggerPostMoveFlash} from "@atlaskit/pragmatic-drag-and-drop-flourish/trigger-post-move-flash";
+import {getReorderDestinationIndex} from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/get-reorder-destination-index";
+import {autoScrollForElements} from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
+import {unsafeOverflowAutoScrollForElements} from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/unsafe-overflow/element";
+
+import {DropIndicator} from "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box";
+import mergeRefs from "@atlaskit/ds-lib/merge-refs";
+import {bindAll} from "bind-event-listener";
+import type {CleanupFn} from "@atlaskit/pragmatic-drag-and-drop/types";
+
 import MenuplanPdf from "./menuplanPdf";
 import Utils from "../../Shared/utils.class";
 import Firebase from "../../Firebase/firebase.class";
@@ -194,25 +244,55 @@ import {
   NavigationValuesContext,
   NavigationObject,
 } from "../../Navigation/navigationContext";
+import {
+  isCardListData,
+  isCardListDropTargetData,
+  isListContainerDropTargetData,
+  isDraggingACardListItem,
+} from "./menuplan.menucard.list";
+import {
+  EmptyMealContainer,
+  isEmptyContainerData,
+} from "./menuplan.emptycontainer";
+import {DialogSelectMeals} from "./dialogSelectMeals";
 
 /* ===================================================================
 // ============================== Global =============================
 // =================================================================== */
-
-interface MenuplanSettings {
+export interface MenuplanSettings {
   showDetails: boolean;
+  enableDragAndDrop: boolean;
 }
 
 interface onMenuplanUpdate {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
-enum DragDropTypes {
+export enum MenuplanDragDropTypes {
   MEALTYPE = "MEALTYPE",
   MENU = "MENU",
   MEALRECIPE = "RECIPE",
   PRODUCT = "PRODUCT",
   MATERIAL = "MATERIAL",
 }
+
+const getOrderListNameFromDragAndDropTypes = (
+  dragAndDropType: MenuplanDragDropTypes
+) => {
+  switch (dragAndDropType) {
+    case MenuplanDragDropTypes.MEALRECIPE:
+      return MenueListOrderTypes.mealRecipeOrder;
+    case MenuplanDragDropTypes.MATERIAL:
+      return MenueListOrderTypes.materialOrder;
+    case MenuplanDragDropTypes.PRODUCT:
+      return MenueListOrderTypes.productOrder;
+    case MenuplanDragDropTypes.MEALTYPE:
+      return MenueListOrderTypes.mealTypeOrder;
+    case MenuplanDragDropTypes.MENU:
+      return MenueListOrderTypes.menuOrder;
+  }
+};
+
 enum MenueEditTypes {
   NOTE = "NOTE",
   MEALRECIPE = "MEALRECIPE",
@@ -263,7 +343,7 @@ export const generatePlanedPortionsText = ({
           : `, ${
               groupConfiguration.intolerances.entries[plan.intolerance].name
             }`
-      } (${plan.totalPortions} ${
+      } (${plan.totalPortions.toFixed(1)} ${
         plan.totalPortions == 1 ? TEXT_PORTION : TEXT_PORTIONS
       })`}
 
@@ -273,6 +353,75 @@ export const generatePlanedPortionsText = ({
   ));
 };
 
+/* ===================================================================
+// ================= Drag & Drop Context für Meal Row ================
+// =================================================================== */
+const MealTypesRowContext = createContext<ListContextValue | null>(null);
+
+function useMealTypeRowContext() {
+  const rowContext = useContext(MealTypesRowContext);
+  invariant(rowContext !== null);
+  return rowContext;
+}
+
+const itemKey = Symbol("item");
+type ItemData<Item> = {
+  [itemKey]: true;
+  item: Item;
+  index: number;
+  instanceId: symbol;
+};
+
+function getItemData<Item>({
+  item,
+  index,
+  instanceId,
+}: {
+  item: Item;
+  index: number;
+  instanceId: symbol;
+}): ItemData<Item> {
+  return {
+    [itemKey]: true,
+    item,
+    index,
+    instanceId,
+  };
+}
+function isItemData<T>(
+  data: Record<string | symbol, unknown>
+): data is ItemData<T> {
+  return data[itemKey] === true;
+}
+
+function getItemRegistry() {
+  const registry = new Map<string, HTMLElement>();
+
+  function register({itemUiId, element}: ItemEntry) {
+    registry.set(itemUiId, element);
+
+    return function unregister() {
+      registry.delete(itemUiId);
+    };
+  }
+
+  function getElement(itemId: string): HTMLElement | null {
+    return registry.get(itemId) ?? null;
+  }
+
+  return {register, getElement};
+}
+export const blockBoardPanningAttr = "data-block-board-panning" as const;
+
+export type DragAndDropDirections = "up" | "down" | "inOtherMenu";
+export interface DragAndDropMoveCommand {
+  kind: MenuplanDragDropTypes;
+  direction: DragAndDropDirections;
+  menueUid?: Menue["uid"];
+  mealUid?: Meal["uid"];
+  itemUid: string;
+}
+export type OnMoveDragAndDropElementFx = (cmd: DragAndDropMoveCommand) => void;
 /* ===================================================================
 // ============================= Menüplan ============================
 // =================================================================== */
@@ -297,6 +446,20 @@ interface DialogSelectMenueData {
   open: boolean;
   menues: DialogSelectMenuesForRecipeDialogValues;
   selectedRecipe: RecipeShort;
+  singleSelection: boolean;
+  caller: string;
+  dragAndDropHandler: {
+    listElementUid: string;
+    menuUid: Menue["uid"];
+    dragAndDropListType: MenuplanDragDropTypes | "";
+  };
+}
+interface DialogSelectMealData {
+  open: boolean;
+  dragAndDropHandler: {
+    menuUid: Menue["uid"];
+    mealUid: Meal["uid"];
+  };
 }
 interface DialogPlanPortionsData {
   open: boolean;
@@ -343,29 +506,48 @@ const MenuplanPage = ({
   fetchMissingData,
   onMasterdataCreate,
 }: MenuplanPageProps) => {
-  const classes = useStyles();
+  const theme = useTheme();
   const {customDialog} = useCustomDialog();
-  const navigationValuesContext = React.useContext(NavigationValuesContext);
+  const navigationValuesContext = useContext(NavigationValuesContext);
 
-  const [menuplanSettings, setMenuPlanSettings] =
-    React.useState<MenuplanSettings>({showDetails: false});
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const userDidChangeDnD = useRef(false);
+
+  const [menuplanSettings, setMenuPlanSettings] = useState<MenuplanSettings>({
+    showDetails: false,
+    enableDragAndDrop: false,
+  });
   const [recipeSearchDrawerData, setRecipeSearchDrawerData] =
-    React.useState<RecipeSearchDrawerData>({
+    useState<RecipeSearchDrawerData>({
       open: false,
       isLoadingData: false,
       menue: null,
     });
 
-  const [recipeDrawerData, setRecipeDrawerData] =
-    React.useState<RecipeDrawerData>(RECIPE_DRAWER_DATA_INITIAL_VALUES);
+  const [recipeDrawerData, setRecipeDrawerData] = useState<RecipeDrawerData>(
+    RECIPE_DRAWER_DATA_INITIAL_VALUES
+  );
   const [dialogSelectMenueData, setDialogSelectMenueData] =
-    React.useState<DialogSelectMenueData>({
+    useState<DialogSelectMenueData>({
       open: false,
       menues: {} as DialogSelectMenuesForRecipeDialogValues,
       selectedRecipe: {} as RecipeShort,
+      singleSelection: false,
+      caller: "",
+      dragAndDropHandler: {
+        listElementUid: "",
+        menuUid: "",
+        dragAndDropListType: "",
+      },
     });
+  const [dialogSelectMealData, setDialogSelectMealData] =
+    useState<DialogSelectMealData>({
+      open: false,
+      dragAndDropHandler: {menuUid: "", mealUid: ""},
+    });
+
   const [dialogPlanPortionsData, setDialogPlanPortionsData] =
-    React.useState<DialogPlanPortionsData>({
+    useState<DialogPlanPortionsData>({
       open: false,
       menues: null,
       mealRecipeUid: "",
@@ -374,9 +556,10 @@ const MenuplanPage = ({
       planedProduct: null,
       planedObject: PlanedObject.RECIPE,
     });
-  const [dialogEditMenue, setDialogEditMenue] = React.useState<DialotEditMenue>(
-    {open: false, menueUid: ""}
-  );
+  const [dialogEditMenue, setDialogEditMenue] = useState<DialotEditMenue>({
+    open: false,
+    menueUid: "",
+  });
   const GOODS_DATA_DIALOG_INITIAL_DATA: DialogGoods = {
     open: false,
     menueUid: "",
@@ -385,19 +568,20 @@ const MenuplanPage = ({
     material: null,
   };
   // Dialog für Produkte und Material ==> Goods
-  const [dialogGoodsData, setDialogGoodsData] = React.useState<DialogGoods>(
+  const [dialogGoodsData, setDialogGoodsData] = useState<DialogGoods>(
     GOODS_DATA_DIALOG_INITIAL_DATA
   );
+  const scrollableRef = useRef<HTMLDivElement | null>(null);
+
   /* ------------------------------------------
   // Navigation-Handler
   // ------------------------------------------ */
-  React.useEffect(() => {
+  useEffect(() => {
     navigationValuesContext?.setNavigationValues({
       action: Action.NONE,
       object: NavigationObject.menueplan,
     });
   }, []);
-
   /* ------------------------------------------
   // Initiale-Einstellungen vornehmen
   // ------------------------------------------ */
@@ -430,6 +614,513 @@ const MenuplanPage = ({
       });
     }
   }
+
+  useEffect(() => {
+    if (userDidChangeDnD.current) {
+      // Wenn der User üebrsteuert hat, machen wir nichts mehr
+      return;
+    }
+    setMenuPlanSettings({
+      ...menuplanSettings,
+      enableDragAndDrop: !isMobile,
+    });
+  }, [isMobile]);
+
+  /* ------------------------------------------
+  // Drag & Drop Handling
+  // ------------------------------------------ */
+  useEffect(() => {
+    const element = scrollableRef.current;
+
+    invariant(element);
+    return combine(
+      monitorForElements({
+        canMonitor: isDraggingACardListItem,
+        onDrop({source, location}) {
+          const dragging = source.data;
+          if (!isCardListData(dragging)) {
+            return;
+          }
+          const innerMost = location.current.dropTargets[0];
+
+          if (!innerMost) {
+            return;
+          }
+
+          // Herausfinden wo zu Hause
+          const homeMenue: Menue | undefined =
+            menuplan.menues[dragging.menueUid];
+          if (!homeMenue) {
+            return;
+          }
+
+          // In welcher Liste befindet sich das Objekt?
+          const homeOrderList = (() => {
+            switch (dragging.itemType) {
+              case MenuplanDragDropTypes.MEALRECIPE:
+                return homeMenue.mealRecipeOrder;
+              case MenuplanDragDropTypes.MATERIAL:
+                return homeMenue.materialOrder;
+              case MenuplanDragDropTypes.PRODUCT:
+                return homeMenue.productOrder;
+            }
+          })();
+
+          const orderListName = getOrderListNameFromDragAndDropTypes(
+            dragging.itemType
+          );
+
+          if (
+            orderListName !== "mealRecipeOrder" &&
+            orderListName !== "materialOrder" &&
+            orderListName !== "productOrder"
+          ) {
+            return;
+          }
+
+          if (!homeOrderList || !orderListName) {
+            return;
+          }
+          const homeListItemIndex = homeOrderList.findIndex(
+            (listItemUid) => listItemUid == dragging.listItem.id
+          );
+
+          // Drop auf eine Liste
+          const dropTargetData = innerMost.data;
+          if (isCardListDropTargetData(dropTargetData)) {
+            const destinationMenue: Menue | undefined =
+              menuplan.menues[dropTargetData.menueUid];
+            if (!destinationMenue) {
+              return;
+            }
+            // unable to find destination
+            if (!destinationMenue) {
+              console.warn("Drag & Drop kein Ziel gefunden");
+              return;
+            }
+
+            // reordering in home column
+            if (homeMenue === destinationMenue) {
+              const destinationListItemIndex = homeOrderList.findIndex(
+                (listItemUid) => listItemUid === dropTargetData.listItem.id
+              );
+              // could not find cards needed
+              if (homeListItemIndex === -1 || destinationListItemIndex === -1) {
+                return;
+              }
+              // no change needed
+              if (homeListItemIndex === destinationListItemIndex) {
+                return;
+              }
+              const closestEdge = extractClosestEdge(dropTargetData);
+              const reorderedList = reorderWithEdge({
+                axis: "vertical",
+                list: homeOrderList,
+                startIndex: homeListItemIndex,
+                indexOfTarget: destinationListItemIndex,
+                closestEdgeOfTarget: closestEdge,
+              });
+              onMenuplanUpdateSuper({
+                ...menuplan,
+                menues: {
+                  ...menuplan.menues,
+                  [dragging.menueUid]: {
+                    ...homeMenue,
+                    [orderListName]: reorderedList,
+                  },
+                },
+              });
+              return;
+            }
+            // In welcher Liste befindet sich das Objekt?
+            const destinationOrderList = (() => {
+              switch (dragging.itemType) {
+                case MenuplanDragDropTypes.MEALRECIPE:
+                  return destinationMenue.mealRecipeOrder;
+                case MenuplanDragDropTypes.MATERIAL:
+                  return destinationMenue.materialOrder;
+                case MenuplanDragDropTypes.PRODUCT:
+                  return destinationMenue.productOrder;
+              }
+            })();
+
+            if (!destinationOrderList) {
+              return;
+            }
+
+            const destinationListItemIndex = destinationOrderList.findIndex(
+              (listItemUid) => listItemUid == dropTargetData.listItem.id
+            );
+
+            const closestEdge = extractClosestEdge(dropTargetData);
+            const finalIndex =
+              closestEdge === "bottom"
+                ? destinationListItemIndex + 1
+                : destinationListItemIndex;
+
+            // remove card from home list
+            const homeReorderedList = [...homeOrderList];
+            homeReorderedList.splice(homeListItemIndex, 1);
+            // insert into destination list
+            const destinationReorderedList = [...destinationOrderList];
+            destinationReorderedList.splice(
+              finalIndex,
+              0,
+              dragging.listItem.id
+            );
+
+            onMenuplanUpdateSuper({
+              ...menuplan,
+              menues: {
+                ...menuplan.menues,
+                [dragging.menueUid]: {
+                  ...homeMenue,
+                  [orderListName]: homeReorderedList,
+                },
+                [destinationMenue.uid]: {
+                  ...destinationMenue,
+                  [orderListName]: destinationReorderedList,
+                },
+              },
+            });
+            return;
+          }
+
+          // Drop auf eine Karte (aber nicht Liste)
+          if (isMenueCardData(dropTargetData)) {
+            const destinationMenue =
+              menuplan.menues[dropTargetData.listItem.menue.uid];
+            if (!destinationMenue) {
+              return;
+            }
+
+            // Drop auf gleiches Menü
+            if (homeMenue === destinationMenue) {
+              // an letzte Stelle verschieben
+              const reorderedList = reorder({
+                list: homeMenue[orderListName],
+                startIndex: homeListItemIndex,
+                finishIndex: homeMenue[orderListName].length - 1,
+              });
+
+              onMenuplanUpdateSuper({
+                ...menuplan,
+                menues: {
+                  ...menuplan.menues,
+                  [dragging.menueUid]: {
+                    ...homeMenue,
+                    [orderListName]: reorderedList,
+                  },
+                },
+              });
+              return;
+            }
+
+            // Aus Homeliste entfernen
+            const homeReorderedList = homeOrderList;
+            homeReorderedList.splice(homeListItemIndex, 1);
+
+            // In Zielliste einfügen
+            const destinationReorderedList = destinationMenue[orderListName];
+            destinationReorderedList.splice(
+              destinationReorderedList.length,
+              0,
+              dragging.listItem.id
+            );
+
+            onMenuplanUpdateSuper({
+              ...menuplan,
+              menues: {
+                ...menuplan.menues,
+                [dragging.menueUid]: {
+                  ...homeMenue,
+                  [orderListName]: homeReorderedList,
+                },
+                [destinationMenue.uid]: {
+                  ...destinationMenue,
+                  [orderListName]: destinationReorderedList,
+                },
+              },
+            });
+            return;
+          }
+          // Drop auf leere Liste
+          if (isListContainerDropTargetData(dropTargetData)) {
+            const destinationMenue = menuplan.menues[dropTargetData.menueUid];
+
+            if (!destinationMenue || !dropTargetData.isEmpty) {
+              return;
+            }
+
+            // Element aus Home-Liste entfernen
+            const homeReorderedList = homeOrderList;
+            homeReorderedList.splice(homeListItemIndex, 1);
+
+            // Element in leere Ziel-Liste einfügen
+            const destinationReorderedList = [dragging.listItem.id];
+            onMenuplanUpdateSuper({
+              ...menuplan,
+              menues: {
+                ...menuplan.menues,
+                [dragging.menueUid]: {
+                  ...homeMenue,
+                  [orderListName]: homeReorderedList,
+                },
+                [destinationMenue.uid]: {
+                  ...destinationMenue,
+                  [orderListName]: destinationReorderedList,
+                },
+              },
+            });
+            return;
+          }
+        },
+      }),
+      monitorForElements({
+        canMonitor: isDraggingAMenueCard,
+        onDrop({source, location}) {
+          //  Menü-Card wurd verschoben
+
+          const dragging = source.data;
+          if (!isMenueCardData(dragging)) {
+            return;
+          }
+
+          const innerMost = location.current.dropTargets[0];
+
+          if (!innerMost) {
+            return;
+          }
+          const dropTargetData = innerMost.data;
+
+          // Drop auf leeren Container
+          if (isEmptyContainerData(dropTargetData)) {
+            const homeMeal = menuplan.meals[dragging.mealUid];
+            const destinationMeal = menuplan.meals[dropTargetData.mealUid];
+
+            if (!homeMeal || !destinationMeal) {
+              return;
+            }
+
+            if (homeMeal.uid === destinationMeal.uid) {
+              // Gleiche Mahlzeit - keine Änderung nötig
+              return;
+            }
+
+            const homeMenuIndex = homeMeal.menuOrder.findIndex(
+              (menuUid) => menuUid == dragging.listItem.menue.uid
+            );
+
+            if (homeMenuIndex === -1) {
+              return;
+            }
+
+            // Menü aus Home-Mahlzeit entfernen
+            const homeReorderedList = [...homeMeal.menuOrder];
+            homeReorderedList.splice(homeMenuIndex, 1);
+
+            // In leere Ziel-Mahlzeit einfügen
+            const destinationReorderedList = [dragging.listItem.menue.uid];
+
+            onMenuplanUpdateSuper({
+              ...menuplan,
+              meals: {
+                ...menuplan.meals,
+                [homeMeal.uid]: {
+                  ...homeMeal,
+                  menuOrder: homeReorderedList,
+                },
+                [destinationMeal.uid]: {
+                  ...destinationMeal,
+                  menuOrder: destinationReorderedList,
+                },
+              },
+            });
+            return;
+          }
+
+          if (
+            !isMenueCardData(dropTargetData) &&
+            !isMenueCardDropTargetData(dropTargetData) &&
+            !isMenueCardContainerDropTargetData(dropTargetData)
+          ) {
+            return;
+          }
+
+          const homeMeal = menuplan.meals[dragging.mealUid];
+          const destinationMeal = menuplan.meals[dropTargetData.mealUid];
+
+          if (!homeMeal || !destinationMeal) {
+            return;
+          }
+
+          const homeMenuIndex = homeMeal.menuOrder.findIndex(
+            (menuUid) => menuUid == dragging.listItem.menue.uid
+          );
+          let destinationMenuIndex = -1;
+          if (!isMenueCardContainerDropTargetData(dropTargetData)) {
+            destinationMenuIndex = destinationMeal.menuOrder.findIndex(
+              (menuUid) => menuUid === dropTargetData.listItem.menue.uid
+            );
+          } else {
+            destinationMenuIndex = destinationMeal.menuOrder.length;
+          }
+
+          // could not find cards needed
+          if (homeMenuIndex === -1 || destinationMenuIndex === -1) {
+            return;
+          }
+
+          if (homeMeal.uid === destinationMeal.uid) {
+            // Wird nur in der Position verschoben im gleich Meal
+            const closestEdge = extractClosestEdge(dropTargetData);
+            const reorderedList = reorderWithEdge({
+              axis: "vertical",
+              list: homeMeal.menuOrder,
+              startIndex: homeMenuIndex,
+              indexOfTarget: destinationMenuIndex,
+              closestEdgeOfTarget: closestEdge,
+            });
+
+            onMenuplanUpdateSuper({
+              ...menuplan,
+              meals: {
+                ...menuplan.meals,
+                [dragging.mealUid]: {
+                  ...homeMeal,
+                  menuOrder: reorderedList,
+                },
+              },
+            });
+            return;
+          }
+
+          const closestEdge = extractClosestEdge(dropTargetData);
+          const finalIndex =
+            closestEdge === "bottom"
+              ? destinationMenuIndex + 1
+              : destinationMenuIndex;
+
+          // Menü aus Home-Mahlzeit entfernen
+          const homeReorderedList = [...homeMeal.menuOrder];
+          homeReorderedList.splice(homeMenuIndex, 1);
+          // In Ziel Mahlzeit einfügen
+          const destinationReorderedList = [...destinationMeal.menuOrder];
+          destinationReorderedList.splice(
+            finalIndex,
+            0,
+            dragging.listItem.menue.uid
+          );
+
+          onMenuplanUpdateSuper({
+            ...menuplan,
+            meals: {
+              ...menuplan.meals,
+              [homeMeal.uid]: {
+                ...homeMeal,
+                menuOrder: homeReorderedList,
+              },
+              [destinationMeal.uid]: {
+                ...destinationMeal,
+                menuOrder: destinationReorderedList,
+              },
+            },
+          });
+        },
+      }),
+      autoScrollForElements({
+        canScroll({source}) {
+          return (
+            isDraggingACardListItem({source}) || isDraggingAMenueCard({source})
+          );
+        },
+        element,
+      }),
+      unsafeOverflowAutoScrollForElements({
+        element,
+        canScroll({source}) {
+          return (
+            isDraggingACardListItem({source}) || isDraggingAMenueCard({source})
+          );
+        },
+        getOverflow() {
+          return {
+            forLeftEdge: {top: 1000, left: 1000, bottom: 1000},
+            forRightEdge: {top: 1000, right: 1000, bottom: 1000},
+          };
+        },
+      })
+    );
+  }, [menuplan.menues]);
+
+  // Panning the board
+  useEffect(() => {
+    let cleanupActive: CleanupFn | null = null;
+    const scrollable = scrollableRef.current;
+    invariant(scrollable);
+
+    function begin({startX}: {startX: number}) {
+      let lastX = startX;
+
+      const cleanupEvents = bindAll(
+        window,
+        [
+          {
+            type: "pointermove",
+            listener(event) {
+              const currentX = event.clientX;
+              const diffX = lastX - currentX;
+
+              lastX = currentX;
+              scrollable?.scrollBy({left: diffX});
+            },
+          },
+          // stop panning if we see any of these events
+          ...(
+            [
+              "pointercancel",
+              "pointerup",
+              "pointerdown",
+              "keydown",
+              "resize",
+              "click",
+              "visibilitychange",
+            ] as const
+          ).map((eventName) => ({
+            type: eventName,
+            listener: () => cleanupEvents(),
+          })),
+        ],
+        // need to make sure we are not after the "pointerdown" on the scrollable
+        // Also this is helpful to make sure we always hear about events from this point
+        {capture: true}
+      );
+
+      cleanupActive = cleanupEvents;
+    }
+
+    const cleanupStart = bindAll(scrollable, [
+      {
+        type: "pointerdown",
+        listener(event) {
+          if (!(event.target instanceof HTMLElement)) {
+            return;
+          }
+          // ignore interactive elements
+          if (event.target.closest(`[${blockBoardPanningAttr}]`)) {
+            return;
+          }
+
+          begin({startX: event.clientX});
+        },
+      },
+    ]);
+
+    return function cleanupAll() {
+      cleanupStart();
+      cleanupActive?.();
+    };
+  }, []);
   /* ------------------------------------------
   // Setting-Handling
   // ------------------------------------------ */
@@ -438,6 +1129,13 @@ const MenuplanPage = ({
       ...menuplanSettings,
       showDetails: !menuplanSettings.showDetails,
     });
+  const onSwitchEnableDragAndDrop = () => {
+    userDidChangeDnD.current = true;
+    setMenuPlanSettings({
+      ...menuplanSettings,
+      enableDragAndDrop: !menuplanSettings.enableDragAndDrop,
+    });
+  };
   /* ------------------------------------------
   // Change-Handler
   // ------------------------------------------ */
@@ -533,255 +1231,157 @@ const MenuplanPage = ({
     pdf(<MenuplanPdf event={event} menuplan={menuplan} authUser={authUser} />)
       .toBlob()
       .then((result) => {
-        fileSaver.saveAs(result, "Menueplan " + event.name + TEXT_SUFFIX_PDF);
+        saveAs(result, "Menueplan " + event.name + TEXT_SUFFIX_PDF);
       });
   };
   /* ------------------------------------------
   // Drag & Drop Handler
   // ------------------------------------------ */
-  const onDragEnd = (result: DropResult) => {
-    const {destination, source, type} = result;
-    let draggableId = result.draggableId;
-
-    if (draggableId.includes("_")) {
-      draggableId = draggableId.split("_")[1];
-    }
-    // GateKeeper
-    if (!destination) {
-      return;
-    }
-    if (
-      destination?.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
-      return;
-    }
-
-    if (destination.droppableId.includes("_")) {
-      destination.droppableId = destination.droppableId.split("_")[0];
-    }
-    if (source.droppableId.includes("_")) {
-      source.droppableId = source.droppableId.split("_")[0];
-    }
-
-    let newMealTypeOrder: MealType["uid"][];
-    let newMealRecipeOrder: Meal["uid"][];
-    let sourceMenue: Menue;
-    let destinationMenue: Menue;
-    let sourceMealRecipeOrder: MealRecipe["uid"][];
-    let destinationMealRecipeOrder: MealRecipe["uid"][];
-    let sourceMeal: Meal;
-    let destinationMeal: Meal;
-    let newMealOrder: Meal["uid"][];
-    let sourceMealMenuOrder: Meal["menuOrder"];
-    let destinationMealMenuOrder: Meal["menuOrder"];
-
-    // let sourceMealProducts: Menue[""]
-    // destinationMealProducts
-    // newMealProductsOrder
-    let sourceMenueProductOrder: Menue["productOrder"];
-    let destinationMenueProductsOrder: Menue["productOrder"];
-    switch (type) {
-      case DragDropTypes.MEALTYPE:
-        newMealTypeOrder = Array.from(menuplan.mealTypes.order);
-        newMealTypeOrder.splice(source.index, 1);
-        newMealTypeOrder.splice(destination.index, 0, draggableId);
+  const onDragAndDropUpdate = (
+    newOrder: string[],
+    dragAndDropListType: MenuplanDragDropTypes
+  ) => {
+    switch (dragAndDropListType) {
+      case MenuplanDragDropTypes.MEALTYPE:
         onMenuplanUpdateSuper({
           ...menuplan,
           mealTypes: {
             entries: menuplan.mealTypes.entries,
-            order: newMealTypeOrder,
+            order: newOrder,
           },
         });
         break;
-      case DragDropTypes.MEALRECIPE:
-        sourceMenue = {...menuplan.menues[source.droppableId]};
-        destinationMenue = {
-          ...menuplan.menues[destination.droppableId],
-        };
-
-        if (source.droppableId === destination.droppableId) {
-          // Reihenfolge im gleichen Menü angepasst
-          newMealRecipeOrder = Array.from(sourceMenue.mealRecipeOrder);
-          newMealRecipeOrder.splice(source.index, 1);
-          newMealRecipeOrder.splice(destination?.index, 0, draggableId);
-
-          onMenuplanUpdateSuper({
-            ...menuplan,
+    }
+  };
+  // Element mittels Kontextmenü ändern
+  const onMoveDragAndDropElement = ({
+    kind,
+    direction,
+    menueUid,
+    mealUid,
+    itemUid,
+  }: DragAndDropMoveCommand) => {
+    if (direction === "inOtherMenu") {
+      switch (kind) {
+        case MenuplanDragDropTypes.MEALRECIPE:
+        case MenuplanDragDropTypes.PRODUCT:
+        case MenuplanDragDropTypes.MATERIAL:
+          // Dialog anzeigen um das Element zu verschieben.
+          if (!menueUid) {
+            return;
+          }
+          setDialogSelectMenueData({
+            open: true,
             menues: {
-              ...menuplan.menues,
-              [sourceMenue.uid]: {
-                ...sourceMenue,
-                mealRecipeOrder: newMealRecipeOrder,
-              },
+              [menueUid]: true,
+            } as DialogSelectMenuesForRecipeDialogValues,
+            selectedRecipe: {} as RecipeShort,
+            singleSelection: true,
+            caller: onMoveDragAndDropElement.name,
+            dragAndDropHandler: {
+              listElementUid: itemUid,
+              menuUid: menueUid,
+              dragAndDropListType: kind,
             },
           });
-        } else {
-          // In ein anderes Menü verschoben
-          sourceMealRecipeOrder = Array.from(sourceMenue.mealRecipeOrder);
-          destinationMealRecipeOrder = Array.from(
-            destinationMenue.mealRecipeOrder
-          );
-          sourceMealRecipeOrder.splice(source.index, 1);
-          destinationMealRecipeOrder.splice(destination.index, 0, draggableId);
+          break;
+        case MenuplanDragDropTypes.MENU:
+          if (!mealUid) {
+            return;
+          }
 
-          onMenuplanUpdateSuper({
-            ...menuplan,
-            menues: {
-              ...menuplan.menues,
-              [sourceMenue.uid]: {
-                ...sourceMenue,
-                mealRecipeOrder: sourceMealRecipeOrder,
-              },
-              [destinationMenue.uid]: {
-                ...destinationMenue,
-                mealRecipeOrder: destinationMealRecipeOrder,
-              },
-            },
+          setDialogSelectMealData({
+            open: true,
+            dragAndDropHandler: {menuUid: itemUid, mealUid: mealUid},
           });
-        }
+      }
+      return;
+    }
+
+    // In welcher Liste befindet sich das Objekt?
+    const orderListName = getOrderListNameFromDragAndDropTypes(kind);
+    if (!orderListName) {
+      return;
+    }
+
+    if (
+      (kind === MenuplanDragDropTypes.MEALRECIPE ||
+        kind === MenuplanDragDropTypes.PRODUCT ||
+        kind === MenuplanDragDropTypes.MATERIAL) &&
+      !menueUid
+    ) {
+      return;
+    } else if (kind === MenuplanDragDropTypes.MENU && !mealUid) {
+      return;
+    }
+
+    const orderList = (() => {
+      switch (kind) {
+        case MenuplanDragDropTypes.MEALRECIPE:
+          return menuplan.menues[menueUid!].mealRecipeOrder;
+        case MenuplanDragDropTypes.PRODUCT:
+          return menuplan.menues[menueUid!].productOrder;
+        case MenuplanDragDropTypes.MATERIAL:
+          return menuplan.menues[menueUid!].materialOrder;
+        case MenuplanDragDropTypes.MEALTYPE:
+          return menuplan.mealTypes.order;
+        case MenuplanDragDropTypes.MENU:
+          return menuplan.meals[mealUid!].menuOrder;
+      }
+    })();
+
+    if (!orderList) {
+      return;
+    }
+
+    const index = orderList.findIndex((item) => item === itemUid);
+    if (index === -1) {
+      return;
+    }
+
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+
+    const reorderedList = [...orderList];
+    [reorderedList[index], reorderedList[targetIndex]] = [
+      reorderedList[targetIndex],
+      reorderedList[index],
+    ];
+
+    switch (kind) {
+      case MenuplanDragDropTypes.MEALRECIPE:
+      case MenuplanDragDropTypes.PRODUCT:
+      case MenuplanDragDropTypes.MATERIAL:
+        onMenuplanUpdateSuper({
+          ...menuplan,
+          menues: {
+            ...menuplan.menues,
+            [menueUid!]: {
+              ...menuplan.menues[menueUid!],
+              [orderListName]: reorderedList,
+            },
+          },
+        });
         break;
-      case DragDropTypes.MENU:
-        sourceMeal = {...menuplan.meals[source.droppableId]};
-        destinationMeal = {...menuplan.meals[destination.droppableId]};
-
-        if (source.droppableId === destination.droppableId) {
-          // Reihenfolge des gleichen Menü angepasst
-          newMealOrder = Array.from(sourceMeal.menuOrder);
-          newMealOrder.splice(source.index, 1);
-          newMealOrder.splice(destination?.index, 0, draggableId);
-
-          onMenuplanUpdateSuper({
-            ...menuplan,
-            meals: {
-              ...menuplan.meals,
-              [sourceMeal.uid]: {
-                ...sourceMeal,
-                menuOrder: newMealOrder,
-              },
-            },
-          });
-        } else {
-          // In ein anderes Menü verschoben
-          sourceMealMenuOrder = Array.from(sourceMeal.menuOrder);
-          destinationMealMenuOrder = Array.from(destinationMeal.menuOrder);
-          sourceMealMenuOrder.splice(source.index, 1);
-          destinationMealMenuOrder.splice(destination.index, 0, draggableId);
-
-          onMenuplanUpdateSuper({
-            ...menuplan,
-            meals: {
-              ...menuplan.meals,
-              [sourceMeal.uid]: {
-                ...sourceMeal,
-                menuOrder: sourceMealMenuOrder,
-              },
-              [destinationMeal.uid]: {
-                ...destinationMeal,
-                menuOrder: destinationMealMenuOrder,
-              },
-            },
-          });
-        }
-
+      case MenuplanDragDropTypes.MEALTYPE:
+        onMenuplanUpdateSuper({
+          ...menuplan,
+          mealTypes: {
+            entries: menuplan.mealTypes.entries,
+            order: reorderedList,
+          },
+        });
         break;
-      case DragDropTypes.PRODUCT:
-        sourceMenue = {...menuplan.menues[source.droppableId]};
-        destinationMenue = {...menuplan.menues[destination.droppableId]};
-
-        if (source.droppableId === destination.droppableId) {
-          // Reihenfolge im gleichen Menü angepasst
-          const newMealProductsOrder = Array.from(sourceMenue.productOrder);
-          newMealProductsOrder.splice(source.index, 1);
-          newMealProductsOrder.splice(destination?.index, 0, draggableId);
-
-          onMenuplanUpdateSuper({
-            ...menuplan,
-            menues: {
-              ...menuplan.menues,
-              [sourceMenue.uid]: {
-                ...sourceMenue,
-                productOrder: newMealProductsOrder,
-              },
+      case MenuplanDragDropTypes.MENU:
+        onMenuplanUpdateSuper({
+          ...menuplan,
+          meals: {
+            ...menuplan.meals,
+            [mealUid!]: {
+              ...menuplan.meals[mealUid!],
+              menuOrder: reorderedList,
             },
-          });
-        } else {
-          // In ein anderes Menü verschoben
-          sourceMenueProductOrder = Array.from(sourceMenue.productOrder);
-          destinationMenueProductsOrder = Array.from(
-            destinationMenue.productOrder
-          );
-          sourceMenueProductOrder.splice(source.index, 1);
-          destinationMenueProductsOrder.splice(
-            destination.index,
-            0,
-            draggableId
-          );
-
-          onMenuplanUpdateSuper({
-            ...menuplan,
-            menues: {
-              ...menuplan.menues,
-              [sourceMenue.uid]: {
-                ...sourceMenue,
-                productOrder: sourceMenueProductOrder,
-              },
-              [destinationMenue.uid]: {
-                ...destinationMenue,
-                productOrder: destinationMenueProductsOrder,
-              },
-            },
-          });
-        }
-        break;
-      case DragDropTypes.MATERIAL:
-        sourceMenue = {...menuplan.menues[source.droppableId]};
-        destinationMenue = {...menuplan.menues[destination.droppableId]};
-
-        if (source.droppableId === destination.droppableId) {
-          // Reihenfolge im gleichen Menü angepasst
-          const newMealMaterialsOrder = Array.from(sourceMenue.materialOrder);
-          newMealMaterialsOrder.splice(source.index, 1);
-          newMealMaterialsOrder.splice(destination?.index, 0, draggableId);
-
-          onMenuplanUpdateSuper({
-            ...menuplan,
-            menues: {
-              ...menuplan.menues,
-              [sourceMenue.uid]: {
-                ...sourceMenue,
-                materialOrder: newMealMaterialsOrder,
-              },
-            },
-          });
-        } else {
-          // In ein anderes Menü verschoben
-          const sourceMealProductOrder = Array.from(sourceMenue.materialOrder);
-          const destinationMealMaterialsOrder = Array.from(
-            destinationMenue.materialOrder
-          );
-          sourceMealProductOrder.splice(source.index, 1);
-          destinationMealMaterialsOrder.splice(
-            destination.index,
-            0,
-            draggableId
-          );
-
-          onMenuplanUpdateSuper({
-            ...menuplan,
-            menues: {
-              ...menuplan.menues,
-              [sourceMenue.uid]: {
-                ...sourceMenue,
-                materialOrder: sourceMealProductOrder,
-              },
-              [destinationMenue.uid]: {
-                ...destinationMenue,
-                materialOrder: destinationMealMaterialsOrder,
-              },
-            },
-          });
-        }
+          },
+        });
         break;
     }
   };
@@ -795,7 +1395,6 @@ const MenuplanPage = ({
       isLoadingData: recipeList.length == 0 ? true : false,
       menue: menue,
     });
-
     if (recipeList.length == 0) {
       fetchMissingData({type: FetchMissingDataType.RECIPES});
     }
@@ -841,6 +1440,8 @@ const MenuplanPage = ({
         [recipeSearchDrawerData?.menue?.uid as Menuplan["uid"]]: true,
       },
       selectedRecipe: recipeShort,
+      singleSelection: false,
+      caller: onRecipeSelection.name,
     });
   };
   const onRecipeUpdate = (recipe: Recipe) => {
@@ -893,6 +1494,8 @@ const MenuplanPage = ({
         setDialogSelectMenueData({
           ...dialogSelectMenueData,
           selectedRecipe: RecipeShort.createShortRecipeFromRecipe(recipe),
+          singleSelection: false,
+          caller: onRecipeUpdate.name,
         });
         setRecipeDrawerData({
           ...recipeDrawerData,
@@ -1254,6 +1857,8 @@ const MenuplanPage = ({
     setDialogSelectMenueData({
       ...dialogSelectMenueData,
       open: false,
+      caller: "",
+      singleSelection: false,
       // menues: {} as DialogSelectMenuesForRecipeDialogValues,
       // selectedRecipe: {} as RecipeShort,
     });
@@ -1261,20 +1866,124 @@ const MenuplanPage = ({
   const onDialogSelectMenueContinue = (
     selectedMenues: DialogSelectMenuesForRecipeDialogValues
   ) => {
-    setDialogPlanPortionsData({
-      open: true,
-      menues: selectedMenues,
-      mealRecipeUid: "",
-      portionPlan: [],
-      planedMaterial: null,
-      planedProduct: null,
-      planedObject: PlanedObject.RECIPE,
-    });
+    if (dialogSelectMenueData.caller !== onMoveDragAndDropElement.name) {
+      // Portionen Dialog anzeigen.
+      setDialogPlanPortionsData({
+        open: true,
+        menues: selectedMenues,
+        mealRecipeUid: "",
+        portionPlan: [],
+        planedMaterial: null,
+        planedProduct: null,
+        planedObject: PlanedObject.RECIPE,
+      });
+    } else {
+      // UID des neuen Ziel-Menüs
+      const destinationMenueUid = Object.keys(selectedMenues)[0];
+
+      // Element verschieben aus der Drag & Drop Liste
+      if (
+        dialogSelectMenueData.dragAndDropHandler.dragAndDropListType !== "" &&
+        destinationMenueUid !== dialogSelectMenueData.dragAndDropHandler.menuUid
+      ) {
+        const orderListName = getOrderListNameFromDragAndDropTypes(
+          dialogSelectMenueData.dragAndDropHandler.dragAndDropListType
+        );
+
+        if (
+          orderListName !== "mealRecipeOrder" &&
+          orderListName !== "materialOrder" &&
+          orderListName !== "productOrder"
+        ) {
+          return;
+        }
+
+        if (orderListName) {
+          // Eintrag aus Home entfernen
+          const homeMenue =
+            menuplan.menues[dialogSelectMenueData.dragAndDropHandler.menuUid];
+          const homeReorderedList = homeMenue[orderListName].filter(
+            (listElementUid) =>
+              listElementUid !==
+              dialogSelectMenueData.dragAndDropHandler.listElementUid
+          );
+          // Eintrag in Destination anhängen
+          const destinationMenue = menuplan.menues[destinationMenueUid];
+          const destinationReorderedList = destinationMenue[
+            orderListName
+          ].concat(dialogSelectMenueData.dragAndDropHandler.listElementUid);
+
+          onMenuplanUpdateSuper({
+            ...menuplan,
+            menues: {
+              ...menuplan.menues,
+              [dialogSelectMenueData.dragAndDropHandler.menuUid]: {
+                ...homeMenue,
+                [orderListName]: homeReorderedList,
+              },
+              [destinationMenueUid]: {
+                ...destinationMenue,
+                [orderListName]: destinationReorderedList,
+              },
+            },
+          });
+        }
+      }
+    }
+
     setDialogSelectMenueData({
       ...dialogSelectMenueData,
       open: false,
       menues: {} as DialogSelectMenuesForRecipeDialogValues,
-      // selectedRecipe: {} as RecipeShort,
+      caller: "",
+      singleSelection: false,
+      dragAndDropHandler: {
+        listElementUid: "",
+        menuUid: "",
+        dragAndDropListType: "",
+      },
+    });
+  };
+  /* ------------------------------------------
+  // Dialog Mahlzeit-Auswahl Handling
+  // ------------------------------------------ */
+  const onDialogSelectMealClose = () => {
+    setDialogSelectMealData({
+      open: false,
+      dragAndDropHandler: {menuUid: "", mealUid: ""},
+    });
+  };
+  const onDialogSelectMealConfirm = (mealUid: Meal["uid"]) => {
+    if (mealUid !== dialogSelectMealData.dragAndDropHandler.mealUid) {
+      // Element aus Home entfernen
+      const reorderedHomeList = menuplan.meals[
+        dialogSelectMealData.dragAndDropHandler.mealUid
+      ].menuOrder.filter(
+        (menuUid) => menuUid != dialogSelectMealData.dragAndDropHandler.menuUid
+      );
+
+      const reorderedDestinationList = menuplan.meals[mealUid].menuOrder.concat(
+        dialogSelectMealData.dragAndDropHandler.menuUid
+      );
+
+      onMenuplanUpdateSuper({
+        ...menuplan,
+        meals: {
+          ...menuplan.meals,
+          [dialogSelectMealData.dragAndDropHandler.mealUid]: {
+            ...menuplan.meals[dialogSelectMealData.dragAndDropHandler.mealUid],
+            menuOrder: reorderedHomeList,
+          },
+          [mealUid]: {
+            ...menuplan.meals[mealUid],
+            menuOrder: reorderedDestinationList,
+          },
+        },
+      });
+    }
+    setDialogSelectMealData({
+      open: false,
+      dragAndDropHandler: {menuUid: "", mealUid: ""},
     });
   };
   /* ------------------------------------------
@@ -1291,6 +2000,8 @@ const MenuplanPage = ({
       open: true,
       menues:
         dialogPlanPortionsData.menues as DialogSelectMenuesForRecipeDialogValues,
+      caller: onDialogPlanPortionsBack.name,
+      singleSelection: false,
     });
   };
   const onDialogPlanPortionsClose = () => {
@@ -1408,6 +2119,13 @@ const MenuplanPage = ({
       open: false,
       menues: {} as DialogSelectMenuesForRecipeDialogValues,
       selectedRecipe: {} as RecipeShort,
+      caller: onDialogPlanPortionsAdd.name,
+      singleSelection: false,
+      dragAndDropHandler: {
+        listElementUid: "",
+        menuUid: "",
+        dragAndDropListType: "",
+      },
     });
 
     setRecipeDrawerData(RECIPE_DRAWER_DATA_INITIAL_VALUES);
@@ -1420,10 +2138,9 @@ const MenuplanPage = ({
   /* ------------------------------------------
   // MenuCard-Handling
   // ------------------------------------------ */
-  const onMealRecipeOpen = (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
-  ) => {
-    const [, , mealRecipeUid] = event.currentTarget.id.split("_");
+  const onMealRecipeOpen = (mealRecipeUid: MealRecipe["uid"]) => {
+    console.log("onMealRecipeOpen", mealRecipeUid);
+
     let loadingData = false;
     const mealPlan: Array<PlanedMealsRecipe> = [];
 
@@ -1526,7 +2243,7 @@ const MenuplanPage = ({
       planedProduct: null,
       planedObject: PlanedObject.RECIPE,
     });
-    //   // Falls keine Einplanung vorhandne ist (bspw. durch Löschung einer Diät/Intoleran),
+    //   // Falls keine Einplanung vorhanden ist (bspw. durch Löschung einer Diät/Intoleran),
     //   // wird gleich vorgegangen, wie wenn ein Rezept neu eingeplannt wird (wobei) die Tage
     //   // bereits bestimmt sind.
     //   setDialogSelectMenueData({
@@ -1598,93 +2315,54 @@ const MenuplanPage = ({
   ) {
     console.warn("Doppelte MealTypes: ", menuplan.mealTypes.order);
   }
-
   return (
-    <React.Fragment>
-      <CssBaseline />
-      <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable
-          droppableId="mealTypes"
-          type={DragDropTypes.MEALTYPE}
-          key={"droppable_MealRow"}
-        >
-          {(provided, snapshot) => (
-            <Container
-              key={"container_menuplan_rows"}
-              innerRef={provided.innerRef}
-              {...provided.droppableProps}
-              className={
-                snapshot.isDraggingOver
-                  ? classes.mealRowOnDrop
-                  : classes.mealRowNoDrop
-              }
-              style={{display: "flex", flexDirection: "column"}}
-            >
-              <MenuplanHeaderRow
-                dates={menuplan.dates}
-                notes={menuplan.notes}
-                menuplanSettings={menuplanSettings}
-                onSwitchShowDetails={onSwitchShowDetails}
-                onMealTypeUpdate={onMealTypeUpdate}
-                onNoteUpdate={onNoteUpdate}
-                onPrint={onPrint}
-              />
-              {/* <Container
-                key={"container_mealtype_rows"}
-                innerRef={provided.innerRef}
-                {...provided.droppableProps}
-                className={
-                  snapshot.isDraggingOver
-                    ? classes.mealRowOnDrop
-                    : classes.mealRowNoDrop
-                }
-                // style={{flexGrow: 1}}
-              > */}
-              {menuplan.mealTypes.order.map((mealTypeUid, index) => (
-                <Draggable
-                  draggableId={mealTypeUid}
-                  index={index}
-                  key={"draggableMealTypRow_" + mealTypeUid}
-                  isDragDisabled={menuplan.mealTypes.order.length <= 1}
-                >
-                  {(provided, snapshot) => {
-                    return (
-                      <MealTypeRow
-                        key={"mealTypeRow_" + mealTypeUid}
-                        mealType={menuplan.mealTypes.entries[mealTypeUid]}
-                        dates={menuplan.dates}
-                        meals={menuplan.meals}
-                        menues={menuplan.menues}
-                        notes={menuplan.notes}
-                        products={menuplan.products}
-                        materials={menuplan.materials}
-                        mealRecipes={menuplan.mealRecipes}
-                        menuplanSettings={menuplanSettings}
-                        groupConfiguration={groupConfiguration}
-                        draggableProvided={provided}
-                        draggableSnapshot={snapshot}
-                        onMealTypeUpdate={onMealTypeUpdate}
-                        onMenuplanUpdate={onMenuplanUpdate}
-                        fetchMissingData={fetchMissingData}
-                        onAddRecipe={onAddRecipe}
-                        onAddProduct={onAddProduct}
-                        onAddMaterial={onAddMaterial}
-                        onEditMenue={onEditMenue}
-                        onMealRecipeOpen={onMealRecipeOpen}
-                        onMealProductOpen={onEditProductPlan}
-                        onMealMaterialOpen={onEditMaterialPlan}
-                        onNoteUpdate={onNoteUpdate}
-                      />
-                    );
-                  }}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-              {/* </Container> */}
-            </Container>
-          )}
-        </Droppable>
-      </DragDropContext>
+    <React.Fragment key={"test"}>
+      <Box
+        component={"div"}
+        key={"container_menuplan_rows"}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          flexWrap: "nowrap",
+          width: "auto",
+        }}
+        ref={scrollableRef}
+      >
+        <MenuplanHeaderRow
+          dates={menuplan.dates}
+          notes={menuplan.notes}
+          menuplanSettings={menuplanSettings}
+          onSwitchShowDetails={onSwitchShowDetails}
+          onSwitchEnableDragAndDrop={onSwitchEnableDragAndDrop}
+          onMealTypeUpdate={onMealTypeUpdate}
+          onNoteUpdate={onNoteUpdate}
+          onPrint={onPrint}
+        />
+        <MealTypeRows
+          mealTypes={menuplan.mealTypes}
+          dates={menuplan.dates}
+          meals={menuplan.meals}
+          menues={menuplan.menues}
+          notes={menuplan.notes}
+          products={menuplan.products}
+          materials={menuplan.materials}
+          mealRecipes={menuplan.mealRecipes}
+          menuplanSettings={menuplanSettings}
+          groupConfiguration={groupConfiguration}
+          onMealTypeUpdate={onMealTypeUpdate}
+          onMenuplanUpdate={onMenuplanUpdate}
+          onAddRecipe={onAddRecipe}
+          onAddProduct={onAddProduct}
+          onAddMaterial={onAddMaterial}
+          onEditMenue={onEditMenue}
+          onMealRecipeOpen={onMealRecipeOpen}
+          onEditMaterialPlan={onEditMaterialPlan}
+          onEditProductPlan={onEditProductPlan}
+          onNoteUpdate={onNoteUpdate}
+          onDragAndDropUpdate={onDragAndDropUpdate}
+          onMoveDragAndDropElement={onMoveDragAndDropElement}
+        />
+      </Box>
       {/* Rezept-Übersicht Drawer */}
       <RecipeSearchDrawer
         drawerSettings={recipeSearchDrawerData}
@@ -1723,6 +2401,17 @@ const MenuplanPage = ({
         preSelectedMenue={dialogSelectMenueData.menues}
         onClose={onDialogSelectMenueClose}
         onConfirm={onDialogSelectMenueContinue}
+        singleSelection={dialogSelectMenueData.singleSelection}
+      />
+      {/* Dialog Mahlzeit-Auswahl */}
+      <DialogSelectMeals
+        open={dialogSelectMealData.open}
+        title={TEXT_DIALOG_CHOOSE_MEALS_TITLE}
+        dates={menuplan.dates}
+        mealTypes={menuplan.mealTypes}
+        meals={menuplan.meals}
+        onClose={onDialogSelectMealClose}
+        onConfirm={onDialogSelectMealConfirm}
       />
       {/* Dialog Portionenauswahl */}
       <DialogPlanPortions
@@ -1780,6 +2469,7 @@ interface MenuplanHeaderRowProps {
   notes: Menuplan["notes"];
   menuplanSettings: MenuplanSettings;
   onSwitchShowDetails: () => void;
+  onSwitchEnableDragAndDrop: () => void;
   onMealTypeUpdate: ({action, mealType}: OnMealTypeUpdate) => void;
   onNoteUpdate: ({action, note}: OnNoteUpdate) => void;
   onPrint: () => void;
@@ -1798,18 +2488,21 @@ const MenuplanHeaderRow = ({
   notes,
   menuplanSettings,
   onSwitchShowDetails,
+  onSwitchEnableDragAndDrop,
   onMealTypeUpdate,
   onNoteUpdate,
   onPrint,
 }: MenuplanHeaderRowProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
   const {customDialog} = useCustomDialog();
   const [contextMenuAnchorElement, setContextMenuAnchorElement] =
-    React.useState<HTMLElement | null>(null);
+    useState<HTMLElement | null>(null);
 
   const [contextMenuState, setContextMenuState] =
-    React.useState<DaysRowContextMenuState>(CONTEXT_MENU_INITIAL_STATE);
+    useState<DaysRowContextMenuState>(CONTEXT_MENU_INITIAL_STATE);
+  const [scrolled, setScrolled] = useState(false);
+
   /* ------------------------------------------
   // Button-Handling
   // ------------------------------------------ */
@@ -1832,6 +2525,18 @@ const MenuplanHeaderRow = ({
       onMealTypeUpdate({action: Action.ADD, mealType: newMealType});
     }
   };
+  /* ------------------------------------------
+  // Scroll-Listener für Sticky Header
+  // ------------------------------------------ */
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 64);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   /* ------------------------------------------
   // Kontext-Menü
   // ------------------------------------------ */
@@ -1897,12 +2602,27 @@ const MenuplanHeaderRow = ({
     setContextMenuAnchorElement(null);
   };
   return (
-    <div
-      className={classes.menuplanRow}
-      // style={{display: "flex", flexDirection: "row"}}
+    <Box
+      component="div"
+      sx={{
+        ...classes.stickyHeaderRow,
+        "&::after": scrolled
+          ? {
+              content: '""',
+              position: "absolute",
+              left: 0,
+              bottom: 0,
+              width: "100%",
+              height: "10px",
+              background:
+                "linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0))",
+              pointerEvents: "none",
+            }
+          : {},
+      }}
     >
       <Container
-        className={classes.menuplanItem}
+        sx={classes.menuplanItem}
         style={{
           display: "flex",
           flexDirection: "column",
@@ -1917,12 +2637,20 @@ const MenuplanHeaderRow = ({
           <FormControlLabel
             control={
               <Switch
-                color="primary"
                 checked={menuplanSettings.showDetails}
                 onChange={onSwitchShowDetails}
               />
             }
             label={TEXT_SHOW_DETAILS}
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={menuplanSettings.enableDragAndDrop}
+                onChange={onSwitchEnableDragAndDrop}
+              />
+            }
+            label={TEXT_ENABLE_DRAG_AND_DROP}
           />
         </FormGroup>
         <Button
@@ -1950,7 +2678,7 @@ const MenuplanHeaderRow = ({
         );
         return (
           <Container
-            className={classes.menuplanItem}
+            sx={classes.menuplanItem}
             key={"dayCardContainer_" + date}
             style={{
               display: "flex",
@@ -1960,7 +2688,7 @@ const MenuplanHeaderRow = ({
           >
             <Card
               key={"date_card_" + date}
-              className={classes.cardDate}
+              sx={classes.cardDate}
               style={{width: "100%"}}
               variant="outlined"
             >
@@ -1972,6 +2700,7 @@ const MenuplanHeaderRow = ({
                     id={"MoreBtn_" + date}
                     aria-label="settings"
                     onClick={onContextMenuClick}
+                    size="large"
                   >
                     <MoreVertIcon />
                   </IconButton>
@@ -2027,13 +2756,225 @@ const MenuplanHeaderRow = ({
           </MenuItem>
         )}
       </Menu>
-    </div>
+    </Box>
   );
 };
+/* ===================================================================
+// ========================= Mahlzeit-Reihen =========================
+// =================================================================== */
+interface MealTypeRowsProps {
+  mealTypes: Menuplan["mealTypes"];
+  dates: Menuplan["dates"];
+  meals: Menuplan["meals"];
+  menues: Menuplan["menues"];
+  notes: Menuplan["notes"];
+  products: Menuplan["products"];
+  materials: Menuplan["materials"];
+  mealRecipes: Menuplan["mealRecipes"];
+  menuplanSettings: MenuplanSettings;
+  groupConfiguration: EventGroupConfiguration;
+  onMealTypeUpdate: ({action, mealType}: OnMealTypeUpdate) => void;
+  onMenuplanUpdate: (updatedValues: onMenuplanUpdate) => void;
+  onAddRecipe: (menue: Menue) => void;
+  onEditMenue: (menueUid: Menue["uid"]) => void;
+  onAddProduct: (menueUid: Menue["uid"]) => void;
+  onAddMaterial: (menueUid: Menue["uid"]) => void;
+  onMealRecipeOpen: (uid: MealRecipe["uid"]) => void;
+  onEditProductPlan: (uid: MenuplanProduct["uid"]) => void;
+  onEditMaterialPlan: (uid: MenuplanMaterial["uid"]) => void;
+  onNoteUpdate: ({action, note}: OnNoteUpdate) => void;
+  onDragAndDropUpdate: (
+    newOrder: string[],
+    dragAndDropList: MenuplanDragDropTypes
+  ) => void;
+  onMoveDragAndDropElement: OnMoveDragAndDropElementFx;
+}
+const MealTypeRows = ({
+  mealTypes,
+  dates,
+  meals,
+  menues,
+  notes,
+  products,
+  materials,
+  mealRecipes,
+  menuplanSettings,
+  groupConfiguration,
+  onMealTypeUpdate,
+  onMenuplanUpdate,
+  onAddRecipe,
+  onAddProduct,
+  onAddMaterial,
+  onEditMenue,
+  onMealRecipeOpen,
+  onEditProductPlan,
+  onEditMaterialPlan,
+  onNoteUpdate,
+  onDragAndDropUpdate,
+  onMoveDragAndDropElement,
+}: MealTypeRowsProps) => {
+  /* ------------------------------------------
+  // Drag & Drop Handling
+  // ------------------------------------------ */
+  const [registry] = useState(getItemRegistry);
+  const [lastCardMoved, setLasCardMoved] =
+    useState<LastCardMoved<MealType>>(null);
+
+  // Isolated instances of this component from one another
+  const [instanceId] = useState(() => Symbol("instance-id"));
+  const reorderItem = useCallback(
+    ({
+      startIndex,
+      indexOfTarget,
+      closestEdgeOfTarget,
+    }: {
+      startIndex: number;
+      indexOfTarget: number;
+      closestEdgeOfTarget: Edge | null;
+    }) => {
+      const finishIndex = getReorderDestinationIndex({
+        startIndex,
+        closestEdgeOfTarget,
+        indexOfTarget,
+        axis: "vertical",
+      });
+
+      if (finishIndex === startIndex) {
+        // Keine Änderung, Kein Update
+        return;
+      }
+
+      const itemKey = mealTypes.order[startIndex];
+      const item = mealTypes.entries[itemKey];
+
+      onDragAndDropUpdate(
+        reorder({
+          list: mealTypes.order,
+          startIndex,
+          finishIndex,
+        }),
+        MenuplanDragDropTypes.MEALTYPE
+      );
+      setLasCardMoved({
+        item,
+        previousIndex: startIndex,
+        currentIndex: finishIndex,
+        numberOfItems: mealTypes.order.length,
+      });
+    },
+    [mealTypes]
+  );
+
+  useEffect(() => {
+    if (!menuplanSettings.enableDragAndDrop) {
+      // Kein DnD
+      return;
+    }
+    return monitorForElements({
+      canMonitor({source}) {
+        return isItemData(source.data) && source.data.instanceId === instanceId;
+      },
+      onDrop({location, source}) {
+        const target = location.current.dropTargets[0];
+        if (!target) {
+          return;
+        }
+
+        const sourceData = source.data;
+        const targetData = target.data;
+        if (!isItemData(sourceData) || !isItemData(targetData)) {
+          return;
+        }
+
+        const indexOfTarget = mealTypes.order.findIndex(
+          (itemUiId) => itemUiId === (targetData.item as MealType).uid
+        );
+        if (indexOfTarget < 0) {
+          return;
+        }
+
+        const closestEdgeOfTarget = extractClosestEdge(targetData);
+        reorderItem({
+          startIndex: sourceData.index,
+          indexOfTarget,
+          closestEdgeOfTarget,
+        });
+      },
+    });
+  }, [instanceId, mealTypes.order, reorderItem]);
+
+  // Drag beendet, Abschlussarbeiten
+  useEffect(() => {
+    if (!menuplanSettings.enableDragAndDrop) {
+      // Kein DnD
+      return;
+    }
+
+    if (lastCardMoved === null) {
+      return;
+    }
+    const {item} = lastCardMoved;
+    const element = registry.getElement(item.uid);
+    if (element) {
+      triggerPostMoveFlash(element);
+    }
+  }, [lastCardMoved, registry]);
+
+  const getListLength = useCallback(
+    () => mealTypes.order.length,
+    [mealTypes.order.length]
+  );
+
+  const contextValue: ListContextValue = useMemo(() => {
+    return {
+      registerItem: registry.register,
+      reorderItem,
+      instanceId,
+      getListLength,
+    };
+  }, [registry.register, reorderItem, instanceId, getListLength]);
+
+  return (
+    <MealTypesRowContext.Provider value={contextValue}>
+      {mealTypes.order.map((mealTypeUid, index) => (
+        <MealTypeRow
+          key={"mealTypeRow_" + mealTypeUid}
+          index={index}
+          isLastElement={index === mealTypes.order.length - 1}
+          mealType={mealTypes.entries[mealTypeUid]}
+          dates={dates}
+          meals={meals}
+          menues={menues}
+          notes={notes}
+          products={products}
+          materials={materials}
+          mealRecipes={mealRecipes}
+          menuplanSettings={menuplanSettings}
+          groupConfiguration={groupConfiguration}
+          mealTypes={mealTypes}
+          onMealTypeUpdate={onMealTypeUpdate}
+          onMenuplanUpdate={onMenuplanUpdate}
+          onAddRecipe={onAddRecipe}
+          onAddProduct={onAddProduct}
+          onAddMaterial={onAddMaterial}
+          onEditMenue={onEditMenue}
+          onMealRecipeOpen={onMealRecipeOpen}
+          onMealProductOpen={onEditProductPlan}
+          onMealMaterialOpen={onEditMaterialPlan}
+          onNoteUpdate={onNoteUpdate}
+          onMoveDragAndDropElement={onMoveDragAndDropElement}
+        />
+      ))}
+    </MealTypesRowContext.Provider>
+  );
+};
+
 /* ===================================================================
 // ========================== Mahlzeit-Reihe =========================
 // =================================================================== */
 interface MealTypeRowProps {
+  index: number;
+  isLastElement: boolean;
   mealType: MealType;
   dates: Menuplan["dates"];
   meals: Menuplan["meals"];
@@ -2044,23 +2985,22 @@ interface MealTypeRowProps {
   mealRecipes: Menuplan["mealRecipes"];
   menuplanSettings: MenuplanSettings;
   groupConfiguration: EventGroupConfiguration;
-  draggableProvided: DraggableProvided;
-  draggableSnapshot: DraggableStateSnapshot;
+  mealTypes: Menuplan["mealTypes"];
   onMealTypeUpdate: ({action, mealType}: OnMealTypeUpdate) => void;
   onMenuplanUpdate: (updatedValues: onMenuplanUpdate) => void;
-  fetchMissingData: ({type, recipeShort}: FetchMissingDataProps) => void;
   onAddRecipe: (menue: Menue) => void;
   onEditMenue: (menueUid: Menue["uid"]) => void;
   onAddProduct: (menueUid: Menue["uid"]) => void;
   onAddMaterial: (menueUid: Menue["uid"]) => void;
-  onMealRecipeOpen: (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
-  ) => void;
+  onMealRecipeOpen: (uid: MealRecipe["uid"]) => void;
   onMealProductOpen: (uid: MenuplanProduct["uid"]) => void;
   onMealMaterialOpen: (uid: MenuplanMaterial["uid"]) => void;
   onNoteUpdate: ({action, note}: OnNoteUpdate) => void;
+  onMoveDragAndDropElement: OnMoveDragAndDropElementFx;
 }
 const MealTypeRow = ({
+  index,
+  isLastElement,
   mealType,
   dates,
   meals,
@@ -2070,11 +3010,10 @@ const MealTypeRow = ({
   materials,
   mealRecipes,
   menuplanSettings,
-  draggableProvided,
   groupConfiguration,
+  mealTypes,
   onMealTypeUpdate,
   onMenuplanUpdate,
-  fetchMissingData,
   onAddRecipe,
   onAddProduct,
   onAddMaterial,
@@ -2083,11 +3022,107 @@ const MealTypeRow = ({
   onMealProductOpen,
   onMealMaterialOpen,
   onNoteUpdate,
+  onMoveDragAndDropElement,
 }: MealTypeRowProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
   const {customDialog} = useCustomDialog();
+  /* ------------------------------------------
+  // Drag & Drop
+  // ------------------------------------------ */
+  const {registerItem, instanceId} = useMealTypeRowContext();
 
+  const mealRowRef = useRef<HTMLDivElement>(null);
+  const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
+  const dragHandleRef = useRef<HTMLButtonElement>(null);
+  // **const scrollableRef = useRef<HTMLDivElement | null>(null);
+  const [draggableState, setDraggableState] =
+    useState<DraggableState>(idleState);
+
+  useEffect(() => {
+    if (!menuplanSettings.enableDragAndDrop) {
+      // Kein DnD
+      return;
+    }
+
+    const element = mealRowRef.current;
+    const dragHandle = dragHandleRef.current;
+    invariant(element);
+    invariant(dragHandle);
+
+    // Instance-ID (Liste in dem das Drag & drop Stattfindet)
+    const data = getItemData({item: mealType, index, instanceId});
+
+    return combine(
+      registerItem({itemUiId: mealType.uid, element}),
+      draggable({
+        element: dragHandle,
+        getInitialData: () => data,
+
+        onDragStart() {
+          setDraggableState(draggingState);
+        },
+        onDrop() {
+          setDraggableState(idleState);
+        },
+      }),
+      dropTargetForElements({
+        element,
+        canDrop({source}) {
+          return (
+            isItemData<MealType>(source.data) &&
+            source.data.instanceId === instanceId
+          );
+        },
+        getData({input}) {
+          return attachClosestEdge(data, {
+            element,
+            input,
+            allowedEdges: ["top", "bottom"],
+          });
+        },
+        onDrag({self, source}) {
+          const isSource = source.element === element;
+          if (isSource) {
+            setClosestEdge(null);
+            return;
+          }
+          const closestEdge = extractClosestEdge(self.data);
+          const sourceIndex = source.data.index;
+          invariant(typeof sourceIndex === "number");
+
+          const isItemBeforeSource = index === sourceIndex - 1;
+          const isItemAfterSource = index === sourceIndex + 1;
+
+          const isDropIndicatorHidden =
+            (isItemBeforeSource && closestEdge === "bottom") ||
+            (isItemAfterSource && closestEdge === "top");
+
+          if (isDropIndicatorHidden) {
+            setClosestEdge(null);
+            return;
+          }
+
+          setClosestEdge(closestEdge);
+          setDraggableState(draggingState);
+        },
+        onDragLeave() {
+          setClosestEdge(null);
+          setDraggableState(idleState);
+        },
+        onDrop() {
+          setClosestEdge(null);
+          setDraggableState(idleState);
+        },
+      })
+    );
+  }, [
+    instanceId,
+    mealType,
+    index,
+    registerItem,
+    menuplanSettings.enableDragAndDrop,
+  ]);
   /* ------------------------------------------
   // Menü-Handling
   // ------------------------------------------ */
@@ -2163,125 +3198,125 @@ const MealTypeRow = ({
     });
   };
   return (
-    <div
-      key={"mealtype_row_container_" + mealType.uid}
-      id={"mealtype_row_container_" + mealType.uid}
-      ref={draggableProvided.innerRef}
-      {...draggableProvided.draggableProps}
-      {...draggableProvided.dragHandleProps}
-      className={
-        classes.menuplanRow
-        // draggableSnapshot.isDragging
-        //   ? classes.menuplanRowOnDrag
-        //   : classes.menuplanRowNoDrag
-      }
-    >
-      <Container
-        className={classes.menuplanItem}
+    <React.Fragment>
+      {draggableState.type == "dragging" && closestEdge == "top" && (
+        <Box
+          component="div"
+          className="custom-drop-indicator"
+          style={{position: "relative", margin: theme.spacing(1)}}
+        >
+          <DropIndicator edge={closestEdge} />
+        </Box>
+      )}
+      <Box
+        component={"div"}
+        ref={mergeRefs([mealRowRef, dragHandleRef])}
         style={{
           display: "flex",
-          padding: theme.spacing(1),
-          paddingBottom: theme.spacing(2),
+          flexDirection: "row",
+          flexWrap: "nowrap",
+          alignItems: "stretch",
         }}
       >
-        <MealTypeCard
-          mealType={mealType}
-          onMealTypeUpdate={onMealTypeUpdate}
-          draggableProvided={draggableProvided}
-        />
-      </Container>
-      {dates.map((date) => {
-        let actualMeal = {} as Meal;
-        Object.values(meals).forEach((meal) => {
-          if (
-            meal.mealType == mealType.uid &&
-            meal.date == Utils.dateAsString(date)
-          ) {
-            actualMeal = meal;
-          }
-        });
-        return (
-          <Droppable
-            droppableId={actualMeal.uid}
-            type={DragDropTypes.MENU}
-            key={"droppable_meal_" + actualMeal.uid}
-          >
-            {(provided) => (
-              <Container
-                className={classes.menuplanItem}
-                style={{
-                  display: "flex",
-                  padding: theme.spacing(1),
-                  paddingBottom: theme.spacing(2),
-                  flexDirection: "column",
-                }}
-                key={
-                  "mealCardContainer_" +
-                  Utils.dateAsString(date) +
-                  "_" +
-                  mealType.uid
-                }
-                innerRef={provided.innerRef}
-                {...provided.droppableProps}
-              >
-                {actualMeal.menuOrder?.length > 0 ? (
-                  actualMeal.menuOrder.map((menueUid, index) => (
-                    <Draggable
-                      draggableId={menueUid}
-                      index={index}
-                      key={"draggableMeal_" + menueUid}
-                    >
-                      {(provided) => (
-                        <MenueCard
-                          menue={menues[menueUid]}
-                          notes={notes}
-                          mealRecipes={mealRecipes}
-                          draggableProvided={provided}
-                          menuplanSettings={menuplanSettings}
-                          groupConfiguration={groupConfiguration}
-                          products={products}
-                          materials={materials}
-                          onUpdateMenue={onUpdateMenue}
-                          onDeleteMenue={onDeleteMenue}
-                          fetchMissingData={fetchMissingData}
-                          onAddRecipe={onAddRecipe}
-                          onAddProduct={onAddProduct}
-                          onAddMaterial={onAddMaterial}
-                          onEditMenue={onEditMenue}
-                          onMealRecipeOpen={onMealRecipeOpen}
-                          onMealProductOpen={onMealProductOpen}
-                          onMealMaterialOpen={onMealMaterialOpen}
-                          onNoteUpdate={onNoteUpdate}
-                        />
-                      )}
-                    </Draggable>
-                  ))
-                ) : (
-                  // Kein Menü vorhanden - MenuCard erstellen.....
-                  <Container
-                    className={classes.emptyMealBox}
-                    style={{display: "flex"}}
-                  >
-                    <Container
-                      className={classes.centerCenter}
-                      style={{display: "flex"}}
-                    >
-                      <Button
-                        id={"onCreateMenu_" + actualMeal.uid}
-                        onClick={onCreateMenu}
-                      >
-                        {TEXT_NEW_MENU}
-                      </Button>
-                    </Container>
-                  </Container>
-                )}
-                {provided.placeholder}
-              </Container>
-            )}
-          </Droppable>
-        );
-      })}
-    </div>
+        <Container
+          sx={classes.menuplanItem}
+          style={{
+            display: "flex",
+            padding: theme.spacing(1),
+            paddingBottom: theme.spacing(2),
+          }}
+        >
+          <MealTypeCard
+            mealType={mealType}
+            index={index}
+            isLastElement={isLastElement}
+            onMealTypeUpdate={onMealTypeUpdate}
+            onMoveDragAndDropElement={onMoveDragAndDropElement}
+          />
+        </Container>
+        {dates.map((date) => {
+          let actualMeal = {} as Meal;
+          Object.values(meals).forEach((meal) => {
+            if (
+              meal.mealType == mealType.uid &&
+              meal.date == Utils.dateAsString(date)
+            ) {
+              actualMeal = meal;
+            }
+          });
+          return (
+            <Container
+              sx={classes.menuplanItem}
+              style={{
+                display: "flex",
+                padding: theme.spacing(1),
+                paddingBottom: theme.spacing(2),
+                // height: "100%",
+                flexDirection: "column",
+              }}
+              key={
+                "mealCardContainer_" +
+                Utils.dateAsString(date) +
+                "_" +
+                mealType.uid
+              }
+            >
+              {actualMeal.menuOrder?.length > 0 ? (
+                <MenueListOfMeal
+                  meal={actualMeal}
+                  menues={menues}
+                  mealRecipes={mealRecipes}
+                  products={products}
+                  materials={materials}
+                  notes={notes}
+                  mealTypes={mealTypes}
+                  menuplanSettings={menuplanSettings}
+                  groupConfiguration={groupConfiguration}
+                  onUpdateMenue={onUpdateMenue}
+                  onAddRecipe={onAddRecipe}
+                  onAddProduct={onAddProduct}
+                  onAddMaterial={onAddMaterial}
+                  onEditMenue={onEditMenue}
+                  onDeleteMenue={onDeleteMenue}
+                  onNoteUpdate={onNoteUpdate}
+                  onMealRecipeOpen={onMealRecipeOpen}
+                  onMealProductOpen={onMealProductOpen}
+                  onMealMaterialOpen={onMealMaterialOpen}
+                  onMoveDragAndDropElement={onMoveDragAndDropElement}
+                />
+              ) : (
+                // Kein Menü vorhanden - MenuCard erstellen.....
+                <EmptyMealContainer
+                  mealUid={actualMeal.uid}
+                  buttonText={TEXT_NEW_MENU}
+                  onCreateMenu={(mealUid) => {
+                    const event = {
+                      currentTarget: {id: "onCreateMenu_" + mealUid},
+                    } as React.MouseEvent<HTMLButtonElement>;
+                    onCreateMenu(event);
+                  }}
+                />
+              )}
+              {/* {closestEdge && (
+                <Box component="div" className="custom-drop-indicator">
+                  <p>Hier bin ich</p>
+                  <DropIndicator edge={closestEdge} gap="272px" />
+                </Box>
+              )} */}
+            </Container>
+          );
+        })}
+      </Box>
+      {draggableState.type == "dragging" && closestEdge == "bottom" && (
+        <Box
+          component="div"
+          className="custom-drop-indicator"
+          style={{position: "relative", margin: theme.spacing(1)}}
+        >
+          <DropIndicator edge={closestEdge} />
+        </Box>
+      )}
+    </React.Fragment>
   );
 };
 /* ===================================================================
@@ -2291,30 +3326,28 @@ interface OnMealTypeUpdate {
   action: Action;
   mealType: MealType;
 }
-interface OnNoteUpdate {
+export interface OnNoteUpdate {
   action: Action;
   note: Note;
 }
 interface MealTypeCardProps {
   mealType: MealType;
+  index: number;
+  isLastElement: boolean;
   onMealTypeUpdate: ({action, mealType}: OnMealTypeUpdate) => void;
-  draggableProvided: DraggableProvided;
+  onMoveDragAndDropElement: OnMoveDragAndDropElementFx;
 }
-// interface MealTypeContextMenuState {
-//   mealType: MealType;
-// }
-// const MEAL_TYPE_CONTEXT_MENU_INITIAL_STATE: MealTypeContextMenuState = {
-//   mealType: { uid: "", name: "" },
-// };
 const MealTypeCard = ({
   mealType,
-  draggableProvided,
+  index,
+  isLastElement,
   onMealTypeUpdate,
+  onMoveDragAndDropElement,
 }: MealTypeCardProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {customDialog} = useCustomDialog();
   const [contextMenuAnchorElement, setContextMenuAnchorElement] =
-    React.useState<HTMLElement | null>(null);
+    useState<HTMLElement | null>(null);
   /* ------------------------------------------
   // Kontexmenü
   // ------------------------------------------ */
@@ -2356,15 +3389,20 @@ const MealTypeCard = ({
     setContextMenuAnchorElement(null);
     // setContextMenuState(MEAL_TYPE_CONTEXT_MENU_INITIAL_STATE);
   };
+  const onMoveElement = (direction: DragAndDropDirections) => {
+    onMoveDragAndDropElement({
+      direction: direction,
+      kind: MenuplanDragDropTypes.MEALTYPE,
+      itemUid: mealType.uid,
+    });
+    setContextMenuAnchorElement(null);
+  };
   return (
     <React.Fragment>
       <Card
         key={"mealtype_card_" + mealType.uid}
-        className={classes.cardMealType}
-        // style={{ width: "100%" }}
+        sx={classes.cardMealType}
         variant="outlined"
-        {...draggableProvided.dragHandleProps}
-        // innerRef={draggableProvided.innerRef}
       >
         <CardHeader
           key={"mealtype_cardHeader_" + mealType.uid}
@@ -2373,6 +3411,7 @@ const MealTypeCard = ({
               id={"MoreBtn_" + mealType.uid}
               aria-label="settings"
               onClick={onContextMenuClick}
+              size="large"
             >
               <MoreVertIcon />
             </IconButton>
@@ -2403,594 +3442,589 @@ const MealTypeCard = ({
             {TEXT_DELETE}
           </Typography>
         </MenuItem>
-      </Menu>
-    </React.Fragment>
-  );
-};
-/* ===================================================================
-// ============================ Menü-Karte ===========================
-// =================================================================== */
-interface MenuCardProps {
-  menue: Menue;
-  notes: Menuplan["notes"];
-  // recipeList: RecipeShort[];
-  mealRecipes: Menuplan["mealRecipes"];
-  draggableProvided: DraggableProvided;
-  menuplanSettings: MenuplanSettings;
-  groupConfiguration: EventGroupConfiguration;
-  products: Menuplan["products"];
-  materials: Menuplan["materials"];
-  onUpdateMenue: (menue: Menue) => void;
-  onDeleteMenue: (menueUid: Menue["uid"]) => void;
-  fetchMissingData: ({type, recipeShort}: FetchMissingDataProps) => void;
-  onAddRecipe: (menue: Menue) => void;
-  onAddProduct: (menueUid: Menue["uid"]) => void;
-  onAddMaterial: (menueUid: Menue["uid"]) => void;
-  onEditMenue: (menueUid: Menue["uid"]) => void;
-  onMealRecipeOpen: (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
-  ) => void;
-  onMealProductOpen: (uid: MenuplanProduct["uid"]) => void;
-  onMealMaterialOpen: (uid: MenuplanMaterial["uid"]) => void;
-  onNoteUpdate: ({action, note}: OnNoteUpdate) => void;
-}
-const MenueCard = ({
-  menue,
-  notes,
-  mealRecipes,
-  menuplanSettings,
-  draggableProvided,
-  groupConfiguration,
-  products,
-  materials,
-  onUpdateMenue,
-  onDeleteMenue: onDeleteMenueSuper,
-  onMealRecipeOpen,
-  onMealMaterialOpen,
-  onMealProductOpen,
-  onAddRecipe: onAddRecipeSuper,
-  onAddProduct: onAddProductSuper,
-  onAddMaterial: onAddMaterialSuper,
-  onEditMenue: onEditMenueSuper,
-  onNoteUpdate,
-}: // onLoadRecipes,
-MenuCardProps) => {
-  const classes = useStyles();
-  const {customDialog} = useCustomDialog();
-  const [contextMenuAnchorElement, setContextMenuAnchorElement] =
-    React.useState<HTMLElement | null>(null);
-  const [menueName, setMenueName] = React.useState<Menue["name"]>("");
-  const theme = useTheme();
-
-  if (menue.name && !menueName) {
-    setMenueName(menue.name);
-  }
-
-  const note = Object.values(notes).find((note) => note.menueUid == menue.uid);
-  /* ------------------------------------------
-  // Kontexmenü
-  // ------------------------------------------ */
-  const onContextMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    setContextMenuAnchorElement(event.currentTarget);
-  };
-  const closeContextMenu = () => {
-    setContextMenuAnchorElement(null);
-  };
-  /* ------------------------------------------
-  // Kontex-Menü-Handler
-  // ------------------------------------------ */
-  const onEditMenue = () => {
-    if (contextMenuAnchorElement?.id) {
-      onEditMenueSuper(contextMenuAnchorElement.id.split("_")[1]);
-    }
-    setContextMenuAnchorElement(null);
-  };
-  const onDeleteMenue = () => {
-    if (contextMenuAnchorElement?.id) {
-      onDeleteMenueSuper(contextMenuAnchorElement.id.split("_")[1]);
-    }
-  };
-  const onAddProduct = () => {
-    if (contextMenuAnchorElement?.id) {
-      onAddProductSuper(contextMenuAnchorElement.id.split("_")[1]);
-    }
-    setContextMenuAnchorElement(null);
-  };
-  const onAddMaterial = () => {
-    if (contextMenuAnchorElement?.id) {
-      onAddMaterialSuper(contextMenuAnchorElement.id.split("_")[1]);
-    }
-    setContextMenuAnchorElement(null);
-  };
-  const onEditNote = async () => {
-    let userInput = {valid: false, input: ""} as SingleTextInputResult;
-
-    const existingNote = Object.values(notes).find(
-      (note) => note.menueUid == menue.uid
-    );
-
-    userInput = (await customDialog({
-      dialogType: DialogType.SingleTextInput,
-      title: `${TEXT_NOTE} ${existingNote?.text ? TEXT_EDIT : TEXT_ADD}`,
-      singleTextInputProperties: {
-        initialValue: existingNote?.text ? existingNote?.text : "",
-        textInputLabel: TEXT_NOTE,
-      },
-    })) as SingleTextInputResult;
-
-    if (userInput?.valid && userInput.input != "") {
-      let note: Note;
-      if (!existingNote?.text) {
-        note = Menuplan.createEmptyNote();
-      } else {
-        note = existingNote;
-      }
-      note.text = userInput.input;
-      note.menueUid = menue.uid;
-      note.date = "";
-      onNoteUpdate({
-        action: existingNote?.text ? Action.EDIT : Action.ADD,
-        note: note,
-      });
-    }
-    setContextMenuAnchorElement(null);
-  };
-  /* ------------------------------------------
-  // Input-Handler
-  // ------------------------------------------ */
-  const onChangeMenueName = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.value == "") {
-      // Wert gelöscht --> hochgeben
-      onUpdateMenue({...menue, name: ""});
-    }
-    setMenueName(event.target.value);
-  };
-  const onMenueNameBlur = () => {
-    // Name im Controller updaten, aber erst
-    // wenn dieser fertig erfasst wurde
-    onUpdateMenue({...menue, name: menueName});
-  };
-  const onAddRecipe = () => {
-    // Drawer anzeigen
-    onAddRecipeSuper(menue);
-  };
-  return (
-    <React.Fragment>
-      <Card
-        className={classes.menuCard}
-        innerRef={draggableProvided.innerRef}
-        {...draggableProvided.draggableProps}
-        {...draggableProvided.dragHandleProps}
-      >
-        <CardHeader
-          key={"menu_cardHeader_" + menue.uid}
-          action={
-            <IconButton
-              id={"MoreBtn_" + menue.uid}
-              aria-label="settings"
-              onClick={onContextMenuClick}
-            >
-              <MoreVertIcon />
-            </IconButton>
-          }
-          title={
-            <TextField
-              fullWidth
-              value={menueName}
-              onChange={onChangeMenueName}
-              onBlur={onMenueNameBlur}
-              label={TEXT_MENUE}
-            />
-          }
-        />
-
-        <CardContent className={classes.centerCenter}>
-          <Grid container>
-            {note && (
-              <Grid item xs={12}>
-                <Typography
-                  variant="body2"
-                  color="textSecondary"
-                  align="center"
-                >
-                  <em>{note.text}</em>
-                </Typography>
-              </Grid>
-            )}
-            <Grid item xs={12}>
-              <Droppable
-                droppableId={`${menue.uid}_${DragDropTypes.MEALRECIPE}`}
-                type={DragDropTypes.MEALRECIPE}
-              >
-                {(provided, snapshot) => (
-                  <List
-                    key={"listMealRecipes_" + menue.uid}
-                    innerRef={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={
-                      snapshot.isDraggingOver
-                        ? classes.ListOnDrop
-                        : classes.ListNoDrop
-                    }
-                    style={{minHeight: "3em"}}
-                  >
-                    {menue.mealRecipeOrder.map((mealRecipeUid, index) => (
-                      <React.Fragment
-                        key={
-                          "draggableMealRecipeDiv_" +
-                          menue.uid +
-                          "_" +
-                          mealRecipeUid
-                        }
-                      >
-                        <Draggable
-                          draggableId={mealRecipeUid}
-                          index={index}
-                          key={
-                            "draggableMealRecipe_" +
-                            menue.uid +
-                            "_" +
-                            mealRecipeUid
-                          }
-                        >
-                          {(provided, snapshot) => (
-                            <ListItem
-                              button
-                              dense
-                              key={
-                                "listitem_" + menue.uid + "_" + mealRecipeUid
-                              }
-                              id={"listitem_" + menue.uid + "_" + mealRecipeUid}
-                              innerRef={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={
-                                snapshot.isDragging
-                                  ? classes.listItemOnDrag
-                                  : classes.listItemNoDrag
-                              }
-                              onClick={(event) => {
-                                if (
-                                  !mealRecipes[
-                                    mealRecipeUid
-                                  ]?.recipe.recipeUid.includes(
-                                    MealRecipeDeletedPrefix
-                                  )
-                                ) {
-                                  onMealRecipeOpen(event);
-                                }
-                              }}
-                            >
-                              <ListItemText
-                                key={
-                                  "listitemText_" +
-                                  menue.uid +
-                                  "_" +
-                                  mealRecipeUid
-                                }
-                                style={{margin: 0}}
-                                primary={
-                                  mealRecipes[
-                                    mealRecipeUid
-                                  ]?.recipe.recipeUid.includes(
-                                    MealRecipeDeletedPrefix
-                                  ) ? (
-                                    <span
-                                      style={{
-                                        color: theme.palette.text.secondary,
-                                      }}
-                                    >
-                                      {/* Das Rezept wurde gelöscht... */}
-                                      {mealRecipes[mealRecipeUid]?.recipe.name}
-                                    </span>
-                                  ) : (
-                                    <span>
-                                      {mealRecipes[mealRecipeUid]?.recipe.name}
-                                      <span
-                                        style={{
-                                          color: theme.palette.text.secondary,
-                                        }}
-                                      >
-                                        {mealRecipes[mealRecipeUid]?.recipe
-                                          .type === RecipeType.variant
-                                          ? ` [${TEXT_VARIANT}: ${mealRecipes[mealRecipeUid]?.recipe.variantName}]`
-                                          : ``}
-                                      </span>
-                                    </span>
-                                  )
-                                }
-                                secondary={
-                                  mealRecipes[mealRecipeUid]?.plan.length ==
-                                  0 ? (
-                                    <span
-                                      style={{
-                                        color: theme.palette.error.main,
-                                      }}
-                                    >
-                                      {TEXT_RECIPE_WIHOUT_PORTIONPLAN}
-                                    </span>
-                                  ) : menuplanSettings.showDetails &&
-                                    mealRecipes[mealRecipeUid]?.plan.length >
-                                      0 ? (
-                                    generatePlanedPortionsText({
-                                      uid: mealRecipeUid,
-                                      portionPlan:
-                                        mealRecipes[mealRecipeUid].plan,
-                                      groupConfiguration: groupConfiguration,
-                                    })
-                                  ) : null
-                                }
-                              />
-                            </ListItem>
-                          )}
-                        </Draggable>
-                      </React.Fragment>
-                    ))}
-                    {provided.placeholder}
-                  </List>
-                )}
-              </Droppable>
-            </Grid>
-            <Grid item xs={12} className={classes.centerCenter}>
-              <Button
-                onClick={onAddRecipe}
-                color="primary"
-                endIcon={<AddIcon />}
-              >
-                {TEXT_ADD_RECIPE}
-              </Button>
-            </Grid>
-            {/* Produkt-Liste */}
-            <Grid item xs={12}>
-              <Droppable
-                droppableId={`${menue.uid}_${DragDropTypes.PRODUCT}`}
-                type={DragDropTypes.PRODUCT}
-              >
-                {(provided, snapshot) => (
-                  <List
-                    key={"listMealProducts_" + menue.uid}
-                    innerRef={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={
-                      snapshot.isDraggingOver
-                        ? classes.ListOnDrop
-                        : classes.ListNoDrop
-                    }
-                    style={{minHeight: "3em"}}
-                  >
-                    {menue.productOrder.map((productUid, index) => (
-                      <Draggable
-                        draggableId={productUid}
-                        index={index}
-                        key={
-                          "draggableMealProduct" + menue.uid + "_" + productUid
-                        }
-                      >
-                        {(provided, snapshot) => (
-                          <ListItem
-                            button
-                            dense
-                            key={"listitem_" + menue.uid + "_" + productUid}
-                            id={"listitem_" + menue.uid + "_" + productUid}
-                            innerRef={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={
-                              snapshot.isDragging
-                                ? classes.listItemOnDrag
-                                : classes.listItemNoDrag
-                            }
-                            onClick={() => onMealProductOpen(productUid)}
-                          >
-                            <ListItemText
-                              key={
-                                "listitemText_" + menue.uid + "_" + productUid
-                              }
-                              style={{margin: 0}}
-                              primary={`${
-                                menuplanSettings.showDetails &&
-                                products[productUid]?.totalQuantity > 0
-                                  ? `${products[productUid]?.totalQuantity} ${
-                                      products[productUid].unit
-                                        ? products[productUid].unit
-                                        : " ×"
-                                    }`
-                                  : ``
-                              } ${products[productUid]?.productName}
-                                ${
-                                  products[productUid]?.planMode ==
-                                    GoodsPlanMode.PER_PORTION &&
-                                  menuplanSettings.showDetails
-                                    ? `(${products[productUid].quantity} ${products[productUid].unit} ${TEXT_PER_PORTION})`
-                                    : ``
-                                }`}
-                              secondary={
-                                menuplanSettings.showDetails
-                                  ? products[productUid]?.planMode ==
-                                    GoodsPlanMode.PER_PORTION
-                                    ? generatePlanedPortionsText({
-                                        uid: productUid,
-                                        portionPlan: products[productUid].plan,
-                                        groupConfiguration: groupConfiguration,
-                                      })
-                                    : ``
-                                  : null
-                              }
-                            />
-                          </ListItem>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </List>
-                )}
-              </Droppable>
-            </Grid>
-            {/* Material-Liste */}
-            <Grid item xs={12}>
-              <Droppable
-                droppableId={`${menue.uid}_${DragDropTypes.MATERIAL}`}
-                type={DragDropTypes.MATERIAL}
-              >
-                {(provided, snapshot) => (
-                  <List
-                    key={"listMealMaterials_" + menue.uid}
-                    innerRef={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={
-                      snapshot.isDraggingOver
-                        ? classes.ListOnDrop
-                        : classes.ListNoDrop
-                    }
-                    style={{minHeight: "3em"}}
-                  >
-                    {menue.materialOrder.map((materialUid, index) => (
-                      <Draggable
-                        draggableId={materialUid}
-                        index={index}
-                        key={
-                          "draggableMealMaterial_" +
-                          menue.uid +
-                          "_" +
-                          materialUid
-                        }
-                      >
-                        {(provided, snapshot) => (
-                          <ListItem
-                            button
-                            dense
-                            key={"listitem_" + menue.uid + "_" + materialUid}
-                            id={"listitem_" + menue.uid + "_" + materialUid}
-                            innerRef={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={
-                              snapshot.isDragging
-                                ? classes.listItemOnDrag
-                                : classes.listItemNoDrag
-                            }
-                            onClick={() => onMealMaterialOpen(materialUid)}
-                          >
-                            <ListItemText
-                              key={
-                                "listitemText_" + menue.uid + "_" + materialUid
-                              }
-                              style={{margin: 0}}
-                              primary={`${
-                                menuplanSettings.showDetails &&
-                                materials[materialUid]?.totalQuantity > 0
-                                  ? `${materials[materialUid]?.totalQuantity} ${
-                                      materials[materialUid].unit
-                                        ? materials[materialUid].unit
-                                        : " ×"
-                                    }`
-                                  : ``
-                              } ${materials[materialUid]?.materialName}
-                                ${
-                                  materials[materialUid]?.planMode ==
-                                    GoodsPlanMode.PER_PORTION &&
-                                  menuplanSettings.showDetails
-                                    ? `(${materials[materialUid].quantity} ${materials[materialUid].unit} ${TEXT_PER_PORTION})`
-                                    : ``
-                                }`}
-                              secondary={
-                                menuplanSettings.showDetails
-                                  ? materials[materialUid]?.planMode ==
-                                    GoodsPlanMode.PER_PORTION
-                                    ? generatePlanedPortionsText({
-                                        uid: materialUid,
-                                        portionPlan:
-                                          materials[materialUid].plan,
-                                        groupConfiguration: groupConfiguration,
-                                      })
-                                    : ``
-                                  : null
-                              }
-                            />
-                          </ListItem>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </List>
-                )}
-              </Droppable>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-
-      <Menu
-        open={Boolean(contextMenuAnchorElement)}
-        keepMounted
-        anchorEl={contextMenuAnchorElement}
-        onClose={closeContextMenu}
-      >
+        <MenuItem onClick={() => onMoveElement("up")} disabled={index === 0}>
+          <ListItemIcon>
+            <ArrowUpwardIcon fontSize="small"></ArrowUpwardIcon>
+          </ListItemIcon>
+          <Typography>{TEXT_TOOLTIP_MOVE_UP}</Typography>
+        </MenuItem>
         <MenuItem
-          onClick={onEditMenue}
-          disabled={
-            menue.materialOrder.length == 0 &&
-            menue.productOrder.length == 0 &&
-            menue.mealRecipeOrder.length == 0 &&
-            note == undefined
-          }
+          onClick={() => onMoveElement("down")}
+          disabled={isLastElement}
         >
           <ListItemIcon>
-            <EditIcon />
+            <ArrowDownwardIcon fontSize="small"></ArrowDownwardIcon>
           </ListItemIcon>
-          <Typography variant="inherit" noWrap>
-            {TEXT_EDIT_MENUE}
-          </Typography>
-        </MenuItem>
-        <MenuItem onClick={onAddProduct}>
-          <ListItemIcon>
-            <ShoppingCartIcon />
-          </ListItemIcon>
-          <Typography variant="inherit" noWrap>
-            {TEXT_ADD_PRODUCT}
-          </Typography>
-        </MenuItem>
-        <MenuItem onClick={onAddMaterial}>
-          <ListItemIcon>
-            <BuildIcon />
-          </ListItemIcon>
-          <Typography variant="inherit" noWrap>
-            {TEXT_ADD_MATERIAL}
-          </Typography>
-        </MenuItem>
-        <MenuItem onClick={onEditNote}>
-          <ListItemIcon>
-            <NotesIcon />
-          </ListItemIcon>
-          <Typography variant="inherit" noWrap>
-            {`${TEXT_NOTE} ${note ? TEXT_EDIT : TEXT_ADD}`}
-          </Typography>
-        </MenuItem>
-        {note && (
-          <MenuItem
-            onClick={() => onNoteUpdate({action: Action.DELETE, note: note})}
-          >
-            <ListItemIcon>
-              <DeleteSweepIcon />
-            </ListItemIcon>
-            <Typography variant="inherit" noWrap>
-              {`${TEXT_NOTE} ${TEXT_DELETE}`}
-            </Typography>
-          </MenuItem>
-        )}
-
-        <MenuItem onClick={onDeleteMenue}>
-          <ListItemIcon>
-            <DeleteIcon />
-          </ListItemIcon>
-          <Typography variant="inherit" noWrap>
-            {TEXT_DELETE_MENUE}
-          </Typography>
+          <Typography>{TEXT_TOOLTIP_MOVE_DOWN}</Typography>
         </MenuItem>
       </Menu>
     </React.Fragment>
   );
 };
+// /* ===================================================================
+// // ============================ Menü-Karte ===========================
+// // =================================================================== */
+// //FIXME: muss noch gelöscht werden. wurden ausgelagert
+// interface MenuCardProps {
+//   menue: Menue;
+//   notes: Menuplan["notes"];
+//   // recipeList: RecipeShort[];
+//   mealRecipes: Menuplan["mealRecipes"];
+//   // draggableProvided: DraggableProvided;
+//   menuplanSettings: MenuplanSettings;
+//   groupConfiguration: EventGroupConfiguration;
+//   products: Menuplan["products"];
+//   materials: Menuplan["materials"];
+//   onUpdateMenue: (menue: Menue) => void;
+//   onDeleteMenue: (menueUid: Menue["uid"]) => void;
+//   fetchMissingData: ({type, recipeShort}: FetchMissingDataProps) => void;
+//   onAddRecipe: (menue: Menue) => void;
+//   onAddProduct: (menueUid: Menue["uid"]) => void;
+//   onAddMaterial: (menueUid: Menue["uid"]) => void;
+//   onEditMenue: (menueUid: Menue["uid"]) => void;
+//   onMealRecipeOpen: (
+//     event: React.MouseEvent<HTMLDivElement, MouseEvent>
+//   ) => void;
+//   onMealProductOpen: (uid: MenuplanProduct["uid"]) => void;
+//   onMealMaterialOpen: (uid: MenuplanMaterial["uid"]) => void;
+//   onNoteUpdate: ({action, note}: OnNoteUpdate) => void;
+// }
+// const MenueCard = ({
+//   menue,
+//   notes,
+//   mealRecipes,
+//   menuplanSettings,
+//   // draggableProvided,
+//   groupConfiguration,
+//   products,
+//   materials,
+//   onUpdateMenue,
+//   onDeleteMenue: onDeleteMenueSuper,
+//   onMealRecipeOpen,
+//   onMealMaterialOpen,
+//   onMealProductOpen,
+//   onAddRecipe: onAddRecipeSuper,
+//   onAddProduct: onAddProductSuper,
+//   onAddMaterial: onAddMaterialSuper,
+//   onEditMenue: onEditMenueSuper,
+//   onNoteUpdate,
+// }: // onLoadRecipes,
+// MenuCardProps) => {
+//   const classes = useCustomStyles();
+//   const {customDialog} = useCustomDialog();
+//   const [contextMenuAnchorElement, setContextMenuAnchorElement] =
+//     useState<HTMLElement | null>(null);
+//   const [menueName, setMenueName] = useState<Menue["name"]>("");
+//   const theme = useTheme();
+
+//   if (menue.name && !menueName) {
+//     setMenueName(menue.name);
+//   }
+
+//   const note = Object.values(notes).find((note) => note.menueUid == menue.uid);
+//   /* ------------------------------------------
+//   // Kontexmenü
+//   // ------------------------------------------ */
+//   const onContextMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+//     setContextMenuAnchorElement(event.currentTarget);
+//   };
+//   const closeContextMenu = () => {
+//     setContextMenuAnchorElement(null);
+//   };
+//   /* ------------------------------------------
+//   // Kontex-Menü-Handler
+//   // ------------------------------------------ */
+//   const onEditMenue = () => {
+//     if (contextMenuAnchorElement?.id) {
+//       onEditMenueSuper(contextMenuAnchorElement.id.split("_")[1]);
+//     }
+//     setContextMenuAnchorElement(null);
+//   };
+//   const onDeleteMenue = () => {
+//     if (contextMenuAnchorElement?.id) {
+//       onDeleteMenueSuper(contextMenuAnchorElement.id.split("_")[1]);
+//     }
+//   };
+//   const onAddProduct = () => {
+//     if (contextMenuAnchorElement?.id) {
+//       onAddProductSuper(contextMenuAnchorElement.id.split("_")[1]);
+//     }
+//     setContextMenuAnchorElement(null);
+//   };
+//   const onAddMaterial = () => {
+//     if (contextMenuAnchorElement?.id) {
+//       onAddMaterialSuper(contextMenuAnchorElement.id.split("_")[1]);
+//     }
+//     setContextMenuAnchorElement(null);
+//   };
+//   const onEditNote = async () => {
+//     let userInput = {valid: false, input: ""} as SingleTextInputResult;
+
+//     const existingNote = Object.values(notes).find(
+//       (note) => note.menueUid == menue.uid
+//     );
+
+//     userInput = (await customDialog({
+//       dialogType: DialogType.SingleTextInput,
+//       title: `${TEXT_NOTE} ${existingNote?.text ? TEXT_EDIT : TEXT_ADD}`,
+//       singleTextInputProperties: {
+//         initialValue: existingNote?.text ? existingNote?.text : "",
+//         textInputLabel: TEXT_NOTE,
+//       },
+//     })) as SingleTextInputResult;
+
+//     if (userInput?.valid && userInput.input != "") {
+//       let note: Note;
+//       if (!existingNote?.text) {
+//         note = Menuplan.createEmptyNote();
+//       } else {
+//         note = existingNote;
+//       }
+//       note.text = userInput.input;
+//       note.menueUid = menue.uid;
+//       note.date = "";
+//       onNoteUpdate({
+//         action: existingNote?.text ? Action.EDIT : Action.ADD,
+//         note: note,
+//       });
+//     }
+//     setContextMenuAnchorElement(null);
+//   };
+//   /* ------------------------------------------
+//   // Input-Handler
+//   // ------------------------------------------ */
+//   const onChangeMenueName = (event: React.ChangeEvent<HTMLInputElement>) => {
+//     if (event.target.value == "") {
+//       // Wert gelöscht --> hochgeben
+//       onUpdateMenue({...menue, name: ""});
+//     }
+//     setMenueName(event.target.value);
+//   };
+//   const onMenueNameBlur = () => {
+//     // Name im Controller updaten, aber erst
+//     // wenn dieser fertig erfasst wurde
+//     onUpdateMenue({...menue, name: menueName});
+//   };
+//   const onAddRecipe = () => {
+//     // Drawer anzeigen
+//     onAddRecipeSuper(menue);
+//   };
+//   return (
+//     <React.Fragment>
+//       <Card
+//         sx={classes.menuCard}
+//         // innerRef={draggableProvided.innerRef}
+//         // {...draggableProvided.draggableProps}
+//         // {...draggableProvided.dragHandleProps}
+//       >
+//         <CardHeader
+//           key={"menu_cardHeader_" + menue.uid}
+//           action={
+//             <IconButton
+//               id={"MoreBtn_" + menue.uid}
+//               aria-label="settings"
+//               onClick={onContextMenuClick}
+//               size="large"
+//             >
+//               <MoreVertIcon />
+//             </IconButton>
+//           }
+//           title={
+//             <TextField
+//               fullWidth
+//               variant="standard"
+//               value={menueName}
+//               onChange={onChangeMenueName}
+//               onBlur={onMenueNameBlur}
+//               label={TEXT_MENUE}
+//             />
+//           }
+//         />
+
+//         <CardContent sx={classes.centerCenter}>
+//           <Grid container>
+//             {note && (
+//               <Grid xs={12}>
+//                 <Typography
+//                   variant="body2"
+//                   color="textSecondary"
+//                   align="center"
+//                 >
+//                   <em>{note.text}</em>
+//                 </Typography>
+//               </Grid>
+//             )}
+//             <Grid xs={12}>
+//               {/* <Droppable
+//                 droppableId={`${menue.uid}_${DragDropTypes.MEALRECIPE}`}
+//                 type={DragDropTypes.MEALRECIPE}
+//               >
+//                 {(provided, snapshot) => ( */}
+//               <List
+//                 key={"listMealRecipes_" + menue.uid}
+//                 // innerRef={provided.innerRef}
+//                 // {...provided.droppableProps}
+//                 // className={
+//                 //   snapshot.isDraggingOver
+//                 //     ? classes.ListOnDrop
+//                 //     : classes.ListNoDrop
+//                 // }
+//                 style={{minHeight: "3em"}}
+//               >
+//                 {menue.mealRecipeOrder.map((mealRecipeUid) => (
+//                   <React.Fragment
+//                     key={
+//                       "draggableMealRecipeDiv_" +
+//                       menue.uid +
+//                       "_" +
+//                       mealRecipeUid
+//                     }
+//                   >
+//                     {/* <Draggable
+//                           draggableId={mealRecipeUid}
+//                           index={index}
+//                           key={
+//                             "draggableMealRecipe_" +
+//                             menue.uid +
+//                             "_" +
+//                             mealRecipeUid
+//                           }
+//                         >
+//                           {(provided, snapshot) => ( */}
+//                     <ListItem
+//                       button
+//                       dense
+//                       key={"listitem_" + menue.uid + "_" + mealRecipeUid}
+//                       id={"listitem_" + menue.uid + "_" + mealRecipeUid}
+//                       // innerRef={provided.innerRef}
+//                       // {...provided.draggableProps}
+//                       // {...provided.dragHandleProps}
+//                       // className={
+//                       //   snapshot.isDragging
+//                       //     ? classes.listItemOnDrag
+//                       //     : classes.listItemNoDrag
+//                       // }
+//                       onClick={(event) => {
+//                         if (
+//                           !mealRecipes[
+//                             mealRecipeUid
+//                           ]?.recipe.recipeUid.includes(MealRecipeDeletedPrefix)
+//                         ) {
+//                           onMealRecipeOpen(event);
+//                         }
+//                       }}
+//                     >
+//                       <ListItemText
+//                         key={"listitemText_" + menue.uid + "_" + mealRecipeUid}
+//                         style={{margin: 0}}
+//                         primary={
+//                           mealRecipes[mealRecipeUid]?.recipe.recipeUid.includes(
+//                             MealRecipeDeletedPrefix
+//                           ) ? (
+//                             <span
+//                               style={{
+//                                 color: theme.palette.text.secondary,
+//                               }}
+//                             >
+//                               {/* Das Rezept wurde gelöscht... */}
+//                               {mealRecipes[mealRecipeUid]?.recipe.name}
+//                             </span>
+//                           ) : (
+//                             <span>
+//                               {mealRecipes[mealRecipeUid]?.recipe.name}
+//                               <span
+//                                 style={{
+//                                   color: theme.palette.text.secondary,
+//                                 }}
+//                               >
+//                                 {mealRecipes[mealRecipeUid]?.recipe.type ===
+//                                 RecipeType.variant
+//                                   ? ` [${TEXT_VARIANT}: ${mealRecipes[mealRecipeUid]?.recipe.variantName}]`
+//                                   : ``}
+//                               </span>
+//                             </span>
+//                           )
+//                         }
+//                         secondary={
+//                           mealRecipes[mealRecipeUid]?.plan.length == 0 ? (
+//                             <span
+//                               style={{
+//                                 color: theme.palette.error.main,
+//                               }}
+//                             >
+//                               {TEXT_RECIPE_WIHOUT_PORTIONPLAN}
+//                             </span>
+//                           ) : menuplanSettings.showDetails &&
+//                             mealRecipes[mealRecipeUid]?.plan.length > 0 ? (
+//                             generatePlanedPortionsText({
+//                               uid: mealRecipeUid,
+//                               portionPlan: mealRecipes[mealRecipeUid].plan,
+//                               groupConfiguration: groupConfiguration,
+//                             })
+//                           ) : null
+//                         }
+//                       />
+//                     </ListItem>
+//                     {/* )}
+//                         </Draggable> */}
+//                   </React.Fragment>
+//                 ))}
+//                 {/* {provided.placeholder} */}
+//               </List>
+//               {/* )} */}
+//               {/* </Droppable> */}
+//             </Grid>
+//             <Grid xs={12} sx={classes.centerCenter}>
+//               <Button
+//                 onClick={onAddRecipe}
+//                 color="primary"
+//                 endIcon={<AddIcon />}
+//               >
+//                 {TEXT_ADD_RECIPE}
+//               </Button>
+//             </Grid>
+//             {/* Produkt-Liste */}
+//             <Grid xs={12}>
+//               {/* <Droppable
+//                 droppableId={`${menue.uid}_${DragDropTypes.PRODUCT}`}
+//                 type={DragDropTypes.PRODUCT}
+//               > */}
+//               {/* {(provided, snapshot) => ( */}
+//               <List
+//                 key={"listMealProducts_" + menue.uid}
+//                 // innerRef={provided.innerRef}
+//                 // {...provided.droppableProps}
+//                 // className={
+//                 //   snapshot.isDraggingOver
+//                 //     ? classes.ListOnDrop
+//                 //     : classes.ListNoDrop
+//                 // }
+//                 style={{minHeight: "3em"}}
+//               >
+//                 {menue.productOrder.map((productUid) => (
+//                   // <Draggable
+//                   //   draggableId={productUid}
+//                   //   index={index}
+//                   //   key={
+//                   //     "draggableMealProduct" + menue.uid + "_" + productUid
+//                   //   }
+//                   // >
+//                   //   {(provided, snapshot) => (
+//                   <ListItem
+//                     button
+//                     dense
+//                     key={"listitem_" + menue.uid + "_" + productUid}
+//                     id={"listitem_" + menue.uid + "_" + productUid}
+//                     // innerRef={provided.innerRef}
+//                     // {...provided.draggableProps}
+//                     // {...provided.dragHandleProps}
+//                     // className={
+//                     //   snapshot.isDragging
+//                     //     ? classes.listItemOnDrag
+//                     //     : classes.listItemNoDrag
+//                     // }
+//                     onClick={() => onMealProductOpen(productUid)}
+//                   >
+//                     <ListItemText
+//                       key={"listitemText_" + menue.uid + "_" + productUid}
+//                       style={{margin: 0}}
+//                       primary={`${
+//                         menuplanSettings.showDetails &&
+//                         products[productUid]?.totalQuantity > 0
+//                           ? `${products[productUid]?.totalQuantity} ${
+//                               products[productUid].unit
+//                                 ? products[productUid].unit
+//                                 : " ×"
+//                             }`
+//                           : ``
+//                       } ${products[productUid]?.productName}
+//                                 ${
+//                                   products[productUid]?.planMode ==
+//                                     GoodsPlanMode.PER_PORTION &&
+//                                   menuplanSettings.showDetails
+//                                     ? `(${products[productUid].quantity} ${products[productUid].unit} ${TEXT_PER_PORTION})`
+//                                     : ``
+//                                 }`}
+//                       secondary={
+//                         menuplanSettings.showDetails
+//                           ? products[productUid]?.planMode ==
+//                             GoodsPlanMode.PER_PORTION
+//                             ? generatePlanedPortionsText({
+//                                 uid: productUid,
+//                                 portionPlan: products[productUid].plan,
+//                                 groupConfiguration: groupConfiguration,
+//                               })
+//                             : ``
+//                           : null
+//                       }
+//                     />
+//                   </ListItem>
+//                   //   )}
+//                   // </Draggable>
+//                 ))}
+//                 {/* {provided.placeholder} */}
+//               </List>
+//               {/* )}
+//               </Droppable> */}
+//             </Grid>
+//             {/* Material-Liste */}
+//             <Grid xs={12}>
+//               {/* <Droppable
+//                 droppableId={`${menue.uid}_${DragDropTypes.MATERIAL}`}
+//                 type={DragDropTypes.MATERIAL}
+//               >
+//                 {(provided, snapshot) => ( */}
+//               <List
+//                 key={"listMealMaterials_" + menue.uid}
+//                 // innerRef={provided.innerRef}
+//                 // {...provided.droppableProps}
+//                 // className={
+//                 //   snapshot.isDraggingOver
+//                 //     ? classes.ListOnDrop
+//                 //     : classes.ListNoDrop
+//                 // }
+//                 style={{minHeight: "3em"}}
+//               >
+//                 {menue.materialOrder.map((materialUid) => (
+//                   // <Draggable
+//                   //   draggableId={materialUid}
+//                   //   index={index}
+//                   //   key={
+//                   //     "draggableMealMaterial_" + menue.uid + "_" + materialUid
+//                   //   }
+//                   // >
+//                   //   {(provided, snapshot) => (
+//                   <ListItem
+//                     button
+//                     dense
+//                     key={"listitem_" + menue.uid + "_" + materialUid}
+//                     id={"listitem_" + menue.uid + "_" + materialUid}
+//                     // innerRef={provided.innerRef}
+//                     // {...provided.draggableProps}
+//                     // {...provided.dragHandleProps}
+//                     // className={
+//                     //   snapshot.isDragging
+//                     //     ? classes.listItemOnDrag
+//                     //     : classes.listItemNoDrag
+//                     // }
+//                     onClick={() => onMealMaterialOpen(materialUid)}
+//                   >
+//                     <ListItemText
+//                       key={"listitemText_" + menue.uid + "_" + materialUid}
+//                       style={{margin: 0}}
+//                       primary={`${
+//                         menuplanSettings.showDetails &&
+//                         materials[materialUid]?.totalQuantity > 0
+//                           ? `${materials[materialUid]?.totalQuantity} ${
+//                               materials[materialUid].unit
+//                                 ? materials[materialUid].unit
+//                                 : " ×"
+//                             }`
+//                           : ``
+//                       } ${materials[materialUid]?.materialName}
+//                                 ${
+//                                   materials[materialUid]?.planMode ==
+//                                     GoodsPlanMode.PER_PORTION &&
+//                                   menuplanSettings.showDetails
+//                                     ? `(${materials[materialUid].quantity} ${materials[materialUid].unit} ${TEXT_PER_PORTION})`
+//                                     : ``
+//                                 }`}
+//                       secondary={
+//                         menuplanSettings.showDetails
+//                           ? materials[materialUid]?.planMode ==
+//                             GoodsPlanMode.PER_PORTION
+//                             ? generatePlanedPortionsText({
+//                                 uid: materialUid,
+//                                 portionPlan: materials[materialUid].plan,
+//                                 groupConfiguration: groupConfiguration,
+//                               })
+//                             : ``
+//                           : null
+//                       }
+//                     />
+//                   </ListItem>
+//                   //   )}
+//                   // </Draggable>
+//                 ))}
+//                 {/* {provided.placeholder} */}
+//               </List>
+//               {/* )}
+//               </Droppable> */}
+//             </Grid>
+//           </Grid>
+//         </CardContent>
+//       </Card>
+//       <Menu
+//         open={Boolean(contextMenuAnchorElement)}
+//         keepMounted
+//         anchorEl={contextMenuAnchorElement}
+//         onClose={closeContextMenu}
+//       >
+//         <MenuItem
+//           onClick={onEditMenue}
+//           disabled={
+//             menue.materialOrder.length == 0 &&
+//             menue.productOrder.length == 0 &&
+//             menue.mealRecipeOrder.length == 0 &&
+//             note == undefined
+//           }
+//         >
+//           <ListItemIcon>
+//             <EditIcon />
+//           </ListItemIcon>
+//           <Typography variant="inherit" noWrap>
+//             {TEXT_EDIT_MENUE}
+//           </Typography>
+//         </MenuItem>
+//         <MenuItem onClick={onAddProduct}>
+//           <ListItemIcon>
+//             <ShoppingCartIcon />
+//           </ListItemIcon>
+//           <Typography variant="inherit" noWrap>
+//             {TEXT_ADD_PRODUCT}
+//           </Typography>
+//         </MenuItem>
+//         <MenuItem onClick={onAddMaterial}>
+//           <ListItemIcon>
+//             <BuildIcon />
+//           </ListItemIcon>
+//           <Typography variant="inherit" noWrap>
+//             {TEXT_ADD_MATERIAL}
+//           </Typography>
+//         </MenuItem>
+//         <MenuItem onClick={onEditNote}>
+//           <ListItemIcon>
+//             <NotesIcon />
+//           </ListItemIcon>
+//           <Typography variant="inherit" noWrap>
+//             {`${TEXT_NOTE} ${note ? TEXT_EDIT : TEXT_ADD}`}
+//           </Typography>
+//         </MenuItem>
+//         {note && (
+//           <MenuItem
+//             onClick={() => onNoteUpdate({action: Action.DELETE, note: note})}
+//           >
+//             <ListItemIcon>
+//               <DeleteSweepIcon />
+//             </ListItemIcon>
+//             <Typography variant="inherit" noWrap>
+//               {`${TEXT_NOTE} ${TEXT_DELETE}`}
+//             </Typography>
+//           </MenuItem>
+//         )}
+
+//         <MenuItem onClick={onDeleteMenue}>
+//           <ListItemIcon>
+//             <DeleteIcon />
+//           </ListItemIcon>
+//           <Typography variant="inherit" noWrap>
+//             {TEXT_DELETE_MENUE}
+//           </Typography>
+//         </MenuItem>
+//       </Menu>
+//     </React.Fragment>
+//   );
+// };
 /* ===================================================================
 // ====================== Rezepte-Suchen-Drawer ======================
 // =================================================================== */
@@ -3012,14 +4046,14 @@ const RecipeSearchDrawer = ({
   onNewRecipe,
   authUser,
 }: RecipeSearchDrawerProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
     <Drawer
       anchor="bottom"
       open={drawerSettings.open}
       onClose={onClose}
-      className={classes.recipeDrawerBackground}
+      sx={classes.recipeDrawerBackground}
       ModalProps={{
         keepMounted: true,
       }}
@@ -3027,8 +4061,9 @@ const RecipeSearchDrawer = ({
       <IconButton
         color="inherit"
         aria-label="close"
-        className={classes.closeDrawerIconButton}
+        sx={classes.closeDrawerIconButton}
         onClick={onClose}
+        size="large"
       >
         <CloseIcon fontSize="small" />
       </IconButton>
@@ -3087,9 +4122,9 @@ export const RecipeDrawer = ({
   onRecipeDelete,
   onRecipeUpdate: onRecipeUpdateSuper,
 }: RecipeDrawerProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
-  const onRecipeUpdate = ({recipe}) => {
+  const onRecipeUpdate = ({recipe}: {recipe: Recipe}) => {
     // Umbiegen der Signatur
     if (onRecipeUpdateSuper) {
       onRecipeUpdateSuper(recipe);
@@ -3100,7 +4135,7 @@ export const RecipeDrawer = ({
       anchor="bottom"
       open={drawerSettings.open}
       onClose={onClose}
-      className={classes.recipeDrawerBackground}
+      sx={classes.recipeDrawerBackground}
       ModalProps={{
         keepMounted: true,
       }}
@@ -3108,12 +4143,12 @@ export const RecipeDrawer = ({
       <IconButton
         color="inherit"
         aria-label="close"
-        className={classes.closeDrawerIconButton}
+        sx={classes.closeDrawerIconButton}
         onClick={onClose}
+        size="large"
       >
         <CloseIcon fontSize="small" />
       </IconButton>
-
       <Container style={{width: "100vw", height: "100vh", padding: "0"}}>
         {editMode ? (
           <RecipeEdit
@@ -3169,20 +4204,21 @@ interface DialogPlanPortionsProps {
   }) => void;
 }
 const KEEP_IN_SYNC_KEY = "SYNC";
+
+export interface DialogPlanPortionsPlanningInfo {
+  active: boolean;
+  factor: string;
+  portions: number;
+  total: number;
+  diet: Diet["uid"];
+}
 interface DialogPlanPortionsMealPlanning {
-  [key: Intolerance["uid"]]: {
-    active: boolean;
-    factor: string;
-    portions: number;
-    total: number;
-    diet: Diet["uid"];
-  };
+  [key: Intolerance["uid"]]: DialogPlanPortionsPlanningInfo;
 }
 enum PlanedObject {
   RECIPE,
   GOOD,
 }
-
 interface DialogPlanPortionsMealPlan {
   [key: Menue["uid"]]: DialogPlanPortionsMealPlanning | null;
 }
@@ -3205,7 +4241,7 @@ const DialogPlanPortions = ({
   onBackClick: onBackClickSuper,
   onAddClick: onAddClickSuper,
 }: DialogPlanPortionsProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
 
   const DIALOG_VALUES_INITIAL_VALUES = {
@@ -3216,10 +4252,8 @@ const DialogPlanPortions = ({
   };
 
   const [dialogValues, setDialogValues] =
-    React.useState<DialogPlanPortionsDialogValues>(
-      DIALOG_VALUES_INITIAL_VALUES
-    );
-  const [dialogValidation, setDialogValidation] = React.useState<
+    useState<DialogPlanPortionsDialogValues>(DIALOG_VALUES_INITIAL_VALUES);
+  const [dialogValidation, setDialogValidation] = useState<
     Array<FormValidationFieldError>
   >([]);
   /* ------------------------------------------
@@ -3263,7 +4297,7 @@ const DialogPlanPortions = ({
       };
     }
 
-    let plan = {};
+    let plan = {} as DialogPlanPortionsMealPlan;
     if (!dialogValues.plan) {
       menueList.forEach((menueUid) => (plan[menueUid] = null));
     } else {
@@ -3548,10 +4582,12 @@ const DialogPlanPortions = ({
     if (dialogValidationMessages.length == 0) {
       // Zurückmelden, was alles aktiv ist.
       setDialogValidation([]);
-      const selectedPlans = {};
+      const selectedPlans = {} as {
+        [key: Menue["uid"]]: DialogPlanPortionsMealPlanning;
+      };
 
       Object.keys(dialogValues.plan).forEach((menuUid) => {
-        const intolerances = {};
+        const intolerances = {} as DialogPlanPortionsMealPlanning;
         Object.keys(dialogValues.plan![menuUid]!).forEach((intoleraceUid) => {
           if (dialogValues.plan![menuUid]![intoleraceUid].active === true) {
             intolerances[intoleraceUid] =
@@ -3605,7 +4641,6 @@ const DialogPlanPortions = ({
                 <FormControlLabel
                   control={
                     <Switch
-                      color="primary"
                       checked={dialogValues.keepMenuPortionsInSync}
                       onChange={onSwitchSyncAllMenues}
                     />
@@ -3706,7 +4741,8 @@ const DialogPlanPortions = ({
                       style={{
                         display: "flex",
                       }}
-                      className={classes.toggleButtonGroup}
+                      sx={classes.toggleButtonGroup}
+                      color="primary"
                     >
                       <ToggleButton
                         key={
@@ -3723,7 +4759,7 @@ const DialogPlanPortions = ({
                         }
                         value={PlanedDiet.ALL}
                         aria-label={TEXT_ALL}
-                        className={classes.toggleButton}
+                        sx={classes.toggleButton}
                         style={{
                           ...(dialogValues.selectedDiets &&
                             dialogValues.selectedDiets[menueUid] ===
@@ -3756,7 +4792,7 @@ const DialogPlanPortions = ({
                           aria-label={
                             groupConfiguration.diets.entries[dietUid].name
                           }
-                          className={classes.toggleButton}
+                          sx={classes.toggleButton}
                           style={{
                             ...(dialogValues.selectedDiets &&
                               dialogValues.selectedDiets[menueUid] ===
@@ -3781,7 +4817,7 @@ const DialogPlanPortions = ({
                         }
                         value={PlanedDiet.FIX}
                         aria-label={TEXT_FIX_PORTIONS}
-                        className={classes.toggleButton}
+                        sx={classes.toggleButton}
                         style={{
                           ...(dialogValues.selectedDiets &&
                             dialogValues.selectedDiets[menueUid] ===
@@ -3881,7 +4917,7 @@ const DialogPlanPortionsMealBlock = ({
     plan &&
     (selectedDietUid == PlanedDiet.FIX ? (
       <Grid container spacing={2}>
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <TextField
             id={
               "dialogPlanPortionsMealBlockIntolerance_total_" +
@@ -3905,8 +4941,8 @@ const DialogPlanPortionsMealBlock = ({
       </Grid>
     ) : (
       <Grid container spacing={2}>
-        <Grid item xs={8} />
-        <Grid item xs={2}>
+        <Grid xs={8} />
+        <Grid xs={2}>
           <Typography>
             <strong>{TEXT_FACTOR} </strong>
             <Tooltip title={TEXT_FACTOR_TOOLTIP} placement="bottom" arrow>
@@ -3914,7 +4950,7 @@ const DialogPlanPortionsMealBlock = ({
             </Tooltip>
           </Typography>
         </Grid>
-        <Grid item xs={2}>
+        <Grid xs={2}>
           <strong>{TEXT_TOTAL_PORTIONS}</strong>
         </Grid>
         {/* Zuerst eine Zeile mit für das Total der gewählten Diät-Gruppe */}
@@ -3963,16 +4999,16 @@ const DialogPlanPortionsMealBlock = ({
             onFieldUpdate={onFieldUpdate}
           />
         ))}
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <Divider />
         </Grid>
-        <Grid item xs={8}>
+        <Grid xs={8}>
           <Typography>
             <strong>{TEXT_YOUR_SELECTION_MAKES_X_SERVINGS}</strong>
           </Typography>
         </Grid>
-        <Grid item xs={2} />
-        <Grid item xs={2}>
+        <Grid xs={2} />
+        <Grid xs={2}>
           <TextField
             fullWidth
             disabled
@@ -4034,7 +5070,7 @@ export const DialogPlanPortionsMealBlockRow = ({
         intoleranceUid
       }
     >
-      <Grid item xs={8}>
+      <Grid xs={8}>
         <FormControlLabel
           key={
             "dialogPlanPortionsMealBlockIntoleranceFormcontroll_" +
@@ -4052,7 +5088,6 @@ export const DialogPlanPortionsMealBlockRow = ({
               }
               checked={active}
               onChange={onFieldUpdate}
-              color="primary"
             />
           }
           label={
@@ -4072,7 +5107,7 @@ export const DialogPlanPortionsMealBlockRow = ({
           }
         />
       </Grid>
-      <Grid item xs={2}>
+      <Grid xs={2}>
         <TextField
           id={
             "dialogPlanPortionsMealBlockIntolerance_factor_" +
@@ -4098,7 +5133,7 @@ export const DialogPlanPortionsMealBlockRow = ({
           label={TEXT_FACTOR}
         />
       </Grid>
-      <Grid item xs={2}>
+      <Grid xs={2}>
         <TextField
           id={
             "dialogPlanPortionsMealBlockIntolerance_totalPortions_" +
@@ -4177,6 +5212,7 @@ export const DialogEditMenue = ({
                         uid: note.uid,
                       })
                     }
+                    size="large"
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -4225,6 +5261,7 @@ export const DialogEditMenue = ({
                           uid: mealRecipeUid,
                         })
                       }
+                      size="large"
                     >
                       <Edit />
                     </IconButton>
@@ -4237,6 +5274,7 @@ export const DialogEditMenue = ({
                           uid: mealRecipeUid,
                         })
                       }
+                      size="large"
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -4292,6 +5330,7 @@ export const DialogEditMenue = ({
                           uid: productUid,
                         })
                       }
+                      size="large"
                     >
                       <Edit />
                     </IconButton>
@@ -4304,6 +5343,7 @@ export const DialogEditMenue = ({
                           uid: productUid,
                         })
                       }
+                      size="large"
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -4359,6 +5399,7 @@ export const DialogEditMenue = ({
                           uid: materialUid,
                         })
                       }
+                      size="large"
                     >
                       <Edit />
                     </IconButton>
@@ -4371,6 +5412,7 @@ export const DialogEditMenue = ({
                           uid: materialUid,
                         })
                       }
+                      size="large"
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -4437,7 +5479,7 @@ const DIALOG_VALUES_INITIAL_STATE = {
   unit: "",
   product: null,
   material: null,
-  // Die Werte werden erst mit dem React.useState gesetzt. Dann darf der Dialog nicht
+  // Die Werte werden erst mit dem useState gesetzt. Dann darf der Dialog nicht
   // bereits geöffnet seind, darum wird der Zustand auch über den useState gesteuert
   // ansonsten wäre der Autocomplete jeweils leer
   dialogOpen: false,
@@ -4460,14 +5502,14 @@ export const DialogGoods = ({
   onProductCreate: onProductCreateSuper,
 }: DialogGoodsProps) => {
   const theme = useTheme();
-  const [dialogValues, setDialogValues] = React.useState<DialogGoodsValues>(
+  const [dialogValues, setDialogValues] = useState<DialogGoodsValues>(
     DIALOG_VALUES_INITIAL_STATE
   );
-  const [materialAddPopupValues, setMaterialAddPopupValues] = React.useState({
+  const [materialAddPopupValues, setMaterialAddPopupValues] = useState({
     ...MATERIAL_POP_UP_VALUES_INITIAL_STATE,
     ...{popUpOpen: false},
   });
-  const [productAddPopupValues, setProductAddPopupValues] = React.useState({
+  const [productAddPopupValues, setProductAddPopupValues] = useState({
     ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
     ...{popUpOpen: false},
   });
@@ -4544,7 +5586,7 @@ export const DialogGoods = ({
     let product: Product;
 
     if (
-      (action === "select-option" || action === "blur") &&
+      (action === "selectOption" || action === "blur") &&
       objectId?.startsWith("material")
     ) {
       // Prüfen ob neues Material angelegt wird
@@ -4573,7 +5615,7 @@ export const DialogGoods = ({
         return;
       }
     } else if (
-      (action === "select-option" || action === "blur") &&
+      (action === "selectOption" || action === "blur") &&
       objectId?.startsWith("product")
     ) {
       // Prüfen ob neues Produkt angelegt wird
@@ -4732,6 +5774,7 @@ export const DialogGoods = ({
           <br />
           <ToggleButtonGroup
             value={dialogValues.planMode}
+            color="primary"
             exclusive
             onChange={onTypeChange}
             style={{marginBottom: theme.spacing(2), width: "100%"}}
@@ -4762,7 +5805,7 @@ export const DialogGoods = ({
           </Typography>
           <br />
           <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               {goodsType === GoodsType.PRODUCT ? (
                 <ProductAutocomplete
                   componentKey={""}
@@ -4788,7 +5831,7 @@ export const DialogGoods = ({
               )}
             </Grid>
 
-            <Grid item xs={goodsType === GoodsType.PRODUCT ? 6 : 12}>
+            <Grid xs={goodsType === GoodsType.PRODUCT ? 6 : 12}>
               <TextField
                 key={"quantity"}
                 id={"quantity"}
@@ -4806,7 +5849,7 @@ export const DialogGoods = ({
               />
             </Grid>
             {goodsType === GoodsType.PRODUCT && (
-              <Grid item xs={6}>
+              <Grid xs={6}>
                 <UnitAutocomplete
                   componentKey={""}
                   unitKey={dialogValues.unit}

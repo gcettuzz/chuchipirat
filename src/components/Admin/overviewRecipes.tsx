@@ -3,10 +3,9 @@ import {compose} from "react-recompose";
 
 import {useHistory} from "react-router";
 
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 import {
   Container,
-  Grid,
   Backdrop,
   CircularProgress,
   Card,
@@ -14,6 +13,8 @@ import {
   Radio,
   RadioGroup,
   FormControlLabel,
+  Box,
+  Stack,
 } from "@mui/material";
 
 import {IconButton, Typography, useTheme} from "@mui/material";
@@ -25,11 +26,6 @@ import {
 } from "@mui/icons-material";
 
 import PageTitle from "../Shared/pageTitle";
-// import EnhancedTable, {
-//   TableColumnTypes,
-//   Column,
-//   ColumnTextAlign,
-// } from "../Shared/enhancedTable";
 import AlertMessage from "../Shared/AlertMessage";
 import SearchPanel from "../Shared/searchPanel";
 import RecipeShort from "../Recipe/recipeShort.class";
@@ -250,7 +246,7 @@ const OverviewRecipeBase: React.FC<
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
 
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {push} = useHistory();
 
   const [state, dispatch] = React.useReducer(recipesReducer, inititialState);
@@ -261,7 +257,6 @@ const OverviewRecipeBase: React.FC<
   const [radioButtonSelection, setRadioButtonSelection] =
     React.useState("public");
   const radioButtonSelectionRef = React.useRef("public");
-  const scrollPositionRef = React.useRef(0);
   /* ------------------------------------------
 	// SessionHandling für speichern der letzten Werte
 	// ------------------------------------------ */
@@ -272,29 +267,6 @@ const OverviewRecipeBase: React.FC<
     radioButtonSelectionRef.current = radioButtonSelection;
   }, [radioButtonSelection]);
 
-  // React.useEffect(() => {
-  // if (props.history.action === "POP") {
-  //   let sessionStorageValue = SessionStorageHandler.getSessionStorageEntry({
-  //     path: props.location.pathname,
-  //   });
-  //   if (sessionStorageValue) {
-  //     setRadioButtonSelection(sessionStorageValue.radioButtonSelection);
-  //     setSearchString(sessionStorageValue.searchString);
-  //     window.scrollTo(0, sessionStorageValue.scrollPosition);
-  //   }
-  // }
-
-  // return function cleanup() {
-  // SessionStorageHandler.setSessionStorageEntry({
-  //   path: props.location.pathname,
-  //   value: {
-  //     searchString: searchStringRef.current,
-  //     radioButtonSelection: radioButtonSelectionRef.current,
-  //     scrollPositionRef: scrollPositionRef.current,
-  //   },
-  // });
-  //   };
-  // }, []);
   /* ------------------------------------------
 	// Daten aus DB holen
 	// ------------------------------------------ */
@@ -456,62 +428,55 @@ const OverviewRecipeBase: React.FC<
         subTitle={TEXT_OVERVIEW_RECIPES_DESCRIPTION}
       />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="md">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="md">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
-        {state.isError && (
-          <Grid item key={"error"} xs={12}>
+        <Stack spacing={2}>
+          {state.isError && (
             <AlertMessage
               error={state.error!}
               messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
             />
-          </Grid>
-        )}
+          )}
 
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <Card className={classes.card} key={"cardProductsPanel"}>
-              <CardContent>
-                <SearchPanel
-                  searchString={searchString}
-                  onUpdateSearchString={onUpdateSearchString}
-                  onClearSearchString={onClearSearchString}
+          <Card sx={classes.card} key={"cardProductsPanel"}>
+            <CardContent>
+              <SearchPanel
+                searchString={searchString}
+                onUpdateSearchString={onUpdateSearchString}
+                onClearSearchString={onClearSearchString}
+              />
+              <RadioGroup
+                aria-label="gender"
+                name="recipeType"
+                row
+                value={radioButtonSelection}
+                onChange={onRadioButtonChange}
+              >
+                <FormControlLabel
+                  value={RecipeType.public}
+                  control={<Radio />}
+                  label={TEXT_PUBLIC_RECIPES}
                 />
-                <RadioGroup
-                  aria-label="gender"
-                  name="recipeType"
-                  row
-                  value={radioButtonSelection}
-                  onChange={onRadioButtonChange}
-                >
-                  <FormControlLabel
-                    value={RecipeType.public}
-                    control={<Radio color="primary" />}
-                    label={TEXT_PUBLIC_RECIPES}
-                  />
-                  <FormControlLabel
-                    value={RecipeType.private}
-                    control={<Radio color="primary" />}
-                    label={TEXT_PRIVATE_RECIPES}
-                  />
-                  <FormControlLabel
-                    value="all"
-                    control={<Radio color="primary" />}
-                    label={TEXT_ALL_RECIPES}
-                  />
-                </RadioGroup>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12}>
-            <RecipesPanel
-              recipes={state.filteredData}
-              onRecipeOpen={onRecipeOpen}
-            />
-          </Grid>
-        </Grid>
+                <FormControlLabel
+                  value={RecipeType.private}
+                  control={<Radio />}
+                  label={TEXT_PRIVATE_RECIPES}
+                />
+                <FormControlLabel
+                  value="all"
+                  control={<Radio />}
+                  label={TEXT_ALL_RECIPES}
+                />
+              </RadioGroup>
+            </CardContent>
+          </Card>
+          <RecipesPanel
+            recipes={state.filteredData}
+            onRecipeOpen={onRecipeOpen}
+          />
+        </Stack>
       </Container>
       <DialogRecipeQuickView
         firebase={firebase}
@@ -547,7 +512,7 @@ interface RecipesPanelProps {
 }
 const RecipesPanel = ({recipes, onRecipeOpen}: RecipesPanelProps) => {
   const theme = useTheme();
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const DATA_GRID_COLUMNS: GridColDef[] = [
     {
@@ -642,32 +607,29 @@ const RecipesPanel = ({recipes, onRecipeOpen}: RecipesPanelProps) => {
   ];
 
   return (
-    <Card className={classes.card} key={"cardProductsPanel"}>
-      <CardContent className={classes.cardContent} key={"cardPrdocutContent"}>
+    <Card sx={classes.card} key={"cardProductsPanel"}>
+      <CardContent sx={classes.cardContent} key={"cardPrdocutContent"}>
         <Typography gutterBottom={true} variant="h5" component="h2">
           {recipes.length} {TEXT_RECIPES}
         </Typography>
-
-        {/* <EnhancedTable
-          tableData={recipes}
-          tableColumns={TABLE_COLUMS}
-          keyColum={"uid"}
-          onRowClick={onRowClick}
-        /> */}
-        <DataGrid
-          autoHeight
-          rows={recipes}
-          columns={DATA_GRID_COLUMNS}
-          getRowId={(row) => row.uid}
-          localeText={deDE.props.MuiDataGrid.localeText}
-          getRowClassName={(params) => {
-            if (params.row?.disabled) {
-              return `super-app ${classes.dataGridDisabled}`;
-            } else {
-              `super-app-theme`;
-            }
-          }}
-        />
+        <Box component="div" style={{display: "flex", height: "100%"}}>
+          <Box component="div" style={{flexGrow: 1}}>
+            <DataGrid
+              autoHeight
+              rows={recipes}
+              columns={DATA_GRID_COLUMNS}
+              getRowId={(row) => row.uid}
+              localeText={deDE.components.MuiDataGrid.defaultProps.localeText}
+              getRowClassName={(params) => {
+                if (params.row?.disabled) {
+                  return `super-app ${classes.dataGridDisabled}`;
+                } else {
+                  return `super-app-theme`;
+                }
+              }}
+            />
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );

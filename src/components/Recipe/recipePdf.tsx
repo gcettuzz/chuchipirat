@@ -292,7 +292,7 @@ export const RecipeIngredients = ({
   scaledIngredients,
 }: RecipeIngredientsProps) => {
   return (
-    <React.Fragment>
+    (<React.Fragment>
       {/*===== Überschriften =====*/}
       <View style={styles.table}>
         <View style={styles.tableRow}>
@@ -315,9 +315,9 @@ export const RecipeIngredients = ({
           </View>
         ) : (
           //leer
-          <View style={styles.tableRow}>
+          (<View style={styles.tableRow}>
             <View style={styles.tableCol100} />
-          </View>
+          </View>)
         )}
         {/*===== Zutaten =====*/}
         {ingredients.order.map((ingredientUid, counter) => {
@@ -346,7 +346,7 @@ export const RecipeIngredients = ({
             : (unit = ingredient.unit);
 
           return (
-            <React.Fragment key={"ingredient_row_" + ingredientUid}>
+            (<React.Fragment key={"ingredient_row_" + ingredientUid}>
               {ingredients.entries[ingredientUid].posType ==
               PositionType.section ? (
                 <RecipeSection
@@ -365,7 +365,7 @@ export const RecipeIngredients = ({
                 >
                   {scaledPortions && scaledIngredients ? (
                     // Originalmenge
-                    <React.Fragment>
+                    (<React.Fragment>
                       <View
                         style={styles.tableColQuantitySmall}
                         key={
@@ -401,7 +401,7 @@ export const RecipeIngredients = ({
                             : ingredient?.unit}
                         </Text>
                       </View>
-                    </React.Fragment>
+                    </React.Fragment>)
                   ) : (
                     <View
                       key={
@@ -458,11 +458,11 @@ export const RecipeIngredients = ({
                   </View>
                 </View>
               )}
-            </React.Fragment>
+            </React.Fragment>)
           );
         })}
       </View>
-    </React.Fragment>
+    </React.Fragment>)
   );
 };
 /* ===================================================================
@@ -559,7 +559,7 @@ export const RecipeMaterial = ({
   scaledMaterials,
 }: RecipeMaterialProps) => {
   return (
-    <React.Fragment>
+    (<React.Fragment>
       {/*===== Überschriften =====*/}
       <View style={styles.table}>
         <View style={styles.tableRow}>
@@ -582,9 +582,9 @@ export const RecipeMaterial = ({
           </View>
         ) : (
           //leer
-          <View style={styles.tableRow}>
+          (<View style={styles.tableRow}>
             <View style={styles.tableCol100} />
-          </View>
+          </View>)
         )}
         {/*===== Material =====*/}
         {materials.order.map((materialUid, counter) => {
@@ -596,13 +596,13 @@ export const RecipeMaterial = ({
             : (quantity = material.quantity);
 
           return (
-            <View
+            (<View
               style={styles.tableRow}
               key={"materialBlock_" + material.uid + "_" + counter}
             >
               {scaledPortions && scaledMaterials ? (
                 // Originalmenge
-                <View
+                (<View
                   style={styles.tableColQuantitySmall}
                   key={
                     "materialOrignalQuantity_" + material.uid + "_" + counter
@@ -613,7 +613,7 @@ export const RecipeMaterial = ({
                       ? ""
                       : material.quantity.toLocaleString("de-CH")}
                   </Text>
-                </View>
+                </View>)
               ) : (
                 <View />
               )}
@@ -639,7 +639,6 @@ export const RecipeMaterial = ({
                 }
                 key={"materialUnit_" + material.uid + "_" + counter}
               ></View>
-
               <View
                 style={
                   scaledPortions
@@ -650,11 +649,11 @@ export const RecipeMaterial = ({
               >
                 <Text style={styles.tableCell}>{material.material.name}</Text>
               </View>
-            </View>
+            </View>)
           );
         })}
       </View>
-    </React.Fragment>
+    </React.Fragment>)
   );
 };
 

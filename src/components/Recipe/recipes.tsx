@@ -1,16 +1,14 @@
-/* eslint-disable react/prop-types */ // TODO: upgrade to latest eslint tooling
-
-import React from "react";
+import React, {SyntheticEvent} from "react";
 import {compose} from "react-recompose";
 
 import {useHistory} from "react-router";
 
-import CssBaseline from "@mui/material/CssBaseline";
-
 import Container from "@mui/material/Container";
-import Grid from "@mui/material/Grid";
+import Grid from "@mui/material/Unstable_Grid2";
 import {
   Button,
+  ToggleButton,
+  ToggleButtonGroup,
   Collapse,
   InputLabel,
   Select,
@@ -25,9 +23,9 @@ import {
   Typography,
   Backdrop,
   CircularProgress,
+  SelectChangeEvent,
+  SnackbarCloseReason,
 } from "@mui/material";
-
-import {ToggleButton, ToggleButtonGroup} from "@mui/lab";
 
 import AddIcon from "@mui/icons-material/Add";
 
@@ -62,7 +60,7 @@ import {
   SHOW_ONLY_MY_RECIPES as TEXT_SHOW_ONLY_MY_RECIPES,
 } from "../../constants/text";
 
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
 import RecipeShort from "./recipeShort.class";
 import {MenuType, RecipeType} from "./recipe.class";
@@ -179,7 +177,9 @@ interface LocationState {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const RecipesPage = (props) => {
+const RecipesPage: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = (
+  props
+) => {
   return (
     <AuthUserContext.Consumer>
       {(authUser) => <RecipesBase {...props} authUser={authUser} />}
@@ -193,7 +193,7 @@ const RecipesBase: React.FC<
   CustomRouterProps<undefined, LocationState> & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {push} = useHistory();
 
   const [state, dispatch] = React.useReducer(recipesReducer, inititialState);
@@ -281,8 +281,8 @@ const RecipesBase: React.FC<
   // Snackback schliessen
   // ------------------------------------------ */
   const handleSnackbarClose = (
-    event: React.SyntheticEvent | React.MouseEvent,
-    reason?: string
+    event: Event | SyntheticEvent<any, Event>,
+    reason: SnackbarCloseReason
   ) => {
     if (reason === "clickaway") {
       return;
@@ -295,15 +295,14 @@ const RecipesBase: React.FC<
   };
   return (
     <React.Fragment>
-      <CssBaseline />
       {/*===== HEADER ===== */}
       <PageTitle
         title={TEXT_RECIPES}
         subTitle={TEXT_FIND_YOUR_FAVORITE_RECIPES}
       />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="lg">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="lg">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
         {state.error && (
@@ -374,7 +373,7 @@ export const RecipeSearch = ({
   isLoading = false,
   authUser,
 }: RecipeSearchProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const [searchSettings, setSearchSettings] = React.useState<SearchSettings>(
     INITIAL_SEARCH_SETTINGS
   );
@@ -479,12 +478,13 @@ export const RecipeSearch = ({
       })
     );
   };
+
   const onSearchSettingMenuTypeUpdate = (
-    event: React.ChangeEvent<{[key: string]: any}>
+    event: SelectChangeEvent<MenuType[]>
   ) => {
-    let selectedMenuTypes: MenuType[] = event.target.value.map(
-      (value: string) => parseInt(value)
-    );
+    let selectedMenuTypes: MenuType[] = (
+      event.target.value as unknown as string[]
+    ).map((value: string) => parseInt(value));
     let newValue: MenuType;
     // Der Wert wird als String zurückgegeben, wir speichern ihn aber als Number
     // Wenn das Array nun zwei mal den gleichen Wert hat (als String und als Number)
@@ -723,19 +723,19 @@ export const RecipeSearch = ({
     <React.Fragment>
       <Container maxWidth="md" style={{marginBottom: "4em"}}>
         <Grid container spacing={2}>
-          <Grid item xs={9}>
+          <Grid xs={9}>
             <SearchPanel
               searchString={searchSettings.searchString}
               onUpdateSearchString={onSearch}
               onClearSearchString={onClearSearchString}
             />
           </Grid>
-          <Grid item xs={3} className={classes.centerCenter}>
+          <Grid xs={3} sx={classes.centerCenter}>
             <Button color="primary" onClick={onAdvancedSearchClick}>
               {TEXT_ADVANCED_SEARCH}
             </Button>
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <Typography variant="subtitle2">{`${filteredData.length} ${
               filteredData.length != 1 ? TEXT_RECIPES : TEXT_RECIPE
             }`}</Typography>
@@ -747,25 +747,21 @@ export const RecipeSearch = ({
           style={{marginTop: "1em"}}
         >
           <Grid container spacing={2}>
-            <Grid item xs={4} sm={2} md={2} className={classes.centerCenter}>
+            <Grid xs={4} sm={2} md={2} sx={classes.centerCenter}>
               <Typography variant="body2">{TEXT_RESTRICTIONS}</Typography>
             </Grid>
-            <Grid item xs={8} sm={4} md={3}>
+            <Grid xs={8} sm={4} md={3}>
               <ToggleButtonGroup
+                color="primary"
                 value={searchSettings.diet}
                 exclusive
                 onChange={onSearchSettingDietUpdate}
                 size="small"
                 aria-label="Diät"
-                // color="primary"
                 id="diet"
                 key="diet"
               >
-                <ToggleButton
-                  color="primary"
-                  value={Diet.Meat}
-                  aria-label="Keine"
-                >
+                <ToggleButton value={Diet.Meat} aria-label="Keine">
                   {TEXT_NONE_RESTRICTION}
                 </ToggleButton>
                 <ToggleButton value={Diet.Vegetarian} aria-label="Vegetarisch">
@@ -776,18 +772,18 @@ export const RecipeSearch = ({
                 </ToggleButton>
               </ToggleButtonGroup>
             </Grid>
-            <Grid item xs={4} sm={2} md={2} className={classes.centerCenter}>
+            <Grid xs={4} sm={2} md={2} sx={classes.centerCenter}>
               <Typography variant="body2">
                 {TEXT_CONSIDER_INTOLERANCES}
               </Typography>
             </Grid>
-            <Grid item xs={8} sm={4} md={3}>
+            <Grid xs={8} sm={4} md={3}>
               <ToggleButtonGroup
+                color="primary"
                 value={searchSettings.allergens}
                 onChange={onSearchSettingAllergensUpdate}
                 size="small"
                 aria-label="Allergene"
-                color="primary"
                 id="allergens"
                 key="allergens"
               >
@@ -797,15 +793,15 @@ export const RecipeSearch = ({
                 <ToggleButton value={Allergen.Lactose} aria-label="Laktose">
                   {TEXT_LACTOSE}
                 </ToggleButton>
-                <ToggleButton value={Allergen.Gluten} aria-label="Laktose">
+                <ToggleButton value={Allergen.Gluten} aria-label="Gluten">
                   {TEXT_GLUTEN}
                 </ToggleButton>
               </ToggleButtonGroup>
             </Grid>
-            <Grid item xs={12} sm={12} md={2}>
+            <Grid xs={12} sm={12} md={2}>
               <FormControl
                 variant="outlined"
-                className={classes.formControl}
+                sx={classes.formControl}
                 fullWidth
                 size="small"
               >
@@ -839,7 +835,6 @@ export const RecipeSearch = ({
                                 parseInt(menuType)
                               ) > -1
                             }
-                            color="primary"
                           />
                           <ListItemText primary={TEXT_MENU_TYPES[menuType]} />
                         </MenuItem>
@@ -849,16 +844,12 @@ export const RecipeSearch = ({
               </FormControl>
             </Grid>
             {/* Ideal für Outdoorküche */}
-            <Grid item xs={12} sm={12} md={3}>
-              <FormControl
-                className={classes.formControl}
-                fullWidth
-                size="small"
-              >
+            <Grid xs={12} sm={12} md={3}>
+              <FormControl sx={classes.formControl} fullWidth size="small">
                 <FormControlLabel
                   checked={searchSettings.outdoorKitchenSuitable}
                   onChange={onSearchSettingOutdoorKitchenSuitableUpdate}
-                  control={<Switch color="primary" />}
+                  control={<Switch />}
                   label={
                     <Typography variant="body2">
                       {TEXT_OUTDOOR_KITCHEN_SUITABLE}
@@ -869,11 +860,12 @@ export const RecipeSearch = ({
               </FormControl>
             </Grid>
             {/* Rezept-Typ */}
-            <Grid item xs={4} sm={1} md={1} className={classes.centerCenter}>
+            <Grid xs={4} sm={1} md={1} sx={classes.centerCenter}>
               <Typography variant="body2">{TEXT_RECIPETYPE}</Typography>
             </Grid>
-            <Grid item xs={8} sm={4} md={4}>
+            <Grid xs={8} sm={4} md={4}>
               <ToggleButtonGroup
+                color="primary"
                 value={searchSettings.recipeType}
                 exclusive
                 onChange={onSearchSettingRecipeTypeUpdate}
@@ -883,7 +875,7 @@ export const RecipeSearch = ({
                 id="recipeType"
                 key="recipeType"
               >
-                <ToggleButton color="primary" value={"all"} aria-label="Alle">
+                <ToggleButton value={"all"} aria-label="Alle">
                   {TEXT_ALL}
                 </ToggleButton>
                 <ToggleButton
@@ -909,16 +901,12 @@ export const RecipeSearch = ({
             </Grid>
 
             {/* Nur Meine Rezept anzeigen */}
-            <Grid item xs={12} sm={12} md={3}>
-              <FormControl
-                className={classes.formControl}
-                fullWidth
-                size="small"
-              >
+            <Grid xs={12} sm={12} md={3}>
+              <FormControl sx={classes.formControl} fullWidth size="small">
                 <FormControlLabel
                   checked={searchSettings.showOnlyMyRecipes}
                   onChange={onSearchSettingShowOnlyMyRecipesUpdate}
-                  control={<Switch color="primary" />}
+                  control={<Switch />}
                   label={
                     <Typography variant="body2">
                       {TEXT_SHOW_ONLY_MY_RECIPES}
@@ -931,9 +919,9 @@ export const RecipeSearch = ({
           </Grid>
         </Collapse>
         <Grid container>
-          <Grid item xs={12} className={classes.centerCenter}>
+          <Grid xs={12} sx={classes.centerCenter}>
             <Button
-              className={classes.button}
+              sx={classes.button}
               id={"new_recipe"}
               key={"new_recipe"}
               variant={"outlined"}
@@ -950,7 +938,6 @@ export const RecipeSearch = ({
           // 8 Karten zum Überbrücken, bis die Daten da sind
           [1, 2, 3, 4, 5, 6, 7, 8].map((counter) => (
             <Grid
-              item
               key={"recipeLoadingCardGrid_" + counter}
               xs={12}
               sm={embeddedMode ? 12 : 6}
@@ -964,7 +951,6 @@ export const RecipeSearch = ({
           <React.Fragment>
             {filteredData.map((recipe) => (
               <Grid
-                item
                 key={"recipe_" + recipe.uid}
                 xs={12}
                 sm={embeddedMode ? 6 : 4}
@@ -998,7 +984,7 @@ export const RecipeSearch = ({
             ))}
             {/* Keine Rezepte gefunden --> Neues Erfassen? */}
             {filteredData.length === 0 && (
-              <Grid item key={"noRecipe"} xs={12} sm={12} md={12}>
+              <Grid key={"noRecipe"} xs={12} sm={12} md={12}>
                 <Typography
                   variant="h5"
                   align="center"
@@ -1012,7 +998,7 @@ export const RecipeSearch = ({
                   {TEXT_CREATE_A_NEW_ONE}
                 </Typography>
                 <Grid container spacing={2} justifyContent="center">
-                  <Grid item>
+                  <Grid>
                     <Fab
                       onClick={onNewClick}
                       color="primary"

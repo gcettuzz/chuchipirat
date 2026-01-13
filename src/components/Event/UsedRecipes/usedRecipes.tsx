@@ -3,7 +3,7 @@ import {pdf} from "@react-pdf/renderer";
 import fileSaver from "file-saver";
 
 import {
-  Grid,
+  Stack,
   Backdrop,
   CircularProgress,
   Typography,
@@ -14,6 +14,7 @@ import {
   Link,
   Box,
 } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
@@ -36,7 +37,7 @@ import {
 } from "../../../constants/text";
 import {ImageRepository} from "../../../constants/imageRepository";
 
-import useStyles from "../../../constants/styles";
+import useCustomStyles from "../../../constants/styles";
 
 import Firebase from "../../Firebase/firebase.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
@@ -194,7 +195,7 @@ const EventUsedRecipesPage = ({
   fetchMissingData,
   onUsedRecipesUpdate,
 }: EventUsedRecipesPageProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const navigationValuesContext = React.useContext(NavigationValuesContext);
   const {customDialog} = useCustomDialog();
@@ -399,7 +400,7 @@ const EventUsedRecipesPage = ({
       return;
     }
     const selectedMenuesForDialog: DialogSelectMenuesForRecipeDialogValues = {};
-
+    console.log("hier");
     let selectedMenues =
       usedRecipes.lists[selectedListUid].properties.selectedMenues;
 
@@ -427,10 +428,10 @@ const EventUsedRecipesPage = ({
     }
 
     // Menues der Mahlzeiten holen und Objekt umwandeln
-    Menuplan.getMealsOfMenues({
-      menuplan: menuplan,
-      menues: usedRecipes.lists[selectedListUid].properties.selectedMeals,
-    }).forEach((menueUid) => (selectedMenues[menueUid] = true));
+    // Menuplan.getMealsOfMenues({
+    //   menuplan: menuplan,
+    //   menues: usedRecipes.lists[selectedListUid].properties.selectedMeals,
+    // }).forEach((menueUid) => (selectedMenues[menueUid] = true));
 
     selectedMenues.forEach(
       (menueUid) => (selectedMenuesForDialog[menueUid] = true)
@@ -479,52 +480,44 @@ const EventUsedRecipesPage = ({
       });
   };
   return (
-    <React.Fragment>
+    <Stack spacing={2}>
       {state.error && (
-        <Grid item key={"error"} xs={12}>
-          <AlertMessage
-            error={state.error}
-            messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
-          />
-        </Grid>
+        <AlertMessage
+          error={state.error}
+          messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
+        />
       )}
 
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Backdrop className={classes.backdrop} open={state.isLoading}>
-            <CircularProgress color="inherit" />
-          </Backdrop>
-        </Grid>
-        <Grid item xs={12}>
-          <EventListCard
-            cardTitle={TEXT_PLANED_RECIPES}
-            cardDescription={TEXT_USED_RECIPES_MENUE_SELECTION_DESCRIPTION}
-            outOfDateWarnMessage={TEXT_LIST_ENTRY_MAYBE_OUT_OF_DATE(TEXT_LIST)}
-            selectedListItem={state.selectedListItem}
-            lists={usedRecipes.lists}
-            noOfLists={usedRecipes.noOfLists}
-            menuplan={menuplan}
-            onCreateList={onCreateList}
-            onListElementSelect={onListElementSelect}
-            onListElementDelete={onListElementDelete}
-            onListElementEdit={onListElementEdit}
-            onRefreshLists={onRefreshLists}
-            onGeneratePrintVersion={onGeneratePrintVersion}
-          />
-        </Grid>
-        {state.selectedListItem && (
-          <EventUsedRecipes
-            sortedMenueList={state.sortedMenueList}
-            usedRecipes={usedRecipes.lists[state.selectedListItem].recipes}
-            menuplan={menuplan}
-            groupConfiguration={groupConfiguration}
-            products={products}
-            units={units}
-            unitConversionBasic={unitConversionBasic}
-            unitConversionProducts={unitConversionProducts}
-          />
-        )}
-      </Grid>
+      <Backdrop sx={classes.backdrop} open={state.isLoading}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
+      <EventListCard
+        cardTitle={TEXT_PLANED_RECIPES}
+        cardDescription={TEXT_USED_RECIPES_MENUE_SELECTION_DESCRIPTION}
+        outOfDateWarnMessage={TEXT_LIST_ENTRY_MAYBE_OUT_OF_DATE(TEXT_LIST)}
+        selectedListItem={state.selectedListItem}
+        lists={usedRecipes.lists}
+        noOfLists={usedRecipes.noOfLists}
+        menuplan={menuplan}
+        onCreateList={onCreateList}
+        onListElementSelect={onListElementSelect}
+        onListElementDelete={onListElementDelete}
+        onListElementEdit={onListElementEdit}
+        onRefreshLists={onRefreshLists}
+        onGeneratePrintVersion={onGeneratePrintVersion}
+      />
+      {state.selectedListItem && (
+        <EventUsedRecipes
+          sortedMenueList={state.sortedMenueList}
+          usedRecipes={usedRecipes.lists[state.selectedListItem].recipes}
+          menuplan={menuplan}
+          groupConfiguration={groupConfiguration}
+          products={products}
+          units={units}
+          unitConversionBasic={unitConversionBasic}
+          unitConversionProducts={unitConversionProducts}
+        />
+      )}
       <DialogSelectMenues
         open={dialogSelectMenueData.open}
         title={TEXT_WHICH_MENUES_FOR_RECIPE_GENERATION}
@@ -537,7 +530,7 @@ const EventUsedRecipesPage = ({
         onClose={onCloseDialogSelectMenues}
         onConfirm={onConfirmDialogSelectMenues}
       />
-    </React.Fragment>
+    </Stack>
   );
 };
 
@@ -568,8 +561,8 @@ const EventUsedRecipes = ({
 
   return (
     <Container style={{marginTop: theme.spacing(2)}}>
-      <Grid container spacing={2} justifyContent="center" alignItems="center">
-        <Grid item xs={12}>
+      <Box component="div" sx={{justifyContent: "center", display: "flex"}}>
+        <Stack spacing={2}>
           {sortedMenueList.map((menueCoordinate) => {
             return menuplan.menues[
               menueCoordinate.menueUid
@@ -599,8 +592,8 @@ const EventUsedRecipes = ({
                 )
             );
           })}
-        </Grid>
-      </Grid>
+        </Stack>
+      </Box>
     </Container>
   );
 };
@@ -627,10 +620,10 @@ const EventUsedMealRecipe = ({
   unitConversionBasic,
   unitConversionProducts,
 }: EventUsedMealRecipeProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   return (
     <Container
-      className={classes.container}
+      sx={classes.container}
       component="main"
       maxWidth="md"
       key={"recipeContainer_" + mealRecipe.uid}
@@ -655,7 +648,6 @@ const EventUsedMealRecipe = ({
         />
         {/* Zutaten */}
         <Grid
-          item
           xs={12}
           sm={6}
           style={{marginTop: "2em", marginBottom: "2em"}}
@@ -672,7 +664,6 @@ const EventUsedMealRecipe = ({
         </Grid>
         {/* Zubereitung */}
         <Grid
-          item
           xs={12}
           sm={6}
           style={{marginTop: "2em", marginBottom: "2em"}}
@@ -683,7 +674,6 @@ const EventUsedMealRecipe = ({
         {/* Material */}
         {recipe?.materials?.order.length > 0 && (
           <Grid
-            item
             xs={12}
             style={{marginTop: "2em", marginBottom: "2em"}}
             key={"recipeGridMaterials_" + mealRecipe.uid}
@@ -695,37 +685,18 @@ const EventUsedMealRecipe = ({
           </Grid>
         )}
         {/* Divider */}
-        <Grid
-          container
-          alignContent="center"
-          alignItems="center"
-          key={"recipeGridDivider_" + mealRecipe.uid}
-        >
-          <Grid item key={"recipeGridDividerLeft_" + mealRecipe.uid} xs={5}>
-            <Divider
-              className={classes.thickDivider}
-              key={"recipeDividerLeft_" + mealRecipe.uid}
-              style={{width: "100%"}}
-            />
-          </Grid>
-
-          <Grid item container key={"recipeGridImage_" + mealRecipe.uid} xs={2}>
-            <img
-              className={classes.marginCenter}
+        <Grid key={"recipeGridDividerLeft_" + mealRecipe.uid} xs={12}>
+          <Divider key={"recipeDividerLeft_" + mealRecipe.uid}>
+            <Box
+              component="img"
+              sx={classes.marginCenter}
               src={
                 ImageRepository.getEnviromentRelatedPicture().VECTOR_LOGO_GREY
               }
               alt=""
               width="50px"
             />
-          </Grid>
-          <Grid item key={"recipeGridDividerRight_" + mealRecipe.uid} xs={5}>
-            <Divider
-              className={classes.thickDivider}
-              key={"recipeDividerRight_" + mealRecipe.uid}
-              style={{width: "100%"}}
-            />
-          </Grid>
+          </Divider>
         </Grid>
       </Grid>
     </Container>
@@ -744,7 +715,7 @@ const EventUsedMealRecipeTitle = ({
 }: EventUsedMealRecipeTitleProps) => {
   const theme = useTheme();
   return (
-    <Grid item key={"recipeName_" + recipe.uid} xs={12}>
+    <Grid key={"recipeName_" + recipe.uid} xs={12}>
       <Typography
         component="h1"
         variant="h4"
@@ -802,7 +773,7 @@ const EventUsedMealRecipeInfoBlock = ({
   groupConfiguration,
 }: EventUsedMealRecipeInfoBlockProps) => {
   return (
-    <Grid item key={"recipeInfoBlockTime" + mealRecipe.uid} xs={12}>
+    <Grid key={"recipeInfoBlockTime" + mealRecipe.uid} xs={12}>
       <Container maxWidth="sm">
         <List dense>
           <FormListItem

@@ -1,5 +1,5 @@
 import React from "react";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
 import {
   Typography,
@@ -12,10 +12,12 @@ import {
   Grid,
   CardActionArea,
   Fab,
+  Rating,
+  Skeleton,
+  Box,
 } from "@mui/material";
 import {Info as InfoIcon, Add as AddIcon} from "@mui/icons-material";
 
-import {Skeleton, Rating} from "@mui/lab";
 import RecipeShort from "./recipeShort.class";
 import {ImageRepository} from "../../constants/imageRepository";
 import {OnRecipeCardClickProps} from "./recipes";
@@ -72,7 +74,7 @@ const RecipeCard = ({
   fabButtonIcon,
   onFabButtonClick: onFabButtonClickSuper,
 }: RecipeCardProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const [hover, setHover] = React.useState(false);
 
@@ -128,7 +130,7 @@ const RecipeCard = ({
 
   return (
     <Card
-      className={classes.card}
+      sx={classes.card}
       onMouseOver={handleHover}
       onMouseOut={handleMouseOut}
     >
@@ -137,7 +139,7 @@ const RecipeCard = ({
         onClick={onCardClick}
         style={{height: "100%"}}
       >
-        <div className={classes.card}>
+        <Box component="div" sx={classes.card}>
           <div style={{overflow: "hidden"}}>
             {ribbon && (
               <CardRibbon
@@ -147,7 +149,7 @@ const RecipeCard = ({
               />
             )}
             <CardMedia
-              className={classes.cardMedia}
+              sx={classes.cardMedia}
               image={
                 recipe.pictureSrc
                   ? recipe.pictureSrc
@@ -182,7 +184,7 @@ const RecipeCard = ({
               </Typography>
             }
           />
-          <CardContent className={classes.cardContent}>
+          <CardContent sx={classes.cardContent}>
             {infoLine ? (
               <Grid container spacing={1}>
                 <Grid item xs={2}>
@@ -198,7 +200,7 @@ const RecipeCard = ({
           </CardContent>
 
           {/* <CardActions> */}
-          <CardActions className={classes.cardActions}>
+          <CardActions sx={classes.cardActions}>
             <Grid container spacing={1}>
               <Grid item xs={10}>
                 <div
@@ -245,23 +247,7 @@ const RecipeCard = ({
               </Grid>
             </Grid>
           </CardActions>
-
-          {/* {cardActions.length > 0 && (
-        <CardActions>
-          {cardActions.map((action) => (
-            <Button
-              key={action.key + "_" + recipe.uid}
-              id={action.key + "_" + recipe.uid}
-              size="small"
-              color="primary"
-              onClick={(event) => action.onClick(event, recipe)}
-            >
-              {action.name}
-            </Button>
-          ))}
-        </CardActions>
-      )} */}
-        </div>
+        </Box>
       </CardActionArea>
     </Card>
   );
@@ -270,14 +256,13 @@ const RecipeCard = ({
 // =====================Rezept Karte am laden ========================
 // =================================================================== */
 const RecipeCardLoading = () => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
-    <Card className={classes.card}>
+    <Card sx={classes.card}>
       {/* Card Media */}
-      <Skeleton animation="wave" variant="rect" className={classes.cardMedia} />
-
-      <CardContent className={classes.cardContent}>
+      <Skeleton animation="wave" variant="rectangular" sx={classes.cardMedia} />
+      <CardContent sx={classes.cardContent}>
         <Typography gutterBottom={true} variant="h5" component="h2">
           <Skeleton />
         </Typography>

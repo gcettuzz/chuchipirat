@@ -3,23 +3,27 @@ import {compose} from "react-recompose";
 
 import {Link} from "react-router-dom";
 
-import Container from "@mui/material/Container";
-import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
-import TextField from "@mui/material/TextField";
-import {Alert, AlertTitle} from "@mui/lab";
-import Typography from "@mui/material/Typography";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import CardMedia from "@mui/material/CardMedia";
-import InputAdornment from "@mui/material/InputAdornment";
+import {
+  Container,
+  Button,
+  IconButton,
+  TextField,
+  Typography,
+  Card,
+  CardContent,
+  CardMedia,
+  InputAdornment,
+  Alert,
+  AlertTitle,
+} from "@mui/material";
 
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 import PasswordStrengthMeter from "../Shared/passwordStrengthMeter";
 import PageTitle from "../Shared/pageTitle";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
+
 import AlertMessage from "../Shared/AlertMessage";
 import DialogReauthenticate from "../SignIn/dialogReauthenticate";
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
@@ -151,7 +155,7 @@ const PasswordChangeBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
   let resetCode = props.oobCode as string;
 
   const [state, dispatch] = React.useReducer(
@@ -313,7 +317,7 @@ const PasswordChangeBase: React.FC<
   return (
     <React.Fragment>
       <PageTitle title={resetCode ? TEXT_PASSWORD_CHANGE : TEXT_LOGIN_CHANGE} />
-      <Container className={classes.container} component="main" maxWidth="xs">
+      <Container sx={classes.container} component="main" maxWidth="xs">
         <PasswordChangeForm
           resetCode={resetCode}
           passwordChangeData={state.passwordChangeData}
@@ -368,7 +372,7 @@ const PasswordChangeForm = ({
   successEmailChange,
   error,
 }: PasswordChangeFormProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const [showPassword, setShowPassword] = React.useState(false);
 
   const isValidEmail = Utils.isEmail(passwordChangeData.email);
@@ -387,11 +391,11 @@ const PasswordChangeForm = ({
     <React.Fragment>
       <Card>
         <CardMedia
-          className={classes.cardMedia}
+          sx={classes.cardMedia}
           image={ImageRepository.getEnviromentRelatedPicture().SIGN_IN_HEADER}
           title={"Logo"}
         />
-        <CardContent className={classes.cardContent}>
+        <CardContent sx={classes.cardContent}>
           <Typography
             gutterBottom={true}
             variant="h5"
@@ -447,7 +451,7 @@ const PasswordChangeForm = ({
               fullWidth
               variant="contained"
               color="primary"
-              className={classes.submit}
+              sx={classes.submit}
               onClick={onEmailChange}
             >
               {TEXT_CHANGE_EMAIL}
@@ -472,6 +476,7 @@ const PasswordChangeForm = ({
                     aria-label={TEXT_SHOW_PASSWORD}
                     onClick={handleClickShowPassword}
                     onMouseDown={handleMouseDownPassword}
+                    size="large"
                   >
                     {showPassword ? <Visibility /> : <VisibilityOff />}
                   </IconButton>
@@ -489,7 +494,7 @@ const PasswordChangeForm = ({
             fullWidth
             variant="contained"
             color="primary"
-            className={classes.submit}
+            sx={classes.submit}
             onClick={onPwChange}
           >
             {TEXT_CHANGE_PASSWORD}

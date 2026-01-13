@@ -53,7 +53,7 @@ type State = {
   dialogType: DialogType;
   visible: boolean;
   title: string;
-  text: string;
+  text: string | JSX.Element;
   subtitle: string;
   buttonTextConfirm: string;
   buttonTextCancel: string;
@@ -75,7 +75,7 @@ interface SingleTextInputProperties {
 interface DialogContentProps {
   dialogType: DialogType;
   title?: string;
-  text?: string;
+  text?: string | JSX.Element;
   subtitle?: string;
   buttonTextConfirm?: string;
   buttonTextCancel?: string;

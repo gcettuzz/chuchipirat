@@ -1,7 +1,6 @@
 import React from "react";
 import {compose} from "react-recompose";
 
-import CssBaseline from "@mui/material/CssBaseline";
 import {
   DEPARTMENTS as TEXT_DEPARTMENTS,
   SO_YOU_DONT_GET_LOST_IN_THE_STORE as TEXT_SO_YOU_DONT_GET_LOST_IN_THE_STORE,
@@ -28,7 +27,7 @@ import Roles, {Role} from "../../constants/roles";
 import Department from "./department.class";
 import ButtonRow from "../Shared/buttonRow";
 import PageTitle from "../Shared/pageTitle";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 import {
   Backdrop,
   Card,
@@ -41,6 +40,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  SelectChangeEvent,
   TextField,
   Typography,
 } from "@mui/material";
@@ -215,7 +215,7 @@ const DepartmentsBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const [editMode, setEditMode] = React.useState(false);
   const [state, dispatch] = React.useReducer(
@@ -300,9 +300,7 @@ const DepartmentsBase: React.FC<
   /* ------------------------------------------
   //  Position von Abteilung ändern
   // ------------------------------------------ */
-  const onChangeSelect = (
-    event: React.ChangeEvent<{name?: string; value: unknown}>
-  ) => {
+  const onChangeSelect = (event: SelectChangeEvent) => {
     const selectedItem = event.target?.name?.split("_");
     if (!selectedItem || selectedItem?.length === 0) {
       return;
@@ -358,7 +356,6 @@ const DepartmentsBase: React.FC<
   };
   return (
     <React.Fragment>
-      <CssBaseline />
       {/*===== HEADER ===== */}
       <PageTitle
         title={TEXT_DEPARTMENTS}
@@ -398,8 +395,8 @@ const DepartmentsBase: React.FC<
         ]}
       />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="sm">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="sm">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
         <Grid container spacing={2}>
@@ -449,7 +446,7 @@ interface DepartmentTableProps {
   departments: Department[];
   positionList: string[];
   onChangeField: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onChangeSelect: (event: React.ChangeEvent<{value: unknown}>) => void;
+  onChangeSelect: (event: SelectChangeEvent) => void;
   editMode: boolean;
 }
 const DepartmentTable = ({
@@ -459,10 +456,10 @@ const DepartmentTable = ({
   onChangeSelect,
   editMode,
 }: DepartmentTableProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   return (
-    <Card className={classes.card} key={"cardDepartmentsPanel"}>
-      <CardContent className={classes.cardContent} key={"cardDepartments"}>
+    <Card sx={classes.card} key={"cardDepartmentsPanel"}>
+      <CardContent sx={classes.cardContent} key={"cardDepartments"}>
         {editMode ? (
           <Grid container spacing={2}>
             <Grid item xs={8}>
@@ -488,13 +485,14 @@ const DepartmentTable = ({
                   />
                 </Grid>
                 <Grid item xs={4} key={"gridItemPos_" + department.uid}>
-                  <FormControl fullWidth className={classes.formControl}>
+                  <FormControl fullWidth sx={classes.formControl}>
                     <InputLabel key="label_pos">{TEXT_POSITION}</InputLabel>
                     <Select
                       labelId="label_pos"
+                      label={TEXT_POSITION}
                       id={"pos_" + department.uid}
                       name={"pos_" + department.uid}
-                      value={department.pos}
+                      value={department.pos.toString()}
                       onChange={onChangeSelect}
                     >
                       {positionList.map((pos) => (

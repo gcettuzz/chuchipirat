@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 
-import {Container, Grid} from "@mui/material";
+import {Container, Stack} from "@mui/material";
 
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
@@ -15,7 +15,7 @@ import {withFirebase} from "../Firebase/firebaseContext";
 import {AuthUserContext} from "./authUserContext";
 import {Alert} from "@mui/lab";
 import Firebase from "../Firebase/firebase.class";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
 /* ===================================================================
 // ============== Prüfung ob Email-Verifizierung nötig ist ===========
@@ -50,7 +50,7 @@ const withEmailVerification = (Component: React.ComponentType<any>) => {
   ) => {
     const firebase = props.firebase as Firebase;
     const [isSent, setIsSent] = useState(false);
-    const classes = useStyles();
+    const classes = useCustomStyles();
 
     const onSendEmailVerification = () => {
       firebase.sendEmailVerification().then(() => setIsSent(true));
@@ -63,41 +63,31 @@ const withEmailVerification = (Component: React.ComponentType<any>) => {
               <PageTitle
                 subTitle={TEXT_ISNT_THERE_A_CAPTAIN_MISSING_SOMEWHERE}
               />
-              <Container
-                className={classes.container}
-                component="main"
-                maxWidth="xs"
-              >
+              <Container sx={classes.container} component="main" maxWidth="xs">
                 <br />
-                <Grid container spacing={2}>
+                <Stack spacing={2}>
                   {isSent ? (
-                    <Grid item key={"email_sent"} xs={12}>
-                      <Alert severity="success">
-                        {TEXT_VERIFICATION_EMAIL_SENT}
-                      </Alert>
-                    </Grid>
+                    <Alert severity="success">
+                      {TEXT_VERIFICATION_EMAIL_SENT}
+                    </Alert>
                   ) : (
-                    <Grid item key={"verify_email"} xs={12}>
-                      <Alert severity="info">{TEXT_VERIFY_YOUR_EMAIL}</Alert>
-                    </Grid>
+                    <Alert severity="info">{TEXT_VERIFY_YOUR_EMAIL}</Alert>
                   )}
-                  <Grid item key={"buttons"} xs={12}>
-                    <ButtonRow
-                      buttons={[
-                        {
-                          id: "buttonResendConfirmationEmail",
-                          hero: true,
-                          label: "Bestätigungs-E-Mail erneut senden",
-                          variant: "contained",
-                          color: "primary",
-                          onClick: onSendEmailVerification,
-                          disabled: isSent,
-                          visible: true,
-                        },
-                      ]}
-                    />
-                  </Grid>
-                </Grid>
+                  <ButtonRow
+                    buttons={[
+                      {
+                        id: "buttonResendConfirmationEmail",
+                        hero: true,
+                        label: "Bestätigungs-E-Mail erneut senden",
+                        variant: "contained",
+                        color: "primary",
+                        onClick: onSendEmailVerification,
+                        disabled: isSent,
+                        visible: true,
+                      },
+                    ]}
+                  />
+                </Stack>
               </Container>
             </React.Fragment>
           ) : (

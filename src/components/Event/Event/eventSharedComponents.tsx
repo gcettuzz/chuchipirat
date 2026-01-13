@@ -2,7 +2,6 @@ import React from "react";
 import Menuplan, {Menue, MenueCoordinates} from "../Menuplan/menuplan.class";
 
 import {
-  Grid,
   Button,
   Card,
   CardHeader,
@@ -23,6 +22,7 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 
 import {
   MENUE_SELECTION as TEXT_MENUE_SELECTION,
@@ -54,7 +54,7 @@ import UsedRecipes from "../UsedRecipes/usedRecipes.class";
 import MaterialList from "../MaterialList/materialList.class";
 import Action from "../../../constants/actions";
 import Recipe from "../../Recipe/recipe.class";
-import useStyles from "../../../constants/styles";
+import useCustomStyles from "../../../constants/styles";
 /* ===================================================================
 // ===================== Globale Einstellungen ======================
 // =================================================================== */
@@ -131,12 +131,14 @@ export const EventListCard = ({
                   <IconButton
                     id={"EditBtn_" + list?.properties.uid}
                     onClick={onListElementEdit}
+                    size="large"
                   >
                     <EditIcon />
                   </IconButton>
                   <IconButton
                     id={"DeleteBtn_" + list?.properties.uid}
                     onClick={onListElementDelete}
+                    size="large"
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -153,7 +155,6 @@ export const EventListCard = ({
           noOfLists > 0 && (
             <Grid container>
               <Grid
-                item
                 xs={1}
                 style={{
                   display: "flex",
@@ -163,7 +164,7 @@ export const EventListCard = ({
               >
                 <ErrorOutlineIcon color="error" />
               </Grid>
-              <Grid item xs={11}>
+              <Grid xs={11}>
                 <Typography color="error">{outOfDateWarnMessage}</Typography>
               </Grid>
             </Grid>
@@ -268,7 +269,7 @@ export const DialogTraceItem = ({
   handleClose,
   onShowRecipe,
 }: DialogTraceItem) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   /* ------------------------------------------
   // Rezept Handler
@@ -290,7 +291,7 @@ export const DialogTraceItem = ({
         <Grid container spacing={2}>
           {hasBeenManualyEdited && (
             <React.Fragment>
-              <Grid item xs={2}>
+              <Grid xs={2}>
                 <InfoIcon fontSize="small" color="disabled" />
               </Grid>
               <Grid xs={10}>
@@ -300,7 +301,7 @@ export const DialogTraceItem = ({
               </Grid>
             </React.Fragment>
           )}
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <List key={`list_for_trace`}>
               {sortedMenues.map((menue) => {
                 const traceItems = trace?.filter(
@@ -351,7 +352,7 @@ export const DialogTraceItem = ({
                                           maximumSignificantDigits: 3,
                                         }).format(item.quantity)
                                   } ${item.unit}`}
-                                  className={classes.listItemTextAlignRight}
+                                  sx={classes.textAlignRight}
                                   id={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
                                   key={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
                                 />
@@ -383,7 +384,7 @@ export const DialogTraceItem = ({
                                           maximumSignificantDigits: 3,
                                         }).format(item.quantity)
                                   } ${item.unit}`}
-                                  className={classes.listItemTextAlignRight}
+                                  sx={classes.textAlignRight}
                                   id={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
                                   key={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
                                 />
@@ -414,7 +415,7 @@ export const DialogTraceItem = ({
                                 maximumSignificantDigits: 3,
                               }).format(item.quantity)
                         } ${item.unit}`}
-                        className={classes.listItemTextAlignRight}
+                        sx={classes.textAlignRight}
                         key={`manualItemTextQuantity_${counter}`}
                       />
                     </ListItem>

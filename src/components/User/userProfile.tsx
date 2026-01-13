@@ -5,7 +5,7 @@ import {useHistory} from "react-router";
 
 import {
   Container,
-  Grid,
+  Stack,
   Backdrop,
   CircularProgress,
   Card,
@@ -15,6 +15,8 @@ import {
   Fab,
   LinearProgress,
   List,
+  Box,
+  useTheme,
 } from "@mui/material";
 
 import {
@@ -51,8 +53,7 @@ import {
 } from "../../constants/text";
 import {ImageRepository} from "../../constants/imageRepository";
 
-import useStyles from "../../constants/styles";
-
+import useCustomStyles from "../../constants/styles";
 import User, {UserFullProfile} from "./user.class";
 
 import PageTitle from "../Shared/pageTitle";
@@ -179,42 +180,6 @@ const userProfileReducer = (state: State, action: DispatchAction): State => {
         ...state,
         isLoading: action.payload,
       };
-    // case ReducerActions.PICTURE_UPLOAD_INIT:
-    //   // Bild wird hochgeladen
-    //   return {
-    //     ...state,
-    //     isLoadingPicture: true,
-    //   };
-    // case ReducerActions.PICTURE_UPLOAD_SUCCESS:
-    //   // Bild erfolgreich hochgeladen
-    //   return {
-    //     ...state,
-    //     userProfile: {
-    //       ...state.userProfile,
-    //       pictureSrc: action.payload.pictureSrc,
-    //     },
-    //     isLoadingPicture: false,
-    //     snackbar: {
-    //       open: true,
-    //       severity: "success",
-    //       message: TEXT_PROFILE_PICTURE_UPLOAD_SUCCESS,
-    //     },
-    //   };
-    // case ReducerActions.PICTURE_DELETE:
-    //   // Bild gelöscht
-    //   return {
-    //     ...state,
-    //     isLoadingPicture: false,
-    //     userProfile: {
-    //       ...state.userProfile,
-    //       pictureSrc: {fullSize: "", normalSize: "", smallSize: ""},
-    //     },
-    //     snackbar: {
-    //       severity: "info",
-    //       message: TEXT_PICTURE_HAS_BEEN_DELETED,
-    //       open: true,
-    //     },
-    //   };
     case ReducerActions.SNACKBAR_CLOSE:
       // Snackbar schliessen
       return {
@@ -256,7 +221,7 @@ const UserProfileBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {push} = useHistory();
   const {customDialog} = useCustomDialog();
 
@@ -408,50 +373,42 @@ const UserProfileBase: React.FC<
       )}
 
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="sm">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="sm">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        <Grid container spacing={2}>
+        <Stack spacing={2}>
           {state.error && (
-            <Grid item key={"error"} xs={12}>
-              <AlertMessage
-                error={state.error}
-                messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
-              />
-            </Grid>
+            <AlertMessage
+              error={state.error}
+              messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
+            />
           )}
 
           {state.userProfile?.uid && (
             <React.Fragment>
-              <Grid item key={"profileCard"} xs={12}>
-                <ProfileCard
-                  userProfile={state.userProfile}
-                  previewPictureUrl={
-                    state.localPicture
-                      ? URL.createObjectURL(state.localPicture)
-                      : ""
-                  }
-                  editMode={editMode}
-                  isLoadingPicture={state.isLoadingPicture}
-                  onFieldChange={onChangeField}
-                  onUpload={onPictureUpload}
-                  onDelete={onPictureDelete}
-                />
-              </Grid>
-              <Grid item key={"publicProfileCard"} xs={12}>
-                <PublicProfileCard
-                  userProfile={state.userProfile}
-                  editMode={editMode}
-                  onFieldChange={onChangeField}
-                />
-              </Grid>
-              <Grid item key={"achievedRewardsCard"} xs={12}>
-                <AchievedRewardsCard publicProfile={state.userProfile} />
-              </Grid>
+              <ProfileCard
+                userProfile={state.userProfile}
+                previewPictureUrl={
+                  state.localPicture
+                    ? URL.createObjectURL(state.localPicture)
+                    : ""
+                }
+                editMode={editMode}
+                isLoadingPicture={state.isLoadingPicture}
+                onFieldChange={onChangeField}
+                onUpload={onPictureUpload}
+                onDelete={onPictureDelete}
+              />
+              <PublicProfileCard
+                userProfile={state.userProfile}
+                editMode={editMode}
+                onFieldChange={onChangeField}
+              />
+              <AchievedRewardsCard publicProfile={state.userProfile} />
             </React.Fragment>
           )}
-        </Grid>
+        </Stack>
       </Container>
       <CustomSnackbar
         message={state.snackbar.message}
@@ -541,13 +498,14 @@ const ProfileCard = ({
   onUpload,
   onDelete,
 }: ProfileCardProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
+  const theme = useTheme();
 
   return (
-    <Card className={classes.card}>
-      <div style={{position: "relative"}}>
+    <Card sx={classes.card}>
+      <Box component={"div"} style={{position: "relative"}}>
         <CardMedia
-          className={classes.cardMedia}
+          sx={classes.cardMedia}
           image={
             userProfile.pictureSrc.normalSize
               ? userProfile.pictureSrc.normalSize
@@ -562,61 +520,55 @@ const ProfileCard = ({
               : userProfile.displayName
           }
         />
-        <div className={classes.textOnCardMediaImage}>
+        <Box
+          component={"div"}
+          sx={classes.textOnCardMediaImage}
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            flexWrap: "nowrap",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography sx={classes.userProfileCardNameOnImage} variant="h2">
+            {userProfile.firstName && userProfile.lastName
+              ? userProfile.firstName + " " + userProfile.lastName
+              : userProfile.displayName}
+          </Typography>
           {editMode && (
-            <div>
+            <Box
+              component={"div"}
+              style={{
+                display: "flex",
+                alignContent: "center",
+                gap: theme.spacing(2),
+                marginRight: theme.spacing(2),
+              }}
+            >
               <input
                 accept="image/*"
-                className={classes.imageButtonInput}
+                style={classes.imageButtonInput}
                 id="icon-button-file"
                 type="file"
                 onChange={onUpload}
               />
               <label htmlFor="icon-button-file">
-                <Fab
-                  component="span"
-                  color="primary"
-                  size="small"
-                  className={classes.userProfileCardIconButton}
-                >
+                <Fab component="span" color="primary" size="small">
                   <PhotoCameraIcon />
                 </Fab>
               </label>
               {userProfile.pictureSrc.normalSize && (
-                <Fab
-                  component="span"
-                  size="small"
-                  className={classes.userProfileCardIconButtonDelete}
-                  onClick={onDelete}
-                >
+                <Fab component="span" size="small" onClick={onDelete}>
                   <DeleteIcon />
                 </Fab>
               )}
-            </div>
+            </Box>
           )}
-          <Grid
-            container
-            direction="row"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <Grid container>
-              <Typography
-                className={classes.userProfileCardNameOnImage}
-                variant="h2"
-              >
-                {userProfile.firstName && userProfile.lastName
-                  ? userProfile.firstName + " " + userProfile.lastName
-                  : userProfile.displayName}
-              </Typography>
-            </Grid>
-            <Grid container></Grid>
-          </Grid>
-          {/* </div> */}
-        </div>
-      </div>
+        </Box>
+      </Box>
       {isLoadingPicture && <LinearProgress />}
-      <CardContent className={classes.cardContent}>
+      <CardContent sx={classes.cardContent}>
         <List>
           <FormListItem
             id={"firstName"}
@@ -679,11 +631,11 @@ const PublicProfileCard = ({
   editMode,
   onFieldChange,
 }: PublicProfileCard) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
-    <Card className={classes.card}>
-      <CardContent className={classes.cardContent}>
+    <Card sx={classes.card}>
+      <CardContent sx={classes.cardContent}>
         <Typography gutterBottom={true} variant="h5" component="h2">
           {TEXT_INTRODUCE_YOURSELF}
         </Typography>
@@ -734,10 +686,10 @@ interface AchievedRewardsCard {
   publicProfile: UserFullProfile;
 }
 const AchievedRewardsCard = ({publicProfile}: AchievedRewardsCard) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   return (
     <Card>
-      <CardContent className={classes.cardContent}>
+      <CardContent sx={classes.cardContent}>
         <Typography gutterBottom={true} variant="h5" component="h2">
           {TEXT_FOUND_TREASURES}
         </Typography>

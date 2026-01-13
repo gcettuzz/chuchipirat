@@ -1,17 +1,21 @@
-import React from "react";
+import React, {SyntheticEvent} from "react";
 import {compose} from "react-recompose";
 
-import CssBaseline from "@mui/material/CssBaseline";
-import Container from "@mui/material/Container";
-import Grid from "@mui/material/Grid";
-import Backdrop from "@mui/material/Backdrop";
-import CircularProgress from "@mui/material/CircularProgress";
-
-import Typography from "@mui/material/Typography";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-
-import {FormControlLabel, RadioGroup, Radio, Checkbox} from "@mui/material";
+import {
+  Container,
+  Backdrop,
+  CircularProgress,
+  Typography,
+  Card,
+  CardContent,
+  FormControlLabel,
+  RadioGroup,
+  Radio,
+  Checkbox,
+  Stack,
+  useTheme,
+  SnackbarCloseReason,
+} from "@mui/material";
 
 import * as TEXT from "../../constants/text";
 import Roles, {Role} from "../../constants/roles";
@@ -28,7 +32,7 @@ import AlertMessage from "../Shared/AlertMessage";
 import EditIcon from "@mui/icons-material/Edit";
 
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 import SearchPanel from "../Shared/searchPanel";
 
 import AuthUser from "../Firebase/Authentication/authUser.class";
@@ -138,7 +142,7 @@ const MaterialBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(materialsReducer, inititialState);
   const [editMode, setEditMode] = React.useState(false);
@@ -209,8 +213,8 @@ const MaterialBase: React.FC<
   // Snackback schliessen
   // ------------------------------------------ */
   const handleSnackbarClose = (
-    event: React.SyntheticEvent | React.MouseEvent,
-    reason?: string
+    event: Event | SyntheticEvent<any, Event>,
+    reason: SnackbarCloseReason
   ) => {
     if (reason === "clickaway") {
       return;
@@ -223,7 +227,6 @@ const MaterialBase: React.FC<
 
   return (
     <React.Fragment>
-      <CssBaseline />
       {/*===== HEADER ===== */}
       <PageTitle
         title={TEXT.MATERIALS}
@@ -237,8 +240,8 @@ const MaterialBase: React.FC<
         authUser={authUser}
       />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="xl">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="xl">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
 
@@ -361,7 +364,9 @@ const MaterialsTable = ({
     MATERIAL_POPUP_VALUES
   );
 
-  const classes = useStyles();
+  const classes = useCustomStyles();
+  const theme = useTheme();
+
   const TABLE_COLUMS = [
     {
       id: "edit",
@@ -488,7 +493,6 @@ const MaterialsTable = ({
             id={"checkbox_" + material.uid}
             disabled={!editMode}
             checked={material.usable}
-            color="primary"
             onChange={handleCheckBoxChange}
           />
         ),
@@ -503,16 +507,12 @@ const MaterialsTable = ({
           >
             <FormControlLabel
               value={MaterialType.consumable}
-              control={
-                <Radio size="small" color="primary" disabled={!editMode} />
-              }
+              control={<Radio size="small" disabled={!editMode} />}
               label={TEXT.MATERIAL_TYPE_CONSUMABLE}
             />
             <FormControlLabel
               value={MaterialType.usage}
-              control={
-                <Radio size="small" color="primary" disabled={!editMode} />
-              }
+              control={<Radio size="small" disabled={!editMode} />}
               label={TEXT.MATERIAL_TYPE_USAGE}
             />
           </RadioGroup>
@@ -626,37 +626,32 @@ const MaterialsTable = ({
 
   return (
     <React.Fragment>
-      <Card className={classes.card} key={"requestTablePanel"}>
-        <CardContent
-          className={classes.cardContent}
-          key={"requestTableContent"}
-        >
-          <Grid container>
-            <Grid item xs={12} style={{marginBottom: "2ex"}}>
-              <SearchPanel
-                searchString={searchString}
-                onUpdateSearchString={updateSearchString}
-                onClearSearchString={clearSearchString}
-              />
-              <Typography
-                variant="body2"
-                style={{marginTop: "0.5em", marginBottom: "2em"}}
-              >
-                {filteredMaterialsUi.length == materials.length
-                  ? `${materials.length} ${TEXT.MATERIALS}`
-                  : `${filteredMaterialsUi.length} ${TEXT.FROM.toLowerCase()} ${
-                      materials.length
-                    } ${TEXT.MATERIALS}`}
-              </Typography>
+      <Card sx={classes.card} key={"requestTablePanel"}>
+        <CardContent sx={classes.cardContent} key={"requestTableContent"}>
+          <Stack sx={{marginBottom: theme.spacing(1)}}>
+            <SearchPanel
+              searchString={searchString}
+              onUpdateSearchString={updateSearchString}
+              onClearSearchString={clearSearchString}
+            />
+            <Typography
+              variant="body2"
+              style={{marginTop: "0.5em", marginBottom: "2em"}}
+            >
+              {filteredMaterialsUi.length == materials.length
+                ? `${materials.length} ${TEXT.MATERIALS}`
+                : `${filteredMaterialsUi.length} ${TEXT.FROM.toLowerCase()} ${
+                    materials.length
+                  } ${TEXT.MATERIALS}`}
+            </Typography>
 
-              <EnhancedTable
-                tableData={filteredMaterialsUi}
-                tableColumns={TABLE_COLUMS}
-                keyColum={"uid"}
-                onIconClick={openPopUp}
-              />
-            </Grid>
-          </Grid>
+            <EnhancedTable
+              tableData={filteredMaterialsUi}
+              tableColumns={TABLE_COLUMS}
+              keyColum={"uid"}
+              onIconClick={openPopUp}
+            />
+          </Stack>
         </CardContent>
       </Card>
       <DialogMaterial

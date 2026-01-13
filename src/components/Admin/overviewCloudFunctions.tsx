@@ -28,7 +28,7 @@ import {OpenInNew as OpenInNewIcon} from "@mui/icons-material";
 import PageTitle from "../Shared/pageTitle";
 
 import Role from "../../constants/roles";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 import CustomSnackbar, {
   SNACKBAR_INITIAL_STATE_VALUES,
   Snackbar,
@@ -42,23 +42,19 @@ import {
   Tab,
   Tabs,
   Dialog,
-  // DialogActions,
   DialogContent,
   DialogTitle,
-  // FormControl,
-  // FormControlLabel,
-  // FormGroup,
-  // FormLabel,
-  Grid,
   IconButton,
   List,
-  // Switch,
   Typography,
   useTheme,
   LinearProgress,
   Button,
   TextField,
+  Box,
+  Stack,
 } from "@mui/material";
+
 import AlertMessage from "../Shared/AlertMessage";
 import SearchPanel from "../Shared/searchPanel";
 
@@ -78,7 +74,6 @@ import CloudFx, {CloudFxLogEntry} from "./cloudFx.class";
 import {CloudFunctionType} from "../Firebase/Db/firebase.db.cloudfunction.super.class";
 import UserPublicProfile from "../User/user.public.profile.class";
 import User from "../User/user.class";
-
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
@@ -216,7 +211,7 @@ const OverviewCloudFxBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
 
   const [state, dispatch] = React.useReducer(cloudFxReducer, inititialState);
@@ -254,10 +249,7 @@ const OverviewCloudFxBase: React.FC<
   /* ------------------------------------------
 	// Tab-Handler
 	// ------------------------------------------ */
-  const handleTabChange = (
-    event: React.ChangeEvent<Record<string, unknown>>,
-    newValue: number
-  ) => {
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
   /* ------------------------------------------
@@ -356,8 +348,8 @@ const OverviewCloudFxBase: React.FC<
       <PageTitle title={`${TEXT_CLOUD_FX} ${TEXT_MONITOR}`} />
 
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="xl">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="xl">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
         {state.error && (
@@ -371,8 +363,6 @@ const OverviewCloudFxBase: React.FC<
         <Tabs
           value={tabValue}
           onChange={handleTabChange}
-          indicatorColor="primary"
-          textColor="primary"
           centered
           style={{marginBottom: theme.spacing(2)}}
         >
@@ -386,11 +376,7 @@ const OverviewCloudFxBase: React.FC<
           />
         )}
         {tabValue === TabValue.delete && (
-          <Container
-            className={classes.container}
-            component="main"
-            maxWidth="sm"
-          >
+          <Container sx={classes.container} component="main" maxWidth="sm">
             <DeleteDocumentTriggerDocumentsPanel
               onDelete={onDeleteCloudFxTriggerDocuments}
               isDeleting={state.isDeleting}
@@ -432,7 +418,7 @@ const CloudFxTable = ({dbClodFxLog, onCloudFxLogSelect}: CloudFxTableProps) => {
   const [filteredCloudFxlogUi, setFilteredCloudFxlogUi] = React.useState<
     CloudFxLogOverviewStructure[]
   >([]);
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
 
   const DATA_GRID_COLUMNS: GridColDef[] = [
@@ -603,50 +589,46 @@ const CloudFxTable = ({dbClodFxLog, onCloudFxLogSelect}: CloudFxTableProps) => {
 
   return (
     <Card
-      className={classes.card}
+      sx={classes.card}
       key={"requestTablePanel"}
       style={{marginBottom: "4em"}}
     >
-      <CardContent className={classes.cardContent} key={"requestTableContent"}>
-        <Grid container>
-          <Grid item xs={12}>
-            <SearchPanel
-              searchString={searchString}
-              onUpdateSearchString={updateSearchString}
-              onClearSearchString={clearSearchString}
-            />
-            <Typography
-              variant="body2"
-              style={{marginTop: "0.5em", marginBottom: "2em"}}
-            >
-              {filteredCloudFxlogUi.length == cloudFxLog.length
-                ? `${cloudFxLog.length} ${TEXT_CLOUD_FX_TRIGGER_DOCS}`
-                : `${filteredCloudFxlogUi.length} ${TEXT_FROM.toLowerCase()} ${
-                    cloudFxLog.length
-                  } ${TEXT_CLOUD_FX_TRIGGER_DOCS}`}
-            </Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <div style={{display: "flex", height: "100%"}}>
-              <div style={{flexGrow: 1}}>
-                <DataGrid
-                  autoHeight
-                  rows={filteredCloudFxlogUi}
-                  columns={DATA_GRID_COLUMNS}
-                  getRowId={(row) => row.uid}
-                  localeText={deDE.props.MuiDataGrid.localeText}
-                  getRowClassName={(params) => {
-                    if (params.row?.disabled) {
-                      return `super-app ${classes.dataGridDisabled}`;
-                    } else {
-                      `super-app-theme`;
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          </Grid>
-        </Grid>
+      <CardContent sx={classes.cardContent} key={"requestTableContent"}>
+        <Stack spacing={2}>
+          <SearchPanel
+            searchString={searchString}
+            onUpdateSearchString={updateSearchString}
+            onClearSearchString={clearSearchString}
+          />
+          <Typography
+            variant="body2"
+            style={{marginTop: "0.5em", marginBottom: "2em"}}
+          >
+            {filteredCloudFxlogUi.length == cloudFxLog.length
+              ? `${cloudFxLog.length} ${TEXT_CLOUD_FX_TRIGGER_DOCS}`
+              : `${filteredCloudFxlogUi.length} ${TEXT_FROM.toLowerCase()} ${
+                  cloudFxLog.length
+                } ${TEXT_CLOUD_FX_TRIGGER_DOCS}`}
+          </Typography>
+          <Box component="div" style={{display: "flex", height: "100%"}}>
+            <Box component="div" style={{flexGrow: 1}}>
+              <DataGrid
+                autoHeight
+                rows={filteredCloudFxlogUi}
+                columns={DATA_GRID_COLUMNS}
+                getRowId={(row) => row.uid}
+                localeText={deDE.components.MuiDataGrid.defaultProps.localeText}
+                getRowClassName={(params) => {
+                  if (params.row?.disabled) {
+                    return `super-app ${classes.dataGridDisabled}`;
+                  } else {
+                    return `super-app-theme`;
+                  }
+                }}
+              />
+            </Box>
+          </Box>
+        </Stack>
       </CardContent>
     </Card>
   );
@@ -668,7 +650,7 @@ const DialogCloudFxTriggerDocument = ({
   handleClose,
 }: DialogCloudFxTriggerDocumentProps) => {
   const theme = useTheme();
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
     <Dialog
@@ -680,14 +662,13 @@ const DialogCloudFxTriggerDocument = ({
     >
       {cloudFxTrigger?.["templateData"]?.["headerPictureSrc"] ? (
         <DialogTitle
-          className={classes.dialogHeaderWithPicture}
+          sx={classes.dialogHeaderWithPicture}
           style={{
             backgroundImage: `url(${cloudFxTrigger?.["templateData"]?.["headerPictureSrc"]})`,
             backgroundPosition: "center",
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
           }}
-          disableTypography
         >
           {logEntry.cloudFunctionType}
         </DialogTitle>
@@ -765,7 +746,7 @@ const DeleteDocumentTriggerDocumentsPanel = ({
   isDeleting,
   onDelete,
 }: DeleteDocumentTriggerDocumentsPanelProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
 
   const [daysOffset, setDaysOffset] = React.useState(180);
@@ -775,8 +756,8 @@ const DeleteDocumentTriggerDocumentsPanel = ({
   };
 
   return (
-    <Card className={classes.card} key={"cardInfo"}>
-      <CardContent className={classes.cardContent} key={"cardContentInfo"}>
+    <Card sx={classes.card} key={"cardInfo"}>
+      <CardContent sx={classes.cardContent} key={"cardContentInfo"}>
         <Typography gutterBottom={true} variant="h5" component="h2">
           {TEXT_DELETE_CLOUD_FX_TRIGGER_DOCS}
         </Typography>
@@ -807,7 +788,7 @@ const DeleteDocumentTriggerDocumentsPanel = ({
           disabled={!daysOffset}
           variant="contained"
           color="primary"
-          className={classes.submit}
+          sx={classes.submit}
           onClick={() => onDelete(daysOffset)}
         >
           {`${TEXT_CLOUD_FX_TRIGGER_DOCS} ${TEXT_DELETE}`}

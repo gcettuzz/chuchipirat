@@ -29,6 +29,7 @@
 .temp.jsx
 report.*.json
 *.code-workspace
+src/components/Temp/*
 
 npm-debug.log*
 yarn-debug.log*
@@ -45,3 +46,5 @@ jest_html_reporters.html
 /html-report
 mailTemplates/
 .vscode/launch.json
+
+

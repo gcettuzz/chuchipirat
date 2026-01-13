@@ -1,6 +1,8 @@
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import {SortOrder} from "../Firebase/Db/firebase.db.super.class";
 import {ChangeRecord} from "./global.interface";
+import {once} from "@atlaskit/pragmatic-drag-and-drop/once";
+
 /**
  * Schnittstelle für Utils.insertArrayElementAtPosition
  * @param array - Array das geändert werden soll
@@ -415,7 +417,7 @@ export default class Utils {
    * @result Boolean
    */
   static areStringArraysEqual = (array1: string[], array2: string[]) => {
-    if (array1.length !== array2.length) {
+    if (array1?.length !== array2?.length) {
       return false; // Die Arrays haben unterschiedliche Längen, daher können sie nicht identisch sein.
     }
 
@@ -487,4 +489,19 @@ export default class Utils {
     const unionSize = new Set([...setA, ...setB]).size;
     return intersectionSize / unionSize;
   }
+  // ===================================================================== */
+  /**
+   * Prüfung ob es der Code im Safari ausgeführt wird.
+   * Strings sind
+   * @returns `true` if a `Safari` browser.
+   * @returns `true` if the browser is running on iOS (they are all Safari).
+   */
+  static isSafari = once(function isSafari(): boolean {
+    if (process.env.NODE_ENV === "test") {
+      return false;
+    }
+
+    const {userAgent} = navigator;
+    return userAgent.includes("AppleWebKit") && !userAgent.includes("Chrome");
+  });
 }

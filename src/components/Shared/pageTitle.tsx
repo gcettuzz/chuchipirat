@@ -1,8 +1,9 @@
 import React from "react";
 
 import Typography from "@mui/material/Typography";
-import useStyles from "../../constants/styles";
 import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
+import useCustomStyles from "../../constants/styles";
+import {Box} from "@mui/material";
 
 /**
  * PageTitle-Eingenschaften
@@ -33,7 +34,7 @@ const PageTitle = ({
   windowTitle,
   ribbon,
 }: PageTitleProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   window.document.title = windowTitle
     ? windowTitle
@@ -46,7 +47,7 @@ const PageTitle = ({
   return (
     <React.Fragment>
       {ribbon && <Ribbon text={ribbon.text} cssProperty={ribbon.class} />}
-      <div className={classes.heroContent}>
+      <Box component="div" sx={classes.heroContent}>
         {title && (
           <Typography
             component="h1"
@@ -79,7 +80,7 @@ const PageTitle = ({
             {subTitle}
           </Typography>
         )}
-      </div>
+      </Box>
     </React.Fragment>
   );
 };

@@ -42,6 +42,7 @@ export interface ShoppingListProperties {
   name: string;
   selectedMeals: Meal["uid"][];
   selectedMenues: Menue["uid"][];
+  selectedDepartments: Department["uid"][];
   generated: ChangeRecord;
   hasManuallyAddedItems: boolean;
 }
@@ -49,6 +50,7 @@ export interface ShoppingListProperties {
 interface CreateNewList {
   name: string;
   selectedMenues: Menue["uid"][];
+  selectedDepartments: Department["uid"][];
   shoppingListCollection: ShoppingListCollection;
   menueplan: Menuplan;
   eventUid: Event["uid"];
@@ -262,6 +264,7 @@ export default class ShoppingListCollection {
   static createNewList = async ({
     name,
     selectedMenues,
+    selectedDepartments,
     shoppingListCollection,
     menueplan,
     eventUid,
@@ -279,6 +282,7 @@ export default class ShoppingListCollection {
 
     await ShoppingList.createNewList({
       selectedMenues: selectedMenues,
+      selectedDepartments: selectedDepartments,
       menueplan: menueplan,
       products: products,
       materials: materials,
@@ -306,6 +310,7 @@ export default class ShoppingListCollection {
             uid: shoppingList.uid,
             name: name,
             selectedMenues: selectedMenues,
+            selectedDepartments: selectedDepartments,
             selectedMeals: Menuplan.getMealsOfMenues({
               menuplan: menueplan,
               menues: selectedMenues,
@@ -474,6 +479,7 @@ export default class ShoppingListCollection {
     // Shopping Liste neu generieren
     await ShoppingList.createNewList({
       selectedMenues: listToUpdate.properties.selectedMenues,
+      selectedDepartments: listToUpdate.properties.selectedDepartments,
       menueplan: menueplan,
       products: products,
       materials: materials,

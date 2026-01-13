@@ -4,7 +4,6 @@ import {compose} from "react-recompose";
 
 import {
   Container,
-  Grid,
   IconButton,
   Card,
   CardHeader,
@@ -16,6 +15,7 @@ import {
   ListItemText,
   Typography,
 } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 
 import {
   Forward as ForwardIcon,
@@ -82,7 +82,7 @@ import {
   SYSTEM_SYSTEM_MESSAGE as ROUTE_SYSTEM_SYSTEM_MESSAGE,
 } from "../../constants/routes";
 
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
 import PageTitle from "../Shared/pageTitle";
 import withEmailVerification from "../Session/withEmailVerification";
@@ -111,7 +111,7 @@ const SystemPage = (props) => {
 const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
   authUser,
 }) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {push} = useHistory();
 
   if (!authUser) {
@@ -135,14 +135,14 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
         subTitle={TEXT_WELCOME_ON_THE_BRIDGE_CAPTAIN}
       />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="md">
+      <Container sx={classes.container} component="main" maxWidth="md">
         <Grid container spacing={2}>
           {authUser.roles.includes(Role.admin) && (
-            <Grid item xs={12} md={6}>
+            <Grid xs={12} md={6}>
               <SettingsTile goToDestination={goToDestination} />
             </Grid>
           )}
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <OverviewTile
               id={"overview"}
               onShowRecipes={goToDestination}
@@ -154,7 +154,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
               authUser={authUser}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <AdminTile
               id={"support"}
               text={TEXT_ACTIVATE_SUPPORT_USER}
@@ -164,7 +164,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
               routeDestination={ROUTE_SYSTEM_ACTIVATE_SUPPORT_USER}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <AdminTile
               id={"whereUsed"}
               text={TEXT_WHERE_USED}
@@ -174,7 +174,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
               routeDestination={ROUTE_SYSTEM_WHERE_USED}
             />
           </Grid>
-          <Grid item xs={12} md={6} lg={4}>
+          <Grid xs={12} md={6} lg={4}>
             <AdminTile
               id={"merge"}
               text={TEXT_MERGE_ITEMS}
@@ -184,7 +184,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
               routeDestination={ROUTE_SYSTEM_MERGE_PRODUCT}
             />
           </Grid>
-          <Grid item xs={12} md={6} lg={4}>
+          <Grid xs={12} md={6} lg={4}>
             <AdminTile
               id={"convert"}
               text={TEXT_CONVERT_ITEM}
@@ -196,7 +196,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
           </Grid>
           {authUser.roles.includes(Role.admin) && (
             <React.Fragment>
-              <Grid item xs={12} md={6} lg={4}>
+              <Grid xs={12} md={6} lg={4}>
                 <AdminTile
                   id={"jobs"}
                   text={TEXT_JOBS}
@@ -207,7 +207,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
                 />
               </Grid>
 
-              <Grid item xs={12} md={6} lg={4}>
+              <Grid xs={12} md={6} lg={4}>
                 <AdminTile
                   id={"dbIndices"}
                   text={TEXT_DB_INDICES}
@@ -217,7 +217,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
                   routeDestination={ROUTE_SYSTEM_DB_INDICES}
                 />
               </Grid>
-              <Grid item xs={12} md={6} lg={4}>
+              <Grid xs={12} md={6} lg={4}>
                 <AdminTile
                   id={"mailConsole"}
                   text={TEXT_MAIL_CONSOLE}
@@ -227,7 +227,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
                   routeDestination={ROUTE_SYSTEM_MAIL_CONSOLE}
                 />
               </Grid>
-              <Grid item xs={12} md={6} lg={4}>
+              <Grid xs={12} md={6} lg={4}>
                 <AdminTile
                   id={"temp"}
                   text={"Temp"}
@@ -238,7 +238,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
                 />
               </Grid>
             </React.Fragment>
-          )}{" "}
+          )}
         </Grid>
       </Container>
     </>
@@ -263,15 +263,15 @@ const AdminTile = ({
   action,
   routeDestination,
 }: AdminTileProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
-    <Card className={classes.card} key={"card_" + id}>
+    <Card sx={classes.card} key={"card_" + id}>
       <CardActionArea onClick={() => action(routeDestination)}>
         <CardHeader
           title={text}
           action={
-            <IconButton aria-label={"admin Card " + text}>
+            <IconButton aria-label={"admin Card " + text} size="large">
               {icon ? icon : <ForwardIcon />}
             </IconButton>
           }
@@ -290,14 +290,14 @@ interface SettingsTileProps {
   goToDestination: (route: string) => void;
 }
 const SettingsTile = ({goToDestination}: SettingsTileProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
-    <Card className={classes.card} key={"card_settings"}>
+    <Card sx={classes.card} key={"card_settings"}>
       <CardHeader
         title={TEXT_GLOBAL_SETTINGS}
         action={
-          <IconButton aria-label={"settings Card "}>
+          <IconButton aria-label={"settings Card "} size="large">
             <BuildIcon />
           </IconButton>
         }
@@ -350,14 +350,13 @@ const OverviewTile = ({
   icon,
   authUser,
 }: OverviewTileProps) => {
-  const classes = useStyles();
-
+  const classes = useCustomStyles();
   return (
-    <Card className={classes.card} key={"card_" + id}>
+    <Card sx={classes.card} key={"card_" + id}>
       <CardHeader
         title={TEXT_OVERVIEW_DIFFERENT_ELEMENTS}
         action={
-          <IconButton aria-label={"admin Card "}>
+          <IconButton aria-label={"admin Card "} size="large">
             {icon ? icon : <ForwardIcon />}
           </IconButton>
         }

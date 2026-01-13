@@ -25,6 +25,15 @@ export interface MealType {
   uid: string;
   name: string;
 }
+
+export enum MenueListOrderTypes {
+  mealRecipeOrder = "mealRecipeOrder",
+  materialOrder = "materialOrder",
+  productOrder = "productOrder",
+  mealTypeOrder = "order",
+  menuOrder = "menuOrder",
+}
+
 export interface Menue {
   uid: string;
   name: string;
@@ -655,7 +664,6 @@ export default class Menuplan {
         mealsOfMenues.push(meal.uid);
       }
     });
-
     return mealsOfMenues;
   };
   // ===================================================================== */
@@ -666,7 +674,6 @@ export default class Menuplan {
    */
   static getMenuesOfMeals = ({menuplan, meals}: GetMenuesOfMeals) => {
     const menuesOfMeals: Menue["uid"][] = [];
-
     meals.forEach((mealUid) => {
       menuplan.meals[mealUid].menuOrder.forEach((menueUid) =>
         menuesOfMeals.push(menueUid)

@@ -1,18 +1,17 @@
 import React from "react";
 
-import Backdrop from "@mui/material/Backdrop";
-import CircularProgress from "@mui/material/CircularProgress";
+import {Backdrop, CircularProgress} from "@mui/material";
 
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
 /* ===================================================================
 // ======================= Ladeanzeige für Seite =====================
 // =================================================================== */
 const FallbackLoading = () => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
-    <Backdrop className={classes.backdrop} open={true}>
+    <Backdrop sx={classes.backdrop} open={true}>
       <CircularProgress color="inherit" />
     </Backdrop>
   );

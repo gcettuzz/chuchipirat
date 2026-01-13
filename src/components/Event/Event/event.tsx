@@ -1,4 +1,4 @@
-import React from "react";
+import React, {SyntheticEvent} from "react";
 import {compose} from "react-recompose";
 
 import {useHistory} from "react-router";
@@ -11,12 +11,14 @@ import {
   Tabs,
   Tab,
   useTheme,
-  Grid,
+  Stack,
   Button,
   Typography,
+  Box,
+  SnackbarCloseReason,
 } from "@mui/material";
 
-import useStyles from "../../../constants/styles";
+import useCustomStyles from "../../../constants/styles";
 
 import Event, {EventRefDocuments} from "./event.class";
 import PageTitle from "../../Shared/pageTitle";
@@ -677,7 +679,7 @@ const EventBase: React.FC<
   const {customDialog} = useCustomDialog();
   const {push} = useHistory();
 
-  const classes = useStyles();
+  const classes = useCustomStyles();
   let eventUid = "";
 
   const [state, dispatch] = React.useReducer(eventReducer, INITITIAL_STATE);
@@ -1020,16 +1022,14 @@ const EventBase: React.FC<
   /* ------------------------------------------
   // Tab-Handling
   // ------------------------------------------ */
-  const onTabChange = (
-    event: React.ChangeEvent<Record<string, unknown>>,
-    newValue: number
-  ) => {
+  const onTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
   /* ------------------------------------------
   // Change-Handling
   // ------------------------------------------ */
   const onMenuplanUpdate = (menuplan: Menuplan) => {
+    console.warn("hier");
     Menuplan.save({
       menuplan: menuplan,
       firebase: firebase,
@@ -1505,8 +1505,8 @@ const EventBase: React.FC<
   // Snackback 
   // ------------------------------------------ */
   const handleSnackbarClose = (
-    event: React.SyntheticEvent | React.MouseEvent,
-    reason?: string
+    event: globalThis.Event | SyntheticEvent<any, globalThis.Event>,
+    reason: SnackbarCloseReason
   ) => {
     if (reason === "clickaway") {
       return;
@@ -1540,39 +1540,32 @@ const EventBase: React.FC<
       />
       {/* ===== BODY ===== */}
       <Container
-        className={classes.container}
+        sx={classes.container}
         style={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           marginBottom: theme.spacing(2),
+          width: "auto !important",
         }}
         component="main"
         maxWidth="xl"
       >
         <Backdrop
-          className={classes.backdrop}
+          sx={classes.backdrop}
           open={state.isLoading || state.isSaving}
         >
-          <Grid container spacing={2}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} className={classes.centerCenter}>
-                <CircularProgress color="inherit" />
-              </Grid>
-              {state.isSaving && (
-                <React.Fragment>
-                  <Grid item xs={12} className={classes.centerCenter}>
-                    <Typography>{TEXT_EVENT_IS_BEEING_SAVED}</Typography>
-                  </Grid>
-                  {eventDraft.localPicture && (
-                    <Grid item xs={12} className={classes.centerCenter}>
-                      <Typography>{TEXT_IMAGE_IS_BEEING_UPLOADED}</Typography>
-                    </Grid>
-                  )}
-                </React.Fragment>
-              )}
-            </Grid>
-          </Grid>
+          <Stack spacing={2} sx={classes.centerCenter}>
+            <CircularProgress color="inherit" />
+            {state.isSaving && (
+              <React.Fragment>
+                <Typography>{TEXT_EVENT_IS_BEEING_SAVED}</Typography>
+                {eventDraft.localPicture && (
+                  <Typography>{TEXT_IMAGE_IS_BEEING_UPLOADED}</Typography>
+                )}
+              </React.Fragment>
+            )}
+          </Stack>
         </Backdrop>
         {state.error ? (
           <AlertMessage
@@ -1582,18 +1575,16 @@ const EventBase: React.FC<
           />
         ) : (
           <React.Fragment>
-            <div className={classes.menuplanTabsContainer}>
+            <Box component="div" sx={classes.menuplanTabsContainer}>
               <Tabs
                 value={activeTab}
-                className={classes.menuplanTabs}
+                sx={classes.menuplanTabs}
                 style={{
                   marginBottom: "1rem",
                   display: "flex",
                   justifyContent: "center",
                 }}
                 onChange={onTabChange}
-                indicatorColor="primary"
-                textColor="primary"
                 variant="scrollable"
                 scrollButtons="auto"
                 aria-label="Menuplan Tabs"
@@ -1605,15 +1596,11 @@ const EventBase: React.FC<
                 <Tab label={TEXT_MATERIAL_LIST} {...tabProps(4)} />
                 <Tab label={TEXT_EVENT_INFO_SHORT} {...tabProps(5)} />
               </Tabs>
-            </div>
+            </Box>
             {activeTab == EventTabs.menuplan ? (
               <Container
                 maxWidth="xl"
-                style={{
-                  overflowX: "scroll",
-                  // display: "flex",
-                  // flexDirection: "row",
-                }}
+                style={{width: "auto"}}
                 id="menuplan_page_containter"
               >
                 <MenuplanPage
@@ -1705,22 +1692,23 @@ const EventBase: React.FC<
               </Container>
             ) : (
               <Container>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <EventInfoPage
-                      event={eventDraft.event}
-                      localPicture={eventDraft.localPicture}
-                      formValidation={eventDraft.formValidation}
-                      firebase={firebase}
-                      authUser={authUser}
-                      onUpdateEvent={onEventUpdate}
-                      onUpdatePicture={onEventPictureUpdate}
-                    />
-                  </Grid>
+                <Stack spacing={2}>
+                  <EventInfoPage
+                    event={eventDraft.event}
+                    localPicture={eventDraft.localPicture}
+                    formValidation={eventDraft.formValidation}
+                    firebase={firebase}
+                    authUser={authUser}
+                    onUpdateEvent={onEventUpdate}
+                    onUpdatePicture={onEventPictureUpdate}
+                  />
                   {state.event != eventDraft.event && (
-                    <Grid item xs={12} container justifyContent="flex-end">
+                    <Box
+                      component="div"
+                      sx={{display: "flex", justifyContent: "flex-end"}}
+                    >
                       <Button
-                        className={classes.deleteButton}
+                        sx={classes.deleteButton}
                         variant="outlined"
                         onClick={onEventDelete}
                       >
@@ -1743,9 +1731,9 @@ const EventBase: React.FC<
                       >
                         {TEXT_SAVE}
                       </Button>
-                    </Grid>
+                    </Box>
                   )}
-                </Grid>
+                </Stack>
               </Container>
             )}
           </React.Fragment>

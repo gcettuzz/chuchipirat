@@ -1,7 +1,6 @@
 import React from "react";
 import PageTitle from "../Shared/pageTitle";
-import {Container, Link, Typography} from "@mui/material";
-import {Alert, AlertTitle} from "@mui/lab";
+import {Container, Link, Typography, Alert, AlertTitle} from "@mui/material";
 import {
   HOME as ROUTE_HOME,
   SIGN_IN as ROUTE_SIGN_IN,
@@ -16,13 +15,13 @@ import {
   IF_YOU_ARE_IMPATIENT as TEXT_IF_YOU_ARE_IMPATIENT,
   HERE as TEXT_HERE,
 } from "../../constants/text";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
 const NoAuthPage = () => {
   const authUser = null;
   const [timer, setTimer] = React.useState(20);
   const {push} = useHistory();
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   React.useEffect(() => {
     if (timer === 0) {
@@ -41,7 +40,7 @@ const NoAuthPage = () => {
   return (
     <React.Fragment>
       <PageTitle title={TEXT_ALERT_TITLE_WAIT_A_MINUTE} />
-      <Container className={classes.container} component="main" maxWidth="xs">
+      <Container sx={classes.container} component="main" maxWidth="xs">
         <Alert severity="warning">
           <AlertTitle>
             {TEXT_ALERT_TITLE_MUTINY_ON_THE_HIGH_SEAS} - {TEXT_REDIRECTION_IN}{" "}

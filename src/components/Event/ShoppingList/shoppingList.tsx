@@ -1,9 +1,9 @@
-import React from "react";
+import React, {SyntheticEvent} from "react";
 import {pdf} from "@react-pdf/renderer";
 import fileSaver from "file-saver";
 
 import {
-  Grid,
+  Stack,
   Button,
   Backdrop,
   CircularProgress,
@@ -16,14 +16,17 @@ import {
   IconButton,
   Container,
   Checkbox,
-  useTheme,
   Dialog,
   DialogTitle,
   DialogActions,
   DialogContent,
   TextField,
   FormControl,
+  SnackbarCloseReason,
+  useTheme,
+  Box,
 } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
@@ -59,7 +62,7 @@ import {
 } from "../../../constants/text";
 import {MoreVert as MoreVertIcon} from "@mui/icons-material";
 
-import useStyles from "../../../constants/styles";
+import useCustomStyles from "../../../constants/styles";
 
 import Firebase from "../../Firebase/firebase.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
@@ -135,6 +138,11 @@ import {
   OperationType,
 } from "../Event/eventSharedComponents";
 import Material from "../../Material/material.class";
+import {TextFieldSize} from "../../../constants/defaultValues";
+import {
+  DialogSelectDepartments,
+  SelectedDepartmentsForShoppingList,
+} from "./dialogSelectDepartments";
 
 /* ===================================================================
 // ============================ Dispatcher ===========================
@@ -154,6 +162,7 @@ type State = {
 };
 type DispatchAction = {
   type: ReducerActions;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: {[key: string]: any};
 };
 const inititialState: State = {
@@ -233,6 +242,11 @@ const DIALOG_SELECT_MENUE_DATA_INITIAL_DATA = {
   operationType: OperationType.none,
 };
 
+const DIALOG_SELECT_DEPARTMENTS_INITIAL_DATA = {
+  open: false,
+  departments: {} as SelectedDepartmentsForShoppingList,
+};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
@@ -287,7 +301,8 @@ const EventShoppingListPage = ({
   onShoppingCollectionUpdate,
   onMasterdataCreate,
 }: EventShoppingListPageProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
+  const theme = useTheme();
   const {customDialog} = useCustomDialog();
 
   const navigationValuesContext = React.useContext(NavigationValuesContext);
@@ -298,6 +313,9 @@ const EventShoppingListPage = ({
   );
   const [dialogSelectMenueData, setDialogSelectMenueData] = React.useState(
     DIALOG_SELECT_MENUE_DATA_INITIAL_DATA
+  );
+  const [dialogSelectDepartments, setDialogSelectDepartments] = React.useState(
+    DIALOG_SELECT_DEPARTMENTS_INITIAL_DATA
   );
   const [contextMenuSelectedItem, setContextMenuSelectedItem] = React.useState(
     CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE
@@ -366,7 +384,31 @@ const EventShoppingListPage = ({
   const onConfirmDialogSelectMenues = async (
     selectedMenues: DialogSelectMenuesForRecipeDialogValues
   ) => {
-    setDialogSelectMenueData({...dialogSelectMenueData, open: false});
+    // Gewählte Menüs speichern
+    setDialogSelectMenueData({
+      ...dialogSelectMenueData,
+      menues: selectedMenues,
+      open: false,
+    });
+
+    setDialogSelectDepartments({...dialogSelectDepartments, open: true});
+  };
+
+  const onCloseDialogSelectDepartments = () => {
+    // Abbruch der Übung
+    setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
+    setDialogSelectDepartments(DIALOG_SELECT_DEPARTMENTS_INITIAL_DATA);
+  };
+  const onConfirmDialogSelectDepartments = async (
+    selectedDepartments: SelectedDepartmentsForShoppingList
+  ) => {
+    // Gewählte Abteilungen speichern
+    setDialogSelectDepartments({
+      ...dialogSelectDepartments,
+      open: false,
+      departments: selectedDepartments,
+    });
+    console.log("selectedDepartments: ", selectedDepartments);
 
     const userInput = (await customDialog({
       dialogType: DialogType.SingleTextInput,
@@ -382,17 +424,16 @@ const EventShoppingListPage = ({
         textInputLabel: TEXT_NAME,
       },
     })) as SingleTextInputResult;
-
     if (userInput.valid) {
       // Wait anzeigen
       dispatch({type: ReducerActions.SHOW_LOADING, payload: {isLoading: true}});
-
       if (dialogSelectMenueData.operationType === OperationType.Create) {
         // Rezepte holen und Liste erstellen
         await ShoppingListCollection.createNewList({
           name: userInput.input,
           shoppingListCollection: shoppingListCollection,
-          selectedMenues: Object.keys(selectedMenues),
+          selectedMenues: Object.keys(dialogSelectMenueData.menues),
+          selectedDepartments: Object.keys(selectedDepartments),
           menueplan: menuplan,
           eventUid: event.uid,
           products: products,
@@ -406,12 +447,10 @@ const EventShoppingListPage = ({
         })
           .then(async (result) => {
             await onShoppingCollectionUpdate(result.shoppingListCollection);
-
             fetchMissingData({
               type: FetchMissingDataType.SHOPPING_LIST,
               objectUid: result.shoppingListUid,
             });
-
             // liste gleich anzeigen!
             dispatch({
               type: ReducerActions.SET_SELECTED_LIST_ITEM,
@@ -435,17 +474,25 @@ const EventShoppingListPage = ({
                 payload: error,
               });
             }
+          })
+          .finally(() => {
+            // Alle Dialoge reseten
+            setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
+            setDialogSelectDepartments(DIALOG_SELECT_DEPARTMENTS_INITIAL_DATA);
           });
       } else if (dialogSelectMenueData.operationType === OperationType.Update) {
-        onRefreshLists(userInput.input, Object.keys(selectedMenues));
+        //TODO: Markierte Checkboxen beibehalten!!!! --> neue mengen anzeigen
+        // siehe #171
+        onRefreshLists(
+          userInput.input,
+          Object.keys(dialogSelectMenueData.menues),
+          Object.keys(selectedDepartments)
+        );
       }
     } else {
-      // Abbruch wieder das andere anzeigen
-      setDialogSelectMenueData({
-        ...dialogSelectMenueData,
-        menues: selectedMenues,
-        open: true,
-      });
+      // Abbruch Fenster schliessen
+      setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
+      setDialogSelectDepartments(DIALOG_SELECT_DEPARTMENTS_INITIAL_DATA);
     }
   };
   /* ------------------------------------------
@@ -453,11 +500,13 @@ const EventShoppingListPage = ({
   // ------------------------------------------ */
   const onRefreshLists = async (
     newName?: string,
-    selectedMenues?: Menue["uid"][]
+    selectedMenues?: Menue["uid"][],
+    selectedDepartments?: Department["uid"][]
   ) => {
     let keepManuallyAddedItems = false;
     const shoppingListCollectionToRefresh = {...shoppingListCollection};
-
+    console.log(selectedMenues);
+    console.log(selectedDepartments);
     if (
       shoppingList &&
       shoppingListCollection.lists[shoppingList.uid].properties
@@ -487,9 +536,14 @@ const EventShoppingListPage = ({
         dialogSelectMenueData.selectedListUid
       ].properties.name = newName!;
 
+      console.log(selectedMenues);
       shoppingListCollectionToRefresh.lists[
         dialogSelectMenueData.selectedListUid
       ].properties.selectedMenues = Object.keys(selectedMenues!);
+
+      shoppingListCollectionToRefresh.lists[
+        dialogSelectMenueData.selectedListUid
+      ].properties.selectedDepartments = selectedDepartments!;
 
       shoppingListCollectionToRefresh.lists[
         dialogSelectMenueData.selectedListUid
@@ -501,6 +555,9 @@ const EventShoppingListPage = ({
       setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
     }
     // Alle Listen aktualisieren
+    //TODO: hier gibt es einen Fehler mit LENGTH!!!
+    // prüfen ob selectedMeals und selectedMenues immer abgefüllt sind, oder nicht
+    // hier wird auf etwas zugegriffen, dass leer ist!!!
     ShoppingListCollection.refreshList({
       shoppingListCollection: shoppingListCollectionToRefresh,
       shoppingList: shoppingList!,
@@ -573,8 +630,9 @@ const EventShoppingListPage = ({
   // Snackbar-Handling
   // ------------------------------------------ */
   const handleSnackbarClose = (
-    event: React.SyntheticEvent | React.MouseEvent,
-    reason?: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    event: globalThis.Event | SyntheticEvent<any, globalThis.Event>,
+    reason: SnackbarCloseReason
   ) => {
     if (reason === "clickaway") {
       return;
@@ -652,9 +710,13 @@ const EventShoppingListPage = ({
       actionEvent as React.MouseEvent<HTMLDivElement, MouseEvent>
     );
     const selectedMenuesForDialog: DialogSelectMenuesForRecipeDialogValues = {};
+    const selectedDepartmentsForDialog: SelectedDepartmentsForShoppingList = {};
 
     let selectedMenues =
       shoppingListCollection.lists[selectedListUid].properties.selectedMenues;
+    const selectedDepartments =
+      shoppingListCollection.lists[selectedListUid].properties
+        .selectedDepartments;
 
     // Prüfen ob die Menüs immer noch gleich sind
     if (
@@ -686,15 +748,12 @@ const EventShoppingListPage = ({
       });
     }
 
-    // Menues der Mahlzeiten holen und Objekt umwandeln
-    Menuplan.getMealsOfMenues({
-      menuplan: menuplan,
-      menues:
-        shoppingListCollection.lists[selectedListUid].properties.selectedMeals,
-    }).forEach((menueUid) => (selectedMenues[menueUid] = true));
-
+    // Auswahl in Objekt umwandeln
     selectedMenues.forEach(
       (menueUid) => (selectedMenuesForDialog[menueUid] = true)
+    );
+    selectedDepartments.forEach(
+      (departmentUid) => (selectedDepartmentsForDialog[departmentUid] = true)
     );
 
     setDialogSelectMenueData({
@@ -703,31 +762,31 @@ const EventShoppingListPage = ({
       selectedListUid: selectedListUid,
       operationType: OperationType.Update,
     });
-
-    // const selectedMenues: DialogSelectMenuesForRecipeDialogValues = {};
-    // shoppingListCollection.lists[
-    //   selectedListUid
-    // ].properties.selectedMenues.forEach(
-    //   (menueUid) => (selectedMenues[menueUid] = true)
-    // );
-
-    setDialogSelectMenueData({
-      menues: selectedMenuesForDialog,
-      open: true,
-      selectedListUid: selectedListUid,
-      operationType: OperationType.Update,
+    setDialogSelectDepartments({
+      ...dialogSelectDepartments,
+      departments: selectedDepartmentsForDialog,
     });
   };
   const onCheckboxClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     // Umschiessen und speichern!
     const pressedCheckbox = event.target.name.split("_");
+    const departmentIndex = parseInt(pressedCheckbox[1], 10);
 
-    const item = shoppingList!.list[pressedCheckbox[1]].items.find(
+    if (isNaN(departmentIndex) || !shoppingList?.list[departmentIndex]) {
+      return;
+    }
+
+    const item = shoppingList.list[departmentIndex].items.find(
       (item: ShoppingListItem) =>
         item.item.uid == pressedCheckbox[2] && item.unit == pressedCheckbox[3]
-    ) as ShoppingListItem;
+    ) as ShoppingListItem | undefined;
+
+    if (!item) {
+      return;
+    }
+
     item.checked = !item.checked;
-    onShoppingListUpdate(shoppingList!);
+    onShoppingListUpdate(shoppingList);
   };
   /* ------------------------------------------
   // Kontext-Menü-Handler
@@ -1055,60 +1114,60 @@ const EventShoppingListPage = ({
     setRecipeDrawerData({...recipeDrawerData, open: false});
   };
   return (
-    <React.Fragment>
+    <Stack spacing={2}>
       {state.error && (
-        <Grid item key={"error"} xs={12}>
-          <AlertMessage
-            error={state.error}
-            messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
-          />
-        </Grid>
+        <AlertMessage
+          error={state.error}
+          messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
+        />
       )}
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Backdrop
-            className={classes.backdrop}
-            open={state.isLoading || recipeDrawerData.isLoadingData}
-          >
-            <CircularProgress color="inherit" />
-          </Backdrop>
-        </Grid>
-        <Grid item xs={12}>
-          <EventListCard
-            cardTitle={TEXT_SHOPPING_LIST}
-            cardDescription={TEXT_SHOPPING_LIST_MENUE_SELECTION_DESCRIPTION}
-            outOfDateWarnMessage={
-              TEXT_USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE
-            }
-            selectedListItem={state.selectedListItem}
-            lists={shoppingListCollection.lists}
-            noOfLists={shoppingListCollection.noOfLists}
-            menuplan={menuplan}
-            onCreateList={onCreateList}
-            onListElementSelect={onListElementSelect}
-            onListElementDelete={onListElementDelete}
-            onListElementEdit={onListElementEdit}
-            onRefreshLists={onRefreshLists}
-            onGeneratePrintVersion={onGeneratePrintVersion}
-          />
-        </Grid>
-        {state.selectedListItem && shoppingList && (
-          <React.Fragment>
-            <Grid item container justifyContent="center" xs={12}>
-              <Button color="primary" onClick={onAddArticleClick}>
-                {TEXT_ADD_ITEM}
-              </Button>
-            </Grid>
-            <Grid item xs={12}>
-              <EventShoppingListList
-                shoppingList={shoppingList}
-                onCheckboxClick={onCheckboxClick}
-                onOpenContexMenü={onOpenContextMenu}
-              />
-            </Grid>
-          </React.Fragment>
-        )}
-      </Grid>
+      <Backdrop
+        sx={classes.backdrop}
+        open={state.isLoading || recipeDrawerData.isLoadingData}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
+      <EventListCard
+        cardTitle={TEXT_SHOPPING_LIST}
+        cardDescription={TEXT_SHOPPING_LIST_MENUE_SELECTION_DESCRIPTION}
+        outOfDateWarnMessage={
+          TEXT_USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE
+        }
+        selectedListItem={state.selectedListItem}
+        lists={shoppingListCollection.lists}
+        noOfLists={shoppingListCollection.noOfLists}
+        menuplan={menuplan}
+        onCreateList={onCreateList}
+        onListElementSelect={onListElementSelect}
+        onListElementDelete={onListElementDelete}
+        onListElementEdit={onListElementEdit}
+        onRefreshLists={onRefreshLists}
+        onGeneratePrintVersion={onGeneratePrintVersion}
+      />
+      {state.selectedListItem && shoppingList && (
+        <React.Fragment>
+          <Box component="div" sx={{justifyContent: "center", display: "flex"}}>
+            <Button
+              color="primary"
+              onClick={onAddArticleClick}
+              variant="outlined"
+              sx={{
+                alignSelf: "flex-start",
+                marginTop: theme.spacing(2),
+              }}
+            >
+              {TEXT_ADD_ITEM}
+            </Button>
+          </Box>
+          <Box component="div" sx={{justifyContent: "center", display: "flex"}}>
+            <EventShoppingListList
+              shoppingList={shoppingList}
+              onCheckboxClick={onCheckboxClick}
+              onOpenContexMenü={onOpenContextMenu}
+            />
+          </Box>
+        </React.Fragment>
+      )}
       <DialogSelectMenues
         open={dialogSelectMenueData.open}
         title={TEXT_WHICH_MENUES_FOR_SHOPPING_LIST_GENERATION}
@@ -1120,6 +1179,13 @@ const EventShoppingListPage = ({
         showSelectAll={true}
         onClose={onCloseDialogSelectMenues}
         onConfirm={onConfirmDialogSelectMenues}
+      />
+      <DialogSelectDepartments
+        open={dialogSelectDepartments.open}
+        departments={departments}
+        preSelecteDepartments={dialogSelectDepartments.departments}
+        onClose={onCloseDialogSelectDepartments}
+        onConfirm={onConfirmDialogSelectDepartments}
       />
       <DialogHandleItem
         dialogOpen={handleItemDialogValues.open}
@@ -1185,7 +1251,7 @@ const EventShoppingListPage = ({
           onClose={onRecipeDrawerClose}
         />
       )}
-    </React.Fragment>
+    </Stack>
   );
 };
 /* ===================================================================
@@ -1201,161 +1267,148 @@ const EventShoppingListList = ({
   onCheckboxClick,
   onOpenContexMenü,
 }: EventShoppingListListProps) => {
-  const classes = useStyles();
-  const theme = useTheme();
+  const classes = useCustomStyles();
 
   return (
     <Container
-      className={classes.container}
+      sx={{...classes.container, width: "100%"}}
       component="main"
       maxWidth="sm"
       key={"ShoppingListContainer"}
     >
-      <Grid
-        container
-        justifyContent="center"
-        spacing={2}
-        key={"ShoppingListGridContainer"}
-      >
-        {Object.entries(shoppingList.list).map(
-          ([departmentKey, department]: [string, ShoppingListDepartment]) => (
-            <Grid item xs={12} key={"GridItemDepartment_" + departmentKey}>
-              <Typography
-                component={"h2"}
-                variant={"h5"}
-                align="center"
-                gutterBottom
-              >
-                {department.departmentName}
-              </Typography>
-              <Grid item xs={12} style={{marginBottom: theme.spacing(3)}}>
-                <List
-                  className={classes.listShoppingList}
-                  key={"shoppingListList_" + department.departmentUid}
+      {Object.entries(shoppingList.list).map(
+        ([departmentKey, department]: [string, ShoppingListDepartment]) => (
+          <React.Fragment key={"GridItemDepartment_" + departmentKey}>
+            <Typography
+              component={"h2"}
+              variant={"h5"}
+              align="center"
+              gutterBottom
+            >
+              {department.departmentName}
+            </Typography>
+            <List
+              sx={classes.eventList}
+              key={"shoppingListList_" + department.departmentUid}
+            >
+              {/* //TODO: Autocomplete hinzufügen für jeden Block jeweils ein leerer
+              // dieser wird automatisch erneuert, sobald einer gefüllt wird. ählich wie Rezept*/}
+              {Utils.sortArray({
+                array: department.items,
+                attributeName: "item.name",
+              }).map((item) => (
+                <ListItem
+                  key={"shoppingListItem_" + item.item.uid + "_" + item.unit}
+                  sx={classes.eventListItem}
                 >
-                  {Utils.sortArray({
-                    array: department.items,
-                    attributeName: "item.name",
-                  }).map((item) => (
-                    <ListItem
-                      key={
-                        "shoppingListItem_" + item.item.uid + "_" + item.unit
+                  <ListItemIcon>
+                    <Checkbox
+                      key={"checkbox_" + item.item.uid + "_" + item.unit}
+                      name={
+                        "checkbox_" +
+                        departmentKey +
+                        "_" +
+                        item.item.uid +
+                        "_" +
+                        item.unit
                       }
-                      className={classes.listShoppingListItem}
+                      onChange={onCheckboxClick}
+                      checked={item.checked}
+                      disableRipple
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    sx={classes.eventListItemTextQuantity}
+                    primaryTypographyProps={
+                      item.checked
+                        ? {color: "textSecondary"}
+                        : {color: "textPrimary"}
+                    }
+                    key={"quantity" + item.item.uid + "_" + item.unit}
+                    primary={
+                      item.checked ? (
+                        <del>
+                          {Number.isNaN(item.quantity) || item.quantity == 0
+                            ? ""
+                            : new Intl.NumberFormat("de-CH", {
+                                maximumSignificantDigits: 3,
+                              }).format(item.quantity)}
+                        </del>
+                      ) : Number.isNaN(item.quantity) || item.quantity == 0 ? (
+                        ""
+                      ) : (
+                        new Intl.NumberFormat("de-CH", {
+                          maximumSignificantDigits: 3,
+                        }).format(item.quantity)
+                      )
+                    }
+                  />
+                  <ListItemText
+                    sx={classes.eventListItemTextUnit}
+                    primaryTypographyProps={
+                      item.checked
+                        ? {color: "textSecondary"}
+                        : {color: "textPrimary"}
+                    }
+                    key={"unit_" + item.item.uid + "_" + item.unit}
+                    primary={item.checked ? <del>{item.unit}</del> : item.unit}
+                  />
+                  <ListItemText
+                    sx={classes.eventListItemTextProduct}
+                    primaryTypographyProps={
+                      item.checked
+                        ? {color: "textSecondary"}
+                        : {color: "textPrimary"}
+                    }
+                    key={"itemName_" + item.item.uid + "_" + item.unit}
+                    primary={
+                      item.checked ? (
+                        <del>{item.item.name}</del>
+                      ) : (
+                        item.item.name
+                      )
+                    }
+                  />
+                  <ListItemSecondaryAction
+                    key={
+                      "SecondaryAction_" +
+                      departmentKey +
+                      "_" +
+                      item.item.uid +
+                      "_" +
+                      item.unit
+                    }
+                  >
+                    <IconButton
+                      key={
+                        "MoreBtn_" +
+                        departmentKey +
+                        "_" +
+                        item.item.uid +
+                        "_" +
+                        item.unit
+                      }
+                      id={
+                        "MoreBtn_" +
+                        departmentKey +
+                        "_" +
+                        item.item.uid +
+                        "_" +
+                        item.unit
+                      }
+                      aria-label="settings"
+                      onClick={onOpenContexMenü}
+                      size="large"
                     >
-                      <ListItemIcon>
-                        <Checkbox
-                          key={"checkbox_" + item.item.uid + "_" + item.unit}
-                          name={
-                            "checkbox_" +
-                            departmentKey +
-                            "_" +
-                            item.item.uid +
-                            "_" +
-                            item.unit
-                          }
-                          onChange={onCheckboxClick}
-                          checked={item.checked}
-                          color={"primary"}
-                          disableRipple
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        className={classes.shoppingListItemTextQuantity}
-                        primaryTypographyProps={
-                          item.checked
-                            ? {color: "textSecondary"}
-                            : {color: "textPrimary"}
-                        }
-                        key={"quantity" + item.item.uid + "_" + item.unit}
-                        primary={
-                          item.checked ? (
-                            <del>
-                              {Number.isNaN(item.quantity) || item.quantity == 0
-                                ? ""
-                                : new Intl.NumberFormat("de-CH", {
-                                    maximumSignificantDigits: 3,
-                                  }).format(item.quantity)}
-                            </del>
-                          ) : Number.isNaN(item.quantity) ||
-                            item.quantity == 0 ? (
-                            ""
-                          ) : (
-                            new Intl.NumberFormat("de-CH", {
-                              maximumSignificantDigits: 3,
-                            }).format(item.quantity)
-                          )
-                        }
-                      />
-                      <ListItemText
-                        className={classes.shoppingListItemTextUnit}
-                        primaryTypographyProps={
-                          item.checked
-                            ? {color: "textSecondary"}
-                            : {color: "textPrimary"}
-                        }
-                        key={"unit_" + item.item.uid + "_" + item.unit}
-                        primary={
-                          item.checked ? <del>{item.unit}</del> : item.unit
-                        }
-                      />
-                      <ListItemText
-                        className={classes.shoppingListItemTextProduct}
-                        primaryTypographyProps={
-                          item.checked
-                            ? {color: "textSecondary"}
-                            : {color: "textPrimary"}
-                        }
-                        key={"itemName_" + item.item.uid + "_" + item.unit}
-                        primary={
-                          item.checked ? (
-                            <del>{item.item.name}</del>
-                          ) : (
-                            item.item.name
-                          )
-                        }
-                      />
-                      <ListItemSecondaryAction
-                        key={
-                          "SecondaryAction_" +
-                          departmentKey +
-                          "_" +
-                          item.item.uid +
-                          "_" +
-                          item.unit
-                        }
-                      >
-                        <IconButton
-                          key={
-                            "MoreBtn_" +
-                            departmentKey +
-                            "_" +
-                            item.item.uid +
-                            "_" +
-                            item.unit
-                          }
-                          id={
-                            "MoreBtn_" +
-                            departmentKey +
-                            "_" +
-                            item.item.uid +
-                            "_" +
-                            item.unit
-                          }
-                          aria-label="settings"
-                          onClick={onOpenContexMenü}
-                        >
-                          <MoreVertIcon />
-                        </IconButton>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                  ))}
-                </List>
-              </Grid>
-            </Grid>
-          )
-        )}
-      </Grid>
+                      <MoreVertIcon />
+                    </IconButton>
+                  </ListItemSecondaryAction>
+                </ListItem>
+              ))}
+            </List>
+          </React.Fragment>
+        )
+      )}
     </Container>
   );
 };
@@ -1583,7 +1636,7 @@ const DialogHandleItem = ({
         <DialogTitle>{TEXT_ADD_ITEM}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               {/* Produkt */}
               <ItemAutocomplete
                 componentKey={"x"}
@@ -1591,12 +1644,13 @@ const DialogHandleItem = ({
                 materials={materials}
                 products={products}
                 disabled={editMode}
+                size={TextFieldSize.medium}
                 onChange={onChangeItem}
                 error={dialogValidation}
               />
             </Grid>
             {/* Menge */}
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 margin="normal"
                 id={"quantity"}
@@ -1609,8 +1663,7 @@ const DialogHandleItem = ({
                 onChange={onQuantityChange}
               />
             </Grid>
-            {/* HACK: MUI kann die Felder noch nicht zu 100% sauber ausrichten */}
-            <Grid item xs={6} style={{marginTop: "3px"}}>
+            <Grid xs={6}>
               {/* Einheit */}
               <FormControl fullWidth margin="normal">
                 <UnitAutocomplete

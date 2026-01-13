@@ -1,12 +1,19 @@
 import React from "react";
 
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
+import {
+  Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+} from "@mui/material";
 
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
 import CheckBoxOutlinedIcon from "@mui/icons-material/CheckBoxOutlined";
 
 import {
@@ -22,13 +29,6 @@ import {
   CANCEL as TEXT_CANCEL,
   SEND_RECIPE_TO_REVIEW as TEXT_SEND_RECIPE_TO_REVIEW,
 } from "../../constants/text";
-import {
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-} from "@mui/material";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================

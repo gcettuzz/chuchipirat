@@ -151,12 +151,14 @@ export class RecipeShort {
       })
     );
     if (eventUid !== "") {
-      recipesShort = recipesShort.concat(
-        await this.getShortRecipesVariant({
-          firebase: firebase,
-          eventUid: eventUid,
-        })
-      );
+      const recipeList = await this.getShortRecipesVariant({
+        firebase: firebase,
+        eventUid: eventUid,
+      });
+
+      if (recipeList.length != 0) {
+        recipesShort = recipesShort.concat(recipeList);
+      }
     }
 
     recipesShort = Utils.sortArray({
@@ -234,7 +236,8 @@ export class RecipeShort {
       .read<RecipeShort>({uids: [eventUid]})
       .then((result) => {
         recipesShort = this.moveDbDateFromObjectToArray(result);
-      });
+      })
+      .catch((error) => console.info(error));
 
     recipesShort = Utils.sortArray({
       array: recipesShort,

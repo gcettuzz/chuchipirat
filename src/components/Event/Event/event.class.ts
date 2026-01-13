@@ -541,6 +541,10 @@ export default class Event {
         objectUid: eventData.uid,
         objectName: eventData.name,
         objectPictureSrc: eventData.pictureSrc,
+        additionalData: {
+          location: eventData.location,
+          duration: eventData.numberOfDays,
+        },
       });
     }
 

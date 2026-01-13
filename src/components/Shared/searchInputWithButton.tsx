@@ -1,23 +1,25 @@
 import React from "react";
 import {useTheme} from "@mui/material/styles";
 
-import Container from "@mui/material/Container";
-import Grid from "@mui/material/Grid";
-import Button from "@mui/material/Button";
-import FormControl from "@mui/material/FormControl";
-import InputAdornment from "@mui/material/InputAdornment";
-import Input from "@mui/material/Input";
-import InputLabel from "@mui/material/InputLabel";
-import IconButton from "@mui/material/IconButton";
+import {
+  Container,
+  Button,
+  FormControl,
+  InputAdornment,
+  Input,
+  InputLabel,
+  IconButton,
+} from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
+
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import * as TEXT from "../../constants/text";
 
 import useMediaQuery from "@mui/material/useMediaQuery";
 
-import useStyles from "../../constants/styles";
-
 import {HTMLInputTypeAttribute} from "react";
+import useCustomStyles from "../../constants/styles";
 // ===================================================================== */
 /**
  * Übergabeparameter für SearchInputWithButton
@@ -52,15 +54,15 @@ const SearchInputWithButton = ({
   onInputClear,
   onSearch,
 }: SearchInputWithButtonProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const theme = useTheme();
-  const breakpointIsSm = useMediaQuery(theme.breakpoints.down("sm"));
+  const breakpointIsSm = useMediaQuery(theme.breakpoints.down("md"));
 
   return (
-    <Container className={classes.container} component="main">
-      <Grid container spacing={2} className={classes.gridSearchInput}>
-        <Grid item xs={8} sm={9}>
+    <Container sx={classes.container} component="main">
+      <Grid container spacing={2} sx={{paddingBottom: theme.spacing(2)}}>
+        <Grid xs={8} sm={9}>
           <FormControl fullWidth>
             <InputLabel id={id}>{label}</InputLabel>
             <Input
@@ -93,7 +95,7 @@ const SearchInputWithButton = ({
             />
           </FormControl>
         </Grid>
-        <Grid item xs={4} sm={3}>
+        <Grid xs={4} sm={3}>
           {breakpointIsSm ? (
             <Button
               fullWidth
@@ -109,7 +111,7 @@ const SearchInputWithButton = ({
               fullWidth
               variant="contained"
               color="primary"
-              className={classes.button}
+              sx={classes.button}
               startIcon={<SearchIcon />}
               onClick={onSearch}
               disabled={!value}

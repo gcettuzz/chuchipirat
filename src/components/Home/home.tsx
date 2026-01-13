@@ -1,11 +1,10 @@
-import React from "react";
+import React, {SyntheticEvent} from "react";
 import {useTheme} from "@mui/material/styles";
 import {compose} from "react-recompose";
 
 import {useHistory} from "react-router";
 
 import {
-  Grid,
   Card,
   CardMedia,
   CardContent,
@@ -23,9 +22,11 @@ import {
   Avatar,
   Link,
   Box,
+  Skeleton,
+  SnackbarCloseReason,
 } from "@mui/material";
 
-import {Skeleton} from "@mui/lab";
+import Grid from "@mui/material/Unstable_Grid2";
 
 import PageTitle from "../Shared/pageTitle";
 import AlertMessage from "../Shared/AlertMessage";
@@ -482,8 +483,8 @@ const HomeBase: React.FC<
   // Snackback schliessen
   // ------------------------------------------ */
   const handleSnackbarClose = (
-    event: React.SyntheticEvent | React.MouseEvent,
-    reason?: string
+    event: globalThis.Event | SyntheticEvent<any, globalThis.Event>,
+    reason: SnackbarCloseReason
   ) => {
     if (reason === "clickaway") {
       return;
@@ -500,7 +501,7 @@ const HomeBase: React.FC<
       <Container sx={classes.container} component="main" maxWidth="md">
         <Grid container spacing={2} justifyContent="center">
           {state.error && (
-            <Grid item key={"error"} xs={12}>
+            <Grid key={"error"} xs={12}>
               <AlertMessage
                 error={state.error}
                 messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
@@ -508,11 +509,11 @@ const HomeBase: React.FC<
             </Grid>
           )}
           {state.systemMessage !== null && (
-            <Grid item key="systemMessage" xs={12}>
+            <Grid key="systemMessage" xs={12}>
               <AlertSystemMessage systemMessage={state.systemMessage} />
             </Grid>
           )}
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <HomeNextEvents
               events={state.events}
               isLoadingEvents={state.isLoadingEvents}
@@ -520,7 +521,7 @@ const HomeBase: React.FC<
               onCreateNewEvent={onCreateNewEvent}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <HomePassedEvents
               events={state.passedEvents}
               isLoadingPassedEvents={state.isLoadingPassedEvents}
@@ -528,11 +529,11 @@ const HomeBase: React.FC<
               onShowPassedEvents={onShowPassedEvents}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <Divider style={{marginBottom: "2rem"}} />
           </Grid>
           {Utils.isTestEnviroment() && (
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <Typography variant="h5" align="center" gutterBottom>
                 Testing
               </Typography>
@@ -548,21 +549,21 @@ const HomeBase: React.FC<
               <Divider style={{marginBottom: "2rem"}} />
             </Grid>
           )}
-          <Grid item xs={12} md={4}>
+          <Grid xs={12} md={4}>
             <HomeNewestRecipes
               recipes={state.recipes}
               isLoadingRecipes={state.isLoadingEvents}
               onCardClick={onRecipeClick}
             />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid xs={12} md={4}>
             <HomeFeed
               feed={state.feed}
               isLoadingFeed={state.isLoadingFeed}
               onListEntryClick={onFeedEntryCllick}
             />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid xs={12} md={4}>
             <HomeStats
               stats={state.stats}
               isLoadingStats={state.isLoadingStats}
@@ -614,19 +615,12 @@ const HomeNextEvents = ({
     <React.Fragment>
       <Grid container spacing={2} justifyContent="center">
         {isLoadingEvents && (
-          <Grid item xs={12} sm={6} md={4} lg={3}>
+          <Grid xs={12} sm={6} md={4} lg={3}>
             <EventCardLoading key={"loadingEventCard"} />
           </Grid>
         )}
         {events.map((event) => (
-          <Grid
-            item
-            xs={12}
-            sm={6}
-            md={4}
-            lg={3}
-            key={"eventGrid_" + event.uid}
-          >
+          <Grid xs={12} sm={6} md={4} lg={3} key={"eventGrid_" + event.uid}>
             <EventCard
               event={event}
               onCardClick={onCardClick}
@@ -634,7 +628,7 @@ const HomeNextEvents = ({
             />
           </Grid>
         ))}
-        <Grid item xs={12} sm={6} md={4} lg={3}>
+        <Grid xs={12} sm={6} md={4} lg={3}>
           <Card sx={classes.card} key={"eventCardNew"}>
             <CardMedia
               sx={classes.cardMedia}
@@ -686,8 +680,8 @@ const HomePassedEvents = ({
   // gelistet werden
   const theme = useTheme();
   let rowFiller: number[] = [];
-  const breakpointIsXs = useMediaQuery(theme.breakpoints.down("xs"));
-  const breakpointIsSm = useMediaQuery(theme.breakpoints.down("sm"));
+  const breakpointIsXs = useMediaQuery(theme.breakpoints.down("sm"));
+  const breakpointIsSm = useMediaQuery(theme.breakpoints.down("md"));
   breakpointIsXs
     ? (rowFiller = [])
     : breakpointIsSm
@@ -698,7 +692,7 @@ const HomePassedEvents = ({
     <React.Fragment>
       <Grid container spacing={2} justifyContent="center">
         {showLoadPassedEvents ? (
-          <Grid item xs={12} sx={classes.centerCenter}>
+          <Grid xs={12} sx={classes.centerCenter}>
             <Button
               color="primary"
               sx={classes.button}
@@ -708,7 +702,7 @@ const HomePassedEvents = ({
             </Button>
           </Grid>
         ) : (
-          <Grid item xs={12} sx={classes.centerCenter}>
+          <Grid xs={12} sx={classes.centerCenter}>
             <Typography
               variant="h5"
               align="center"
@@ -721,24 +715,17 @@ const HomePassedEvents = ({
         )}
         {isLoadingPassedEvents && (
           <React.Fragment>
-            <Grid item xs={12} sm={6} md={4} lg={3}>
+            <Grid xs={12} sm={6} md={4} lg={3}>
               <EventCardLoading />
             </Grid>
-            <Grid item xs={12} sm={6} md={4} lg={3}>
+            <Grid xs={12} sm={6} md={4} lg={3}>
               <EventCardLoading />
             </Grid>
           </React.Fragment>
         )}
         {!showLoadPassedEvents &&
           events.map((event) => (
-            <Grid
-              item
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              key={"eventGrid_" + event.uid}
-            >
+            <Grid xs={12} sm={6} md={4} lg={3} key={"eventGrid_" + event.uid}>
               <EventCard
                 event={event}
                 onCardClick={onCardClick}
@@ -749,7 +736,6 @@ const HomePassedEvents = ({
         {!showLoadPassedEvents &&
           rowFiller.map((number) => (
             <Grid
-              item
               xs={12}
               sm={6}
               md={4}
@@ -789,7 +775,7 @@ const HomeNewestRecipes = ({
 
   return (
     <Grid container spacing={2} justifyContent="center">
-      <Grid item xs={12} key={"recipeTitle"}>
+      <Grid xs={12} key={"recipeTitle"}>
         <Typography
           align="center"
           gutterBottom={true}
@@ -801,12 +787,12 @@ const HomeNewestRecipes = ({
       </Grid>
       {isLoadingRecipes &&
         Array(DEFAULT_RECIPE_DISPLAY).map((emptyCard) => (
-          <Grid item xs={12} key={"emptyRecipeGrid_" + emptyCard}>
+          <Grid xs={12} key={"emptyRecipeGrid_" + emptyCard}>
             <RecipeCardLoading key={"emptyRecipeCard_" + emptyCard} />
           </Grid>
         ))}
       {recipes.map((recipe) => (
-        <Grid item xs={12} key={"recipeGrid_" + recipe.uid}>
+        <Grid xs={12} key={"recipeGrid_" + recipe.uid}>
           <Card
             sx={classes.card}
             onMouseOver={() => handleHover(recipe.uid)}
@@ -859,7 +845,7 @@ const HomeFeed = ({feed, isLoadingFeed, onListEntryClick}: HomeFeedProps) => {
   const classes = useCustomStyles();
   return (
     <Grid container spacing={2} justifyContent="center">
-      <Grid item xs={12}>
+      <Grid xs={12}>
         <Typography
           align="center"
           gutterBottom={true}
@@ -869,7 +855,7 @@ const HomeFeed = ({feed, isLoadingFeed, onListEntryClick}: HomeFeedProps) => {
           {TEXT_FEED}
         </Typography>
       </Grid>
-      <Grid item xs={12}>
+      <Grid xs={12}>
         <Card sx={classes.card}>
           <List>
             {isLoadingFeed &&
@@ -911,7 +897,6 @@ const HomeFeed = ({feed, isLoadingFeed, onListEntryClick}: HomeFeedProps) => {
                         <Typography
                           component="span"
                           variant="body2"
-                          //  className={classes.inline}
                           color="textPrimary"
                         >
                           {feedEntry.user.displayName}
@@ -943,7 +928,7 @@ const HomeStats = ({stats, isLoadingStats}: HomeStatsProps) => {
   const classes = useCustomStyles();
   return (
     <Grid container spacing={2} justifyContent="center">
-      <Grid item xs={12}>
+      <Grid xs={12}>
         <Typography
           align="center"
           gutterBottom={true}
@@ -953,7 +938,7 @@ const HomeStats = ({stats, isLoadingStats}: HomeStatsProps) => {
           {TEXT_STATS}
         </Typography>
       </Grid>
-      <Grid item xs={12}>
+      <Grid xs={12}>
         <Card sx={classes.card}>
           <List>
             {isLoadingStats

@@ -1,9 +1,9 @@
-import React, {Suspense, lazy} from "react";
+import React, {Suspense, SyntheticEvent, lazy} from "react";
 import {useHistory} from "react-router";
 import {compose} from "react-recompose";
 
 import Action from "../../constants/actions";
-import {Container, Divider} from "@mui/material";
+import {Container, Divider, SnackbarCloseReason} from "@mui/material";
 import Recipe, {RecipeType} from "./recipe.class";
 
 import RecipeView from "./recipe.view";
@@ -369,8 +369,8 @@ const RecipeBase: React.FC<
   // Snackback schliessen
   // ------------------------------------------ */
   const handleSnackbarClose = (
-    event: React.SyntheticEvent | React.MouseEvent,
-    reason?: string
+    event: Event | SyntheticEvent<any, Event>,
+    reason: SnackbarCloseReason
   ) => {
     if (reason === "clickaway") {
       return;
@@ -430,10 +430,6 @@ export const RecipeDivider = ({style}: RecipeDividerProps) => {
     </Container>
   );
 };
-
-// const condition = (authUser) => !!authUser;
-
-// export default compose(withAuthorization(condition), withFirebase)(RecipePage);
 
 const condition = (authUser: AuthUser | null) => !!authUser;
 

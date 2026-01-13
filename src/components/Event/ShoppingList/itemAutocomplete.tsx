@@ -1,7 +1,10 @@
 import React from "react";
 import TextField from "@mui/material/TextField";
-import Autocomplete from "@mui/lab/Autocomplete";
-import {AutocompleteChangeReason} from "@mui/material";
+import {
+  Autocomplete,
+  AutocompleteChangeReason,
+  createFilterOptions,
+} from "@mui/material";
 
 import Material, {MaterialType} from "../../Material/material.class";
 import Utils from "../../Shared/utils.class";
@@ -9,6 +12,7 @@ import Utils from "../../Shared/utils.class";
 import {ITEM, ADD, ITEM_CANT_BE_CHANGED} from "../../../constants/text";
 import Product from "../../Product/product.class";
 import {ItemType} from "./shoppingList.class";
+import {TextFieldSize} from "../../../constants/defaultValues";
 
 interface ItemAutocompleteProps {
   componentKey: string;
@@ -24,6 +28,7 @@ interface ItemAutocompleteProps {
   ) => void;
   error: {isError: boolean; errorText: string};
   allowCreateNewItem?: boolean;
+  size: TextFieldSize;
 }
 interface filterHelpWithSortRank {
   uid: string;
@@ -59,6 +64,7 @@ const ItemAutocomplete = ({
   error,
   allowCreateNewItem = true,
   onChange,
+  size = TextFieldSize.medium,
 }: ItemAutocompleteProps) => {
   // Handler für Zutaten/Produkt hinzufügen
   const filter = createFilterOptions<MaterialItem | ProductItem>();
@@ -91,8 +97,7 @@ const ItemAutocomplete = ({
       disabled={disabled}
       autoSelect
       autoHighlight
-      // getOptionSelected={(optionItem) => optionItem.name === item.name}
-      getOptionSelected={(option) => option.name === item?.name}
+      isOptionEqualToValue={(option) => option.name === item?.name}
       getOptionLabel={(option) => {
         if (typeof option === "string") {
           return option;
@@ -164,14 +169,22 @@ const ItemAutocomplete = ({
         });
         return filtered;
       }}
-      renderOption={(option) => option.name}
+      renderOption={(props, option) => {
+        // eslint-disable-next-line react/prop-types
+        const {key, ...optionProps} = props;
+        return (
+          <li key={key} {...optionProps}>
+            {option.name}
+          </li>
+        );
+      }}
       freeSolo
       renderInput={(params) => (
         <TextField
           {...params}
           label={ITEM}
-          size="small"
           error={error.isError}
+          size={size}
           helperText={
             error.isError
               ? error.errorText

@@ -2,8 +2,6 @@ import React from "react";
 import {useHistory, withRouter} from "react-router";
 import {compose} from "react-recompose";
 
-import CssBaseline from "@mui/material/CssBaseline";
-
 import {
   Button,
   IconButton,
@@ -19,9 +17,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Grid,
+  Stack,
 } from "@mui/material";
-
 import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
@@ -34,7 +31,6 @@ import PasswordStrengthMeter from "../Shared/passwordStrengthMeter";
 import AlertMessage from "../Shared/AlertMessage";
 
 import {withFirebase} from "../Firebase/firebaseContext";
-import useStyles from "../../constants/styles";
 import {
   SIGN_UP as ROUTE_SIGN_UP,
   HOME as ROUTE_HOME,
@@ -70,6 +66,7 @@ import {
   useCustomDialog,
 } from "../Shared/customDialogContext";
 import {AlertMaintenanceMode} from "../SignIn/signIn";
+import useCustomStyles from "../../constants/styles";
 
 // ===================================================================
 // ======================== globale Funktionen =======================
@@ -155,7 +152,7 @@ interface CustomRouterProps {
 const SignUpBase: React.FC<CustomRouterProps> = (props) => {
   const firebase = props.firebase;
 
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const [state, dispatch] = React.useReducer(signUpReducer, inititialState);
   const {push} = useHistory();
   const {customDialog} = useCustomDialog();
@@ -251,28 +248,21 @@ const SignUpBase: React.FC<CustomRouterProps> = (props) => {
   };
   return (
     <React.Fragment>
-      <CssBaseline />
       <PageTitle subTitle={TEXT_WE_NEED_SOME_DETAILS_ABOUT_YOU} />
 
-      <Container className={classes.container} component="main" maxWidth="xs">
-        <Grid container spacing={2}>
-          {state.maintenanceMode && (
-            <Grid item xs={12}>
-              <AlertMaintenanceMode />
-            </Grid>
-          )}
-          <Grid item xs={12}>
-            <SignUpForm
-              signUpData={state.signUpData}
-              signUpAllowed={state.signUpAllowed}
-              maintenanceMode={state.maintenanceMode}
-              error={state.error}
-              onFieldChange={onFieldChange}
-              onSignUp={onSignUp}
-              openDialog={onSmallPrintDialogOpen}
-            />
-          </Grid>
-        </Grid>
+      <Container sx={classes.container} component="main" maxWidth="xs">
+        <Stack spacing={2}>
+          {state.maintenanceMode && <AlertMaintenanceMode />}
+          <SignUpForm
+            signUpData={state.signUpData}
+            signUpAllowed={state.signUpAllowed}
+            maintenanceMode={state.maintenanceMode}
+            error={state.error}
+            onFieldChange={onFieldChange}
+            onSignUp={onSignUp}
+            openDialog={onSmallPrintDialogOpen}
+          />
+        </Stack>
       </Container>
       <DialogTermOfUse
         open={smallPrintDialogs.termOfUse}
@@ -307,7 +297,7 @@ const SignUpForm = ({
   openDialog,
   error,
 }: SignUpFormProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const [showPassword, setShowPassword] = React.useState(false);
 
   /* ------------------------------------------
@@ -322,13 +312,13 @@ const SignUpForm = ({
 
   return (
     <React.Fragment>
-      <Card className={classes.card}>
+      <Card sx={classes.card}>
         <CardMedia
-          className={classes.cardMedia}
+          sx={classes.cardMedia}
           image={ImageRepository.getEnviromentRelatedPicture().SIGN_IN_HEADER}
           title={"Logo"}
         />
-        <CardContent className={classes.cardContent}>
+        <CardContent sx={classes.cardContent}>
           <Typography
             gutterBottom={true}
             variant="h5"
@@ -409,6 +399,7 @@ const SignUpForm = ({
                     aria-label={TEXT_SHOW_PASSWORD}
                     onClick={handleClickShowPassword}
                     onMouseDown={handleMouseDownPassword}
+                    size="large"
                   >
                     {showPassword ? <VisibilityIcon /> : <VisibilityOffIcon />}
                   </IconButton>
@@ -453,7 +444,7 @@ const SignUpForm = ({
             fullWidth
             variant="contained"
             color="primary"
-            className={classes.submit}
+            sx={classes.submit}
             onClick={onSignUp}
           >
             {TEXT_CREATE_ACCOUNT}

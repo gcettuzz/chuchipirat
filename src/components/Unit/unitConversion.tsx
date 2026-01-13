@@ -1,8 +1,6 @@
 import React from "react";
 import {compose} from "react-recompose";
 
-import CssBaseline from "@mui/material/CssBaseline";
-
 import {
   Container,
   Typography,
@@ -16,6 +14,7 @@ import {
   IconButton,
   Tabs,
   Tab,
+  SnackbarCloseReason,
 } from "@mui/material";
 
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -54,7 +53,7 @@ import DialogCreateUnitConversion, {
 } from "./dialogCreateUnitConversion";
 
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
 import Unit from "./unit.class";
 import UnitConversion from "./unitConversion.class";
@@ -411,7 +410,7 @@ const UnitConversionBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(
     unitConversionReducer,
@@ -517,11 +516,8 @@ const UnitConversionBase: React.FC<
   /* ------------------------------------------
 	// Tab wechseln
 	// ------------------------------------------ */
-  const onTabChange = (
-    event: React.ChangeEvent<Record<string, unknown>>,
-    newValue: number
-  ) => {
-    setTabValue(newValue);
+  const onTabChange = (event: React.BaseSyntheticEvent, value: any) => {
+    setTabValue(value);
   };
   /* ------------------------------------------
 	// PopUp öffnen um neue Umrechnung anzulegen
@@ -618,8 +614,8 @@ const UnitConversionBase: React.FC<
 	// Snackback schliessen
 	// ------------------------------------------ */
   const handleSnackbarClose = (
-    event: React.SyntheticEvent | React.MouseEvent,
-    reason?: string
+    event: Event | React.SyntheticEvent<any, Event>,
+    reason: SnackbarCloseReason
   ) => {
     if (reason === "clickaway") {
       return;
@@ -686,7 +682,6 @@ const UnitConversionBase: React.FC<
   };
   return (
     <React.Fragment>
-      <CssBaseline />
       {/*===== HEADER ===== */}
       <PageTitle
         title={TEXT_PAGE_TITLE_UNIT_CONVERSION}
@@ -725,20 +720,13 @@ const UnitConversionBase: React.FC<
         ]}
       />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="md">
-        <Backdrop className={classes.backdrop} open={state.isLoading.overall}>
+      <Container sx={classes.container} component="main" maxWidth="md">
+        <Backdrop sx={classes.backdrop} open={state.isLoading.overall}>
           <CircularProgress color="inherit" />
         </Backdrop>
         <Grid container spacing={2}>
           <Grid item key={"gridTabs"} xs={12}>
-            <Tabs
-              // className={classes.tabs}
-              value={tabValue}
-              onChange={onTabChange}
-              indicatorColor="primary"
-              textColor="primary"
-              centered
-            >
+            <Tabs value={tabValue} onChange={onTabChange} centered>
               <Tab
                 // className={classes.tabs}
                 label={TEXT_BASIC}
@@ -816,11 +804,11 @@ const BasicConversionPanel = ({
   onDeleteClick,
   editMode,
 }: BasicConversionPanelProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
-    <Card className={classes.card} key={"cardBasicUnitConversion"}>
-      <CardContent className={classes.cardContent} key={"cardTagsContent"}>
+    <Card sx={classes.card} key={"cardBasicUnitConversion"}>
+      <CardContent sx={classes.cardContent} key={"cardTagsContent"}>
         <Typography gutterBottom={true} variant="h5" component="h2">
           {TEXT_BASIC}
         </Typography>
@@ -922,6 +910,7 @@ const BasicConversionEditRow = ({
           component="span"
           id={"deleteRow_" + unitConversion.uid}
           onClick={onDeleteClick}
+          size="large"
         >
           <DeleteIcon fontSize="small" />
         </IconButton>
@@ -947,11 +936,11 @@ const ProductConversionPanel = ({
   onDeleteClick,
   editMode,
 }: ProductConversionPanelProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
-    <Card className={classes.card} key={"cardBasicUnitConversion"}>
-      <CardContent className={classes.cardContent} key={"cardTagsContent"}>
+    <Card sx={classes.card} key={"cardBasicUnitConversion"}>
+      <CardContent sx={classes.cardContent} key={"cardTagsContent"}>
         <Typography gutterBottom={true} variant="h5" component="h2">
           {TEXT_PRODUCT_SPECIFIC}
         </Typography>
@@ -1023,7 +1012,7 @@ const ProductConversionEditRow = ({
         <Typography color="textSecondary">
           {unitConversion.productName}
         </Typography>
-      </Grid>{" "}
+      </Grid>
       <Grid item xs={3} sm={2} key={"grid_denominator_" + unitConversion.uid}>
         <TextField
           id={"denominator_" + unitConversion.uid}
@@ -1060,6 +1049,7 @@ const ProductConversionEditRow = ({
           component="span"
           id={"deleteRow_" + unitConversion.uid}
           onClick={onDeleteClick}
+          size="large"
         >
           <DeleteIcon fontSize="small" />
         </IconButton>

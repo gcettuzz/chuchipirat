@@ -1,19 +1,22 @@
-import React from "react";
+import React, {SyntheticEvent} from "react";
 import {compose} from "react-recompose";
 
-import Container from "@mui/material/Container";
-import Grid from "@mui/material/Grid";
-
-import Backdrop from "@mui/material/Backdrop";
-import CircularProgress from "@mui/material/CircularProgress";
-import Switch from "@mui/material/Switch";
-
-import List from "@mui/material/List";
-import ListItemText from "@mui/material/ListItemText";
-import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction";
-
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
+import {
+  Backdrop,
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  Container,
+  List,
+  ListItem,
+  ListItemSecondaryAction,
+  ListItemText,
+  SnackbarCloseReason,
+  Stack,
+  Switch,
+  useTheme,
+} from "@mui/material";
 
 import {
   SAVE_SUCCESS as TEXT_SAVE_SUCCESS,
@@ -37,7 +40,6 @@ import {
 } from "../../constants/text";
 
 import GlobalSettings from "./globalSettings.class";
-import useStyles from "../../constants/styles";
 
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
@@ -51,8 +53,8 @@ import withEmailVerification from "../Session/withEmailVerification";
 import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
 import {withFirebase} from "../Firebase/firebaseContext";
 import {CustomRouterProps} from "../Shared/global.interface";
-import {Button, ListItem, useTheme} from "@mui/material";
 import {DialogType, useCustomDialog} from "../Shared/customDialogContext";
+import useCustomStyles from "../../constants/styles";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -157,7 +159,7 @@ const globalSettingsReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const GlobalSettingsPage = (props) => {
+const GlobalSettingsPage: React.FC<CustomRouterProps> = (props) => {
   return (
     <AuthUserContext.Consumer>
       {(authUser) => <GlobalSettingsBase {...props} authUser={authUser} />}
@@ -171,7 +173,7 @@ const GlobalSettingsBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {customDialog} = useCustomDialog();
 
   const [editMode, setEditMode] = React.useState(false);
@@ -280,7 +282,10 @@ const GlobalSettingsBase: React.FC<
   /* ------------------------------------------
   // Snackback schliessen
   // ------------------------------------------ */
-  const handleSnackbarClose = (event, reason) => {
+  const handleSnackbarClose = (
+    event: Event | SyntheticEvent<any, Event>,
+    reason: SnackbarCloseReason
+  ) => {
     if (reason === "clickaway") {
       return;
     }
@@ -322,28 +327,25 @@ const GlobalSettingsBase: React.FC<
       />
 
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="sm">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="sm">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        <Grid container spacing={2}>
+        <Stack spacing={2}>
           {state.isError && (
-            <Grid item key={"error"} xs={12}>
-              <AlertMessage
-                error={state.error!}
-                messageTitle={TEXT_ALERT_TITLE_UUPS}
-              />
-            </Grid>
-          )}
-          <Grid item xs={12}>
-            <PanelGlobalSettings
-              editMode={editMode}
-              globalSettings={state.globalSettings}
-              onChange={onChange}
-              onSignOutAllUsers={onSignOutAllUsers}
+            <AlertMessage
+              error={state.error!}
+              messageTitle={TEXT_ALERT_TITLE_UUPS}
             />
-          </Grid>
-        </Grid>
+          )}
+
+          <PanelGlobalSettings
+            editMode={editMode}
+            globalSettings={state.globalSettings}
+            onChange={onChange}
+            onSignOutAllUsers={onSignOutAllUsers}
+          />
+        </Stack>
       </Container>
       <CustomSnackbar
         message={state.snackbar.message}
@@ -369,11 +371,11 @@ const PanelGlobalSettings = ({
   onChange,
   onSignOutAllUsers,
 }: PanelGlobalSettingsProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
   return (
-    <Card className={classes.card} key={"cardInfo"}>
-      <CardContent className={classes.cardContent} key={"cardContentInfo"}>
+    <Card sx={classes.card} key={"cardInfo"}>
+      <CardContent sx={classes.cardContent} key={"cardContentInfo"}>
         <List>
           <ListItem>
             <ListItemText
@@ -386,7 +388,6 @@ const PanelGlobalSettings = ({
                 onChange={onChange}
                 name={"allowSignUp"}
                 id={"allowSignUp"}
-                color="primary"
                 disabled={!editMode}
               />
             </ListItemSecondaryAction>
@@ -402,7 +403,6 @@ const PanelGlobalSettings = ({
                 onChange={onChange}
                 name={"maintenanceMode"}
                 id={"maintenanceMode"}
-                color="primary"
                 disabled={!editMode}
               />
             </ListItemSecondaryAction>
@@ -435,4 +435,5 @@ export default compose(
   withEmailVerification,
   withAuthorization(condition),
   withFirebase
-)(GlobalSettingsPage);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+)(GlobalSettingsPage as React.ComponentType<any>);

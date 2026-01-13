@@ -29,7 +29,7 @@ import {OpenInNew as OpenInNewIcon} from "@mui/icons-material";
 import PageTitle from "../Shared/pageTitle";
 
 import Role from "../../constants/roles";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 import CustomSnackbar, {
   SNACKBAR_INITIAL_STATE_VALUES,
   Snackbar,
@@ -43,24 +43,20 @@ import {
   Tab,
   Tabs,
   Dialog,
-  // DialogActions,
   DialogContent,
   DialogTitle,
-  // FormControl,
-  // FormControlLabel,
-  // FormGroup,
-  // FormLabel,
-  Grid,
   IconButton,
   List,
-  // Switch,
   Typography,
   useTheme,
   LinearProgress,
   Button,
   TextField,
   DialogActions,
+  Box,
+  Stack,
 } from "@mui/material";
+
 import AlertMessage from "../Shared/AlertMessage";
 import SearchPanel from "../Shared/searchPanel";
 
@@ -217,7 +213,7 @@ const OverviewFeedsBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
   const {customDialog} = useCustomDialog();
 
@@ -259,10 +255,7 @@ const OverviewFeedsBase: React.FC<
   /* ------------------------------------------
 	// Tab-Handler
 	// ------------------------------------------ */
-  const handleTabChange = (
-    event: React.ChangeEvent<Record<string, unknown>>,
-    newValue: number
-  ) => {
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
   /* ------------------------------------------
@@ -408,8 +401,8 @@ const OverviewFeedsBase: React.FC<
       <PageTitle title={`${TEXT_FEEDS} ${TEXT_MONITOR}`} />
 
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="xl">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="xl">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
         {state.error && (
@@ -423,8 +416,6 @@ const OverviewFeedsBase: React.FC<
         <Tabs
           value={tabValue}
           onChange={handleTabChange}
-          indicatorColor="primary"
-          textColor="primary"
           centered
           style={{marginBottom: theme.spacing(2)}}
         >
@@ -438,11 +429,7 @@ const OverviewFeedsBase: React.FC<
           />
         )}
         {tabValue === TabValue.delete && (
-          <Container
-            className={classes.container}
-            component="main"
-            maxWidth="sm"
-          >
+          <Container sx={classes.container} component="main" maxWidth="sm">
             <DeleteDocumentTriggerDocumentsPanel
               onDelete={onDeleteFeedDocuments}
               isDeleting={state.isDeleting}
@@ -483,7 +470,7 @@ const FeedLogTable = ({dbFeedLog, onFeedLogSelect}: FeedLogTableProps) => {
   const [filteredFeedLogUi, setFilteredFeedLogUi] = React.useState<
     FeedLogOverviewStructure[]
   >([]);
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
 
   const DATA_GRID_COLUMNS: GridColDef[] = [
@@ -640,50 +627,46 @@ const FeedLogTable = ({dbFeedLog, onFeedLogSelect}: FeedLogTableProps) => {
 
   return (
     <Card
-      className={classes.card}
+      sx={classes.card}
       key={"requestTablePanel"}
       style={{marginBottom: "4em"}}
     >
-      <CardContent className={classes.cardContent} key={"requestTableContent"}>
-        <Grid container>
-          <Grid item xs={12}>
-            <SearchPanel
-              searchString={searchString}
-              onUpdateSearchString={updateSearchString}
-              onClearSearchString={clearSearchString}
-            />
-            <Typography
-              variant="body2"
-              style={{marginTop: "0.5em", marginBottom: "2em"}}
-            >
-              {filteredFeedLogUi.length == feedLog.length
-                ? `${feedLog.length} ${TEXT_FEEDS}`
-                : `${filteredFeedLogUi.length} ${TEXT_FROM.toLowerCase()} ${
-                    feedLog.length
-                  } ${TEXT_FEEDS}`}
-            </Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <div style={{display: "flex", height: "100%"}}>
-              <div style={{flexGrow: 1}}>
-                <DataGrid
-                  autoHeight
-                  rows={filteredFeedLogUi}
-                  columns={DATA_GRID_COLUMNS}
-                  getRowId={(row) => row.uid}
-                  localeText={deDE.props.MuiDataGrid.localeText}
-                  getRowClassName={(params) => {
-                    if (params.row?.disabled) {
-                      return `super-app ${classes.dataGridDisabled}`;
-                    } else {
-                      `super-app-theme`;
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          </Grid>
-        </Grid>
+      <CardContent sx={classes.cardContent} key={"requestTableContent"}>
+        <Stack spacing={1}>
+          <SearchPanel
+            searchString={searchString}
+            onUpdateSearchString={updateSearchString}
+            onClearSearchString={clearSearchString}
+          />
+          <Typography
+            variant="body2"
+            style={{marginTop: "0.5em", marginBottom: "2em"}}
+          >
+            {filteredFeedLogUi.length == feedLog.length
+              ? `${feedLog.length} ${TEXT_FEEDS}`
+              : `${filteredFeedLogUi.length} ${TEXT_FROM.toLowerCase()} ${
+                  feedLog.length
+                } ${TEXT_FEEDS}`}
+          </Typography>
+          <Box component="div" style={{display: "flex", height: "100%"}}>
+            <Box component="div" style={{flexGrow: 1}}>
+              <DataGrid
+                autoHeight
+                rows={filteredFeedLogUi}
+                columns={DATA_GRID_COLUMNS}
+                getRowId={(row) => row.uid}
+                localeText={deDE.components.MuiDataGrid.defaultProps.localeText}
+                getRowClassName={(params) => {
+                  if (params.row?.disabled) {
+                    return `super-app ${classes.dataGridDisabled}`;
+                  } else {
+                    return `super-app-theme`;
+                  }
+                }}
+              />
+            </Box>
+          </Box>
+        </Stack>
       </CardContent>
     </Card>
   );
@@ -707,7 +690,7 @@ const DialogFeedEntry = ({
   onDeleteFeedEntry,
 }: DialogFeedEntryProps) => {
   const theme = useTheme();
-  const classes = useStyles();
+  const classes = useCustomStyles();
   return (
     <Dialog
       open={dialogOpen}
@@ -718,14 +701,13 @@ const DialogFeedEntry = ({
     >
       {feed.sourceObject.pictureSrc ? (
         <DialogTitle
-          className={classes.dialogHeaderWithPicture}
+          sx={classes.dialogHeaderWithPicture}
           style={{
             backgroundImage: `url(${feed.sourceObject.pictureSrc})`,
             backgroundPosition: "center",
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
           }}
-          disableTypography
         >
           {logEntry.type}
         </DialogTitle>
@@ -777,7 +759,7 @@ const DialogFeedEntry = ({
                     <FormListItem
                       key={key}
                       id={key}
-                      value={value.toString()}
+                      value={(value as any).toString()}
                       label={key}
                       displayAsCode={key.toLocaleLowerCase().includes("uid")}
                     />
@@ -790,7 +772,7 @@ const DialogFeedEntry = ({
       </DialogContent>
       <DialogActions>
         <Button
-          className={classes.deleteButton}
+          sx={classes.deleteButton}
           variant="outlined"
           onClick={onDeleteFeedEntry}
         >
@@ -815,7 +797,7 @@ const DeleteDocumentTriggerDocumentsPanel = ({
   isDeleting,
   onDelete,
 }: DeleteDocumentTriggerDocumentsPanelProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
 
   const [daysOffset, setDaysOffset] = React.useState(180);
@@ -825,8 +807,8 @@ const DeleteDocumentTriggerDocumentsPanel = ({
   };
 
   return (
-    <Card className={classes.card} key={"cardInfo"}>
-      <CardContent className={classes.cardContent} key={"cardContentInfo"}>
+    <Card sx={classes.card} key={"cardInfo"}>
+      <CardContent sx={classes.cardContent} key={"cardContentInfo"}>
         <Typography gutterBottom={true} variant="h5" component="h2">
           {TEXT_DELETE_CLOUD_FX_TRIGGER_DOCS}
         </Typography>
@@ -857,7 +839,7 @@ const DeleteDocumentTriggerDocumentsPanel = ({
           disabled={!daysOffset}
           variant="contained"
           color="primary"
-          className={classes.submit}
+          sx={classes.submit}
           onClick={() => onDelete(daysOffset)}
         >
           {`${TEXT_CLOUD_FX_TRIGGER_DOCS} ${TEXT_DELETE}`}

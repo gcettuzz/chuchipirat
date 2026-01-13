@@ -1,9 +1,6 @@
 import React from "react";
 import {compose} from "react-recompose";
 
-import Container from "@mui/material/Container";
-import Grid from "@mui/material/Grid";
-
 import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
 import LinearProgress from "@mui/material/LinearProgress";
@@ -21,8 +18,6 @@ import {rebuildFile000AllUsers} from "../../jobs/rebuildFile000AllUsers";
 import {rebuildFile000AllEvents} from "../../jobs/rebuildFile000AllEvents";
 import {rebuildFile000AllFeeds} from "../../jobs/rebuildFile000AllFeeds";
 
-import useStyles from "../../constants/styles";
-
 import PageTitle from "../Shared/pageTitle";
 import AlertMessage from "../Shared/AlertMessage";
 
@@ -33,6 +28,8 @@ import withEmailVerification from "../Session/withEmailVerification";
 import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
 import {CustomRouterProps} from "../Shared/global.interface";
 import Stats from "../Shared/stats.class";
+import {Container, Stack} from "@mui/material";
+import useCustomStyles from "../../constants/styles";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -81,7 +78,7 @@ const ExecuteJobBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
   // const {customDialog} = useCustomDialog();
 
   const [documentCounter, setDocumentCounter] = React.useState<DocumentCounter>(
@@ -159,20 +156,18 @@ const ExecuteJobBase: React.FC<
       {/*===== HEADER ===== */}
       <PageTitle title={TEXT_JOBS} />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="sm">
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <PanelJobList
-              onRebuild000AllRecipes={onRebuildFile000AllRecipes}
-              onRebuild000AllUsers={onRebuildFile000AllUsers}
-              onRebuild000AllEvents={onRebuildFile000AllEvents}
-              onRebuild000AllFeeds={onRebuildFile000AllFeeds}
-              onRebuildStatsCounter={onRebuildStatsCounter}
-              documentCounter={documentCounter}
-              jobMonitor={jobMonitor}
-            />
-          </Grid>
-        </Grid>
+      <Container sx={classes.container} component="main" maxWidth="sm">
+        <Stack spacing={2}>
+          <PanelJobList
+            onRebuild000AllRecipes={onRebuildFile000AllRecipes}
+            onRebuild000AllUsers={onRebuildFile000AllUsers}
+            onRebuild000AllEvents={onRebuildFile000AllEvents}
+            onRebuild000AllFeeds={onRebuildFile000AllFeeds}
+            onRebuildStatsCounter={onRebuildStatsCounter}
+            documentCounter={documentCounter}
+            jobMonitor={jobMonitor}
+          />
+        </Stack>
       </Container>
     </React.Fragment>
   );
@@ -199,10 +194,10 @@ const PanelJobList = ({
   documentCounter,
   jobMonitor,
 }: JobListProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   return (
-    <Card className={classes.card} key={"cardInfo"}>
-      <CardContent className={classes.cardContent} key={"cardContentInfo"}>
+    <Card sx={classes.card} key={"cardInfo"}>
+      <CardContent sx={classes.cardContent} key={"cardContentInfo"}>
         <Typography gutterBottom={true} variant="h5" component="h2">
           {TEXT_JOBS}
         </Typography>

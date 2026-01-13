@@ -1,8 +1,6 @@
 import React from "react";
 import {compose} from "react-recompose";
 
-import CssBaseline from "@mui/material/CssBaseline";
-
 import {
   Container,
   Button,
@@ -15,7 +13,7 @@ import {
 } from "@mui/material";
 
 import PageTitle from "../Shared/pageTitle";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 import AlertMessage from "../Shared/AlertMessage";
 import {PASSWORD_RESET as ROUTES_PASSWORD_RESET} from "../../constants/routes";
 import {
@@ -84,7 +82,7 @@ const passwordResetReducer = (state: State, action: DispatchAction): State => {
 // ===================================================================
 const PasswordResetPage: React.FC<CustomRouterProps> = ({...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(
     passwordResetReducer,
@@ -117,12 +115,11 @@ const PasswordResetPage: React.FC<CustomRouterProps> = ({...props}) => {
 
   return (
     <React.Fragment>
-      <CssBaseline />
       <PageTitle
         title={TEXT_PASSWORD_RESET}
         subTitle={TEXT_EVERYBODY_FORGETS_SOMETHING}
       />
-      <Container className={classes.container} component="main" maxWidth="xs">
+      <Container sx={classes.container} component="main" maxWidth="xs">
         <PasswordResetForm
           email={state.email}
           onFieldChange={onFieldChange}
@@ -151,17 +148,17 @@ const PasswordResetForm = ({
   error,
   mailSent,
 }: PasswordResetFormProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
-    <Card className={classes.card}>
+    <Card sx={classes.card}>
       <CardMedia
         style={{marginTop: "2rem"}}
-        className={classes.cardMedia}
+        sx={classes.cardMedia}
         image={ImageRepository.getEnviromentRelatedPicture().SIGN_IN_HEADER}
         title={"Logo"}
       />
-      <CardContent className={classes.cardContent}>
+      <CardContent sx={classes.cardContent}>
         {mailSent && (
           <Typography
             gutterBottom={true}

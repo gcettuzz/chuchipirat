@@ -1,11 +1,9 @@
 import React from "react";
 import * as TEXT from "../../constants/text";
 
-import Typography from "@mui/material/Typography";
-import LinearProgress from "@mui/material/LinearProgress";
+import {Typography, LinearProgress} from "@mui/material";
 
 import zxcvbn from "zxcvbn";
-import useCustomStyles from "../../constants/styles";
 // ===================================================================
 // ============================= Global ============================
 // ===================================================================
@@ -35,60 +33,36 @@ interface PasswordStrengthMeterProps {
 
 const PasswordStrengthMeter = ({password}: PasswordStrengthMeterProps) => {
   const testedResult = zxcvbn(password);
-  const classes = useCustomStyles();
+
   return (
     <React.Fragment>
       <LinearProgress
         variant="determinate"
         value={(100 / 4) * testedResult.score}
-        classes={
+        color={
           !password
-            ? undefined
-            : testedResult.score === 0
-            ? {
-                colorPrimary:
-                  classes.passwordStrengthMeter.colorPrimaryStrength0,
-                barColorPrimary:
-                  classes.passwordStrengthMeter.barColorPrimaryStrength0,
-              }
+            ? "primary"
+            : testedResult.score === 0 && password.length > 0
+            ? "error"
             : testedResult.score === 1
-            ? {
-                colorPrimary:
-                  classes.passwordStrengthMeter.colorPrimaryStrength1,
-                barColorPrimary:
-                  classes.passwordStrengthMeter.barColorPrimaryStrength1,
-              }
+            ? "error"
             : testedResult.score === 2
-            ? {
-                colorPrimary:
-                  classes.passwordStrengthMeter.colorPrimaryStrength2,
-                barColorPrimary:
-                  classes.passwordStrengthMeter.barColorPrimaryStrength2,
-              }
+            ? "warning"
             : testedResult.score === 3
-            ? {
-                colorPrimary:
-                  classes.passwordStrengthMeter.colorPrimaryStrength3,
-                barColorPrimary:
-                  classes.passwordStrengthMeter.barColorPrimaryStrength3,
-              }
+            ? "info"
             : testedResult.score === 4
-            ? {
-                colorPrimary:
-                  classes.passwordStrengthMeter.colorPrimaryStrength4,
-                barColorPrimary:
-                  classes.passwordStrengthMeter.barColorPrimaryStrength4,
-              }
-            : undefined
+            ? "success"
+            : "primary"
         }
       />
       <br />
-      {password && (
-        <Typography>
-          {TEXT.PASSWORD_HOW_STRONG_IS_IT}
+
+      <Typography>
+        {TEXT.PASSWORD_HOW_STRONG_IS_IT}
+        {password.length > 0 && (
           <strong>{getPasswordLabel(testedResult)}</strong>
-        </Typography>
-      )}
+        )}
+      </Typography>
     </React.Fragment>
   );
 };

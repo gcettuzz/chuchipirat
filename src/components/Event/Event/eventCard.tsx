@@ -7,8 +7,8 @@ import {
   CardHeader,
   CardActionArea,
   Box,
+  Skeleton,
 } from "@mui/material";
-import {Skeleton} from "@mui/lab";
 
 import Event from "./event.class";
 import {ImageRepository} from "../../../constants/imageRepository";

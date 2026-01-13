@@ -1,15 +1,15 @@
 import React from "react";
 
-import {Alert} from "@mui/lab";
-
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogActions from "@mui/material/DialogActions";
-
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
+import {
+  Alert,
+  Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+} from "@mui/material";
 
 import Utils from "../Shared/utils.class";
 import User from "../User/user.class";
@@ -25,7 +25,6 @@ import {
   YOU_CANNOT_ADD_YOURSELF as TEXT_YOU_CANNOT_ADD_YOURSELF,
 } from "../../constants/text";
 
-// import useStyles from "../../constants/styles";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import Firebase from "../Firebase/firebase.class";
 
@@ -46,7 +45,6 @@ const DialogAddUser = ({
   handleAddUser,
   handleClose,
 }: DialogAddUserProps) => {
-  // const classes = useStyles();
 
   const [userEmail, setUserEmail] = React.useState("");
   const [formValidationState, setFormValidationState] = React.useState({

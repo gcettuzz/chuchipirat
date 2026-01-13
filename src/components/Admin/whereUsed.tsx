@@ -2,7 +2,7 @@ import React from "react";
 import {compose} from "react-recompose";
 
 import {
-  Grid,
+  Stack,
   Container,
   Backdrop,
   CircularProgress,
@@ -13,10 +13,11 @@ import {
   Button,
   Divider,
   TextField,
-  useTheme,
   List,
   ListItem,
   ListItemText,
+  Skeleton,
+  AutocompleteChangeReason,
 } from "@mui/material";
 
 import {
@@ -32,8 +33,7 @@ import {
 } from "../../constants/text";
 import Role from "../../constants/roles";
 
-import useStyles from "../../constants/styles";
-
+import useCustomStyles from "../../constants/styles";
 import PageTitle from "../Shared/pageTitle";
 
 import Product from "../Product/product.class";
@@ -55,7 +55,6 @@ import ItemAutocomplete, {
 } from "../Event/ShoppingList/itemAutocomplete";
 import WhereUsed, {TraceObject} from "./whereUsed.class";
 import Recipe from "../Recipe/recipe.class";
-import {AutocompleteChangeReason, Skeleton} from "@mui/lab";
 import {ItemType} from "../Event/ShoppingList/shoppingList.class";
 
 /* ===================================================================
@@ -192,7 +191,7 @@ const WhereUsedBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(whereUsedReducer, inititialState);
 
@@ -320,42 +319,36 @@ const WhereUsedBase: React.FC<
       <PageTitle title={TEXT_TRACE} subTitle={TEXT_WHERE_ARE_YOUR} />
 
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="sm">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="sm">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
 
-        <Grid container spacing={2}>
+        <Stack spacing={2}>
           {state.error && (
-            <Grid item key={"error"} xs={12}>
-              <AlertMessage
-                error={state.error}
-                messageTitle={TEXT_ALERT_TITLE_UUPS}
-              />
-            </Grid>
+            <AlertMessage
+              error={state.error}
+              messageTitle={TEXT_ALERT_TITLE_UUPS}
+            />
           )}
 
-          <Grid item xs={12}>
-            {state.isLoading ? (
-              <Skeleton />
-            ) : (
-              <SearchPanel
-                products={state.products}
-                materials={state.materials}
-                selectedItem={state.selectedItem}
-                selectedRecipe={state.selectedRecipeUid}
-                isTracing={state.isTracing}
-                onStartTrace={onStartTrace}
-                onFieldUpdate={onFieldUpdate}
-              />
-            )}
-          </Grid>
-          {state.noOfFoundFiles >= 0 && (
-            <Grid item xs={12}>
-              <ResultPanel documentList={state.tracedFiles} />
-            </Grid>
+          {state.isLoading ? (
+            <Skeleton />
+          ) : (
+            <SearchPanel
+              products={state.products}
+              materials={state.materials}
+              selectedItem={state.selectedItem}
+              selectedRecipe={state.selectedRecipeUid}
+              isTracing={state.isTracing}
+              onStartTrace={onStartTrace}
+              onFieldUpdate={onFieldUpdate}
+            />
           )}
-        </Grid>
+          {state.noOfFoundFiles >= 0 && (
+            <ResultPanel documentList={state.tracedFiles} />
+          )}
+        </Stack>
       </Container>
     </React.Fragment>
   );
@@ -386,78 +379,55 @@ const SearchPanel = ({
   onFieldUpdate,
   onStartTrace,
 }: SearchPanelProps) => {
-  const classes = useStyles();
-  const theme = useTheme();
+  const classes = useCustomStyles();
 
   return (
-    <Card className={classes.card} key={"cardProduct"}>
-      <CardContent className={classes.cardContent} key={"cardContentProduct"}>
-        <Typography gutterBottom={true} variant="h5" component="h2">
-          {TEXT_WHERE_USED}
-        </Typography>
+    <Card sx={classes.card} key={"cardProduct"}>
+      <CardContent sx={classes.cardContent} key={"cardContentProduct"}>
+        <Stack spacing={2}>
+          <Typography gutterBottom={true} variant="h5" component="h2">
+            {TEXT_WHERE_USED}
+          </Typography>
 
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} style={{marginBottom: theme.spacing(4)}}>
-            <ItemAutocomplete
-              componentKey="item"
-              materials={materials}
-              products={products}
-              item={selectedItem}
-              disabled={false}
-              onChange={onFieldUpdate}
-              error={{isError: false, errorText: ""}}
-              allowCreateNewItem={false}
-            />
-          </Grid>
-
-          <Grid item xs={4}>
-            <Divider />
-          </Grid>
-          <Grid item xs={4}>
-            <Typography align="center">
-              {TEXT_OR.toLocaleUpperCase()}
-            </Typography>{" "}
-          </Grid>
-          <Grid item xs={4}>
-            <Divider />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              margin="normal"
-              id="recipeUid"
-              key="recipeUid"
-              label={`${TEXT_RECIPE} ${TEXT_UID}`}
-              name={"recipeUid"}
-              value={selectedRecipe}
-              fullWidth
-              onChange={onFieldUpdate}
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <Button
-              disabled={
-                (selectedRecipe === "" &&
-                  (!selectedItem || selectedItem.uid === "")) ||
-                (!!selectedItem &&
-                  selectedRecipe !== "" &&
-                  selectedItem.uid !== "")
-              }
-              fullWidth
-              variant="contained"
-              color="primary"
-              onClick={onStartTrace}
-              component="span"
-            >
-              {TEXT_START_TRACE}
-            </Button>
-          </Grid>
-          {isTracing && (
-            <Grid item xs={12}>
-              <LinearProgress />
-            </Grid>
-          )}
-        </Grid>
+          <ItemAutocomplete
+            componentKey="item"
+            materials={materials}
+            products={products}
+            item={selectedItem}
+            disabled={false}
+            onChange={onFieldUpdate}
+            error={{isError: false, errorText: ""}}
+            allowCreateNewItem={false}
+          />
+          <Divider>{TEXT_OR.toLocaleUpperCase()}</Divider>
+          <TextField
+            margin="normal"
+            id="recipeUid"
+            key="recipeUid"
+            label={`${TEXT_RECIPE} ${TEXT_UID}`}
+            name={"recipeUid"}
+            value={selectedRecipe}
+            fullWidth
+            onChange={onFieldUpdate}
+          />
+          <Button
+            disabled={
+              (selectedRecipe === "" &&
+                (!selectedItem || selectedItem.uid === "")) ||
+              (!!selectedItem &&
+                selectedRecipe !== "" &&
+                selectedItem.uid !== "")
+            }
+            fullWidth
+            variant="contained"
+            color="primary"
+            onClick={onStartTrace}
+            component="span"
+          >
+            {TEXT_START_TRACE}
+          </Button>
+          {isTracing && <LinearProgress />}
+        </Stack>
       </CardContent>
     </Card>
   );
@@ -469,30 +439,26 @@ interface ResultPanelProps {
   documentList: State["tracedFiles"];
 }
 const ResultPanel = ({documentList}: ResultPanelProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
-    <Card className={classes.card} key={"cardProduct"}>
-      <CardContent className={classes.cardContent} key={"cardContentProduct"}>
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <Typography gutterBottom={true} variant="h5" component="h2">
-              {`${TEXT_FOUND_DOCUMENTS}: ${documentList.length}`}
-            </Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <List className={classes.root}>
-              {documentList.map((document, counter) => (
-                <ListItem divider key={"listItem_" + counter}>
-                  <ListItemText
-                    primary={document.name}
-                    secondary={document.document}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Grid>
-        </Grid>
+    <Card sx={classes.card} key={"cardProduct"}>
+      <CardContent sx={classes.cardContent} key={"cardContentProduct"}>
+        <Stack spacing={2}>
+          <Typography gutterBottom={true} variant="h5" component="h2">
+            {`${TEXT_FOUND_DOCUMENTS}: ${documentList.length}`}
+          </Typography>
+          <List sx={classes.root}>
+            {documentList.map((document, counter) => (
+              <ListItem divider key={"listItem_" + counter}>
+                <ListItemText
+                  primary={document.name}
+                  secondary={document.document}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Stack>
       </CardContent>
     </Card>
   );

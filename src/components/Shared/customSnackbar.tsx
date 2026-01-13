@@ -1,11 +1,14 @@
-import React from "react";
-import {Color} from "@mui/lab";
+import React, {SyntheticEvent} from "react";
 
-import {Alert} from "@mui/lab";
-import Snackbar from "@mui/material/Snackbar";
-import Fade from "@mui/material/Fade";
+import {
+  Alert,
+  AlertColor,
+  Fade,
+  Snackbar,
+  SnackbarCloseReason,
+} from "@mui/material";
 
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
 export const SNACKBAR_INITIAL_STATE_VALUES: Snackbar = {
   open: false,
@@ -18,19 +21,20 @@ export const SNACKBAR_INITIAL_STATE_VALUES: Snackbar = {
  */
 export interface Snackbar {
   open: boolean;
-  severity: Color;
+  severity: AlertColor;
   message: string;
 }
 
 interface CustomSnackbarProps {
   message: string;
-  severity: Color;
+  severity: AlertColor;
   snackbarOpen: boolean;
   handleClose: (
-    event: React.SyntheticEvent | React.MouseEvent,
-    reason?: string
+    event: Event | SyntheticEvent<any, Event>,
+    reason: SnackbarCloseReason
   ) => void;
 }
+
 /* ===================================================================
 // ============================== Snackbar ===========================
 // =================================================================== */
@@ -40,15 +44,15 @@ function CustomSnackbar({
   snackbarOpen,
   handleClose,
 }: CustomSnackbarProps) {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
-  const Alert = (props) => {
+  const CustomAlert = (props) => {
     return <Alert elevation={6} {...props} />;
   };
 
   return (
     <Snackbar
-      className={classes.snackbar}
+      sx={classes.snackbar}
       anchorOrigin={{
         vertical: "bottom",
         horizontal: "center",
@@ -58,9 +62,11 @@ function CustomSnackbar({
       autoHideDuration={6000}
       TransitionComponent={Fade}
     >
-      <Alert onClose={handleClose} severity={severity}>
-        {message}
-      </Alert>
+      <div>
+        <CustomAlert onClose={handleClose} severity={severity}>
+          {message}
+        </CustomAlert>
+      </div>
     </Snackbar>
   );
 }

@@ -29,7 +29,7 @@ import {OpenInNew as OpenInNewIcon} from "@mui/icons-material";
 import PageTitle from "../Shared/pageTitle";
 
 import Role from "../../constants/roles";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 import CustomSnackbar, {
   SNACKBAR_INITIAL_STATE_VALUES,
   Snackbar,
@@ -45,7 +45,6 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  Grid,
   IconButton,
   List,
   Typography,
@@ -53,7 +52,10 @@ import {
   LinearProgress,
   Button,
   TextField,
+  Box,
+  Stack,
 } from "@mui/material";
+
 import AlertMessage from "../Shared/AlertMessage";
 import SearchPanel from "../Shared/searchPanel";
 
@@ -203,7 +205,7 @@ const OverviewMailboxBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
 
   const [state, dispatch] = React.useReducer(mailboxReducer, inititialState);
@@ -240,10 +242,7 @@ const OverviewMailboxBase: React.FC<
   /* ------------------------------------------
 	// Tab-Handler
 	// ------------------------------------------ */
-  const handleTabChange = (
-    event: React.ChangeEvent<Record<string, unknown>>,
-    newValue: number
-  ) => {
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
   /* ------------------------------------------
@@ -322,8 +321,8 @@ const OverviewMailboxBase: React.FC<
       <PageTitle title={`${TEXT_MAILBOX} ${TEXT_MONITOR}`} />
 
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="xl">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="xl">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
         {state.error && (
@@ -337,8 +336,6 @@ const OverviewMailboxBase: React.FC<
         <Tabs
           value={tabValue}
           onChange={handleTabChange}
-          indicatorColor="primary"
-          textColor="primary"
           centered
           style={{marginBottom: theme.spacing(2)}}
         >
@@ -352,11 +349,7 @@ const OverviewMailboxBase: React.FC<
           />
         )}
         {tabValue === TabValue.delete && (
-          <Container
-            className={classes.container}
-            component="main"
-            maxWidth="sm"
-          >
+          <Container sx={classes.container} component="main" maxWidth="sm">
             <DeleteMailsPanel
               onDelete={onDeleteMails}
               isDeleting={state.isDeleting}
@@ -395,7 +388,7 @@ const MaillogTable = ({dbMaillog, onMailLogSelect}: MaillogTableProps) => {
   const [filteredMaillogUi, setFilteredMaillogUi] = React.useState<
     MailLogOverviewStructure[]
   >([]);
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
 
   const DATA_GRID_COLUMNS: GridColDef[] = [
@@ -528,50 +521,46 @@ const MaillogTable = ({dbMaillog, onMailLogSelect}: MaillogTableProps) => {
 
   return (
     <Card
-      className={classes.card}
+      sx={classes.card}
       key={"requestTablePanel"}
       style={{marginBottom: "4em"}}
     >
-      <CardContent className={classes.cardContent} key={"requestTableContent"}>
-        <Grid container>
-          <Grid item xs={12}>
-            <SearchPanel
-              searchString={searchString}
-              onUpdateSearchString={updateSearchString}
-              onClearSearchString={clearSearchString}
-            />
-            <Typography
-              variant="body2"
-              style={{marginTop: "0.5em", marginBottom: "2em"}}
-            >
-              {filteredMaillogUi.length == maillog.length
-                ? `${maillog.length} ${TEXT_MAILS}`
-                : `${filteredMaillogUi.length} ${TEXT_FROM.toLowerCase()} ${
-                    maillog.length
-                  } ${TEXT_MAILS}`}
-            </Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <div style={{display: "flex", height: "100%"}}>
-              <div style={{flexGrow: 1}}>
-                <DataGrid
-                  autoHeight
-                  rows={filteredMaillogUi}
-                  columns={DATA_GRID_COLUMNS}
-                  getRowId={(row) => row.uid}
-                  localeText={deDE.props.MuiDataGrid.localeText}
-                  getRowClassName={(params) => {
-                    if (params.row?.disabled) {
-                      return `super-app ${classes.dataGridDisabled}`;
-                    } else {
-                      `super-app-theme`;
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          </Grid>
-        </Grid>
+      <CardContent sx={classes.cardContent} key={"requestTableContent"}>
+        <Stack spacing={2}>
+          <SearchPanel
+            searchString={searchString}
+            onUpdateSearchString={updateSearchString}
+            onClearSearchString={clearSearchString}
+          />
+          <Typography
+            variant="body2"
+            style={{marginTop: "0.5em", marginBottom: "2em"}}
+          >
+            {filteredMaillogUi.length == maillog.length
+              ? `${maillog.length} ${TEXT_MAILS}`
+              : `${filteredMaillogUi.length} ${TEXT_FROM.toLowerCase()} ${
+                  maillog.length
+                } ${TEXT_MAILS}`}
+          </Typography>
+          <Box component="div" style={{display: "flex", height: "100%"}}>
+            <Box component="div" style={{flexGrow: 1}}>
+              <DataGrid
+                autoHeight
+                rows={filteredMaillogUi}
+                columns={DATA_GRID_COLUMNS}
+                getRowId={(row) => row.uid}
+                localeText={deDE.components.MuiDataGrid.defaultProps.localeText}
+                getRowClassName={(params) => {
+                  if (params.row?.disabled) {
+                    return `super-app ${classes.dataGridDisabled}`;
+                  } else {
+                    return `super-app-theme`;
+                  }
+                }}
+              />
+            </Box>
+          </Box>
+        </Stack>
       </CardContent>
     </Card>
   );
@@ -590,7 +579,7 @@ const DialogMailProtocol = ({
   mailProtocol,
   handleClose,
 }: DialogMailProtocolProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
   return (
     <Dialog
@@ -601,7 +590,7 @@ const DialogMailProtocol = ({
       maxWidth="sm"
     >
       <DialogTitle
-        className={classes.dialogHeaderWithPicture}
+        sx={classes.dialogHeaderWithPicture}
         style={{
           backgroundImage: `url(${
             mailProtocol.template.data?.headerPictureSrc
@@ -613,12 +602,11 @@ const DialogMailProtocol = ({
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
         }}
-        disableTypography
       >
         <Typography
           variant="h4"
           component="h1"
-          className={classes.dialogHeaderWithPictureTitle}
+          sx={classes.dialogHeaderWithPictureTitle}
           style={{paddingLeft: "2ex"}}
         >
           {mailProtocol.template.name}
@@ -681,7 +669,7 @@ interface DeleteMailsPanelProps {
   onDelete: (days: number) => void;
 }
 const DeleteMailsPanel = ({isDeleting, onDelete}: DeleteMailsPanelProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
 
   const [daysOffset, setDaysOffset] = React.useState(180);
@@ -691,8 +679,8 @@ const DeleteMailsPanel = ({isDeleting, onDelete}: DeleteMailsPanelProps) => {
   };
 
   return (
-    <Card className={classes.card} key={"cardInfo"}>
-      <CardContent className={classes.cardContent} key={"cardContentInfo"}>
+    <Card sx={classes.card} key={"cardInfo"}>
+      <CardContent sx={classes.cardContent} key={"cardContentInfo"}>
         <Typography gutterBottom={true} variant="h5" component="h2">
           {TEXT_DELETE_MAIL_PROTOCOLS}
         </Typography>
@@ -723,7 +711,7 @@ const DeleteMailsPanel = ({isDeleting, onDelete}: DeleteMailsPanelProps) => {
           disabled={!daysOffset}
           variant="contained"
           color="primary"
-          className={classes.submit}
+          sx={classes.submit}
           onClick={() => onDelete(daysOffset)}
         >
           {`${TEXT_MAIL_PROTOCOLS} ${TEXT_DELETE}`}

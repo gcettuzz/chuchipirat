@@ -29,5 +29,6 @@ module.exports = {
   rules: {
     "@typescript-eslint/ban-ts-ignore-expect-error": "off",
     "@typescript-eslint/no-explicit-any": "warn",
+    "react/prop-types": "off",
   },
 };
