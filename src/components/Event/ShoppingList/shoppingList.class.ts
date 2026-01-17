@@ -82,17 +82,10 @@ interface DeleteItem {
   unit: Unit["key"];
   departmentKey: Department["pos"];
 }
-// interface AddMaterial {
-//   shoppingListReference: ShoppingList;
-//   // material: RecipeMaterialPosition;
-//   material: Material;
-//   // materials: Material[];
-//   quantity: number;
-//   unit: Unit["key"];
-//   department: Department | undefined;
-//   addedManualy?: boolean;
-// }
-
+interface RestoreCheckedItems {
+  shoppingList: ShoppingList;
+  checkedItems: ShoppingList["list"];
+}
 interface Save {
   firebase: Firebase;
   eventUid: Event["uid"];
@@ -493,6 +486,93 @@ export default class ShoppingList {
       delete updatedShoppingList.list[departmentKey];
     }
     return updatedShoppingList;
+  };
+  // ===================================================================== */
+  /**
+   * Liefert alle abgehakten (checked = true) Einträge gruppiert nach Department zurück.
+   *
+   * Die Funktion iteriert über alle Departments der Einkaufsliste und filtert pro Department
+   * nur die Items, die aktuell als `checked` markiert sind. Departments ohne markierte Items
+   * werden aus dem Resultat entfernt.
+   *
+   * Typische Verwendung:
+   * - Speichern/Synchronisieren des Checkbox-Status (z. B. für Persistenz, Export, Undo/Redo)
+   * - Als Grundlage für `restoreCheckedItems(...)` (Wiederherstellung des Status)
+   *
+   * @param params.shoppingList Die Einkaufsliste, aus der die markierten Items gelesen werden.
+   *
+   * @returns Eine Liste von Departments, die jeweils nur die markierten Items enthalten.
+   *          Departments ohne markierte Items sind nicht enthalten.
+   *
+   * @example
+   * const checkedByDepartment = ShoppingList.getCheckedItemsByDepartment({ shoppingList });
+   */
+  static getCheckedItemsByDepartment = ({
+    shoppingList,
+  }: {
+    shoppingList: ShoppingList;
+  }): ShoppingList["list"] => {
+    const result = {} as ShoppingList["list"];
+
+    Object.entries(shoppingList.list).forEach(
+      ([departmentPosStr, department]) => {
+        const checked = department.items.filter((item) => item.checked);
+        if (checked.length === 0) return;
+
+        // Key beibehalten!
+        result[departmentPosStr as unknown as Department["pos"]] = {
+          departmentUid: department.departmentUid,
+          departmentName: department.departmentName,
+          items: checked,
+        };
+      }
+    );
+
+    return result;
+  };
+
+  // ===================================================================== */
+  /**
+   * Stellt den `checked`-Status der Einkaufsliste anhand einer zuvor gespeicherten Auswahl wieder her.
+   *
+   * Erwartet eine Liste der zuvor als `checked` markierten Einträge (typischerweise erzeugt durch
+   * `getCheckedItemsByDepartment(...)` und setzt in der übergebenen `shoppingList` die passenden Items
+   * wieder auf `checked = true`.
+   *
+   * - Items, die in `checkedItems` enthalten sind, werden auf `checked = true` gesetzt.
+   * - Das Matching erfolgt über eine stabile Identität (z. B. `departmentUid` + `item.uid` + `unit`
+   *
+   * @param params.shoppingList Die Einkaufsliste, deren Checkboxen wiederhergestellt werden sollen.
+   * @param params.checkedItems Die gespeicherte Auswahl der zuvor abgehakten Einträge inkl. Department-Info.
+   *
+   * @returns Eine neue Einkaufsliste mit wiederhergestelltem `checked`-Status
+   *
+   * @example
+   * const checkedItems = getCheckedItemsByDepartment(list);
+   * // ... später (z.B. nach Reload)
+   * const restored = restoreCheckedItems({ shoppingList: list, checkedItems });
+   */
+  static restoreCheckedItems = ({
+    shoppingList,
+    checkedItems,
+  }: RestoreCheckedItems) => {
+    Object.entries(checkedItems).forEach(([departmentPosStr, department]) => {
+      const departmentPos = Number(departmentPosStr) as Department["pos"];
+      const dep = shoppingList.list[departmentPos];
+      if (!dep) return;
+
+      department.items.forEach((checkedItem) => {
+        dep.items.forEach((item) => {
+          if (
+            item.item.uid === checkedItem.item.uid &&
+            item.unit === checkedItem.unit
+          ) {
+            item.checked = true;
+          }
+        });
+      });
+    });
+    return shoppingList;
   };
 
   // ===================================================================== */

@@ -1,6 +1,7 @@
 import React from "react";
 import {useReducer, useContext} from "react";
 import {OK as TEXT_OK, CANCEL as TEXT_CANCEL} from "../../constants/text";
+import {ButtonOwnProps} from "@mui/material";
 
 // Danke an https://devrecipes.net/custom-confirm-dialog-with-react-hooks-and-the-context-api/
 
@@ -47,7 +48,11 @@ type DispatchAction = {
   payload: State;
 };
 
-type Option = {key: number | string; text: string};
+type Option = {
+  key: number | string;
+  text: string;
+  variant?: ButtonOwnProps["variant"];
+};
 
 type State = {
   dialogType: DialogType;

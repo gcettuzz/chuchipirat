@@ -284,19 +284,19 @@ const CustomDialog = () => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
+          <Button onClick={onCancel} color="primary">
+            {dialogState.buttonTextCancel}
+          </Button>
           {dialogState.options.map((option) => (
             <Button
               key={"button_" + option.key}
               onClick={() => onOptionSelection(option.key)}
               color="primary"
-              variant="outlined"
+              variant={option.variant ? option.variant : "outlined"}
             >
               {option.text}
             </Button>
           ))}
-          <Button onClick={onCancel} color="primary">
-            {dialogState.buttonTextCancel}
-          </Button>
         </DialogActions>
       </Dialog>
     ) : null

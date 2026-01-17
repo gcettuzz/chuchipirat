@@ -51,6 +51,8 @@ import {
   ADD_OR_REPLACE_ARTICLE,
   KEEP_MANUALLY_ADDED_PRODUCTS as TEXT_KEEP_MANUALLY_ADDED_PRODUCTS,
   MANUALLY_ADDED_PRODUCTS as TEXT_MANUALLY_ADDED_PRODUCTS,
+  CHECKED_ITEMS as TEXT_CHECKED_ITEMS,
+  CHECKED_ITEMS_EXPLANATION as TEXT_CHECKED_ITEMS_EXPLANATION,
   KEEP as TEXT_KEEP,
   SHOPPING_LIST as TEXT_SHOPPING_LIST,
   SUFFIX_PDF as TEXT_SUFFIX_PDF,
@@ -504,9 +506,17 @@ const EventShoppingListPage = ({
     selectedDepartments?: Department["uid"][]
   ) => {
     let keepManuallyAddedItems = false;
+    let keepCheckedItems = false;
     const shoppingListCollectionToRefresh = {...shoppingListCollection};
-    console.log(selectedMenues);
-    console.log(selectedDepartments);
+
+    if (!shoppingList?.uid) {
+      return;
+    }
+
+    const checkedItems = ShoppingList.getCheckedItemsByDepartment({
+      shoppingList: shoppingList,
+    });
+
     if (
       shoppingList &&
       shoppingListCollection.lists[shoppingList.uid].properties
@@ -526,6 +536,23 @@ const EventShoppingListPage = ({
         return;
       }
       keepManuallyAddedItems = userInput.input == Action.KEEP ? true : false;
+    }
+
+    if (Object.values(checkedItems).length > 0) {
+      const userInput = (await customDialog({
+        dialogType: DialogType.selectOptions,
+        title: TEXT_CHECKED_ITEMS,
+        text: TEXT_CHECKED_ITEMS_EXPLANATION(TEXT_SHOPPING_LIST),
+        options: [
+          {key: Action.DELETE, text: TEXT_DELETE},
+          {key: Action.KEEP, text: TEXT_KEEP, variant: "contained"},
+        ],
+      })) as SingleTextInputResult;
+
+      if (!userInput.valid) {
+        return;
+      }
+      keepCheckedItems = userInput.input == Action.KEEP ? true : false;
     }
 
     dispatch({type: ReducerActions.SHOW_LOADING, payload: {isLoading: true}});
@@ -574,6 +601,13 @@ const EventShoppingListPage = ({
       authUser: authUser,
     })
       .then((result) => {
+        if (keepCheckedItems) {
+          result.shoppingList = ShoppingList.restoreCheckedItems({
+            shoppingList: result.shoppingList,
+            checkedItems: checkedItems,
+          });
+        }
+
         onShoppingCollectionUpdate(result.shoppingListCollection);
         onShoppingListUpdate(result.shoppingList);
 

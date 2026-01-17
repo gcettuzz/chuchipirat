@@ -1216,6 +1216,10 @@ export const MANUALLY_ADDED_PRODUCTS = "Manuell hinzugefügte Artikel";
 export const KEEP_MANUALLY_ADDED_PRODUCTS = (listName: string) =>
   `Diese ${listName} beinhaltet manuell hinzugefügte Artikel. Sollen diese bei der Aktualisierung beibehalten oder sollen sie aus der Liste gelöscht werden?`;
 export const KEEP = "Behalten";
+export const CHECKED_ITEMS = "Abgehakte Artikel";
+export const CHECKED_ITEMS_EXPLANATION = (listName: string) =>
+  `Diese ${listName} beinhaltet bereits abgehakte Artikel. Sollen die Artikel auch nach der Aktualisierung abgehakt bleiben?`;
+
 export const MATERIAL_LIST_MENUE_SELECTION_DESCRIPTION =
   " Hier kannst du bereits generierte Materiallisten anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltet alle Materialien vom Typ «Gebrauchsmaterial» der gewählten Menüs. Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
 export const LIST = "Liste";
