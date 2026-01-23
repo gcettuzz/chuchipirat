@@ -787,6 +787,11 @@ export const PRODUCT_PROPERTY = "Produkteigenschaft";
 export const HELPTER_TEXT_RECIPE_SOURCE =
   "Woher hast du das Rezept? URL, Buch, Zeitschrift usw.";
 export const DELETE_EVENT = "Anlass löschen";
+export const CONSISTENCY_CHECK = "Konsistenzcheck";
+export const MENUPLAN_CONSISTENCY_CHECK_FIXES_APPLIED =
+  "Konsistenzcheck erfolgreich durchgeführt. Korrekturen wurden angewendet.";
+export const MENUPLAN_CONSISTENCY_CHECK_NO_ISSUES =
+  "Konsistenzcheck erfolgreich durchgeführt. Keine Probleme gefunden.";
 export const POSSIBLE_DUPLICATE_FOUND =
   "Bevor wir’s zweimal kochen: Wir haben ähnliche Rezepte in der Sammlung:";
 export const PRO_TIP = "💡 Pro-Tipp ";
@@ -1207,7 +1212,7 @@ export const ADD_OR_REPLACE_ARTICLE = (
   article: string,
   unit: string,
   oldQuantity: string,
-  newQuantity: string
+  newQuantity: string,
 ) =>
   `Das Produkt «${article}» ist in der Einheit «${unit}» in der Einkaufsliste bereits vorhanden. Wie soll mit der hinzufügenden Menge fortgefahren werden? Möchtest du die bestehende Menge von ${oldQuantity} ${unit} mit der neuen Menge von ${newQuantity} ${unit} überschreiben oder dazuzählen?`;
 export const REPLACE = "Ersetzen";

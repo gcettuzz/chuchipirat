@@ -48,6 +48,9 @@ import {
   CANCEL as TEXT_CANCEL,
   DELETE as TEXT_DELETE,
   DB_DOCUMENT_DELETED as TEXT_DB_DOCUMENT_DELETED,
+  CONSISTENCY_CHECK as TEXT_CONSISTENCY_CHECK,
+  MENUPLAN_CONSISTENCY_CHECK_FIXES_APPLIED as TEXT_MENUPLAN_CONSISTENCY_CHECK_FIXES_APPLIED,
+  MENUPLAN_CONSISTENCY_CHECK_NO_ISSUES as TEXT_MENUPLAN_CONSISTENCY_CHECK_NO_ISSUES,
 } from "../../../constants/text";
 
 import {HOME as ROUTE_HOME} from "../../../constants/routes";
@@ -146,7 +149,7 @@ export enum MasterDataCreateType {
   PRODUCT = "PRODUCT",
 }
 
-function tabProps(index) {
+function tabProps(index: number) {
   return {
     id: `scrollable-auto-tab-${index}`,
     "aria-controls": `scrollable-auto-tabpanel-${index}`,
@@ -512,7 +515,7 @@ const eventReducer = (state: State, action: DispatchAction): State => {
       const memberName = `${action.payload.type.toLowerCase()}s`;
       let newValues = state[memberName];
       const newValue = newValues.find(
-        (value) => value.uid == action.payload.value.uid
+        (value) => value.uid == action.payload.value.uid,
       );
       // Wenn es das schon gibt, nichts tun
       if (!newValue) {
@@ -532,7 +535,7 @@ const eventReducer = (state: State, action: DispatchAction): State => {
       updatedRecipes[newRecipe.uid] = newRecipe;
 
       const arrayIndex = updatedRecipeList.findIndex(
-        (recipeShort) => recipeShort.uid == newRecipe.uid
+        (recipeShort) => recipeShort.uid == newRecipe.uid,
       );
 
       if (arrayIndex !== -1) {
@@ -541,7 +544,7 @@ const eventReducer = (state: State, action: DispatchAction): State => {
       } else {
         // Neues Rezept aufnehmen
         updatedRecipeList.push(
-          RecipeShort.createShortRecipeFromRecipe(newRecipe)
+          RecipeShort.createShortRecipeFromRecipe(newRecipe),
         );
       }
       // Array sortieren
@@ -841,7 +844,7 @@ const EventBase: React.FC<
                   unitConversionProducts: result,
                 },
               });
-            }
+            },
           );
         })
         .catch((error) => {
@@ -1029,7 +1032,6 @@ const EventBase: React.FC<
   // Change-Handling
   // ------------------------------------------ */
   const onMenuplanUpdate = (menuplan: Menuplan) => {
-    console.warn("hier");
     Menuplan.save({
       menuplan: menuplan,
       firebase: firebase,
@@ -1049,7 +1051,7 @@ const EventBase: React.FC<
   };
   const onGroupConfigurationUpdate = (
     // Alle Portionen im Menüplan neu berechnen und update
-    groupConfiguration: EventGroupConfiguration
+    groupConfiguration: EventGroupConfiguration,
   ) => {
     const menuplan = Menuplan.recalculatePortions({
       menuplan: state.menuplan,
@@ -1072,7 +1074,7 @@ const EventBase: React.FC<
     // Kein zurückschreiben in den State, da der Listener, das wieder erhält....
   };
   const onShoppingCollectionUpdate = (
-    shoppingListCollection: ShoppingListCollection
+    shoppingListCollection: ShoppingListCollection,
   ) => {
     ShoppingListCollection.save({
       firebase: firebase,
@@ -1265,6 +1267,34 @@ const EventBase: React.FC<
         dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
       });
   };
+  const onEventConsistencyCheck = () => {
+    console.debug("Starte Konsistenzprüfung für Event:");
+    const fixedMenuplan = Menuplan.fixMenuplan(state.menuplan);
+
+    if (!fixedMenuplan.isConsistent) {
+      // Neuer Menüplan speichern
+      onMenuplanUpdate(fixedMenuplan.menuplan);
+
+      // Meldung ausgeben.
+      dispatch({
+        type: ReducerActions.SNACKBAR_SHOW,
+        payload: {
+          severity: "info",
+          message: TEXT_MENUPLAN_CONSISTENCY_CHECK_FIXES_APPLIED,
+        },
+      });
+    } else {
+      dispatch({
+        type: ReducerActions.SNACKBAR_SHOW,
+        payload: {
+          severity: "success",
+          message: TEXT_MENUPLAN_CONSISTENCY_CHECK_NO_ISSUES,
+        },
+      });
+    }
+    console.debug;
+    ("Konsistenzprüfung abgeschlossen.");
+  };
   /* ------------------------------------------
   // Fehlende Daten holen
   // ------------------------------------------ */
@@ -1436,7 +1466,7 @@ const EventBase: React.FC<
                     unitConversionProducts: result,
                   },
                 });
-              }
+              },
             );
           })
           .catch((error) => {
@@ -1506,7 +1536,7 @@ const EventBase: React.FC<
   // ------------------------------------------ */
   const handleSnackbarClose = (
     event: globalThis.Event | SyntheticEvent<any, globalThis.Event>,
-    reason: SnackbarCloseReason
+    reason: SnackbarCloseReason,
   ) => {
     if (reason === "clickaway") {
       return;
@@ -1526,16 +1556,16 @@ const EventBase: React.FC<
           activeTab === EventTabs.menuplan
             ? TEXT_MENUPLAN
             : activeTab === EventTabs.quantityCalculation
-            ? TEXT_QUANTITY_CALCULATION
-            : activeTab === EventTabs.usedRecipes
-            ? TEXT_PLANED_RECIPES
-            : activeTab === EventTabs.shoppingList
-            ? TEXT_SHOPPING_LIST
-            : activeTab === EventTabs.materialList
-            ? TEXT_MATERIAL_LIST
-            : activeTab === EventTabs.eventInfo
-            ? TEXT_EVENT_INFO_SHORT
-            : "xx"
+              ? TEXT_QUANTITY_CALCULATION
+              : activeTab === EventTabs.usedRecipes
+                ? TEXT_PLANED_RECIPES
+                : activeTab === EventTabs.shoppingList
+                  ? TEXT_SHOPPING_LIST
+                  : activeTab === EventTabs.materialList
+                    ? TEXT_MATERIAL_LIST
+                    : activeTab === EventTabs.eventInfo
+                      ? TEXT_EVENT_INFO_SHORT
+                      : "xx"
         }`}
       />
       {/* ===== BODY ===== */}
@@ -1705,20 +1735,37 @@ const EventBase: React.FC<
                   {state.event != eventDraft.event && (
                     <Box
                       component="div"
-                      sx={{display: "flex", justifyContent: "flex-end"}}
+                      sx={{
+                        display: "flex",
+                        justifyContent: {xs: "stretch", sm: "flex-end"},
+                        flexDirection: {xs: "column", sm: "row"},
+                        alignItems: {xs: "stretch", sm: "center"},
+                        gap: 2,
+                      }}
                     >
                       <Button
                         sx={classes.deleteButton}
                         variant="outlined"
                         onClick={onEventDelete}
+                        fullWidth
                       >
                         {TEXT_DELETE_EVENT}
                       </Button>
+
                       <Button
                         variant="outlined"
                         color="primary"
-                        style={{marginLeft: "1rem"}}
+                        fullWidth
+                        onClick={onEventConsistencyCheck}
+                      >
+                        {TEXT_CONSISTENCY_CHECK}
+                      </Button>
+
+                      <Button
+                        variant="outlined"
+                        color="primary"
                         onClick={onEventDiscardChanges}
+                        fullWidth
                       >
                         {TEXT_DISCARD_CHANGES}
                       </Button>
@@ -1726,8 +1773,8 @@ const EventBase: React.FC<
                       <Button
                         variant="contained"
                         color="primary"
-                        style={{marginLeft: "1rem"}}
                         onClick={onEventSaveChanges}
+                        fullWidth
                       >
                         {TEXT_SAVE}
                       </Button>
@@ -1754,5 +1801,5 @@ const condition = (authUser: AuthUser | null) => !!authUser;
 export default compose(
   withEmailVerification,
   withAuthorization(condition),
-  withFirebase
+  withFirebase,
 )(EventPage);
