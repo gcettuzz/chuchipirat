@@ -7,9 +7,9 @@ import {
   DialogActions,
   Button,
   Typography,
-  FormGroup,
   FormControlLabel,
   Checkbox,
+  Box,
 } from "@mui/material";
 
 import {
@@ -130,11 +130,17 @@ export const DialogSelectDepartments = ({
       <DialogTitle>{TEXT_DIALOG_TITLE_SELECT_DEPARTMENT}</DialogTitle>
       <DialogContent>
         <Typography>{TEXT_DIALOG_SUBTITLE_SELECT_DEPARTMENT}</Typography>
-
-        <FormGroup>
+        <Box
+          sx={{
+            columnCount: {xs: 1, md: 2},
+            columnGap: 3,
+            mt: 1,
+          }}
+        >
           {departments?.map((department) => (
             <FormControlLabel
               key={"frmctrlbl_" + department.uid}
+              sx={{breakInside: "avoid", m: 0, display: "flex"}}
               control={
                 <Checkbox
                   id={"chkb_" + department.uid}
@@ -145,7 +151,7 @@ export const DialogSelectDepartments = ({
               label={department.name}
             />
           ))}
-        </FormGroup>
+        </Box>
       </DialogContent>
       <DialogActions>
         {dialogValidation[0]?.fieldName ===
