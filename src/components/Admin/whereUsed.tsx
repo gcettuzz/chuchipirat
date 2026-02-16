@@ -56,6 +56,7 @@ import ItemAutocomplete, {
 import WhereUsed, {TraceObject} from "./whereUsed.class";
 import Recipe from "../Recipe/recipe.class";
 import {ItemType} from "../Event/ShoppingList/shoppingList.class";
+import {TextFieldSize} from "../../constants/defaultValues";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -241,7 +242,7 @@ const WhereUsedBase: React.FC<
       | React.ChangeEvent<HTMLInputElement>
       | React.ChangeEvent<HTMLInputElement>,
     newValue?: string | MaterialItem | ProductItem | null,
-    action?: AutocompleteChangeReason
+    action?: AutocompleteChangeReason,
   ) => {
     let updatedValues = {};
     switch (event.target.id.split("_")[0]) {
@@ -298,10 +299,10 @@ const WhereUsedBase: React.FC<
       objectType: state.selectedRecipeUid
         ? TraceObject.recipe
         : state.selectedItem?.itemType === ItemType.food
-        ? TraceObject.product
-        : state.selectedItem?.itemType === ItemType.material
-        ? TraceObject.material
-        : TraceObject.none,
+          ? TraceObject.product
+          : state.selectedItem?.itemType === ItemType.material
+            ? TraceObject.material
+            : TraceObject.none,
       firebase: firebase,
       authUser: authUser!,
     }).catch((error) => {
@@ -366,7 +367,7 @@ interface SearchPanelProps {
     event:
       | React.ChangeEvent<HTMLInputElement>
       | React.ChangeEvent<HTMLInputElement>,
-    newValue?: string | MaterialItem | ProductItem | null
+    newValue?: string | MaterialItem | ProductItem | null,
   ) => void;
   onStartTrace: () => void;
 }
@@ -398,6 +399,7 @@ const SearchPanel = ({
             onChange={onFieldUpdate}
             error={{isError: false, errorText: ""}}
             allowCreateNewItem={false}
+            size={TextFieldSize.medium}
           />
           <Divider>{TEXT_OR.toLocaleUpperCase()}</Divider>
           <TextField
@@ -472,5 +474,5 @@ const condition = (authUser: AuthUser | null) =>
 export default compose(
   withEmailVerification,
   withAuthorization(condition),
-  withFirebase
+  withFirebase,
 )(WhereUsedPage);

@@ -31,11 +31,13 @@ import Feed, {FeedType} from "../../Shared/feed.class";
 import Role from "../../../constants/roles";
 import _ from "lodash";
 import {logEvent} from "firebase/analytics";
+import Utils from "../../Shared/utils.class";
 
 export enum ItemType {
   none = 0,
   food,
   material,
+  custom,
 }
 
 export interface ShoppingListItem {
@@ -204,10 +206,10 @@ export default class ShoppingList {
                 Object.values(scaledIngredients).forEach(
                   (ingredient: Ingredient) => {
                     const product = products.find(
-                      (product) => product.uid == ingredient.product.uid
+                      (product) => product.uid == ingredient.product.uid,
                     );
                     const department = departments.find(
-                      (department) => department.uid == product?.department.uid
+                      (department) => department.uid == product?.department.uid,
                     );
 
                     if (
@@ -244,7 +246,7 @@ export default class ShoppingList {
                         itemType: ItemType.food,
                       });
                     }
-                  }
+                  },
                 );
                 // Alle skalierten Materialien hinzufügen
                 Object.values(scaledMaterials).forEach(
@@ -252,13 +254,13 @@ export default class ShoppingList {
                     // Prüfen ob ein Verbauchsmaterial
                     const material = materials.find(
                       (materialRecord) =>
-                        materialRecord.uid == recipeMaterial.material.uid
+                        materialRecord.uid == recipeMaterial.material.uid,
                     );
 
                     const department = departments.find(
                       // Material geht fix in die Non-Food Abteilung
                       (department) =>
-                        department.name.toUpperCase() == "NON FOOD"
+                        department.name.toUpperCase() == "NON FOOD",
                     );
 
                     if (
@@ -295,9 +297,9 @@ export default class ShoppingList {
                         itemType: ItemType.material,
                       });
                     }
-                  }
+                  },
                 );
-              }
+              },
             );
           });
         })
@@ -313,10 +315,10 @@ export default class ShoppingList {
         const menuPlanProductEntry = menueplan.products[productMenuUid];
 
         const product = products.find(
-          (product) => product.uid == menuPlanProductEntry.productUid
+          (product) => product.uid == menuPlanProductEntry.productUid,
         );
         const department = departments.find(
-          (department) => department.uid == product?.department.uid
+          (department) => department.uid == product?.department.uid,
         );
         if (!department || selectedDepartments.includes(department!.uid)) {
           // Nur hinzufügen, wenn die Abteilung ausgewählt wurde
@@ -347,10 +349,10 @@ export default class ShoppingList {
         const menuPlanMaterialEntry = menueplan.materials[materialMenuUid];
 
         const material = materials.find(
-          (material) => material.uid == menuPlanMaterialEntry.materialUid
+          (material) => material.uid == menuPlanMaterialEntry.materialUid,
         );
         const department = departments.find(
-          (department) => department.name.toUpperCase() == "NON FOOD"
+          (department) => department.name.toUpperCase() == "NON FOOD",
         );
 
         if (
@@ -420,7 +422,7 @@ export default class ShoppingList {
     if (
       !Object.prototype.hasOwnProperty.call(
         shoppingListReference.list,
-        department.pos
+        department.pos,
       )
     ) {
       // Neue Abteilung hinzufügen
@@ -435,7 +437,7 @@ export default class ShoppingList {
       department.pos
     ].items.find(
       (listItem: ShoppingListItem) =>
-        listItem.item.uid === item!.uid && listItem.unit === unit
+        listItem.item.uid === item!.uid && listItem.unit === unit,
     );
 
     if (shoppingListItem) {
@@ -474,7 +476,7 @@ export default class ShoppingList {
     itemUid,
   }: DeleteItem) => {
     const updatedShoppingList = _.cloneDeep(
-      shoppingListReference
+      shoppingListReference,
     ) as ShoppingList;
 
     updatedShoppingList!.list[departmentKey].items = updatedShoppingList!.list[
@@ -487,6 +489,131 @@ export default class ShoppingList {
     }
     return updatedShoppingList;
   };
+  // ===================================================================== */
+  /**
+   * Fügt eine Abteilung zur Einkaufsliste hinzu, falls diese noch nicht existiert.
+   *
+   * Erwartet die UID der hinzuzufügenden Abteilung sowie die Liste aller verfügbaren
+   * Abteilungen. Falls die Abteilung bereits in der Einkaufsliste existiert, wird die Liste
+   * unverändert zurückgegeben.
+   *
+   * @param params.shoppingList Die Einkaufsliste, der eine Abteilung hinzugefügt werden soll.
+   * @param params.departmentUid Die UID der hinzuzufügenden Abteilung.
+   * @param params.departments Die Liste aller verfügbaren Abteilungen.
+   *
+   * @returns die aktualisierte Einkaufsliste mit der neuen Abteilung, falls diese hinzugefügt wurde.
+   *
+   * @example
+   * shoppingList = ShoppingList.addDepartmentToList({
+   *   shoppingList,
+   *   departmentUid: "FbYxZKc5NuZE39G4eBL3",
+   *   departments,
+   * });
+   */
+  static addDepartmentToList = ({
+    shoppingList,
+    departmentUid,
+    departments,
+  }: {
+    shoppingList: ShoppingList;
+    departmentUid: Department["uid"];
+    departments: Department[];
+  }) => {
+    if (!shoppingList || !departmentUid) return shoppingList;
+
+    const department = departments.find(
+      (department) => department.uid === departmentUid,
+    );
+    if (!department) return shoppingList;
+
+    // Prüfen ob Abteilung schon existiert
+    if (Object.hasOwn(shoppingList.list, department.pos)) {
+      return shoppingList;
+    }
+
+    // Neue Abteilung hinzufügen
+    shoppingList.list[department.pos] = {
+      departmentUid: department.uid,
+      departmentName: department.name,
+      items: [],
+    };
+
+    return shoppingList;
+  };
+  // ===================================================================== */
+  static createEmptyListEntries = ({
+    shoppingList,
+  }: {
+    shoppingList: ShoppingList;
+  }) => {
+    Object.keys(shoppingList.list).forEach((departmentPos) => {
+      // Wenn Array leer ist oder letztes Element nicht leer ist, neues leeres Element hinzufügen
+      if (
+        shoppingList.list[Number(departmentPos) as Department["pos"]].items
+          .length === 0 ||
+        shoppingList.list[Number(departmentPos) as Department["pos"]].items[
+          shoppingList.list[Number(departmentPos) as Department["pos"]].items
+            .length - 1
+        ].item.name !== ""
+      ) {
+        console.log(
+          departmentPos,
+          shoppingList.list[Number(departmentPos) as Department["pos"]].items,
+        );
+        shoppingList.list[
+          Number(departmentPos) as Department["pos"]
+        ].items.push(ShoppingList.createEmptyListItem());
+      }
+    });
+
+    return shoppingList;
+  };
+
+  // ===================================================================== */
+  /**
+   * Leeres Listenelement für die Einkaufsliste erstellen
+   *
+   * @returns Ein leeres ShoppingListItem-Objekt mit Standardwerten.
+   * @example
+   * const emptyItem = ShoppingList.createEmptyListItem();
+   */
+  static createEmptyListItem = () => {
+    return {
+      checked: false,
+      quantity: 0,
+      unit: "",
+      item: {uid: Utils.generateUid(10), name: ""},
+      type: ItemType.none,
+      manualEdit: false,
+      manualAdd: true,
+    } as ShoppingListItem;
+  };
+  // ===================================================================== */
+  /**
+   * Alle leeren Einträge aus der Einkaufsliste entfernen
+   *
+   * Iteriert über alle Departments der Einkaufsliste und entfernt
+   * alle Items, die keine Menge, keine Einheit und keinen Namen haben.
+   *
+   * @param params.shoppingList Die Einkaufsliste, aus der die leeren Einträge entfernt werden sollen.
+   * @returns die bereinigte Einkaufsliste ohne leere Einträge.
+   * @example
+   * shoppingList = ShoppingList.deleteEmptyItems({ shoppingList });
+   */
+  static deleteEmptyItems = ({shoppingList}: {shoppingList: ShoppingList}) => {
+    Object.keys(shoppingList.list).forEach((departmentPos) => {
+      shoppingList.list[Number(departmentPos) as Department["pos"]].items =
+        shoppingList.list[
+          Number(departmentPos) as Department["pos"]
+        ].items.filter(
+          (item) =>
+            !(item.quantity === 0 && item.unit === "" && item.item.name === ""),
+        );
+    });
+
+    return shoppingList;
+  };
+
   // ===================================================================== */
   /**
    * Liefert alle abgehakten (checked = true) Einträge gruppiert nach Department zurück.
@@ -525,7 +652,7 @@ export default class ShoppingList {
           departmentName: department.departmentName,
           items: checked,
         };
-      }
+      },
     );
 
     return result;
@@ -582,6 +709,8 @@ export default class ShoppingList {
    * @returns shoppingList - ganze ShoppingList
    */
   static save = async ({firebase, eventUid, shoppingList, authUser}: Save) => {
+    // shoppingList = ShoppingList.deleteEmptyItems({shoppingList});
+
     if (!shoppingList.uid) {
       // Neue Liste
       await firebase.event.shoppingList
@@ -622,7 +751,7 @@ export default class ShoppingList {
 
           logEvent(
             firebase.analytics,
-            FirebaseAnalyticEvent.shoppingListGenerated
+            FirebaseAnalyticEvent.shoppingListGenerated,
           );
         })
         .catch((error) => {
@@ -703,7 +832,6 @@ export default class ShoppingList {
         console.error(error);
         throw error;
       });
-
     return shoppingList;
   };
   // ===================================================================== */
@@ -731,7 +859,7 @@ export default class ShoppingList {
   static countItems = ({shoppingList}: CountItems) => {
     let result = 0;
     Object.values(shoppingList.list).forEach(
-      (department) => (result += department.items.length)
+      (department) => (result += department.items.length),
     );
     return result;
   };

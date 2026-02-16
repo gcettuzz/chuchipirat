@@ -446,8 +446,8 @@ const useCustomStyles = () => {
     },
     // EX: listShoppingListItem
     eventListItem: {
-      margin: theme.spacing(0),
-      padding: theme.spacing(0),
+      margin: theme.spacing(0.5),
+      padding: theme.spacing(0.5),
     },
     // EX: shoppingListItemTextQuantity
     eventListItemTextQuantity: {
@@ -542,9 +542,11 @@ const useCustomStyles = () => {
       // marginBottom: theme.spacing(1),
     },
     dialogSelectMenueItem: {
-      padding: theme.spacing(1),
-      minWidth: "15em",
+      paddingLeft: 0,
+      paddingRight: 0,
+      paddingTop: 0,
       paddingBottom: theme.spacing(2),
+      minWidth: "15em",
     },
     dialogSelectMenuCardMealtype: {
       position: "relative",

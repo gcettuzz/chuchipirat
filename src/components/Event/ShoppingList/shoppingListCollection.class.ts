@@ -227,7 +227,7 @@ export default class ShoppingListCollection {
     callback,
   }: GetShoppingListCollectionListener) => {
     const shoppingListCollectionCallback = (
-      shoppingListCollection: ShoppingListCollection
+      shoppingListCollection: ShoppingListCollection,
     ) => {
       // Menüplan mit UID anreichern
       shoppingListCollection.eventUid = uid;
@@ -410,7 +410,7 @@ export default class ShoppingListCollection {
     let manuallyAddedItems: ShoppingList["list"];
     const manuallyAddedItemsTrace = {} as ShoppingListTrace;
     const updatedShoppingListCollection = _.cloneDeep(
-      shoppingListCollection
+      shoppingListCollection,
     ) as ShoppingListCollection;
     let updatedTrace = {} as ShoppingListTrace;
     let updatedShoppingList = {} as ShoppingList;
@@ -424,14 +424,14 @@ export default class ShoppingListCollection {
       Object.entries(manuallyAddedItems).forEach(
         ([departmentPos, department]) => {
           department.items = department.items.filter(
-            (item) => item?.manualAdd == true
+            (item) => item?.manualAdd == true,
           );
 
           if (department.items.length == 0) {
             // Ganze Abteilung löschen
             delete manuallyAddedItems[departmentPos];
           }
-        }
+        },
       );
 
       // Trace-Elemente auch behalten
@@ -444,7 +444,7 @@ export default class ShoppingListCollection {
 
       Object.keys(manuallyAddedItemsTrace).forEach((key) => {
         manuallyAddedItemsTrace[key] = manuallyAddedItemsTrace[key].filter(
-          (item) => item.manualAdd
+          (item) => item.manualAdd,
         );
       });
     }
@@ -458,7 +458,7 @@ export default class ShoppingListCollection {
         Menuplan.getMealsOfMenues({
           menuplan: menueplan,
           menues: listToUpdate.properties.selectedMenues,
-        })
+        }),
       ) ||
       // Sind neue Menü dazugekommen/ oder wurden Menüs aus der
       // Auswahl entfernt
@@ -502,7 +502,7 @@ export default class ShoppingListCollection {
                 if (
                   !Object.prototype.hasOwnProperty.call(
                     updatedShoppingList.list,
-                    departmentKey
+                    departmentKey,
                   )
                 ) {
                   itemToInsert = undefined;
@@ -514,7 +514,7 @@ export default class ShoppingListCollection {
                   ].items.find(
                     (updatedListItem: ShoppingListItem) =>
                       updatedListItem.item.uid == item.item.uid &&
-                      updatedListItem.quantity == item.quantity
+                      updatedListItem.quantity == item.quantity,
                   );
                   if (itemToInsert) {
                     // Gibt es schon (mit dem Update dazugekommen) --> Menge dazuzählen
@@ -524,7 +524,7 @@ export default class ShoppingListCollection {
                   }
                 }
               });
-            }
+            },
           );
           // Trace mit manuellen Einträgen mergen
           Object.entries(manuallyAddedItemsTrace).forEach(([itemUid]) => {
@@ -533,7 +533,7 @@ export default class ShoppingListCollection {
               updatedTrace[itemUid] = [];
             }
             updatedTrace[itemUid] = updatedTrace[itemUid].concat(
-              manuallyAddedItemsTrace[itemUid]
+              manuallyAddedItemsTrace[itemUid],
             );
           });
         }
@@ -544,7 +544,7 @@ export default class ShoppingListCollection {
 
         logEvent(
           firebase.analytics,
-          FirebaseAnalyticEvent.shoppingListRefreshed
+          FirebaseAnalyticEvent.shoppingListRefreshed,
         );
       })
       .catch((error) => {
@@ -552,6 +552,7 @@ export default class ShoppingListCollection {
         throw error;
       });
 
+    console.log(updatedShoppingList);
     return {
       shoppingList: updatedShoppingList,
       shoppingListCollection: updatedShoppingListCollection,
@@ -644,7 +645,7 @@ export default class ShoppingListCollection {
     authUser,
   }: DeleteList) => {
     const updatedShoppingListCollection = _.cloneDeep(
-      shoppingListColection
+      shoppingListColection,
     ) as ShoppingListCollection;
     delete updatedShoppingListCollection.lists[listUidToDelete];
 
@@ -682,7 +683,7 @@ export default class ShoppingListCollection {
     authUser,
   }: EditListName) => {
     const updatedShoppingListCollection = _.cloneDeep(
-      shoppingListCollection
+      shoppingListCollection,
     ) as ShoppingListCollection;
 
     updatedShoppingListCollection.lists[listUidToEdit].properties.name =

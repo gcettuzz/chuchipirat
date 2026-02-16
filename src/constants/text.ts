@@ -23,6 +23,9 @@ export const BUTTON_DELETE = "Löschen";
 export const BUTTON_SCALE = "Skalieren";
 export const BUTTON_OWN_VARIANT = "Eigene Variante erstellen";
 export const ADD_DEPARTMENT = "Abteilung hinzufügen";
+export const SORT_ITEMS = "Einträge sortieren";
+export const SHOPPING_MODE = "Einkaufsmodus";
+export const EDIT_MODE = "Bearbeitungsmodus";
 export const BUTTON_ADD_PERSON = "Person hinzufügen";
 export const BUTTON_ADD_TO_EVENT = "Zu Anlass hinzufügen";
 export const BUTTON_UPLOAD = "Upload";
@@ -1177,6 +1180,11 @@ export const LIST_ENTRY_MAYBE_OUT_OF_DATE = (listName: string) =>
   `Bitte beachte, dass der Menüplan in der Zwischenzeit geändert wurde. Dadurch könnten die Werte der angezeigten ${listName} möglicherweise nicht mehr korrekt sein. Bitte wähle Aktualisieren, um die Auswahl neu zu berechnen.`;
 export const USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE =
   "Bitte beachte, dass der Menüplan in der Zwischenzeit geändert wurde. Dadurch könnten die angezeigten Mengen und Produkte möglicherweise nicht mehr korrekt sein. Bitte wähle Aktualisieren, um die Einkaufsliste neu zu generieren.";
+export const SHOPPINTLIST_ITEM_MOVED_TO_RIGHT_DEPARTMENT = (
+  itemName: string,
+  departmentName: string,
+) =>
+  `Der Produkt ${itemName} wurde automatisch in den Abschnitt ${departmentName} verschoben.`;
 export const PLANED_FOR = "Geplant für";
 export const FOR_DATIVE = "zum";
 export const UNIT = "Einheit";

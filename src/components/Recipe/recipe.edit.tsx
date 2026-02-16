@@ -323,7 +323,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
       // Das neue Produkt in Produkte speichern (für Dropdown)
       tempProducts = state.products;
       tempProduct = tempProducts.find(
-        (product) => product.uid === action.payload.uid
+        (product) => product.uid === action.payload.uid,
       );
       // Wenn es das schon gibt, nichts tun
       if (!tempProduct) {
@@ -420,7 +420,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
       // Das neue Material in Produkte speichern (für Dropdown)
       materials = state.materials;
       material = materials.find(
-        (material) => material.uid === action.payload.uid
+        (material) => material.uid === action.payload.uid,
       );
       // Wenn es das schon gibt, nichts tun
       if (!material) {
@@ -610,7 +610,7 @@ function getItemData<Item>({
 }
 
 function isItemData<T>(
-  data: Record<string | symbol, unknown>
+  data: Record<string | symbol, unknown>,
 ): data is ItemData<T> {
   return data[itemKey] === true;
 }
@@ -874,7 +874,7 @@ const RecipeEdit = ({
   // Feldwert ändern - onChange
   // ------------------------------------------ */
   const onChangeField = (
-    event: SelectChangeEvent<MenuType[]> | React.ChangeEvent<HTMLInputElement>
+    event: SelectChangeEvent<MenuType[]> | React.ChangeEvent<HTMLInputElement>,
   ) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let value: any;
@@ -904,7 +904,7 @@ const RecipeEdit = ({
       if (selectedMenuTypes.filter((value) => value == newValue).length > 1) {
         // Mehrere Einträge... alles löschen was dem neuen Wert entspricht
         selectedMenuTypes = selectedMenuTypes.filter(
-          (value) => value != newValue
+          (value) => value != newValue,
         );
       }
 
@@ -955,7 +955,7 @@ const RecipeEdit = ({
     event?: React.ChangeEvent<HTMLInputElement>,
     newValue?: string | Unit | Product | null,
     action?: AutocompleteChangeReason,
-    objectId?: string
+    objectId?: string,
   ) => {
     let ingredientPos: string[];
     let product: Product;
@@ -1036,7 +1036,7 @@ const RecipeEdit = ({
     });
   };
   const onChangePreparationStep = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const prepparationStepPos = event.target.id.split("_");
 
@@ -1053,7 +1053,7 @@ const RecipeEdit = ({
     event?: React.ChangeEvent<HTMLInputElement>,
     newValue?: string | Material,
     action?: AutocompleteChangeReason,
-    objectId?: string
+    objectId?: string,
   ) => {
     let materialPos: string[];
     let material: Material;
@@ -1128,7 +1128,7 @@ const RecipeEdit = ({
   // ------------------------------------------ */
   const handleSnackbarClose = (
     event: Event | React.SyntheticEvent<any, Event>,
-    reason: SnackbarCloseReason
+    reason: SnackbarCloseReason,
   ) => {
     if (reason === "clickaway") {
       return;
@@ -1149,7 +1149,7 @@ const RecipeEdit = ({
         Object.values(state.recipe.ingredients.entries).filter(
           (entry) =>
             entry.posType == PositionType.ingredient &&
-            entry.product?.uid !== ""
+            entry.product?.uid !== "",
         ).length == 1
       ) {
         const doSave = await customDialog({
@@ -1329,7 +1329,7 @@ const RecipeEdit = ({
     setPositionMenuAnchorElement(event.currentTarget);
   };
   const onPostionMoreContextMenuClick = (
-    event: React.MouseEvent<HTMLElement>
+    event: React.MouseEvent<HTMLElement>,
   ) => {
     let indexToInsert = 0;
     let indexToRemove = 0;
@@ -1370,7 +1370,7 @@ const RecipeEdit = ({
         entriesToUpdate.entries[newObject.uid] = newObject;
 
         indexToInsert = entriesToUpdate.order.findIndex(
-          (objectUid) => objectUid == pressedButton[2]
+          (objectUid) => objectUid == pressedButton[2],
         );
         entriesToUpdate.order.splice(indexToInsert + 1, 0, newObject.uid);
 
@@ -1380,20 +1380,20 @@ const RecipeEdit = ({
         entriesToUpdate.entries[newObject.uid] = newObject;
 
         indexToInsert = entriesToUpdate.order.findIndex(
-          (objectUid) => objectUid == pressedButton[2]
+          (objectUid) => objectUid == pressedButton[2],
         );
         entriesToUpdate.order.splice(indexToInsert + 1, 0, newObject.uid);
         break;
       case Action.DELETE:
         delete entriesToUpdate.entries[pressedButton[2]];
         entriesToUpdate.order = entriesToUpdate.order.filter(
-          (uid) => uid !== pressedButton[2]
+          (uid) => uid !== pressedButton[2],
         );
         break;
       case Action.MOVEUP:
       case Action.MOVEDOWN:
         indexToRemove = entriesToUpdate.order.indexOf(
-          pressedButton[2] as RecipeBlockNotNone
+          pressedButton[2] as RecipeBlockNotNone,
         );
 
         if (indexToRemove === -1) return;
@@ -1543,7 +1543,7 @@ const RecipeEdit = ({
   // ------------------------------------------ */
   const onDragAndDropUpdate = (
     newOrder: string[],
-    dragAndDropListType: DragDropTypes
+    dragAndDropListType: DragDropTypes,
   ) => {
     dispatch({
       type: ReducerActions.DRAG_AND_DROP_UDPATE,
@@ -1993,7 +1993,7 @@ const RecipeInfoPanel = ({
                 renderValue={(selected) => {
                   const selectedValues = selected as unknown as string[];
                   const textArray = selectedValues.map(
-                    (value) => TEXT.MENU_TYPES[value]
+                    (value) => TEXT.MENU_TYPES[value],
                   ) as string[];
                   return (textArray as string[]).join(", ");
                 }}
@@ -2011,7 +2011,7 @@ const RecipeInfoPanel = ({
                         />
                         <ListItemText primary={TEXT.MENU_TYPES[menuType]} />
                       </MenuItem>
-                    )
+                    ),
                 )}
               </Select>
             </FormControl>
@@ -2085,11 +2085,11 @@ interface RecipeIngredientsProps {
     event: React.ChangeEvent<HTMLInputElement>,
     newValue?: string | Unit | Product | null,
     action?: AutocompleteChangeReason,
-    objectId?: string
+    objectId?: string,
   ) => void;
   onDragAndDropUpdate: (
     newOrder: string[],
-    dragAndDropList: DragDropTypes
+    dragAndDropList: DragDropTypes,
   ) => void;
 
   onPositionMoreClick: (event: React.MouseEvent<HTMLElement>) => void;
@@ -2147,7 +2147,7 @@ const RecipeIngredients = ({
           startIndex,
           finishIndex,
         }),
-        DragDropTypes.INGREDIENT
+        DragDropTypes.INGREDIENT,
       );
       setLasCardMoved({
         item,
@@ -2156,7 +2156,7 @@ const RecipeIngredients = ({
         numberOfItems: recipe.ingredients.order.length,
       });
     },
-    [recipe.ingredients]
+    [recipe.ingredients],
   );
 
   useEffect(() => {
@@ -2178,7 +2178,7 @@ const RecipeIngredients = ({
 
         const indexOfTarget = recipe.ingredients.order.findIndex(
           (itemUiId) =>
-            itemUiId === (targetData.item as Ingredient | Section).uid
+            itemUiId === (targetData.item as Ingredient | Section).uid,
         );
         if (indexOfTarget < 0) {
           return;
@@ -2208,7 +2208,7 @@ const RecipeIngredients = ({
 
   const getListLength = useCallback(
     () => recipe.ingredients.order.length,
-    [recipe.ingredients.order.length]
+    [recipe.ingredients.order.length],
   );
 
   const contextValue: ListContextValue = useMemo(() => {
@@ -2392,7 +2392,7 @@ const IngredientListEntry = ({
         onDrop() {
           setClosestEdge(null);
         },
-      })
+      }),
     );
   }, [instanceId, ingredient, index, registerItem]);
 
@@ -2461,7 +2461,7 @@ interface IngredientPositionProps {
     event: React.ChangeEvent<HTMLInputElement>,
     newValue?: string | Unit | Product | null,
     action?: AutocompleteChangeReason,
-    objectId?: string
+    objectId?: string,
   ) => void;
 }
 const IngredientPosition = ({
@@ -2597,11 +2597,11 @@ interface RecipePreparationStepsProps {
     event: React.ChangeEvent<HTMLInputElement>,
     newValue?: string | Unit | Product,
     action?: AutocompleteChangeReason,
-    objectId?: string
+    objectId?: string,
   ) => void;
   onDragAndDropUpdate: (
     newOrder: string[],
-    dragAndDropList: DragDropTypes
+    dragAndDropList: DragDropTypes,
   ) => void;
   onPositionMoreClick: (event: React.MouseEvent<HTMLElement>) => void;
 }
@@ -2651,7 +2651,7 @@ const RecipePreparationSteps = ({
           startIndex,
           finishIndex,
         }),
-        DragDropTypes.PREPARATIONSTEP
+        DragDropTypes.PREPARATIONSTEP,
       );
       setLasCardMoved({
         item,
@@ -2660,7 +2660,7 @@ const RecipePreparationSteps = ({
         numberOfItems: recipe.preparationSteps.order.length,
       });
     },
-    [recipe.preparationSteps]
+    [recipe.preparationSteps],
   );
 
   useEffect(() => {
@@ -2682,7 +2682,7 @@ const RecipePreparationSteps = ({
 
         const indexOfTarget = recipe.preparationSteps.order.findIndex(
           (itemUiId) =>
-            itemUiId === (targetData.item as PreparationStep | Section).uid
+            itemUiId === (targetData.item as PreparationStep | Section).uid,
         );
         if (indexOfTarget < 0) {
           return;
@@ -2712,7 +2712,7 @@ const RecipePreparationSteps = ({
 
   const getListLength = useCallback(
     () => recipe.preparationSteps.order.length,
-    [recipe.preparationSteps.order.length]
+    [recipe.preparationSteps.order.length],
   );
 
   const contextValue: ListContextValue = useMemo(() => {
@@ -2752,7 +2752,7 @@ const RecipePreparationSteps = ({
                     onChange={onChange}
                     onPositionMoreClick={onPositionMoreClick}
                   />
-                )
+                ),
               )}
             </List>
           </PreparationListContext.Provider>
@@ -2857,7 +2857,7 @@ const PreparationStepListEntry = ({
         onDrop() {
           setClosestEdge(null);
         },
-      })
+      }),
     );
   }, [instanceId, preparationStep, index, registerItem]);
 
@@ -2977,11 +2977,11 @@ interface RecipeMaterialsProps {
     event: React.ChangeEvent<HTMLInputElement>,
     newValue?: string | Material,
     action?: AutocompleteChangeReason,
-    objectId?: string
+    objectId?: string,
   ) => void;
   onDragAndDropUpdate: (
     newOrder: string[],
-    dragAndDropList: DragDropTypes
+    dragAndDropList: DragDropTypes,
   ) => void;
   onPositionMoreClick: (event: React.MouseEvent<HTMLElement>) => void;
 }
@@ -3032,7 +3032,7 @@ const RecipeMaterials = ({
           startIndex,
           finishIndex,
         }),
-        DragDropTypes.MATERIAL
+        DragDropTypes.MATERIAL,
       );
       setLasCardMoved({
         item,
@@ -3041,7 +3041,7 @@ const RecipeMaterials = ({
         numberOfItems: recipe.materials.order.length,
       });
     },
-    [recipe.materials]
+    [recipe.materials],
   );
 
   useEffect(() => {
@@ -3063,7 +3063,7 @@ const RecipeMaterials = ({
 
         const indexOfTarget = recipe.materials.order.findIndex(
           (itemUiId) =>
-            itemUiId === (targetData.item as RecipeMaterialPosition).uid
+            itemUiId === (targetData.item as RecipeMaterialPosition).uid,
         );
         if (indexOfTarget < 0) {
           return;
@@ -3093,7 +3093,7 @@ const RecipeMaterials = ({
 
   const getListLength = useCallback(
     () => recipe.materials.order.length,
-    [recipe.materials.order.length]
+    [recipe.materials.order.length],
   );
 
   const contextValue: ListContextValue = useMemo(() => {
@@ -3233,7 +3233,7 @@ const MaterialListEntry = ({
         onDrop() {
           setClosestEdge(null);
         },
-      })
+      }),
     );
   }, [instanceId, material, index, registerItem]);
 

@@ -57,6 +57,7 @@ const UserProfile = lazy(() => import("../User/userProfile"));
 const PrivacyPolicyPage = lazy(() => import("./privacyPolicy"));
 const TermOfUsePage = lazy(() => import("./termOfUse"));
 const Temp = lazy(() => import("../Temp/temp"));
+const Schema = lazy(() => import("../Temp/schema"));
 
 const Event = lazy(() => import("../Event/Event/event"));
 const Events = lazy(() => import("../Event/Event/events"));
@@ -327,6 +328,7 @@ const App = () => {
                 component={UserProfile}
               />
               <Route path={ROUTES.TEMP} component={Temp} />
+              <Route path={ROUTES.SCHEMA} component={Schema} />
               <Route path={ROUTES.NOT_FOUND} component={NotFound} />
               <Route exact path={ROUTES.RECIPE} component={Recipe} />
               <Route exact path={ROUTES.RECIPE_UID} component={Recipe} />

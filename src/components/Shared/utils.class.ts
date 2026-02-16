@@ -40,7 +40,7 @@ export interface DifferenceBetweenTwoDates {
  */
 export interface SortArray<T> {
   array: T[];
-  attributeName: string;
+  attributeName: string | string[];
   sortOrder?: SortOrder;
 }
 export interface SortArrayWithObjectByDate {
@@ -103,7 +103,7 @@ export default class Utils {
         "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // port and path
         "(\\?[;&a-z\\d%_.~+=-]*)?" + // query string
         "(\\#[-a-z\\d_]*)?$", // fragment locator
-      "i"
+      "i",
     );
     return regexp.test(url);
   }
@@ -113,7 +113,7 @@ export default class Utils {
   static isEmail(email: string) {
     if (
       /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-]/.test(
-        email
+        email,
       )
     ) {
       return true;
@@ -186,103 +186,82 @@ export default class Utils {
   }
   // ===================================================================== */
   /**
-   * Sortieren eines Arrays
-   * Falls die Objekte verschachtelt sind, muss der Zugriffspfad zu dem
-   * Sortiert-Attributsnamen mit Punkten (.) getrennt werden
-   * @param object - Objekt mit Referenz zu Array, dem Attributnamen nach
-   *                 dem sortiert werden soll und optional die Sortierrichtung
-   * @returns Sortiertes Array
+   * Sortieren eines Arrays nach einem oder mehreren Attributen.
+   *
+   * Unterstützt:
+   * - Einfaches Attribut: `"name"`
+   * - Verschachteltes Attribut via Punkt-Notation: `"person.lastName"`
+   * - Mehrere Attribute als Array: `["person.lastName", "person.firstName"]`
+   *   → Primär nach lastName, bei Gleichheit sekundär nach firstName, usw.
+   *
+   * Hinweis:
+   * - Sortiert IN PLACE (mutiert das übergebene Array) und gibt dasselbe Array zurück.
+   * - String-Vergleich ist case-insensitive (toUpperCase()).
+   * - Date wird via valueOf() verglichen.
+   * - null/undefined werden stabil behandelt (null/undefined < Wert).
+   *
+   * @template T
+   * @param object - Objekt mit Referenz zu Array, dem/den Attributnamen nach
+   *                 denen sortiert werden soll und optional der Sortierrichtung.
+   * @param object.array - Zu sortierendes Array (wird mutiert).
+   * @param object.attributeName - Attributname (string) oder Liste von Attributnamen (string[]).
+   * @param object.sortOrder - Sortierrichtung (asc|desc). Default: asc.
+   * @returns Sortiertes Array (identische Referenz wie input array).
    */
   static sortArray<T>({
     array,
     attributeName,
     sortOrder = SortOrder.asc,
   }: SortArray<T>) {
-    const nameHierarchy = attributeName.split(".");
+    const keys: string[] = Array.isArray(attributeName)
+      ? attributeName
+      : [attributeName];
 
-    if (sortOrder == SortOrder.asc) {
-      array.sort(function (aOriginal, bOriginal) {
-        let nameA: string;
-        let nameB: string;
-        let aValue: any;
-        let bValue: any;
+    const getValueByPath = (obj: any, path: string) =>
+      path.split(".").reduce((acc, key) => (acc == null ? acc : acc[key]), obj);
 
-        if (nameHierarchy.length > 1) {
-          aValue = aOriginal;
-          bValue = bOriginal;
+    const compareValues = (aValue: any, bValue: any): number => {
+      // null/undefined: beide leer => gleich, sonst leer < nicht leer
+      if (aValue == null && bValue == null) return 0;
+      if (aValue == null) return -1;
+      if (bValue == null) return 1;
 
-          // Versachtelten Wert holen
-          nameHierarchy.forEach((attributeName) => {
-            aValue = aValue[attributeName];
-            bValue = bValue[attributeName];
-          });
-        } else {
-          aValue = aOriginal[attributeName];
-          bValue = bOriginal[attributeName];
-        }
+      // Date
+      if (aValue instanceof Date && bValue instanceof Date) {
+        return aValue.valueOf() - bValue.valueOf();
+      }
 
-        if (aValue instanceof Date && bValue instanceof Date) {
-          return aValue.valueOf() - bValue.valueOf();
-        } else if (typeof aValue === "string") {
-          nameA = aValue.toUpperCase(); // Gross-/Kleinschreibung ignorieren
-          nameB = bValue.toUpperCase(); // Gross-/Kleinschreibung ignorieren
-        } else {
-          nameA = aValue;
-          nameB = bValue;
-        }
-
-        if (nameA < nameB) {
-          return -1;
-        }
-        if (nameA > nameB) {
-          return 1;
-        }
-        // Namen müssen gleich sein
+      // String case-insensitive
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        const A = aValue.toUpperCase();
+        const B = bValue.toUpperCase();
+        if (A < B) return -1;
+        if (A > B) return 1;
         return 0;
-      });
-    } else {
-      array.sort(function (aOriginal, bOriginal) {
-        let nameA: any;
-        let nameB: any;
-        let aValue: any;
-        let bValue: any;
+      }
 
-        if (nameHierarchy.length > 1) {
-          aValue = aOriginal;
-          bValue = bOriginal;
-          // Versachtelten Wert holen
-          nameHierarchy.forEach((attributeName) => {
-            aValue = aValue[attributeName];
-            bValue = bValue[attributeName];
-          });
-        } else {
-          aValue = aOriginal[attributeName];
-          bValue = bOriginal[attributeName];
-        }
+      // Fallback: Standardvergleich (number, boolean, etc.)
+      if (aValue < bValue) return -1;
+      if (aValue > bValue) return 1;
+      return 0;
+    };
 
-        if (aValue instanceof Date && bValue instanceof Date) {
-          return bValue.valueOf() - aValue.valueOf();
-        } else if (typeof aValue === "string") {
-          nameA = aValue.toUpperCase(); // Gross-/Kleinschreibung ignorieren
-          nameB = bValue.toUpperCase(); // Gross-/Kleinschreibung ignorieren
-        } else {
-          nameA = aValue;
-          nameB = bValue;
-        }
+    const direction = sortOrder === SortOrder.asc ? 1 : -1;
 
-        if (nameA > nameB) {
-          return -1;
-        }
-        if (nameA < nameB) {
-          return 1;
-        }
-        // Namen müssen gleich sein
-        return 0;
-      });
-    }
+    array.sort((aOriginal: any, bOriginal: any) => {
+      for (const key of keys) {
+        const aValue = getValueByPath(aOriginal, key);
+        const bValue = getValueByPath(bOriginal, key);
+
+        const cmp = compareValues(aValue, bValue);
+        if (cmp !== 0) return cmp * direction;
+      }
+      return 0;
+    });
 
     return array;
   }
+
   // ===================================================================== */
   /**
    * Prüfung ob wir uns in der Produktion befinden
@@ -367,7 +346,7 @@ export default class Utils {
    */
   static convertObjectToArray = (
     object: Record<string, unknown>,
-    idName: string
+    idName: string,
   ) => {
     return Object.keys(object).map((key) => {
       const entry: Record<string, unknown> = {

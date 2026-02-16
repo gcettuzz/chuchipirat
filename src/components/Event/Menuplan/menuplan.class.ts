@@ -239,7 +239,7 @@ interface RecalculateSinglePortion {
   groupConfig: EventGroupConfiguration;
 }
 
-interface _GetEventDateList {
+interface GetEventDateList {
   event: Event;
 }
 interface AdjustMenuplanWithNewDays {
@@ -332,7 +332,7 @@ export default class Menuplan {
     };
 
     // Datumsliste generieren
-    menuplan.dates = Menuplan._getEventDateList({event: event});
+    menuplan.dates = Menuplan.getEventDateList({event: event});
 
     // Mahlzeiten generieren (aus Default)
     DEFAULT_VALUES.MENUPLAN_MEALS.forEach((mealType) => {
@@ -1010,10 +1010,10 @@ export default class Menuplan {
   }: AdjustMenuplanWithNewDays) => {
     const updatedMenuplan = _.cloneDeep(menuplan) as Menuplan;
 
-    const newDayList = Menuplan._getEventDateList({event: newEvent}).map(
+    const newDayList = Menuplan.getEventDateList({event: newEvent}).map(
       (date) => Utils.dateAsString(date),
     );
-    const oldDayList = Menuplan._getEventDateList({event: existingEvent}).map(
+    const oldDayList = Menuplan.getEventDateList({event: existingEvent}).map(
       (date) => Utils.dateAsString(date),
     );
     const datesToDAdd = newDayList.filter((date) => !oldDayList.includes(date));
@@ -1087,15 +1087,12 @@ export default class Menuplan {
     });
     return updatedMenuplan;
   };
-  /* =====================================================================
-  // PRIVAT: 
-  // ===================================================================== */
   /**
    * Datumsliste generieren
    * Anhand der Zeitscheiben, ein Array mit allen Daten erstellen
    * @param {event}
    */
-  private static _getEventDateList = ({event}: _GetEventDateList) => {
+  static getEventDateList = ({event}: GetEventDateList) => {
     const dateList: Date[] = [];
 
     const dateRanges = Event.deleteEmptyDates(event.dates);

@@ -196,6 +196,16 @@ class FormatedShoppingList {
     ) {
       // Neue Seite anlegen
       this.actualPage++;
+      this.ensurePageExists();
+    }
+  }
+
+  private ensurePageExists() {
+    if (!this.pages[this.actualPage]) {
+      this.pages.push({
+        pageControl: new PageControl(LINES_PER_PAGE.REST),
+        list: [],
+      });
     }
   }
 
@@ -227,6 +237,7 @@ class FormatedShoppingList {
     } else {
       // In RIGHT gibt es keine "nächste Spalte" auf derselben Seite → nächste Seite
       this.actualPage++;
+      this.ensurePageExists();
     }
   }
 }

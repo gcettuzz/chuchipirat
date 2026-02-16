@@ -63,7 +63,10 @@ export enum OperationType {
   Create,
   Update,
 }
-
+export enum ListMode {
+  VIEW = "view",
+  EDIT = "edit",
+}
 /* ===================================================================
 // ======================= Einstellungen-Card ========================
 // =================================================================== */
@@ -80,7 +83,7 @@ interface EventListCardProps {
   menuplan: Menuplan;
   onCreateList: () => void;
   onListElementSelect: (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
+    event: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => void;
   onListElementDelete: (event: React.MouseEvent<HTMLElement>) => void;
   onListElementEdit: (event: React.MouseEvent<HTMLElement>) => void;
@@ -203,12 +206,14 @@ export const EventListCard = ({
 // =================================================================== */
 interface PositionContextMenuProps {
   itemType: string;
+  listMode?: ListMode;
   anchorEl: HTMLElement | null;
   handleMenuClick: (event: React.MouseEvent<HTMLElement>) => void;
   handleMenuClose: () => void;
 }
 export const PositionContextMenu = ({
   itemType,
+  listMode,
   anchorEl,
   handleMenuClick,
   handleMenuClose,
@@ -221,12 +226,17 @@ export const PositionContextMenu = ({
       open={Boolean(anchorEl)}
       onClose={handleMenuClose}
     >
-      <MenuItem id={"ContextMenuItem_" + Action.EDIT} onClick={handleMenuClick}>
-        <ListItemIcon>
-          <EditIcon fontSize="small" />
-        </ListItemIcon>
-        <Typography variant="inherit">{TEXT_CHANGE}</Typography>
-      </MenuItem>
+      {(listMode == ListMode.VIEW || listMode == undefined) && (
+        <MenuItem
+          id={"ContextMenuItem_" + Action.EDIT}
+          onClick={handleMenuClick}
+        >
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <Typography variant="inherit">{TEXT_CHANGE}</Typography>
+        </MenuItem>
+      )}
       <MenuItem
         id={"ContextMenuItem_" + Action.TRACE}
         onClick={handleMenuClick}
@@ -275,7 +285,7 @@ export const DialogTraceItem = ({
   // Rezept Handler
   // ------------------------------------------ */
   const onListItemClick = (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
+    event: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
     const pressedButton = event.currentTarget.id.split("_");
 
@@ -283,7 +293,7 @@ export const DialogTraceItem = ({
       onShowRecipe(pressedButton[1], pressedButton[3]);
     }
   };
-
+  console.log("trace", trace);
   return (
     <Dialog open={dialogOpen} maxWidth="xs" fullWidth style={{zIndex: 500}}>
       <DialogTitle>{TEXT_WHERE_DOES_THIS_ITEM_COME_FROM}</DialogTitle>
@@ -305,7 +315,7 @@ export const DialogTraceItem = ({
             <List key={`list_for_trace`}>
               {sortedMenues.map((menue) => {
                 const traceItems = trace?.filter(
-                  (item) => item.menueUid == menue.menueUid
+                  (item) => item.menueUid == menue.menueUid,
                 );
                 return (
                   <React.Fragment key={`menue_container_${menue.menueUid}`}>

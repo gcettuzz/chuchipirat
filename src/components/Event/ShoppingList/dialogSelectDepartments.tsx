@@ -10,6 +10,8 @@ import {
   FormControlLabel,
   Checkbox,
   Box,
+  RadioGroup,
+  Radio,
 } from "@mui/material";
 
 import {
@@ -37,6 +39,7 @@ interface DialogSelectDepartmentsProps {
   open: boolean;
   departments: Department[];
   preSelecteDepartments: SelectedDepartmentsForShoppingList;
+  singleSelection?: boolean;
   onClose: () => void;
   onConfirm: (dialogValues: SelectedDepartmentsForShoppingList) => void;
 }
@@ -44,6 +47,7 @@ export const DialogSelectDepartments = ({
   open,
   departments,
   preSelecteDepartments,
+  singleSelection = false,
   onClose,
   onConfirm,
 }: DialogSelectDepartmentsProps) => {
@@ -72,6 +76,13 @@ export const DialogSelectDepartments = ({
     const initial = createInitialValues();
     setDialogValues({...initial, ...preSelecteDepartments});
   }, [open, departments, preSelecteDepartments]);
+
+  // Für RadioGroup.value: aktuell selektierte UID ableiten
+  const selectedDepartmentUid = React.useMemo(() => {
+    if (!singleSelection || !dialogValues) return "";
+    return Object.keys(dialogValues).find((k) => dialogValues[k]) ?? "";
+  }, [dialogValues, singleSelection]);
+
   // ------------------------------------------
   // Change-Events
   // ------------------------------------------
@@ -82,7 +93,12 @@ export const DialogSelectDepartments = ({
         return {...prev, [departmentUid]: event.target.checked};
       });
     };
-
+  const onRadioChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    value: string,
+  ) => {
+    setDialogValues({[value]: true} as SelectedDepartmentsForShoppingList);
+  };
   // ------------------------------------------
   // OK / Close
   // ------------------------------------------
@@ -137,20 +153,38 @@ export const DialogSelectDepartments = ({
             mt: 1,
           }}
         >
-          {departments?.map((department) => (
-            <FormControlLabel
-              key={"frmctrlbl_" + department.uid}
-              sx={{breakInside: "avoid", m: 0, display: "flex"}}
-              control={
-                <Checkbox
-                  id={"chkb_" + department.uid}
-                  checked={dialogValues?.[department.uid] ?? false}
-                  onChange={onCheckboxChange(department.uid)}
+          {singleSelection ? (
+            <RadioGroup
+              value={selectedDepartmentUid}
+              onChange={onRadioChange}
+              sx={{display: "contents"}}
+            >
+              {departments?.map((department) => (
+                <FormControlLabel
+                  key={"radio" + department.uid}
+                  value={department.uid}
+                  control={<Radio />}
+                  label={department.name}
+                  style={{width: "100%"}}
                 />
-              }
-              label={department.name}
-            />
-          ))}
+              ))}
+            </RadioGroup>
+          ) : (
+            departments?.map((department) => (
+              <FormControlLabel
+                key={"frmctrlbl_" + department.uid}
+                sx={{breakInside: "avoid", m: 0, display: "flex"}}
+                control={
+                  <Checkbox
+                    id={"chkb_" + department.uid}
+                    checked={dialogValues?.[department.uid] ?? false}
+                    onChange={onCheckboxChange(department.uid)}
+                  />
+                }
+                label={department.name}
+              />
+            ))
+          )}
         </Box>
       </DialogContent>
       <DialogActions>

@@ -15,6 +15,7 @@ import {
   CardActions,
   Radio,
   RadioGroup,
+  useTheme,
 } from "@mui/material";
 
 import Menuplan, {Menue, Meal, MealType} from "./menuplan.class";
@@ -63,7 +64,7 @@ export const decodeSelectedMeals = ({
     menuplan.mealTypes.order.forEach((mealTypeUid) => {
       const meal = Object.values(menuplan.meals).find(
         (meal) =>
-          meal.date == Utils.dateAsString(date) && meal.mealType == mealTypeUid
+          meal.date == Utils.dateAsString(date) && meal.mealType == mealTypeUid,
       );
 
       if (meal) {
@@ -118,7 +119,7 @@ export const decodeSelectedMeals = ({
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
-      }
+      },
     )} ${timeslice.from.mealType}`;
 
     if (
@@ -131,7 +132,7 @@ export const decodeSelectedMeals = ({
           year: "numeric",
           month: "2-digit",
           day: "2-digit",
-        }
+        },
       )} ${timeslice.to.mealType}`;
     }
   });
@@ -140,12 +141,12 @@ export const decodeSelectedMeals = ({
 export const getMealForMealTypeAndDate = (
   meals: Menuplan["meals"],
   mealTypeUid: MealType["uid"],
-  date: Date
+  date: Date,
 ): Meal | null => {
   const dateStr = Utils.dateAsString(date);
   return (
     Object.values(meals).find(
-      (m) => m.mealType === mealTypeUid && m.date === dateStr
+      (m) => m.mealType === mealTypeUid && m.date === dateStr,
     ) ?? null
   );
 };
@@ -185,6 +186,7 @@ export const DialogSelectMenues = ({
   onClose,
 }: DialogSelectMenuesProps) => {
   const classes = useCustomStyles();
+  const theme = useTheme();
 
   const [dialogValues, setDialogValues] =
     React.useState<DialogSelectMenuesForRecipeDialogValues | null>(null);
@@ -204,7 +206,7 @@ export const DialogSelectMenues = ({
       });
       return initialValues;
     },
-    []
+    [],
   );
 
   // dialogValues sauber initialisieren, sobald Dialog geöffnet/geschlossen wird
@@ -236,7 +238,7 @@ export const DialogSelectMenues = ({
     let newValueToSet = true;
 
     const meal = Object.values(meals).find(
-      (m) => m.date === selectedDate && m.menuOrder.length !== 0
+      (m) => m.date === selectedDate && m.menuOrder.length !== 0,
     );
     if (meal) {
       newValueToSet = !dialogValues[meal.menuOrder[0]];
@@ -274,7 +276,7 @@ export const DialogSelectMenues = ({
   // ------------------------------------------
   const onRadioChange = (
     _: React.ChangeEvent<HTMLInputElement>,
-    value: string
+    value: string,
   ) => {
     // singleSelection: genau eines true
     setDialogValues({[value]: true} as DialogSelectMenuesForRecipeDialogValues);
@@ -327,6 +329,7 @@ export const DialogSelectMenues = ({
   const rowGridStyle: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+    columnGap: theme.spacing(2),
     // Wichtig: KEIN gridAutoFlow: "column" nötig, sonst kann es "spaltenweise" fuellen.
     // Standard (row) ist fuer eine Matrix meistens besser.
   };
@@ -414,7 +417,7 @@ export const DialogSelectMenues = ({
                   const actualMeal = getMealForMealTypeAndDate(
                     meals,
                     mealTypeUid,
-                    date
+                    date,
                   );
 
                   return (
@@ -447,7 +450,7 @@ export const DialogSelectMenues = ({
                   const actualMeal = getMealForMealTypeAndDate(
                     meals,
                     mealTypeUid,
-                    date
+                    date,
                   );
 
                   return (

@@ -11,7 +11,6 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction,
   ListItemIcon,
   IconButton,
   Container,
@@ -25,6 +24,9 @@ import {
   SnackbarCloseReason,
   useTheme,
   Box,
+  AutocompleteChangeReason,
+  ToggleButtonGroup,
+  ToggleButton,
 } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 
@@ -61,6 +63,11 @@ import {
   CHANGE as TEXT_CHANGE,
   USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE as TEXT_USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE,
   ERROR_NO_PRODUCTS_FOUND as TEXT_ERROR_NO_PRODUCTS_FOUND,
+  ADD_DEPARTMENT as TEXT_ADD_DEPARTMENT,
+  FIELD_QUANTITY as TEXT_FIELD_QUANTITY,
+  SHOPPING_MODE as TEXT_SHOPPING_MODE,
+  EDIT_MODE as TEXT_EDIT_MODE,
+  SHOPPINTLIST_ITEM_MOVED_TO_RIGHT_DEPARTMENT as TEXT_SHOPPINTLIST_ITEM_MOVED_TO_RIGHT_DEPARTMENT,
 } from "../../../constants/text";
 import {MoreVert as MoreVertIcon} from "@mui/icons-material";
 
@@ -107,7 +114,11 @@ import {
 import Department from "../../Department/department.class";
 import Event from "../Event/event.class";
 import UnitAutocomplete from "../../Unit/unitAutocomplete";
-import ItemAutocomplete, {MaterialItem, ProductItem} from "./itemAutocomplete";
+import ItemAutocomplete, {
+  ItemAutocompleteProps,
+  MaterialItem,
+  ProductItem,
+} from "./itemAutocomplete";
 import Unit from "../../Unit/unit.class";
 import Recipe, {Recipes} from "../../Recipe/recipe.class";
 import DialogMaterial, {
@@ -117,8 +128,8 @@ import DialogMaterial, {
 import {
   FetchMissingDataProps,
   FetchMissingDataType,
-  MasterDataCreateType,
-  OnMasterdataCreateProps,
+  // MasterDataCreateType,
+  // OnMasterdataCreateProps,
 } from "../Event/event";
 import DialogProduct, {
   PRODUCT_POP_UP_VALUES_INITIAL_STATE,
@@ -138,6 +149,7 @@ import {
   EventListCard,
   PositionContextMenu,
   OperationType,
+  ListMode,
 } from "../Event/eventSharedComponents";
 import Material from "../../Material/material.class";
 import {TextFieldSize} from "../../../constants/defaultValues";
@@ -244,10 +256,40 @@ const DIALOG_SELECT_MENUE_DATA_INITIAL_DATA = {
   operationType: OperationType.none,
 };
 
+enum DialogSelectDepartmentsCaller {
+  CREATE = 1,
+  ADD_DEPARTMENT,
+}
+
 const DIALOG_SELECT_DEPARTMENTS_INITIAL_DATA = {
   open: false,
-  departments: {} as SelectedDepartmentsForShoppingList,
+  selectedDepartments: {} as SelectedDepartmentsForShoppingList,
+  singleSelection: false,
+  caller: DialogSelectDepartmentsCaller.CREATE,
 };
+/* ===================================================================
+// ============================== Global =============================
+// =================================================================== */
+type ItemChange =
+  | {
+      source: "textfield";
+      event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>;
+      value: string;
+    }
+  | {
+      source: "autocompleteItem";
+      event: React.ChangeEvent<HTMLInputElement>;
+      value: ItemAutocompleteProps["item"];
+      reason: AutocompleteChangeReason;
+      objectId: string;
+    }
+  | {
+      source: "autocompleteUnit";
+      event: React.ChangeEvent<HTMLInputElement>;
+      value: Unit | null;
+      reason: AutocompleteChangeReason;
+      objectId: string;
+    };
 
 /* ===================================================================
 // =============================== Base ==============================
@@ -269,9 +311,9 @@ interface EventShoppingListPageProps {
   fetchMissingData: ({type, recipeShort}: FetchMissingDataProps) => void;
   onShoppingListUpdate: (shoppingList: ShoppingList) => void;
   onShoppingCollectionUpdate: (
-    shoppingListCollection: ShoppingListCollection
+    shoppingListCollection: ShoppingListCollection,
   ) => void;
-  onMasterdataCreate: ({type, value}: OnMasterdataCreateProps) => void;
+  // onMasterdataCreate: ({type, value}: OnMasterdataCreateProps) => void;
 }
 const ADD_ITEM_DIALOG_INITIAL_VALUES = {
   open: false,
@@ -301,7 +343,7 @@ const EventShoppingListPage = ({
   fetchMissingData,
   onShoppingListUpdate,
   onShoppingCollectionUpdate,
-  onMasterdataCreate,
+  // onMasterdataCreate,
 }: EventShoppingListPageProps) => {
   const classes = useCustomStyles();
   const theme = useTheme();
@@ -311,25 +353,30 @@ const EventShoppingListPage = ({
 
   const [state, dispatch] = React.useReducer(
     usedRecipesReducer,
-    inititialState
+    inititialState,
   );
   const [dialogSelectMenueData, setDialogSelectMenueData] = React.useState(
-    DIALOG_SELECT_MENUE_DATA_INITIAL_DATA
+    DIALOG_SELECT_MENUE_DATA_INITIAL_DATA,
   );
   const [dialogSelectDepartments, setDialogSelectDepartments] = React.useState(
-    DIALOG_SELECT_DEPARTMENTS_INITIAL_DATA
+    DIALOG_SELECT_DEPARTMENTS_INITIAL_DATA,
   );
   const [contextMenuSelectedItem, setContextMenuSelectedItem] = React.useState(
-    CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE
+    CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE,
   );
   const [handleItemDialogValues, setHandleItemDialogValues] = React.useState(
-    ADD_ITEM_DIALOG_INITIAL_VALUES
+    ADD_ITEM_DIALOG_INITIAL_VALUES,
   );
   const [traceItemDialogValues, setTraceItemDialogValues] = React.useState(
-    TRACE_ITEM_DIALOG_INITIAL_VALUES
+    TRACE_ITEM_DIALOG_INITIAL_VALUES,
   );
   const [recipeDrawerData, setRecipeDrawerData] =
     React.useState<RecipeDrawerData>(RECIPE_DRAWER_DATA_INITIAL_VALUES);
+
+  const [shoppingListModus, setShoppingListModus] = React.useState<ListMode>(
+    ListMode.VIEW,
+  );
+
   /* ------------------------------------------
   // Initialisierung
   // ------------------------------------------ */
@@ -384,7 +431,7 @@ const EventShoppingListPage = ({
     setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
   };
   const onConfirmDialogSelectMenues = async (
-    selectedMenues: DialogSelectMenuesForRecipeDialogValues
+    selectedMenues: DialogSelectMenuesForRecipeDialogValues,
   ) => {
     // Gewählte Menüs speichern
     setDialogSelectMenueData({
@@ -393,24 +440,41 @@ const EventShoppingListPage = ({
       open: false,
     });
 
-    setDialogSelectDepartments({...dialogSelectDepartments, open: true});
+    setDialogSelectDepartments({
+      ...dialogSelectDepartments,
+      open: true,
+      caller: DialogSelectDepartmentsCaller.CREATE,
+    });
   };
-
   const onCloseDialogSelectDepartments = () => {
     // Abbruch der Übung
     setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
     setDialogSelectDepartments(DIALOG_SELECT_DEPARTMENTS_INITIAL_DATA);
   };
   const onConfirmDialogSelectDepartments = async (
-    selectedDepartments: SelectedDepartmentsForShoppingList
+    selectedDepartments: SelectedDepartmentsForShoppingList,
   ) => {
+    if (
+      dialogSelectDepartments.caller ===
+      DialogSelectDepartmentsCaller.ADD_DEPARTMENT
+    ) {
+      // Abteilung hinzufügen
+      shoppingList = ShoppingList.addDepartmentToList({
+        shoppingList: shoppingList!,
+        departmentUid: Object.keys(selectedDepartments)![0]!,
+        departments: departments,
+      });
+      onShoppingListUpdate(shoppingList!);
+      setDialogSelectDepartments(DIALOG_SELECT_DEPARTMENTS_INITIAL_DATA);
+      return;
+    }
+
     // Gewählte Abteilungen speichern
     setDialogSelectDepartments({
       ...dialogSelectDepartments,
       open: false,
-      departments: selectedDepartments,
+      selectedDepartments: selectedDepartments,
     });
-    console.log("selectedDepartments: ", selectedDepartments);
 
     const userInput = (await customDialog({
       dialogType: DialogType.SingleTextInput,
@@ -458,6 +522,7 @@ const EventShoppingListPage = ({
               type: ReducerActions.SET_SELECTED_LIST_ITEM,
               payload: {uid: result.shoppingListUid},
             });
+            setShoppingListModus(ListMode.EDIT);
           })
           .catch((error) => {
             if (error.toString().includes(TEXT_ERROR_NO_RECIPES_FOUND)) {
@@ -483,13 +548,12 @@ const EventShoppingListPage = ({
             setDialogSelectDepartments(DIALOG_SELECT_DEPARTMENTS_INITIAL_DATA);
           });
       } else if (dialogSelectMenueData.operationType === OperationType.Update) {
-        //TODO: Markierte Checkboxen beibehalten!!!! --> neue mengen anzeigen
-        // siehe #171
         onRefreshLists(
           userInput.input,
           Object.keys(dialogSelectMenueData.menues),
-          Object.keys(selectedDepartments)
+          Object.keys(selectedDepartments),
         );
+        setShoppingListModus(ListMode.EDIT);
       }
     } else {
       // Abbruch Fenster schliessen
@@ -503,7 +567,7 @@ const EventShoppingListPage = ({
   const onRefreshLists = async (
     newName?: string,
     selectedMenues?: Menue["uid"][],
-    selectedDepartments?: Department["uid"][]
+    selectedDepartments?: Department["uid"][],
   ) => {
     let keepManuallyAddedItems = false;
     let keepCheckedItems = false;
@@ -563,7 +627,6 @@ const EventShoppingListPage = ({
         dialogSelectMenueData.selectedListUid
       ].properties.name = newName!;
 
-      console.log(selectedMenues);
       shoppingListCollectionToRefresh.lists[
         dialogSelectMenueData.selectedListUid
       ].properties.selectedMenues = Object.keys(selectedMenues!);
@@ -582,9 +645,6 @@ const EventShoppingListPage = ({
       setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
     }
     // Alle Listen aktualisieren
-    //TODO: hier gibt es einen Fehler mit LENGTH!!!
-    // prüfen ob selectedMeals und selectedMenues immer abgefüllt sind, oder nicht
-    // hier wird auf etwas zugegriffen, dass leer ist!!!
     ShoppingListCollection.refreshList({
       shoppingListCollection: shoppingListCollectionToRefresh,
       shoppingList: shoppingList!,
@@ -650,13 +710,13 @@ const EventShoppingListPage = ({
         })}
         eventName={event.name}
         authUser={authUser}
-      />
+      />,
     )
       .toBlob()
       .then((result) => {
         fileSaver.saveAs(
           result,
-          event.name + " " + TEXT_SHOPPING_LIST + TEXT_SUFFIX_PDF
+          event.name + " " + TEXT_SHOPPING_LIST + TEXT_SUFFIX_PDF,
         );
       });
   };
@@ -666,7 +726,7 @@ const EventShoppingListPage = ({
   const handleSnackbarClose = (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: globalThis.Event | SyntheticEvent<any, globalThis.Event>,
-    reason: SnackbarCloseReason
+    reason: SnackbarCloseReason,
   ) => {
     if (reason === "clickaway") {
       return;
@@ -680,7 +740,7 @@ const EventShoppingListPage = ({
   // List-Handling
   // ------------------------------------------ */
   const onListElementSelect = async (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
+    event: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
     const selectedListItem = event.currentTarget.id.split("_")[1];
 
@@ -700,7 +760,7 @@ const EventShoppingListPage = ({
     });
   };
   const onListElementDelete = async (
-    actionEvent: React.MouseEvent<HTMLElement>
+    actionEvent: React.MouseEvent<HTMLElement>,
   ) => {
     const selectedList = actionEvent.currentTarget.id.split("_")[1];
 
@@ -732,7 +792,7 @@ const EventShoppingListPage = ({
     });
   };
   const onListElementEdit = async (
-    actionEvent: React.MouseEvent<HTMLElement>
+    actionEvent: React.MouseEvent<HTMLElement>,
   ) => {
     const selectedListUid = actionEvent.currentTarget.id.split("_")[1];
     if (!selectedListUid) {
@@ -741,7 +801,7 @@ const EventShoppingListPage = ({
     // Element selektieren, damit der Fetch passiert und danach
     // die Shoppingliste aktualisiert werden kann.
     onListElementSelect(
-      actionEvent as React.MouseEvent<HTMLDivElement, MouseEvent>
+      actionEvent as React.MouseEvent<HTMLDivElement, MouseEvent>,
     );
     const selectedMenuesForDialog: DialogSelectMenuesForRecipeDialogValues = {};
     const selectedDepartmentsForDialog: SelectedDepartmentsForShoppingList = {};
@@ -761,7 +821,7 @@ const EventShoppingListPage = ({
           menues:
             shoppingListCollection.lists[selectedListUid].properties
               .selectedMenues,
-        })
+        }),
       ) ||
       // Sind neue Menü dazugekommen/ oder wurden Menüs aus der
       // Auswahl entfernt
@@ -784,10 +844,10 @@ const EventShoppingListPage = ({
 
     // Auswahl in Objekt umwandeln
     selectedMenues.forEach(
-      (menueUid) => (selectedMenuesForDialog[menueUid] = true)
+      (menueUid) => (selectedMenuesForDialog[menueUid] = true),
     );
     selectedDepartments.forEach(
-      (departmentUid) => (selectedDepartmentsForDialog[departmentUid] = true)
+      (departmentUid) => (selectedDepartmentsForDialog[departmentUid] = true),
     );
 
     setDialogSelectMenueData({
@@ -798,7 +858,7 @@ const EventShoppingListPage = ({
     });
     setDialogSelectDepartments({
       ...dialogSelectDepartments,
-      departments: selectedDepartmentsForDialog,
+      selectedDepartments: selectedDepartmentsForDialog,
     });
   };
   const onCheckboxClick = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -812,7 +872,7 @@ const EventShoppingListPage = ({
 
     const item = shoppingList.list[departmentIndex].items.find(
       (item: ShoppingListItem) =>
-        item.item.uid == pressedCheckbox[2] && item.unit == pressedCheckbox[3]
+        item.item.uid == pressedCheckbox[2] && item.unit == pressedCheckbox[3],
     ) as ShoppingListItem | undefined;
 
     if (!item) {
@@ -822,6 +882,250 @@ const EventShoppingListPage = ({
     item.checked = !item.checked;
     onShoppingListUpdate(shoppingList);
   };
+  const onChangeItem = async (change: ItemChange) => {
+    const field = change.event.target.id.split("_");
+    let newItem = false;
+    let itemMovedToRightDepartment = false;
+    let item = shoppingList?.list[parseInt(field[1])].items.find(
+      (item) => item.item.uid == field[2],
+    );
+    let department: Department | undefined;
+    let userInput = {valid: false, input: ""} as SingleTextInputResult;
+
+    if (!shoppingList) {
+      return;
+    }
+    if (!item) {
+      // Neues Item (letzte Zeile, gibt es nur im UI)
+      item = ShoppingList.createEmptyListItem();
+      item.item.uid = field[2];
+      newItem = true;
+    }
+
+    if (!newItem) {
+      item.manualEdit = true;
+    }
+    switch (change.source) {
+      case "textfield":
+        item.quantity = parseFloat(change.value);
+
+        if (newItem) {
+          shoppingList.list[parseInt(field[1])].items.push(item);
+        }
+
+        break;
+      case "autocompleteItem":
+        if (change.reason === "clear") {
+          item.item.name = "";
+          break;
+        }
+        if (!change.value) {
+          break;
+        }
+
+        if (
+          typeof change.value == "object" &&
+          Object.hasOwn(change.value, "uid")
+        ) {
+          item.item = {uid: change.value.uid, name: change.value.name};
+          item.type = change.value.itemType;
+        }
+
+        if (typeof change.value === "string") {
+          if (item.item.uid.length == 20) {
+            // die Produkt UID muss weg, da es ein Freitext-Artikel ist
+            item.item.uid = Utils.generateUid(10);
+          }
+          item.item.name = change.value;
+          item.type = ItemType.custom;
+        }
+
+        // Prüfen ob es in der richtigen Abteilung ist
+        switch (item.type) {
+          case ItemType.food:
+            department = departments.find(
+              (department) =>
+                department.uid == (change.value as ProductItem).department.uid,
+            );
+            break;
+          case ItemType.material:
+            department = departments.find(
+              (department) => department.name.toUpperCase() == "NON FOOD",
+            );
+            break;
+          case ItemType.custom:
+          case ItemType.none:
+            department = departments.find(
+              (department) => department.pos == parseInt(field[1]),
+            )!;
+            break;
+        }
+
+        if (!department) {
+          // Dann übernehmen wir das aus dem Block, der gewählt wurde
+          department = departments.find(
+            (department) => department.pos == parseInt(field[1]),
+          )!;
+        }
+        if (!department) {
+          console.error("Abteilung für Artikel nicht gefunden!");
+          return;
+        }
+        if (department.pos != parseInt(field[1]) && !newItem) {
+          // Artikel in die richtige Abteilung verschieben
+          // aus der ursprünglichen Abteilung entfernen
+          shoppingList.list[Number(field[1]) as Department["pos"]].items =
+            shoppingList?.list[parseInt(field[1])].items.filter(
+              (listItem) => listItem.item.uid != item.item.uid,
+            );
+
+          // in die richtige Abteilung hinzufügen
+          shoppingList.list[department.pos].items.push(item);
+        } else if (newItem) {
+          if (!Object.hasOwn(shoppingList.list, department.pos)) {
+            // Neu anlegen
+            shoppingList.list[department.pos] = {
+              departmentUid: department.uid,
+              departmentName: department.name,
+              items: [],
+            };
+          }
+          shoppingList.list[department.pos].items.push(item);
+          itemMovedToRightDepartment = department.pos != parseInt(field[1]);
+        }
+        // item.type = ItemType.custom;
+
+        if (item.item.uid.length == 20) {
+          // Prüfen ob es den Artikel gibt
+          // Prüfen ob der Artikel bereits in der Liste vorhanden ist
+          // != item -> damit wird ausgeschlossen, dass das selbe Item gefunden
+          const existingShoppingListItem = shoppingList?.list[
+            department.pos
+          ]?.items.find(
+            (shoppingListItem) =>
+              shoppingListItem !== item &&
+              shoppingListItem.item.uid == item.item.uid &&
+              shoppingListItem.unit == item.unit,
+          );
+
+          if (existingShoppingListItem?.quantity == 0 && item.quantity == 0) {
+            // Wenn es den Artikel bereits gibt, dann nicht nochmals hinzufügen, da beide keine Menge haben. Ansonsten hätten wir doppelte Artikel in der Liste.
+            // Das soeben hinzugefügte Item wieder entfernen.
+            shoppingList.list[department.pos].items = shoppingList.list[
+              department.pos
+            ].items.filter((listItem) => listItem !== item);
+            itemMovedToRightDepartment = false;
+            return;
+          }
+
+          if (existingShoppingListItem && item.quantity != 0) {
+            userInput = (await customDialog({
+              dialogType: DialogType.selectOptions,
+              title: TEXT_ARTICLE_ALREADY_ADDED,
+              text: ADD_OR_REPLACE_ARTICLE(
+                item.item.name,
+                item.unit,
+                item.quantity.toString(),
+                item.quantity.toString(),
+              ),
+              options: [
+                {key: AddItemAction.REPLACE, text: TEXT_REPLACE},
+                {key: AddItemAction.ADD, text: TEXT_SUM},
+              ],
+            })) as SingleTextInputResult;
+            if (!userInput.valid) {
+              // Abbrechen - Item wieder entfernen
+              shoppingList.list[department.pos].items = shoppingList.list[
+                department.pos
+              ].items.filter((listItem) => listItem !== item);
+              return;
+            }
+
+            switch (parseInt(userInput.input) as AddItemAction) {
+              case AddItemAction.ADD: {
+                //     // Dazuzählen
+                const addedQuantity = item.quantity;
+                existingShoppingListItem.quantity += addedQuantity;
+
+                // Trace-Eintrag für die hinzugefügte Menge
+                const trace = ShoppingListCollection.addTraceEntry({
+                  trace:
+                    shoppingListCollection.lists[state.selectedListItem!].trace,
+                  menueUid: "",
+                  recipe: {} as Recipe,
+                  item: item.item as Product,
+                  quantity: addedQuantity,
+                  unit: item.unit,
+                  addedManually: true,
+                  itemType: item.type,
+                });
+                const tempShoppingListCollection = {
+                  ...shoppingListCollection,
+                };
+                tempShoppingListCollection.lists[state.selectedListItem!].trace =
+                  trace;
+                onShoppingCollectionUpdate(tempShoppingListCollection);
+                break;
+              }
+              case AddItemAction.REPLACE:
+                // Das Item erhält die neue Menge
+                existingShoppingListItem.quantity = item.quantity;
+                break;
+              default:
+                console.warn("ENUM unbekannt:", userInput.input);
+                return;
+            }
+
+            // Item entfernen, da die Menge ins bestehende übernommen wurde
+            shoppingList.list[department.pos].items = shoppingList.list[
+              department.pos
+            ].items.filter((listItem) => listItem !== item);
+            existingShoppingListItem.manualEdit = true;
+          }
+        }
+
+        break;
+      case "autocompleteUnit":
+        if (!change.value) {
+          item.unit = "";
+        } else {
+          item.unit = change.value.key;
+        }
+        break;
+    }
+
+    // Trace aktualisieren, wenn ein neues Item hinzugefügt wurde
+    if (newItem && item.item.name) {
+      const trace = ShoppingListCollection.addTraceEntry({
+        trace: shoppingListCollection.lists[state.selectedListItem!].trace,
+        menueUid: "",
+        recipe: {} as Recipe,
+        item: item.item as Product,
+        quantity: item.quantity,
+        unit: item.unit,
+        addedManually: true,
+        itemType: item.type,
+      });
+      const tempShoppingListCollection = {...shoppingListCollection};
+      tempShoppingListCollection.lists[state.selectedListItem!].trace = trace;
+      onShoppingCollectionUpdate(tempShoppingListCollection);
+    }
+
+    onShoppingListUpdate(shoppingList!);
+    if (itemMovedToRightDepartment) {
+      dispatch({
+        type: ReducerActions.SNACKBAR_SHOW,
+        payload: {
+          severity: "info",
+          message: TEXT_SHOPPINTLIST_ITEM_MOVED_TO_RIGHT_DEPARTMENT(
+            item.item.name,
+            department?.name as string,
+          ),
+          open: true,
+        },
+      });
+    }
+  };
   /* ------------------------------------------
   // Kontext-Menü-Handler
   // ------------------------------------------ */
@@ -829,7 +1133,7 @@ const EventShoppingListPage = ({
     const pressedButton = event.currentTarget.id.split("_");
 
     const item = shoppingList?.list[parseInt(pressedButton[1])].items.find(
-      (item) => item.item.uid == pressedButton[2]
+      (item) => item.item.uid == pressedButton[2],
     );
 
     setContextMenuSelectedItem({
@@ -844,6 +1148,7 @@ const EventShoppingListPage = ({
     setContextMenuSelectedItem(CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE);
   };
   const onContextMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    //FIXME: Hier knallts noch bei klick auf Context Menü
     const pressedButton = event.currentTarget.id.split("_");
     let quantity: number | undefined;
     let item = {} as ProductItem | MaterialItem | undefined;
@@ -856,16 +1161,16 @@ const EventShoppingListPage = ({
         quantity = shoppingList?.list[
           contextMenuSelectedItem.departmentKey
         ].items.find(
-          (item) => item.item.uid == contextMenuSelectedItem.productUid
+          (item) => item.item.uid == contextMenuSelectedItem.productUid,
         )?.quantity;
 
         if (contextMenuSelectedItem.itemType == ItemType.food) {
           item = products.find(
-            (product) => product.uid == contextMenuSelectedItem.productUid
+            (product) => product.uid == contextMenuSelectedItem.productUid,
           ) as ProductItem;
         } else {
           item = materials.find(
-            (material) => material.uid == contextMenuSelectedItem.productUid
+            (material) => material.uid == contextMenuSelectedItem.productUid,
           ) as MaterialItem;
         }
         item.itemType = contextMenuSelectedItem.itemType;
@@ -922,9 +1227,9 @@ const EventShoppingListPage = ({
   /* ------------------------------------------
   // Artikel hinzufügen Dialog
   // ------------------------------------------ */
-  const onAddArticleClick = () => {
-    setHandleItemDialogValues({...handleItemDialogValues, open: true});
-  };
+  // const onAddArticleClick = () => {
+  //   setHandleItemDialogValues({...handleItemDialogValues, open: true});
+  // };
   const onDialogHandleItemClose = () => {
     setContextMenuSelectedItem(CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE);
     setHandleItemDialogValues(ADD_ITEM_DIALOG_INITIAL_VALUES);
@@ -949,12 +1254,12 @@ const EventShoppingListPage = ({
       if (item.itemType == ItemType.food) {
         product = item as ProductItem;
         department = departments.find(
-          (department) => department.uid == product.department.uid
+          (department) => department.uid == product.department.uid,
         );
       } else {
         // Material
         department = departments.find(
-          (department) => department.name.toUpperCase() == "NON FOOD"
+          (department) => department.name.toUpperCase() == "NON FOOD",
         );
       }
 
@@ -967,7 +1272,8 @@ const EventShoppingListPage = ({
       // der*die Benuter"*in sicherstellen will, dass das Item sicher auf der Liste ist.
       shoppingListItem = shoppingList?.list[department.pos]?.items.find(
         (shoppingListItem) =>
-          shoppingListItem.item.uid == item.uid && shoppingListItem.unit == unit
+          shoppingListItem.item.uid == item.uid &&
+          shoppingListItem.unit == unit,
       );
 
       if (shoppingListItem && quantity != 0) {
@@ -979,7 +1285,7 @@ const EventShoppingListPage = ({
             shoppingListItem.item.name,
             unit,
             quantity.toString(),
-            shoppingListItem.quantity.toString()
+            shoppingListItem.quantity.toString(),
           ),
           options: [
             {key: AddItemAction.REPLACE, text: TEXT_REPLACE},
@@ -1045,7 +1351,7 @@ const EventShoppingListPage = ({
       ].items.find(
         (item) =>
           item.item.uid == contextMenuSelectedItem.productUid &&
-          item.unit == contextMenuSelectedItem.unit
+          item.unit == contextMenuSelectedItem.unit,
       );
 
       if (item) {
@@ -1073,16 +1379,27 @@ const EventShoppingListPage = ({
     setContextMenuSelectedItem(CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE);
     setHandleItemDialogValues(ADD_ITEM_DIALOG_INITIAL_VALUES);
   };
-  const onMaterialCreate = (material: Material) => {
-    onMasterdataCreate({
-      type: MasterDataCreateType.MATERIAL,
-      value: material,
-    });
-  };
-  const onProductCreate = (product: Product) => {
-    onMasterdataCreate({
-      type: MasterDataCreateType.PRODUCT,
-      value: product,
+  // const onMaterialCreate = (material: Material) => {
+  //   onMasterdataCreate({
+  //     type: MasterDataCreateType.MATERIAL,
+  //     value: material,
+  //   });
+  // };
+  // const onProductCreate = (product: Product) => {
+  //   onMasterdataCreate({
+  //     type: MasterDataCreateType.PRODUCT,
+  //     value: product,
+  //   });
+  // };
+  /* ------------------------------------------
+  // Abteilung hinzufügen Dialog
+  // ------------------------------------------ */
+  const onAddDepartmentClick = () => {
+    setDialogSelectDepartments({
+      ...dialogSelectDepartments,
+      open: true,
+      singleSelection: true,
+      caller: DialogSelectDepartmentsCaller.ADD_DEPARTMENT,
     });
   };
   /* ------------------------------------------
@@ -1097,7 +1414,7 @@ const EventShoppingListPage = ({
   // ------------------------------------------ */
   const onOpenRecipeDrawer = (
     menueUid: Menue["uid"],
-    recipeUid: Recipe["uid"]
+    recipeUid: Recipe["uid"],
   ) => {
     let mealRecipe = {} as MealRecipe;
     let recipe = new Recipe();
@@ -1180,23 +1497,61 @@ const EventShoppingListPage = ({
       />
       {state.selectedListItem && shoppingList && (
         <React.Fragment>
-          <Box component="div" sx={{justifyContent: "center", display: "flex"}}>
-            <Button
+          <Box
+            component="div"
+            sx={{
+              ...classes.container,
+              display: "flex",
+              justifyContent: "center",
+              flexDirection: "column",
+              alignItems: "center",
+              width: "100%",
+              mx: "auto",
+            }}
+          >
+            <ToggleButtonGroup
+              exclusive
+              value={shoppingListModus}
+              onChange={(event, newValue) => setShoppingListModus(newValue)}
               color="primary"
-              onClick={onAddArticleClick}
-              variant="outlined"
-              sx={{
-                alignSelf: "flex-start",
-                marginTop: theme.spacing(2),
-              }}
             >
-              {TEXT_ADD_ITEM}
-            </Button>
+              <ToggleButton
+                value={ListMode.VIEW}
+                aria-label={TEXT_SHOPPING_MODE}
+              >
+                {TEXT_SHOPPING_MODE}
+              </ToggleButton>
+              <ToggleButton value={ListMode.EDIT} aria-label={TEXT_EDIT_MODE}>
+                {TEXT_EDIT_MODE}
+              </ToggleButton>
+            </ToggleButtonGroup>
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{marginTop: theme.spacing(2)}}
+            >
+              <Button
+                color="primary"
+                size="small"
+                onClick={onAddDepartmentClick}
+                variant="outlined"
+                sx={{
+                  marginTop: theme.spacing(2),
+                }}
+              >
+                {TEXT_ADD_DEPARTMENT}
+              </Button>
+            </Stack>
           </Box>
           <Box component="div" sx={{justifyContent: "center", display: "flex"}}>
             <EventShoppingListList
               shoppingList={shoppingList}
+              products={products}
+              materials={materials}
+              units={units}
+              shoppingListModus={shoppingListModus}
               onCheckboxClick={onCheckboxClick}
+              onChangeItem={onChangeItem}
               onOpenContexMenü={onOpenContextMenu}
             />
           </Box>
@@ -1216,8 +1571,19 @@ const EventShoppingListPage = ({
       />
       <DialogSelectDepartments
         open={dialogSelectDepartments.open}
-        departments={departments}
-        preSelecteDepartments={dialogSelectDepartments.departments}
+        departments={
+          dialogSelectDepartments.caller ===
+          DialogSelectDepartmentsCaller.ADD_DEPARTMENT
+            ? departments.filter(
+                (department) =>
+                  !Object.values(shoppingList?.list ?? {}).some(
+                    (entry) => entry.departmentUid === department.uid,
+                  ),
+              )
+            : departments
+        }
+        preSelecteDepartments={dialogSelectDepartments.selectedDepartments}
+        singleSelection={dialogSelectDepartments.singleSelection}
         onClose={onCloseDialogSelectDepartments}
         onConfirm={onConfirmDialogSelectDepartments}
       />
@@ -1235,11 +1601,12 @@ const EventShoppingListPage = ({
         authUser={authUser}
         handleOk={onDialogHandleItemOk}
         handleClose={onDialogHandleItemClose}
-        onProductCreate={onProductCreate}
-        onMaterialCreate={onMaterialCreate}
+        // onProductCreate={onProductCreate}
+        // onMaterialCreate={onMaterialCreate}
       />
       <PositionContextMenu
         itemType={TEXT_ITEM}
+        listMode={shoppingListModus}
         anchorEl={contextMenuSelectedItem.anchor}
         handleMenuClick={onContextMenuClick}
         handleMenuClose={onCloseContextMenu}
@@ -1264,8 +1631,8 @@ const EventShoppingListPage = ({
             shoppingList!.list[
               contextMenuSelectedItem.departmentKey
             ]?.items.find(
-              (item) => item.item.uid == contextMenuSelectedItem.productUid
-            )?.manualEdit
+              (item) => item.item.uid == contextMenuSelectedItem.productUid,
+            )?.manualEdit,
           )}
           handleClose={onDialogTraceItemClose}
           onShowRecipe={onOpenRecipeDrawer}
@@ -1293,15 +1660,74 @@ const EventShoppingListPage = ({
 // =================================================================== */
 interface EventShoppingListListProps {
   shoppingList: ShoppingList;
+  units: Unit[];
+  products: Product[];
+  materials: Material[];
+  shoppingListModus: ListMode;
   onCheckboxClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onOpenContexMenü: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onChangeItem: (change: ItemChange) => void;
 }
 const EventShoppingListList = ({
   shoppingList,
+  products,
+  materials,
+  units,
+  shoppingListModus,
   onCheckboxClick,
   onOpenContexMenü,
+  onChangeItem,
 }: EventShoppingListListProps) => {
   const classes = useCustomStyles();
+  const theme = useTheme();
+  /* ------------------------------------------
+  // Mapper für Autocomplete
+  // ------------------------------------------ */
+  const toAutocompleteItem = (shoppingListItem: ShoppingListItem) => {
+    switch (shoppingListItem.type) {
+      case ItemType.food:
+        return {
+          uid: shoppingListItem.item.uid,
+          name: shoppingListItem.item.name,
+          itemType: ItemType.food,
+        } as ProductItem;
+      case ItemType.material:
+        return {
+          uid: shoppingListItem.item.uid,
+          name: shoppingListItem.item.name,
+          itemType: ItemType.material,
+        } as MaterialItem;
+      case ItemType.custom:
+        return shoppingListItem.item.name;
+      default:
+        return null;
+    }
+  };
+
+  const prepareDepartmentItemsForDisplay = (items: ShoppingListItem[]) => {
+    // Leere Zeilen ans Ende sortieren, damit sie nicht zwischen den anderen Items auftauchen
+    const sortedList = [...items].sort((a, b) => {
+      if (!a.item.name && !b.item.name) return 0;
+      if (!a.item.name) return 1;
+      if (!b.item.name) return -1;
+      return a.item.name.localeCompare(b.item.name);
+    });
+
+    if (shoppingListModus === ListMode.VIEW) {
+      return sortedList;
+    }
+
+    if (
+      sortedList.length === 0 ||
+      sortedList[sortedList.length - 1].item.name !== ""
+    ) {
+      const newItem = ShoppingList.createEmptyListItem();
+      newItem.manualAdd = true;
+      sortedList.push(newItem);
+    }
+
+    return sortedList;
+  };
 
   return (
     <Container
@@ -1318,6 +1744,7 @@ const EventShoppingListList = ({
               variant={"h5"}
               align="center"
               gutterBottom
+              sx={{marginTop: theme.spacing(4)}}
             >
               {department.departmentName}
             </Typography>
@@ -1325,94 +1752,181 @@ const EventShoppingListList = ({
               sx={classes.eventList}
               key={"shoppingListList_" + department.departmentUid}
             >
-              {/* //TODO: Autocomplete hinzufügen für jeden Block jeweils ein leerer
-              // dieser wird automatisch erneuert, sobald einer gefüllt wird. ählich wie Rezept*/}
-              {Utils.sortArray({
-                array: department.items,
-                attributeName: "item.name",
-              }).map((item) => (
-                <ListItem
-                  key={"shoppingListItem_" + item.item.uid + "_" + item.unit}
-                  sx={classes.eventListItem}
-                >
-                  <ListItemIcon>
-                    <Checkbox
-                      key={"checkbox_" + item.item.uid + "_" + item.unit}
-                      name={
-                        "checkbox_" +
-                        departmentKey +
-                        "_" +
-                        item.item.uid +
-                        "_" +
-                        item.unit
-                      }
-                      onChange={onCheckboxClick}
-                      checked={item.checked}
-                      disableRipple
-                    />
-                  </ListItemIcon>
-                  <ListItemText
-                    sx={classes.eventListItemTextQuantity}
-                    primaryTypographyProps={
-                      item.checked
-                        ? {color: "textSecondary"}
-                        : {color: "textPrimary"}
-                    }
-                    key={"quantity" + item.item.uid + "_" + item.unit}
-                    primary={
-                      item.checked ? (
-                        <del>
-                          {Number.isNaN(item.quantity) || item.quantity == 0
-                            ? ""
-                            : new Intl.NumberFormat("de-CH", {
-                                maximumSignificantDigits: 3,
-                              }).format(item.quantity)}
-                        </del>
-                      ) : Number.isNaN(item.quantity) || item.quantity == 0 ? (
-                        ""
-                      ) : (
-                        new Intl.NumberFormat("de-CH", {
-                          maximumSignificantDigits: 3,
-                        }).format(item.quantity)
-                      )
-                    }
-                  />
-                  <ListItemText
-                    sx={classes.eventListItemTextUnit}
-                    primaryTypographyProps={
-                      item.checked
-                        ? {color: "textSecondary"}
-                        : {color: "textPrimary"}
-                    }
-                    key={"unit_" + item.item.uid + "_" + item.unit}
-                    primary={item.checked ? <del>{item.unit}</del> : item.unit}
-                  />
-                  <ListItemText
-                    sx={classes.eventListItemTextProduct}
-                    primaryTypographyProps={
-                      item.checked
-                        ? {color: "textSecondary"}
-                        : {color: "textPrimary"}
-                    }
-                    key={"itemName_" + item.item.uid + "_" + item.unit}
-                    primary={
-                      item.checked ? (
-                        <del>{item.item.name}</del>
-                      ) : (
-                        item.item.name
-                      )
-                    }
-                  />
-                  <ListItemSecondaryAction
-                    key={
-                      "SecondaryAction_" +
-                      departmentKey +
-                      "_" +
-                      item.item.uid +
-                      "_" +
-                      item.unit
+              {prepareDepartmentItemsForDisplay(department.items).map(
+                (item) => (
+                  <ListItem
+                    key={"shoppingListItem_" + item.item.uid + "_" + item.unit}
+                    sx={
+                      shoppingListModus === ListMode.VIEW
+                        ? {margin: 0, padding: 0}
+                        : classes.eventListItem
                     }
                   >
+                    <ListItemIcon
+                      sx={
+                        shoppingListModus === ListMode.VIEW
+                          ? {minWidth: 36}
+                          : undefined
+                      }
+                    >
+                      <Checkbox
+                        key={"checkbox_" + item.item.uid + "_" + item.unit}
+                        name={
+                          "checkbox_" +
+                          departmentKey +
+                          "_" +
+                          item.item.uid +
+                          "_" +
+                          item.unit
+                        }
+                        onChange={onCheckboxClick}
+                        checked={item.checked}
+                        disableRipple
+                        size={
+                          shoppingListModus === ListMode.VIEW
+                            ? "small"
+                            : "medium"
+                        }
+                      />
+                    </ListItemIcon>
+                    {shoppingListModus === ListMode.VIEW ? (
+                      <>
+                        <ListItemText
+                          sx={classes.eventListItemTextQuantity}
+                          primaryTypographyProps={
+                            item.checked
+                              ? {color: "textSecondary"}
+                              : {color: "textPrimary"}
+                          }
+                          key={"quantity" + item.item.uid + "_" + item.unit}
+                          primary={
+                            item.checked ? (
+                              <del>
+                                {Number.isNaN(item.quantity) ||
+                                item.quantity == 0
+                                  ? ""
+                                  : new Intl.NumberFormat("de-CH", {
+                                      maximumSignificantDigits: 3,
+                                    }).format(item.quantity)}
+                              </del>
+                            ) : Number.isNaN(item.quantity) ||
+                              item.quantity == 0 ? (
+                              ""
+                            ) : (
+                              new Intl.NumberFormat("de-CH", {
+                                maximumSignificantDigits: 2,
+                              }).format(item.quantity)
+                            )
+                          }
+                        />
+                        <ListItemText
+                          sx={classes.eventListItemTextUnit}
+                          primaryTypographyProps={
+                            item.checked
+                              ? {color: "textSecondary"}
+                              : {color: "textPrimary"}
+                          }
+                          key={"unit_" + item.item.uid + "_" + item.unit}
+                          primary={
+                            item.checked ? <del>{item.unit}</del> : item.unit
+                          }
+                        />
+                        <ListItemText
+                          sx={classes.eventListItemTextProduct}
+                          primaryTypographyProps={
+                            item.checked
+                              ? {color: "textSecondary"}
+                              : {color: "textPrimary"}
+                          }
+                          key={"itemName_" + item.item.uid + "_" + item.unit}
+                          primary={
+                            item.checked ? (
+                              <del>{item.item.name}</del>
+                            ) : (
+                              item.item.name
+                            )
+                          }
+                        />
+                      </>
+                    ) : (
+                      <Grid
+                        container
+                        spacing={2}
+                        alignItems="center"
+                        sx={{flex: 1, minWidth: 0}}
+                      >
+                        <Grid
+                          key={"quantity_grid_" + item.item.uid}
+                          xs={5}
+                          sm={3}
+                        >
+                          <TextField
+                            key={
+                              "quantity_" + departmentKey + "_" + item.item.uid
+                            }
+                            id={
+                              "quantity_" + departmentKey + "_" + item.item.uid
+                            }
+                            value={
+                              Number.isNaN(item.quantity) || item.quantity === 0
+                                ? ""
+                                : item.quantity
+                            }
+                            label={TEXT_FIELD_QUANTITY}
+                            type="number"
+                            inputProps={{min: 0, inputMode: "decimal"}}
+                            onChange={(event) =>
+                              onChangeItem({
+                                source: "textfield",
+                                event: event,
+                                value: event.target.value,
+                              })
+                            }
+                            fullWidth
+                            size="small"
+                          />
+                        </Grid>
+                        <Grid key={"unit_grid_" + item.item.uid} xs={4} sm={3}>
+                          <UnitAutocomplete
+                            componentKey={departmentKey + "_" + item.item.uid}
+                            unitKey={item.unit}
+                            units={units}
+                            size={TextFieldSize.small}
+                            onChange={(event, newValue, reason, objectId) =>
+                              onChangeItem({
+                                source: "autocompleteUnit",
+                                event,
+                                value: newValue,
+                                reason,
+                                objectId,
+                              })
+                            }
+                          />
+                        </Grid>
+                        <Grid key={"item_grid_" + item.item.uid} xs={12} sm={6}>
+                          <ItemAutocomplete
+                            componentKey={departmentKey + "_" + item.item.uid}
+                            item={toAutocompleteItem(item)}
+                            materials={materials}
+                            products={products}
+                            disabled={false}
+                            allowCreateNewItem={false}
+                            allowFreeText={true}
+                            error={{isError: false, errorText: ""}}
+                            size={TextFieldSize.small}
+                            onChange={(event, newValue, reason, objectId) =>
+                              onChangeItem({
+                                source: "autocompleteItem",
+                                event,
+                                value: newValue,
+                                reason,
+                                objectId,
+                              })
+                            }
+                          />
+                        </Grid>
+                      </Grid>
+                    )}
                     <IconButton
                       key={
                         "MoreBtn_" +
@@ -1432,20 +1946,24 @@ const EventShoppingListList = ({
                       }
                       aria-label="settings"
                       onClick={onOpenContexMenü}
-                      size="large"
+                      size={
+                        shoppingListModus === ListMode.VIEW ? "small" : "large"
+                      }
+                      sx={{flexShrink: 0}}
                     >
                       <MoreVertIcon />
                     </IconButton>
-                  </ListItemSecondaryAction>
-                </ListItem>
-              ))}
+                  </ListItem>
+                ),
+              )}
             </List>
           </React.Fragment>
-        )
+        ),
       )}
     </Container>
   );
 };
+
 /* ===================================================================
 // ==================== Dialog Artikel hinzufügen ====================
 // =================================================================== */
@@ -1463,8 +1981,8 @@ interface DialogHandleItemProps {
   authUser: AuthUser;
   handleOk: ({item, quantity, unit}: OnDialogAddItemOk) => void;
   handleClose: () => void;
-  onMaterialCreate: (material: Material) => void;
-  onProductCreate: (product: Product) => void;
+  // onMaterialCreate: (material: Material) => void;
+  // onProductCreate: (product: Product) => void;
 }
 interface OnDialogAddItemOk {
   item: ProductItem | MaterialItem;
@@ -1499,16 +2017,16 @@ const DialogHandleItem = ({
   authUser,
   handleOk: handleOkSuper,
   handleClose: handleCloseSuper,
-  onMaterialCreate: onMaterialCreateSuper,
-  onProductCreate: onProductCreateSuper,
+  // onMaterialCreate: onMaterialCreateSuper,
+  // onProductCreate: onProductCreateSuper,
 }: DialogHandleItemProps) => {
   const {customDialog} = useCustomDialog();
 
   const [dialogValues, setDialogValues] = React.useState(
-    DIALOG_VALUES_INITIAL_STATE
+    DIALOG_VALUES_INITIAL_STATE,
   );
   const [dialogValidation, setDialogValidation] = React.useState(
-    DIALOG_VALUES_VALIDATION_INITIAL_STATE
+    DIALOG_VALUES_VALIDATION_INITIAL_STATE,
   );
   const [materialAddPopupValues, setMaterialAddPopupValues] = React.useState({
     ...MATERIAL_POP_UP_VALUES_INITIAL_STATE,
@@ -1531,7 +2049,7 @@ const DialogHandleItem = ({
   // ------------------------------------------ */
   const onChangeItem = async (
     event: React.ChangeEvent<HTMLInputElement>,
-    newValue: string | MaterialItem | ProductItem | null
+    newValue: string | MaterialItem | ProductItem | null,
   ) => {
     if (typeof newValue === "string" || !newValue) {
       return;
@@ -1584,7 +2102,7 @@ const DialogHandleItem = ({
   };
   const onUnitChange = (
     event: React.ChangeEvent<HTMLInputElement>,
-    newValue: Unit | null
+    newValue: Unit | null,
   ) => {
     if (newValue) {
       setDialogValues({...dialogValues, unit: newValue.key});
@@ -1622,6 +2140,7 @@ const DialogHandleItem = ({
   // Pop-Up Handler Material/Produkt
   // ------------------------------------------ */
   const onMaterialCreate = (material: Material) => {
+    //FIXME:
     const item: MaterialItem = {...material, itemType: ItemType.material};
     setDialogValues({...dialogValues, item: item});
 
@@ -1629,7 +2148,7 @@ const DialogHandleItem = ({
       ...MATERIAL_POP_UP_VALUES_INITIAL_STATE,
       popUpOpen: false,
     });
-    onMaterialCreateSuper(material);
+    // onMaterialCreateSuper(material);
   };
   const onCloseDialogMaterial = () => {
     setMaterialAddPopupValues({
@@ -1645,7 +2164,7 @@ const DialogHandleItem = ({
       ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
       popUpOpen: false,
     });
-    onProductCreateSuper(product);
+    // onProductCreateSuper(product);
   };
 
   const onProductChooseExisting = (product: Product) => {
