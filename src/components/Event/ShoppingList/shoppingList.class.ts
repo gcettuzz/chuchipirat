@@ -214,6 +214,7 @@ export default class ShoppingList {
 
                     if (
                       !department ||
+                      !selectedDepartments ||
                       selectedDepartments.includes(department!.uid)
                     ) {
                       // Nur hinzufügen, wenn die Abteilung ausgewählt wurde

@@ -99,6 +99,7 @@ enum ReducerActions {
 
 type DispatchAction = {
   type: ReducerActions;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any;
 };
 
@@ -177,9 +178,8 @@ interface LocationState {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const RecipesPage: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = (
-  props
-) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const RecipesPage = (props: any) => {
   return (
     <AuthUserContext.Consumer>
       {(authUser) => <RecipesBase {...props} authUser={authUser} />}
@@ -281,7 +281,7 @@ const RecipesBase: React.FC<
   // Snackback schliessen
   // ------------------------------------------ */
   const handleSnackbarClose = (
-    event: Event | SyntheticEvent<any, Event>,
+    _event: Event | SyntheticEvent<Element, Event>,
     reason: SnackbarCloseReason
   ) => {
     if (reason === "clickaway") {
@@ -428,7 +428,7 @@ export const RecipeSearch = ({
     setFilteredData(recipes);
   };
   const onSearchSettingDietUpdate = (
-    event: React.MouseEvent<HTMLElement>,
+    _event: React.MouseEvent<HTMLElement>,
     value: string
   ) => {
     if (!value) {
@@ -444,7 +444,7 @@ export const RecipeSearch = ({
     );
   };
   const onSearchSettingAllergensUpdate = (
-    event: React.MouseEvent<HTMLElement>,
+    _event: React.MouseEvent<HTMLElement>,
     values: string[]
   ) => {
     let selectedAllergens: Allergen[] = [];
@@ -524,7 +524,7 @@ export const RecipeSearch = ({
     );
   };
   const onSearchSettingRecipeTypeUpdate = (
-    event: React.MouseEvent<HTMLElement>,
+    _event: React.MouseEvent<HTMLElement>,
     value: SearchSettings["recipeType"]
   ) => {
     if (!value) {

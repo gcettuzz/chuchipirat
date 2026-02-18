@@ -956,7 +956,7 @@ const HomeStats = ({stats, isLoadingStats}: HomeStatsProps) => {
                     >
                       <ListItemText primary={stat.caption} />
                       <ListItemText
-                        primary={stat.value.toLocaleString("de-CH")}
+                        primary={(stat.value ?? 0).toLocaleString("de-CH")}
                         style={{textAlign: "right"}}
                       />
                     </ListItem>
