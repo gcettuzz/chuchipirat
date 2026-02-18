@@ -14,15 +14,15 @@ import {
   TextField,
   List,
   ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
   ListItemIcon,
   IconButton,
   Container,
   Checkbox,
   useTheme,
   Box,
+  AlertColor,
 } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
@@ -46,6 +46,7 @@ import {
   KEEP as TEXT_KEEP,
   DELETE as TEXT_DELETE,
   ERROR_NO_MATERIALS_FOUND as TEXT_ERROR_NO_MATERIALS_FOUND,
+  FIELD_QUANTITY as TEXT_FIELD_QUANTITY,
 } from "../../../constants/text";
 
 import {MoreVert as MoreVertIcon} from "@mui/icons-material";
@@ -89,8 +90,11 @@ import {
   MasterDataCreateType,
   OnMasterdataCreateProps,
 } from "../Event/event";
-import MaterialList, {MaterialListEntry} from "./materialList.class";
-import Material from "../../Material/material.class";
+import MaterialList, {
+  MaterialListEntry,
+  MaterialListMaterial,
+} from "./materialList.class";
+import Material, {MaterialType} from "../../Material/material.class";
 import {
   DialogTraceItem,
   EventListCard,
@@ -102,7 +106,6 @@ import DialogMaterial, {
   MaterialDialog,
 } from "../../Material/dialogMaterial";
 import MaterialAutocomplete from "../../Material/materialAutocomplete";
-// import {AutocompleteChangeReason} from "@mui/lab";
 import {
   RECIPE_DRAWER_DATA_INITIAL_VALUES,
   RecipeDrawer,
@@ -113,6 +116,8 @@ import RecipeShort from "../../Recipe/recipeShort.class";
 import MaterialListPdf from "./materialListPdf";
 import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
 import {logEvent} from "firebase/analytics";
+import {TextFieldSize} from "../../../constants/defaultValues";
+import {ItemType} from "../ShoppingList/shoppingList.class";
 
 /* ===================================================================
 // ============================ Dispatcher ===========================
@@ -131,11 +136,17 @@ type State = {
   error: Error | null;
   snackbar: Snackbar;
 };
-type DispatchAction = {
-  type: ReducerActions;
-  payload: {[key: string]: any};
-};
-const inititialState: State = {
+type DispatchAction =
+  | {type: ReducerActions.SHOW_LOADING; payload: {isLoading: boolean}}
+  | {type: ReducerActions.SET_SELECTED_LIST_ITEM; payload: {uid: string}}
+  | {type: ReducerActions.GENERIC_ERROR; payload: Error}
+  | {
+      type: ReducerActions.SNACKBAR_SHOW;
+      payload: {severity: AlertColor; message: string};
+    }
+  | {type: ReducerActions.SNACKBAR_CLOSE};
+
+const initialState: State = {
   selectedListItem: null,
   isError: false,
   isLoading: false,
@@ -161,7 +172,7 @@ const TRACE_ITEM_DIALOG_INITIAL_VALUES = {
   sortedMenues: [] as MenueCoordinates[],
 };
 
-const usedRecipesReducer = (state: State, action: DispatchAction): State => {
+const materialListReducer = (state: State, action: DispatchAction): State => {
   switch (action.type) {
     case ReducerActions.SHOW_LOADING:
       return {
@@ -199,9 +210,10 @@ const usedRecipesReducer = (state: State, action: DispatchAction): State => {
           open: false,
         },
       };
-    default:
-      console.error("Unbekannter ActionType: ", action.type);
-      throw new Error();
+    default: {
+      const _exhaustiveCheck: never = action;
+      throw new Error(`Unknown action: ${_exhaustiveCheck}`);
+    }
   }
 };
 
@@ -211,6 +223,34 @@ const DIALOG_SELECT_MENUE_DATA_INITIAL_DATA = {
   selectedListUid: "",
   operationType: OperationType.none,
 };
+
+const CENTER_BOX_SX = {justifyContent: "center", display: "flex"};
+
+/* ===================================================================
+// ========================= Inline Change Types =====================
+// =================================================================== */
+export type MaterialItemChange =
+  | {
+      source: "textfield";
+      event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>;
+      value: string;
+    }
+  | {
+      source: "autocompleteMaterial";
+      event: React.ChangeEvent<HTMLInputElement>;
+      value: string | Material | null;
+    };
+
+const createEmptyMaterialListItem = (): MaterialListMaterial => ({
+  checked: false,
+  name: "",
+  uid: Utils.generateUid(10),
+  type: MaterialType.usage,
+  quantity: 0,
+  trace: [],
+  manualAdd: true,
+});
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
@@ -245,59 +285,65 @@ const EventMaterialListPage = ({
   onMasterdataCreate,
 }: EventMaterialListPageProps) => {
   const classes = useCustomStyles();
-  const theme = useTheme();
 
   const navigationValuesContext = React.useContext(NavigationValuesContext);
   const {customDialog} = useCustomDialog();
 
-  const [state, dispatch] = React.useReducer(
-    usedRecipesReducer,
-    inititialState
-  );
+  const [state, dispatch] = React.useReducer(materialListReducer, initialState);
   const [dialogSelectMenueData, setDialogSelectMenueData] = React.useState(
-    DIALOG_SELECT_MENUE_DATA_INITIAL_DATA
+    DIALOG_SELECT_MENUE_DATA_INITIAL_DATA,
   );
   const [contextMenuSelectedItem, setContextMenuSelectedItem] = React.useState(
-    CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE
+    CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE,
   );
   const [handleMaterialDialogValues, setHandleMaterialDialogValues] =
     React.useState(ADD_MATERIAL_DIALOG_INITIAL_VALUES);
   const [traceItemDialogValues, setTraceItemDialogValues] = React.useState(
-    TRACE_ITEM_DIALOG_INITIAL_VALUES
+    TRACE_ITEM_DIALOG_INITIAL_VALUES,
   );
   const [recipeDrawerData, setRecipeDrawerData] =
     React.useState<RecipeDrawerData>(RECIPE_DRAWER_DATA_INITIAL_VALUES);
   /* ------------------------------------------
   // Initialisierung
   // ------------------------------------------ */
-  if (
-    recipeDrawerData.isLoadingData &&
-    Object.prototype.hasOwnProperty.call(recipes, recipeDrawerData.recipe.uid)
-    // recipes.hasOwnProperty(recipeDrawerData.recipe.uid)
-  ) {
+  React.useEffect(() => {
+    if (!recipeDrawerData.isLoadingData) {
+      return;
+    }
+    if (
+      !Object.prototype.hasOwnProperty.call(
+        recipes,
+        recipeDrawerData.recipe.uid,
+      )
+    ) {
+      return;
+    }
+
     if (!recipeDrawerData.recipe.name) {
-      // Aktualisierte Werte setzen // es wurden erst die Infos aus der
-      // RecipeShort gesetzt. Diese mal anzeigen
-      setRecipeDrawerData({
-        ...recipeDrawerData,
-        isLoadingData:
-          recipes[recipeDrawerData.recipe.uid].portions > 0 ? false : true,
+      setRecipeDrawerData((prev) => ({
+        ...prev,
+        isLoadingData: recipes[prev.recipe.uid].portions > 0 ? false : true,
         open: true,
-        recipe: recipes[recipeDrawerData.recipe.uid],
-      });
+        recipe: recipes[prev.recipe.uid],
+      }));
     } else if (
       recipeDrawerData.recipe?.portions == 0 &&
       recipes[recipeDrawerData.recipe.uid]?.portions > 0
     ) {
-      // Nun ist alles da. Loading-Kreis ausblenden
-      setRecipeDrawerData({
-        ...recipeDrawerData,
+      setRecipeDrawerData((prev) => ({
+        ...prev,
         isLoadingData: false,
         open: true,
-        recipe: recipes[recipeDrawerData.recipe.uid],
-      });
+        recipe: recipes[prev.recipe.uid],
+      }));
     }
-  }
+  }, [
+    recipeDrawerData.isLoadingData,
+    recipeDrawerData.recipe.uid,
+    recipeDrawerData.recipe.name,
+    recipeDrawerData.recipe.portions,
+    recipes,
+  ]);
 
   /* ------------------------------------------
   // Navigation-Handler
@@ -318,18 +364,20 @@ const EventMaterialListPage = ({
   /* ------------------------------------------
   // Dialog-Handling
   // ------------------------------------------ */
-  const onCreateList = () => {
-    setDialogSelectMenueData({
-      ...dialogSelectMenueData,
+  const onCreateList = React.useCallback(() => {
+    setDialogSelectMenueData((prev) => ({
+      ...prev,
       open: true,
       operationType: OperationType.Create,
-    });
-  };
-  const onCloseDialogSelectMenues = () => {
+    }));
+  }, []);
+
+  const onCloseDialogSelectMenues = React.useCallback(() => {
     setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
-  };
+  }, []);
+
   const onConfirmDialogSelectMenues = async (
-    selectedMenues: DialogSelectMenuesForRecipeDialogValues
+    selectedMenues: DialogSelectMenuesForRecipeDialogValues,
   ) => {
     setDialogSelectMenueData({...dialogSelectMenueData, open: false});
 
@@ -348,11 +396,12 @@ const EventMaterialListPage = ({
     })) as SingleTextInputResult;
 
     if (userInput.valid) {
-      // Wait anzeigen
-      dispatch({type: ReducerActions.SHOW_LOADING, payload: {isLoading: true}});
+      dispatch({
+        type: ReducerActions.SHOW_LOADING,
+        payload: {isLoading: true},
+      });
 
       if (dialogSelectMenueData.operationType === OperationType.Create) {
-        // Rezepte holen und Material sammeln
         MaterialList.createNewList({
           name: userInput.input,
           selectedMenues: Object.keys(selectedMenues),
@@ -383,7 +432,6 @@ const EventMaterialListPage = ({
         onRefreshLists(userInput.input, Object.keys(selectedMenues));
       }
     } else {
-      // Abbruch wieder das andere anzeigen
       setDialogSelectMenueData({
         ...dialogSelectMenueData,
         menues: selectedMenues,
@@ -394,95 +442,210 @@ const EventMaterialListPage = ({
   /* ------------------------------------------
   // Kontext-Menü-Handler
   // ------------------------------------------ */
-  const onOpenContextMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
-    const pressedButton = event.currentTarget.id.split("_");
+  const onOpenContextMenu = React.useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      const pressedButton = event.currentTarget.id.split("_");
 
-    setContextMenuSelectedItem({
-      anchor: event.currentTarget,
-      materialUid: pressedButton[1],
-    });
-  };
-  const onCloseContextMenu = () => {
+      setContextMenuSelectedItem({
+        anchor: event.currentTarget,
+        materialUid: pressedButton[1],
+      });
+    },
+    [],
+  );
+
+  const onCloseContextMenu = React.useCallback(() => {
     setContextMenuSelectedItem(CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE);
-  };
-  const onContextMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    const pressedButton = event.currentTarget.id.split("_");
-    let material: Material | undefined;
-    let quantity: number | undefined;
-    switch (pressedButton[1]) {
-      case Action.EDIT:
-        material = materials.find(
-          (material) => material.uid == contextMenuSelectedItem.materialUid
-        );
+  }, []);
 
-        if (!material) {
-          return;
-        }
+  const onContextMenuClick = React.useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      const pressedButton = event.currentTarget.id.split("_");
+      let material: Material | undefined;
+      let quantity: number | undefined;
+      switch (pressedButton[1]) {
+        case Action.EDIT:
+          material = materials.find(
+            (material) => material.uid == contextMenuSelectedItem.materialUid,
+          );
 
-        quantity = materialList?.lists[state.selectedListItem!].items.find(
-          (material) => material.uid == contextMenuSelectedItem.materialUid
-        )?.quantity;
-        setHandleMaterialDialogValues({
-          open: true,
-          material: material,
-          quantity: quantity ? quantity.toString() : "",
-        });
-        break;
-      case Action.DELETE:
-        materialList.lists[state.selectedListItem!].items =
-          MaterialList.deleteMaterialFromList({
-            list: materialList.lists[state.selectedListItem!].items,
-            materialUid: contextMenuSelectedItem.materialUid,
+          if (!material) {
+            // Freitext-Eintrag: Material aus der Liste rekonstruieren
+            const listItem = materialList?.lists[
+              state.selectedListItem!
+            ].items.find(
+              (item) => item.uid == contextMenuSelectedItem.materialUid,
+            );
+            if (!listItem) {
+              return;
+            }
+            material = {
+              uid: listItem.uid,
+              name: listItem.name,
+              type: listItem.type,
+              usable: true,
+            } as Material;
+          }
+
+          quantity = materialList?.lists[state.selectedListItem!].items.find(
+            (material) => material.uid == contextMenuSelectedItem.materialUid,
+          )?.quantity;
+          setHandleMaterialDialogValues({
+            open: true,
+            material: material,
+            quantity: quantity ? quantity.toString() : "",
           });
-        logEvent(firebase.analytics, FirebaseAnalyticEvent.materialListDeleted);
-        onMaterialListUpdate(materialList);
-        break;
-      case Action.TRACE:
-        setTraceItemDialogValues({
-          open: true,
-          sortedMenues: Menuplan.sortSelectedMenues({
-            menueList:
-              materialList.lists[state.selectedListItem!].properties
-                .selectedMenues,
-            menuplan: menuplan,
-          }),
-        });
-        setContextMenuSelectedItem({...contextMenuSelectedItem, anchor: null});
-        return;
-        break;
-    }
-    setContextMenuSelectedItem(CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE);
-  };
+          break;
+        case Action.DELETE:
+          materialList.lists[state.selectedListItem!].items =
+            MaterialList.deleteMaterialFromList({
+              list: materialList.lists[state.selectedListItem!].items,
+              materialUid: contextMenuSelectedItem.materialUid,
+            });
+          logEvent(
+            firebase.analytics,
+            FirebaseAnalyticEvent.materialListDeleted,
+          );
+          onMaterialListUpdate(materialList);
+          break;
+        case Action.TRACE:
+          setTraceItemDialogValues({
+            open: true,
+            sortedMenues: Menuplan.sortSelectedMenues({
+              menueList:
+                materialList.lists[state.selectedListItem!].properties
+                  .selectedMenues,
+              menuplan: menuplan,
+            }),
+          });
+          setContextMenuSelectedItem({
+            ...contextMenuSelectedItem,
+            anchor: null,
+          });
+          return;
+      }
+      setContextMenuSelectedItem(CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE);
+    },
+    [
+      materials,
+      materialList,
+      state.selectedListItem,
+      contextMenuSelectedItem,
+      menuplan,
+      firebase,
+      onMaterialListUpdate,
+    ],
+  );
   /* ------------------------------------------
   // List-Einträge-Handling
   // ------------------------------------------ */
-  const onCheckboxClick = (event: React.ChangeEvent<HTMLInputElement>) => {
-    // Umschiessen und speichern!
-    const pressedCheckbox = event.target.name.split("_");
-    const material = materialList.lists[state.selectedListItem!].items.find(
-      (material) => material.uid == pressedCheckbox[1]
-    );
-    if (!material) {
-      return;
-    }
-    material.checked = !material.checked;
-    onMaterialListUpdate(materialList);
-  };
+  const onCheckboxClick = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const pressedCheckbox = event.target.name.split("_");
+      const material = materialList.lists[state.selectedListItem!].items.find(
+        (material) => material.uid == pressedCheckbox[1],
+      );
+      if (!material) {
+        return;
+      }
+      material.checked = !material.checked;
+      onMaterialListUpdate(materialList);
+    },
+    [materialList, state.selectedListItem, onMaterialListUpdate],
+  );
+
+  /* ------------------------------------------
+  // Inline-Change-Handler
+  // ------------------------------------------ */
+  const onChangeItem = React.useCallback(
+    (change: MaterialItemChange) => {
+      const field = change.event.target.id.split("_");
+      // field[0] = "quantity" oder "material", field[1] = materialUid
+      const materialUid = field[1];
+      const items = materialList.lists[state.selectedListItem!].items;
+
+      let item = items.find((item) => item.uid == materialUid);
+      let isNewItem = false;
+
+      if (!item) {
+        item = createEmptyMaterialListItem();
+        item.uid = materialUid;
+        isNewItem = true;
+      }
+
+      switch (change.source) {
+        case "textfield": {
+          item.quantity = parseFloat(change.value);
+          if (isNewItem) {
+            items.push(item);
+          } else {
+            item.manualEdit = true;
+          }
+          break;
+        }
+        case "autocompleteMaterial": {
+          if (!change.value) {
+            item.name = "";
+            break;
+          }
+
+          if (typeof change.value === "string") {
+            // Freitext-Eintrag
+            if (item.uid.length == 20) {
+              item.uid = Utils.generateUid(10);
+            }
+            item.name = change.value.trim();
+            item.type = MaterialType.usage;
+          } else if (change.value.name.endsWith(TEXT_ADD)) {
+            // "Hinzufügen" Eintrag – ignorieren, wird über MaterialAutocomplete
+            // als neues Material angelegt
+            return;
+          } else {
+            // Bestehendes Material ausgewählt
+            item.name = change.value.name;
+            item.uid = change.value.uid;
+            item.type = change.value.type;
+          }
+
+          if (isNewItem) {
+            item.manualAdd = true;
+            item.trace = [
+              {
+                menueUid: "",
+                recipe: {uid: "", name: ""},
+                planedPortions: 0,
+                quantity: item.quantity,
+                unit: "",
+                manualAdd: true,
+                itemType: ItemType.material,
+              },
+            ];
+            items.push(item);
+          } else {
+            item.manualEdit = true;
+          }
+          break;
+        }
+      }
+
+      onMaterialListUpdate(materialList);
+    },
+    [materialList, state.selectedListItem, onMaterialListUpdate],
+  );
+
   /* ------------------------------------------
   // List-Handling
   // ------------------------------------------ */
   const onRefreshLists = async (
     newName?: string,
-    selectedMenues?: Menue["uid"][]
+    selectedMenues?: Menue["uid"][],
   ) => {
     let keepManuallyAddedItems = false;
 
     if (
       materialList.lists[state.selectedListItem!].items.some((material) =>
-        material.trace.some((trace) => trace.manualAdd == true)
+        material.trace.some((trace) => trace.manualAdd == true),
       )
-
-      // Sollen die manuell hinzugefügten Artikel behalten werden.
     ) {
       const userInput = (await customDialog({
         dialogType: DialogType.selectOptions,
@@ -499,14 +662,11 @@ const EventMaterialListPage = ({
       }
       keepManuallyAddedItems = userInput.input == Action.KEEP ? true : false;
     }
-    // Alle Liste aktualisieren
     dispatch({type: ReducerActions.SHOW_LOADING, payload: {isLoading: true}});
 
     const materialListToReferesh = {...materialList};
 
     if (dialogSelectMenueData.operationType === OperationType.Update) {
-      // die neu gewählten Menüs und Name setzen
-
       materialListToReferesh.lists[
         dialogSelectMenueData.selectedListUid
       ].properties.name = newName!;
@@ -547,142 +707,155 @@ const EventMaterialListPage = ({
         dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
       });
   };
-  const onListElementSelect = async (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
-  ) => {
-    // Menües in der richtigen Reihenfolge aufbauen, damit diese dann auch richtig angezeigt werden
-    const selectedListItem = event.currentTarget.id.split("_")[1];
-    if (state.selectedListItem == selectedListItem) {
-      // Element bereits aktiv
-      return;
-    }
-
-    dispatch({
-      type: ReducerActions.SET_SELECTED_LIST_ITEM,
-      payload: {
-        uid: selectedListItem,
-      },
-    });
-  };
-  const onListElementDelete = (event: React.MouseEvent<HTMLElement>) => {
-    const selectedList = event.currentTarget.id.split("_")[1];
-    if (!selectedList) {
-      return;
-    }
-
-    const updatedMaterialList = MaterialList.deleteList({
-      materialList: materialList,
-      listUidToDelete: selectedList,
-      authUser: authUser,
-    });
-    onMaterialListUpdate(updatedMaterialList);
-
-    dispatch({
-      type: ReducerActions.SET_SELECTED_LIST_ITEM,
-      payload: {
-        uid: "",
-      },
-    });
-  };
-  const onListElementEdit = async (event: React.MouseEvent<HTMLElement>) => {
-    const selectedListUid = event.currentTarget.id.split("_")[1];
-    if (!selectedListUid) {
-      return;
-    }
-    const selectedMenuesForDialog: DialogSelectMenuesForRecipeDialogValues = {};
-
-    let selectedMenues =
-      materialList.lists[selectedListUid].properties.selectedMenues;
-
-    // Prüfen ob die Menüs immer noch gleich sind
-    if (
-      !Utils.areStringArraysEqual(
-        materialList.lists[selectedListUid].properties.selectedMeals,
-        Menuplan.getMealsOfMenues({
-          menuplan: menuplan,
-          menues: materialList.lists[selectedListUid].properties.selectedMenues,
-        })
-      ) ||
-      // Sind neue Menü dazugekommen/ oder wurden Menüs aus der
-      // Auswahl entfernt
-      materialList.lists[selectedListUid].properties.selectedMenues.length !==
-        Menuplan.getMenuesOfMeals({
-          menuplan: menuplan,
-          meals: materialList.lists[selectedListUid].properties.selectedMeals,
-        }).length
-    ) {
-      selectedMenues = Menuplan.getMenuesOfMeals({
-        menuplan: menuplan,
-        meals: materialList.lists[selectedListUid].properties.selectedMeals,
-      });
-    }
-
-    // Menues der Mahlzeiten holen und Objekt umwandeln
-    selectedMenues.forEach(
-      (menueUid) => (selectedMenuesForDialog[menueUid] = true)
-    );
-
-    setDialogSelectMenueData({
-      menues: selectedMenuesForDialog,
-      open: true,
-      selectedListUid: selectedListUid,
-      operationType: OperationType.Update,
-    });
-  };
-  /* ------------------------------------------
-  // Artikel hinzufügen Dialog
-  // ------------------------------------------ */
-  const onAddMaterialClick = () => {
-    setHandleMaterialDialogValues({...handleMaterialDialogValues, open: true});
-  };
-  const onAddMaterialDialogClose = () => {
-    setHandleMaterialDialogValues(ADD_MATERIAL_DIALOG_INITIAL_VALUES);
-  };
-  const onAddMaterialDialogAdd = ({material, quantity}: OnDialogAddItemOk) => {
-    if (!handleMaterialDialogValues.material.uid) {
-      // Neuer Eintrag
-      materialList.lists[state.selectedListItem!].items =
-        MaterialList.addMaterialToList({
-          material: material,
-          list: materialList.lists[state.selectedListItem!].items,
-          quantity: quantity,
-          planedPortions: 0,
-          manuelAdd: true,
-        });
-    } else {
-      // Eintrag ändern
-      const materialInList = materialList.lists[
-        state.selectedListItem!
-      ].items.find((materialInList) => materialInList.uid == material.uid);
-
-      if (!materialInList) {
+  const onListElementSelect = React.useCallback(
+    async (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      const selectedListItem = event.currentTarget.id.split("_")[1];
+      if (state.selectedListItem == selectedListItem) {
         return;
       }
 
-      materialInList.quantity = quantity;
-      materialInList.manualEdit = true;
-    }
-    onMaterialListUpdate(materialList);
+      dispatch({
+        type: ReducerActions.SET_SELECTED_LIST_ITEM,
+        payload: {
+          uid: selectedListItem,
+        },
+      });
+    },
+    [state.selectedListItem],
+  );
+
+  const onListElementDelete = React.useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      const selectedList = event.currentTarget.id.split("_")[1];
+      if (!selectedList) {
+        return;
+      }
+
+      const updatedMaterialList = MaterialList.deleteList({
+        materialList: materialList,
+        listUidToDelete: selectedList,
+        authUser: authUser,
+      });
+      onMaterialListUpdate(updatedMaterialList);
+
+      dispatch({
+        type: ReducerActions.SET_SELECTED_LIST_ITEM,
+        payload: {
+          uid: "",
+        },
+      });
+    },
+    [materialList, authUser, onMaterialListUpdate],
+  );
+
+  const onListElementEdit = React.useCallback(
+    async (event: React.MouseEvent<HTMLElement>) => {
+      const selectedListUid = event.currentTarget.id.split("_")[1];
+      if (!selectedListUid) {
+        return;
+      }
+      const selectedMenuesForDialog: DialogSelectMenuesForRecipeDialogValues =
+        {};
+
+      let selectedMenues =
+        materialList.lists[selectedListUid].properties.selectedMenues;
+
+      if (
+        !Utils.areStringArraysEqual(
+          materialList.lists[selectedListUid].properties.selectedMeals,
+          Menuplan.getMealsOfMenues({
+            menuplan: menuplan,
+            menues:
+              materialList.lists[selectedListUid].properties.selectedMenues,
+          }),
+        ) ||
+        materialList.lists[selectedListUid].properties.selectedMenues.length !==
+          Menuplan.getMenuesOfMeals({
+            menuplan: menuplan,
+            meals: materialList.lists[selectedListUid].properties.selectedMeals,
+          }).length
+      ) {
+        selectedMenues = Menuplan.getMenuesOfMeals({
+          menuplan: menuplan,
+          meals: materialList.lists[selectedListUid].properties.selectedMeals,
+        });
+      }
+
+      selectedMenues.forEach(
+        (menueUid) => (selectedMenuesForDialog[menueUid] = true),
+      );
+
+      setDialogSelectMenueData({
+        menues: selectedMenuesForDialog,
+        open: true,
+        selectedListUid: selectedListUid,
+        operationType: OperationType.Update,
+      });
+    },
+    [materialList, menuplan],
+  );
+  /* ------------------------------------------
+  // Artikel-Dialog (nur für Kontext-Menü EDIT)
+  // ------------------------------------------ */
+  const onAddMaterialDialogClose = React.useCallback(() => {
     setHandleMaterialDialogValues(ADD_MATERIAL_DIALOG_INITIAL_VALUES);
-  };
-  const onMaterialCreate = (material: Material) => {
-    onMasterdataCreate({
-      type: MasterDataCreateType.MATERIAL,
-      value: material,
-    });
-  };
+  }, []);
+
+  const onAddMaterialDialogAdd = React.useCallback(
+    ({material, quantity}: OnDialogAddItemOk) => {
+      if (!handleMaterialDialogValues.material.uid) {
+        materialList.lists[state.selectedListItem!].items =
+          MaterialList.addMaterialToList({
+            material: material,
+            list: materialList.lists[state.selectedListItem!].items,
+            quantity: quantity,
+            planedPortions: 0,
+            manuelAdd: true,
+          });
+      } else {
+        const materialInList = materialList.lists[
+          state.selectedListItem!
+        ].items.find((materialInList) => materialInList.uid == material.uid);
+
+        if (!materialInList) {
+          return;
+        }
+
+        materialInList.quantity = quantity;
+        materialInList.manualEdit = true;
+      }
+      onMaterialListUpdate(materialList);
+      setHandleMaterialDialogValues(ADD_MATERIAL_DIALOG_INITIAL_VALUES);
+    },
+    [
+      handleMaterialDialogValues.material.uid,
+      materialList,
+      state.selectedListItem,
+      onMaterialListUpdate,
+    ],
+  );
+
+  const onMaterialCreate = React.useCallback(
+    (material: Material) => {
+      onMasterdataCreate({
+        type: MasterDataCreateType.MATERIAL,
+        value: material,
+      });
+    },
+    [onMasterdataCreate],
+  );
   /* ------------------------------------------
   // Artikel Trace Dialog
   // ------------------------------------------ */
-  const onDialogTraceItemClose = () => {
-    setTraceItemDialogValues({...traceItemDialogValues, open: false});
-  };
+  const onDialogTraceItemClose = React.useCallback(() => {
+    setTraceItemDialogValues((prev) => ({...prev, open: false}));
+  }, []);
   /* ------------------------------------------
   // Recipe-Drawer-Handler
   // ------------------------------------------ */
   const onOpenRecipeDrawer = (
     menueUid: Menue["uid"],
-    recipeUid: Recipe["uid"]
+    recipeUid: Recipe["uid"],
   ) => {
     let mealRecipe = {} as MealRecipe;
     let recipe = new Recipe();
@@ -720,7 +893,6 @@ const EventMaterialListPage = ({
       });
       loadingData = true;
     }
-    // Erst öffnen, wenn die Daten auch da sind
     setRecipeDrawerData({
       ...recipeDrawerData,
       open: openDrawer,
@@ -729,13 +901,13 @@ const EventMaterialListPage = ({
       scaledPortions: mealRecipe.totalPortions,
     });
   };
-  const onRecipeDrawerClose = () => {
-    setRecipeDrawerData({...recipeDrawerData, open: false});
-  };
+  const onRecipeDrawerClose = React.useCallback(() => {
+    setRecipeDrawerData((prev) => ({...prev, open: false}));
+  }, []);
   /* ------------------------------------------
   // PDF erzeugen
   // ------------------------------------------ */
-  const onGeneratePrintVersion = () => {
+  const onGeneratePrintVersion = React.useCallback(() => {
     if (materialList.lists[state.selectedListItem!].items.length === 0) {
       dispatch({
         type: ReducerActions.GENERIC_ERROR,
@@ -755,16 +927,17 @@ const EventMaterialListPage = ({
         })}
         eventName={event.name}
         authUser={authUser}
-      />
+      />,
     )
       .toBlob()
       .then((result) => {
         fileSaver.saveAs(
           result,
-          event.name + " " + TEXT_MATERIAL_LIST + TEXT_SUFFIX_PDF
+          event.name + " " + TEXT_MATERIAL_LIST + TEXT_SUFFIX_PDF,
         );
       });
-  };
+  }, [materialList, state.selectedListItem, menuplan, event.name, authUser]);
+
   return (
     <Stack spacing={2}>
       {state.isError && (
@@ -780,7 +953,7 @@ const EventMaterialListPage = ({
         cardTitle={TEXT_MATERIAL_LIST}
         cardDescription={TEXT_MATERIAL_LIST_MENUE_SELECTION_DESCRIPTION}
         outOfDateWarnMessage={TEXT_LIST_ENTRY_MAYBE_OUT_OF_DATE(
-          TEXT_MATERIAL_LIST
+          TEXT_MATERIAL_LIST,
         )}
         selectedListItem={state.selectedListItem}
         lists={materialList.lists}
@@ -794,32 +967,19 @@ const EventMaterialListPage = ({
         onGeneratePrintVersion={onGeneratePrintVersion}
       />
       {state.selectedListItem && materialList && (
-        <React.Fragment>
-          <Box component="div" sx={{justifyContent: "center", display: "flex"}}>
-            <Button
-              color="primary"
-              onClick={onAddMaterialClick}
-              variant="outlined"
-              sx={{
-                alignSelf: "flex-start",
-                marginTop: theme.spacing(2),
-              }}
-            >
-              {TEXT_ADD_ITEM}
-            </Button>
-          </Box>
-          <Box component="div" sx={{justifyContent: "center", display: "flex"}}>
-            <EventMaterialListList
-              materialList={materialList.lists[state.selectedListItem]}
-              menuplan={menuplan}
-              groupConfiguration={groupConfiguration}
-              unitConversionBasic={unitConversionBasic}
-              unitConversionProducts={unitConversionProducts}
-              onCheckboxClick={onCheckboxClick}
-              onOpenContexMenü={onOpenContextMenu}
-            />
-          </Box>
-        </React.Fragment>
+        <Box component="div" sx={CENTER_BOX_SX}>
+          <EventMaterialListList
+            materialList={materialList.lists[state.selectedListItem]}
+            materials={materials}
+            menuplan={menuplan}
+            groupConfiguration={groupConfiguration}
+            unitConversionBasic={unitConversionBasic}
+            unitConversionProducts={unitConversionProducts}
+            onCheckboxClick={onCheckboxClick}
+            onOpenContexMenü={onOpenContextMenu}
+            onChangeItem={onChangeItem}
+          />
+        </Box>
       )}
       <DialogSelectMenues
         open={dialogSelectMenueData.open}
@@ -852,19 +1012,18 @@ const EventMaterialListPage = ({
         firebase={firebase}
       />
       {state.selectedListItem && contextMenuSelectedItem.materialUid && (
-        // kann nur generiert werden, wenn auch etwas ausgewählt ist
         <DialogTraceItem
           dialogOpen={traceItemDialogValues.open}
           trace={
             materialList.lists[state.selectedListItem!]!.items.find(
-              (material) => material.uid == contextMenuSelectedItem.materialUid
+              (material) => material.uid == contextMenuSelectedItem.materialUid,
             )!.trace!
           }
           sortedMenues={traceItemDialogValues.sortedMenues}
           hasBeenManualyEdited={Boolean(
             materialList.lists[state.selectedListItem!]?.items.find(
-              (material) => material.uid == contextMenuSelectedItem.materialUid
-            )?.manualEdit
+              (material) => material.uid == contextMenuSelectedItem.materialUid,
+            )?.manualEdit,
           )}
           handleClose={onDialogTraceItemClose}
           onShowRecipe={onOpenRecipeDrawer}
@@ -887,107 +1046,222 @@ const EventMaterialListPage = ({
     </Stack>
   );
 };
+
+/* ===================================================================
+// ==================== Quantity Field with local state ==============
+// =================================================================== */
+interface QuantityFieldProps {
+  materialUid: string;
+  quantity: number;
+  onChangeItem: (change: MaterialItemChange) => void;
+}
+const QuantityField = React.memo(
+  ({materialUid, quantity, onChangeItem}: QuantityFieldProps) => {
+    const displayValue =
+      Number.isNaN(quantity) || quantity === 0 ? "" : String(quantity);
+    const [localValue, setLocalValue] = React.useState(displayValue);
+
+    React.useEffect(() => {
+      setLocalValue(displayValue);
+    }, [displayValue]);
+
+    const handleBlur = React.useCallback(
+      (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        if (localValue !== displayValue) {
+          onChangeItem({
+            source: "textfield",
+            event: event,
+            value: localValue,
+          });
+        }
+      },
+      [localValue, displayValue, onChangeItem],
+    );
+
+    return (
+      <TextField
+        id={"quantity_" + materialUid}
+        value={localValue}
+        label={TEXT_FIELD_QUANTITY}
+        type="number"
+        inputProps={{min: 0, inputMode: "decimal"}}
+        onChange={(event) => setLocalValue(event.target.value)}
+        onBlur={handleBlur}
+        fullWidth
+        size="small"
+      />
+    );
+  },
+);
+QuantityField.displayName = "QuantityField";
+
 /* ===================================================================
 // ======================= Liste der Materialien =====================
 // =================================================================== */
 interface EventMaterialListListProps {
   materialList: MaterialListEntry;
+  materials: Material[];
   menuplan: Menuplan;
   groupConfiguration: EventGroupConfiguration;
   unitConversionBasic: UnitConversionBasic | null;
   unitConversionProducts: UnitConversionProducts | null;
   onCheckboxClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onOpenContexMenü: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onChangeItem: (change: MaterialItemChange) => void;
 }
-const EventMaterialListList = ({
-  materialList,
-  onCheckboxClick,
-  onOpenContexMenü,
-}: EventMaterialListListProps) => {
-  const classes = useCustomStyles();
-  return (
-    <Container
-      component="main"
-      maxWidth="sm"
-      key={"MaterialListContainer"}
-      sx={classes.container}
-    >
-      <Stack spacing={2}>
-        <List sx={[classes.eventList]} key={"materialList"}>
-          {Utils.sortArray({
-            array: materialList.items,
-            attributeName: "name",
-          }).map((material) => (
-            <ListItem
-              key={"shoppingListItem_" + material.uid}
-              sx={classes.eventListItem}
-            >
-              <ListItemIcon>
-                <Checkbox
-                  key={"checkbox_" + material.uid}
-                  name={"checkbox_" + material.uid}
-                  onChange={onCheckboxClick}
-                  checked={material.checked}
-                  disableRipple
-                />
-              </ListItemIcon>
-              <ListItemText
-                sx={classes.eventListItemTextQuantity}
-                primaryTypographyProps={
-                  material.checked
-                    ? {color: "textSecondary"}
-                    : {color: "textPrimary"}
-                }
-                key={"quantity" + material.uid}
-                primary={
-                  material.checked ? (
-                    <del>
-                      {Number.isNaN(material.quantity) || material.quantity == 0
-                        ? ""
-                        : new Intl.NumberFormat("de-CH", {
-                            maximumSignificantDigits: 3,
-                          }).format(material.quantity)}
-                    </del>
-                  ) : Number.isNaN(material.quantity) ||
-                    material.quantity == 0 ? (
-                    ""
-                  ) : (
-                    new Intl.NumberFormat("de-CH", {
-                      maximumSignificantDigits: 3,
-                    }).format(material.quantity)
-                  )
-                }
-              />
-              <ListItemText
-                sx={classes.eventListItemTextProduct}
-                primaryTypographyProps={
-                  material.checked
-                    ? {color: "textSecondary"}
-                    : {color: "textPrimary"}
-                }
-                key={"itemName_" + material.uid}
-                primary={
-                  material.checked ? <del>{material.name}</del> : material.name
-                }
-              />
-              <ListItemSecondaryAction key={"SecondaryAction_" + material.uid}>
-                <IconButton
-                  key={"MoreBtn_" + material.uid}
-                  id={"MoreBtn_" + material.uid}
-                  aria-label="settings"
-                  onClick={onOpenContexMenü}
-                  size="large"
+const EventMaterialListList = React.memo(
+  ({
+    materialList,
+    materials,
+    onCheckboxClick,
+    onOpenContexMenü,
+    onChangeItem,
+  }: EventMaterialListListProps) => {
+    const classes = useCustomStyles();
+    const shouldFocusNewRowRef = React.useRef(false);
+
+    const prepareItemsForDisplay = React.useCallback(
+      (items: MaterialListMaterial[]) => {
+        // Nach Name sortieren, Einträge ohne Name ans Ende
+        const sortedList = [...items].sort((a, b) => {
+          if (!a.name && !b.name) return 0;
+          if (!a.name) return 1;
+          if (!b.name) return -1;
+          return a.name.localeCompare(b.name);
+        });
+
+        // Leere Vorlage-Zeile zum Hinzufügen am Ende
+        const templateRow = createEmptyMaterialListItem();
+
+        if (
+          sortedList.length === 0 ||
+          sortedList[sortedList.length - 1].name !== ""
+        ) {
+          sortedList.push(templateRow);
+        }
+
+        return {
+          items: sortedList,
+          templateRowUid: templateRow.uid,
+        };
+      },
+      [],
+    );
+
+    const displayData = React.useMemo(
+      () => prepareItemsForDisplay(materialList.items),
+      [materialList.items, prepareItemsForDisplay],
+    );
+
+    React.useEffect(() => {
+      if (shouldFocusNewRowRef.current) {
+        shouldFocusNewRowRef.current = false;
+        const el = document.getElementById(
+          "quantity_" + displayData.templateRowUid,
+        );
+        if (el) {
+          el.focus();
+        }
+      }
+    }, [displayData.templateRowUid]);
+
+    const containerSx = React.useMemo(
+      () => ({...classes.container, width: "100%"}),
+      [classes.container],
+    );
+
+    return (
+      <Container
+        component="main"
+        maxWidth="sm"
+        key={"MaterialListContainer"}
+        sx={containerSx}
+      >
+        <Stack spacing={2}>
+          <List sx={[classes.eventList]} key={"materialList"}>
+            {displayData.items.map((material) => {
+              return (
+                <ListItem
+                  key={"materialListItem_" + material.uid}
+                  sx={classes.eventListItem}
                 >
-                  <MoreVertIcon />
-                </IconButton>
-              </ListItemSecondaryAction>
-            </ListItem>
-          ))}
-        </List>
-      </Stack>
-    </Container>
-  );
-};
+                  <ListItemIcon>
+                    <Checkbox
+                      key={"checkbox_" + material.uid}
+                      name={"checkbox_" + material.uid}
+                      onChange={onCheckboxClick}
+                      checked={material.checked}
+                      disableRipple
+                    />
+                  </ListItemIcon>
+                  <Grid
+                    container
+                    spacing={2}
+                    alignItems="center"
+                    sx={{flex: 1, minWidth: 0}}
+                  >
+                    <Grid key={"quantity_grid_" + material.uid} xs={4} sm={3}>
+                      <QuantityField
+                        materialUid={material.uid}
+                        quantity={material.quantity}
+                        onChangeItem={onChangeItem}
+                      />
+                    </Grid>
+                    <Grid key={"material_grid_" + material.uid} xs={8} sm={9}>
+                      <MaterialAutocomplete
+                        componentKey={material.uid}
+                        material={
+                          material.name
+                            ? ({
+                                uid: material.uid,
+                                name: material.name,
+                                type: material.type,
+                                usable: true,
+                              } as Material)
+                            : null
+                        }
+                        materials={materials}
+                        disabled={false}
+                        allowCreateNewMaterial={false}
+                        size={TextFieldSize.small}
+                        onChange={(_event, newValue, _reason, objectId) => {
+                          if (
+                            material.uid === displayData.templateRowUid &&
+                            newValue
+                          ) {
+                            shouldFocusNewRowRef.current = true;
+                          }
+                          onChangeItem({
+                            source: "autocompleteMaterial",
+                            event: {
+                              target: {id: objectId},
+                            } as React.ChangeEvent<HTMLInputElement>,
+                            value: newValue,
+                          });
+                        }}
+                      />
+                    </Grid>
+                  </Grid>
+                  <IconButton
+                    key={"MoreBtn_" + material.uid}
+                    id={"MoreBtn_" + material.uid}
+                    aria-label="settings"
+                    onClick={onOpenContexMenü}
+                    size="large"
+                    sx={{flexShrink: 0}}
+                  >
+                    <MoreVertIcon />
+                  </IconButton>
+                </ListItem>
+              );
+            })}
+          </List>
+        </Stack>
+      </Container>
+    );
+  },
+);
+EventMaterialListList.displayName = "EventMaterialListList";
 /* ===================================================================
 // ==================== Dialog Material hinzufügen ===================
 // =================================================================== */
@@ -1030,21 +1304,26 @@ const DialogHandleMaterial = ({
   const theme = useTheme();
 
   const [dialogValues, setDialogValues] = React.useState(
-    DIALOG_VALUES_INITIAL_STATE
+    DIALOG_VALUES_INITIAL_STATE,
   );
   const [dialogValidation, setDialogValidation] = React.useState(
-    DIALOG_VALUES_VALIDATION_INITIAL_STATE
+    DIALOG_VALUES_VALIDATION_INITIAL_STATE,
   );
   const [materialAddPopupValues, setMaterialAddPopupValues] = React.useState({
     ...MATERIAL_POP_UP_VALUES_INITIAL_STATE,
     ...{popUpOpen: false},
   });
-  if (dialogValues == DIALOG_VALUES_INITIAL_STATE && material?.uid) {
-    setDialogValues({
-      quantity: quantity,
-      material: material,
-    });
-  }
+
+  React.useEffect(() => {
+    if (material?.uid) {
+      setDialogValues({
+        quantity: quantity,
+        material: material,
+      });
+    } else {
+      setDialogValues(DIALOG_VALUES_INITIAL_STATE);
+    }
+  }, [material, quantity]);
 
   /* ------------------------------------------
   // Button-Handler Dialog
@@ -1055,7 +1334,6 @@ const DialogHandleMaterial = ({
     handleCloseSuper();
   };
   const handleOk = () => {
-    // Prüfen ob Eingaben korrekt (Produkt muss vorhanden sein)
     if (!dialogValues.material || !dialogValues.material.uid) {
       setDialogValidation({
         isError: true,
@@ -1080,20 +1358,26 @@ const DialogHandleMaterial = ({
     });
   };
   const onChangeMaterial = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-    newValue: string | Material | null
-    // action: AutocompleteChangeReason,
-    // objectId: string
+    _event: React.ChangeEvent<HTMLInputElement>,
+    newValue: string | Material | null,
   ) => {
-    if (typeof newValue === "string" || !newValue) {
+    if (!newValue) {
+      return;
+    }
+
+    if (typeof newValue === "string") {
+      const freetextMaterial = new Material();
+      freetextMaterial.uid = Utils.generateUid(10);
+      freetextMaterial.name = newValue.trim();
+      freetextMaterial.type = MaterialType.usage;
+      freetextMaterial.usable = true;
+      setDialogValues({...dialogValues, material: freetextMaterial});
       return;
     }
 
     if (newValue.name.endsWith(TEXT_ADD)) {
-      // Begriff "Hinzufügen" und Anführzungszeichen entfernen
       const materiaName = newValue?.name.match('".*"')![0].slice(1, -1);
 
-      // Fenster anzeigen um neues Produkt zu erfassen
       setMaterialAddPopupValues({
         ...materialAddPopupValues,
         name: materiaName,

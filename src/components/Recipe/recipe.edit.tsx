@@ -60,6 +60,7 @@ import {
   Divider,
   SnackbarCloseReason,
   Alert,
+  AlertColor,
 } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 
@@ -178,10 +179,58 @@ enum ReducerActions {
   CLEAR_STATE = "CLEAR_STATE",
 }
 
-type DispatchAction = {
-  type: ReducerActions;
-  payload: {[key: string]: any};
-};
+type DispatchAction =
+  | {type: ReducerActions.SET_RECIPE; payload: {recipe: Recipe}}
+  | {
+      type: ReducerActions.ON_FIELD_CHANGE;
+      payload: {field: string; value: string | number | boolean | string[] | MenuType[]};
+    }
+  | {
+      type: ReducerActions.ON_INGREDIENT_CHANGE;
+      payload: {uid: string; field: string; value: string | number | IngredientProduct};
+    }
+  | {type: ReducerActions.ON_INGREDIENT_DELETE_NAME; payload: {uid: string}}
+  | {type: ReducerActions.ON_INGREDIENT_ADD_NEW_PRODUCT; payload: Product}
+  | {
+      type: ReducerActions.ON_MATERIAL_CHANGE;
+      payload: {uid: string; field: string; value: string | number | RecipeProduct};
+    }
+  | {type: ReducerActions.ON_MATERIAL_DELETE_NAME; payload: {uid: string}}
+  | {type: ReducerActions.ON_MATERIAL_ADD_NEW_PRODUCT; payload: Material}
+  | {
+      type: ReducerActions.ON_PREPARATIONSTEP_CHANGE;
+      payload: {uid: string; fieldName: string; value: string};
+    }
+  | {
+      type: ReducerActions.ON_UPDATE_LIST;
+      payload: {
+        fieldName: string;
+        value: RecipeObjectStructure<Ingredient | Section>
+          | RecipeObjectStructure<PreparationStep | Section>
+          | RecipeObjectStructure<RecipeMaterialPosition | Section>;
+      };
+    }
+  | {
+      type: ReducerActions.DRAG_AND_DROP_UDPATE;
+      payload: {field: DragDropTypes; value: string[]};
+    }
+  | {type: ReducerActions.UNITS_FETCH_INIT}
+  | {type: ReducerActions.UNITS_FETCH_SUCCESS; payload: Unit[]}
+  | {type: ReducerActions.PRODUCTS_FETCH_INIT}
+  | {type: ReducerActions.PRODUCTS_FETCH_SUCCESS; payload: Product[]}
+  | {type: ReducerActions.DEPARTMENTS_FETCH_INIT}
+  | {type: ReducerActions.DEPARTMENTS_FETCH_SUCCESS; payload: Department[]}
+  | {type: ReducerActions.MATERIALS_FETCH_INIT}
+  | {type: ReducerActions.MATERIALS_FETCH_SUCCESS; payload: Material[]}
+  | {type: ReducerActions.PUBLIC_RECIPES_FETCH_INIT}
+  | {type: ReducerActions.PUBLIC_RECIPES_FETCH_SUCCESS; payload: RecipeShort[]}
+  | {
+      type: ReducerActions.SNACKBAR_SHOW;
+      payload: {severity: AlertColor; message: string};
+    }
+  | {type: ReducerActions.SNACKBAR_CLOSE}
+  | {type: ReducerActions.GENERIC_ERROR; payload: Error}
+  | {type: ReducerActions.CLEAR_STATE; payload: State};
 type State = {
   recipe: Recipe;
   units: Unit[];
@@ -232,8 +281,6 @@ enum RecipeBlock {
 type RecipeBlockNotNone = Exclude<RecipeBlock, RecipeBlock.none>;
 
 const recipesReducer = (state: State, action: DispatchAction): State => {
-  let field: string;
-  let value: any;
   let updatedMaterials: Recipe["materials"];
   let tmpIngredients: Recipe["ingredients"];
   let tempProducts: Product[];
@@ -245,7 +292,9 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
   switch (action.type) {
     case ReducerActions.SET_RECIPE:
       return {...state, recipe: action.payload.recipe};
-    case ReducerActions.ON_FIELD_CHANGE:
+    case ReducerActions.ON_FIELD_CHANGE: {
+      let field: string;
+      let value: string | number | boolean | string[] | MenuType[] | Record<string, unknown>;
       if (action.payload.field.includes(".")) {
         //ATTENTION:
         // Verschachtelter Wert --> Attribut holen
@@ -253,8 +302,9 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
         // 💥 Achtung! Funktioniert nur mit einer Verschachtelungs-
         //             tiefe von 1.
         field = action.payload.field.split(".")[0];
-        value = state.recipe[field as keyof Recipe];
-        value[action.payload.field.split(".")[1]] = action.payload.value;
+        const nested = Object.assign({}, state.recipe[field as keyof Recipe]) as Record<string, unknown>;
+        nested[action.payload.field.split(".")[1]] = action.payload.value;
+        value = nested;
       } else {
         field = action.payload.field;
         value = action.payload.value;
@@ -266,10 +316,11 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
           [field]: value,
         },
       };
+    }
     case ReducerActions.ON_INGREDIENT_CHANGE:
       tmpIngredients = {...state.recipe.ingredients};
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (tmpIngredients.entries[action.payload.uid as string] as any)[
+      (tmpIngredients.entries[action.payload.uid] as unknown as
+        Record<string, string | number | IngredientProduct>)[
         action.payload.field
       ] = action.payload.value;
 
@@ -327,7 +378,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
       );
       // Wenn es das schon gibt, nichts tun
       if (!tempProduct) {
-        tempProducts.push(action.payload as Product);
+        tempProducts.push(action.payload);
       }
       return {
         ...state,
@@ -339,13 +390,14 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
         ...state,
         recipe: {
           ...state.recipe,
-          [action.payload.fieldName as keyof Recipe]: action.payload.value,
+          [action.payload.fieldName]: action.payload.value,
         },
       };
     case ReducerActions.ON_PREPARATIONSTEP_CHANGE:
       preparationStepsToUpdate = {...state.recipe.preparationSteps};
 
-      (preparationStepsToUpdate.entries[action.payload.uid] as any)[
+      (preparationStepsToUpdate.entries[action.payload.uid] as unknown as
+        Record<string, string>)[
         action.payload.fieldName
       ] = action.payload.value;
       // Wenn das die letzte Zeile ist, automatisch eine neue einfügen
@@ -379,7 +431,8 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.ON_MATERIAL_CHANGE:
       tmpMaterials = {...state.recipe.materials};
 
-      (tmpMaterials.entries[action.payload.uid] as any)[action.payload.field] =
+      (tmpMaterials.entries[action.payload.uid] as unknown as
+        Record<string, string | number | RecipeProduct>)[action.payload.field] =
         action.payload.value;
 
       // Wenn das die letzte Zeile ist, automatisch eine neue einfügen
@@ -424,7 +477,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
       );
       // Wenn es das schon gibt, nichts tun
       if (!material) {
-        materials.push(action.payload as Material);
+        materials.push(action.payload);
       }
       return {
         ...state,
@@ -441,7 +494,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.UNITS_FETCH_SUCCESS:
       return {
         ...state,
-        units: action.payload as Unit[],
+        units: action.payload,
         loadCollector: {
           ...state.loadCollector,
           units: false,
@@ -458,7 +511,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.PRODUCTS_FETCH_SUCCESS:
       return {
         ...state,
-        products: action.payload as Product[],
+        products: action.payload,
         loadCollector: {
           ...state.loadCollector,
           products: false,
@@ -475,7 +528,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.DEPARTMENTS_FETCH_SUCCESS:
       return {
         ...state,
-        departments: action.payload as Department[],
+        departments: action.payload,
         loadCollector: {
           ...state.loadCollector,
           departments: false,
@@ -492,7 +545,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.MATERIALS_FETCH_SUCCESS:
       return {
         ...state,
-        materials: action.payload as Material[],
+        materials: action.payload,
         loadCollector: {
           ...state.loadCollector,
           materials: false,
@@ -509,7 +562,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.PUBLIC_RECIPES_FETCH_SUCCESS:
       return {
         ...state,
-        publicRecipes: action.payload as RecipeShort[],
+        publicRecipes: action.payload,
         loadCollector: {
           ...state.loadCollector,
           publicRecipes: false,
@@ -554,14 +607,15 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
           materials: false,
           publicRecipes: false,
         },
-        error: action.payload as Error,
+        error: action.payload,
       };
     case ReducerActions.CLEAR_STATE:
       // Hiermiet wird alles gelöscht!
-      return action.payload as State;
-    default:
-      console.error("Unbekannter ActionType: ", action.type);
-      throw new Error();
+      return action.payload;
+    default: {
+      const _exhaustiveCheck: never = action;
+      throw new Error(`Unbekannter ActionType: ${_exhaustiveCheck}`);
+    }
   }
 };
 const PreparationListContext = createContext<ListContextValue | null>(null);
@@ -761,7 +815,6 @@ const RecipeEdit = ({
     if (state.units.length === 0) {
       dispatch({
         type: ReducerActions.UNITS_FETCH_INIT,
-        payload: {},
       });
 
       Unit.getAllUnits({firebase: firebase})
@@ -789,7 +842,6 @@ const RecipeEdit = ({
     if (state.products.length === 0) {
       dispatch({
         type: ReducerActions.PRODUCTS_FETCH_INIT,
-        payload: {},
       });
       Product.getAllProducts({
         firebase: firebase,
@@ -812,7 +864,6 @@ const RecipeEdit = ({
     if (state.departments.length === 0) {
       dispatch({
         type: ReducerActions.DEPARTMENTS_FETCH_INIT,
-        payload: {},
       });
       Department.getAllDepartments({firebase: firebase})
         .then((result) => {
@@ -832,7 +883,6 @@ const RecipeEdit = ({
     if (state.materials.length === 0) {
       dispatch({
         type: ReducerActions.MATERIALS_FETCH_INIT,
-        payload: {},
       });
       Material.getAllMaterials({firebase: firebase})
         .then((result) => {
@@ -852,7 +902,6 @@ const RecipeEdit = ({
     if (state.publicRecipes.length === 0) {
       dispatch({
         type: ReducerActions.PUBLIC_RECIPES_FETCH_INIT,
-        payload: {},
       });
       RecipeShort.getShortRecipesPublic({firebase: firebase})
         .then((result) => {
@@ -876,8 +925,7 @@ const RecipeEdit = ({
   const onChangeField = (
     event: SelectChangeEvent<MenuType[]> | React.ChangeEvent<HTMLInputElement>,
   ) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let value: any;
+    let value: string | boolean | MenuType[];
 
     if (
       event.target instanceof HTMLInputElement &&
@@ -911,7 +959,7 @@ const RecipeEdit = ({
       value = selectedMenuTypes;
       value.sort();
     } else {
-      value = event.target.value;
+      value = event.target.value as string;
     }
     dispatch({
       type: ReducerActions.ON_FIELD_CHANGE,
@@ -1127,7 +1175,7 @@ const RecipeEdit = ({
   // Snackback 
   // ------------------------------------------ */
   const handleSnackbarClose = (
-    event: Event | React.SyntheticEvent<any, Event>,
+    _event: Event | React.SyntheticEvent<Element, Event>,
     reason: SnackbarCloseReason,
   ) => {
     if (reason === "clickaway") {
@@ -1135,7 +1183,6 @@ const RecipeEdit = ({
     }
     dispatch({
       type: ReducerActions.SNACKBAR_CLOSE,
-      payload: {},
     });
   };
   /* ------------------------------------------
@@ -1149,7 +1196,7 @@ const RecipeEdit = ({
         Object.values(state.recipe.ingredients.entries).filter(
           (entry) =>
             entry.posType == PositionType.ingredient &&
-            entry.product?.uid !== "",
+            (entry as Ingredient).product?.uid !== "",
         ).length == 1
       ) {
         const doSave = await customDialog({
@@ -1182,7 +1229,7 @@ const RecipeEdit = ({
       console.error(error);
       dispatch({
         type: ReducerActions.GENERIC_ERROR,
-        payload: error,
+        payload: error as Error,
       });
       return;
     }
@@ -1207,7 +1254,6 @@ const RecipeEdit = ({
             payload: {
               severity: "success",
               message: TEXT.RECIPE_SAVE_SUCCESS,
-              open: true,
             },
           });
           // Umleiten auf neue URL
@@ -1238,7 +1284,6 @@ const RecipeEdit = ({
             payload: {
               severity: "success",
               message: TEXT.RECIPE_SAVE_SUCCESS,
-              open: true,
             },
           });
         }
@@ -1441,7 +1486,7 @@ const RecipeEdit = ({
     // Wert löschen.... der das ausgelöst hat.
     dispatch({
       type: ReducerActions.ON_INGREDIENT_DELETE_NAME,
-      payload: {pos: triggeredIngredientUid},
+      payload: {uid: triggeredIngredientUid},
     });
 
     setTriggeredIngredientUid("");

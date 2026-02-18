@@ -24,9 +24,9 @@ import {
   SnackbarCloseReason,
   useTheme,
   Box,
-  AutocompleteChangeReason,
   ToggleButtonGroup,
   ToggleButton,
+  AlertColor,
 } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 
@@ -35,10 +35,6 @@ import {
   SHOPPING_LIST_MENUE_SELECTION_DESCRIPTION as TEXT_SHOPPING_LIST_MENUE_SELECTION_DESCRIPTION,
   WHICH_MENUES_FOR_SHOPPING_LIST_GENERATION as TEXT_WHICH_MENUES_FOR_SHOPPING_LIST_GENERATION,
   NAME as TEXT_NAME,
-  NEW_LIST as TEXT_NEW_LIST,
-  GIVE_THE_NEW_SHOPPINGLIST_A_NAME as GIVE_THE_NEW_SHOPPINGLIST_A_NAME,
-  DELETE as TEXT_DELETE,
-  ERROR_NO_RECIPES_FOUND as TEXT_ERROR_NO_RECIPES_FOUND,
   ADD_ITEM as TEXT_ADD_ITEM,
   CANCEL as TEXT_CANCEL,
   ADD as TEXT_ADD,
@@ -47,27 +43,16 @@ import {
   WHAT_KIND_OF_ITEM_ARE_YOU_CREATING as TEXT_WHAT_KIND_OF_ITEM_ARE_YOU_CREATING,
   FOOD as TEXT_FOOD,
   MATERIAL as TEXT_MATERIAL,
-  ARTICLE_ALREADY_ADDED as TEXT_ARTICLE_ALREADY_ADDED,
-  REPLACE as TEXT_REPLACE,
-  SUM as TEXT_SUM,
-  ADD_OR_REPLACE_ARTICLE,
-  KEEP_MANUALLY_ADDED_PRODUCTS as TEXT_KEEP_MANUALLY_ADDED_PRODUCTS,
-  MANUALLY_ADDED_PRODUCTS as TEXT_MANUALLY_ADDED_PRODUCTS,
-  CHECKED_ITEMS as TEXT_CHECKED_ITEMS,
-  CHECKED_ITEMS_EXPLANATION as TEXT_CHECKED_ITEMS_EXPLANATION,
-  KEEP as TEXT_KEEP,
   SHOPPING_LIST as TEXT_SHOPPING_LIST,
   SUFFIX_PDF as TEXT_SUFFIX_PDF,
   PLEASE_GIVE_VALUE_FOR_FIELD as TEXT_PLEASE_GIVE_VALUE_FOR_FIELD,
   ITEM as TEXT_ITEM,
   CHANGE as TEXT_CHANGE,
   USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE as TEXT_USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE,
-  ERROR_NO_PRODUCTS_FOUND as TEXT_ERROR_NO_PRODUCTS_FOUND,
   ADD_DEPARTMENT as TEXT_ADD_DEPARTMENT,
   FIELD_QUANTITY as TEXT_FIELD_QUANTITY,
   SHOPPING_MODE as TEXT_SHOPPING_MODE,
   EDIT_MODE as TEXT_EDIT_MODE,
-  SHOPPINTLIST_ITEM_MOVED_TO_RIGHT_DEPARTMENT as TEXT_SHOPPINTLIST_ITEM_MOVED_TO_RIGHT_DEPARTMENT,
 } from "../../../constants/text";
 import {MoreVert as MoreVertIcon} from "@mui/icons-material";
 
@@ -75,11 +60,7 @@ import useCustomStyles from "../../../constants/styles";
 
 import Firebase from "../../Firebase/firebase.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
-import Menuplan, {
-  MealRecipe,
-  Menue,
-  MenueCoordinates,
-} from "../Menuplan/menuplan.class";
+import Menuplan from "../Menuplan/menuplan.class";
 import CustomSnackbar, {Snackbar} from "../../Shared/customSnackbar";
 import {
   DialogType,
@@ -92,20 +73,13 @@ import {
 } from "../../Navigation/navigationContext";
 import Action from "../../../constants/actions";
 import AlertMessage from "../../Shared/AlertMessage";
-import ShoppingListCollection, {
-  ShoppingListTrace,
-} from "./shoppingListCollection.class";
+import ShoppingListCollection from "./shoppingListCollection.class";
 import ShoppingList, {
   ItemType,
-  ShoppingListDepartment,
   ShoppingListItem,
 } from "./shoppingList.class";
 
-import {
-  DialogSelectMenues,
-  DialogSelectMenuesForRecipeDialogValues,
-  decodeSelectedMeals,
-} from "../Menuplan/dialogSelectMenues";
+import {DialogSelectMenues} from "../Menuplan/dialogSelectMenues";
 import Product from "../../Product/product.class";
 import {
   UnitConversionBasic,
@@ -115,48 +89,44 @@ import Department from "../../Department/department.class";
 import Event from "../Event/event.class";
 import UnitAutocomplete from "../../Unit/unitAutocomplete";
 import ItemAutocomplete, {
-  ItemAutocompleteProps,
   MaterialItem,
   ProductItem,
 } from "./itemAutocomplete";
 import Unit from "../../Unit/unit.class";
-import Recipe, {Recipes} from "../../Recipe/recipe.class";
+import {Recipes} from "../../Recipe/recipe.class";
 import DialogMaterial, {
   MATERIAL_POP_UP_VALUES_INITIAL_STATE,
   MaterialDialog,
 } from "../../Material/dialogMaterial";
-import {
-  FetchMissingDataProps,
-  FetchMissingDataType,
-  // MasterDataCreateType,
-  // OnMasterdataCreateProps,
-} from "../Event/event";
+import {FetchMissingDataProps} from "../Event/event";
 import DialogProduct, {
   PRODUCT_POP_UP_VALUES_INITIAL_STATE,
   ProductDialog,
 } from "../../Product/dialogProduct";
-import Utils from "../../Shared/utils.class";
 import {
-  RECIPE_DRAWER_DATA_INITIAL_VALUES,
   RecipeDrawer,
-  RecipeDrawerData,
 } from "../Menuplan/menuplan";
 import EventGroupConfiguration from "../GroupConfiguration/groupConfiguration.class";
-import RecipeShort from "../../Recipe/recipeShort.class";
 import ShoppingListPdf from "./shoppingListPdf";
 import {
   DialogTraceItem,
   EventListCard,
   PositionContextMenu,
-  OperationType,
   ListMode,
 } from "../Event/eventSharedComponents";
 import Material from "../../Material/material.class";
 import {TextFieldSize} from "../../../constants/defaultValues";
 import {
   DialogSelectDepartments,
-  SelectedDepartmentsForShoppingList,
 } from "./dialogSelectDepartments";
+
+// Custom hooks
+import useRecipeDrawer from "./useRecipeDrawer";
+import useShoppingListDialogs, {
+  DialogSelectDepartmentsCaller,
+  OnDialogAddItemOk,
+} from "./useShoppingListDialogs";
+import useShoppingListOperations, {ItemChange} from "./useShoppingListOperations";
 
 /* ===================================================================
 // ============================ Dispatcher ===========================
@@ -168,43 +138,30 @@ enum ReducerActions {
   SNACKBAR_SHOW,
   SNACKBAR_CLOSE,
 }
-type State = {
+interface State {
   selectedListItem: string | null;
   isLoading: boolean;
   error: Error | null;
   snackbar: Snackbar;
-};
-type DispatchAction = {
-  type: ReducerActions;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload: {[key: string]: any};
-};
-const inititialState: State = {
+}
+type DispatchAction =
+  | {type: ReducerActions.SHOW_LOADING; payload: {isLoading: boolean}}
+  | {type: ReducerActions.SET_SELECTED_LIST_ITEM; payload: {uid: string}}
+  | {type: ReducerActions.GENERIC_ERROR; payload: Error}
+  | {
+      type: ReducerActions.SNACKBAR_SHOW;
+      payload: {severity: AlertColor; message: string};
+    }
+  | {type: ReducerActions.SNACKBAR_CLOSE; payload: Record<string, never>};
+
+const initialState: State = {
   selectedListItem: null,
   isLoading: false,
   error: null,
   snackbar: {open: false, severity: "success", message: ""},
 };
-interface ContextMenuSeletedItemsProps {
-  anchor: HTMLElement | null;
-  departmentKey: Department["pos"];
-  productUid: Product["uid"];
-  itemType: ItemType;
-  unit: Unit["key"];
-}
-const CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE: ContextMenuSeletedItemsProps = {
-  anchor: null,
-  departmentKey: 0,
-  productUid: "",
-  itemType: 0,
-  unit: "",
-};
-enum AddItemAction {
-  REPLACE = 1,
-  ADD,
-}
 
-const usedRecipesReducer = (state: State, action: DispatchAction): State => {
+const shoppingListReducer = (state: State, action: DispatchAction): State => {
   switch (action.type) {
     case ReducerActions.SHOW_LOADING:
       return {
@@ -222,7 +179,7 @@ const usedRecipesReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoading: false,
-        error: action.payload as Error,
+        error: action.payload,
       };
     case ReducerActions.SNACKBAR_SHOW:
       return {
@@ -243,53 +200,13 @@ const usedRecipesReducer = (state: State, action: DispatchAction): State => {
           open: false,
         },
       };
-    default:
-      console.error("Unbekannter ActionType: ", action.type);
+    default: {
+      const _exhaustiveCheck: never = action;
+      console.error("Unbekannter ActionType: ", _exhaustiveCheck);
       throw new Error();
+    }
   }
 };
-
-const DIALOG_SELECT_MENUE_DATA_INITIAL_DATA = {
-  open: false,
-  menues: {} as DialogSelectMenuesForRecipeDialogValues,
-  selectedListUid: "",
-  operationType: OperationType.none,
-};
-
-enum DialogSelectDepartmentsCaller {
-  CREATE = 1,
-  ADD_DEPARTMENT,
-}
-
-const DIALOG_SELECT_DEPARTMENTS_INITIAL_DATA = {
-  open: false,
-  selectedDepartments: {} as SelectedDepartmentsForShoppingList,
-  singleSelection: false,
-  caller: DialogSelectDepartmentsCaller.CREATE,
-};
-/* ===================================================================
-// ============================== Global =============================
-// =================================================================== */
-type ItemChange =
-  | {
-      source: "textfield";
-      event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>;
-      value: string;
-    }
-  | {
-      source: "autocompleteItem";
-      event: React.ChangeEvent<HTMLInputElement>;
-      value: ItemAutocompleteProps["item"];
-      reason: AutocompleteChangeReason;
-      objectId: string;
-    }
-  | {
-      source: "autocompleteUnit";
-      event: React.ChangeEvent<HTMLInputElement>;
-      value: Unit | null;
-      reason: AutocompleteChangeReason;
-      objectId: string;
-    };
 
 /* ===================================================================
 // =============================== Base ==============================
@@ -308,23 +225,12 @@ interface EventShoppingListPageProps {
   unitConversionProducts: UnitConversionProducts | null;
   shoppingListCollection: ShoppingListCollection;
   shoppingList: ShoppingList | null;
-  fetchMissingData: ({type, recipeShort}: FetchMissingDataProps) => void;
+  fetchMissingData: (props: FetchMissingDataProps) => void;
   onShoppingListUpdate: (shoppingList: ShoppingList) => void;
   onShoppingCollectionUpdate: (
     shoppingListCollection: ShoppingListCollection,
   ) => void;
-  // onMasterdataCreate: ({type, value}: OnMasterdataCreateProps) => void;
 }
-const ADD_ITEM_DIALOG_INITIAL_VALUES = {
-  open: false,
-  item: {} as ProductItem | MaterialItem,
-  quantity: "",
-  unit: "",
-};
-const TRACE_ITEM_DIALOG_INITIAL_VALUES = {
-  open: false,
-  sortedMenues: [] as MenueCoordinates[],
-};
 
 const EventShoppingListPage = ({
   firebase,
@@ -343,70 +249,109 @@ const EventShoppingListPage = ({
   fetchMissingData,
   onShoppingListUpdate,
   onShoppingCollectionUpdate,
-  // onMasterdataCreate,
 }: EventShoppingListPageProps) => {
   const classes = useCustomStyles();
   const theme = useTheme();
-  const {customDialog} = useCustomDialog();
 
   const navigationValuesContext = React.useContext(NavigationValuesContext);
 
-  const [state, dispatch] = React.useReducer(
-    usedRecipesReducer,
-    inititialState,
-  );
-  const [dialogSelectMenueData, setDialogSelectMenueData] = React.useState(
-    DIALOG_SELECT_MENUE_DATA_INITIAL_DATA,
-  );
-  const [dialogSelectDepartments, setDialogSelectDepartments] = React.useState(
-    DIALOG_SELECT_DEPARTMENTS_INITIAL_DATA,
-  );
-  const [contextMenuSelectedItem, setContextMenuSelectedItem] = React.useState(
-    CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE,
-  );
-  const [handleItemDialogValues, setHandleItemDialogValues] = React.useState(
-    ADD_ITEM_DIALOG_INITIAL_VALUES,
-  );
-  const [traceItemDialogValues, setTraceItemDialogValues] = React.useState(
-    TRACE_ITEM_DIALOG_INITIAL_VALUES,
-  );
-  const [recipeDrawerData, setRecipeDrawerData] =
-    React.useState<RecipeDrawerData>(RECIPE_DRAWER_DATA_INITIAL_VALUES);
-
+  const [state, dispatch] = React.useReducer(shoppingListReducer, initialState);
   const [shoppingListModus, setShoppingListModus] = React.useState<ListMode>(
     ListMode.VIEW,
   );
 
-  /* ------------------------------------------
-  // Initialisierung
-  // ------------------------------------------ */
-  if (
-    recipeDrawerData.isLoadingData &&
-    Object.prototype.hasOwnProperty.call(recipes, recipeDrawerData.recipe.uid)
-  ) {
-    if (!recipeDrawerData.recipe.name) {
-      // Aktualisierte Werte setzen // es wurden erst die Infos aus der
-      // RecipeShort gesetzt. Diese mal anzeigen
-      setRecipeDrawerData({
-        ...recipeDrawerData,
-        isLoadingData:
-          recipes[recipeDrawerData.recipe.uid].portions > 0 ? false : true,
-        open: true,
-        recipe: recipes[recipeDrawerData.recipe.uid],
+  // Dispatch helper callbacks (stable references for hooks)
+  const onDispatchLoading = React.useCallback(
+    (isLoading: boolean) => {
+      dispatch({type: ReducerActions.SHOW_LOADING, payload: {isLoading}});
+    },
+    [],
+  );
+  const onDispatchSetSelectedListItem = React.useCallback(
+    (uid: string) => {
+      dispatch({
+        type: ReducerActions.SET_SELECTED_LIST_ITEM,
+        payload: {uid},
       });
-    } else if (
-      recipeDrawerData.recipe?.portions == 0 &&
-      recipes[recipeDrawerData.recipe.uid]?.portions > 0
-    ) {
-      // Nun ist alles da. Loading-Kreis ausblenden
-      setRecipeDrawerData({
-        ...recipeDrawerData,
-        isLoadingData: false,
-        open: true,
-        recipe: recipes[recipeDrawerData.recipe.uid],
+      setShoppingListModus(ListMode.EDIT);
+    },
+    [],
+  );
+  const onDispatchError = React.useCallback(
+    (error: Error) => {
+      dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+    },
+    [],
+  );
+  const onDispatchSnackbar = React.useCallback(
+    (severity: AlertColor, message: string) => {
+      dispatch({
+        type: ReducerActions.SNACKBAR_SHOW,
+        payload: {severity, message},
       });
-    }
-  }
+    },
+    [],
+  );
+
+  // Custom hooks
+  const {recipeDrawerData, onOpenRecipeDrawer, onRecipeDrawerClose} =
+    useRecipeDrawer({recipes, menuplan, fetchMissingData});
+
+  const {
+    dialogSelectMenueData,
+    dialogSelectDepartments,
+    contextMenuSelectedItem,
+    handleItemDialogValues,
+    traceItemDialogValues,
+    onCreateList,
+    onCloseDialogSelectMenues,
+    onConfirmDialogSelectMenues,
+    onCloseDialogSelectDepartments,
+    onConfirmDialogSelectDepartments,
+    onAddDepartmentClick,
+    onListElementSelect,
+    onListElementDelete,
+    onListElementEdit,
+    onRefreshLists,
+    onOpenContextMenu,
+    onCloseContextMenu,
+    onContextMenuClick,
+    onDialogHandleItemClose,
+    onDialogHandleItemOk,
+    onDialogTraceItemClose,
+    onGeneratePrintVersion,
+  } = useShoppingListDialogs({
+    firebase,
+    authUser,
+    event,
+    menuplan,
+    products,
+    materials,
+    departments,
+    units,
+    unitConversionBasic,
+    unitConversionProducts,
+    shoppingListCollection,
+    shoppingList,
+    selectedListItem: state.selectedListItem,
+    fetchMissingData,
+    onShoppingListUpdate,
+    onShoppingCollectionUpdate,
+    onDispatchLoading,
+    onDispatchSetSelectedListItem,
+    onDispatchError,
+    onDispatchSnackbar,
+  });
+
+  const {onCheckboxClick, onChangeItem} = useShoppingListOperations({
+    shoppingList,
+    shoppingListCollection,
+    selectedListItem: state.selectedListItem,
+    departments,
+    onShoppingListUpdate,
+    onShoppingCollectionUpdate,
+    onSnackbarShow: onDispatchSnackbar,
+  });
 
   /* ------------------------------------------
   // Navigation-Handler
@@ -417,297 +362,19 @@ const EventShoppingListPage = ({
       object: NavigationObject.shoppingList,
     });
   }, []);
+
   /* ------------------------------------------
-  // Dialog-Handling
+  // PDF generieren (wrapper that creates JSX)
   // ------------------------------------------ */
-  const onCreateList = () => {
-    setDialogSelectMenueData({
-      ...dialogSelectMenueData,
-      open: true,
-      operationType: OperationType.Create,
-    });
-  };
-  const onCloseDialogSelectMenues = () => {
-    setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
-  };
-  const onConfirmDialogSelectMenues = async (
-    selectedMenues: DialogSelectMenuesForRecipeDialogValues,
-  ) => {
-    // Gewählte Menüs speichern
-    setDialogSelectMenueData({
-      ...dialogSelectMenueData,
-      menues: selectedMenues,
-      open: false,
-    });
-
-    setDialogSelectDepartments({
-      ...dialogSelectDepartments,
-      open: true,
-      caller: DialogSelectDepartmentsCaller.CREATE,
-    });
-  };
-  const onCloseDialogSelectDepartments = () => {
-    // Abbruch der Übung
-    setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
-    setDialogSelectDepartments(DIALOG_SELECT_DEPARTMENTS_INITIAL_DATA);
-  };
-  const onConfirmDialogSelectDepartments = async (
-    selectedDepartments: SelectedDepartmentsForShoppingList,
-  ) => {
-    if (
-      dialogSelectDepartments.caller ===
-      DialogSelectDepartmentsCaller.ADD_DEPARTMENT
-    ) {
-      // Abteilung hinzufügen
-      shoppingList = ShoppingList.addDepartmentToList({
-        shoppingList: shoppingList!,
-        departmentUid: Object.keys(selectedDepartments)![0]!,
-        departments: departments,
-      });
-      onShoppingListUpdate(shoppingList!);
-      setDialogSelectDepartments(DIALOG_SELECT_DEPARTMENTS_INITIAL_DATA);
-      return;
-    }
-
-    // Gewählte Abteilungen speichern
-    setDialogSelectDepartments({
-      ...dialogSelectDepartments,
-      open: false,
-      selectedDepartments: selectedDepartments,
-    });
-
-    const userInput = (await customDialog({
-      dialogType: DialogType.SingleTextInput,
-      title: TEXT_NEW_LIST,
-      text: GIVE_THE_NEW_SHOPPINGLIST_A_NAME,
-      singleTextInputProperties: {
-        initialValue:
-          dialogSelectMenueData.operationType === OperationType.Update
-            ? shoppingListCollection.lists[
-                dialogSelectMenueData.selectedListUid
-              ].properties.name
-            : "",
-        textInputLabel: TEXT_NAME,
-      },
-    })) as SingleTextInputResult;
-    if (userInput.valid) {
-      // Wait anzeigen
-      dispatch({type: ReducerActions.SHOW_LOADING, payload: {isLoading: true}});
-      if (dialogSelectMenueData.operationType === OperationType.Create) {
-        // Rezepte holen und Liste erstellen
-        await ShoppingListCollection.createNewList({
-          name: userInput.input,
-          shoppingListCollection: shoppingListCollection,
-          selectedMenues: Object.keys(dialogSelectMenueData.menues),
-          selectedDepartments: Object.keys(selectedDepartments),
-          menueplan: menuplan,
-          eventUid: event.uid,
-          products: products,
-          materials: materials,
-          departments: departments,
-          units: units,
-          unitConversionBasic: unitConversionBasic!,
-          unitConversionProducts: unitConversionProducts!,
-          firebase: firebase,
-          authUser: authUser,
-        })
-          .then(async (result) => {
-            await onShoppingCollectionUpdate(result.shoppingListCollection);
-            fetchMissingData({
-              type: FetchMissingDataType.SHOPPING_LIST,
-              objectUid: result.shoppingListUid,
-            });
-            // liste gleich anzeigen!
-            dispatch({
-              type: ReducerActions.SET_SELECTED_LIST_ITEM,
-              payload: {uid: result.shoppingListUid},
-            });
-            setShoppingListModus(ListMode.EDIT);
-          })
-          .catch((error) => {
-            if (error.toString().includes(TEXT_ERROR_NO_RECIPES_FOUND)) {
-              dispatch({
-                type: ReducerActions.SNACKBAR_SHOW,
-                payload: {
-                  severity: "info",
-                  message: TEXT_ERROR_NO_RECIPES_FOUND,
-                  open: true,
-                },
-              });
-            } else {
-              console.error(error);
-              dispatch({
-                type: ReducerActions.GENERIC_ERROR,
-                payload: error,
-              });
-            }
-          })
-          .finally(() => {
-            // Alle Dialoge reseten
-            setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
-            setDialogSelectDepartments(DIALOG_SELECT_DEPARTMENTS_INITIAL_DATA);
-          });
-      } else if (dialogSelectMenueData.operationType === OperationType.Update) {
-        onRefreshLists(
-          userInput.input,
-          Object.keys(dialogSelectMenueData.menues),
-          Object.keys(selectedDepartments),
-        );
-        setShoppingListModus(ListMode.EDIT);
-      }
-    } else {
-      // Abbruch Fenster schliessen
-      setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
-      setDialogSelectDepartments(DIALOG_SELECT_DEPARTMENTS_INITIAL_DATA);
-    }
-  };
-  /* ------------------------------------------
-  // Listen aktualisieren
-  // ------------------------------------------ */
-  const onRefreshLists = async (
-    newName?: string,
-    selectedMenues?: Menue["uid"][],
-    selectedDepartments?: Department["uid"][],
-  ) => {
-    let keepManuallyAddedItems = false;
-    let keepCheckedItems = false;
-    const shoppingListCollectionToRefresh = {...shoppingListCollection};
-
-    if (!shoppingList?.uid) {
-      return;
-    }
-
-    const checkedItems = ShoppingList.getCheckedItemsByDepartment({
-      shoppingList: shoppingList,
-    });
-
-    if (
-      shoppingList &&
-      shoppingListCollection.lists[shoppingList.uid].properties
-        .hasManuallyAddedItems
-    ) {
-      const userInput = (await customDialog({
-        dialogType: DialogType.selectOptions,
-        title: TEXT_MANUALLY_ADDED_PRODUCTS,
-        text: TEXT_KEEP_MANUALLY_ADDED_PRODUCTS(TEXT_SHOPPING_LIST),
-        options: [
-          {key: Action.DELETE, text: TEXT_DELETE},
-          {key: Action.KEEP, text: TEXT_KEEP},
-        ],
-      })) as SingleTextInputResult;
-
-      if (!userInput.valid) {
-        return;
-      }
-      keepManuallyAddedItems = userInput.input == Action.KEEP ? true : false;
-    }
-
-    if (Object.values(checkedItems).length > 0) {
-      const userInput = (await customDialog({
-        dialogType: DialogType.selectOptions,
-        title: TEXT_CHECKED_ITEMS,
-        text: TEXT_CHECKED_ITEMS_EXPLANATION(TEXT_SHOPPING_LIST),
-        options: [
-          {key: Action.DELETE, text: TEXT_DELETE},
-          {key: Action.KEEP, text: TEXT_KEEP, variant: "contained"},
-        ],
-      })) as SingleTextInputResult;
-
-      if (!userInput.valid) {
-        return;
-      }
-      keepCheckedItems = userInput.input == Action.KEEP ? true : false;
-    }
-
-    dispatch({type: ReducerActions.SHOW_LOADING, payload: {isLoading: true}});
-
-    if (dialogSelectMenueData.operationType === OperationType.Update) {
-      // die neu gewählten Menüs und Name setzen
-      shoppingListCollectionToRefresh.lists[
-        dialogSelectMenueData.selectedListUid
-      ].properties.name = newName!;
-
-      shoppingListCollectionToRefresh.lists[
-        dialogSelectMenueData.selectedListUid
-      ].properties.selectedMenues = Object.keys(selectedMenues!);
-
-      shoppingListCollectionToRefresh.lists[
-        dialogSelectMenueData.selectedListUid
-      ].properties.selectedDepartments = selectedDepartments!;
-
-      shoppingListCollectionToRefresh.lists[
-        dialogSelectMenueData.selectedListUid
-      ].properties.selectedMeals = Menuplan.getMealsOfMenues({
-        menuplan: menuplan,
-        menues: selectedMenues!,
-      });
-
-      setDialogSelectMenueData(DIALOG_SELECT_MENUE_DATA_INITIAL_DATA);
-    }
-    // Alle Listen aktualisieren
-    ShoppingListCollection.refreshList({
-      shoppingListCollection: shoppingListCollectionToRefresh,
-      shoppingList: shoppingList!,
-      keepManuallyAddedItems: keepManuallyAddedItems,
-      menueplan: menuplan,
-      eventUid: event.uid,
-      products: products,
-      materials: materials,
-      units: units,
-      unitConversionBasic: unitConversionBasic!,
-      unitConversionProducts: unitConversionProducts!,
-      departments: departments,
-      firebase: firebase,
-      authUser: authUser,
-    })
-      .then((result) => {
-        if (keepCheckedItems) {
-          result.shoppingList = ShoppingList.restoreCheckedItems({
-            shoppingList: result.shoppingList,
-            checkedItems: checkedItems,
-          });
-        }
-
-        onShoppingCollectionUpdate(result.shoppingListCollection);
-        onShoppingListUpdate(result.shoppingList);
-
-        dispatch({
-          type: ReducerActions.SHOW_LOADING,
-          payload: {isLoading: false},
-        });
-      })
-      .catch((error) => {
-        console.error(error);
-        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
-      });
-  };
-  /* ------------------------------------------
-  // PDF generieren
-  // ------------------------------------------ */
-  const onGeneratePrintVersion = () => {
-    if (
-      Object.keys(shoppingListCollection.lists[state.selectedListItem!].trace)
-        .length === 0
-    ) {
-      dispatch({
-        type: ReducerActions.GENERIC_ERROR,
-        payload: new Error(TEXT_ERROR_NO_PRODUCTS_FOUND),
-      });
-      return;
-    }
+  const handleGeneratePrintVersion = React.useCallback(() => {
+    const pdfData = onGeneratePrintVersion();
+    if (!pdfData) return;
 
     pdf(
       <ShoppingListPdf
         shoppingList={shoppingList!}
-        shoppingListName={
-          shoppingListCollection.lists[state.selectedListItem!].properties.name
-        }
-        shoppingListSelectedTimeSlice={decodeSelectedMeals({
-          selectedMeals:
-            shoppingListCollection.lists[state.selectedListItem!].properties
-              .selectedMeals,
-          menuplan: menuplan,
-        })}
+        shoppingListName={pdfData.shoppingListName}
+        shoppingListSelectedTimeSlice={pdfData.shoppingListSelectedTimeSlice}
         eventName={event.name}
         authUser={authUser}
       />,
@@ -719,751 +386,66 @@ const EventShoppingListPage = ({
           event.name + " " + TEXT_SHOPPING_LIST + TEXT_SUFFIX_PDF,
         );
       });
-  };
+  }, [onGeneratePrintVersion, shoppingList, event.name, authUser]);
+
   /* ------------------------------------------
   // Snackbar-Handling
   // ------------------------------------------ */
-  const handleSnackbarClose = (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    event: globalThis.Event | SyntheticEvent<any, globalThis.Event>,
-    reason: SnackbarCloseReason,
-  ) => {
-    if (reason === "clickaway") {
-      return;
-    }
-    dispatch({
-      type: ReducerActions.SNACKBAR_CLOSE,
-      payload: {},
-    });
-  };
-  /* ------------------------------------------
-  // List-Handling
-  // ------------------------------------------ */
-  const onListElementSelect = async (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>,
-  ) => {
-    const selectedListItem = event.currentTarget.id.split("_")[1];
-
-    if (state.selectedListItem == selectedListItem) {
-      // Element bereits aktiv
-      return;
-    }
-
-    fetchMissingData({
-      type: FetchMissingDataType.SHOPPING_LIST,
-      objectUid: selectedListItem,
-    });
-
-    dispatch({
-      type: ReducerActions.SET_SELECTED_LIST_ITEM,
-      payload: {uid: selectedListItem},
-    });
-  };
-  const onListElementDelete = async (
-    actionEvent: React.MouseEvent<HTMLElement>,
-  ) => {
-    const selectedList = actionEvent.currentTarget.id.split("_")[1];
-
-    if (!selectedList) {
-      return;
-    }
-    await ShoppingListCollection.deleteList({
-      firebase: firebase,
-      shoppingListColection: shoppingListCollection,
-      listUidToDelete: selectedList,
-      eventUid: event.uid,
-      authUser: authUser,
-    }).then(async () => {
-      await ShoppingList.delete({
-        firebase: firebase,
-        eventUid: event.uid,
-        listUidToDelete: selectedList,
-      })
-        .then(() => {
-          dispatch({
-            type: ReducerActions.SET_SELECTED_LIST_ITEM,
-            payload: {uid: ""},
-          });
-        })
-        .catch((error) => {
-          console.error(error);
-          dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
-        });
-    });
-  };
-  const onListElementEdit = async (
-    actionEvent: React.MouseEvent<HTMLElement>,
-  ) => {
-    const selectedListUid = actionEvent.currentTarget.id.split("_")[1];
-    if (!selectedListUid) {
-      return;
-    }
-    // Element selektieren, damit der Fetch passiert und danach
-    // die Shoppingliste aktualisiert werden kann.
-    onListElementSelect(
-      actionEvent as React.MouseEvent<HTMLDivElement, MouseEvent>,
-    );
-    const selectedMenuesForDialog: DialogSelectMenuesForRecipeDialogValues = {};
-    const selectedDepartmentsForDialog: SelectedDepartmentsForShoppingList = {};
-
-    let selectedMenues =
-      shoppingListCollection.lists[selectedListUid].properties.selectedMenues;
-    const selectedDepartments =
-      shoppingListCollection.lists[selectedListUid].properties
-        .selectedDepartments;
-
-    // Prüfen ob die Menüs immer noch gleich sind
-    if (
-      !Utils.areStringArraysEqual(
-        shoppingListCollection.lists[selectedListUid].properties.selectedMeals,
-        Menuplan.getMealsOfMenues({
-          menuplan: menuplan,
-          menues:
-            shoppingListCollection.lists[selectedListUid].properties
-              .selectedMenues,
-        }),
-      ) ||
-      // Sind neue Menü dazugekommen/ oder wurden Menüs aus der
-      // Auswahl entfernt
-      shoppingListCollection.lists[selectedListUid].properties.selectedMenues
-        .length !==
-        Menuplan.getMenuesOfMeals({
-          menuplan: menuplan,
-          meals:
-            shoppingListCollection.lists[selectedListUid].properties
-              .selectedMeals,
-        }).length
-    ) {
-      selectedMenues = Menuplan.getMenuesOfMeals({
-        menuplan: menuplan,
-        meals:
-          shoppingListCollection.lists[selectedListUid].properties
-            .selectedMeals,
-      });
-    }
-
-    // Auswahl in Objekt umwandeln
-    selectedMenues.forEach(
-      (menueUid) => (selectedMenuesForDialog[menueUid] = true),
-    );
-    selectedDepartments.forEach(
-      (departmentUid) => (selectedDepartmentsForDialog[departmentUid] = true),
-    );
-
-    setDialogSelectMenueData({
-      menues: selectedMenuesForDialog,
-      open: true,
-      selectedListUid: selectedListUid,
-      operationType: OperationType.Update,
-    });
-    setDialogSelectDepartments({
-      ...dialogSelectDepartments,
-      selectedDepartments: selectedDepartmentsForDialog,
-    });
-  };
-  const onCheckboxClick = (event: React.ChangeEvent<HTMLInputElement>) => {
-    // Umschiessen und speichern!
-    const pressedCheckbox = event.target.name.split("_");
-    const departmentIndex = parseInt(pressedCheckbox[1], 10);
-
-    if (isNaN(departmentIndex) || !shoppingList?.list[departmentIndex]) {
-      return;
-    }
-
-    const item = shoppingList.list[departmentIndex].items.find(
-      (item: ShoppingListItem) =>
-        item.item.uid == pressedCheckbox[2] && item.unit == pressedCheckbox[3],
-    ) as ShoppingListItem | undefined;
-
-    if (!item) {
-      return;
-    }
-
-    item.checked = !item.checked;
-    onShoppingListUpdate(shoppingList);
-  };
-  const onChangeItem = async (change: ItemChange) => {
-    const field = change.event.target.id.split("_");
-    let newItem = false;
-    let itemMovedToRightDepartment = false;
-    let item = shoppingList?.list[parseInt(field[1])].items.find(
-      (item) => item.item.uid == field[2],
-    );
-    let department: Department | undefined;
-    let userInput = {valid: false, input: ""} as SingleTextInputResult;
-
-    if (!shoppingList) {
-      return;
-    }
-    if (!item) {
-      // Neues Item (letzte Zeile, gibt es nur im UI)
-      item = ShoppingList.createEmptyListItem();
-      item.item.uid = field[2];
-      newItem = true;
-    }
-
-    if (!newItem) {
-      item.manualEdit = true;
-    }
-    switch (change.source) {
-      case "textfield":
-        item.quantity = parseFloat(change.value);
-
-        if (newItem) {
-          shoppingList.list[parseInt(field[1])].items.push(item);
-        }
-
-        break;
-      case "autocompleteItem":
-        if (change.reason === "clear") {
-          item.item.name = "";
-          break;
-        }
-        if (!change.value) {
-          break;
-        }
-
-        if (
-          typeof change.value == "object" &&
-          Object.hasOwn(change.value, "uid")
-        ) {
-          item.item = {uid: change.value.uid, name: change.value.name};
-          item.type = change.value.itemType;
-        }
-
-        if (typeof change.value === "string") {
-          if (item.item.uid.length == 20) {
-            // die Produkt UID muss weg, da es ein Freitext-Artikel ist
-            item.item.uid = Utils.generateUid(10);
-          }
-          item.item.name = change.value;
-          item.type = ItemType.custom;
-        }
-
-        // Prüfen ob es in der richtigen Abteilung ist
-        switch (item.type) {
-          case ItemType.food:
-            department = departments.find(
-              (department) =>
-                department.uid == (change.value as ProductItem).department.uid,
-            );
-            break;
-          case ItemType.material:
-            department = departments.find(
-              (department) => department.name.toUpperCase() == "NON FOOD",
-            );
-            break;
-          case ItemType.custom:
-          case ItemType.none:
-            department = departments.find(
-              (department) => department.pos == parseInt(field[1]),
-            )!;
-            break;
-        }
-
-        if (!department) {
-          // Dann übernehmen wir das aus dem Block, der gewählt wurde
-          department = departments.find(
-            (department) => department.pos == parseInt(field[1]),
-          )!;
-        }
-        if (!department) {
-          console.error("Abteilung für Artikel nicht gefunden!");
-          return;
-        }
-        if (department.pos != parseInt(field[1]) && !newItem) {
-          // Artikel in die richtige Abteilung verschieben
-          // aus der ursprünglichen Abteilung entfernen
-          shoppingList.list[Number(field[1]) as Department["pos"]].items =
-            shoppingList?.list[parseInt(field[1])].items.filter(
-              (listItem) => listItem.item.uid != item.item.uid,
-            );
-
-          // in die richtige Abteilung hinzufügen
-          shoppingList.list[department.pos].items.push(item);
-        } else if (newItem) {
-          if (!Object.hasOwn(shoppingList.list, department.pos)) {
-            // Neu anlegen
-            shoppingList.list[department.pos] = {
-              departmentUid: department.uid,
-              departmentName: department.name,
-              items: [],
-            };
-          }
-          shoppingList.list[department.pos].items.push(item);
-          itemMovedToRightDepartment = department.pos != parseInt(field[1]);
-        }
-        // item.type = ItemType.custom;
-
-        if (item.item.uid.length == 20) {
-          // Prüfen ob es den Artikel gibt
-          // Prüfen ob der Artikel bereits in der Liste vorhanden ist
-          // != item -> damit wird ausgeschlossen, dass das selbe Item gefunden
-          const existingShoppingListItem = shoppingList?.list[
-            department.pos
-          ]?.items.find(
-            (shoppingListItem) =>
-              shoppingListItem !== item &&
-              shoppingListItem.item.uid == item.item.uid &&
-              shoppingListItem.unit == item.unit,
-          );
-
-          if (existingShoppingListItem?.quantity == 0 && item.quantity == 0) {
-            // Wenn es den Artikel bereits gibt, dann nicht nochmals hinzufügen, da beide keine Menge haben. Ansonsten hätten wir doppelte Artikel in der Liste.
-            // Das soeben hinzugefügte Item wieder entfernen.
-            shoppingList.list[department.pos].items = shoppingList.list[
-              department.pos
-            ].items.filter((listItem) => listItem !== item);
-            itemMovedToRightDepartment = false;
-            return;
-          }
-
-          if (existingShoppingListItem && item.quantity != 0) {
-            userInput = (await customDialog({
-              dialogType: DialogType.selectOptions,
-              title: TEXT_ARTICLE_ALREADY_ADDED,
-              text: ADD_OR_REPLACE_ARTICLE(
-                item.item.name,
-                item.unit,
-                item.quantity.toString(),
-                item.quantity.toString(),
-              ),
-              options: [
-                {key: AddItemAction.REPLACE, text: TEXT_REPLACE},
-                {key: AddItemAction.ADD, text: TEXT_SUM},
-              ],
-            })) as SingleTextInputResult;
-            if (!userInput.valid) {
-              // Abbrechen - Item wieder entfernen
-              shoppingList.list[department.pos].items = shoppingList.list[
-                department.pos
-              ].items.filter((listItem) => listItem !== item);
-              return;
-            }
-
-            switch (parseInt(userInput.input) as AddItemAction) {
-              case AddItemAction.ADD: {
-                //     // Dazuzählen
-                const addedQuantity = item.quantity;
-                existingShoppingListItem.quantity += addedQuantity;
-
-                // Trace-Eintrag für die hinzugefügte Menge
-                const trace = ShoppingListCollection.addTraceEntry({
-                  trace:
-                    shoppingListCollection.lists[state.selectedListItem!].trace,
-                  menueUid: "",
-                  recipe: {} as Recipe,
-                  item: item.item as Product,
-                  quantity: addedQuantity,
-                  unit: item.unit,
-                  addedManually: true,
-                  itemType: item.type,
-                });
-                const tempShoppingListCollection = {
-                  ...shoppingListCollection,
-                };
-                tempShoppingListCollection.lists[state.selectedListItem!].trace =
-                  trace;
-                onShoppingCollectionUpdate(tempShoppingListCollection);
-                break;
-              }
-              case AddItemAction.REPLACE:
-                // Das Item erhält die neue Menge
-                existingShoppingListItem.quantity = item.quantity;
-                break;
-              default:
-                console.warn("ENUM unbekannt:", userInput.input);
-                return;
-            }
-
-            // Item entfernen, da die Menge ins bestehende übernommen wurde
-            shoppingList.list[department.pos].items = shoppingList.list[
-              department.pos
-            ].items.filter((listItem) => listItem !== item);
-            existingShoppingListItem.manualEdit = true;
-          }
-        }
-
-        break;
-      case "autocompleteUnit":
-        if (!change.value) {
-          item.unit = "";
-        } else {
-          item.unit = change.value.key;
-        }
-        break;
-    }
-
-    // Trace aktualisieren, wenn ein neues Item hinzugefügt wurde
-    if (newItem && item.item.name) {
-      const trace = ShoppingListCollection.addTraceEntry({
-        trace: shoppingListCollection.lists[state.selectedListItem!].trace,
-        menueUid: "",
-        recipe: {} as Recipe,
-        item: item.item as Product,
-        quantity: item.quantity,
-        unit: item.unit,
-        addedManually: true,
-        itemType: item.type,
-      });
-      const tempShoppingListCollection = {...shoppingListCollection};
-      tempShoppingListCollection.lists[state.selectedListItem!].trace = trace;
-      onShoppingCollectionUpdate(tempShoppingListCollection);
-    }
-
-    onShoppingListUpdate(shoppingList!);
-    if (itemMovedToRightDepartment) {
-      dispatch({
-        type: ReducerActions.SNACKBAR_SHOW,
-        payload: {
-          severity: "info",
-          message: TEXT_SHOPPINTLIST_ITEM_MOVED_TO_RIGHT_DEPARTMENT(
-            item.item.name,
-            department?.name as string,
-          ),
-          open: true,
-        },
-      });
-    }
-  };
-  /* ------------------------------------------
-  // Kontext-Menü-Handler
-  // ------------------------------------------ */
-  const onOpenContextMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
-    const pressedButton = event.currentTarget.id.split("_");
-
-    const item = shoppingList?.list[parseInt(pressedButton[1])].items.find(
-      (item) => item.item.uid == pressedButton[2],
-    );
-
-    setContextMenuSelectedItem({
-      anchor: event.currentTarget,
-      departmentKey: parseInt(pressedButton[1]),
-      productUid: pressedButton[2],
-      itemType: item!.type as ItemType,
-      unit: pressedButton[3],
-    });
-  };
-  const onCloseContextMenu = () => {
-    setContextMenuSelectedItem(CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE);
-  };
-  const onContextMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    //FIXME: Hier knallts noch bei klick auf Context Menü
-    const pressedButton = event.currentTarget.id.split("_");
-    let quantity: number | undefined;
-    let item = {} as ProductItem | MaterialItem | undefined;
-    let updatedShoppingList: ShoppingList;
-    let updatedTrace: ShoppingListTrace;
-    let updatedShoppingListCollection: ShoppingListCollection;
-
-    switch (pressedButton[1]) {
-      case Action.EDIT:
-        quantity = shoppingList?.list[
-          contextMenuSelectedItem.departmentKey
-        ].items.find(
-          (item) => item.item.uid == contextMenuSelectedItem.productUid,
-        )?.quantity;
-
-        if (contextMenuSelectedItem.itemType == ItemType.food) {
-          item = products.find(
-            (product) => product.uid == contextMenuSelectedItem.productUid,
-          ) as ProductItem;
-        } else {
-          item = materials.find(
-            (material) => material.uid == contextMenuSelectedItem.productUid,
-          ) as MaterialItem;
-        }
-        item.itemType = contextMenuSelectedItem.itemType;
-
-        setHandleItemDialogValues({
-          open: true,
-          item: item!,
-          quantity: quantity ? quantity.toString() : "",
-          unit: contextMenuSelectedItem.unit,
-        });
-
-        break;
-      case Action.DELETE:
-        updatedShoppingList = ShoppingList.deleteItem({
-          shoppingListReference: shoppingList!,
-          departmentKey: contextMenuSelectedItem.departmentKey,
-          unit: contextMenuSelectedItem.unit,
-          itemUid: contextMenuSelectedItem.productUid,
-        });
-
-        updatedTrace = ShoppingListCollection.deleteTraceEntry({
-          trace: shoppingListCollection.lists[state.selectedListItem!].trace,
-          itemUid: contextMenuSelectedItem.productUid,
-        });
-        updatedShoppingListCollection = {
-          ...shoppingListCollection,
-          lists: {
-            ...shoppingListCollection.lists,
-            [state.selectedListItem!]: {
-              ...shoppingListCollection.lists[state.selectedListItem!],
-              trace: updatedTrace,
-            },
-          },
-        };
-
-        onShoppingListUpdate(updatedShoppingList!);
-        onShoppingCollectionUpdate(updatedShoppingListCollection);
-        break;
-      case Action.TRACE:
-        setTraceItemDialogValues({
-          open: true,
-          sortedMenues: Menuplan.sortSelectedMenues({
-            menueList:
-              shoppingListCollection.lists[state.selectedListItem!].properties
-                .selectedMenues,
-            menuplan: menuplan,
-          }),
-        });
-
-        break;
-    }
-    setContextMenuSelectedItem({...contextMenuSelectedItem, anchor: null});
-  };
-  /* ------------------------------------------
-  // Artikel hinzufügen Dialog
-  // ------------------------------------------ */
-  // const onAddArticleClick = () => {
-  //   setHandleItemDialogValues({...handleItemDialogValues, open: true});
-  // };
-  const onDialogHandleItemClose = () => {
-    setContextMenuSelectedItem(CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE);
-    setHandleItemDialogValues(ADD_ITEM_DIALOG_INITIAL_VALUES);
-  };
-  const onDialogHandleItemOk = async ({
-    item,
-    quantity,
-    unit,
-  }: OnDialogAddItemOk) => {
-    if (!handleItemDialogValues.item.uid) {
-      // Neues Produkt hinzufügen
-      let product: ProductItem;
-      let department: Department | undefined;
-      let trace: ShoppingListTrace | undefined;
-      let userInput = {valid: false, input: ""} as SingleTextInputResult;
-      let shoppingListItem: ShoppingListItem | undefined = undefined;
-
-      shoppingListCollection.lists[
-        state.selectedListItem!
-      ].properties.hasManuallyAddedItems = true;
-
-      if (item.itemType == ItemType.food) {
-        product = item as ProductItem;
-        department = departments.find(
-          (department) => department.uid == product.department.uid,
-        );
-      } else {
-        // Material
-        department = departments.find(
-          (department) => department.name.toUpperCase() == "NON FOOD",
-        );
-      }
-
-      if (!department) {
+  const handleSnackbarClose = React.useCallback(
+    (
+      _event: globalThis.Event | SyntheticEvent<Element, globalThis.Event>,
+      reason: SnackbarCloseReason,
+    ) => {
+      if (reason === "clickaway") {
         return;
       }
-      // Prüfen ob es die Combo, Item / Einheit schon gibt und fragen
-      // ob die neue Menge ersetzt oder hinzugefügt werden soll...
-      // --> wenn neue Menge Leer, dann nicht! Dann gehen wir davon aus, dass
-      // der*die Benuter"*in sicherstellen will, dass das Item sicher auf der Liste ist.
-      shoppingListItem = shoppingList?.list[department.pos]?.items.find(
-        (shoppingListItem) =>
-          shoppingListItem.item.uid == item.uid &&
-          shoppingListItem.unit == unit,
-      );
-
-      if (shoppingListItem && quantity != 0) {
-        // Es gibt bereits eine Position mit diesen Schlüsseln
-        userInput = (await customDialog({
-          dialogType: DialogType.selectOptions,
-          title: TEXT_ARTICLE_ALREADY_ADDED,
-          text: ADD_OR_REPLACE_ARTICLE(
-            shoppingListItem.item.name,
-            unit,
-            quantity.toString(),
-            shoppingListItem.quantity.toString(),
-          ),
-          options: [
-            {key: AddItemAction.REPLACE, text: TEXT_REPLACE},
-            {key: AddItemAction.ADD, text: TEXT_SUM},
-          ],
-        })) as SingleTextInputResult;
-        if (!userInput.valid) {
-          // Abbrechen
-          setContextMenuSelectedItem(CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE);
-          setHandleItemDialogValues(ADD_ITEM_DIALOG_INITIAL_VALUES);
-          return;
-        }
-
-        switch (parseInt(userInput.input) as AddItemAction) {
-          case AddItemAction.ADD:
-            // Dazuzählen
-            shoppingListItem.quantity += quantity;
-            break;
-          case AddItemAction.REPLACE:
-            // Das Item erhält die neue Menge
-            shoppingListItem.quantity = quantity;
-            break;
-          default:
-            console.warn("ENUM unbekannt:", userInput.input);
-            return;
-        }
-        shoppingListItem.manualEdit = true;
-      } else {
-        // Neue Combo - kann einfach hinzugefügt werden.
-        ShoppingList.addItem({
-          shoppingListReference: shoppingList!,
-          item: item,
-          quantity: quantity,
-          unit: unit,
-          department: department,
-          addedManually: true,
-          itemType: item.itemType,
-        });
-      }
-
-      if (!shoppingListItem || parseInt(userInput.input) == AddItemAction.ADD) {
-        // Dann braucht einen Trance-Eintrag
-        trace = ShoppingListCollection.addTraceEntry({
-          trace: shoppingListCollection.lists[state.selectedListItem!].trace,
-          menueUid: "",
-          recipe: {} as Recipe,
-          item: item,
-          quantity: quantity,
-          unit: unit,
-          addedManually: true,
-          itemType: item.itemType,
-        });
-      }
-      if (trace) {
-        const tempShoppingListCollection = {...shoppingListCollection};
-        tempShoppingListCollection.lists[state.selectedListItem!].trace = trace;
-        onShoppingCollectionUpdate(tempShoppingListCollection);
-      }
-    } else {
-      // Bestehende Position ändern
-      const item = shoppingList?.list[
-        contextMenuSelectedItem.departmentKey
-      ].items.find(
-        (item) =>
-          item.item.uid == contextMenuSelectedItem.productUid &&
-          item.unit == contextMenuSelectedItem.unit,
-      );
-
-      if (item) {
-        if (item.quantity !== quantity || item.unit !== unit) {
-          item.manualEdit = true;
-        }
-
-        item.quantity = quantity;
-        item.unit = unit;
-      }
-      // Kein Trace, da der Urpsrung dieser Position auch bei
-      // einer Änderung bleibt.
-    }
-
-    ShoppingList.save({
-      firebase: firebase,
-      eventUid: event.uid,
-      shoppingList: shoppingList!,
-      authUser: authUser,
-    }).catch((error) => {
-      console.error(error);
-      dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
-    });
-
-    setContextMenuSelectedItem(CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE);
-    setHandleItemDialogValues(ADD_ITEM_DIALOG_INITIAL_VALUES);
-  };
-  // const onMaterialCreate = (material: Material) => {
-  //   onMasterdataCreate({
-  //     type: MasterDataCreateType.MATERIAL,
-  //     value: material,
-  //   });
-  // };
-  // const onProductCreate = (product: Product) => {
-  //   onMasterdataCreate({
-  //     type: MasterDataCreateType.PRODUCT,
-  //     value: product,
-  //   });
-  // };
-  /* ------------------------------------------
-  // Abteilung hinzufügen Dialog
-  // ------------------------------------------ */
-  const onAddDepartmentClick = () => {
-    setDialogSelectDepartments({
-      ...dialogSelectDepartments,
-      open: true,
-      singleSelection: true,
-      caller: DialogSelectDepartmentsCaller.ADD_DEPARTMENT,
-    });
-  };
-  /* ------------------------------------------
-  // Artikel Trace Dialog
-  // ------------------------------------------ */
-  const onDialogTraceItemClose = () => {
-    setTraceItemDialogValues(TRACE_ITEM_DIALOG_INITIAL_VALUES);
-    setContextMenuSelectedItem(CONTEXT_MENU_SELECTE_ITEM_INITIAL_STATE);
-  };
-  /* ------------------------------------------
-  // Recipe-Drawer-Handler
-  // ------------------------------------------ */
-  const onOpenRecipeDrawer = (
-    menueUid: Menue["uid"],
-    recipeUid: Recipe["uid"],
-  ) => {
-    let mealRecipe = {} as MealRecipe;
-    let recipe = new Recipe();
-    recipe.uid = recipeUid;
-
-    let loadingData = false;
-    let openDrawer = false;
-
-    menuplan.menues[menueUid].mealRecipeOrder.forEach((mealRecipeUid) => {
-      if (menuplan.mealRecipes[mealRecipeUid].recipe.recipeUid == recipeUid) {
-        mealRecipe = menuplan.mealRecipes[mealRecipeUid];
-      }
-    });
-
-    if (!mealRecipe) {
-      return;
-    }
-
-    if (Object.prototype.hasOwnProperty.call(recipes, recipeUid)) {
-      recipe = recipes[recipeUid] as Recipe;
-      openDrawer = true;
-    } else {
-      recipe.name = mealRecipe.recipe.name;
-
-      fetchMissingData({
-        type: FetchMissingDataType.RECIPE,
-        recipeShort: {
-          uid: mealRecipe.recipe.recipeUid,
-          name: mealRecipe.recipe.name,
-          type: mealRecipe.recipe.type,
-          created: {
-            fromUid: mealRecipe.recipe.createdFromUid,
-          },
-        } as RecipeShort,
+      dispatch({
+        type: ReducerActions.SNACKBAR_CLOSE,
+        payload: {},
       });
-      loadingData = true;
-    }
-    // Erst öffnen, wenn die Daten auch da sind
-    setRecipeDrawerData({
-      ...recipeDrawerData,
-      open: openDrawer,
-      isLoadingData: loadingData,
-      recipe: recipe,
-      scaledPortions: mealRecipe.totalPortions,
-    });
-  };
-  const onRecipeDrawerClose = () => {
-    setRecipeDrawerData({...recipeDrawerData, open: false});
-  };
+    },
+    [],
+  );
+
+  /* ------------------------------------------
+  // Toggle Handler
+  // ------------------------------------------ */
+  const handleModusChange = React.useCallback(
+    (_event: React.MouseEvent<HTMLElement>, newValue: ListMode) => {
+      setShoppingListModus(newValue);
+    },
+    [],
+  );
+
+  // Memoize toolbar styles
+  const toolbarContainerSx = React.useMemo(
+    () => ({
+      ...classes.container,
+      display: "flex",
+      justifyContent: "center",
+      flexDirection: "column" as const,
+      alignItems: "center",
+      width: "100%",
+      mx: "auto",
+    }),
+    [classes.container],
+  );
+
+  const listContainerSx = React.useMemo(
+    () => ({justifyContent: "center", display: "flex"}),
+    [],
+  );
+
+  const buttonStackSx = React.useMemo(
+    () => ({marginTop: theme.spacing(2)}),
+    [theme],
+  );
+
+  const addDepartmentButtonSx = React.useMemo(
+    () => ({marginTop: theme.spacing(2)}),
+    [theme],
+  );
+
   return (
     <Stack spacing={2}>
       {state.error && (
@@ -1493,26 +475,15 @@ const EventShoppingListPage = ({
         onListElementDelete={onListElementDelete}
         onListElementEdit={onListElementEdit}
         onRefreshLists={onRefreshLists}
-        onGeneratePrintVersion={onGeneratePrintVersion}
+        onGeneratePrintVersion={handleGeneratePrintVersion}
       />
       {state.selectedListItem && shoppingList && (
         <React.Fragment>
-          <Box
-            component="div"
-            sx={{
-              ...classes.container,
-              display: "flex",
-              justifyContent: "center",
-              flexDirection: "column",
-              alignItems: "center",
-              width: "100%",
-              mx: "auto",
-            }}
-          >
+          <Box component="div" sx={toolbarContainerSx}>
             <ToggleButtonGroup
               exclusive
               value={shoppingListModus}
-              onChange={(event, newValue) => setShoppingListModus(newValue)}
+              onChange={handleModusChange}
               color="primary"
             >
               <ToggleButton
@@ -1525,25 +496,19 @@ const EventShoppingListPage = ({
                 {TEXT_EDIT_MODE}
               </ToggleButton>
             </ToggleButtonGroup>
-            <Stack
-              direction="row"
-              spacing={2}
-              sx={{marginTop: theme.spacing(2)}}
-            >
+            <Stack direction="row" spacing={2} sx={buttonStackSx}>
               <Button
                 color="primary"
                 size="small"
                 onClick={onAddDepartmentClick}
                 variant="outlined"
-                sx={{
-                  marginTop: theme.spacing(2),
-                }}
+                sx={addDepartmentButtonSx}
               >
                 {TEXT_ADD_DEPARTMENT}
               </Button>
             </Stack>
           </Box>
-          <Box component="div" sx={{justifyContent: "center", display: "flex"}}>
+          <Box component="div" sx={listContainerSx}>
             <EventShoppingListList
               shoppingList={shoppingList}
               products={products}
@@ -1601,8 +566,6 @@ const EventShoppingListPage = ({
         authUser={authUser}
         handleOk={onDialogHandleItemOk}
         handleClose={onDialogHandleItemClose}
-        // onProductCreate={onProductCreate}
-        // onMaterialCreate={onMaterialCreate}
       />
       <PositionContextMenu
         itemType={TEXT_ITEM}
@@ -1618,7 +581,6 @@ const EventShoppingListPage = ({
         handleClose={handleSnackbarClose}
       />
       {state.selectedListItem && contextMenuSelectedItem.productUid && (
-        // kann nur generiert werden, wenn auch etwas ausgewählt ist
         <DialogTraceItem
           dialogOpen={traceItemDialogValues.open}
           trace={
@@ -1668,76 +630,175 @@ interface EventShoppingListListProps {
   onOpenContexMenü: (event: React.MouseEvent<HTMLButtonElement>) => void;
   onChangeItem: (change: ItemChange) => void;
 }
-const EventShoppingListList = ({
-  shoppingList,
-  products,
-  materials,
-  units,
-  shoppingListModus,
-  onCheckboxClick,
-  onOpenContexMenü,
-  onChangeItem,
-}: EventShoppingListListProps) => {
-  const classes = useCustomStyles();
-  const theme = useTheme();
-  /* ------------------------------------------
-  // Mapper für Autocomplete
-  // ------------------------------------------ */
-  const toAutocompleteItem = (shoppingListItem: ShoppingListItem) => {
-    switch (shoppingListItem.type) {
-      case ItemType.food:
-        return {
-          uid: shoppingListItem.item.uid,
-          name: shoppingListItem.item.name,
-          itemType: ItemType.food,
-        } as ProductItem;
-      case ItemType.material:
-        return {
-          uid: shoppingListItem.item.uid,
-          name: shoppingListItem.item.name,
-          itemType: ItemType.material,
-        } as MaterialItem;
-      case ItemType.custom:
-        return shoppingListItem.item.name;
-      default:
-        return null;
-    }
-  };
 
-  const prepareDepartmentItemsForDisplay = (items: ShoppingListItem[]) => {
-    // Leere Zeilen ans Ende sortieren, damit sie nicht zwischen den anderen Items auftauchen
-    const sortedList = [...items].sort((a, b) => {
-      if (!a.item.name && !b.item.name) return 0;
-      if (!a.item.name) return 1;
-      if (!b.item.name) return -1;
-      return a.item.name.localeCompare(b.item.name);
+/* ===================================================================
+// ==================== Quantity Field with local state ==============
+// =================================================================== */
+interface QuantityFieldProps {
+  departmentKey: string;
+  itemUid: string;
+  quantity: number;
+  onChangeItem: (change: ItemChange) => void;
+}
+const QuantityField = React.memo(
+  ({departmentKey, itemUid, quantity, onChangeItem}: QuantityFieldProps) => {
+    const displayValue =
+      Number.isNaN(quantity) || quantity === 0 ? "" : String(quantity);
+    const [localValue, setLocalValue] = React.useState(displayValue);
+
+    // Sync local state when the prop changes from outside (e.g. after save)
+    React.useEffect(() => {
+      setLocalValue(displayValue);
+    }, [displayValue]);
+
+    const handleBlur = React.useCallback(
+      (event: React.FocusEvent<HTMLInputElement>) => {
+        if (localValue !== displayValue) {
+          onChangeItem({
+            source: "textfield",
+            event: event,
+            value: localValue,
+          });
+        }
+      },
+      [localValue, displayValue, onChangeItem],
+    );
+
+    return (
+      <TextField
+        id={"quantity_" + departmentKey + "_" + itemUid}
+        value={localValue}
+        label={TEXT_FIELD_QUANTITY}
+        type="number"
+        inputProps={{min: 0, inputMode: "decimal"}}
+        onChange={(event) => setLocalValue(event.target.value)}
+        onBlur={handleBlur}
+        fullWidth
+        size="small"
+      />
+    );
+  },
+);
+QuantityField.displayName = "QuantityField";
+
+/* ===================================================================
+// ========================= Einkaufsliste ===========================
+// =================================================================== */
+const EventShoppingListList = React.memo(
+  ({
+    shoppingList,
+    products,
+    materials,
+    units,
+    shoppingListModus,
+    onCheckboxClick,
+    onOpenContexMenü,
+    onChangeItem,
+  }: EventShoppingListListProps) => {
+    const classes = useCustomStyles();
+    const theme = useTheme();
+    const shouldFocusDepartmentRef = React.useRef<string | null>(null);
+
+    const toAutocompleteItem = React.useCallback(
+      (shoppingListItem: ShoppingListItem) => {
+        switch (shoppingListItem.type) {
+          case ItemType.food:
+            return {
+              uid: shoppingListItem.item.uid,
+              name: shoppingListItem.item.name,
+              itemType: ItemType.food,
+            } as ProductItem;
+          case ItemType.material:
+            return {
+              uid: shoppingListItem.item.uid,
+              name: shoppingListItem.item.name,
+              itemType: ItemType.material,
+            } as MaterialItem;
+          case ItemType.custom:
+            return shoppingListItem.item.name;
+          default:
+            return null;
+        }
+      },
+      [],
+    );
+
+    const prepareDepartmentItemsForDisplay = React.useCallback(
+      (items: ShoppingListItem[]) => {
+        const sortedList = [...items].sort((a, b) => {
+          if (!a.item.name && !b.item.name) return 0;
+          if (!a.item.name) return 1;
+          if (!b.item.name) return -1;
+          return a.item.name.localeCompare(b.item.name);
+        });
+
+        let templateRowUid = "";
+
+        if (shoppingListModus === ListMode.VIEW) {
+          return {items: sortedList, templateRowUid};
+        }
+
+        const newItem = ShoppingList.createEmptyListItem();
+        newItem.manualAdd = true;
+        templateRowUid = newItem.item.uid;
+
+        if (
+          sortedList.length === 0 ||
+          sortedList[sortedList.length - 1].item.name !== ""
+        ) {
+          sortedList.push(newItem);
+        }
+
+        return {items: sortedList, templateRowUid};
+      },
+      [shoppingListModus],
+    );
+
+    // Memoize style objects
+    const viewModeItemSx = React.useMemo(() => ({margin: 0, padding: 0}), []);
+    const viewModeIconSx = React.useMemo(() => ({minWidth: 36}), []);
+    const containerSx = React.useMemo(
+      () => ({...classes.container, width: "100%"}),
+      [classes.container],
+    );
+
+    // Memoize display data per department (sorted items + template row UIDs)
+    const displayDataByDepartment = React.useMemo(() => {
+      const result: Record<string, {items: ShoppingListItem[]; templateRowUid: string}> = {};
+      Object.entries(shoppingList.list).forEach(([departmentKey, department]) => {
+        result[departmentKey] = prepareDepartmentItemsForDisplay(department.items);
+      });
+      return result;
+    }, [shoppingList.list, prepareDepartmentItemsForDisplay]);
+
+    // Focus the quantity field of the new template row after re-render
+    React.useEffect(() => {
+      if (shouldFocusDepartmentRef.current) {
+        const departmentKey = shouldFocusDepartmentRef.current;
+        shouldFocusDepartmentRef.current = null;
+        const templateRowUid = displayDataByDepartment[departmentKey]?.templateRowUid;
+        if (templateRowUid) {
+          const el = document.getElementById(
+            "quantity_" + departmentKey + "_" + templateRowUid,
+          );
+          if (el) {
+            el.focus();
+          }
+        }
+      }
     });
 
-    if (shoppingListModus === ListMode.VIEW) {
-      return sortedList;
-    }
-
-    if (
-      sortedList.length === 0 ||
-      sortedList[sortedList.length - 1].item.name !== ""
-    ) {
-      const newItem = ShoppingList.createEmptyListItem();
-      newItem.manualAdd = true;
-      sortedList.push(newItem);
-    }
-
-    return sortedList;
-  };
-
-  return (
-    <Container
-      sx={{...classes.container, width: "100%"}}
-      component="main"
-      maxWidth="sm"
-      key={"ShoppingListContainer"}
-    >
-      {Object.entries(shoppingList.list).map(
-        ([departmentKey, department]: [string, ShoppingListDepartment]) => (
+    return (
+      <Container
+        sx={containerSx}
+        component="main"
+        maxWidth="sm"
+        key={"ShoppingListContainer"}
+      >
+        {Object.entries(shoppingList.list).map(([departmentKey, department]) => {
+          const departmentDisplayData = displayDataByDepartment[departmentKey];
+          if (!departmentDisplayData) return null;
+          return (
           <React.Fragment key={"GridItemDepartment_" + departmentKey}>
             <Typography
               component={"h2"}
@@ -1752,20 +813,20 @@ const EventShoppingListList = ({
               sx={classes.eventList}
               key={"shoppingListList_" + department.departmentUid}
             >
-              {prepareDepartmentItemsForDisplay(department.items).map(
+              {departmentDisplayData.items.map(
                 (item) => (
                   <ListItem
                     key={"shoppingListItem_" + item.item.uid + "_" + item.unit}
                     sx={
                       shoppingListModus === ListMode.VIEW
-                        ? {margin: 0, padding: 0}
+                        ? viewModeItemSx
                         : classes.eventListItem
                     }
                   >
                     <ListItemIcon
                       sx={
                         shoppingListModus === ListMode.VIEW
-                          ? {minWidth: 36}
+                          ? viewModeIconSx
                           : undefined
                       }
                     >
@@ -1860,30 +921,11 @@ const EventShoppingListList = ({
                           xs={5}
                           sm={3}
                         >
-                          <TextField
-                            key={
-                              "quantity_" + departmentKey + "_" + item.item.uid
-                            }
-                            id={
-                              "quantity_" + departmentKey + "_" + item.item.uid
-                            }
-                            value={
-                              Number.isNaN(item.quantity) || item.quantity === 0
-                                ? ""
-                                : item.quantity
-                            }
-                            label={TEXT_FIELD_QUANTITY}
-                            type="number"
-                            inputProps={{min: 0, inputMode: "decimal"}}
-                            onChange={(event) =>
-                              onChangeItem({
-                                source: "textfield",
-                                event: event,
-                                value: event.target.value,
-                              })
-                            }
-                            fullWidth
-                            size="small"
+                          <QuantityField
+                            departmentKey={departmentKey}
+                            itemUid={item.item.uid}
+                            quantity={item.quantity}
+                            onChangeItem={onChangeItem}
                           />
                         </Grid>
                         <Grid key={"unit_grid_" + item.item.uid} xs={4} sm={3}>
@@ -1903,7 +945,11 @@ const EventShoppingListList = ({
                             }
                           />
                         </Grid>
-                        <Grid key={"item_grid_" + item.item.uid} xs={12} sm={6}>
+                        <Grid
+                          key={"item_grid_" + item.item.uid}
+                          xs={12}
+                          sm={6}
+                        >
                           <ItemAutocomplete
                             componentKey={departmentKey + "_" + item.item.uid}
                             item={toAutocompleteItem(item)}
@@ -1914,15 +960,21 @@ const EventShoppingListList = ({
                             allowFreeText={true}
                             error={{isError: false, errorText: ""}}
                             size={TextFieldSize.small}
-                            onChange={(event, newValue, reason, objectId) =>
+                            onChange={(event, newValue, reason, objectId) => {
+                              if (
+                                item.item.uid === departmentDisplayData.templateRowUid &&
+                                newValue
+                              ) {
+                                shouldFocusDepartmentRef.current = departmentKey;
+                              }
                               onChangeItem({
                                 source: "autocompleteItem",
                                 event,
                                 value: newValue,
                                 reason,
                                 objectId,
-                              })
-                            }
+                              });
+                            }}
                           />
                         </Grid>
                       </Grid>
@@ -1958,11 +1010,13 @@ const EventShoppingListList = ({
               )}
             </List>
           </React.Fragment>
-        ),
-      )}
-    </Container>
-  );
-};
+          );
+        })}
+      </Container>
+    );
+  },
+);
+EventShoppingListList.displayName = "EventShoppingListList";
 
 /* ===================================================================
 // ==================== Dialog Artikel hinzufügen ====================
@@ -1979,15 +1033,8 @@ interface DialogHandleItemProps {
   editMode: boolean;
   firebase: Firebase;
   authUser: AuthUser;
-  handleOk: ({item, quantity, unit}: OnDialogAddItemOk) => void;
+  handleOk: (props: OnDialogAddItemOk) => void;
   handleClose: () => void;
-  // onMaterialCreate: (material: Material) => void;
-  // onProductCreate: (product: Product) => void;
-}
-interface OnDialogAddItemOk {
-  item: ProductItem | MaterialItem;
-  quantity: number;
-  unit: Unit["key"];
 }
 interface DialogValues {
   quantity: string;
@@ -2017,8 +1064,6 @@ const DialogHandleItem = ({
   authUser,
   handleOk: handleOkSuper,
   handleClose: handleCloseSuper,
-  // onMaterialCreate: onMaterialCreateSuper,
-  // onProductCreate: onProductCreateSuper,
 }: DialogHandleItemProps) => {
   const {customDialog} = useCustomDialog();
 
@@ -2048,14 +1093,13 @@ const DialogHandleItem = ({
   // Change-Handler Dialog
   // ------------------------------------------ */
   const onChangeItem = async (
-    event: React.ChangeEvent<HTMLInputElement>,
+    _event: React.ChangeEvent<HTMLInputElement>,
     newValue: string | MaterialItem | ProductItem | null,
   ) => {
     if (typeof newValue === "string" || !newValue) {
       return;
     }
     if (newValue.name.endsWith(TEXT_ADD)) {
-      // Herausfinden ob ein Produkt oder Material angelegt werden soll
       const userInput = (await customDialog({
         dialogType: DialogType.selectOptions,
         title: TEXT_NEW_ITEM,
@@ -2070,19 +1114,15 @@ const DialogHandleItem = ({
         ],
       })) as SingleTextInputResult;
       if (userInput.valid) {
-        // Begriff Hinzufügen und Anführzungszeichen entfernen
         const itemName = newValue?.name.match('".*"')![0].slice(1, -1);
-
         const selectedItemType = parseInt(userInput.input) as ItemType;
         if (selectedItemType == ItemType.material) {
-          // Fenster anzeigen um neues Material zu erfassen
           setMaterialAddPopupValues({
             ...materialAddPopupValues,
             name: itemName,
             popUpOpen: true,
           });
         } else {
-          // Fenster anzeigen um neues Produkt zu erfassen
           setProductAddPopupValues({
             ...productAddPopupValues,
             name: itemName,
@@ -2101,13 +1141,12 @@ const DialogHandleItem = ({
     });
   };
   const onUnitChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
+    _event: React.ChangeEvent<HTMLInputElement>,
     newValue: Unit | null,
   ) => {
     if (newValue) {
       setDialogValues({...dialogValues, unit: newValue.key});
     } else {
-      // Wurde gelöscht
       setDialogValues({...dialogValues, unit: ""});
     }
   };
@@ -2115,7 +1154,6 @@ const DialogHandleItem = ({
   // Button-Handler Dialog
   // ------------------------------------------ */
   const handleOk = () => {
-    // Prüfen ob Eingaben korrekt (Produkt muss vorhanden sein)
     if (!dialogValues.item || !dialogValues.item.uid) {
       setDialogValidation({
         isError: true,
@@ -2140,15 +1178,12 @@ const DialogHandleItem = ({
   // Pop-Up Handler Material/Produkt
   // ------------------------------------------ */
   const onMaterialCreate = (material: Material) => {
-    //FIXME:
     const item: MaterialItem = {...material, itemType: ItemType.material};
     setDialogValues({...dialogValues, item: item});
-
     setMaterialAddPopupValues({
       ...MATERIAL_POP_UP_VALUES_INITIAL_STATE,
       popUpOpen: false,
     });
-    // onMaterialCreateSuper(material);
   };
   const onCloseDialogMaterial = () => {
     setMaterialAddPopupValues({
@@ -2159,18 +1194,15 @@ const DialogHandleItem = ({
   const onProductCreate = (product: Product) => {
     const item: ProductItem = {...product, itemType: ItemType.food};
     setDialogValues({...dialogValues, item: item});
-
     setProductAddPopupValues({
       ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
       popUpOpen: false,
     });
-    // onProductCreateSuper(product);
   };
 
   const onProductChooseExisting = (product: Product) => {
     const item: ProductItem = {...product, itemType: ItemType.food};
     setDialogValues({...dialogValues, item: item});
-
     setProductAddPopupValues({
       ...PRODUCT_POP_UP_VALUES_INITIAL_STATE,
       popUpOpen: false,
@@ -2190,7 +1222,6 @@ const DialogHandleItem = ({
         <DialogContent>
           <Grid container spacing={2}>
             <Grid xs={12}>
-              {/* Produkt */}
               <ItemAutocomplete
                 componentKey={"x"}
                 item={dialogValues.item}
@@ -2202,7 +1233,6 @@ const DialogHandleItem = ({
                 error={dialogValidation}
               />
             </Grid>
-            {/* Menge */}
             <Grid xs={6}>
               <TextField
                 margin="normal"
@@ -2217,7 +1247,6 @@ const DialogHandleItem = ({
               />
             </Grid>
             <Grid xs={6}>
-              {/* Einheit */}
               <FormControl fullWidth margin="normal">
                 <UnitAutocomplete
                   componentKey="unit_"

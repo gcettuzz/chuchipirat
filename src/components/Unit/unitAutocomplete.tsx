@@ -5,7 +5,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 
 import {TextField, Autocomplete} from "@mui/material";
 
-import Unit, {UnitDimension} from "./unit.class";
+import Unit from "./unit.class";
 
 import {
   FIELD_UNIT,
@@ -47,7 +47,7 @@ const UnitAutocomplete = ({
     <Autocomplete
       key={componentKey ? "unit_" + componentKey : "unit"}
       id={componentKey ? "unit_" + componentKey : "unit"}
-      value={{key: unitKey, name: "", dimension: UnitDimension.dimensionless}}
+      value={units.find((unit) => unit.key === unitKey) ?? null}
       options={units}
       autoSelect
       autoHighlight
