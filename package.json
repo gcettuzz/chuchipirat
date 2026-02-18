@@ -49,11 +49,11 @@
     "zxcvbn": "^4.4.2"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "build:dev": "env-cmd -f .env.development npm run-script build",
-    "build:test": "env-cmd -f .env.test react-scripts build",
-    "build:prod": "env-cmd -f .env.production npm run-script build",
+    "start": "NODE_OPTIONS=--openssl-legacy-provider react-scripts start",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider react-scripts build",
+    "build:dev": "NODE_OPTIONS=--openssl-legacy-provider env-cmd -f .env.development npm run-script build",
+    "build:test": "NODE_OPTIONS=--openssl-legacy-provider env-cmd -f .env.test react-scripts build",
+    "build:prod": "NODE_OPTIONS=--openssl-legacy-provider env-cmd -f .env.production npm run-script build",
     "eject": "react-scripts eject",
     "analyze": "source-map-explorer 'build/static/js/*.js'",
     "lint": "eslint --ext .ts .",
