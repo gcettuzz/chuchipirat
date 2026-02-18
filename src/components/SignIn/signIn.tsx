@@ -1,19 +1,19 @@
 import React from "react";
-import {compose} from "react-recompose";
 
-import Button from "@material-ui/core/Button";
-import IconButton from "@material-ui/core/IconButton";
-import TextField from "@material-ui/core/TextField";
-
-import Typography from "@material-ui/core/Typography";
-import Container from "@material-ui/core/Container";
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-import CardMedia from "@material-ui/core/CardMedia";
-import useStyles from "../../constants/styles";
-import Visibility from "@material-ui/icons/Visibility";
-import VisibilityOff from "@material-ui/icons/VisibilityOff";
-import InputAdornment from "@material-ui/core/InputAdornment";
+import {
+  Button,
+  IconButton,
+  TextField,
+  Typography,
+  Container,
+  Card,
+  CardContent,
+  CardMedia,
+  Stack,
+} from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import InputAdornment from "@mui/material/InputAdornment";
 
 import PageTitle from "../Shared/pageTitle";
 import {SignUpLink} from "../SignUp/signUp";
@@ -37,11 +37,13 @@ import {ForgotPasswordLink} from "../AuthServiceHandler/passwordReset";
 import {withFirebase} from "../Firebase/firebaseContext";
 import User from "../User/user.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {useHistory} from "react-router";
+import {useHistory, withRouter} from "react-router";
 import Utils from "../Shared/utils.class";
-import {Backdrop, CircularProgress, Grid} from "@material-ui/core";
+import {Backdrop, CircularProgress} from "@mui/material";
+
 import {CustomRouterProps} from "../Shared/global.interface";
 import GlobalSettings from "../Admin/globalSettings.class";
+import useCustomStyles from "../../constants/styles";
 
 // ===================================================================
 // ======================== globale Funktionen =======================
@@ -119,7 +121,7 @@ const signInReducer = (state: State, action: DispatchAction): State => {
 // =================================================================== */
 const SignInPage: React.FC<CustomRouterProps> = ({...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {push} = useHistory();
 
   const [state, dispatch] = React.useReducer(signInReducer, inititialState);
@@ -198,52 +200,47 @@ const SignInPage: React.FC<CustomRouterProps> = ({...props}) => {
   return (
     <React.Fragment>
       <PageTitle smallTitle={TEXT_COME_IN} />
-      <Backdrop className={classes.backdrop} open={state.isSigningIn}>
+      <Backdrop sx={classes.backdrop} open={state.isSigningIn}>
         <CircularProgress color="inherit" />
       </Backdrop>
 
-      <Container className={classes.container} component="main" maxWidth="xs">
-        <Grid container spacing={2}>
-          {state.maintenanceMode && (
-            <Grid item xs={12}>
-              <AlertMaintenanceMode />
-            </Grid>
-          )}
-          <Grid item xs={12}>
-            <Card className={classes.card}>
-              <CardMedia
-                className={classes.cardMedia}
-                image={
-                  ImageRepository.getEnviromentRelatedPicture().SIGN_IN_HEADER
-                }
-                title={"Logo"}
+      <Container sx={classes.container} component="main" maxWidth="xs">
+        <Stack spacing={2}>
+          {state.maintenanceMode && <AlertMaintenanceMode />}
+
+          <Card sx={classes.card}>
+            <CardMedia
+              sx={classes.cardMedia}
+              image={
+                ImageRepository.getEnviromentRelatedPicture().SIGN_IN_HEADER
+              }
+              title={"Logo"}
+            />
+            <CardContent sx={classes.cardContent}>
+              <SignInForm
+                signInData={state.signInData}
+                onFieldChange={onFieldChange}
+                onSignIn={onSignIn}
+                maintenanceMode={state.maintenanceMode}
               />
-              <CardContent className={classes.cardContent}>
-                <SignInForm
-                  signInData={state.signInData}
-                  onFieldChange={onFieldChange}
-                  onSignIn={onSignIn}
-                  maintenanceMode={state.maintenanceMode}
+              {state.error && (
+                <AlertMessage
+                  error={state.error}
+                  severity={"error"}
+                  messageTitle={TEXT_ALERT_TITLE_UUPS}
+                  body={
+                    state.error.code! === AuthMessages.WRONG_PASSWORD ? (
+                      <ForgotPasswordLink />
+                    ) : (
+                      ""
+                    )
+                  }
                 />
-                {state.error && (
-                  <AlertMessage
-                    error={state.error}
-                    severity={"error"}
-                    messageTitle={TEXT_ALERT_TITLE_UUPS}
-                    body={
-                      state.error.code! === AuthMessages.WRONG_PASSWORD ? (
-                        <ForgotPasswordLink />
-                      ) : (
-                        ""
-                      )
-                    }
-                  />
-                )}
-                {!state.maintenanceMode && <SignUpLink />}
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+              )}
+              {!state.maintenanceMode && <SignUpLink />}
+            </CardContent>
+          </Card>
+        </Stack>
       </Container>
     </React.Fragment>
   );
@@ -265,7 +262,7 @@ const SignInForm = ({
   onSignIn,
 }: SignInFormProps) => {
   const [showPassword, setShowPassword] = React.useState(false);
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
@@ -320,6 +317,7 @@ const SignInForm = ({
                 aria-label={TEXT_SHOW_PASSWORD}
                 onClick={handleClickShowPassword}
                 onMouseDown={handleMouseDownPassword}
+                size="large"
               >
                 {showPassword ? <Visibility /> : <VisibilityOff />}
               </IconButton>
@@ -339,7 +337,7 @@ const SignInForm = ({
         fullWidth
         variant="contained"
         color="primary"
-        className={classes.submit}
+        sx={classes.submit}
         onClick={onSignIn}
       >
         {TEXT_SIGN_IN}
@@ -361,4 +359,4 @@ export const AlertMaintenanceMode = () => {
   );
 };
 
-export default compose(withFirebase)(SignInPage);
+export default withRouter(withFirebase(SignInPage));

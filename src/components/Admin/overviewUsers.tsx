@@ -34,20 +34,21 @@ import {
   OpenInNew as OpenInNewIcon,
   Add as AddIcon,
   Remove as RemoveIcon,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 import PageTitle from "../Shared/pageTitle";
 
 import User, {UserFullProfile, UserOverviewStructure} from "../User/user.class";
 
 import Role from "../../constants/roles";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 import CustomSnackbar, {
   SNACKBAR_INITIAL_STATE_VALUES,
   Snackbar,
 } from "../Shared/customSnackbar";
 import {
   Backdrop,
+  Box,
   Button,
   Card,
   CardContent,
@@ -62,7 +63,6 @@ import {
   FormControlLabel,
   FormGroup,
   FormLabel,
-  Grid,
   IconButton,
   List,
   ListItem,
@@ -70,7 +70,9 @@ import {
   Switch,
   Typography,
   useTheme,
-} from "@material-ui/core";
+  Stack,
+} from "@mui/material";
+
 import AlertMessage from "../Shared/AlertMessage";
 import SearchPanel from "../Shared/searchPanel";
 
@@ -88,7 +90,7 @@ import {
   GridValueFormatterParams,
   deDE,
 } from "@mui/x-data-grid";
-import {Alert, AlertTitle} from "@material-ui/lab";
+import {Alert, AlertTitle} from "@mui/lab";
 import Event from "../Event/Event/event.class";
 import isEqual from "lodash/isEqual";
 
@@ -247,7 +249,7 @@ const OverviewUsersBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(usersReducer, inititialState);
   const [dialogValues, setDialogValues] = React.useState({
@@ -450,8 +452,8 @@ const OverviewUsersBase: React.FC<
       />
 
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="xl">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="xl">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
 
@@ -514,7 +516,7 @@ const UsersTable = ({dbUsers, onUserSelect}: UsersTableProps) => {
       sort: "asc",
     },
   ]);
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
 
   const DATA_GRID_COLUMNS: GridColDef[] = [
@@ -646,56 +648,51 @@ const UsersTable = ({dbUsers, onUserSelect}: UsersTableProps) => {
 
   return (
     <Card
-      className={classes.card}
+      sx={classes.card}
       key={"requestTablePanel"}
       style={{marginBottom: "4em"}}
     >
-      <CardContent className={classes.cardContent} key={"requestTableContent"}>
-        <Grid container>
-          <Grid item xs={12}>
-            <SearchPanel
-              searchString={searchString}
-              onUpdateSearchString={updateSearchString}
-              onClearSearchString={clearSearchString}
-            />
-            <Typography
-              variant="body2"
-              style={{marginTop: "0.5em", marginBottom: "2em"}}
-            >
-              {filteredUsersUi.length == users.length
-                ? `${users.length} ${TEXT_USERS}`
-                : `${filteredUsersUi.length} ${TEXT_FROM.toLowerCase()} ${
-                    users.length
-                  } ${TEXT_USERS}`}
-            </Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <div style={{display: "flex", height: "100%"}}>
-              <div style={{flexGrow: 1}}>
-                <DataGrid
-                  autoHeight
-                  rows={filteredUsersUi}
-                  columns={DATA_GRID_COLUMNS}
-                  sortModel={sortModel}
-                  onSortModelChange={(model) => {
-                    if (!isEqual(model, sortModel)) {
-                      setSortModel(model);
-                    }
-                  }}
-                  getRowId={(row) => row.uid}
-                  localeText={deDE.props.MuiDataGrid.localeText}
-                  getRowClassName={(params) => {
-                    if (params.row?.disabled) {
-                      return `super-app ${classes.dataGridDisabled}`;
-                    } else {
-                      `super-app-theme`;
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          </Grid>
-        </Grid>
+      <CardContent sx={classes.cardContent} key={"requestTableContent"}>
+        <Stack spacing={2}>
+          <SearchPanel
+            searchString={searchString}
+            onUpdateSearchString={updateSearchString}
+            onClearSearchString={clearSearchString}
+          />
+          <Typography
+            variant="body2"
+            style={{marginTop: "0.5em", marginBottom: "2em"}}
+          >
+            {filteredUsersUi.length == users.length
+              ? `${users.length} ${TEXT_USERS}`
+              : `${filteredUsersUi.length} ${TEXT_FROM.toLowerCase()} ${
+                  users.length
+                } ${TEXT_USERS}`}
+          </Typography>
+          <Box component="div" style={{display: "flex", height: "100%"}}>
+            <Box component="div" style={{flexGrow: 1}}>
+              <DataGrid
+                autoHeight
+                rows={filteredUsersUi}
+                columns={DATA_GRID_COLUMNS}
+                getRowId={(row) => row.uid}
+                localeText={deDE.components.MuiDataGrid.defaultProps.localeText}
+                onSortModelChange={(model) => {
+                  if (!isEqual(model, sortModel)) {
+                    setSortModel(model);
+                  }
+                }}
+                getRowClassName={(params) => {
+                  if (params.row?.disabled) {
+                    return `super-app ${classes.dataGridDisabled}`;
+                  } else {
+                    return `super-app-theme`;
+                  }
+                }}
+              />
+            </Box>
+          </Box>
+        </Stack>
       </CardContent>
     </Card>
   );
@@ -726,7 +723,7 @@ const DialogUser = ({
   onEditRoles,
   getEventsOfUser,
 }: DialogUserProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
 
   return (
@@ -738,7 +735,7 @@ const DialogUser = ({
       maxWidth="sm"
     >
       <DialogTitle
-        className={classes.dialogHeaderWithPicture}
+        sx={classes.dialogHeaderWithPicture}
         style={{
           backgroundImage: `url(${
             userFullProfile?.pictureSrc?.normalSize
@@ -750,12 +747,11 @@ const DialogUser = ({
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
         }}
-        disableTypography
       >
         <Typography
           variant="h4"
           component="h1"
-          className={classes.dialogHeaderWithPictureTitle}
+          sx={classes.dialogHeaderWithPictureTitle}
           style={{paddingLeft: "2ex"}}
         >
           {userFullProfile.displayName}
@@ -869,7 +865,7 @@ const DialogUser = ({
                           <React.Fragment>
                             <Typography
                               component="span"
-                              className={classes.typographyCode}
+                              sx={classes.typographyCode}
                               variant="body2"
                               color="textPrimary"
                             >
@@ -1003,66 +999,57 @@ const DialogEditRoles = ({
     <Dialog open={open} onClose={handleClose}>
       <DialogTitle>{TEXT_EDIT_AUTHORIZATION}</DialogTitle>
       <DialogContent>
-        <Grid container spacing={2}>
-          <Grid xs={12} item>
-            <Typography>{TEXT_EDIT_AUTHORIZATION_DESCRIPTION}</Typography>
-          </Grid>
-          <Grid xs={12} item>
-            {userUid === authUser.uid ? (
-              <Alert severity="warning" style={{marginTop: theme.spacing(1)}}>
-                {TEXT_YOU_CANT_UPDATE_YOUR_OWN_AUTHORIZATION}
-              </Alert>
-            ) : (
-              <Alert severity="info" style={{marginTop: theme.spacing(1)}}>
-                <AlertTitle>{TEXT_RE_SIGN_IN_REQUIRED}</AlertTitle>
-                {TEXT_RE_SIGN_IN_REQUIRED_AFTER_ROLES_ASSIGNMENT}
-              </Alert>
-            )}
-          </Grid>
-          <Grid xs={12} item>
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Berechtigungen</FormLabel>
-              <FormGroup>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      color="primary"
-                      checked={roleSelection.basic}
-                      onChange={handleChange}
-                      name="basic"
-                      disabled
-                    />
-                  }
-                  label={TEXT_ROLE_TYPES.basic}
-                />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      color="primary"
-                      checked={roleSelection.communityLeader}
-                      onChange={handleChange}
-                      name="communityLeader"
-                      disabled={userUid === authUser.uid}
-                    />
-                  }
-                  label={TEXT_ROLE_TYPES.communityLeader}
-                />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      color="primary"
-                      checked={roleSelection.admin}
-                      onChange={handleChange}
-                      name="admin"
-                      disabled={userUid === authUser.uid}
-                    />
-                  }
-                  label={TEXT_ROLE_TYPES.admin}
-                />
-              </FormGroup>
-            </FormControl>
-          </Grid>
-        </Grid>
+        <Stack spacing={2}>
+          <Typography>{TEXT_EDIT_AUTHORIZATION_DESCRIPTION}</Typography>
+          {userUid === authUser.uid ? (
+            <Alert severity="warning" style={{marginTop: theme.spacing(1)}}>
+              {TEXT_YOU_CANT_UPDATE_YOUR_OWN_AUTHORIZATION}
+            </Alert>
+          ) : (
+            <Alert severity="info" style={{marginTop: theme.spacing(1)}}>
+              <AlertTitle>{TEXT_RE_SIGN_IN_REQUIRED}</AlertTitle>
+              {TEXT_RE_SIGN_IN_REQUIRED_AFTER_ROLES_ASSIGNMENT}
+            </Alert>
+          )}
+          <FormControl component="fieldset">
+            <FormLabel component="legend">Berechtigungen</FormLabel>
+            <FormGroup>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={roleSelection.basic}
+                    onChange={handleChange}
+                    name="basic"
+                    disabled
+                  />
+                }
+                label={TEXT_ROLE_TYPES.basic}
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={roleSelection.communityLeader}
+                    onChange={handleChange}
+                    name="communityLeader"
+                    disabled={userUid === authUser.uid}
+                  />
+                }
+                label={TEXT_ROLE_TYPES.communityLeader}
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={roleSelection.admin}
+                    onChange={handleChange}
+                    name="admin"
+                    disabled={userUid === authUser.uid}
+                  />
+                }
+                label={TEXT_ROLE_TYPES.admin}
+              />
+            </FormGroup>
+          </FormControl>
+        </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose} color="primary" variant="outlined">

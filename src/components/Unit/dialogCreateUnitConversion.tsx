@@ -1,20 +1,21 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
 
-import Dialog from "@material-ui/core/Dialog";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogActions from "@material-ui/core/DialogActions";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Autocomplete,
+  FormControl,
+  Button,
+  TextField,
+  Alert,
+  AlertTitle,
+} from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 
-import Autocomplete from "@material-ui/lab/Autocomplete";
+import useCustomStyles from "../../constants/styles";
 
-import FormControl from "@material-ui/core/FormControl";
-import Button from "@material-ui/core/Button";
-import TextField from "@material-ui/core/TextField";
-
-import {Alert, AlertTitle} from "@material-ui/lab";
-
-import useStyles from "../../constants/styles";
 import {
   DENOMINATOR as TEXT_DENOMINATOR,
   NUMERATOR as TEXT_NUMERATOR,
@@ -96,7 +97,7 @@ const DialogCreateUnitConversion = ({
   handleCreate,
   handleClose,
 }: DialogCreateUnitConversionProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const [formFields, setFormFields] = React.useState(
     UNIT_CONVERSION_ADD_INITIAL_STATE
@@ -310,8 +311,8 @@ const DialogCreateUnitConversion = ({
         )}
         <Grid container spacing={2}>
           {unitConversionType === UnitConversionType.PRODUCT && (
-            <Grid item xs={12}>
-              <FormControl className={classes.formSelect} margin="normal">
+            <Grid xs={12}>
+              <FormControl sx={classes.formSelect} margin="normal">
                 <Autocomplete
                   id={"product"}
                   value={formFields.product}
@@ -337,7 +338,7 @@ const DialogCreateUnitConversion = ({
               </FormControl>
             </Grid>
           )}
-          <Grid item xs={6}>
+          <Grid xs={6}>
             <TextField
               error={validation.denominator.hasError}
               margin="dense"
@@ -351,8 +352,8 @@ const DialogCreateUnitConversion = ({
               helperText={validation.denominator.helperText}
             />
           </Grid>
-          <Grid item xs={6}>
-            <FormControl className={classes.formSelect} margin="normal">
+          <Grid xs={6}>
+            <FormControl sx={classes.formSelect} margin="normal">
               <Autocomplete
                 id={"fromUnit"}
                 value={formFields.fromUnit}
@@ -377,7 +378,7 @@ const DialogCreateUnitConversion = ({
               />
             </FormControl>
           </Grid>
-          <Grid item xs={6}>
+          <Grid xs={6}>
             <TextField
               error={validation.numerator.hasError}
               margin="dense"
@@ -391,8 +392,8 @@ const DialogCreateUnitConversion = ({
               helperText={validation.numerator.helperText}
             />
           </Grid>
-          <Grid item xs={6}>
-            <FormControl className={classes.formSelect} margin="normal">
+          <Grid xs={6}>
+            <FormControl sx={classes.formSelect} margin="normal">
               <Autocomplete
                 id={"toUnit"}
                 value={formFields.toUnit}
@@ -412,9 +413,6 @@ const DialogCreateUnitConversion = ({
                     label={TEXT_UNIT_TO}
                     error={validation.toUnit.hasError}
                     helperText={validation.toUnit.helperText}
-
-                    // size="small"
-                    // margin="normal"
                   />
                 )}
               />

@@ -84,5 +84,8 @@ export const withAuthorization =
       );
     };
 
-    return compose(withRouter, withFirebase)(WithAuthorization);
+    return compose(
+      withRouter,
+      withFirebase
+    )(WithAuthorization as React.ComponentType<any>);
   };

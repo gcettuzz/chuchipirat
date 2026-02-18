@@ -1,9 +1,10 @@
 import React from "react";
-import TextField from "@material-ui/core/TextField";
-import Autocomplete, {
+import TextField from "@mui/material/TextField";
+import {
+  Autocomplete,
   AutocompleteChangeReason,
   createFilterOptions,
-} from "@material-ui/lab/Autocomplete";
+} from "@mui/material";
 
 import Material, {MaterialType} from "../../Material/material.class";
 import Utils from "../../Shared/utils.class";
@@ -11,21 +12,103 @@ import Utils from "../../Shared/utils.class";
 import {ITEM, ADD, ITEM_CANT_BE_CHANGED} from "../../../constants/text";
 import Product from "../../Product/product.class";
 import {ItemType} from "./shoppingList.class";
+import {TextFieldSize} from "../../../constants/defaultValues";
 
-interface ItemAutocompleteProps {
+/**
+ * Props fuer {@link ItemAutocomplete}.
+ *
+ * Diese Komponente kombiniert Produkte und Material in einem einzigen Autocomplete-Feld.
+ * Je nach Konfiguration kann der User:
+ * - einen bestehenden Eintrag auswaehlen (Standard), und/oder
+ * - einen neuen Eintrag via "Hinzufuegen" (ADD) anstossen, und/oder
+ * - beliebigen Freitext übernehmen (ohne Creation-Flow) via {@link ItemAutocompleteProps.allowFreeText}.
+ */
+export interface ItemAutocompleteProps {
+  /**
+   * Eindeutiger Key zur Unterscheidung mehrerer Instanzen in derselben View.
+   * Wird für React key/id sowie als objectId im onChange verwendet.
+   */
   componentKey: string;
-  item: MaterialItem | ProductItem | null;
+  /**
+   * Aktueller Wert des Feldes.
+   *
+   * - {@link MaterialItem} / {@link ProductItem}: wenn ein bestehender Eintrag selektiert ist
+   * - string: wenn Freitext erlaubt ist und der User einen eigenen Text übernommen hat
+   * - null: kein Wert
+   */
+
+  item: MaterialItem | ProductItem | string | null;
+  /**
+   * Verfuegbare Material-Einträge für die Auswahl.
+   * Werden intern in {@link MaterialItem} erweitert (mit itemType).
+   */
   materials: Material[];
+
+  /**
+   * Verfügbare Produkt-Einträge für die Auswahl.
+   * Werden intern in {@link ProductItem} erweitert (mit itemType).
+   */
   products: Product[];
+
+  /**
+   * Wenn true, ist das Feld deaktiviert (read-only).
+   */
   disabled: boolean;
+
+  /**
+   * Callback bei Wert-Änderung.
+   *
+   * @param event - ChangeEvent (von Autocomplete auf TextField gemappt)
+   * @param newValue - Neuer Wert:
+   *   - {@link MaterialItem} / {@link ProductItem} bei Auswahl
+   *   - string bei Freitext (allowFreeText=true)
+   *   - null wenn geloescht
+   * @param action - Grund/Action von MUI Autocomplete (selectOption, clear, blur, createOption, ...)
+   * @param objectId - Eindeutige Id der Komponente ("item_" + componentKey)
+   */
   onChange: (
     event: React.ChangeEvent<HTMLInputElement>,
     newValue: string | MaterialItem | ProductItem | null,
-    action: AutocompleteChangeReason,
-    objectId: string
+    action: import("@mui/material").AutocompleteChangeReason,
+    objectId: string,
   ) => void;
+
+  /**
+   * Fehleranzeige für das Feld.
+   *
+   * - isError: true -> Feld ist rot markiert
+   * - errorText: wird als helperText angezeigt
+   */
   error: {isError: boolean; errorText: string};
+
+  /**
+   * Legacy-Feature:
+   * Wenn true, wird in der Dropdown-Liste eine zusaetzliche Option angezeigt, um
+   * einen neuen Eintrag anzulegen (z. B. '"ABC" Hinzufügen').
+   *
+   * Default: true
+   *
+   * Hinweis: Wenn {@link ItemAutocompleteProps.allowFreeText} true ist,
+   * wird dieses Verhalten bewusst unterdrückt, damit kein Creation-Flow getriggert wird.
+   */
   allowCreateNewItem?: boolean;
+
+  /**
+   * Wenn true, kann der User beliebigen Freitext eingeben, auch wenn kein Eintrag existiert.
+   * Der Text wird übernommen, ohne dass der Creation-Process getriggert wird.
+   *
+   * Typisches Verhalten:
+   * - Enter oder Auswahl eines bestehenden Eintrags -> onChange mit Item oder string
+   * - Blur/Tab aus dem Feld -> Freitext wird ebenfalls committed (onChange action="blur")
+   *
+   * Default: false (bestehende Nutzung bleibt unveraendert)
+   */
+  allowFreeText?: boolean;
+
+  /**
+   * Groesse des TextField Inputs.
+   */
+  size: TextFieldSize;
 }
 interface filterHelpWithSortRank {
   uid: string;
@@ -46,13 +129,25 @@ export interface MaterialItem extends Material {
 
 type Item = ProductItem | MaterialItem;
 
-// ===================================================================== */
 /**
- * Autocomplete Feld für Produkte und Material kombiniert
- * @param param0
- * @returns
+ * Autocomplete Feld fuer Produkte und Material (kombiniert).
+ *
+ * Features:
+ * - Kombinierte Liste aus Produkten + Material
+ * - Case-insensitive Matching für Strings
+ * - Optionale Sortierung der Vorschläge nach "startsWith" (bessere UX)
+ * - Optionaler Create-Flow via "ADD"
+ * - Optionaler Freitext-Modus ohne Creation-Flow
+ *
+ * Wichtige Hinweise:
+ * - Sortiert und transformiert intern die übergebenen Listen in ein gemeinsames Options-Array.
+ * - Im Freitext-Modus wird beim Verlassen des Feldes (blur) der aktuelle Input committed,
+ *   damit der User nicht zwingend Enter drücken muss.
+ *
+ * @param props - Siehe {@link ItemAutocompleteProps}
+ * @returns React Element (MUI Autocomplete)
  */
-const ItemAutocomplete = ({
+const ItemAutocomplete: React.FC<ItemAutocompleteProps> = ({
   componentKey,
   item,
   materials,
@@ -60,47 +155,74 @@ const ItemAutocomplete = ({
   disabled,
   error,
   allowCreateNewItem = true,
+  allowFreeText = false,
   onChange,
+  size = TextFieldSize.medium,
 }: ItemAutocompleteProps) => {
   // Handler für Zutaten/Produkt hinzufügen
-  const filter = createFilterOptions<MaterialItem | ProductItem>();
+  const filter = createFilterOptions<Item>();
+  const [items, setItems] = React.useState<Item[]>([]);
 
-  const [items, setItems] = React.useState<Array<ProductItem | MaterialItem>>(
-    []
+  const [inputValue, setInputValue] = React.useState<string>(
+    typeof item === "string" ? item : (item?.name ?? ""),
   );
 
-  if (items.length == 0 && materials.length > 0 && products.length > 0) {
+  // Items sauber initialisieren/aktualisieren
+  React.useEffect(() => {
+    if (materials.length === 0 || products.length === 0) return;
+
     const tempProducts: ProductItem[] = products.map((product) => ({
       ...product,
       itemType: ItemType.food,
     }));
+
     const tempMaterials: MaterialItem[] = materials.map((material) => ({
       ...material,
       itemType: ItemType.material,
     }));
-    // Ein Array mit beiden Elementen drin
+
     const tempItems = [...tempProducts, ...tempMaterials];
-    Utils.sortArray({array: items, attributeName: "name"});
+    Utils.sortArray({array: tempItems, attributeName: "name"});
+
     setItems(tempItems);
-  }
+  }, [materials, products]);
+
+  React.useEffect(() => {
+    setInputValue(typeof item === "string" ? item : (item?.name ?? ""));
+  }, [item]);
+
+  const objectId = "item_" + componentKey;
 
   return (
     <Autocomplete
-      key={"item_" + componentKey}
-      id={"item_" + componentKey}
-      value={item?.name}
+      key={objectId}
+      id={objectId}
       options={items}
       disabled={disabled}
-      autoSelect
+      fullWidth
+      // Freitext ist immer technisch erlaubt, aber wir committen ihn nur,
+      // wenn allowFreeText=true (via blur/onChange)
+      freeSolo
+      // In Freitext-Modus NICHT autoSelect, sonst wird beim Tab/Blur evtl. ein Vorschlag genommen
+      autoSelect={!allowFreeText}
       autoHighlight
-      // getOptionSelected={(optionItem) => optionItem.name === item.name}
-      getOptionSelected={(option) => option.name === item?.name}
-      getOptionLabel={(option) => {
-        if (typeof option === "string") {
-          return option;
+      // value kann Item | string | null sein
+      value={item}
+      inputValue={inputValue}
+      onInputChange={(_, newInputValue) => {
+        setInputValue(newInputValue);
+      }}
+      isOptionEqualToValue={(option, value) => {
+        if (typeof value === "string") {
+          return option.name === value;
         }
+        return option.name === value?.name;
+      }}
+      getOptionLabel={(option) => {
+        if (typeof option === "string") return option;
 
-        if (option.name.endsWith(ADD)) {
+        // Nur für den Create-Flow relevant (wenn er aktiv ist)
+        if (!allowFreeText && option.name.endsWith(ADD)) {
           const words = option.name.match('".*"');
           if (words && words.length >= 0) {
             return words[0].slice(1, -1);
@@ -109,77 +231,109 @@ const ItemAutocomplete = ({
         return option.name;
       }}
       onChange={(event, newValue, action) => {
+        // Wenn Freitext erlaubt ist: string einfach durchreichen.
+        // MUI liefert bei Enter oft action="createOption" und newValue als string.
         onChange(
           event as unknown as React.ChangeEvent<HTMLInputElement>,
-          newValue,
+          newValue as any,
           action,
-          "item_" + componentKey
+          objectId,
         );
       }}
-      fullWidth
+      // Wenn der User nur tippt und raus-tabt: Text übernehmen (ohne Creation)
+      onBlur={(event) => {
+        if (!allowFreeText) return;
+
+        const text = inputValue?.trim();
+        if (text === "") {
+          onChange(
+            event as unknown as React.ChangeEvent<HTMLInputElement>,
+            null,
+            "blur",
+            objectId,
+          );
+          return;
+        }
+
+        // Wenn exakt ein bestehender Eintrag passt, optional den nehmen
+        const existing = items.find(
+          (it) => it.name.toLowerCase() === text.toLowerCase(),
+        );
+
+        onChange(
+          event as unknown as React.ChangeEvent<HTMLInputElement>,
+          existing ?? text,
+          "blur",
+          objectId,
+        );
+      }}
       filterOptions={(options, params) => {
         let filtered = filter(options, params) as Item[];
+
+        // NEU: Im Freitext-Modus KEINE "ADD" Option mehr reinschmuggeln,
+        // damit nie ein Creation-Flow "aus Versehen" passiert.
+        if (allowFreeText) {
+          return filtered;
+        }
+
         if (
           params.inputValue !== "" &&
-          // Sicherstellen, dass kein Produkt mit gleichem Namen erfasst wird
           items.find(
-            (item) =>
-              item.name.toLowerCase() === params.inputValue.toLowerCase()
+            (it) => it.name.toLowerCase() === params.inputValue.toLowerCase(),
           ) === undefined &&
           !params.inputValue.endsWith(ADD)
         ) {
           if (allowCreateNewItem) {
-            // Hinzufügen-Möglichkeit auch als Produkt reinschmuggeln
             const newMaterial: MaterialItem = {
               ...new Material(),
               itemType: ItemType.material,
             };
-
             newMaterial.name = `"${params.inputValue}" ${ADD}`;
             filtered.push(newMaterial);
           }
         }
-        // So sortieren, dass Zutaten, die mit den gleichen Zeichen beginnen
-        // vorher angezeigt werden (Salz vor Erdnüsse, gesalzen)
+
+        // SortRank Logik behalten
         let tempFiltered = filtered.map((entry) => {
-          let sortRank: number;
-
-          if (
+          const startsWith =
             entry.name.substring(0, params.inputValue.length).toLowerCase() ===
-            params.inputValue.toLowerCase()
-          ) {
-            sortRank = 1;
-          } else {
-            sortRank = 100;
-          }
+            params.inputValue.toLowerCase();
 
-          return {...entry, ...{sortRank: sortRank}};
+          return {...entry, sortRank: startsWith ? 1 : 100};
         }) as filterHelpWithSortRank[];
 
         tempFiltered = Utils.sortArray({
           array: tempFiltered,
           attributeName: "sortRank",
         });
+
         filtered = tempFiltered.map((entry) => {
           delete entry.sortRank;
-          return entry;
+          return entry as Item;
         });
+
         return filtered;
       }}
-      renderOption={(option) => option.name}
-      freeSolo
+      renderOption={(props, option) => {
+        const {key, ...optionProps} = props;
+        return (
+          <li key={key} {...optionProps}>
+            {option.name}
+          </li>
+        );
+      }}
       renderInput={(params) => (
         <TextField
           {...params}
           label={ITEM}
-          size="small"
           error={error.isError}
+          size={size}
           helperText={
             error.isError
               ? error.errorText
               : disabled
-              ? ITEM_CANT_BE_CHANGED
-              : ""
+                ? ITEM_CANT_BE_CHANGED
+                : ""
           }
         />
       )}

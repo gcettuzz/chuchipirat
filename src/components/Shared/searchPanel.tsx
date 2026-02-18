@@ -1,13 +1,15 @@
 import React from "react";
 
-import OutlinedInput from "@material-ui/core/OutlinedInput";
-import InputLabel from "@material-ui/core/InputLabel";
-import IconButton from "@material-ui/core/IconButton";
-import InputAdornment from "@material-ui/core/InputAdornment";
-import FormControl from "@material-ui/core/FormControl";
+import {
+  TextField,
+  InputLabel,
+  IconButton,
+  InputAdornment,
+  FormControl,
+} from "@mui/material";
 
-import SearchIcon from "@material-ui/icons/Search";
-import ClearIcon from "@material-ui/icons/Clear";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
 
 import * as TEXT from "../../constants/text";
 
@@ -28,17 +30,12 @@ const SearchPanel = ({
 }: SearchPanelProps) => {
   return (
     <React.Fragment>
-      <FormControl
-        // className={clsx(classes.margin, classes.textField)}
-        variant="outlined"
-        fullWidth
-      >
-        {/* <InputLabel id={"SearchString"}>{TEXT.SEARCH_STRING}</InputLabel> */}
+      <FormControl variant="outlined" fullWidth>
         <InputLabel htmlFor="searchString_input">
           {TEXT.SEARCH_STRING}
         </InputLabel>
 
-        <OutlinedInput
+        <TextField
           label={TEXT.SEARCH_STRING}
           id={"searchString_input"}
           type={"text"}
@@ -46,22 +43,24 @@ const SearchPanel = ({
           fullWidth={true}
           autoComplete="off"
           onChange={onUpdateSearchString}
-          endAdornment={
-            <InputAdornment position="end">
-              <IconButton
-                aria-label="clear Search Term"
-                onClick={() => {
-                  if (searchString) {
-                    onClearSearchString();
-                  }
-                }}
-                edge="end"
-                size="small"
-              >
-                {!searchString ? <SearchIcon /> : <ClearIcon />}
-              </IconButton>
-            </InputAdornment>
-          }
+          inputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="clear Search Term"
+                  onClick={() => {
+                    if (searchString) {
+                      onClearSearchString();
+                    }
+                  }}
+                  edge="end"
+                  size="small"
+                >
+                  {!searchString ? <SearchIcon /> : <ClearIcon />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
         />
       </FormControl>
     </React.Fragment>

@@ -1,16 +1,15 @@
 import React from "react";
+import Fab from "@mui/material/Fab";
 
-import Fab from "@material-ui/core/Fab";
-import useStyles from "../../constants/styles";
-
-import ArrowBackIosIcon from "@material-ui/icons/ArrowBackIos";
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import {useHistory} from "react-router";
+import useCustomStyles from "../../constants/styles";
 
 // ===================================================================
 // ========================== GoBack Button ==========================
 // ===================================================================
 const GoBackFab = () => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const history = useHistory();
   /* ------------------------------------------
   // zurück navigieren
@@ -25,10 +24,10 @@ const GoBackFab = () => {
       size="small"
       color="primary"
       aria-label="back"
-      className={classes.goBackFabButton}
+      sx={classes.goBackFabButton}
       onClick={onBack}
     >
-      <ArrowBackIosIcon fontSize="small" className={classes.goBackButtonIcon} />
+      <ArrowBackIosIcon fontSize="small" sx={classes.goBackButtonIcon} />
     </Fab>
   );
 };

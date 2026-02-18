@@ -1,18 +1,13 @@
-import React from "react";
+import React, {SyntheticEvent} from "react";
 import {compose} from "react-recompose";
 
-import CssBaseline from "@material-ui/core/CssBaseline";
-import Container from "@material-ui/core/Container";
-import Backdrop from "@material-ui/core/Backdrop";
-import CircularProgress from "@material-ui/core/CircularProgress";
-
-import Typography from "@material-ui/core/Typography";
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
 import {
-  // FormControlLabel,
-  // RadioGroup,
-  // Radio,
+  Backdrop,
+  CircularProgress,
+  Container,
+  Typography,
+  Card,
+  CardContent,
   Checkbox,
   Menu,
   MenuItem,
@@ -20,7 +15,8 @@ import {
   IconButton,
   useTheme,
   Box,
-} from "@material-ui/core";
+  SnackbarCloseReason,
+} from "@mui/material";
 
 import {
   DEPARTMENT as TEXT_DEPARTMENT,
@@ -58,10 +54,6 @@ import Roles from "../../constants/roles";
 
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
-// import EnhancedTable, {
-//   TableColumnTypes,
-//   ColumnTextAlign,
-// } from "../Shared/enhancedTable";
 import DialogProduct, {ProductDialog} from "./dialogProduct";
 import AlertMessage from "../Shared/AlertMessage";
 
@@ -69,11 +61,11 @@ import {
   Edit as EditIcon,
   MoreVert as MoreVertIcon,
   Cached as CachedIcon,
-  // OpenInNew as OpenInNewIcon,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
+
 import SearchPanel from "../Shared/searchPanel";
 
 import Product, {Allergen, Diet} from "./product.class";
@@ -326,7 +318,7 @@ const ProductsBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {customDialog} = useCustomDialog();
 
   const [state, dispatch] = React.useReducer(productsReducer, inititialState);
@@ -509,8 +501,8 @@ const ProductsBase: React.FC<
   // Snackback schliessen
   // ------------------------------------------ */
   const handleSnackbarClose = (
-    event: React.SyntheticEvent | React.MouseEvent,
-    reason?: string
+    event: Event | SyntheticEvent<any, Event>,
+    reason: SnackbarCloseReason
   ) => {
     if (reason === "clickaway") {
       return;
@@ -522,7 +514,6 @@ const ProductsBase: React.FC<
   };
   return (
     <React.Fragment>
-      <CssBaseline />
       {/*===== HEADER ===== */}
       <PageTitle
         title={TEXT_PRODUCTS}
@@ -538,8 +529,8 @@ const ProductsBase: React.FC<
         authUser={authUser}
       />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="xl">
-        <Backdrop className={classes.backdrop} open={state.isLoading.overall}>
+      <Container sx={classes.container} component="main" maxWidth="xl">
+        <Backdrop sx={classes.backdrop} open={state.isLoading.overall}>
           <CircularProgress color="inherit" />
         </Backdrop>
 
@@ -705,9 +696,9 @@ const ProductsTable = ({
   const [contextMenuAnchorElement, setContextMenuAnchorElement] =
     React.useState<HTMLElement | null>(null);
   const [contextMenuProductUid, setContextMenuProductUid] = React.useState("");
-  const [pageSize, setPageSize] = React.useState(20);
+  const [pageSize, setPageSize] = React.useState(100);
 
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
 
   const DATA_GRID_COLUMNS: GridColDef[] = [
@@ -769,7 +760,6 @@ const ProductsTable = ({
           onChange={handleCheckboxChange}
           key={"checkbox_" + Allergen.Lactose + "_" + params.id}
           name={"checkbox_" + Allergen.Lactose + "_" + params.id}
-          color="primary"
         />
       ),
     },
@@ -785,7 +775,6 @@ const ProductsTable = ({
           onChange={handleCheckboxChange}
           key={"checkbox_" + Allergen.Gluten + "_" + params.id}
           name={"checkbox_" + Allergen.Gluten + "_" + params.id}
-          color="primary"
         />
       ),
     },
@@ -808,7 +797,6 @@ const ProductsTable = ({
           onChange={handleCheckboxChange}
           key={"checkbox_usable_" + params.id}
           name={"checkbox_usable_" + params.id}
-          color="primary"
         />
       ),
     },
@@ -1115,11 +1103,8 @@ const ProductsTable = ({
   }
   return (
     <React.Fragment>
-      <Card className={classes.card} key={"requestTablePanel"}>
-        <CardContent
-          className={classes.cardContent}
-          key={"requestTableContent"}
-        >
+      <Card sx={classes.card} key={"requestTablePanel"}>
+        <CardContent sx={classes.cardContent} key={"requestTableContent"}>
           <SearchPanel
             searchString={searchString}
             onUpdateSearchString={updateSearchString}
@@ -1142,12 +1127,12 @@ const ProductsTable = ({
               columns={DATA_GRID_COLUMNS}
               getRowId={(row) => row.uid}
               pagination
-              localeText={deDE.props.MuiDataGrid.localeText}
+              localeText={deDE.components.MuiDataGrid.defaultProps.localeText}
               getRowClassName={(params) => {
                 if (params.row?.disabled) {
                   return `super-app ${classes.dataGridDisabled}`;
                 } else {
-                  `super-app-theme`;
+                  return `super-app-theme`;
                 }
               }}
               pageSize={pageSize}

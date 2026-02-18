@@ -1,10 +1,14 @@
-import React from "react";
-import {Color} from "@material-ui/lab";
-import MuiAlert from "@material-ui/lab/Alert";
-import Snackbar from "@material-ui/core/Snackbar";
-import Fade from "@material-ui/core/Fade";
+import React, {SyntheticEvent} from "react";
 
-import useStyles from "../../constants/styles";
+import {
+  Alert,
+  AlertColor,
+  Fade,
+  Snackbar,
+  SnackbarCloseReason,
+} from "@mui/material";
+
+import useCustomStyles from "../../constants/styles";
 
 export const SNACKBAR_INITIAL_STATE_VALUES: Snackbar = {
   open: false,
@@ -17,19 +21,20 @@ export const SNACKBAR_INITIAL_STATE_VALUES: Snackbar = {
  */
 export interface Snackbar {
   open: boolean;
-  severity: Color;
+  severity: AlertColor;
   message: string;
 }
 
 interface CustomSnackbarProps {
   message: string;
-  severity: Color;
+  severity: AlertColor;
   snackbarOpen: boolean;
   handleClose: (
-    event: React.SyntheticEvent | React.MouseEvent,
-    reason?: string
+    event: Event | SyntheticEvent<any, Event>,
+    reason: SnackbarCloseReason
   ) => void;
 }
+
 /* ===================================================================
 // ============================== Snackbar ===========================
 // =================================================================== */
@@ -39,15 +44,15 @@ function CustomSnackbar({
   snackbarOpen,
   handleClose,
 }: CustomSnackbarProps) {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
-  const Alert = (props) => {
-    return <MuiAlert elevation={6} {...props} />;
+  const CustomAlert = (props) => {
+    return <Alert elevation={6} {...props} />;
   };
 
   return (
     <Snackbar
-      className={classes.snackbar}
+      sx={classes.snackbar}
       anchorOrigin={{
         vertical: "bottom",
         horizontal: "center",
@@ -57,9 +62,11 @@ function CustomSnackbar({
       autoHideDuration={6000}
       TransitionComponent={Fade}
     >
-      <Alert onClose={handleClose} severity={severity}>
-        {message}
-      </Alert>
+      <div>
+        <CustomAlert onClose={handleClose} severity={severity}>
+          {message}
+        </CustomAlert>
+      </div>
     </Snackbar>
   );
 }

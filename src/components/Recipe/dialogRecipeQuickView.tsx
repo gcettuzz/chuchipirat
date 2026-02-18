@@ -1,18 +1,19 @@
 import React from "react";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
-import Button from "@material-ui/core/Button";
-import Backdrop from "@material-ui/core/Backdrop";
-import CircularProgress from "@material-ui/core/CircularProgress";
-
-import Dialog from "@material-ui/core/Dialog";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogActions from "@material-ui/core/DialogActions";
-import CardMedia from "@material-ui/core/CardMedia";
+import {
+  Button,
+  Backdrop,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogActions,
+  CardMedia,
+} from "@mui/material";
 
 import RecipeShort from "./recipeShort.class";
 import Recipe from "./recipe.class";
-import {DialogContent, Link, List} from "@material-ui/core";
+import {DialogContent, Link, List} from "@mui/material";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import {FormListItem} from "../Shared/formListItem";
 import Utils from "../Shared/utils.class";
@@ -61,7 +62,7 @@ const DialogRecipeQuickView = ({
   const [recipe, setRecipe] = React.useState<Recipe>(new Recipe());
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {push} = useHistory();
 
   if (recipeShort.uid && !recipe.uid) {
@@ -85,13 +86,13 @@ const DialogRecipeQuickView = ({
       open={dialogOpen}
       scroll={"paper"}
     >
-      <Backdrop className={classes.backdrop} open={isLoading}>
+      <Backdrop sx={classes.backdrop} open={isLoading}>
         <CircularProgress color="inherit" />
       </Backdrop>
 
       {recipeShort.pictureSrc && (
         <CardMedia
-          className={classes.cardMedia}
+          sx={classes.cardMedia}
           image={recipeShort.pictureSrc}
           title={"Bild " + recipeShort.name}
         />

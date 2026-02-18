@@ -1,25 +1,23 @@
 import React from "react";
 import {useHistory} from "react-router";
 
-import Dialog from "@material-ui/core/Dialog";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogActions from "@material-ui/core/DialogActions";
-
-import Button from "@material-ui/core/Button";
-import Divider from "@material-ui/core/Divider";
-import Typography from "@material-ui/core/Typography";
-
-import TextField from "@material-ui/core/TextField";
 import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Divider,
+  Typography,
+  TextField,
   Link,
   Avatar,
   List,
   ListItem,
   ListItemText,
   ListItemAvatar,
-} from "@material-ui/core";
-import useStyles from "../../constants/styles";
+} from "@mui/material";
+import useCustomStyles from "../../constants/styles";
 
 import {FormListItem} from "../Shared/formListItem";
 
@@ -34,7 +32,6 @@ import {
   REQUEST_ASSIGNEE_DISPLAYNAME as TEXT_REQUEST_ASSIGNEE_DISPLAYNAME,
   REQUEST_ASSIGN_TO_ME_LABEL as TEXT_REQUEST_ASSIGN_TO_ME_LABEL,
   WRONG_ASIGNEE as TEXT_WRONG_ASIGNEE,
-  // REQUEST_CONTINUE_WITH as TEXT_REQUEST_CONTINUE_WITH,
   BUTTON_CANCEL as TEXT_BUTTON_CANCEL,
   BUTTON_CLOSE as TEXT_BUTTON_CLOSE,
   COMMENTS as TEXT_COMMENTS,
@@ -80,7 +77,7 @@ const DialogRequest = ({
   handleAddComment,
   handleRecipeOpen,
 }: DialogRequestProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {push} = useHistory();
 
   const [comment, setComment] = React.useState("");
@@ -117,25 +114,23 @@ const DialogRequest = ({
       style={{zIndex: 500}}
     >
       <DialogTitle
-        className={classes.dialogHeaderWithPicture}
+        sx={classes.dialogHeaderWithPicture}
         style={{
           backgroundImage: `url(${request?.requestObject?.pictureSrc})`,
           backgroundPosition: "center",
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
         }}
-        disableTypography
       >
         <Typography
           variant="h4"
           component="h1"
-          className={classes.dialogHeaderWithPictureTitle}
+          sx={classes.dialogHeaderWithPictureTitle}
           style={{paddingLeft: "2ex"}}
         >
           {TEXT_REQUEST} #{request.number}
         </Typography>
       </DialogTitle>
-
       <DialogContent style={{overflow: "unset"}}>
         <List>
           {/* Request Type */}

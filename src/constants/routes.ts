@@ -69,3 +69,4 @@ export const NO_AUTH = "/noauth";
 
 //NEXT_FEATURE: Muss Raus
 export const TEMP = "/temp";
+export const SCHEMA = "/schema";

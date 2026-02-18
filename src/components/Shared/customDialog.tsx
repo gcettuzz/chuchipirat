@@ -10,20 +10,17 @@ import {
   Button,
   Typography,
   TextField,
-} from "@material-ui/core";
+  Box,
+  useTheme,
+} from "@mui/material";
 
-import WarningIcon from "@material-ui/icons/Warning";
+import WarningIcon from "@mui/icons-material/Warning";
 
 import {
-  // CANCEL as TEXT_CANCEL,
-  // DELETE as TEXT_DELETE,
-  // DIALOG_TITLE_DELETION_CONFIRMATION as TEXT_DIALOG_TITLE_DELETION_CONFIRMATION,
-  // DIALOG_SUBTITLE_DELETION_CONFIRMATION as TEXT_DIALOG_SUBTITLE_DELETION_CONFIRMATION,
-  // DIALOG_TEXT_DELETION_CONFIRMATION as TEXT_DIALOG_TEXT_DELETION_CONFIRMATION,
   DIALOG_DELETION_CONFIRMATION_STRING_DOES_NOT_MATCH as TEXT_DIALOG_DELETION_CONFIRMATION_STRING_DOES_NOT_MATCH,
   REQUIRED as TEXT_REQUIRED,
 } from "../../constants/text";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
 interface FormFieldsState {
   userInput: string;
@@ -40,7 +37,8 @@ const FORM_FIELDS_INITIAL_STATE: FormFieldsState = {
 };
 
 const CustomDialog = () => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
+  const theme = useTheme();
 
   const {dialogState, onConfirm, onCancel} = useCustomDialog();
   const portalElement = document.getElementById("portal");
@@ -176,7 +174,9 @@ const CustomDialog = () => {
           <DialogTitle id="dialogTitle">{dialogState.title}</DialogTitle>
         )}
         <DialogContent>
-          <Typography>{dialogState.text}</Typography>
+          <Typography sx={{marginBottom: theme.spacing(1)}}>
+            {dialogState.text}
+          </Typography>
           <TextField
             fullWidth
             autoFocus
@@ -217,21 +217,20 @@ const CustomDialog = () => {
       >
         <DialogTitle
           id="dialogDeletionConfirmation"
-          className={classes.dialogDeletionConfirmationTitle}
+          sx={classes.dialogDeletionConfirmationTitle}
         >
-          <div
+          <Box
+            component="div"
             style={{
               display: "flex",
               alignItems: "center",
               flexWrap: "wrap",
             }}
           >
-            <WarningIcon
-              className={classes.dialogDeletionConfirmationWarningIcon}
-            />
+            <WarningIcon sx={classes.dialogDeletionConfirmationWarningIcon} />
             <span>{dialogState.title}</span>
-          </div>
-          <DialogContentText className={classes.dialogDeletionConfirmationText}>
+          </Box>
+          <DialogContentText sx={classes.dialogDeletionConfirmationText}>
             {dialogState.subtitle}
           </DialogContentText>
         </DialogTitle>
@@ -263,7 +262,7 @@ const CustomDialog = () => {
             {dialogState.buttonTextCancel}
           </Button>
           <Button
-            className={classes.dialogDeletedeleteButton}
+            sx={classes.dialogDeletedeleteButton}
             disabled={!formFields.inputMatches}
             onClick={onOkConfirmDeletion}
             variant="contained"
@@ -285,19 +284,19 @@ const CustomDialog = () => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
+          <Button onClick={onCancel} color="primary">
+            {dialogState.buttonTextCancel}
+          </Button>
           {dialogState.options.map((option) => (
             <Button
               key={"button_" + option.key}
               onClick={() => onOptionSelection(option.key)}
               color="primary"
-              variant="outlined"
+              variant={option.variant ? option.variant : "outlined"}
             >
               {option.text}
             </Button>
           ))}
-          <Button onClick={onCancel} color="primary">
-            {dialogState.buttonTextCancel}
-          </Button>
         </DialogActions>
       </Dialog>
     ) : null

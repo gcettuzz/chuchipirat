@@ -355,13 +355,15 @@ export default class UsedRecipes {
 
     selectedMenues.forEach((menueUid) => {
       menueplan.menues[menueUid].mealRecipeOrder.forEach((mealRecipeUid) => {
-        usedRecipesList.push({
-          uid: menueplan.mealRecipes[mealRecipeUid].recipe.recipeUid,
-          recipeType: menueplan.mealRecipes[mealRecipeUid].recipe.type,
-          createdFromUid:
-            menueplan.mealRecipes[mealRecipeUid].recipe.createdFromUid,
-          eventUid: menueplan.uid,
-        });
+        if (menueplan.mealRecipes[mealRecipeUid].recipe) {
+          usedRecipesList.push({
+            uid: menueplan.mealRecipes[mealRecipeUid].recipe.recipeUid,
+            recipeType: menueplan.mealRecipes[mealRecipeUid].recipe.type,
+            createdFromUid:
+              menueplan.mealRecipes[mealRecipeUid].recipe.createdFromUid,
+            eventUid: menueplan.uid,
+          });
+        }
       });
     });
     // Doppelte Werte löschen

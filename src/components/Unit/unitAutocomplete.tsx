@@ -1,16 +1,19 @@
 import React from "react";
-import {useTheme} from "@material-ui/core/styles";
+import {useTheme} from "@mui/material/styles";
 
-import useMediaQuery from "@material-ui/core/useMediaQuery";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
-import TextField from "@material-ui/core/TextField";
-import Autocomplete, {
-  AutocompleteChangeReason,
-} from "@material-ui/lab/Autocomplete";
+import {TextField, Autocomplete} from "@mui/material";
 
-import Unit, {UnitDimension} from "./unit.class";
+import Unit from "./unit.class";
 
-import {FIELD_UNIT, ABBREVIATION_UNIT} from "../../constants/text";
+import {
+  FIELD_UNIT,
+  ABBREVIATION_UNIT,
+  ERROR_NO_OPTIONS,
+} from "../../constants/text";
+import {AutocompleteChangeReason} from "@mui/material";
+import {TextFieldSize} from "../../constants/defaultValues";
 
 interface UnitAutocompleteProps {
   componentKey?: string;
@@ -18,10 +21,11 @@ interface UnitAutocompleteProps {
   units: Unit[];
   onChange: (
     event: React.ChangeEvent<HTMLInputElement>,
-    newValue: Unit | null, // string | Unit
+    newValue: Unit | null,
     action: AutocompleteChangeReason,
     objectId: string
   ) => void;
+  size?: TextFieldSize;
 }
 // ===================================================================== */
 /**
@@ -34,20 +38,20 @@ const UnitAutocomplete = ({
   unitKey,
   units,
   onChange,
+  size = TextFieldSize.medium,
 }: UnitAutocompleteProps) => {
   const theme = useTheme();
-  const breakpointIsXs = useMediaQuery(theme.breakpoints.down("xs"));
+  const breakpointIsXs = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
     <Autocomplete
       key={componentKey ? "unit_" + componentKey : "unit"}
       id={componentKey ? "unit_" + componentKey : "unit"}
-      value={{key: unitKey, name: "", dimension: UnitDimension.dimensionless}}
+      value={units.find((unit) => unit.key === unitKey) ?? null}
       options={units}
       autoSelect
       autoHighlight
-      // getOptionSelected={(unit) => unit.key === unitKey}
-      getOptionSelected={(option) => option.key === unitKey}
+      isOptionEqualToValue={(option) => option.key === unitKey}
       getOptionLabel={(option) => {
         if (typeof option === "string") {
           return option;
@@ -57,6 +61,7 @@ const UnitAutocomplete = ({
         }
         return option.name;
       }}
+      noOptionsText={ERROR_NO_OPTIONS}
       onChange={(event, newValue, action) => {
         onChange(
           event as unknown as React.ChangeEvent<HTMLInputElement>,
@@ -68,10 +73,9 @@ const UnitAutocomplete = ({
       fullWidth
       renderInput={(params) => (
         <TextField
-          // value={ingredient.unit}
           {...params}
+          size={size}
           label={breakpointIsXs ? ABBREVIATION_UNIT : FIELD_UNIT}
-          size="small"
         />
       )}
     />

@@ -3,10 +3,9 @@ import {compose} from "react-recompose";
 import {pdf} from "@react-pdf/renderer";
 import fileSaver from "file-saver";
 
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 import {
   Container,
-  Grid,
   Card,
   CardContent,
   Backdrop,
@@ -23,13 +22,15 @@ import {
   DialogActions,
   Button,
   TextField,
-} from "@material-ui/core";
+  Box,
+  Stack,
+} from "@mui/material";
 
 import {
   OpenInNew as OpenInNewIcon,
   MoreVert as MoreVertIcon,
   Receipt as ReceiptIcon,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 import PageTitle from "../Shared/pageTitle";
 
@@ -66,6 +67,7 @@ import {
   EMAIL as TEXT_EMAIL,
   AMOUNT as TEXT_AMOUNT,
   SUFFIX_PDF as TEXT_SUFFIX_PDF,
+  FROM as TEXT_FROM,
 } from "../../constants/text";
 import AlertMessage from "../Shared/AlertMessage";
 import SearchPanel from "../Shared/searchPanel";
@@ -80,18 +82,12 @@ import DialogEventQuickView from "../Event/Event/dialogEventQuickView";
 import {useHistory} from "react-router";
 import Action from "../../constants/actions";
 import User from "../User/user.class";
-import {
-  KeyboardDatePicker,
-  MuiPickersUtilsProvider,
-} from "@material-ui/pickers";
 
-import format from "date-fns/format";
-import deLocale from "date-fns/locale/de";
-import DateFnsUtils from "@date-io/date-fns";
 import EventReceiptPdf from "../Event/Event/eventRecipePdf";
 import Receipt from "../Event/Event/receipt.class";
 import Utils from "../Shared/utils.class";
 import {SortOrder} from "../Firebase/Db/firebase.db.super.class";
+import {DatePicker} from "@mui/x-date-pickers";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -234,11 +230,7 @@ const eventsReducer = (state: State, action: DispatchAction): State => {
       throw new Error();
   }
 };
-class DeLocalizedUtils extends DateFnsUtils {
-  getDatePickerHeaderText(date) {
-    return format(date, "dd.MM.yyyy", {locale: this.locale});
-  }
-}
+
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
@@ -257,13 +249,12 @@ const OverviewEventsBase: React.FC<
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
   const [state, dispatch] = React.useReducer(eventsReducer, inititialState);
-  const [searchString, setSearchString] = React.useState<string>("");
   const [dialogQuickView, setDialogQuickView] =
     React.useState<DialogQuickViewState>(DIALOG_QUICK_VIEW_INITIAL_STATE);
   const [dialogCreateReceipt, setDialogCreateReceipt] = React.useState(
     DIALOG_CREATE_RECEIPT_INITIAL_STATE
   );
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {push} = useHistory();
 
   /* ------------------------------------------
@@ -298,28 +289,6 @@ const OverviewEventsBase: React.FC<
     return null;
   }
 
-  /* ------------------------------------------
-  // Search String Handling
-  // ------------------------------------------ */
-  const onUpdateSearchString = (
-    event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
-  ) => {
-    setSearchString(event.target.value);
-
-    dispatch({
-      type: ReducerActions.FILTER_EVENTS_LIST,
-      payload: {
-        searchString: event.target.value,
-      },
-    });
-  };
-  const onClearSearchString = () => {
-    setSearchString("");
-    dispatch({
-      type: ReducerActions.FILTER_EVENTS_LIST,
-      payload: {searchString: ""},
-    });
-  };
   /* ------------------------------------------
   // Quick-View Dialog öffnen
   // ------------------------------------------ */
@@ -424,40 +393,26 @@ const OverviewEventsBase: React.FC<
         subTitle={TEXT_OVERVIEW_EVENTS_DESCRIPTION}
       />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="md">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="xl">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
-        {state.error && (
-          <Grid item key={"error"} xs={12}>
+        <Stack>
+          {state.error && (
             <AlertMessage
               error={state.error!}
               messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
             />
-          </Grid>
-        )}
+          )}
 
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <Card className={classes.card} key={"cardProductsPanel"}>
-              <CardContent>
-                <SearchPanel
-                  searchString={searchString}
-                  onUpdateSearchString={onUpdateSearchString}
-                  onClearSearchString={onClearSearchString}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12}>
-            <EventsPanel
-              events={state.filteredData}
-              onEventOpen={onEventOpen}
-              onCreateReceipt={onCreateReceipt}
-            />
-          </Grid>
-        </Grid>
+          <EventsPanel
+            events={state.events}
+            filteredData={state.filteredData}
+            onEventOpen={onEventOpen}
+            onCreateReceipt={onCreateReceipt}
+            dispatch={dispatch}
+          />
+        </Stack>{" "}
       </Container>
       <DialogEventQuickView
         firebase={firebase}
@@ -479,6 +434,7 @@ const OverviewEventsBase: React.FC<
           },
         ]}
       />
+
       <DialogCreateReceipt
         dialogData={dialogCreateReceipt}
         handleClose={onCreateReceiptClose}
@@ -491,18 +447,23 @@ const OverviewEventsBase: React.FC<
 // =========================== Event Panel ===========================
 // =================================================================== */
 interface EventsPanelProps {
-  events: EventOverview[];
+  events: EventShort[];
+  filteredData: EventOverview[];
   onEventOpen: (eventUid: EventShort["uid"]) => void;
   onCreateReceipt: (eventUid: EventShort["uid"]) => void;
+  dispatch: (value: DispatchAction) => void;
 }
 
 const EventsPanel = ({
   events,
+  filteredData,
   onEventOpen,
   onCreateReceipt,
+  dispatch,
 }: EventsPanelProps) => {
   const theme = useTheme();
-  const classes = useStyles();
+  const classes = useCustomStyles();
+  const [searchString, setSearchString] = React.useState<string>("");
   const [contextMenuAnchorElement, setContextMenuAnchorElement] =
     React.useState<HTMLElement | null>(null);
   const [contextMenuSelectedItem, setContextMenuSelectedItem] =
@@ -516,6 +477,29 @@ const EventsPanel = ({
     onCreateReceipt(contextMenuSelectedItem);
     setContextMenuAnchorElement(null);
     setContextMenuSelectedItem("");
+  };
+
+  /* ------------------------------------------
+  // Search String Handling
+  // ------------------------------------------ */
+  const onUpdateSearchString = (
+    event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
+  ) => {
+    setSearchString(event.target.value);
+
+    dispatch({
+      type: ReducerActions.FILTER_EVENTS_LIST,
+      payload: {
+        searchString: event.target.value,
+      },
+    });
+  };
+  const onClearSearchString = () => {
+    setSearchString("");
+    dispatch({
+      type: ReducerActions.FILTER_EVENTS_LIST,
+      payload: {searchString: ""},
+    });
   };
 
   /* ------------------------------------------
@@ -669,29 +653,48 @@ const EventsPanel = ({
 
   return (
     <React.Fragment>
-      <Card className={classes.card} key={"cardProductsPanel"}>
-        <CardContent className={classes.cardContent} key={"cardPrdocutContent"}>
-          <Typography gutterBottom={true} variant="h5" component="h2">
-            {events.length} {TEXT_EVENTS}
-          </Typography>
-
-          <DataGrid
-            autoHeight
-            rows={events}
-            columns={DATA_GRID_COLUMNS}
-            getRowId={(row) => row.uid}
-            localeText={deDE.props.MuiDataGrid.localeText}
-            getRowClassName={(params) => {
-              if (params.row?.disabled) {
-                return `super-app ${classes.dataGridDisabled}`;
-              } else {
-                return `super-app-theme`; // Fehlendes 'return' ergänzt
-              }
-            }}
-            components={{
-              Toolbar: GridToolbar,
-            }}
-          />
+      <Card sx={classes.card} key={"cardProductsPanel"}>
+        <CardContent sx={classes.cardContent} key={"cardPrdocutContent"}>
+          <Stack>
+            <SearchPanel
+              searchString={searchString}
+              onUpdateSearchString={onUpdateSearchString}
+              onClearSearchString={onClearSearchString}
+            />
+            <Typography
+              variant="body2"
+              style={{marginTop: "0.5em", marginBottom: "2em"}}
+            >
+              {events.length == filteredData.length
+                ? `${events.length} ${TEXT_EVENTS}`
+                : `${filteredData.length} ${TEXT_FROM.toLowerCase()} ${
+                    events.length
+                  } ${TEXT_EVENTS}`}
+            </Typography>
+            <Box component="div" style={{display: "flex", height: "100%"}}>
+              <Box component="div" style={{flexGrow: 1}}>
+                <DataGrid
+                  autoHeight
+                  rows={filteredData}
+                  columns={DATA_GRID_COLUMNS}
+                  getRowId={(row) => row.uid}
+                  localeText={
+                    deDE.components.MuiDataGrid.defaultProps.localeText
+                  }
+                  getRowClassName={(params) => {
+                    if (params.row?.disabled) {
+                      return `super-app ${classes.dataGridDisabled}`;
+                    } else {
+                      return `super-app-theme`;
+                    }
+                  }}
+                  components={{
+                    Toolbar: GridToolbar,
+                  }}
+                />
+              </Box>
+            </Box>
+          </Stack>
         </CardContent>
       </Card>
 
@@ -727,7 +730,7 @@ const DialogCreateReceipt = ({
   handleClose,
   handleOk: handleOkSuper,
 }: DialogCreateReceiptProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const [dialogValues, setDialogValues] = React.useState(
     DIALOG_CREATE_RECEIPT_INITIAL_STATE
   );
@@ -768,77 +771,58 @@ const DialogCreateReceipt = ({
     >
       <DialogTitle>{TEXT_CREATE_RECEIPT}</DialogTitle>
       <DialogContent>
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <TextField
-              id="eventUid"
-              fullWidth
-              label={TEXT_UID}
-              value={dialogValues.eventUid}
-              disabled={true}
-              className={classes.typographyCode}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              id="eventName"
-              fullWidth
-              value={dialogValues.eventName}
-              label={TEXT_EVENT}
-              onChange={onFieldChange}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <MuiPickersUtilsProvider utils={DeLocalizedUtils} locale={deLocale}>
-              <KeyboardDatePicker
-                disableToolbar
-                format="dd.MM.yyyy"
-                id={"payDate"}
-                key={"payDate"}
-                label={TEXT_PAY_DATE}
-                value={dialogValues.payDate}
-                fullWidth
-                onChange={(date) => {
-                  setDialogValues({...dialogValues, payDate: date as Date});
-                }}
-                KeyboardButtonProps={{
-                  "aria-label": "Datum",
-                }}
-              />
-            </MuiPickersUtilsProvider>
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              id="donorName"
-              fullWidth
-              value={dialogValues.donorName}
-              label={TEXT_DONOR}
-              onChange={onFieldChange}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              id="donorEmail"
-              fullWidth
-              value={dialogValues.donorEmail}
-              label={`${TEXT_DONOR} ${TEXT_EMAIL}`}
-              onChange={onFieldChange}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              id="amount"
-              fullWidth
-              value={dialogValues.amount}
-              label={TEXT_AMOUNT}
-              onChange={onFieldChange}
-              inputProps={{
-                inputMode: "numeric",
-                pattern: "[0-9]*",
-              }}
-            />
-          </Grid>
-        </Grid>
+        <Stack spacing={2}>
+          <TextField
+            id="eventUid"
+            fullWidth
+            label={TEXT_UID}
+            value={dialogValues.eventUid}
+            disabled={true}
+            sx={classes.typographyCode}
+          />
+          <TextField
+            id="eventName"
+            fullWidth
+            value={dialogValues.eventName}
+            label={TEXT_EVENT}
+            onChange={onFieldChange}
+          />
+          <DatePicker
+            key={"payDate"}
+            label={TEXT_PAY_DATE}
+            inputFormat="dd.MM.yyyy"
+            value={dialogValues.payDate}
+            onChange={(date) => {
+              setDialogValues({...dialogValues, payDate: date as Date});
+            }}
+            renderInput={(params) => <TextField {...params} />}
+          />
+          <TextField
+            id="donorName"
+            fullWidth
+            value={dialogValues.donorName}
+            label={TEXT_DONOR}
+            onChange={onFieldChange}
+          />
+          <TextField
+            id="donorEmail"
+            fullWidth
+            value={dialogValues.donorEmail}
+            label={`${TEXT_DONOR} ${TEXT_EMAIL}`}
+            onChange={onFieldChange}
+          />
+          <TextField
+            id="amount"
+            fullWidth
+            value={dialogValues.amount}
+            label={TEXT_AMOUNT}
+            onChange={onFieldChange}
+            inputProps={{
+              inputMode: "numeric",
+              pattern: "[0-9]*",
+            }}
+          />
+        </Stack>
       </DialogContent>
       <DialogActions>
         <Button color="primary" onClick={handleClose}>

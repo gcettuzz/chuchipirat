@@ -1,6 +1,5 @@
-import React from "react";
+import React, {SyntheticEvent} from "react";
 import {compose} from "react-recompose";
-import CssBaseline from "@material-ui/core/CssBaseline";
 
 import {
   Container,
@@ -9,12 +8,15 @@ import {
   Divider,
   Card,
   CardContent,
-  Grid,
   Backdrop,
   CircularProgress,
   Select,
   MenuItem,
-} from "@material-ui/core";
+  SnackbarCloseReason,
+  Stack,
+  SelectChangeEvent,
+} from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 
 import {
   NAME as TEXT_NAME,
@@ -42,7 +44,7 @@ import DialogCreateUnit from "./dialogCreateUnit";
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
 import AlertMessage from "../Shared/AlertMessage";
 
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
 import Unit, {UnitDimension} from "./unit.class";
 import withEmailVerification from "../Session/withEmailVerification";
@@ -209,7 +211,7 @@ const UnitsBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
   ...props
 }) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(unitsReducer, inititialState);
 
@@ -242,9 +244,7 @@ const UnitsBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
   // onChangeField
   // ------------------------------------------ */
   const onChangeField = (
-    event:
-      | React.ChangeEvent<HTMLInputElement>
-      | React.ChangeEvent<{value: unknown}>
+    event: React.ChangeEvent<HTMLInputElement> | SelectChangeEvent
   ) => {
     const unitField = event.target.name.split("_");
 
@@ -315,8 +315,8 @@ const UnitsBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
   // Snackback schliessen
   // ------------------------------------------ */
   const handleSnackbarClose = (
-    event: React.SyntheticEvent | React.MouseEvent,
-    reason?: string
+    event: Event | SyntheticEvent<any, Event>,
+    reason: SnackbarCloseReason
   ) => {
     if (reason === "clickaway") {
       return;
@@ -329,7 +329,6 @@ const UnitsBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
 
   return (
     <React.Fragment>
-      <CssBaseline />
       {/*===== HEADER ===== */}
       <PageTitle title={TEXT_UNITS} />
       <ButtonRow
@@ -365,28 +364,25 @@ const UnitsBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
         ]}
       />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="sm">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="sm">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        <Grid container spacing={2}>
+        <Stack spacing={2}>
           {state.isError && (
-            <Grid item key={"error"} xs={12}>
-              <AlertMessage
-                error={state.error as Error}
-                messageTitle={TEXT_ALERT_TITLE_UUPS}
-              />
-            </Grid>
+            <AlertMessage
+              error={state.error as Error}
+              messageTitle={TEXT_ALERT_TITLE_UUPS}
+            />
           )}
           {/* Tabelle */}
-          <Grid item key={"error"} xs={12}>
-            <TablePanel
-              units={state.units}
-              editMode={editMode}
-              onChangeField={onChangeField}
-            />
-          </Grid>
-        </Grid>
+          <TablePanel
+            units={state.units}
+            editMode={editMode}
+            onChangeField={onChangeField}
+            onChangeSelect={onChangeField}
+          />
+        </Stack>
       </Container>
       <DialogCreateUnit
         dialogOpen={unitCreateValues.popUpOpen}
@@ -407,35 +403,37 @@ const UnitsBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
 // =================================================================== */
 interface TablePanelProps {
   units: Unit[];
-  onChangeField: (
-    event:
-      | React.ChangeEvent<HTMLInputElement>
-      | React.ChangeEvent<{value: unknown}>
-  ) => void;
+  onChangeField: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onChangeSelect: (event: SelectChangeEvent) => void;
   editMode: boolean;
 }
-const TablePanel = ({units, onChangeField, editMode}: TablePanelProps) => {
-  const classes = useStyles();
+const TablePanel = ({
+  units,
+  onChangeField,
+  onChangeSelect,
+  editMode,
+}: TablePanelProps) => {
+  const classes = useCustomStyles();
 
   return (
     <React.Fragment>
-      <Card className={classes.card} key={"cardUnits"}>
-        <CardContent className={classes.cardContent} key={"cardContentUnits"}>
+      <Card sx={classes.card} key={"cardUnits"}>
+        <CardContent sx={classes.cardContent} key={"cardContentUnits"}>
           {editMode ? (
             <Grid container spacing={2}>
-              <Grid item xs={4}>
+              <Grid xs={4}>
                 <Typography variant="subtitle1">{TEXT_UNIT}</Typography>
               </Grid>
-              <Grid item xs={4}>
+              <Grid xs={4}>
                 <Typography variant="subtitle1">{TEXT_NAME}</Typography>
               </Grid>
-              <Grid item xs={4}>
+              <Grid xs={4}>
                 <Typography variant="subtitle1">{TEXT_DIMENSION}</Typography>
               </Grid>
               <Divider />
               {units.map((unit) => (
                 <React.Fragment key={"unitFragment_" + unit.key}>
-                  <Grid item xs={4} key={"gridItemKey_" + unit.key}>
+                  <Grid xs={4} key={"gridItemKey_" + unit.key}>
                     <TextField
                       id={"key_" + unit.key}
                       key={"key_" + unit.key}
@@ -445,7 +443,7 @@ const TablePanel = ({units, onChangeField, editMode}: TablePanelProps) => {
                       fullWidth
                     />
                   </Grid>
-                  <Grid item xs={4} key={"gridItemName_" + unit.key}>
+                  <Grid xs={4} key={"gridItemName_" + unit.key}>
                     <TextField
                       id={"name_" + unit.key}
                       key={"name_" + unit.key}
@@ -455,13 +453,13 @@ const TablePanel = ({units, onChangeField, editMode}: TablePanelProps) => {
                       fullWidth
                     />
                   </Grid>
-                  <Grid item xs={4} key={"gridItemDim_" + unit.key}>
+                  <Grid xs={4} key={"gridItemDim_" + unit.key}>
                     <Select
                       labelId="unit-dimension"
                       id={"dimension_" + unit.key}
                       name={"dimension_" + unit.key}
                       value={unit.dimension}
-                      onChange={onChangeField}
+                      onChange={onChangeSelect}
                       fullWidth
                     >
                       <MenuItem value={UnitDimension.volume}>
@@ -474,15 +472,8 @@ const TablePanel = ({units, onChangeField, editMode}: TablePanelProps) => {
                         {TEXT_UNIT_DIMENSION[UnitDimension.dimensionless]}
                       </MenuItem>
                     </Select>
-                    {/* <TextField
-                      id={"dim_" + unit.key}
-                      key={"dim_" + unit.key}
-                      value={unit.dimension}
-                      onChange={onChangeField}
-                      fullWidth
-                    /> */}
                   </Grid>
-                  <Grid item xs={12} key={"gridItemDivider_" + unit.key}>
+                  <Grid xs={12} key={"gridItemDivider_" + unit.key}>
                     <Divider />
                   </Grid>
                 </React.Fragment>

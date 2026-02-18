@@ -1,13 +1,14 @@
 import React from "react";
 
-import Dialog from "@material-ui/core/Dialog";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogContentText from "@material-ui/core/DialogContentText";
-import DialogActions from "@material-ui/core/DialogActions";
-
-import Button from "@material-ui/core/Button";
-import TextField from "@material-ui/core/TextField";
+import {
+  Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+} from "@mui/material";
 
 import {
   GIVE_UNIT as TEXT_GIVE_UNIT,
@@ -18,7 +19,7 @@ import {
   CANCEL as TEXT_CANCEL,
   CREATE as TEXT_CREATE,
 } from "../../constants/text";
-import Unit from "./unit.class";
+import Unit, {UnitDimension} from "./unit.class";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -85,7 +86,11 @@ const DialogCreateUnit = ({
     if (hasError) {
       return;
     }
-    handleCreate({key: formFields.key, name: formFields.name});
+    handleCreate({
+      key: formFields.key,
+      name: formFields.name,
+      dimension: UnitDimension.dimensionless,
+    });
     setFormFields(UNIT_ADD_INITIAL_STATE);
   };
   /* ------------------------------------------

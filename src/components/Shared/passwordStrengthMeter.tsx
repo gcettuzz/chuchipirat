@@ -1,9 +1,7 @@
 import React from "react";
-import {makeStyles} from "@material-ui/core/styles";
 import * as TEXT from "../../constants/text";
 
-import Typography from "@material-ui/core/Typography";
-import LinearProgress from "@material-ui/core/LinearProgress";
+import {Typography, LinearProgress} from "@mui/material";
 
 import zxcvbn from "zxcvbn";
 // ===================================================================
@@ -26,44 +24,6 @@ const getPasswordLabel = (result) => {
       return TEXT.PASSWORD_STRENGTH_METER.WEAK;
   }
 };
-const useStyles = makeStyles({
-  // Farben aus Material UI-Palette. Jeweils die 700 und 200 Variante
-  // Strength 0 = rot
-  colorPrimaryStrength0: {
-    backgroundColor: "#d32f2f",
-  },
-  barColorPrimaryStrength0: {
-    backgroundColor: "#ef9a9a",
-  },
-  // Strength 1 = rot
-  colorPrimaryStrength1: {
-    backgroundColor: "#d32f2f",
-  },
-  barColorPrimaryStrength1: {
-    backgroundColor: "#ef9a9a",
-  },
-  // Strength 2 = orange
-  colorPrimaryStrength2: {
-    backgroundColor: "#ffa000",
-  },
-  barColorPrimaryStrength2: {
-    backgroundColor: "#ffe082",
-  },
-  // Strength 3 = blau
-  colorPrimaryStrength3: {
-    backgroundColor: "#1976d2",
-  },
-  barColorPrimaryStrength3: {
-    backgroundColor: "#90caf9",
-  },
-  // Strength 4 = grün
-  colorPrimaryStrength4: {
-    backgroundColor: "#388e3c",
-  },
-  barColorPrimaryStrength4: {
-    backgroundColor: "#a5d6a7",
-  },
-});
 // ===================================================================
 // ====================== Password-Strengh-Meter =====================
 // ===================================================================
@@ -73,50 +33,36 @@ interface PasswordStrengthMeterProps {
 
 const PasswordStrengthMeter = ({password}: PasswordStrengthMeterProps) => {
   const testedResult = zxcvbn(password);
-  const classes = useStyles();
+
   return (
     <React.Fragment>
       <LinearProgress
         variant="determinate"
         value={(100 / 4) * testedResult.score}
-        classes={
+        color={
           !password
-            ? undefined
-            : testedResult.score === 0
-            ? {
-                colorPrimary: classes.colorPrimaryStrength0,
-                barColorPrimary: classes.barColorPrimaryStrength0,
-              }
+            ? "primary"
+            : testedResult.score === 0 && password.length > 0
+            ? "error"
             : testedResult.score === 1
-            ? {
-                colorPrimary: classes.colorPrimaryStrength1,
-                barColorPrimary: classes.barColorPrimaryStrength1,
-              }
+            ? "error"
             : testedResult.score === 2
-            ? {
-                colorPrimary: classes.colorPrimaryStrength2,
-                barColorPrimary: classes.barColorPrimaryStrength2,
-              }
+            ? "warning"
             : testedResult.score === 3
-            ? {
-                colorPrimary: classes.colorPrimaryStrength3,
-                barColorPrimary: classes.barColorPrimaryStrength3,
-              }
+            ? "info"
             : testedResult.score === 4
-            ? {
-                colorPrimary: classes.colorPrimaryStrength4,
-                barColorPrimary: classes.barColorPrimaryStrength4,
-              }
-            : undefined
+            ? "success"
+            : "primary"
         }
       />
       <br />
-      {password && (
-        <Typography>
-          {TEXT.PASSWORD_HOW_STRONG_IS_IT}
+
+      <Typography>
+        {TEXT.PASSWORD_HOW_STRONG_IS_IT}
+        {password.length > 0 && (
           <strong>{getPasswordLabel(testedResult)}</strong>
-        </Typography>
-      )}
+        )}
+      </Typography>
     </React.Fragment>
   );
 };

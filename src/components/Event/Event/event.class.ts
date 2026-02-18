@@ -342,7 +342,7 @@ export default class Event {
     if (formValidation.length != 0) {
       throw new FieldValidationError(
         TEXT_ERROR_FORM_VALIDATION,
-        formValidation
+        formValidation,
       );
     }
   }
@@ -529,7 +529,7 @@ export default class Event {
           uid: cook.uid,
           field: UserPublicProfileStatsFields.noEvents,
           step: 1,
-        })
+        }),
       );
       // Feed Eintrag
       Feed.createFeedEntry({
@@ -541,6 +541,10 @@ export default class Event {
         objectUid: eventData.uid,
         objectName: eventData.name,
         objectPictureSrc: eventData.pictureSrc,
+        additionalData: {
+          location: eventData.location,
+          duration: eventData.numberOfDays,
+        },
       });
     }
 
@@ -653,7 +657,7 @@ export default class Event {
           (error) => {
             console.error(error);
             throw error;
-          }
+          },
         );
       })
       .then(async () => {
@@ -662,7 +666,7 @@ export default class Event {
           (error) => {
             console.error(error);
             throw error;
-          }
+          },
         );
       })
       .then(async () => {
@@ -683,7 +687,7 @@ export default class Event {
             field: UserPublicProfileStatsFields.noEvents,
             uid: cook.uid,
             step: -1,
-          })
+          }),
         );
       })
       .then(async () => {
@@ -1000,23 +1004,23 @@ export default class Event {
     event,
     menuplan,
   }: CheckIfDeletedDayArePlanned) => {
-    const newDayList = Menuplan._getEventDateList({event: event}).map((date) =>
-      Utils.dateAsString(date)
+    const newDayList = Menuplan.getEventDateList({event: event}).map((date) =>
+      Utils.dateAsString(date),
     );
     const menuplanDates = menuplan.dates.map((date) =>
-      Utils.dateAsString(date)
+      Utils.dateAsString(date),
     );
 
     const missingDates = menuplanDates.filter(
-      (date) => !newDayList.includes(date)
+      (date) => !newDayList.includes(date),
     );
 
     const affectedMeals = Object.values(menuplan.meals).filter((meal) =>
-      missingDates.includes(meal.date)
+      missingDates.includes(meal.date),
     );
     const affectedMenues: Menue["uid"][] = affectedMeals.reduce<Menue["uid"][]>(
       (accumulator, meal) => accumulator.concat(meal.menuOrder),
-      []
+      [],
     );
 
     const planedObjects = affectedMenues.reduce<number>(
@@ -1028,7 +1032,7 @@ export default class Event {
           menuplan.menues[mealUid].materialOrder.length
         );
       },
-      0
+      0,
     );
     return Boolean(planedObjects !== 0);
   };

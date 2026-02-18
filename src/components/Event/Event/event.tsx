@@ -1,4 +1,4 @@
-import React from "react";
+import React, {SyntheticEvent} from "react";
 import {compose} from "react-recompose";
 
 import {useHistory} from "react-router";
@@ -11,12 +11,14 @@ import {
   Tabs,
   Tab,
   useTheme,
-  Grid,
+  Stack,
   Button,
   Typography,
-} from "@material-ui/core";
+  Box,
+  SnackbarCloseReason,
+} from "@mui/material";
 
-import useStyles from "../../../constants/styles";
+import useCustomStyles from "../../../constants/styles";
 
 import Event, {EventRefDocuments} from "./event.class";
 import PageTitle from "../../Shared/pageTitle";
@@ -46,6 +48,9 @@ import {
   CANCEL as TEXT_CANCEL,
   DELETE as TEXT_DELETE,
   DB_DOCUMENT_DELETED as TEXT_DB_DOCUMENT_DELETED,
+  CONSISTENCY_CHECK as TEXT_CONSISTENCY_CHECK,
+  MENUPLAN_CONSISTENCY_CHECK_FIXES_APPLIED as TEXT_MENUPLAN_CONSISTENCY_CHECK_FIXES_APPLIED,
+  MENUPLAN_CONSISTENCY_CHECK_NO_ISSUES as TEXT_MENUPLAN_CONSISTENCY_CHECK_NO_ISSUES,
 } from "../../../constants/text";
 
 import {HOME as ROUTE_HOME} from "../../../constants/routes";
@@ -93,6 +98,8 @@ import {CustomRouterProps} from "../../Shared/global.interface";
 import withEmailVerification from "../../Session/withEmailVerification";
 import AlertMessage from "../../Shared/AlertMessage";
 import Stats, {StatsField} from "../../Shared/stats.class";
+import {logEvent} from "firebase/analytics";
+import FirebaseAnalyticEvent from "../../../constants/firebaseEvent";
 
 /* ===================================================================
 // ============================== Global =============================
@@ -144,7 +151,7 @@ export enum MasterDataCreateType {
   PRODUCT = "PRODUCT",
 }
 
-function tabProps(index) {
+function tabProps(index: number) {
   return {
     id: `scrollable-auto-tab-${index}`,
     "aria-controls": `scrollable-auto-tabpanel-${index}`,
@@ -193,10 +200,73 @@ enum ReducerActions {
   SNACKBAR_SHOW,
   GENERIC_ERROR,
 }
-type DispatchAction = {
-  type: ReducerActions;
-  payload: {[key: string]: any};
-};
+type DispatchAction =
+  | {
+      type:
+        | ReducerActions.EVENT_FETCH_INIT
+        | ReducerActions.EVENT_SAVE_INIT
+        | ReducerActions.EVENT_SAVE_SUCCESS
+        | ReducerActions.EVENT_DELETE_START
+        | ReducerActions.GROUP_CONFIG_FETCH_INIT
+        | ReducerActions.MENUPLAN_FETCH_INIT
+        | ReducerActions.USED_RECIPES_FETCH_INIT
+        | ReducerActions.SHOPPINGLIST_COLLECTION_FETCH_INIT
+        | ReducerActions.SHOPPINGLIST_FETCH_INIT
+        | ReducerActions.MATERIALLIST_FETCH_INIT
+        | ReducerActions.RECIPE_LIST_FETCH_INIT
+        | ReducerActions.UNTIS_FETCH_INIT
+        | ReducerActions.PRODUCTS_FETCH_INIT
+        | ReducerActions.MATERIALS_FETCH_INIT
+        | ReducerActions.DEPARTMENTS_FETCH_INIT
+        | ReducerActions.UNIT_CONVERSION_FETCH_INIT
+        | ReducerActions.SNACKBAR_CLOSE;
+      payload: Record<string, never>;
+    }
+  | {type: ReducerActions.EVENT_FETCH_SUCCESS; payload: Event}
+  | {
+      type: ReducerActions.GROUP_CONFIG_FETCH_SUCCESS;
+      payload: EventGroupConfiguration;
+    }
+  | {type: ReducerActions.MENUPLAN_FETCH_SUCCESS; payload: Menuplan}
+  | {type: ReducerActions.USED_RECIPES_FETCH_SUCCESS; payload: UsedRecipes}
+  | {
+      type: ReducerActions.SHOPPINGLIST_COLLECTION_FETCH_SUCCESS;
+      payload: ShoppingListCollection;
+    }
+  | {
+      type: ReducerActions.SHOPPINGLIST_FETCH_SUCCESS_DATA;
+      payload: ShoppingList;
+    }
+  | {
+      type: ReducerActions.SHOPPINGLIST_FETCH_SUCCESS_LISTENER;
+      payload: () => void;
+    }
+  | {type: ReducerActions.MATERIALLIST_FETCH_SUCCESS; payload: MaterialList}
+  | {type: ReducerActions.RECIPE_FETCH_INIT; payload: RecipeShort}
+  | {type: ReducerActions.RECIPE_FETCH_SUCCESS; payload: Recipe}
+  | {type: ReducerActions.RECIPES_FETCH_SUCCESS; payload: Recipes}
+  | {type: ReducerActions.ON_RECIPE_UPDATE; payload: Recipe}
+  | {type: ReducerActions.RECIPE_LIST_FETCH_SUCCESS; payload: RecipeShort[]}
+  | {type: ReducerActions.UNITS_FETCH_SUCCESS; payload: Unit[]}
+  | {type: ReducerActions.PRODUCTS_FETCH_SUCCESS; payload: Product[]}
+  | {type: ReducerActions.MATERIALS_FETCH_SUCCESS; payload: Material[]}
+  | {type: ReducerActions.DEPARTMENTS_FETCH_SUCCESS; payload: Department[]}
+  | {
+      type: ReducerActions.UNIT_CONVERSION_FETCH_SUCCES;
+      payload: {
+        unitConversionBasic: UnitConversionBasic;
+        unitConversionProducts: UnitConversionProducts;
+      };
+    }
+  | {
+      type: ReducerActions.ON_MASTERDATA_CREATE;
+      payload: {type: MasterDataCreateType; value: Material | Product};
+    }
+  | {
+      type: ReducerActions.SNACKBAR_SHOW;
+      payload: {severity: Snackbar["severity"]; message: string};
+    }
+  | {type: ReducerActions.GENERIC_ERROR; payload: Error};
 
 type State = {
   event: Event;
@@ -507,21 +577,33 @@ const eventReducer = (state: State, action: DispatchAction): State => {
         loadingComponents: {...state.loadingComponents, departments: false},
       };
     case ReducerActions.ON_MASTERDATA_CREATE: {
-      const memberName = `${action.payload.type.toLowerCase()}s`;
-      let newValues = state[memberName];
-      const newValue = newValues.find(
-        (value) => value.uid == action.payload.value.uid
-      );
-      // Wenn es das schon gibt, nichts tun
-      if (!newValue) {
-        newValues.push(action.payload.value);
-
-        newValues = Utils.sortArray({
-          array: newValues,
-          attributeName: "name",
-        });
+      if (action.payload.type === MasterDataCreateType.PRODUCT) {
+        let newProducts = [...state.products];
+        const existing = newProducts.find(
+          (value) => value.uid == action.payload.value.uid,
+        );
+        if (!existing) {
+          newProducts.push(action.payload.value as Product);
+          newProducts = Utils.sortArray({
+            array: newProducts,
+            attributeName: "name",
+          });
+        }
+        return {...state, products: newProducts};
+      } else {
+        let newMaterials = [...state.materials];
+        const existing = newMaterials.find(
+          (value) => value.uid == action.payload.value.uid,
+        );
+        if (!existing) {
+          newMaterials.push(action.payload.value as Material);
+          newMaterials = Utils.sortArray({
+            array: newMaterials,
+            attributeName: "name",
+          });
+        }
+        return {...state, materials: newMaterials};
       }
-      return {...state, [memberName]: newValues};
     }
     case ReducerActions.ON_RECIPE_UPDATE: {
       const newRecipe = action.payload as Recipe;
@@ -530,7 +612,7 @@ const eventReducer = (state: State, action: DispatchAction): State => {
       updatedRecipes[newRecipe.uid] = newRecipe;
 
       const arrayIndex = updatedRecipeList.findIndex(
-        (recipeShort) => recipeShort.uid == newRecipe.uid
+        (recipeShort) => recipeShort.uid == newRecipe.uid,
       );
 
       if (arrayIndex !== -1) {
@@ -539,7 +621,7 @@ const eventReducer = (state: State, action: DispatchAction): State => {
       } else {
         // Neues Rezept aufnehmen
         updatedRecipeList.push(
-          RecipeShort.createShortRecipeFromRecipe(newRecipe)
+          RecipeShort.createShortRecipeFromRecipe(newRecipe),
         );
       }
       // Array sortieren
@@ -599,9 +681,11 @@ const eventReducer = (state: State, action: DispatchAction): State => {
         isLoading: false,
         error: action.payload as Error,
       };
-    default:
-      console.error("Unbekannter ActionType: ", action.type);
+    default: {
+      const _exhaustiveCheck: never = action;
+      console.error("Unbekannter ActionType: ", _exhaustiveCheck);
       throw new Error();
+    }
   }
 };
 
@@ -659,7 +743,8 @@ interface LocationState {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const EventPage = (props) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const EventPage = (props: any) => {
   return (
     <AuthUserContext.Consumer>
       {(authUser) => <EventBase {...props} authUser={authUser} />}
@@ -677,7 +762,7 @@ const EventBase: React.FC<
   const {customDialog} = useCustomDialog();
   const {push} = useHistory();
 
-  const classes = useStyles();
+  const classes = useCustomStyles();
   let eventUid = "";
 
   const [state, dispatch] = React.useReducer(eventReducer, INITITIAL_STATE);
@@ -748,7 +833,7 @@ const EventBase: React.FC<
           dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
         });
     } catch (error) {
-      dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+      dispatch({type: ReducerActions.GENERIC_ERROR, payload: error as Error});
     }
     return function cleanup() {
       unsubscribe && unsubscribe();
@@ -839,7 +924,7 @@ const EventBase: React.FC<
                   unitConversionProducts: result,
                 },
               });
-            }
+            },
           );
         })
         .catch((error) => {
@@ -1020,10 +1105,7 @@ const EventBase: React.FC<
   /* ------------------------------------------
   // Tab-Handling
   // ------------------------------------------ */
-  const onTabChange = (
-    event: React.ChangeEvent<Record<string, unknown>>,
-    newValue: number
-  ) => {
+  const onTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
   /* ------------------------------------------
@@ -1049,7 +1131,7 @@ const EventBase: React.FC<
   };
   const onGroupConfigurationUpdate = (
     // Alle Portionen im Menüplan neu berechnen und update
-    groupConfiguration: EventGroupConfiguration
+    groupConfiguration: EventGroupConfiguration,
   ) => {
     const menuplan = Menuplan.recalculatePortions({
       menuplan: state.menuplan,
@@ -1072,7 +1154,7 @@ const EventBase: React.FC<
     // Kein zurückschreiben in den State, da der Listener, das wieder erhält....
   };
   const onShoppingCollectionUpdate = (
-    shoppingListCollection: ShoppingListCollection
+    shoppingListCollection: ShoppingListCollection,
   ) => {
     ShoppingListCollection.save({
       firebase: firebase,
@@ -1265,6 +1347,42 @@ const EventBase: React.FC<
         dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
       });
   };
+  const onEventConsistencyCheck = () => {
+    console.debug("Starte Konsistenzprüfung für Event:");
+    const fixedMenuplan = Menuplan.fixMenuplan(state.menuplan);
+
+    if (!fixedMenuplan.isConsistent) {
+      // Neuer Menüplan speichern
+      onMenuplanUpdate(fixedMenuplan.menuplan);
+
+      // Meldung ausgeben.
+      dispatch({
+        type: ReducerActions.SNACKBAR_SHOW,
+        payload: {
+          severity: "info",
+          message: TEXT_MENUPLAN_CONSISTENCY_CHECK_FIXES_APPLIED,
+        },
+      });
+      logEvent(
+        firebase.analytics,
+        FirebaseAnalyticEvent.menuplanConsistencyCheckErrorsFound,
+      );
+    } else {
+      dispatch({
+        type: ReducerActions.SNACKBAR_SHOW,
+        payload: {
+          severity: "success",
+          message: TEXT_MENUPLAN_CONSISTENCY_CHECK_NO_ISSUES,
+        },
+      });
+      logEvent(
+        firebase.analytics,
+        FirebaseAnalyticEvent.menuplanConsistencyCheckNoErrors,
+      );
+    }
+    console.debug;
+    ("Konsistenzprüfung abgeschlossen.");
+  };
   /* ------------------------------------------
   // Fehlende Daten holen
   // ------------------------------------------ */
@@ -1436,7 +1554,7 @@ const EventBase: React.FC<
                     unitConversionProducts: result,
                   },
                 });
-              }
+              },
             );
           })
           .catch((error) => {
@@ -1505,8 +1623,8 @@ const EventBase: React.FC<
   // Snackback 
   // ------------------------------------------ */
   const handleSnackbarClose = (
-    event: React.SyntheticEvent | React.MouseEvent,
-    reason?: string
+    event: globalThis.Event | SyntheticEvent<Element, globalThis.Event>,
+    reason: SnackbarCloseReason,
   ) => {
     if (reason === "clickaway") {
       return;
@@ -1526,53 +1644,46 @@ const EventBase: React.FC<
           activeTab === EventTabs.menuplan
             ? TEXT_MENUPLAN
             : activeTab === EventTabs.quantityCalculation
-            ? TEXT_QUANTITY_CALCULATION
-            : activeTab === EventTabs.usedRecipes
-            ? TEXT_PLANED_RECIPES
-            : activeTab === EventTabs.shoppingList
-            ? TEXT_SHOPPING_LIST
-            : activeTab === EventTabs.materialList
-            ? TEXT_MATERIAL_LIST
-            : activeTab === EventTabs.eventInfo
-            ? TEXT_EVENT_INFO_SHORT
-            : "xx"
+              ? TEXT_QUANTITY_CALCULATION
+              : activeTab === EventTabs.usedRecipes
+                ? TEXT_PLANED_RECIPES
+                : activeTab === EventTabs.shoppingList
+                  ? TEXT_SHOPPING_LIST
+                  : activeTab === EventTabs.materialList
+                    ? TEXT_MATERIAL_LIST
+                    : activeTab === EventTabs.eventInfo
+                      ? TEXT_EVENT_INFO_SHORT
+                      : "xx"
         }`}
       />
       {/* ===== BODY ===== */}
       <Container
-        className={classes.container}
+        sx={classes.container}
         style={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           marginBottom: theme.spacing(2),
+          width: "auto !important",
         }}
         component="main"
         maxWidth="xl"
       >
         <Backdrop
-          className={classes.backdrop}
+          sx={classes.backdrop}
           open={state.isLoading || state.isSaving}
         >
-          <Grid container spacing={2}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} className={classes.centerCenter}>
-                <CircularProgress color="inherit" />
-              </Grid>
-              {state.isSaving && (
-                <React.Fragment>
-                  <Grid item xs={12} className={classes.centerCenter}>
-                    <Typography>{TEXT_EVENT_IS_BEEING_SAVED}</Typography>
-                  </Grid>
-                  {eventDraft.localPicture && (
-                    <Grid item xs={12} className={classes.centerCenter}>
-                      <Typography>{TEXT_IMAGE_IS_BEEING_UPLOADED}</Typography>
-                    </Grid>
-                  )}
-                </React.Fragment>
-              )}
-            </Grid>
-          </Grid>
+          <Stack spacing={2} sx={classes.centerCenter}>
+            <CircularProgress color="inherit" />
+            {state.isSaving && (
+              <React.Fragment>
+                <Typography>{TEXT_EVENT_IS_BEEING_SAVED}</Typography>
+                {eventDraft.localPicture && (
+                  <Typography>{TEXT_IMAGE_IS_BEEING_UPLOADED}</Typography>
+                )}
+              </React.Fragment>
+            )}
+          </Stack>
         </Backdrop>
         {state.error ? (
           <AlertMessage
@@ -1582,18 +1693,16 @@ const EventBase: React.FC<
           />
         ) : (
           <React.Fragment>
-            <div className={classes.menuplanTabsContainer}>
+            <Box component="div" sx={classes.menuplanTabsContainer}>
               <Tabs
                 value={activeTab}
-                className={classes.menuplanTabs}
+                sx={classes.menuplanTabs}
                 style={{
                   marginBottom: "1rem",
                   display: "flex",
                   justifyContent: "center",
                 }}
                 onChange={onTabChange}
-                indicatorColor="primary"
-                textColor="primary"
                 variant="scrollable"
                 scrollButtons="auto"
                 aria-label="Menuplan Tabs"
@@ -1605,15 +1714,11 @@ const EventBase: React.FC<
                 <Tab label={TEXT_MATERIAL_LIST} {...tabProps(4)} />
                 <Tab label={TEXT_EVENT_INFO_SHORT} {...tabProps(5)} />
               </Tabs>
-            </div>
+            </Box>
             {activeTab == EventTabs.menuplan ? (
               <Container
                 maxWidth="xl"
-                style={{
-                  overflowX: "scroll",
-                  // display: "flex",
-                  // flexDirection: "row",
-                }}
+                style={{width: "auto"}}
                 id="menuplan_page_containter"
               >
                 <MenuplanPage
@@ -1682,7 +1787,7 @@ const EventBase: React.FC<
                   fetchMissingData={fetchMissingData}
                   onShoppingListUpdate={onShoppingListUpdate}
                   onShoppingCollectionUpdate={onShoppingCollectionUpdate}
-                  onMasterdataCreate={onMasterdataCreate}
+                  // onMasterdataCreate={onMasterdataCreate}
                 />
               </Container>
             ) : activeTab == EventTabs.materialList ? (
@@ -1705,32 +1810,50 @@ const EventBase: React.FC<
               </Container>
             ) : (
               <Container>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <EventInfoPage
-                      event={eventDraft.event}
-                      localPicture={eventDraft.localPicture}
-                      formValidation={eventDraft.formValidation}
-                      firebase={firebase}
-                      authUser={authUser}
-                      onUpdateEvent={onEventUpdate}
-                      onUpdatePicture={onEventPictureUpdate}
-                    />
-                  </Grid>
+                <Stack spacing={2}>
+                  <EventInfoPage
+                    event={eventDraft.event}
+                    localPicture={eventDraft.localPicture}
+                    formValidation={eventDraft.formValidation}
+                    firebase={firebase}
+                    authUser={authUser}
+                    onUpdateEvent={onEventUpdate}
+                    onUpdatePicture={onEventPictureUpdate}
+                  />
                   {state.event != eventDraft.event && (
-                    <Grid item xs={12} container justifyContent="flex-end">
+                    <Box
+                      component="div"
+                      sx={{
+                        display: "flex",
+                        justifyContent: {xs: "stretch", sm: "flex-end"},
+                        flexDirection: {xs: "column", sm: "row"},
+                        alignItems: {xs: "stretch", sm: "center"},
+                        gap: 2,
+                      }}
+                    >
                       <Button
-                        className={classes.deleteButton}
+                        sx={classes.deleteButton}
                         variant="outlined"
                         onClick={onEventDelete}
+                        fullWidth
                       >
                         {TEXT_DELETE_EVENT}
                       </Button>
+
                       <Button
                         variant="outlined"
                         color="primary"
-                        style={{marginLeft: "1rem"}}
+                        fullWidth
+                        onClick={onEventConsistencyCheck}
+                      >
+                        {TEXT_CONSISTENCY_CHECK}
+                      </Button>
+
+                      <Button
+                        variant="outlined"
+                        color="primary"
                         onClick={onEventDiscardChanges}
+                        fullWidth
                       >
                         {TEXT_DISCARD_CHANGES}
                       </Button>
@@ -1738,14 +1861,14 @@ const EventBase: React.FC<
                       <Button
                         variant="contained"
                         color="primary"
-                        style={{marginLeft: "1rem"}}
                         onClick={onEventSaveChanges}
+                        fullWidth
                       >
                         {TEXT_SAVE}
                       </Button>
-                    </Grid>
+                    </Box>
                   )}
-                </Grid>
+                </Stack>
               </Container>
             )}
           </React.Fragment>
@@ -1766,5 +1889,5 @@ const condition = (authUser: AuthUser | null) => !!authUser;
 export default compose(
   withEmailVerification,
   withAuthorization(condition),
-  withFirebase
+  withFirebase,
 )(EventPage);

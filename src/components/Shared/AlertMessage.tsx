@@ -1,11 +1,11 @@
 import React from "react";
-import {Alert, AlertTitle, Color} from "@material-ui/lab";
+import {Alert, AlertColor, AlertTitle} from "@mui/material";
 import FirebaseMessageHandler from "../Firebase/firebaseMessageHandler.class";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
 interface AlertMessageProps {
   error?: Error | null;
-  severity?: Color;
+  severity?: AlertColor;
   messageTitle?: string;
   body?: string | JSX.Element;
 }
@@ -19,10 +19,10 @@ const AlertMessage = ({
   messageTitle = "",
   body,
 }: AlertMessageProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   return (
     <React.Fragment>
-      <Alert severity={severity} className={classes.alertMessage}>
+      <Alert severity={severity} sx={classes.alertMessage}>
         {messageTitle && <AlertTitle>{messageTitle}</AlertTitle>}
         <React.Fragment>
           {error && FirebaseMessageHandler.translateMessage(error)}

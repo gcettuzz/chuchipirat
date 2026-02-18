@@ -112,6 +112,13 @@ class FormatedShoppingList {
 
     Object.values(shoppingList.list).forEach((department) => {
       let pageControl = this.pages[this.actualPage].pageControl;
+
+      // Platz prüfen, bevor die Überschrift geschrieben wird
+      this.ensureSpaceForDepartment(pageControl, department.items.length);
+
+      // danach pageControl neu holen (falls Seite/Spalte gewechselt wurde)
+      pageControl = this.pages[this.actualPage].pageControl;
+
       switch (pageControl.actualColum) {
         case Column.LEFT:
           this.pages[this.actualPage].list.push({
@@ -175,7 +182,7 @@ class FormatedShoppingList {
     });
   }
 
-  updatePageControl(pageControl) {
+  updatePageControl(pageControl: PageControl) {
     // Prüfen ob es einen Spalten- oder Seitenumbruch benötigt
     if (
       pageControl.lineCounter === pageControl.maxLines &&
@@ -189,6 +196,48 @@ class FormatedShoppingList {
     ) {
       // Neue Seite anlegen
       this.actualPage++;
+      this.ensurePageExists();
+    }
+  }
+
+  private ensurePageExists() {
+    if (!this.pages[this.actualPage]) {
+      this.pages.push({
+        pageControl: new PageControl(LINES_PER_PAGE.REST),
+        list: [],
+      });
+    }
+  }
+
+  private padToEndOfLeftColumn(pageControl: PageControl) {
+    // LEFT-Spalte bis maxLines auffüllen, damit RIGHT danach immer in list[index] schreiben kann
+    while (pageControl.lineCounter < pageControl.maxLines) {
+      this.pages[this.actualPage].list.push({left: null, right: null});
+      pageControl.lineCounter++;
+    }
+  }
+
+  private ensureSpaceForDepartment(
+    pageControl: PageControl,
+    itemsCount: number
+  ) {
+    // Wenn es keine Items gibt, ist die Regel "mindestens 1 Item unter Titel" nicht erfüllbar – dann lassen wir es zu
+    if (itemsCount <= 0) return;
+
+    const freeLines = pageControl.maxLines - pageControl.lineCounter;
+
+    // Wir brauchen: 1 Zeile Titel + 1 Zeile Item = 2 Zeilen
+    if (freeLines >= 2) return;
+
+    if (pageControl.actualColum === Column.LEFT) {
+      // Frühzeitig in die rechte Spalte wechseln:
+      this.padToEndOfLeftColumn(pageControl); // füllt bis maxLines
+      pageControl.lineCounter = 0;
+      pageControl.actualColum = Column.RIGHT;
+    } else {
+      // In RIGHT gibt es keine "nächste Spalte" auf derselben Seite → nächste Seite
+      this.actualPage++;
+      this.ensurePageExists();
     }
   }
 }
@@ -198,7 +247,7 @@ class PageControl {
   actualColum: Column;
   maxLines: number;
 
-  constructor(maxLines) {
+  constructor(maxLines: number) {
     this.lineCounter = 0;
     this.actualColum = Column.LEFT;
     this.maxLines = maxLines;

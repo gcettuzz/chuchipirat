@@ -1,21 +1,26 @@
 import React from "react";
 import {compose} from "react-recompose";
 
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
-import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-import Typography from "@material-ui/core/Typography";
-import LinearProgress from "@material-ui/core/LinearProgress";
-import Backdrop from "@material-ui/core/Backdrop";
-import CircularProgress from "@material-ui/core/CircularProgress";
-import {AutocompleteChangeReason} from "@material-ui/lab/Autocomplete";
-import Button from "@material-ui/core/Button";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListSubheader from "@material-ui/core/ListSubheader";
+import {
+  ListItemText,
+  Tab,
+  Tabs,
+  useTheme,
+  AutocompleteChangeReason,
+  Container,
+  Backdrop,
+  CircularProgress,
+  Card,
+  CardContent,
+  Typography,
+  LinearProgress,
+  Button,
+  List,
+  ListSubheader,
+  ListItem,
+} from "@mui/material";
 
 import PageTitle from "../Shared/pageTitle";
 import AlertMessage from "../Shared/AlertMessage";
@@ -52,7 +57,6 @@ import Product, {MergeProductsCallbackDocument} from "../Product/product.class";
 import {withFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import ProductAutocomplete from "../Product/productAutocomplete";
-import {ListItemText, Tab, Tabs, useTheme} from "@material-ui/core";
 import {
   STORAGE_OBJECT_PROPERTY,
   SessionStorageHandler,
@@ -261,7 +265,7 @@ const MergeItemsBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
 
   const [state, dispatch] = React.useReducer(
@@ -417,10 +421,7 @@ const MergeItemsBase: React.FC<
   /* ------------------------------------------
 	// Tab-Handler
 	// ------------------------------------------ */
-  const handleTabChange = (
-    event: React.ChangeEvent<Record<string, unknown>>,
-    newValue: number
-  ) => {
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
     dispatch({type: ReducerActions.CLEAR_MERGE_PROTOCOL, payload: {}});
   };
@@ -430,8 +431,8 @@ const MergeItemsBase: React.FC<
       {/*===== HEADER ===== */}
       <PageTitle title={TEXT_MERGE_ITEMS} subTitle={TEXT_TIME_TO_CLEAN_UP} />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="sm">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="sm">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
         {state.error && (
@@ -443,8 +444,6 @@ const MergeItemsBase: React.FC<
         <Tabs
           value={tabValue}
           onChange={handleTabChange}
-          indicatorColor="primary"
-          textColor="primary"
           centered
           style={{marginBottom: theme.spacing(2)}}
         >
@@ -494,11 +493,11 @@ const PanelMergeProducts = ({
   onMergeProducts,
   mergeProtocol,
 }: PanelMergeProductsProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
-    <Card className={classes.card} key={"cardInfo"}>
-      <CardContent className={classes.cardContent} key={"cardContentInfo"}>
+    <Card sx={classes.card} key={"cardInfo"}>
+      <CardContent sx={classes.cardContent} key={"cardContentInfo"}>
         <Typography gutterBottom={true} variant="h5" component="h2">
           {TEXT_MERGE_PRODUCT_SELECTION}
         </Typography>
@@ -545,7 +544,7 @@ const PanelMergeProducts = ({
           disabled={!mergeItems?.product_A?.uid || !mergeItems?.product_B?.uid}
           variant="contained"
           color="primary"
-          className={classes.submit}
+          sx={classes.submit}
           onClick={onMergeProducts}
         >
           {TEXT_MERGE_ITEMS}
@@ -553,49 +552,45 @@ const PanelMergeProducts = ({
         {mergeProtocol !== null && (
           <React.Fragment>
             <br />
-            <Grid item xs={12}>
-              <List
-                subheader={
-                  <ListSubheader component="div" id="subheader-log-result">
-                    {TEXT_LOG}
-                  </ListSubheader>
-                }
-              >
-                <ListItem divider key={"listItem_productA"}>
-                  <ListItemText
-                    primary={`${TEXT_PRODUCT} A: ${mergeProtocol
-                      .productToReplace.name!}`}
-                    secondary={mergeProtocol.productToReplace.uid}
-                  />
-                </ListItem>
-                <ListItem divider key={"listItem_productB"}>
-                  <ListItemText
-                    primary={`${TEXT_PRODUCT} B: ${mergeProtocol.productToReplaceWith.name}`}
-                    secondary={mergeProtocol.productToReplaceWith.uid}
-                  />
-                </ListItem>
-              </List>
+            <List
+              subheader={
+                <ListSubheader component="div" id="subheader-log-result">
+                  {TEXT_LOG}
+                </ListSubheader>
+              }
+            >
+              <ListItem divider key={"listItem_productA"}>
+                <ListItemText
+                  primary={`${TEXT_PRODUCT} A: ${mergeProtocol.productToReplace
+                    .name!}`}
+                  secondary={mergeProtocol.productToReplace.uid}
+                />
+              </ListItem>
+              <ListItem divider key={"listItem_productB"}>
+                <ListItemText
+                  primary={`${TEXT_PRODUCT} B: ${mergeProtocol.productToReplaceWith.name}`}
+                  secondary={mergeProtocol.productToReplaceWith.uid}
+                />
+              </ListItem>
+            </List>
 
-              <br />
-            </Grid>
-            <Grid item xs={12}>
-              <List
-                subheader={
-                  <ListSubheader component="div" id="subheader-merge-result">
-                    {TEXT_CHANGED_DOCUMENTS}
-                  </ListSubheader>
-                }
-              >
-                {mergeProtocol.documentList.map((document, counter) => (
-                  <ListItem divider key={"listItem_" + counter}>
-                    <ListItemText
-                      primary={document.name}
-                      secondary={document.document}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </Grid>
+            <br />
+            <List
+              subheader={
+                <ListSubheader component="div" id="subheader-merge-result">
+                  {TEXT_CHANGED_DOCUMENTS}
+                </ListSubheader>
+              }
+            >
+              {mergeProtocol.documentList.map((document, counter) => (
+                <ListItem divider key={"listItem_" + counter}>
+                  <ListItemText
+                    primary={document.name}
+                    secondary={document.document}
+                  />
+                </ListItem>
+              ))}
+            </List>
           </React.Fragment>
         )}
       </CardContent>
@@ -685,11 +680,11 @@ const PanelMergeMaterials = ({
   onMergeMaterials,
   mergeProtocol,
 }: PanelMergeMaterialsProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
-    <Card className={classes.card} key={"cardInfo"}>
-      <CardContent className={classes.cardContent} key={"cardContentInfo"}>
+    <Card sx={classes.card} key={"cardInfo"}>
+      <CardContent sx={classes.cardContent} key={"cardContentInfo"}>
         <Typography gutterBottom={true} variant="h5" component="h2">
           {TEXT_MERGE_MATERIAL_SELECTION}
         </Typography>
@@ -739,7 +734,7 @@ const PanelMergeMaterials = ({
           }
           variant="contained"
           color="primary"
-          className={classes.submit}
+          sx={classes.submit}
           onClick={onMergeMaterials}
         >
           {TEXT_MERGE_ITEMS}
@@ -747,48 +742,44 @@ const PanelMergeMaterials = ({
         {mergeProtocol !== null && (
           <React.Fragment>
             <br />
-            <Grid item xs={12}>
-              <List
-                subheader={
-                  <ListSubheader component="div" id="subheader-log-result">
-                    {TEXT_LOG}
-                  </ListSubheader>
-                }
-              >
-                <ListItem divider key={"listItem_materialA"}>
-                  <ListItemText
-                    primary={`${TEXT_MATERIAL} A: ${mergeProtocol.materialToReplace.name}`}
-                    secondary={mergeProtocol.materialToReplace.uid}
-                  />
-                </ListItem>
-                <ListItem divider key={"listItem_materialB"}>
-                  <ListItemText
-                    primary={`${TEXT_PRODUCT} B: ${mergeProtocol.materialToReplaceWith.name}`}
-                    secondary={mergeProtocol.materialToReplaceWith.uid}
-                  />
-                </ListItem>
-              </List>
+            <List
+              subheader={
+                <ListSubheader component="div" id="subheader-log-result">
+                  {TEXT_LOG}
+                </ListSubheader>
+              }
+            >
+              <ListItem divider key={"listItem_materialA"}>
+                <ListItemText
+                  primary={`${TEXT_MATERIAL} A: ${mergeProtocol.materialToReplace.name}`}
+                  secondary={mergeProtocol.materialToReplace.uid}
+                />
+              </ListItem>
+              <ListItem divider key={"listItem_materialB"}>
+                <ListItemText
+                  primary={`${TEXT_PRODUCT} B: ${mergeProtocol.materialToReplaceWith.name}`}
+                  secondary={mergeProtocol.materialToReplaceWith.uid}
+                />
+              </ListItem>
+            </List>
 
-              <br />
-            </Grid>
-            <Grid item xs={12}>
-              <List
-                subheader={
-                  <ListSubheader component="div" id="subheader-merge-result">
-                    {TEXT_CHANGED_DOCUMENTS}
-                  </ListSubheader>
-                }
-              >
-                {mergeProtocol.documentList.map((document, counter) => (
-                  <ListItem divider key={"listItem_" + counter}>
-                    <ListItemText
-                      primary={document.name}
-                      secondary={document.document}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </Grid>
+            <br />
+            <List
+              subheader={
+                <ListSubheader component="div" id="subheader-merge-result">
+                  {TEXT_CHANGED_DOCUMENTS}
+                </ListSubheader>
+              }
+            >
+              {mergeProtocol.documentList.map((document, counter) => (
+                <ListItem divider key={"listItem_" + counter}>
+                  <ListItemText
+                    primary={document.name}
+                    secondary={document.document}
+                  />
+                </ListItem>
+              ))}
+            </List>
           </React.Fragment>
         )}
       </CardContent>

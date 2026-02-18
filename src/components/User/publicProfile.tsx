@@ -2,26 +2,31 @@ import React from "react";
 import {useHistory} from "react-router";
 import {compose} from "react-recompose";
 
-import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
-import Backdrop from "@material-ui/core/Backdrop";
-import CircularProgress from "@material-ui/core/CircularProgress";
+import {
+  Container,
+  Stack,
+  Backdrop,
+  CircularProgress,
+  Card,
+  CardContent,
+  CardMedia,
+  List,
+  Typography,
+  Box,
+} from "@mui/material";
 
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-import CardMedia from "@material-ui/core/CardMedia";
-import List from "@material-ui/core/List";
-
-import TodayIcon from "@material-ui/icons/Today";
-import LocalActivityIcon from "@material-ui/icons/LocalActivity";
-import HowToRegIcon from "@material-ui/icons/HowToReg";
-import FastfoodIcon from "@material-ui/icons/Fastfood";
-import BugReportIcon from "@material-ui/icons/BugReport";
+import {
+  Today as TodayIcon,
+  LocalActivity as LocalActivityIcon,
+  HowToReg as HowToRegIcon,
+  Fastfood as FastfoodIcon,
+  BugReport as BugReportIcon,
+} from "@mui/icons-material";
 
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
 
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
 import User from "./user.class";
 import {
@@ -38,9 +43,7 @@ import {
 import Action from "../../constants/actions";
 import * as ROUTES from "../../constants/routes";
 import {ImageRepository} from "../../constants/imageRepository";
-
 import {withFirebase} from "../Firebase/firebaseContext";
-import {Typography} from "@material-ui/core";
 import UserPublicProfile from "./user.public.profile.class";
 import {FormListItem} from "../Shared/formListItem";
 import withEmailVerification from "../Session/withEmailVerification";
@@ -122,7 +125,7 @@ const PublicProfileBase: React.FC<
   CustomRouterProps<MatchParams, LocationState> & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {push} = useHistory();
 
   const [state, dispatch] = React.useReducer(
@@ -198,65 +201,47 @@ const PublicProfileBase: React.FC<
         />
       ) : null}
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="sm">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="sm">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        <Grid container spacing={2}>
-          <Grid item key={"pictureCard"} xs={12}>
-            <Card className={classes.card}>
-              <div style={{position: "relative"}}>
-                {/* {publicProfile.pictureSrc ? ( */}
-                <React.Fragment>
-                  <CardMedia
-                    className={classes.cardMedia}
-                    image={
-                      state.publicProfile.pictureSrc.normalSize
-                        ? state.publicProfile.pictureSrc.normalSize
-                        : ImageRepository.getEnviromentRelatedPicture()
-                            .CARD_PLACEHOLDER_MEDIA
-                    }
-                    title={state.publicProfile.displayName}
-                  />
-                  <div className={classes.textOnCardMediaImage}>
-                    <Grid
-                      container
-                      direction="row"
-                      alignItems="center"
-                      justifyContent="center"
-                    >
-                      <Grid container>
-                        <Typography
-                          className={classes.userProfileCardNameOnImage}
-                          variant="h2"
-                        >
-                          {state.publicProfile.displayName}
-                        </Typography>
-                      </Grid>
-                      <Grid container></Grid>
-                    </Grid>
-                    {/* </div> */}
-                  </div>
-                </React.Fragment>
-                {/* ) : null} */}
-              </div>
-              <CardContent className={classes.cardContent}>
-                {/* <br></br> */}
-                <PublicProfileList userProfile={state.publicProfile} />
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item key={"achievedRewardsCard"} xs={12}>
-            <Card>
-              <CardContent className={classes.cardContent}>
-                <Typography gutterBottom={true} variant="h5" component="h2">
-                  {TEXT_FOUND_TREASURES}
-                </Typography>
-                <AchievedRewardsList userProfile={state.publicProfile} />
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        <Stack spacing={2}>
+          <Card sx={classes.card}>
+            <Box component={"div"} style={{position: "relative"}}>
+              <React.Fragment>
+                <CardMedia
+                  sx={classes.cardMedia}
+                  image={
+                    state.publicProfile.pictureSrc.normalSize
+                      ? state.publicProfile.pictureSrc.normalSize
+                      : ImageRepository.getEnviromentRelatedPicture()
+                          .CARD_PLACEHOLDER_MEDIA
+                  }
+                  title={state.publicProfile.displayName}
+                />
+                <Box component={"div"} sx={classes.textOnCardMediaImage}>
+                  <Typography
+                    sx={classes.userProfileCardNameOnImage}
+                    variant="h2"
+                  >
+                    {state.publicProfile.displayName}
+                  </Typography>
+                </Box>
+              </React.Fragment>
+            </Box>
+            <CardContent sx={classes.cardContent}>
+              <PublicProfileList userProfile={state.publicProfile} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent sx={classes.cardContent}>
+              <Typography gutterBottom={true} variant="h5" component="h2">
+                {TEXT_FOUND_TREASURES}
+              </Typography>
+              <AchievedRewardsList userProfile={state.publicProfile} />
+            </CardContent>
+          </Card>
+        </Stack>
       </Container>
     </React.Fragment>
   );
@@ -339,13 +324,6 @@ export const AchievedRewardsList = ({
           icon={<BugReportIcon fontSize="small" />}
         />
       )}
-      {/* <FormListItem
-        id={"noComments"}
-        key={"noComments"}
-        value={userProfile.noComments}
-        label={TEXT.COMMENTS_LEFT}
-        icon={<ChatBubbleIcon fontSize="small" />}
-      /> */}
     </List>
   );
 };

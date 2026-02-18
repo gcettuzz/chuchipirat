@@ -1,26 +1,26 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
-import Button from "@material-ui/core/Button";
-import IconButton from "@material-ui/core/IconButton";
+import Grid from "@mui/material/Unstable_Grid2";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 
-import {ButtonTypeMap} from "@material-ui/core/Button";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
+import {ButtonTypeMap} from "@mui/material/Button";
+import ButtonGroup from "@mui/material/ButtonGroup";
 
-import useMediaQuery from "@material-ui/core/useMediaQuery";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
-import ClickAwayListener from "@material-ui/core/ClickAwayListener";
-import Grow from "@material-ui/core/Grow";
-import Paper from "@material-ui/core/Paper";
-import Popper from "@material-ui/core/Popper";
-import Menu from "@material-ui/core/Menu";
-import MenuItem from "@material-ui/core/MenuItem";
-import MenuList from "@material-ui/core/MenuList";
+import ClickAwayListener from "@mui/material/ClickAwayListener";
+import Grow from "@mui/material/Grow";
+import Paper from "@mui/material/Paper";
+import Popper from "@mui/material/Popper";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import MenuList from "@mui/material/MenuList";
 
-import ArrowDropDownIcon from "@material-ui/icons/ArrowDropDown";
-import MoreVertIcon from "@material-ui/icons/MoreVert";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
-import useStyles from "../../constants/styles";
-import {useTheme} from "@material-ui/core";
+import {useTheme} from "@mui/material";
+import useCustomStyles from "../../constants/styles";
 
 export interface CustomButton {
   id: string;
@@ -44,7 +44,7 @@ interface ButtonRowProps {
 // ============================= Button Row ==========================
 // =================================================================== */
 const ButtonRow = ({buttons, buttonGroup, splitButtons}: ButtonRowProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
   let menuItems: Array<CustomButton> = [];
   let noOfVisibleButtons = 0;
@@ -76,9 +76,7 @@ const ButtonRow = ({buttons, buttonGroup, splitButtons}: ButtonRowProps) => {
   const handleSplitButtonToggle = () => {
     setSplitButtonMenuOpen((prevOpen) => !prevOpen);
   };
-  const handleSplitButtonMenuClose = (
-    event: React.MouseEvent<Document, MouseEvent>
-  ) => {
+  const handleSplitButtonMenuClose = (event: MouseEvent | TouchEvent) => {
     if (
       splitButtonAnchor.current &&
       splitButtonAnchor.current.contains(event.target as HTMLElement)
@@ -106,9 +104,9 @@ const ButtonRow = ({buttons, buttonGroup, splitButtons}: ButtonRowProps) => {
 
   // hat das Array Buttons mehr Buttons als die Screen-Breite zulässt
   // werden diese in einem Menü zusammengefasst.
-  const isXSBreakPoint = useMediaQuery(theme.breakpoints.down("xs"));
-  const isSMBreakPoint = useMediaQuery(theme.breakpoints.down("sm"));
-  const isMdBreakPoint = useMediaQuery(theme.breakpoints.down("md"));
+  const isXSBreakPoint = useMediaQuery(theme.breakpoints.down("sm"));
+  const isSMBreakPoint = useMediaQuery(theme.breakpoints.down("md"));
+  const isMdBreakPoint = useMediaQuery(theme.breakpoints.down("lg"));
   if (isXSBreakPoint && buttons.length > 1) {
     noOfVisibleButtons = 2;
   } else if (isSMBreakPoint && buttons.length > 3) {
@@ -126,10 +124,10 @@ const ButtonRow = ({buttons, buttonGroup, splitButtons}: ButtonRowProps) => {
       {/* <div className={classes.heroButtons}> */}
       <Grid container justifyContent="center">
         {buttons.map((button) => (
-          <Grid item key={"grid_" + button.id}>
+          <Grid key={"grid_" + button.id}>
             {button.visible && (
               <Button
-                className={button.hero ? classes.heroButton : classes.button}
+                sx={button.hero ? classes.heroButton : classes.button}
                 aria-label={button.label}
                 id={button.id}
                 key={button.id}
@@ -184,11 +182,11 @@ const ButtonRow = ({buttons, buttonGroup, splitButtons}: ButtonRowProps) => {
           </React.Fragment>
         )}
         {buttonGroup && (
-          <Grid item key={"grid_buttonGroup"}>
+          <Grid key={"grid_buttonGroup"}>
             <ButtonGroup
               id="buttonGroup"
               color="primary"
-              className={classes.heroButton}
+              sx={classes.heroButton}
             >
               {buttonGroup.map((button) => (
                 <Button
@@ -204,9 +202,9 @@ const ButtonRow = ({buttons, buttonGroup, splitButtons}: ButtonRowProps) => {
           </Grid>
         )}
         {splitButtons && (
-          <Grid item key={"grid_splitButton"}>
+          <Grid key={"grid_splitButton"}>
             <ButtonGroup
-              className={classes.heroButton}
+              sx={classes.heroButton}
               variant="outlined"
               color="primary"
               ref={splitButtonAnchor}
@@ -243,11 +241,7 @@ const ButtonRow = ({buttons, buttonGroup, splitButtons}: ButtonRowProps) => {
                       placement === "bottom" ? "center top" : "center bottom",
                   }}
                 >
-                  <Paper
-                  // MenuProps={{
-                  //   style: { zIndex: 35001 },
-                  // }}
-                  >
+                  <Paper>
                     <ClickAwayListener onClickAway={handleSplitButtonMenuClose}>
                       <MenuList id="split-button-menu">
                         {splitButtons.map(

@@ -1,13 +1,20 @@
 import React from "react";
 
-import Dialog from "@material-ui/core/Dialog";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogActions from "@material-ui/core/DialogActions";
+import {
+  Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+} from "@mui/material";
 
-import Button from "@material-ui/core/Button";
-import TextField from "@material-ui/core/TextField";
-import CheckBoxOutlinedIcon from "@material-ui/icons/CheckBoxOutlined";
+import CheckBoxOutlinedIcon from "@mui/icons-material/CheckBoxOutlined";
 
 import {
   PUBLISH_RECIPE as TEXT_PUBLISH_RECIPE,
@@ -22,13 +29,6 @@ import {
   CANCEL as TEXT_CANCEL,
   SEND_RECIPE_TO_REVIEW as TEXT_SEND_RECIPE_TO_REVIEW,
 } from "../../constants/text";
-import {
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-} from "@material-ui/core";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================

@@ -1,11 +1,15 @@
 import React from "react";
-import TextField from "@material-ui/core/TextField";
-import Autocomplete, {
-  AutocompleteChangeReason,
-} from "@material-ui/lab/Autocomplete";
+import TextField from "@mui/material/TextField";
 
-import {ITEM_CANT_BE_CHANGED, DEPARTMENT} from "../../constants/text";
+import {Autocomplete, AutocompleteChangeReason} from "@mui/material";
+
+import {
+  ITEM_CANT_BE_CHANGED,
+  DEPARTMENT,
+  ERROR_NO_OPTIONS,
+} from "../../constants/text";
 import Department from "./department.class";
+import {TextFieldSize} from "../../constants/defaultValues";
 
 interface DepartmentAutocompleteProps {
   componentKey?: string;
@@ -15,11 +19,12 @@ interface DepartmentAutocompleteProps {
   disabled: boolean;
   onChange: (
     event: React.ChangeEvent<HTMLInputElement>,
-    newValue: string | Department,
+    newValue: Department | null,
     action: AutocompleteChangeReason,
     objectId: string
   ) => void;
   error?: {isError: boolean; errorText: string};
+  size?: TextFieldSize;
 }
 
 // ===================================================================== */
@@ -36,6 +41,7 @@ const DepartmentAutocomplete = ({
   disabled,
   onChange,
   error,
+  size = TextFieldSize.medium,
 }: DepartmentAutocompleteProps) => {
   return (
     <Autocomplete
@@ -43,25 +49,32 @@ const DepartmentAutocomplete = ({
       id={componentKey ? "department_" + componentKey : "department"}
       value={department}
       options={departments}
-      disabled={disabled}
       autoSelect
       autoHighlight
-      getOptionLabel={(option) => option.name}
-      onChange={(event, newValue, action) =>
-        newValue &&
+      getOptionLabel={(option) => {
+        if (typeof option === "string") {
+          return option;
+        }
+        if (option == undefined || !option?.name) {
+          return "";
+        }
+        return option.name;
+      }}
+      noOptionsText={ERROR_NO_OPTIONS}
+      disabled={disabled}
+      onChange={(event, newValue, action) => {
         onChange(
           event as unknown as React.ChangeEvent<HTMLInputElement>,
           newValue,
           action,
           componentKey ? "department_" + componentKey : "department"
-        )
-      }
+        );
+      }}
       fullWidth
       renderInput={(params) => (
         <TextField
           {...params}
           label={label}
-          size="small"
           error={error?.isError}
           helperText={
             error?.isError
@@ -70,6 +83,7 @@ const DepartmentAutocomplete = ({
               ? ITEM_CANT_BE_CHANGED
               : ""
           }
+          size={size}
         />
       )}
     />

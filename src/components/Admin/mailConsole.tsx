@@ -1,6 +1,5 @@
 import React from "react";
 import {compose} from "react-recompose";
-import clsx from "clsx";
 
 import {withFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
@@ -12,7 +11,6 @@ import {
   CardContent,
   CircularProgress,
   Container,
-  Grid,
   Card,
   CardHeader,
   Typography,
@@ -28,15 +26,12 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  IconButton,
-  makeStyles,
-  Theme,
-  createStyles,
-  Collapse,
   CardMedia,
-} from "@material-ui/core";
+  SelectChangeEvent,
+  Box,
+} from "@mui/material";
 
-import {ExpandMore as ExpandMoreIcon} from "@material-ui/icons";
+import Grid from "@mui/material/Unstable_Grid2";
 
 import MailConsole, {Mail, RecipientType} from "./mailConsole.class";
 
@@ -64,7 +59,6 @@ import {
   BUTTON_LINK as TEXT_BUTTON_LINK,
   MAIL_SENT_TO_RECIPIENTS as TEXT_MAIL_SENT_TO_RECIPIENTS,
 } from "../../constants/text";
-import useStyles from "../../constants/styles";
 import Role from "../../constants/roles";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -72,6 +66,7 @@ import CustomSnackbar, {
   SNACKBAR_INITIAL_STATE_VALUES,
   Snackbar,
 } from "../Shared/customSnackbar";
+import useCustomStyles from "../../constants/styles";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -184,7 +179,7 @@ const MailConsoleBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(
     mailConsoleReducer,
@@ -252,13 +247,13 @@ const MailConsoleBase: React.FC<
         subTitle={TEXT_BECAUSE_NEWSLETTER_ARE_ALWAYS_LOVED}
       />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="md">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="md">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
 
         {state.error && (
-          <Grid item key={"error"} xs={12}>
+          <Grid key={"error"} xs={12}>
             <AlertMessage
               error={state.error!}
               messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
@@ -267,7 +262,7 @@ const MailConsoleBase: React.FC<
         )}
 
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <MailRecipients
               selectedRecipientType={state.recipientType}
               recipients={state.recipients}
@@ -291,7 +286,7 @@ const MailConsoleBase: React.FC<
               }}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <MailEditor
               mailObject={state.mailObject}
               onFieldChange={onEditorFieldChange}
@@ -302,7 +297,7 @@ const MailConsoleBase: React.FC<
               //TODO: Cloud-FX umschreiben, dass sie mit den verschiedenen Typen umgehen kann...
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <Preview mailObject={state.mailObject} />
           </Grid>
         </Grid>
@@ -325,7 +320,7 @@ interface MailRecipientsProps {
   recipients: State["recipients"];
   onChangeRecipientType: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onChangeRecipients: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onChangeRole: (event: React.ChangeEvent<{value: unknown}>) => void;
+  onChangeRole: (event: SelectChangeEvent) => void;
 }
 const MailRecipients = ({
   selectedRecipientType,
@@ -335,7 +330,7 @@ const MailRecipients = ({
   onChangeRole,
 }: MailRecipientsProps) => {
   // const theme = useTheme();
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const ITEM_HEIGHT = 48;
   const ITEM_PADDING_TOP = 8;
@@ -354,7 +349,7 @@ const MailRecipients = ({
       <CardHeader title={"Empfänger"} />
       <CardContent>
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <FormControl component="fieldset">
               <RadioGroup
                 aria-label="recipient_type"
@@ -363,14 +358,14 @@ const MailRecipients = ({
                 onChange={onChangeRecipientType}
               >
                 <Grid container spacing={2}>
-                  <Grid item xs={5} sm={3} md={2}>
+                  <Grid xs={5} sm={3} md={2}>
                     <FormControlLabel
                       value={RecipientType.email}
-                      control={<Radio color="primary" />}
+                      control={<Radio />}
                       label={TEXT_RECIPIENT_TYPE[RecipientType.email]}
                     />
                   </Grid>
-                  <Grid item xs={7} sm={9} md={10}>
+                  <Grid xs={7} sm={9} md={10}>
                     <TextField
                       label={TEXT_RECIPIENT_TYPE[RecipientType.email]}
                       variant="outlined"
@@ -384,14 +379,14 @@ const MailRecipients = ({
                       disabled={selectedRecipientType !== RecipientType.email}
                     />
                   </Grid>
-                  <Grid item xs={5} sm={3} md={2}>
+                  <Grid xs={5} sm={3} md={2}>
                     <FormControlLabel
                       value={RecipientType.uid}
-                      control={<Radio color="primary" />}
+                      control={<Radio />}
                       label={TEXT_RECIPIENT_TYPE[RecipientType.uid]}
                     />
                   </Grid>
-                  <Grid item xs={7} sm={9} md={10}>
+                  <Grid xs={7} sm={9} md={10}>
                     <TextField
                       label="recipient_uids"
                       variant="outlined"
@@ -405,17 +400,17 @@ const MailRecipients = ({
                       disabled={selectedRecipientType !== RecipientType.uid}
                     />
                   </Grid>
-                  <Grid item xs={5} sm={3} md={2}>
+                  <Grid xs={5} sm={3} md={2}>
                     <FormControlLabel
                       value={RecipientType.role}
-                      control={<Radio color="primary" />}
+                      control={<Radio />}
                       label={TEXT_RECIPIENT_TYPE[RecipientType.role]}
                     />
                   </Grid>
-                  <Grid item xs={7} sm={9} md={10}>
+                  <Grid xs={7} sm={9} md={10}>
                     <FormControl
                       variant="outlined"
-                      className={classes.formControl}
+                      sx={classes.formControl}
                       fullWidth
                     >
                       <InputLabel id="select-label-role">
@@ -447,7 +442,7 @@ const MailRecipients = ({
               </RadioGroup>
             </FormControl>
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <Typography color="textSecondary">
               {TEXT_DIVIDE_MULTIPLE_VALUES_BY_SEMICOLON}
             </Typography>
@@ -477,7 +472,7 @@ const MailEditor = ({
   onSendMail,
   onSendTestMail: onSendTestMailSuper,
 }: MailEditorProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
   const [formValidation, setFormValidation] = React.useState({
     subject: false,
@@ -512,11 +507,11 @@ const MailEditor = ({
   };
 
   return (
-    <Card className={classes.card}>
+    <Card sx={classes.card}>
       <CardHeader title={TEXT_EDITOR} />
       <CardContent>
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <TextField
               id="subject"
               key="subject"
@@ -529,10 +524,10 @@ const MailEditor = ({
               error={formValidation.subject}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <Divider style={{margin: theme.spacing(2)}} />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <TextField
               id="title"
               key="title"
@@ -545,7 +540,7 @@ const MailEditor = ({
               error={formValidation.title}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <TextField
               id="subtitle"
               key="subtitle"
@@ -556,7 +551,7 @@ const MailEditor = ({
               label={TEXT_SUB_TITLE}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <TextField
               id="headerPictureSrc"
               key="headerPictureSrc"
@@ -567,7 +562,7 @@ const MailEditor = ({
               label={TEXT_MAIL_HEADER_PICTURE_SRC}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <Typography
               color={formValidation.mailtext ? "error" : "textSecondary"}
             >
@@ -575,7 +570,7 @@ const MailEditor = ({
             </Typography>
             <ReactQuill theme="snow" onChange={onMailTextChange} />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <TextField
               id="buttonText"
               key="buttonText"
@@ -586,7 +581,7 @@ const MailEditor = ({
               label={TEXT_BUTTON_TEXT}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <TextField
               id="buttonLink"
               key="buttonLink"
@@ -599,7 +594,7 @@ const MailEditor = ({
           </Grid>
         </Grid>
       </CardContent>
-      <CardActions className={classes.cardActionRight}>
+      <CardActions sx={classes.cardActionRight}>
         <Button color="primary" variant="outlined" onClick={onSendTestMail}>
           {TEXT_SEND_TEST_MAIL}{" "}
         </Button>
@@ -619,118 +614,73 @@ const MailEditor = ({
 /* ===================================================================
 // ============================ Vorschau =============================
 // =================================================================== */
-const useStylesMailPreview = makeStyles((theme: Theme) =>
-  createStyles({
-    root: {
-      maxWidth: 345,
-    },
-    media: {
-      height: 0,
-      paddingTop: "56.25%", // 16:9
-    },
-    expand: {
-      transform: "rotate(0deg)",
-      marginLeft: "auto",
-      transition: theme.transitions.create("transform", {
-        duration: theme.transitions.duration.shortest,
-      }),
-    },
-    expandOpen: {
-      transform: "rotate(180deg)",
-    },
-  })
-);
-
 interface PreviewProps {
   mailObject: Mail;
 }
 
 const Preview = ({mailObject}: PreviewProps) => {
-  const classes = useStyles();
-  const classesMailPreview = useStylesMailPreview();
-  const [expanded, setExpanded] = React.useState(false);
-
-  const handleExpandClick = () => {
-    setExpanded(!expanded);
-  };
+  const classes = useCustomStyles();
 
   return (
     <Card>
-      <CardHeader
-        title={TEXT_PREVIEW}
-        action={
-          <IconButton
-            className={clsx(classesMailPreview.expand, {
-              [classesMailPreview.expandOpen]: expanded,
-            })}
-            onClick={handleExpandClick}
-            aria-expanded={expanded}
-            aria-label="zeig mehr"
+      <CardHeader title={TEXT_PREVIEW} />
+      <Box component="div" style={{position: "relative"}}>
+        <CardMedia
+          sx={classes.cardMedia}
+          image={mailObject.headerPictureSrc}
+          title={"Headerbild"}
+        />
+        <Box component="div" sx={classes.textOnCardMediaImage}>
+          <Grid
+            container
+            direction="row"
+            alignItems="center"
+            justifyContent="center"
           >
-            <ExpandMoreIcon />
-          </IconButton>
-        }
-      />
-      <Collapse in={expanded} timeout="auto" unmountOnExit>
-        <div style={{position: "relative"}}>
-          <CardMedia
-            className={classes.cardMedia}
-            image={mailObject.headerPictureSrc}
-            title={"Headerbild"}
-          />
-          <div className={classes.textOnCardMediaImage}>
-            <Grid
-              container
-              direction="row"
-              alignItems="center"
-              justifyContent="center"
-            >
-              <Grid item xs={12}>
-                <Typography align="center" variant="h2">
-                  {mailObject.title}
+            <Grid xs={12}>
+              <Typography align="center" variant="h2">
+                {mailObject.title}
+              </Typography>
+            </Grid>
+            {mailObject.subtitle && (
+              <Grid xs={12}>
+                <Typography align="center" variant="h4">
+                  {mailObject.subtitle}
                 </Typography>
               </Grid>
-              {mailObject.subtitle && (
-                <Grid item xs={12}>
-                  <Typography align="center" variant="h4">
-                    {mailObject.subtitle}
-                  </Typography>
-                </Grid>
-              )}
-              <Grid container></Grid>
-            </Grid>
-          </div>
-        </div>
-        <CardContent>
-          <Grid container>
-            <Grid item xs={12}>
-              <Typography
-                variant="body1"
-                component="div"
-                dangerouslySetInnerHTML={{__html: mailObject.mailtext}}
-              />
-            </Grid>
-            {mailObject.buttonLink && mailObject.buttonText && (
-              <Grid
-                item
-                xs={12}
-                alignContent="center"
-                justifyContent="center"
-                style={{display: "flex"}}
-              >
-                <Button
-                  color="primary"
-                  variant="contained"
-                  target="_blank"
-                  href={mailObject.buttonLink}
-                >
-                  {mailObject.buttonText}
-                </Button>
-              </Grid>
             )}
+            <Grid container></Grid>
           </Grid>
-        </CardContent>
-      </Collapse>
+        </Box>
+      </Box>
+      <CardContent>
+        <Grid container>
+          <Grid xs={12}>
+            <Typography
+              variant="body1"
+              component="div"
+              dangerouslySetInnerHTML={{__html: mailObject.mailtext}}
+            />
+          </Grid>
+          {mailObject.buttonLink && mailObject.buttonText && (
+            <Grid
+              xs={12}
+              alignContent="center"
+              justifyContent="center"
+              style={{display: "flex"}}
+            >
+              <Button
+                color="primary"
+                variant="contained"
+                target="_blank"
+                href={mailObject.buttonLink}
+              >
+                {mailObject.buttonText}
+              </Button>
+            </Grid>
+          )}
+        </Grid>
+      </CardContent>
     </Card>
   );
 };

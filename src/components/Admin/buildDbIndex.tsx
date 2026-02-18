@@ -3,9 +3,6 @@ import {compose} from "react-recompose";
 
 import {
   Container,
-  // Backdrop,
-  // CircularProgress,
-  Grid,
   List,
   ListItem,
   ListItemText,
@@ -16,7 +13,8 @@ import {
   Typography,
   Link,
   Divider,
-} from "@material-ui/core";
+  Stack,
+} from "@mui/material";
 
 import PageTitle from "../Shared/pageTitle";
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
@@ -26,10 +24,18 @@ import {
   DB_INDICES as TEXT_DB_INDICES,
   ALERT_TITLE_UUPS as TEXT_ALERT_TITLE_UUPS,
 } from "../../constants/text";
-import useStyles from "../../constants/styles";
 import Role from "../../constants/roles";
 
 import {withFirebase} from "../Firebase/firebaseContext";
+import {
+  collection,
+  collectionGroup,
+  getDocs,
+  Query,
+  query,
+  where,
+} from "firebase/firestore";
+
 import {
   DialogType,
   useCustomDialog,
@@ -39,6 +45,7 @@ import AuthUser from "../Firebase/Authentication/authUser.class";
 import withEmailVerification from "../Session/withEmailVerification";
 import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
 import {CustomRouterProps} from "../Shared/global.interface";
+import useCustomStyles from "../../constants/styles";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
@@ -277,7 +284,7 @@ const BuildIndicesBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {customDialog} = useCustomDialog();
   const [state, dispatch] = React.useReducer(
     buildIndicesReducer,
@@ -292,6 +299,7 @@ const BuildIndicesBase: React.FC<
   // ------------------------------------------ */
   const buildIndex = async (index: BuildIndex) => {
     let userInput = {valid: false, input: ""} as SingleTextInputResult;
+    let queryObject: Query;
 
     switch (index) {
       case BuildIndex.recipeVariants:
@@ -306,14 +314,16 @@ const BuildIndicesBase: React.FC<
           },
         })) as SingleTextInputResult;
         if (userInput?.valid && userInput.input != "") {
-          firebase.db
-            .collectionGroup("recipeVariants")
-            .where("variantProperties.originalRecipeUid", "==", userInput.input)
-            .get()
-            .then((result) => {
+          queryObject = query(
+            collectionGroup(firebase.firestore, "recipeVariants"),
+            where("variantProperties.originalRecipeUid", "==", userInput.input)
+          );
+
+          getDocs(queryObject)
+            .then((snapshot) => {
               dispatch({
                 type: ReducerActions.UPDATE_INDEX_RECIPE_VARIANTS,
-                payload: {error: null, resultCounter: result.size},
+                payload: {error: null, resultCounter: snapshot.size},
               });
             })
             .catch((error) => {
@@ -338,10 +348,12 @@ const BuildIndicesBase: React.FC<
         })) as SingleTextInputResult;
 
         if (userInput?.valid && userInput.input != "") {
-          firebase.db
-            .collectionGroup("docs")
-            .where("usedRecipes", "array-contains", userInput.input)
-            .get()
+          queryObject = query(
+            collectionGroup(firebase.firestore, "docs"),
+            where("usedRecipes", "array-contains", userInput.input)
+          );
+
+          getDocs(queryObject)
             .then((result) => {
               dispatch({
                 type: ReducerActions.UPDATE_INDEX_EVENT_USED_RECIPES,
@@ -358,11 +370,12 @@ const BuildIndicesBase: React.FC<
         }
         break;
       case BuildIndex.activeRequestsAsignee:
-        firebase.db
-          .collection("requests/active/requests")
-          .where("assignee.uid", "==", "")
-          .orderBy("number", "asc")
-          .get()
+        queryObject = query(
+          collection(firebase.firestore, "requests/active/requests"),
+          where("assignee.uid", "==", "")
+        );
+
+        getDocs(queryObject)
           .then((result) => {
             dispatch({
               type: ReducerActions.UPDATE_INDEX_ACTIVE_REQUESTS_ASIGNEE,
@@ -376,13 +389,15 @@ const BuildIndicesBase: React.FC<
               payload: {error: error.toString(), resultCounter: 0},
             });
           });
+
         break;
       case BuildIndex.activeRequestsAuthor:
-        firebase.db
-          .collection("requests/active/requests")
-          .where("author.uid", "==", "")
-          .orderBy("number", "asc")
-          .get()
+        queryObject = query(
+          collection(firebase.firestore, "quests/active/requests"),
+          where("author.uid", "==", "")
+        );
+
+        getDocs(queryObject)
           .then((result) => {
             dispatch({
               type: ReducerActions.UPDATE_INDEX_ACTIVE_REQUESTS_AUTHOR,
@@ -409,10 +424,12 @@ const BuildIndicesBase: React.FC<
         })) as SingleTextInputResult;
 
         if (userInput?.valid && userInput.input != "") {
-          firebase.db
-            .collectionGroup("recipes")
-            .where("usedProducts", "array-contains", userInput.input)
-            .get()
+          queryObject = query(
+            collectionGroup(firebase.firestore, "recipes"),
+            where("usedProducts", "array-contains", userInput.input)
+          );
+
+          getDocs(queryObject)
             .then((result) => {
               console.info(result);
               result.forEach((document) => console.info(document.ref.path));
@@ -442,10 +459,12 @@ const BuildIndicesBase: React.FC<
         })) as SingleTextInputResult;
 
         if (userInput?.valid && userInput.input != "") {
-          firebase.db
-            .collectionGroup("docs")
-            .where("usedProducts", "array-contains", userInput.input)
-            .get()
+          queryObject = query(
+            collectionGroup(firebase.firestore, "docs"),
+            where("usedProducts", "array-contains", userInput.input)
+          );
+
+          getDocs(queryObject)
             .then((result) => {
               console.info(result);
               result.forEach((document) => {
@@ -478,10 +497,12 @@ const BuildIndicesBase: React.FC<
         })) as SingleTextInputResult;
 
         if (userInput?.valid && userInput.input != "") {
-          firebase.db
-            .collectionGroup("recipes")
-            .where("created.fromUid", "==", userInput.input)
-            .get()
+          queryObject = query(
+            collectionGroup(firebase.firestore, "recipes"),
+            where("created.fromUid", "==", userInput.input)
+          );
+
+          getDocs(queryObject)
             .then((result) => {
               console.info(result);
               result.forEach((document) => {
@@ -503,10 +524,12 @@ const BuildIndicesBase: React.FC<
         }
         break;
       case BuildIndex.displayNameEvents:
-        firebase.db
-          .collectionGroup("docs")
-          .where("created.fromUid", "==", "")
-          .get()
+        queryObject = query(
+          collectionGroup(firebase.firestore, "docs"),
+          where("created.fromUid", "==", "")
+        );
+
+        getDocs(queryObject)
           .then((result) => {
             console.info(result);
             result.forEach((document) => {
@@ -538,10 +561,12 @@ const BuildIndicesBase: React.FC<
         })) as SingleTextInputResult;
 
         if (userInput?.valid && userInput.input != "") {
-          firebase.db
-            .collectionGroup("recipes")
-            .where("variantProperties.originalRecipeUid", "==", userInput.input)
-            .get()
+          queryObject = query(
+            collectionGroup(firebase.firestore, "recipes"),
+            where("variantProperties.originalRecipeUid", "==", userInput.input)
+          );
+
+          getDocs(queryObject)
             .then((result) => {
               console.info(result);
               result.forEach((document) => {
@@ -563,10 +588,12 @@ const BuildIndicesBase: React.FC<
         }
         break;
       case BuildIndex.userByRole:
-        firebase.db
-          .collectionGroup("users")
-          .where("roles", "array-contains", "basic")
-          .get()
+        queryObject = query(
+          collectionGroup(firebase.firestore, "users"),
+          where("roles", "array-contains", "basic")
+        );
+
+        getDocs(queryObject)
           .then((result) => {
             console.info(result.size);
             dispatch({
@@ -603,98 +630,91 @@ const BuildIndicesBase: React.FC<
       <PageTitle title={TEXT_DB_INDICES} />
 
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="sm">
+      <Container sx={classes.container} component="main" maxWidth="sm">
         {/* <Backdrop className={classes.backdrop} open={globalSettings.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop> */}
-        <Grid container spacing={2}>
+        <Stack spacing={2}>
           {state.isError && (
-            <Grid item key={"error"} xs={12}>
-              <AlertMessage
-                error={state.error as Error}
-                messageTitle={TEXT_ALERT_TITLE_UUPS}
-              />
-            </Grid>
+            <AlertMessage
+              error={state.error as Error}
+              messageTitle={TEXT_ALERT_TITLE_UUPS}
+            />
           )}
-          <Grid item xs={12}>
-            <Card className={classes.card} key={"cardInfo"}>
-              <CardContent
-                className={classes.cardContent}
-                key={"cardContentInfo"}
-              >
-                <List>
-                  <ListItemBuildIndex
-                    indexName={
-                      "[variantProperties.originalRecipeUid] /../recipeVariants/${recipeDoc}"
-                    }
-                    buildIndexType={BuildIndex.recipeVariants}
-                    buildIndexState={state.indexRecipeVariants}
-                    onBuildIndex={buildIndex}
-                  />
-                  <ListItemBuildIndex
-                    indexName={"[usedRecipes] /../docs/${anyRelatedEventDoc}"}
-                    buildIndexType={BuildIndex.eventUsedRecipes}
-                    buildIndexState={state.indexEventUsedRecipes}
-                    onBuildIndex={buildIndex}
-                  />
-                  <ListItemBuildIndex
-                    indexName={"[assignee.uid] /../active/${requestDocument}"}
-                    buildIndexType={BuildIndex.activeRequestsAsignee}
-                    buildIndexState={state.indexActiveRequestsAsignee}
-                    onBuildIndex={buildIndex}
-                  />
-                  <ListItemBuildIndex
-                    indexName={"[author.uid] /../active/${requestDocument}"}
-                    buildIndexType={BuildIndex.activeRequestsAuthor}
-                    buildIndexState={state.indexActiveRequestsAuthor}
-                    onBuildIndex={buildIndex}
-                  />
-                  <ListItemBuildIndex
-                    indexName={"[usedProducts] /.../recipes/${anyDocument}"}
-                    buildIndexType={BuildIndex.usedProductsRecipes}
-                    buildIndexState={state.indexUsedProductsRecipes}
-                    onBuildIndex={buildIndex}
-                  />
+          <Card sx={classes.card} key={"cardInfo"}>
+            <CardContent sx={classes.cardContent} key={"cardContentInfo"}>
+              <List>
+                <ListItemBuildIndex
+                  indexName={
+                    "[variantProperties.originalRecipeUid] /../recipeVariants/${recipeDoc}"
+                  }
+                  buildIndexType={BuildIndex.recipeVariants}
+                  buildIndexState={state.indexRecipeVariants}
+                  onBuildIndex={buildIndex}
+                />
+                <ListItemBuildIndex
+                  indexName={"[usedRecipes] /../docs/${anyRelatedEventDoc}"}
+                  buildIndexType={BuildIndex.eventUsedRecipes}
+                  buildIndexState={state.indexEventUsedRecipes}
+                  onBuildIndex={buildIndex}
+                />
+                <ListItemBuildIndex
+                  indexName={"[assignee.uid] /../active/${requestDocument}"}
+                  buildIndexType={BuildIndex.activeRequestsAsignee}
+                  buildIndexState={state.indexActiveRequestsAsignee}
+                  onBuildIndex={buildIndex}
+                />
+                <ListItemBuildIndex
+                  indexName={"[author.uid] /../active/${requestDocument}"}
+                  buildIndexType={BuildIndex.activeRequestsAuthor}
+                  buildIndexState={state.indexActiveRequestsAuthor}
+                  onBuildIndex={buildIndex}
+                />
+                <ListItemBuildIndex
+                  indexName={"[usedProducts] /.../recipes/${anyDocument}"}
+                  buildIndexType={BuildIndex.usedProductsRecipes}
+                  buildIndexState={state.indexUsedProductsRecipes}
+                  onBuildIndex={buildIndex}
+                />
 
-                  <ListItemBuildIndex
-                    indexName={"[usedProducts] /.../docs/${anyDocument}"}
-                    buildIndexType={BuildIndex.usedProductsEvents}
-                    buildIndexState={state.indexUsedProductsEvents}
-                    onBuildIndex={buildIndex}
-                  />
-                  <ListItemBuildIndex
-                    indexName={
-                      "[created.displayName] /.../recipes/${anyDocument}"
-                    }
-                    buildIndexType={BuildIndex.displayNameRecipes}
-                    buildIndexState={state.indexDisplayNameRecipes}
-                    onBuildIndex={buildIndex}
-                  />
-                  <ListItemBuildIndex
-                    indexName={"[created.displayName] /.../docs/${anyDocument}"}
-                    buildIndexType={BuildIndex.displayNameEvents}
-                    buildIndexState={state.indexDisplayNameEvents}
-                    onBuildIndex={buildIndex}
-                  />
-                  <ListItemBuildIndex
-                    indexName={
-                      "[variantProperties.originalRecipeUid] /.../recipes/${anyDocument}"
-                    }
-                    buildIndexType={BuildIndex.oringalRecipeUidRecipeVariant}
-                    buildIndexState={state.indexOriginalRecipeUidVariant}
-                    onBuildIndex={buildIndex}
-                  />
-                  <ListItemBuildIndex
-                    indexName={"[user.roles] /users/${anyDocument}"}
-                    buildIndexType={BuildIndex.userByRole}
-                    buildIndexState={state.indexUserByRole}
-                    onBuildIndex={buildIndex}
-                  />
-                </List>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+                <ListItemBuildIndex
+                  indexName={"[usedProducts] /.../docs/${anyDocument}"}
+                  buildIndexType={BuildIndex.usedProductsEvents}
+                  buildIndexState={state.indexUsedProductsEvents}
+                  onBuildIndex={buildIndex}
+                />
+                <ListItemBuildIndex
+                  indexName={
+                    "[created.displayName] /.../recipes/${anyDocument}"
+                  }
+                  buildIndexType={BuildIndex.displayNameRecipes}
+                  buildIndexState={state.indexDisplayNameRecipes}
+                  onBuildIndex={buildIndex}
+                />
+                <ListItemBuildIndex
+                  indexName={"[created.displayName] /.../docs/${anyDocument}"}
+                  buildIndexType={BuildIndex.displayNameEvents}
+                  buildIndexState={state.indexDisplayNameEvents}
+                  onBuildIndex={buildIndex}
+                />
+                <ListItemBuildIndex
+                  indexName={
+                    "[variantProperties.originalRecipeUid] /.../recipes/${anyDocument}"
+                  }
+                  buildIndexType={BuildIndex.oringalRecipeUidRecipeVariant}
+                  buildIndexState={state.indexOriginalRecipeUidVariant}
+                  onBuildIndex={buildIndex}
+                />
+                <ListItemBuildIndex
+                  indexName={"[user.roles] /users/${anyDocument}"}
+                  buildIndexType={BuildIndex.userByRole}
+                  buildIndexState={state.indexUserByRole}
+                  onBuildIndex={buildIndex}
+                />
+              </List>
+            </CardContent>
+          </Card>
+        </Stack>
       </Container>
       <CustomSnackbar
         message={state.snackbar.message}

@@ -7,7 +7,7 @@ import {
   Stepper,
   Step,
   StepLabel,
-  Grid,
+  Stack,
   Button,
   Backdrop,
   CircularProgress,
@@ -16,7 +16,9 @@ import {
   CardHeader,
   CardContent,
   useMediaQuery,
-} from "@material-ui/core";
+  Box,
+  useTheme,
+} from "@mui/material";
 
 import {
   CREATE_YOUR_EVENT as TEXT_CREATE_YOUR_EVENT,
@@ -38,7 +40,8 @@ import {
   THANK_YOU_1000 as TEXT_THANK_YOU_1000,
 } from "../../../constants/text";
 
-import useStyles from "../../../constants/styles";
+import useCustomStyles from "../../../constants/styles";
+
 import PageTitle from "../../Shared/pageTitle";
 import EventInfoPage from "./eventInfo";
 import EventGroupConfigurationPage from "../GroupConfiguration/groupConfigruation";
@@ -197,7 +200,7 @@ const CreateEventBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {push} = useHistory();
 
   const [state, dispatch] = React.useReducer(eventReducer, inititialState);
@@ -334,51 +337,45 @@ const CreateEventBase: React.FC<
         title={TEXT_CREATE_YOUR_EVENT}
         subTitle={TEXT_WHAT_ARE_YOU_UP_TO}
       />
-      <CreateEventStepper activeStep={activeStep} />
-      <Backdrop className={classes.backdrop} open={state.isSaving}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} className={classes.centerCenter}>
-            <CircularProgress color="inherit" />
-          </Grid>
-          <Grid item xs={12} className={classes.centerCenter}>
-            <Typography>
-              {TEXT_EVENT_IS_BEEING_CREATED(state.event.name)}
-            </Typography>
-          </Grid>
+      <Backdrop sx={classes.backdrop} open={state.isSaving}>
+        <Stack spacing={2} sx={classes.centerCenter}>
+          <CircularProgress color="inherit" />
+          <Typography>
+            {TEXT_EVENT_IS_BEEING_CREATED(state.event.name)}
+          </Typography>
           {state.localPicture && (
-            <Grid item xs={12} className={classes.centerCenter}>
-              <Typography>{TEXT_IMAGE_IS_BEEING_UPLOADED}</Typography>
-            </Grid>
+            <Typography>{TEXT_IMAGE_IS_BEEING_UPLOADED}</Typography>
           )}
-        </Grid>
+        </Stack>
       </Backdrop>
 
-      <Container className={classes.container} component="main" maxWidth="md">
-        <Grid container spacing={2}>
+      <Container sx={classes.container} component="main" maxWidth="md">
+        <CreateEventStepper activeStep={activeStep} />
+
+        <Stack spacing={2} sx={classes.centerCenter}>
           {state.isError && (
-            <Grid item key={"error"} xs={12}>
-              <AlertMessage
-                error={state.error as Error}
-                messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
-              />
-            </Grid>
+            <AlertMessage
+              error={state.error as Error}
+              messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
+            />
           )}
 
           {activeStep == WizardSteps.info ? (
-            <React.Fragment>
-              <Grid item xs={12}>
-                <EventInfoPage
-                  event={state.event}
-                  localPicture={state.localPicture}
-                  formValidation={state.eventFormValidation}
-                  firebase={firebase}
-                  authUser={authUser}
-                  onUpdateEvent={onUpdateEvent}
-                  onUpdatePicture={onUpdatePicture}
-                  onError={onEventError}
-                />
-              </Grid>
-              <Grid item xs={12} container justifyContent="flex-end">
+            <Stack spacing={2}>
+              <EventInfoPage
+                event={state.event}
+                localPicture={state.localPicture}
+                formValidation={state.eventFormValidation}
+                firebase={firebase}
+                authUser={authUser}
+                onUpdateEvent={onUpdateEvent}
+                onUpdatePicture={onUpdatePicture}
+                onError={onEventError}
+              />
+              <Box
+                component="div"
+                sx={{display: "flex", justifyContent: "flex-end"}}
+              >
                 <Button
                   variant="outlined"
                   color="primary"
@@ -395,31 +392,27 @@ const CreateEventBase: React.FC<
                 >
                   {TEXT_CONTIUNE}
                 </Button>
-              </Grid>
-            </React.Fragment>
+              </Box>
+            </Stack>
           ) : activeStep === WizardSteps.groupConfig ? (
-            <Grid item xs={12}>
-              <EventGroupConfigurationPage
-                firebase={firebase}
-                authUser={authUser}
-                event={state.event}
-                onConfirm={{buttonText: TEXT_CONTIUNE, onClick: goToResume}}
-                onCancel={{
-                  buttonText: TEXT_BACK_TO_EVENT_INFO,
-                  onClick: goToStepInfo,
-                }}
-              />
-            </Grid>
+            <EventGroupConfigurationPage
+              firebase={firebase}
+              authUser={authUser}
+              event={state.event}
+              onConfirm={{buttonText: TEXT_CONTIUNE, onClick: goToResume}}
+              onCancel={{
+                buttonText: TEXT_BACK_TO_EVENT_INFO,
+                onClick: goToStepInfo,
+              }}
+            />
           ) : (
-            <Grid item xs={12}>
-              <CreateEventCompletion
-                event={state.event}
-                onReturn={goToStepGroup}
-                onProceed={goToMenuplan}
-              />
-            </Grid>
+            <CreateEventCompletion
+              event={state.event}
+              onReturn={goToStepGroup}
+              onProceed={goToMenuplan}
+            />
           )}
-        </Grid>
+        </Stack>
       </Container>
     </React.Fragment>
   );
@@ -437,72 +430,66 @@ const CreateEventCompletion = ({
   onProceed,
   onReturn,
 }: CreateEventCompletionProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
+  const theme = useTheme();
 
   return (
     <Container component="main" maxWidth="md">
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Card>
-            <CardHeader title={TEXT_COMPLETION} />
-            <CardContent>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <Typography>
-                    {TEXT_RESUME_INTRODUCTION(event.name)}
-                  </Typography>
-                  <br />
-                  <Typography>
-                    <strong>{TEXT_PLEASE_DONATE}</strong>
-                    <br />
-                    {TEXT_WHY_DONATE}
-                    <br />
-                    {TEXT_NEED_A_RECEIPT}
-                    <br />
-                    <br />
-                    {TEXT_THANK_YOU_1000}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Grid container justifyContent="center">
-                    <img
-                      src={
-                        ImageRepository.getEnviromentRelatedPicture()
-                          .TWINT_QR_CODE
-                      }
-                      className={classes.cardMediaQrCode}
-                      style={{maxWidth: "100%", height: "auto"}}
-                    />
-                  </Grid>
-                </Grid>
-                <Grid item xs={12}>
-                  <Grid container justifyContent="center">
-                    <TwintButton />
-                  </Grid>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
+      <Stack spacing={2}>
+        <Card>
+          <CardHeader title={TEXT_COMPLETION} />
+          <CardContent>
+            <Stack
+              spacing={2}
+              sx={{
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Typography>{TEXT_RESUME_INTRODUCTION(event.name)}</Typography>
+              <br />
+              <Typography>
+                <strong>{TEXT_PLEASE_DONATE}</strong>
+                <br />
+                {TEXT_WHY_DONATE}
+                <br />
+                {TEXT_NEED_A_RECEIPT}
+                <br />
+                <br />
+                {TEXT_THANK_YOU_1000}
+              </Typography>
+              <Box sx={classes.centerCenter}>
+                <Box
+                  component="img"
+                  src={
+                    ImageRepository.getEnviromentRelatedPicture().TWINT_QR_CODE
+                  }
+                  sx={classes.cardMediaQrCode}
+                  style={{maxWidth: "100%", height: "auto"}}
+                />
+              </Box>
 
-        <Grid item xs={12}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} container justifyContent="flex-end">
-              <Button variant="outlined" color="primary" onClick={onReturn}>
-                {TEXT_BACK_TO_GROUPCONFIG}
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                style={{marginLeft: "1rem"}}
-                onClick={onProceed}
-              >
-                {TEXT_CONTIUNE}
-              </Button>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
+              <TwintButton />
+            </Stack>
+          </CardContent>
+        </Card>
+
+        <Box
+          component="div"
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: theme.spacing(1),
+          }}
+        >
+          <Button variant="outlined" onClick={onReturn}>
+            {TEXT_BACK_TO_GROUPCONFIG}
+          </Button>
+          <Button variant="contained" onClick={onProceed}>
+            {TEXT_CONTIUNE}
+          </Button>
+        </Box>
+      </Stack>
     </Container>
   );
 };
@@ -510,7 +497,7 @@ const CreateEventCompletion = ({
 // ============================ Twint Button =========================
 // =================================================================== */
 export const TwintButton = () => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const [darkMode, setDarkMode] = React.useState(false);
 
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
@@ -523,7 +510,8 @@ export const TwintButton = () => {
     <Button
       fullWidth
       startIcon={
-        <img
+        <Box
+          component="img"
           src={
             darkMode
               ? "https://assets.raisenow.io/twint-logo-light.svg"
@@ -535,9 +523,10 @@ export const TwintButton = () => {
       onClick={() => {
         window.open(TWINT_PAYLINK, "_blank");
       }}
-      className={`${classes.twintButton} ${
-        darkMode ? classes.twintButtonDarkMode : classes.twintButtonLightMode
-      }`}
+      sx={[
+        classes.twintButton,
+        darkMode ? classes.twintButtonDarkMode : classes.twintButtonLightMode,
+      ]}
     >
       Mit TWINT bezahlen
     </Button>

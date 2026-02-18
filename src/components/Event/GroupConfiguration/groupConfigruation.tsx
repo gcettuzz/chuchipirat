@@ -1,14 +1,13 @@
-import React from "react";
+import React, {SyntheticEvent} from "react";
 
 import {
-  Grid,
+  Stack,
   Button,
   Backdrop,
   CircularProgress,
   Card,
   CardHeader,
   CardContent,
-  CardActions,
   Typography,
   Divider,
   IconButton,
@@ -20,14 +19,17 @@ import {
   MenuItem,
   ListItemIcon,
   useTheme,
-} from "@material-ui/core";
+  Box,
+  SnackbarCloseReason,
+} from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 
 import {
   Add as AddIcon,
   MoreVert as MoreVertIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
@@ -53,7 +55,7 @@ import {
   SAVE as TEXT_SAVE,
 } from "../../../constants/text";
 
-import useStyles from "../../../constants/styles";
+import useCustomStyles from "../../../constants/styles";
 import {ButtonAction} from "../../Shared/global.interface";
 import AlertMessage from "../../Shared/AlertMessage";
 import Event from "../Event/event.class";
@@ -185,7 +187,8 @@ const EventGroupConfigurationPage = ({
   onCancel,
   onGroupConfigurationUpdate,
 }: EventGroupConfigurationPageProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
+  const theme = useTheme();
   const {customDialog} = useCustomDialog();
   const navigationValuesContext = React.useContext(NavigationValuesContext);
 
@@ -462,8 +465,8 @@ const EventGroupConfigurationPage = ({
   // Snackback schliessen
   // ------------------------------------------ */
   const handleSnackbarClose = (
-    event: React.SyntheticEvent | React.MouseEvent,
-    reason?: string
+    event: globalThis.Event | SyntheticEvent<any, globalThis.Event>,
+    reason: SnackbarCloseReason
   ) => {
     if (reason === "clickaway") {
       return;
@@ -475,60 +478,47 @@ const EventGroupConfigurationPage = ({
   };
   return (
     <React.Fragment>
-      {state.isError && (
-        <Grid item key={"error"} xs={12}>
+      <Stack spacing={1}>
+        {state.isError && (
           <AlertMessage
             error={state.error as Error}
             messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
           />
-        </Grid>
-      )}
+        )}
 
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Backdrop className={classes.backdrop} open={state.isLoading}>
-            <CircularProgress color="inherit" />
-          </Backdrop>
-        </Grid>
-        <Grid item xs={12}>
-          <EventGroupConfigurationCard
-            groupConfig={state.groupConfig}
-            onAddItem={onAddItem}
-            openIntoleranceContextMenu={openIntoleranceContextMenu}
-            openDietContextMenu={openDietContextMenu}
-            onPortionChange={onPortionChange}
-            onDiscardChanges={onDiscardChanges}
-            onRecalculatePortions={onRecalculatePortions}
-            showUpdateConfigButtons={showUpdateConfigButtons}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} container justifyContent="flex-end">
-              {onCancel && (
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onClick={cancelCreate}
-                >
-                  {onCancel.buttonText}
-                </Button>
-              )}
-              {onConfirm && (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  style={{marginLeft: "1rem"}}
-                  onClick={saveEvent}
-                >
-                  {onConfirm.buttonText}
-                </Button>
-              )}
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
+          <CircularProgress color="inherit" />
+        </Backdrop>
+        <EventGroupConfigurationCard
+          groupConfig={state.groupConfig}
+          onAddItem={onAddItem}
+          openIntoleranceContextMenu={openIntoleranceContextMenu}
+          openDietContextMenu={openDietContextMenu}
+          onPortionChange={onPortionChange}
+          onDiscardChanges={onDiscardChanges}
+          onRecalculatePortions={onRecalculatePortions}
+          showUpdateConfigButtons={showUpdateConfigButtons}
+        />
+        <Box component="div" sx={{display: "flex", justifyContent: "flex-end"}}>
+          {onCancel && (
+            <Button variant="outlined" color="primary" onClick={cancelCreate}>
+              {onCancel.buttonText}
+            </Button>
+          )}
+          {onConfirm && (
+            <Button
+              variant="contained"
+              color="primary"
+              style={{
+                marginLeft: theme.spacing(2),
+              }}
+              onClick={saveEvent}
+            >
+              {onConfirm.buttonText}
+            </Button>
+          )}
+        </Box>
+      </Stack>
       <Menu
         open={Boolean(contextMenuAnchorElement)}
         keepMounted
@@ -595,19 +585,19 @@ const EventGroupConfigurationCard = ({
   onRecalculatePortions,
   showUpdateConfigButtons = false,
 }: EventGroupConfigurationCardProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
 
   return (
     <div style={{overflowX: "scroll", minWidth: "750px"}}>
-      <Card className={classes.card}>
+      <Card sx={classes.card}>
         <CardHeader
           title={TEXT_GROUP_CONFIGURATION_SETTINGS}
           subheader={TEXT_GROUP_CONFIGURATION_SETTINGS_DESCRIPTION}
         />
         <CardContent>
           <Grid container spacing={2}>
-            <Grid item xs={3}>
+            <Grid xs={3}>
               <EventGroupConfigLeadColumn
                 groupConfig={groupConfig}
                 onAddIntolerance={() =>
@@ -615,33 +605,35 @@ const EventGroupConfigurationCard = ({
                 }
               />
             </Grid>
-            <Grid item xs={5}>
+            <Grid xs={5}>
               <EventGroupConfigDietColumn
                 groupConfig={groupConfig}
                 openDietContextMenu={openDietContextMenu}
                 onFieldChange={onPortionChange}
               />
             </Grid>
-            <Grid item xs={1} style={{justifyContent: "center"}}>
+            <Grid xs={1} style={{justifyContent: "center"}}>
               <Grid
                 container
                 direction="column"
                 justifyContent="center"
                 alignItems="center"
               >
-                <Grid item className={classes.itemGroupConfigurationRow}>
+                <Grid sx={classes.itemGroupConfigurationRow}>
                   <Tooltip title={TEXT_ADD_DIET}>
                     <IconButton
                       aria-label="Diät hinzufügen"
                       color="primary"
                       onClick={() => onAddItem(GroupConfigDimension.diet)}
+                      size="large"
                     >
                       <AddIcon />
                     </IconButton>
                   </Tooltip>
                 </Grid>
               </Grid>
-              <div
+              <Box
+                component="div"
                 style={{
                   marginTop: "1rem",
                   width: "100%",
@@ -655,9 +647,9 @@ const EventGroupConfigurationCard = ({
                   flexItem
                   style={{height: "80%", display: "flex"}}
                 />
-              </div>
+              </Box>
             </Grid>
-            <Grid item xs={2}>
+            <Grid xs={2}>
               <EventGroupConfigTotalColumn
                 groupConfig={groupConfig}
                 openIntoleranceContextMenu={openIntoleranceContextMenu}
@@ -665,31 +657,33 @@ const EventGroupConfigurationCard = ({
             </Grid>
           </Grid>
         </CardContent>
-        {showUpdateConfigButtons && (
-          <CardActions
-            style={{
-              justifyContent: "flex-end",
-              marginBottom: theme.spacing(2),
-              marginTop: theme.spacing(2),
-            }}
-          >
-            <Button
-              color="primary"
-              variant="outlined"
-              onClick={onDiscardChanges}
-            >
-              {TEXT_DISCARD_CHANGES}
-            </Button>
-            <Button
-              color="primary"
-              variant="contained"
-              onClick={onRecalculatePortions}
-            >
-              {TEXT_SAVE} {TEXT_AND} {TEXT_RECALCULATE_PORTIONS}
-            </Button>
-          </CardActions>
-        )}
       </Card>
+      {showUpdateConfigButtons && (
+        <Box
+          component="div"
+          style={{
+            marginTop: theme.spacing(2),
+            justifyContent: "flex-end",
+            display: "flex",
+          }}
+        >
+          <Button
+            color="primary"
+            variant="outlined"
+            onClick={onDiscardChanges}
+            sx={{marginRight: theme.spacing(2)}}
+          >
+            {TEXT_DISCARD_CHANGES}
+          </Button>
+          <Button
+            color="primary"
+            variant="contained"
+            onClick={onRecalculatePortions}
+          >
+            {TEXT_SAVE} {TEXT_AND} {TEXT_RECALCULATE_PORTIONS}
+          </Button>
+        </Box>
+      )}
     </div>
   );
 };
@@ -704,25 +698,19 @@ const EventGroupConfigLeadColumn = ({
   groupConfig,
   onAddIntolerance,
 }: EventGroupConfigLeadColumnProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
     <React.Fragment>
-      <Grid
-        container
-        // direction="column"
-        // justifyContent="center"
-        // alignItems="center"
-      >
-        <Grid item className={classes.itemGroupConfigurationRow}>
+      <Grid container spacing={2}>
+        <Grid sx={classes.itemGroupConfigurationRow}>
           <Typography variant="h6" component="h2">
             {TEXT_GROUPS}
           </Typography>
         </Grid>
         {groupConfig.intolerances.order.map((intoleranceUid) => (
           <Grid
-            item
-            className={classes.itemGroupConfigurationRow}
+            sx={classes.itemGroupConfigurationRow}
             xs={12}
             key={"intolerance_grid_" + intoleranceUid}
           >
@@ -732,8 +720,7 @@ const EventGroupConfigLeadColumn = ({
           </Grid>
         ))}
         <Grid
-          item
-          className={classes.itemGroupConfigurationRow}
+          sx={classes.itemGroupConfigurationRow}
           style={{alignItems: "center"}}
         >
           <Button
@@ -748,10 +735,10 @@ const EventGroupConfigLeadColumn = ({
 
         <Divider flexItem />
 
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <Divider />
         </Grid>
-        <Grid item className={classes.itemGroupConfigurationRow}>
+        <Grid sx={classes.itemGroupConfigurationRow}>
           <Typography variant="h6" component="h2">
             {TEXT_TOTAL}
           </Typography>
@@ -773,7 +760,7 @@ const EventGroupConfigDietColumn = ({
   openDietContextMenu,
   onFieldChange,
 }: EventGroupConfigDietColumnProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const gridSize = Math.floor(
     12 / Object.keys(groupConfig.diets.entries).length
@@ -782,85 +769,84 @@ const EventGroupConfigDietColumn = ({
     <React.Fragment>
       <Grid container spacing={2}>
         {groupConfig.diets.order.map((dietUid) => (
-          <Grid item xs={gridSize} key={"grid_diet" + dietUid}>
+          <Grid xs={gridSize} key={"grid_diet" + dietUid}>
             <Grid container>
               <Grid
-                item
-                xs={12}
-                className={classes.itemGroupConfigurationRow}
-                style={{justifyContent: "space-between"}}
+                xs={11}
+                sx={[classes.itemGroupConfigurationRow, {flexGrow: 1}]}
               >
                 <Typography variant="h6" component="h2">
                   {groupConfig.diets.entries[dietUid].name}
                 </Typography>
+              </Grid>
+              <Grid xs={1} sx={classes.itemGroupConfigurationRow}>
                 <IconButton
                   id={"MoreBtn_diet_" + dietUid}
                   aria-label="position-options"
                   style={{paddingRight: "0px"}}
                   size="small"
                   onClick={openDietContextMenu}
+                  sx={{alignContent: "end"}}
                 >
-                  <MoreVertIcon />
+                  <MoreVertIcon fontSize="small" />
                 </IconButton>
               </Grid>
-              {groupConfig.intolerances.order.map((intoleranceUid) => (
-                <Grid
-                  item
-                  xs={12}
-                  className={classes.itemGroupConfigurationRow}
-                  key={
-                    "grid_column_" + dietUid + "_intolerance_" + intoleranceUid
-                  }
-                >
-                  <TextField
-                    key={"portions_" + dietUid + "_" + intoleranceUid}
-                    id={"portions_" + dietUid + "_" + intoleranceUid}
-                    label={TEXT_PORTIONS}
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    InputProps={{
-                      inputProps: {
-                        min: 0,
-                        step: 1,
-                      },
-                      inputComponent: "input",
-                    }}
-                    onWheel={(event) =>
-                      event.target instanceof HTMLElement && event.target.blur()
-                    }
-                    value={groupConfig.portions[dietUid][intoleranceUid]}
-                    onChange={onFieldChange}
-                  />
-                </Grid>
-              ))}
+            </Grid>
+
+            {groupConfig.intolerances.order.map((intoleranceUid) => (
               <Grid
-                item
                 xs={12}
-                className={classes.itemGroupConfigurationRow}
-              />
-              <Grid item xs={12}>
-                <Divider />
-              </Grid>
-              <Grid item xs={12} className={classes.itemGroupConfigurationRow}>
+                sx={classes.itemGroupConfigurationRow}
+                key={
+                  "grid_column_" + dietUid + "_intolerance_" + intoleranceUid
+                }
+              >
                 <TextField
-                  key={"total_diet_" + dietUid}
-                  id={"total_diet_" + dietUid}
+                  key={"portions_" + dietUid + "_" + intoleranceUid}
+                  id={"portions_" + dietUid + "_" + intoleranceUid}
                   label={TEXT_PORTIONS}
                   variant="outlined"
-                  disabled
                   size="small"
                   fullWidth
                   InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <strong>=</strong>
-                      </InputAdornment>
-                    ),
+                    inputProps: {
+                      min: 0,
+                      step: 1,
+                    },
+                    inputComponent: "input",
                   }}
-                  value={groupConfig.diets.entries[dietUid].totalPortions}
-                ></TextField>
+                  onWheel={(event) =>
+                    event.target instanceof HTMLElement && event.target.blur()
+                  }
+                  value={groupConfig.portions[dietUid][intoleranceUid]}
+                  onChange={onFieldChange}
+                />
               </Grid>
+            ))}
+
+            <Grid xs={12} sx={classes.itemGroupConfigurationRow} />
+            {/* Leer da Button nicht nötig */}
+            <Grid xs={12}>
+              <Divider flexItem />
+            </Grid>
+            <Grid xs={12} sx={classes.itemGroupConfigurationRow}>
+              <TextField
+                key={"total_diet_" + dietUid}
+                id={"total_diet_" + dietUid}
+                label={TEXT_PORTIONS}
+                variant="outlined"
+                disabled
+                size="small"
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <strong>=</strong>
+                    </InputAdornment>
+                  ),
+                }}
+                value={groupConfig.diets.entries[dietUid].totalPortions}
+              />
             </Grid>
           </Grid>
         ))}
@@ -879,12 +865,12 @@ const EventGroupConfigTotalColumn = ({
   groupConfig,
   openIntoleranceContextMenu,
 }: EventGroupConfigTotalColumnProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
     <React.Fragment>
       <Grid container>
-        <Grid item className={classes.itemGroupConfigurationRow}>
+        <Grid sx={classes.itemGroupConfigurationRow}>
           <Typography variant="h6" component="h2">
             {TEXT_TOTAL}
           </Typography>
@@ -892,8 +878,7 @@ const EventGroupConfigTotalColumn = ({
         {groupConfig.intolerances.order.map((intoleranceUid) => (
           <React.Fragment key={"grid_total_colum_" + intoleranceUid}>
             <Grid
-              item
-              className={classes.itemGroupConfigurationRow}
+              sx={classes.itemGroupConfigurationRow}
               xs={11}
               key={"intolerance_grid_" + intoleranceUid}
             >
@@ -916,15 +901,15 @@ const EventGroupConfigTotalColumn = ({
               />
             </Grid>
             <Grid
-              item
               xs={1}
-              className={classes.itemGroupConfigurationRow}
+              sx={classes.itemGroupConfigurationRow}
               key={"intolerance_grid_moreBtn_" + intoleranceUid}
             >
               <IconButton
                 id={"MoreBtn_intolerance_" + intoleranceUid}
                 aria-label="position-options"
                 onClick={openIntoleranceContextMenu}
+                size="large"
               >
                 <MoreVertIcon />
               </IconButton>
@@ -932,9 +917,8 @@ const EventGroupConfigTotalColumn = ({
           </React.Fragment>
         ))}
         <Grid
-          item
           xs={12}
-          className={classes.itemGroupConfigurationRow}
+          sx={classes.itemGroupConfigurationRow}
           style={{alignItems: "center"}}
         >
           <div> </div>
@@ -942,10 +926,10 @@ const EventGroupConfigTotalColumn = ({
 
         <Divider flexItem />
 
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <Divider />
         </Grid>
-        <Grid item className={classes.itemGroupConfigurationRow}>
+        <Grid sx={classes.itemGroupConfigurationRow}>
           <TextField
             label={TEXT_PORTIONS}
             variant="outlined"

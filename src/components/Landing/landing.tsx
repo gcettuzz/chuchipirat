@@ -1,6 +1,13 @@
 import React from "react";
 
-import {Container, Grid, Card, Typography, CardMedia} from "@material-ui/core";
+import {
+  Container,
+  Card,
+  Typography,
+  CardMedia,
+  Box,
+  Stack,
+} from "@mui/material";
 
 import {
   SIGN_IN as ROUTE_SIGN_IN,
@@ -32,7 +39,6 @@ import {
 } from "../../constants/text";
 
 import {ImageRepository} from "../../constants/imageRepository";
-import useStyles from "../../constants/styles";
 
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
@@ -40,6 +46,7 @@ import {HOME as ROUTE_HOME} from "../../constants/routes";
 import {AuthUserContext} from "../Session/authUserContext";
 import {CustomRouterProps} from "../Shared/global.interface";
 import AuthUser from "../Firebase/Authentication/authUser.class";
+import useCustomStyles from "../../constants/styles";
 
 /* ===================================================================
 // ================================ Page =============================
@@ -58,13 +65,8 @@ const LandingPage = (props) => {
 export const LandingBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, history}) => {
-  const classes = useStyles();
-  // const {push} = useHistory();
+  const classes = useCustomStyles();
 
-  // Wenn angemeldet direkt weiterleiten
-  // if (authUser) {
-  //   push({pathname: ROUTE_HOME});
-  // }
   React.useEffect(() => {
     // Wenn angemeldet direkt weiterleiten
     if (authUser) {
@@ -105,140 +107,95 @@ export const LandingBase: React.FC<
       />
 
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="sm">
-        <Grid container spacing={4} alignItems="center" justifyContent="center">
-          <Grid item xs={12} style={{textAlign: "center"}}>
-            <img
-              src={ImageRepository.getEnviromentRelatedPicture().LANDING_LOGO}
-              width="350em"
-              alt="Logo"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <Typography variant="h6" component="h2">
-              {TEXT_LANDING_LEAD_TEXT}
-            </Typography>
-            <br />
-            <Typography variant="subtitle1">{TEXT_LOVE_TO_COOK}</Typography>
-          </Grid>
+      <Container sx={classes.container} component="main" maxWidth="sm">
+        <Stack spacing={4} alignItems="center" justifyContent="center">
+          <Box
+            component="img"
+            src={ImageRepository.getEnviromentRelatedPicture().LANDING_LOGO}
+            // width="350em"
+            alt="Logo"
+          />
+          <Typography variant="h6" component="h2">
+            {TEXT_LANDING_LEAD_TEXT}
+          </Typography>
+          <br />
+          <Typography variant="subtitle1">{TEXT_LOVE_TO_COOK}</Typography>
           {/* Rezepte */}
-          <Grid item xs={12}>
-            <Typography>
-              <strong>{TEXT_LANDING_RECIPES_BLOCK_TITLE}</strong>
-              <br />
-              {TEXT_LANDING_RECIPES_BLOCK_TEXT}
-            </Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <ImageCard
-              url={
-                ImageRepository.getLandingPageEnviromentRelatedPicture().recipes
-              }
-            />
-          </Grid>
+          <Typography>
+            <strong>{TEXT_LANDING_RECIPES_BLOCK_TITLE}</strong>
+            <br />
+            {TEXT_LANDING_RECIPES_BLOCK_TEXT}
+          </Typography>
+          <ImageCard
+            url={
+              ImageRepository.getLandingPageEnviromentRelatedPicture().recipes
+            }
+          />
           {/* Gruppen-Config */}
-          <Grid item xs={12}>
-            <Typography>
-              <strong>{TEXT_LANDING_GROUP_CONFIG_TITLE}</strong>
-              <br />
-              {TEXT_LANDING_GROUP_CONFIG_TEXT}
-            </Typography>
-          </Grid>
-
+          <Typography>
+            <strong>{TEXT_LANDING_GROUP_CONFIG_TITLE}</strong>
+            <br />
+            {TEXT_LANDING_GROUP_CONFIG_TEXT}
+          </Typography>
           {/* Gruppengrösse */}
-          <Grid item xs={12}>
-            <Typography>
-              <strong>{TEXT_LANDING_GROUP_SIZE_TITLE}</strong>
-              <br />
-              {TEXT_LANDING_GROUP_SIZE_TEXT}
-            </Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <ImageCard
-              url={
-                ImageRepository.getLandingPageEnviromentRelatedPicture()
-                  .groupconfig
-              }
-            />
-          </Grid>
-
+          <Typography>
+            <strong>{TEXT_LANDING_GROUP_SIZE_TITLE}</strong>
+            <br />
+            {TEXT_LANDING_GROUP_SIZE_TEXT}
+          </Typography>
+          <ImageCard
+            url={
+              ImageRepository.getLandingPageEnviromentRelatedPicture()
+                .groupconfig
+            }
+          />
           {/* Menüplan */}
-          <Grid item xs={12}>
-            <Typography>
-              <strong>{TEXT_LANDING_MENUPLAN_TITLE}</strong>
-              <br />
-              {TEXT_LANDING_MENUPLAN_TEXT}
-            </Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <ImageCard
-              url={
-                ImageRepository.getLandingPageEnviromentRelatedPicture()
-                  .menuplan
-              }
-            />
-          </Grid>
-          {/* <Grid item xs={12}>
-            <Divider color="primary" />
-          </Grid> */}
+          <Typography>
+            <strong>{TEXT_LANDING_MENUPLAN_TITLE}</strong>
+            <br />
+            {TEXT_LANDING_MENUPLAN_TEXT}
+          </Typography>
+          <ImageCard
+            url={
+              ImageRepository.getLandingPageEnviromentRelatedPicture().menuplan
+            }
+          />
           {/* Skalierung */}
-          <Grid item xs={12}>
-            <Typography>
-              <strong>{TEXT_LANDING_SCALING_TITLE}</strong>
-              <br />
-              {TEXT_LANDING_SCALING_TEXT}
-            </Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <ImageCard
-              url={
-                ImageRepository.getLandingPageEnviromentRelatedPicture().scaling
-              }
-            />
-          </Grid>
-          {/* <Grid item xs={12}>
-            <Divider color="primary" />
-          </Grid> */}
+          <Typography>
+            <strong>{TEXT_LANDING_SCALING_TITLE}</strong>
+            <br />
+            {TEXT_LANDING_SCALING_TEXT}
+          </Typography>
+          <ImageCard
+            url={
+              ImageRepository.getLandingPageEnviromentRelatedPicture().scaling
+            }
+          />
           {/* Einkaufen */}
-          <Grid item xs={12}>
-            <Typography>
-              <strong>{TEXT_LANDING_SHOPPINGLIST_TITLE}</strong>
-              <br />
-              {TEXT_LANDING_SHOPPINGLIST_TEXT}
-            </Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <ImageCard
-              url={
-                ImageRepository.getLandingPageEnviromentRelatedPicture()
-                  .shoppinglist
-              }
-            />
-          </Grid>
-          {/* <Grid item xs={12}>
-            <Divider color="primary" />
-          </Grid> */}
+          <Typography>
+            <strong>{TEXT_LANDING_SHOPPINGLIST_TITLE}</strong>
+            <br />
+            {TEXT_LANDING_SHOPPINGLIST_TEXT}
+          </Typography>
+          <ImageCard
+            url={
+              ImageRepository.getLandingPageEnviromentRelatedPicture()
+                .shoppinglist
+            }
+          />
           {/* Social */}
-          <Grid item xs={12}>
-            <Typography>
-              <strong>{TEXT_LANDING_SOCIAL_TITLE}</strong>
-              <br />
-              {TEXT_LANDING_SOCIAL_TEXT}
-            </Typography>
-          </Grid>
-          {/* <Grid item xs={12}>
-            <Divider color="primary" />
-          </Grid> */}
+          <Typography>
+            <strong>{TEXT_LANDING_SOCIAL_TITLE}</strong>
+            <br />
+            {TEXT_LANDING_SOCIAL_TEXT}
+          </Typography>
           {/* Offline */}
-
-          <Grid item xs={12}>
-            <Typography>
-              <strong>{TEXT_LANDING_OFFLINE_TITLE}</strong>
-              <br />
-              {TEXT_LANDING_OFFLINE_TEXT}
-            </Typography>
-          </Grid>
-        </Grid>
+          <Typography>
+            <strong>{TEXT_LANDING_OFFLINE_TITLE}</strong>
+            <br />
+            {TEXT_LANDING_OFFLINE_TEXT}
+          </Typography>
+        </Stack>
       </Container>
     </React.Fragment>
   );
@@ -248,13 +205,19 @@ interface ImageCardProps {
 }
 const ImageCard = ({url}: ImageCardProps) => {
   return (
-    <Card style={{display: "flex", flexDirection: "column", height: "100%"}}>
+    <Card
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        width: "100%",
+      }}
+    >
       <CardMedia
-        style={{
+        sx={{
           width: "100%",
           height: "100%",
-          // paddingTop: "56.25%", // 16:9
-          paddingTop: "75%", // Hier anpassen, um das gewünschte Seitenverhältnis zu erreichen
+          paddingTop: "75%",
           backgroundPosition: "top",
           flexGrow: 1,
           objectFit: "cover",

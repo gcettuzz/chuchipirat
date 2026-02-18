@@ -1,50 +1,39 @@
-/* eslint-disable react/prop-types */
 import React from "react";
 import {useLocation} from "react-router-dom";
-import {useMediaQuery} from "@material-ui/core";
 import {useHistory} from "react-router";
-import {compose} from "react-recompose";
 import {withRouter} from "react-router-dom";
 
-import AppBar from "@material-ui/core/AppBar";
-import Toolbar from "@material-ui/core/Toolbar";
-import Typography from "@material-ui/core/Typography";
+import AppBar from "@mui/material/AppBar";
+import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
 
-import CssBaseline from "@material-ui/core/CssBaseline";
-// import useScrollTrigger from "@material-ui/core/useScrollTrigger";
+import IconButton from "@mui/material/IconButton";
+import MenuIcon from "@mui/icons-material/Menu";
+import AccountCircle from "@mui/icons-material/AccountCircle";
+import MenuItem from "@mui/material/MenuItem";
+import Menu from "@mui/material/Menu";
+import Link from "@mui/material/Link";
 
-// import Fab from "@material-ui/core/Fab";
-// import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
-// import Zoom from "@material-ui/core/Zoom";
-import IconButton from "@material-ui/core/IconButton";
-import MenuIcon from "@material-ui/icons/Menu";
-import AccountCircle from "@material-ui/icons/AccountCircle";
-import MenuItem from "@material-ui/core/MenuItem";
-import Menu from "@material-ui/core/Menu";
-import Link from "@material-ui/core/Link";
+import Divider from "@mui/material/Divider";
+import Drawer from "@mui/material/Drawer";
 
-import clsx from "clsx";
+import {Box, List, ListItemButton} from "@mui/material";
 
-import Divider from "@material-ui/core/Divider";
-import Drawer from "@material-ui/core/Drawer";
-
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import EventIcon from "@material-ui/icons/Event";
-import FastfoodIcon from "@material-ui/icons/Fastfood";
-import ListItemText from "@material-ui/core/ListItemText";
-import HelpOutlineIcon from "@material-ui/icons/HelpOutline";
-import StraightenIcon from "@material-ui/icons/Straighten";
-import SwapHorizIcon from "@material-ui/icons/SwapHoriz";
-import ShoppingCartIcon from "@material-ui/icons/ShoppingCart";
-import LoyaltyIcon from "@material-ui/icons/Loyalty";
-import SettingsIcon from "@material-ui/icons/Settings";
-import GroupIcon from "@material-ui/icons/Group";
-import NewReleasesIcon from "@material-ui/icons/NewReleases";
-import DescriptionIcon from "@material-ui/icons/Description";
-import BuildIcon from "@material-ui/icons/Build";
-import HomeIcon from "@material-ui/icons/Home";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import EventIcon from "@mui/icons-material/Event";
+import FastfoodIcon from "@mui/icons-material/Fastfood";
+import ListItemText from "@mui/material/ListItemText";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import StraightenIcon from "@mui/icons-material/Straighten";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import LoyaltyIcon from "@mui/icons-material/Loyalty";
+import SettingsIcon from "@mui/icons-material/Settings";
+import GroupIcon from "@mui/icons-material/Group";
+import NewReleasesIcon from "@mui/icons-material/NewReleases";
+import DescriptionIcon from "@mui/icons-material/Description";
+import BuildIcon from "@mui/icons-material/Build";
+import HomeIcon from "@mui/icons-material/Home";
 
 import Action from "../../constants/actions";
 import * as ROUTES from "../../constants/routes";
@@ -59,20 +48,26 @@ import DialogRefreshApp from "./dialogRefreshApp";
 
 import Role from "../../constants/roles";
 
-import useStyles from "../../constants/styles";
-
 import {NavigationValuesContext} from "../Navigation/navigationContext";
 import {AuthUserContext} from "../Session/authUserContext";
 import {withFirebase} from "../Firebase/firebaseContext";
 
-// import Environment from "../Shared/enviroment.class";
 import Utils from "../Shared/utils.class";
 import {DonateIcon} from "../Shared/icons";
 import {logEvent} from "firebase/analytics";
+import useCustomStyles from "../../constants/styles";
+import AuthUser from "../Firebase/Authentication/authUser.class";
+import Firebase from "../Firebase/firebase.class";
+
 // ===================================================================
 // ============================= Global =============================
 // ===================================================================
 type Anchor = "top" | "left" | "bottom" | "right";
+
+interface NavigationAuthProps {
+  authUser: AuthUser;
+  firebase: Firebase;
+}
 
 // ===================================================================
 // ========================== Scroll to Top  =========================
@@ -118,7 +113,7 @@ type Anchor = "top" | "left" | "bottom" | "right";
 // ===================================================================
 // ======================= Navigation Komponente =====================
 // ===================================================================
-const NavigationComponent = () => {
+const NavigationComponent: React.FC = () => {
   // const authUser = useAuthUser();
   return (
     <div>
@@ -138,13 +133,11 @@ const NavigationComponent = () => {
 // ===================================================================
 // ==================== Navigation mit Berechtigung ==================
 // ===================================================================
-const NavigationAuthBase = (props) => {
+const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
   const location = useLocation();
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const firebase = props.firebase;
   const authUser = props.authUser;
-  // const authUser = useAuthUser();
-  // const firebase = useFirebase();
 
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
   const navigationValuesContext = React.useContext(NavigationValuesContext);
@@ -153,8 +146,6 @@ const NavigationAuthBase = (props) => {
     left: false,
   });
   const open = Boolean(anchorEl);
-
-  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 
   // const [loadedVersionIsUpToDate, setLoadedVersionIsUpToDate] =
   // React.useState(false);
@@ -329,41 +320,37 @@ const NavigationAuthBase = (props) => {
     setShowDialogRefreshApp(false);
   };
   const list = (anchor: Anchor) => (
-    <div
-      className={clsx(classes.navigationList, {
-        [classes.navigationFullList]: anchor === "top" || anchor === "bottom",
-      })}
+    <Box
       role="presentation"
       onClick={toggleDrawer(anchor, false)}
       onKeyDown={toggleDrawer(anchor, false)}
     >
       <List>
-        <ListItem button key="Home" onClick={() => push(ROUTES.HOME)}>
+        <ListItemButton key="Home" onClick={() => push(ROUTES.HOME)}>
           <ListItemIcon>
             <HomeIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.HOME_DASHBOARD} />
-        </ListItem>
+        </ListItemButton>
       </List>
       <Divider />
       <List>
-        <ListItem button key="Recipes" onClick={() => push(ROUTES.RECIPES)}>
+        <ListItemButton key="Recipes" onClick={() => push(ROUTES.RECIPES)}>
           <ListItemIcon>
             <FastfoodIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.RECIPES} />
-        </ListItem>
-        <ListItem button key="Events" onClick={() => push(ROUTES.EVENTS)}>
+        </ListItemButton>
+        <ListItemButton key="Events" onClick={() => push(ROUTES.EVENTS)}>
           <ListItemIcon>
             <EventIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.EVENTS} />
-        </ListItem>
+        </ListItemButton>
       </List>
       <Divider />
       <List>
-        <ListItem
-          button
+        <ListItemButton
           key="UnitConversion"
           onClick={() => push(ROUTES.UNITCONVERSION)}
         >
@@ -371,12 +358,11 @@ const NavigationAuthBase = (props) => {
             <SwapHorizIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.NAVIGATION_UNIT_CONVERSION} />
-        </ListItem>
+        </ListItemButton>
       </List>
       <Divider />
       <List>
-        <ListItem
-          button
+        <ListItemButton
           key="requestOverview"
           onClick={() => push(ROUTES.REQUEST_OVERVIEW)}
         >
@@ -384,23 +370,22 @@ const NavigationAuthBase = (props) => {
             <DescriptionIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.NAVIGATION_REQUEST_OVERVIEW} />
-        </ListItem>
+        </ListItemButton>
       </List>
       <Divider />
       <List>
-        <ListItem button key="donate" onClick={() => push(ROUTES.DONATE)}>
+        <ListItemButton key="donate" onClick={() => push(ROUTES.DONATE)}>
           <ListItemIcon>
             <DonateIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.DONATE} />
-        </ListItem>
+        </ListItemButton>
       </List>
       {authUser.roles?.includes(Role.communityLeader) && (
         <React.Fragment>
           <Divider />
           <List>
-            <ListItem
-              button
+            <ListItemButton
               key="Products"
               onClick={() => push(ROUTES.PRODUCTS)}
             >
@@ -408,9 +393,8 @@ const NavigationAuthBase = (props) => {
                 <LoyaltyIcon />
               </ListItemIcon>
               <ListItemText primary={TEXT.NAVIGATION_PRODUCTS} />
-            </ListItem>
-            <ListItem
-              button
+            </ListItemButton>
+            <ListItemButton
               key="Materials"
               onClick={() => push(ROUTES.MATERIALS)}
             >
@@ -418,8 +402,8 @@ const NavigationAuthBase = (props) => {
                 <BuildIcon />
               </ListItemIcon>
               <ListItemText primary={TEXT.MATERIALS} />
-            </ListItem>
-            <ListItem button key="departments">
+            </ListItemButton>
+            <ListItemButton key="departments">
               <ListItemIcon>
                 <ShoppingCartIcon />
               </ListItemIcon>
@@ -427,29 +411,28 @@ const NavigationAuthBase = (props) => {
                 primary={TEXT.NAVIGATION_DEPARTMENTS}
                 onClick={() => push(ROUTES.DEPARTMENTS)}
               />
-            </ListItem>
+            </ListItemButton>
           </List>
         </React.Fragment>
       )}
       {authUser.roles?.includes(Role.communityLeader) && (
         <React.Fragment>
-          <ListItem button key="Units" onClick={() => push(ROUTES.UNITS)}>
+          <ListItemButton key="Units" onClick={() => push(ROUTES.UNITS)}>
             <ListItemIcon>
               <StraightenIcon />
             </ListItemIcon>
             <ListItemText primary={TEXT.NAVIGATION_UNITS} />
-          </ListItem>
+          </ListItemButton>
           <Divider />
           <List>
-            <ListItem button key="Admin" onClick={() => push(ROUTES.SYSTEM)}>
+            <ListItemButton key="Admin" onClick={() => push(ROUTES.SYSTEM)}>
               <ListItemIcon>
                 <SettingsIcon />
               </ListItemIcon>
               <ListItemText primary={TEXT.NAVIGATION_SYSTEM} />
-            </ListItem>
+            </ListItemButton>
             {authUser.roles?.includes(Role.admin) && (
-              <ListItem
-                button
+              <ListItemButton
                 key="Users"
                 onClick={() => push(ROUTES.SYSTEM_OVERVIEW_USERS)}
               >
@@ -457,36 +440,34 @@ const NavigationAuthBase = (props) => {
                   <GroupIcon />
                 </ListItemIcon>
                 <ListItemText primary={TEXT.NAVIGATION_USERS} />
-              </ListItem>
+              </ListItemButton>
             )}
           </List>
           <Divider />
         </React.Fragment>
       )}
-    </div>
+    </Box>
   );
 
   return (
     <React.Fragment>
-      <CssBaseline />
-      <AppBar className={prefersDarkMode ? classes.appBarDark : classes.appBar}>
-        <Toolbar
-          className={prefersDarkMode ? classes.appBarDark : classes.appBar}
-        >
+      <AppBar color="primary">
+        <Toolbar>
           <IconButton
             edge="start"
-            className={classes.navigationMenuButton}
+            sx={classes.navigationMenuButton}
             color="inherit"
             aria-label="menu"
             onClick={toggleDrawer("left", true)}
             disabled={!authUser.emailVerified}
+            size="large"
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" className={classes.navigationTitle}>
+          <Typography variant="h6" sx={classes.navigationTitle}>
             <Link
               component="button"
-              className={classes.navigationTitle}
+              sx={classes.navigationTitle}
               variant="h6"
               color="inherit"
               underline="none"
@@ -500,12 +481,6 @@ const NavigationAuthBase = (props) => {
             </Link>
           </Typography>
           {Utils.isTestEnviroment() ? <TestTenantRibbon /> : null}
-          {/* {!isVersionUpToDate ? (
-            <UpdateRibbon onClick={onClickUpdateRibon} />
-          ) : Utils.isTestTenant(window.location.toString()) ? (
-            <TestTenantRibbon />
-          ) : null}
- */}
           <div>
             <IconButton
               aria-label="go to Helppage"
@@ -513,6 +488,7 @@ const NavigationAuthBase = (props) => {
               aria-haspopup="false"
               color="inherit"
               onClick={handleHelp}
+              size="large"
             >
               <HelpOutlineIcon />
             </IconButton>
@@ -522,10 +498,10 @@ const NavigationAuthBase = (props) => {
               aria-haspopup="true"
               onClick={handleMenu}
               color="inherit"
+              size="large"
             >
               <AccountCircle />
             </IconButton>
-            {/* )} */}
             <Menu
               id="menu-appbar"
               anchorEl={anchorEl}
@@ -544,8 +520,6 @@ const NavigationAuthBase = (props) => {
               <MenuItem id={BUTTONTEXT.ACCOUNT} onClick={handleMenuClick}>
                 {TEXT.NAVIGATION_USER_PROFILE}
               </MenuItem>
-
-              {/* <MenuItem>Einstellungen</MenuItem> */}
               <MenuItem id={BUTTONTEXT.SIGNOUT} onClick={handleMenuClick}>
                 {TEXT.SIGN_OUT}
               </MenuItem>
@@ -553,13 +527,7 @@ const NavigationAuthBase = (props) => {
           </div>
         </Toolbar>
       </AppBar>
-      {/* <div id="back-to-top-anchor" /> */}
-      <Toolbar
-        className={classes.toolbar}
-        id="back-to-top-anchor"
-        disableGutters
-      />
-
+      <Toolbar sx={classes.toolbar} id="back-to-top-anchor" disableGutters />
       <div>
         <React.Fragment key={"left"}>
           <Drawer
@@ -572,12 +540,6 @@ const NavigationAuthBase = (props) => {
         </React.Fragment>
         {/* ))} */}
       </div>
-
-      {/* <ScrollTop {...props}>
-        <Fab color="secondary" size="small" aria-label="scroll back to top">
-          <KeyboardArrowUpIcon />
-        </Fab>
-      </ScrollTop> */}
       <DialogRefreshApp
         dialogOpen={showDialogRefreshApp}
         handleOk={onUpdateAppOk}
@@ -589,20 +551,16 @@ const NavigationAuthBase = (props) => {
 // ===================================================================
 // ================== Navigation ohne Berechtigung ===================
 // ===================================================================
-// Komponente für Navigation ohne Login//Ohne Berechtigunge
-export function NavigationNoAuthBase() {
-  const classes = useStyles();
+// Komponente für Navigation ohne Login//Ohne Berechtigungen
+const NavigationNoAuthBase: React.FC = () => {
+  const classes = useCustomStyles();
   const {push} = useHistory();
-  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 
   return (
     <React.Fragment>
-      <CssBaseline />
-      <AppBar className={prefersDarkMode ? classes.appBarDark : classes.appBar}>
-        <Toolbar
-          className={prefersDarkMode ? classes.appBarDark : classes.appBar}
-        >
-          <Typography variant="h6" className={classes.navigationTitle}>
+      <AppBar color="primary">
+        <Toolbar>
+          <Typography variant="h6" sx={classes.navigationTitle}>
             <Link
               variant="h6"
               component="button"
@@ -619,7 +577,7 @@ export function NavigationNoAuthBase() {
           </Typography>
           {Utils.isTestEnviroment() ? <TestTenantRibbon /> : null}
           <div>
-            <Typography variant="h6" className={classes.navigationTitle}>
+            <Typography variant="h6" sx={classes.navigationTitle}>
               <Link
                 variant="body1"
                 component="button"
@@ -640,7 +598,7 @@ export function NavigationNoAuthBase() {
       <Toolbar id="back-to-top-anchor" />
     </React.Fragment>
   );
-}
+};
 /* ===================================================================
 // =============================== Ribbon ============================
 // =================================================================== */
@@ -669,15 +627,8 @@ export const UpdateRibbon = ({onClick}: UpdateRibbonProps) => {
     </div>
   );
 };
-// const NavigationAuth = compose(withRouter, withFirebase)(NavigationAuthBase);
-// const NavigationNoAuth = compose(
-//   withRouter,
-//   withFirebase
-// )(NavigationNoAuthBase);
 
-const NavigationAuth = compose(withRouter, withFirebase)(NavigationAuthBase);
-const NavigationNoAuth = compose(
-  withRouter,
-  withFirebase
-)(NavigationNoAuthBase);
+const NavigationAuth = withRouter(withFirebase(NavigationAuthBase));
+const NavigationNoAuth = withRouter(withFirebase(NavigationNoAuthBase));
+
 export default NavigationComponent;

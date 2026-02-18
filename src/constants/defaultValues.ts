@@ -52,3 +52,8 @@ export const getSupportUserUid = () => {
       return "yuvhzHC3aGMpw0JYlMxUv8T2USl2";
   }
 };
+
+export enum TextFieldSize {
+  small = "small",
+  medium = "medium",
+}

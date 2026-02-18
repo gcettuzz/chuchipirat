@@ -14,9 +14,13 @@ import {CustomDialogContextProvider} from "./components/Shared/customDialogConte
 import {NavigationContextProvider} from "./components/Navigation/navigationContext";
 import Firebase from "./components/Firebase/firebase.class";
 import ErrorInfo from "./components/500/500";
+import Utils from "./components/Shared/utils.class";
+import {LocalizationProvider} from "@mui/x-date-pickers";
+import {AdapterDateFns} from "@mui/x-date-pickers/AdapterDateFns";
 
 Sentry.init({
   dsn: process.env.REACT_APP_SENTRY_DSN,
+  enabled: !Utils.isDevEnviroment(),
   environment: process.env.REACT_APP_ENVIROMENT,
   release: packageJson.version,
   integrations: [
@@ -37,13 +41,15 @@ Sentry.init({
 ReactDOM.render(
   <React.StrictMode>
     <Sentry.ErrorBoundary fallback={<ErrorInfo />}>
-      <FirebaseContext.Provider value={new Firebase()}>
-        <CustomDialogContextProvider>
-          <NavigationContextProvider>
-            <App />
-          </NavigationContextProvider>
-        </CustomDialogContextProvider>
-      </FirebaseContext.Provider>
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <FirebaseContext.Provider value={new Firebase()}>
+          <CustomDialogContextProvider>
+            <NavigationContextProvider>
+              <App />
+            </NavigationContextProvider>
+          </CustomDialogContextProvider>
+        </FirebaseContext.Provider>
+      </LocalizationProvider>
     </Sentry.ErrorBoundary>
   </React.StrictMode>,
   document.getElementById("root")

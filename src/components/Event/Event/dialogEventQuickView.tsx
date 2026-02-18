@@ -1,5 +1,5 @@
 import React from "react";
-import useStyles from "../../../constants/styles";
+import useCustomStyles from "../../../constants/styles";
 
 import {
   Button,
@@ -10,7 +10,7 @@ import {
   DialogContent,
   Link,
   List,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import {FormListItem} from "../../Shared/formListItem";
 
@@ -60,7 +60,7 @@ const DialogEventQuickView = ({
   handleClose,
   dialogActions,
 }: DialogEventQuickViewProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {push} = useHistory();
 
   return (
@@ -74,7 +74,7 @@ const DialogEventQuickView = ({
     >
       {eventShort.pictureSrc && (
         <CardMedia
-          className={classes.cardMedia}
+          sx={classes.cardMedia}
           image={
             eventShort.pictureSrc
               ? eventShort.pictureSrc

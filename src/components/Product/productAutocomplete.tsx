@@ -1,10 +1,11 @@
 import React from "react";
 
-import TextField from "@material-ui/core/TextField";
-import Autocomplete, {
-  createFilterOptions,
+import TextField from "@mui/material/TextField";
+import {
+  Autocomplete,
   AutocompleteChangeReason,
-} from "@material-ui/lab/Autocomplete";
+  createFilterOptions,
+} from "@mui/material";
 
 import {IngredientProduct} from "../Recipe/recipe.class";
 import Product, {DietProperties} from "./product.class";
@@ -12,6 +13,7 @@ import Department from "../Department/department.class";
 import Unit from "../Unit/unit.class";
 import Utils from "../Shared/utils.class";
 import {ADD, INGREDIENT} from "../../constants/text";
+import {TextFieldSize} from "../../constants/defaultValues";
 
 interface ProductAutocompleteProps {
   componentKey: string;
@@ -19,6 +21,7 @@ interface ProductAutocompleteProps {
   products: Product[];
   label?: string;
   allowCreateNewProduct?: boolean;
+  size?: TextFieldSize;
   onChange: (
     event: React.ChangeEvent<HTMLInputElement>,
     newValue: string | Product | null,
@@ -37,11 +40,6 @@ interface filterHelpWithSortRank {
   sortRank?: number;
 }
 
-// export interface NewValueParameter {
-//   inputValue: string;
-//   name: string;
-// }
-
 // ===================================================================== */
 /**
  * Autocomplete Feld für Produkt
@@ -55,6 +53,7 @@ const ProductAutocomplete = ({
   label = INGREDIENT,
   onChange,
   allowCreateNewProduct = true,
+  size = TextFieldSize.medium,
 }: ProductAutocompleteProps) => {
   // Handler für Zutaten/Produkt hinzufügen
   const filter = createFilterOptions<Product>();
@@ -63,32 +62,14 @@ const ProductAutocomplete = ({
       id={"product_" + componentKey}
       key={"product_" + componentKey}
       value={product.name}
-      options={products}
-      autoSelect
-      autoHighlight
-      getOptionSelected={(option, value) => option.uid == value.uid}
-      getOptionLabel={(option) => {
-        if (typeof option === "string") {
-          return option;
-        }
-
-        if (option.name.endsWith(ADD)) {
-          const words = option.name.match('".*"');
-          if (words && words.length >= 0) {
-            return words[0].slice(1, -1);
-          }
-        }
-        return option.name;
-      }}
-      onChange={(event, newValue, action) =>
+      onChange={(event, newValue, reason) => {
         onChange(
           event as unknown as React.ChangeEvent<HTMLInputElement>,
           newValue,
-          action,
+          reason,
           "product_" + componentKey
-        )
-      }
-      fullWidth
+        );
+      }}
       filterOptions={(options, params) => {
         let filtered = filter(options, params) as Product[];
         if (
@@ -134,10 +115,37 @@ const ProductAutocomplete = ({
         });
         return filtered;
       }}
-      renderOption={(option) => option.name}
+      selectOnFocus
+      clearOnBlur
+      handleHomeEndKeys
+      options={products}
+      getOptionLabel={(option) => {
+        if (typeof option === "string") {
+          return option;
+        }
+
+        if (option.name.endsWith(ADD)) {
+          const words = option.name.match('".*"');
+          if (words && words.length >= 0) {
+            return words[0].slice(1, -1);
+          }
+        }
+        return option.name;
+      }}
+      renderOption={(props, option) => {
+        // eslint-disable-next-line react/prop-types
+        const {key, ...optionProps} = props;
+        return (
+          <li key={key} {...optionProps}>
+            {option.name}
+          </li>
+        );
+      }}
       freeSolo
+      autoSelect
+      autoHighlight
       renderInput={(params) => (
-        <TextField {...params} label={label} size="small" />
+        <TextField {...params} label={label} size={size} />
       )}
     />
   );

@@ -612,7 +612,7 @@ export default class User {
       .updateFields({
         uids: [authUser.uid],
         authUser: authUser,
-        values: {emailvalue: newEmail},
+        values: {email: newEmail},
         updateChangeFields: false,
       })
       .catch((error) => {
@@ -624,7 +624,7 @@ export default class User {
       .updateFields({
         uids: [authUser.uid],
         authUser: authUser,
-        values: {emailvalue: newEmail},
+        values: {email: newEmail},
         updateChangeFields: false,
       })
       .catch((error) => {

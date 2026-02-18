@@ -392,10 +392,10 @@ export default class Recipe {
   // in den Listen Einträge erzeugen, wenn nötig
   static createEmptyListEntries({recipe}: CreateEmptyListEntries) {
     recipe.ingredients = Recipe.createEmptyListEntryIngredients(
-      recipe.ingredients
+      recipe.ingredients,
     );
     recipe.preparationSteps = Recipe.createEmptyListEntryPreparationSteps(
-      recipe.preparationSteps
+      recipe.preparationSteps,
     );
     recipe.materials = Recipe.createEmptyListEntryMaterials(recipe.materials);
     return recipe;
@@ -428,7 +428,7 @@ export default class Recipe {
   // Leere Einträge Zubereitungsschritte erzeugen
   // ===================================================================== */
   static createEmptyListEntryPreparationSteps(
-    preparationSteps: Recipe["preparationSteps"]
+    preparationSteps: Recipe["preparationSteps"],
   ) {
     if (Object.keys(preparationSteps.entries).length == 0) {
       const preparationStep = Recipe.createEmptyPreparationStep();
@@ -907,7 +907,7 @@ export default class Recipe {
     }
     if (Object.values(recipe.preparationSteps.entries).length > 0) {
       recipe.preparationSteps = Recipe.deleteEmptyPreparationSteps(
-        recipe.preparationSteps
+        recipe.preparationSteps,
       );
     }
 
@@ -987,7 +987,7 @@ export default class Recipe {
 
         // Infos zu Produkt holen
         const product = products.find(
-          (product) => product.uid === productUid
+          (product) => product.uid === productUid,
         ) as Product;
 
         if (!product) {
@@ -996,7 +996,7 @@ export default class Recipe {
 
         if (product?.dietProperties?.allergens?.length > 0) {
           dietProperties.allergens = dietProperties.allergens.concat(
-            product.dietProperties.allergens
+            product.dietProperties.allergens,
           );
         }
 
@@ -1127,7 +1127,7 @@ export default class Recipe {
   // leere Zutaten entfernen
   // ===================================================================== */
   static deleteEmptyIngredients(
-    ingredients: RecipeObjectStructure<Ingredient | Section>
+    ingredients: RecipeObjectStructure<Ingredient | Section>,
   ) {
     const ingredientUids = [...ingredients.order];
     ingredientUids.forEach((ingredientUid) => {
@@ -1142,7 +1142,7 @@ export default class Recipe {
         ) {
           delete ingredients.entries[ingredientUid];
           ingredients.order = ingredients.order.filter(
-            (orderUid) => orderUid !== ingredientUid
+            (orderUid) => orderUid !== ingredientUid,
           );
         }
       }
@@ -1153,7 +1153,7 @@ export default class Recipe {
   // leere Zubereitungsschritte entfernen
   // ===================================================================== */
   static deleteEmptyPreparationSteps(
-    preparationSteps: RecipeObjectStructure<PreparationStep | Section>
+    preparationSteps: RecipeObjectStructure<PreparationStep | Section>,
   ) {
     const preparationStepUids = [...preparationSteps.order];
     const cleanedPreparationSteps = _.cloneDeep(preparationSteps);
@@ -1169,7 +1169,7 @@ export default class Recipe {
         if (preparationStep.step == "") {
           delete cleanedPreparationSteps.entries[preparationStepUid];
           cleanedPreparationSteps.order = cleanedPreparationSteps.order.filter(
-            (orderUid) => orderUid !== preparationStepUid
+            (orderUid) => orderUid !== preparationStepUid,
           );
         }
       }
@@ -1180,7 +1180,7 @@ export default class Recipe {
   // leere Materiale entfernen
   // ===================================================================== */
   static deleteEmptyMaterials(
-    materials: RecipeObjectStructure<RecipeMaterialPosition>
+    materials: RecipeObjectStructure<RecipeMaterialPosition>,
   ) {
     //TODO: Test-ME
     const materialUids = [...materials.order];
@@ -1188,7 +1188,7 @@ export default class Recipe {
       if (!materials.entries[materialUid].material.name) {
         delete materials.entries[materialUid];
         materials.order = materials.order.filter(
-          (orderUid) => orderUid !== materialUid
+          (orderUid) => orderUid !== materialUid,
         );
       }
     });
@@ -1403,7 +1403,7 @@ export default class Recipe {
           }).then(() => {
             counter++;
           });
-        })
+        }),
       )
       .then(async () => {
         // Rezept-Übersich löschen
@@ -1604,15 +1604,15 @@ export default class Recipe {
               firebase.recipePrivate.getDocument([
                 recipe.createdFromUid,
                 recipe.uid,
-              ])
-            )
+              ]),
+            ),
           );
           break;
         case RecipeType.variant:
           docRefs.push(
             getDoc(
-              firebase.recipeVariant.getDocument([recipe.eventUid, recipe.uid])
-            )
+              firebase.recipeVariant.getDocument([recipe.eventUid, recipe.uid]),
+            ),
           );
           break;
       }
@@ -1622,7 +1622,7 @@ export default class Recipe {
     documents.forEach((document) => {
       let recipe = {} as Recipe;
       const recipeType = recipes.find(
-        (recipe) => recipe.uid == document.id
+        (recipe) => recipe.uid == document.id,
       )?.recipeType;
 
       switch (recipeType) {
@@ -1630,7 +1630,7 @@ export default class Recipe {
           recipe = firebase.recipePublic.prepareDataForApp({
             uid: document.id,
             value: firebase.recipePublic.convertTimestampValuesToDates(
-              document.data()
+              document.data(),
             ),
           });
           break;
@@ -1638,7 +1638,7 @@ export default class Recipe {
           recipe = firebase.recipePrivate.prepareDataForApp({
             uid: document.id,
             value: firebase.recipePrivate.convertTimestampValuesToDates(
-              document.data()
+              document.data(),
             ),
           });
           break;
@@ -1646,7 +1646,7 @@ export default class Recipe {
           recipe = firebase.recipeVariant.prepareDataForApp({
             uid: document.id,
             value: firebase.recipeVariant.convertTimestampValuesToDates(
-              document.data()
+              document.data(),
             ),
           });
           break;
@@ -1701,7 +1701,7 @@ export default class Recipe {
             Math.round(
               ((recipe.rating.avgRating * recipe.rating.noRatings - oldRating) /
                 (recipe.rating.noRatings - 1)) *
-                10
+                10,
             ) / 10;
           recipe.rating.noRatings = recipe.rating.noRatings - 1;
         } else if (oldRating > 0) {
@@ -1712,7 +1712,7 @@ export default class Recipe {
                 oldRating +
                 newRating) /
                 recipe.rating.noRatings) *
-                10
+                10,
             ) / 10;
         } else {
           // neues Rating
@@ -1720,7 +1720,7 @@ export default class Recipe {
             Math.round(
               ((recipe.rating.avgRating * recipe.rating.noRatings + newRating) /
                 (recipe.rating.noRatings + 1)) *
-                10
+                10,
             ) / 10;
           recipe.rating.noRatings = recipe.rating.noRatings + 1;
         }
@@ -1857,7 +1857,7 @@ export default class Recipe {
 
             // Produkt suchen, damit die Ziel-Einheit bestimmt werden kann.
             const product = products?.find(
-              (product) => product.uid == scaledIngredient.product.uid
+              (product) => product.uid == scaledIngredient.product.uid,
             );
             let {convertedQuantity, convertedUnit} =
               UnitConversion.convertQuantity({
@@ -1890,7 +1890,7 @@ export default class Recipe {
                       conversionRule.fromUnit === scaledIngredient.unit &&
                       Unit.getDimensionOfUnit(
                         units!,
-                        conversionRule.fromUnit
+                        conversionRule.fromUnit,
                       ) === UnitDimension.volume
                     ) {
                       // Umrechnen ohne Produkt
@@ -1926,7 +1926,7 @@ export default class Recipe {
                         }
                       }
                     }
-                  }
+                  },
                 );
 
                 if (conversionFound) {

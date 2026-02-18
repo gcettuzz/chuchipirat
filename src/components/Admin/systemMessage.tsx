@@ -11,7 +11,6 @@ import {
   CardContent,
   CircularProgress,
   Container,
-  Grid,
   Card,
   CardHeader,
   Typography,
@@ -21,20 +20,22 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  OutlinedInput,
   useTheme,
   CardActions,
-} from "@material-ui/core";
+  SelectChangeEvent,
+  Alert,
+  AlertTitle,
+  Stack,
+} from "@mui/material";
 
-import format from "date-fns/format";
-import deLocale from "date-fns/locale/de";
-import DateFnsUtils from "@date-io/date-fns";
+import {DatePicker} from "@mui/x-date-pickers/DatePicker";
 
 import AlertMessage from "../Shared/AlertMessage";
 import PageTitle from "../Shared/pageTitle";
 
 import SystemMessage from "./systemMessage.class";
-
+// TODO: Löschen in Package.json:
+// TODO: @material-ui/pickers
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
   EDITOR as TEXT_EDITOR,
@@ -47,7 +48,7 @@ import {
   SAVE as TEXT_SAVE,
   SAVE_SUCCESS as TEXT_SAVE_SUCCESS,
 } from "../../constants/text";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 import Role from "../../constants/roles";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -55,11 +56,6 @@ import CustomSnackbar, {
   SNACKBAR_INITIAL_STATE_VALUES,
   Snackbar,
 } from "../Shared/customSnackbar";
-import {
-  KeyboardDatePicker,
-  MuiPickersUtilsProvider,
-} from "@material-ui/pickers";
-import {Alert, AlertTitle} from "@material-ui/lab";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -131,11 +127,7 @@ const mailConsoleReducer = (state: State, action: DispatchAction): State => {
       throw new Error();
   }
 };
-class DeLocalizedUtils extends DateFnsUtils {
-  getDatePickerHeaderText(date) {
-    return format(date, "dd.MM.yyyy", {locale: this.locale});
-  }
-}
+
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
@@ -153,7 +145,7 @@ const SystemMessageBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(
     mailConsoleReducer,
@@ -191,7 +183,7 @@ const SystemMessageBase: React.FC<
       payload: {key: event.target.id, value: event.target.value},
     });
   };
-  const onChangeType = (event: React.ChangeEvent<{value: unknown}>) => {
+  const onChangeType = (event: SelectChangeEvent) => {
     dispatch({
       type: ReducerActions.SYSTEM_MESSAGE_FIELD_UPDATE,
       payload: {key: "type", value: event.target.value},
@@ -246,43 +238,36 @@ const SystemMessageBase: React.FC<
         subTitle={TEXT_ATENTION_IMPORTANT_ANNOUNCEMENT}
       />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="sm">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="sm">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
-        {state.error && (
-          <Grid item key={"error"} xs={12}>
+        <Stack spacing={2}>
+          {state.error && (
             <AlertMessage
               error={state.error!}
               messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
             />
-          </Grid>
-        )}
+          )}
 
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <SystemMessageForm
-              systemMessage={state.systemMessage}
-              onFieldChange={onFieldChange}
-              onChangeType={onChangeType}
-              onDatePickerUpdate={onValidToChange}
-              onSystemMessageTextChange={onSystemMessageTextChange}
-              onSave={onSave}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <Typography variant="h5">{TEXT_PREVIEW}</Typography>
-            <br />
-            <AlertSystemMessage systemMessage={state.systemMessage} />
-          </Grid>
-        </Grid>
-        <CustomSnackbar
-          message={state.snackbar.message}
-          severity={state.snackbar.severity}
-          snackbarOpen={state.snackbar.open}
-          handleClose={handleSnackbarClose}
-        />
+          <SystemMessageForm
+            systemMessage={state.systemMessage}
+            onFieldChange={onFieldChange}
+            onChangeType={onChangeType}
+            onDatePickerUpdate={onValidToChange}
+            onSystemMessageTextChange={onSystemMessageTextChange}
+            onSave={onSave}
+          />
+          <Typography variant="h5">{TEXT_PREVIEW}</Typography>
+          <br />
+          <AlertSystemMessage systemMessage={state.systemMessage} />
+          <CustomSnackbar
+            message={state.snackbar.message}
+            severity={state.snackbar.severity}
+            snackbarOpen={state.snackbar.open}
+            handleClose={handleSnackbarClose}
+          />
+        </Stack>
       </Container>
     </React.Fragment>
   );
@@ -295,7 +280,7 @@ const SystemMessageBase: React.FC<
 interface SystemMessageFormProps {
   systemMessage: SystemMessage;
   onFieldChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onChangeType: (event: React.ChangeEvent<{value: unknown}>) => void;
+  onChangeType: (event: SelectChangeEvent) => void;
   onDatePickerUpdate: (date: Date | null) => void;
   onSystemMessageTextChange: (value: string) => void;
   onSave: () => void;
@@ -308,83 +293,54 @@ const SystemMessageForm = ({
   onSystemMessageTextChange,
   onSave,
 }: SystemMessageFormProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
 
   return (
-    <Card className={classes.card}>
+    <Card sx={[classes.card, {marginBottom: theme.spacing(2)}]}>
       <CardHeader title={TEXT_EDITOR} />
       <CardContent>
-        <Grid container spacing={1}>
-          <Grid item xs={12}>
-            <FormControl
-              variant="outlined"
-              className={classes.formControl}
-              fullWidth
+        <Stack spacing={2}>
+          <FormControl fullWidth>
+            <InputLabel id="select-label-type">{TEXT_TYPE}</InputLabel>
+            <Select
+              labelId="select-label-type"
+              id="select-role"
+              value={systemMessage.type}
+              label={TEXT_TYPE}
+              onChange={onChangeType}
             >
-              <InputLabel id="select-label-type">{TEXT_TYPE}</InputLabel>
-              <Select
-                input={<OutlinedInput label={TEXT_TYPE} />}
-                labelId="select-label-type"
-                id="select-role"
-                value={systemMessage.type}
-                onChange={onChangeType}
-                fullWidth
-              >
-                <MenuItem key={"success"} value={"success"}>
-                  success
-                </MenuItem>
-                <MenuItem key={"info"} value={"info"}>
-                  info
-                </MenuItem>
-                <MenuItem key={"warning"} value={"warning"}>
-                  warning
-                </MenuItem>
-                <MenuItem key={"error"} value={"error"}>
-                  error
-                </MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              value={systemMessage.title}
-              fullWidth
-              id="title"
-              label={TEXT_TITLE}
-              onChange={onFieldChange}
-              variant="outlined"
-            />
-          </Grid>
+              <MenuItem value={"success"}>success</MenuItem>
+              <MenuItem value={"info"}>info</MenuItem>
+              <MenuItem value={"warning"}>warning</MenuItem>
+              <MenuItem value={"error"}>error</MenuItem>
+            </Select>
+          </FormControl>
+          <TextField
+            value={systemMessage.title}
+            fullWidth
+            id="title"
+            label={TEXT_TITLE}
+            onChange={onFieldChange}
+            variant="outlined"
+          />
           {/* validto */}
-          <MuiPickersUtilsProvider utils={DeLocalizedUtils} locale={deLocale}>
-            <Grid item xs={12}>
-              <KeyboardDatePicker
-                style={{marginTop: theme.spacing(2)}}
-                disableToolbar
-                inputVariant="outlined"
-                format="dd.MM.yyyy"
-                id={"validto"}
-                key={"validto"}
-                label={TEXT_VALID_TO}
-                value={systemMessage.validTo}
-                fullWidth
-                onChange={onDatePickerUpdate}
-                KeyboardButtonProps={{
-                  "aria-label": "Gültig bis",
-                }}
-              />
-            </Grid>
-          </MuiPickersUtilsProvider>
-        </Grid>
-        <Grid xs={12}>
+          <DatePicker
+            key={"validto"}
+            label={TEXT_VALID_TO}
+            inputFormat="dd.MM.yyyy"
+            value={systemMessage.validTo}
+            onChange={onDatePickerUpdate}
+            renderInput={(params) => <TextField {...params} />}
+          />
+
           <ReactQuill
             theme="snow"
             onChange={onSystemMessageTextChange}
             value={systemMessage.text}
             style={{marginTop: theme.spacing(2)}}
           />
-        </Grid>
+        </Stack>{" "}
       </CardContent>
       <CardActions>
         <Button color="primary" variant="outlined" onClick={onSave}>

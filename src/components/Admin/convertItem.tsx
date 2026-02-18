@@ -9,7 +9,6 @@ import Product, {
 } from "../Product/product.class";
 import Role from "../../constants/roles";
 import {withFirebase} from "../Firebase/firebaseContext";
-import useStyles from "../../constants/styles";
 import PageTitle from "../Shared/pageTitle";
 
 import {
@@ -42,7 +41,6 @@ import {
   Container,
   FormControl,
   FormControlLabel,
-  Grid,
   LinearProgress,
   List,
   ListItem,
@@ -57,10 +55,14 @@ import {
   FormLabel,
   FormGroup,
   Checkbox,
-} from "@material-ui/core";
+  AutocompleteChangeReason,
+} from "@mui/material";
+
+import Grid from "@mui/material/Unstable_Grid2";
+
 import AlertMessage from "../Shared/AlertMessage";
 import ProductAutocomplete from "../Product/productAutocomplete";
-import {AutocompleteChangeReason} from "@material-ui/lab";
+
 import Material, {
   ConvertProductToMaterialCallbackDocument,
   MaterialType,
@@ -79,6 +81,7 @@ import MaterialAutocomplete from "../Material/materialAutocomplete";
 import {MaterialDetailList, ProductDetailList} from "./mergeItems";
 import DepartmentAutocomplete from "../Department/departmentAutocomplete";
 import UnitAutocomplete from "../Unit/unitAutocomplete";
+import useCustomStyles from "../../constants/styles";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -312,7 +315,7 @@ const ConvertItemBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
 
   const [state, dispatch] = React.useReducer(
@@ -547,12 +550,8 @@ const ConvertItemBase: React.FC<
   /* ------------------------------------------
 	// Tab-Handler
 	// ------------------------------------------ */
-  const handleTabChange = (
-    event: React.ChangeEvent<Record<string, unknown>>,
-    newValue: number
-  ) => {
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
-    // dispatch({type: ReducerActions.CLEAR_MERGE_PROTOCOL, payload: {}});
   };
 
   if (!authUser) {
@@ -563,8 +562,8 @@ const ConvertItemBase: React.FC<
       {/*===== HEADER ===== */}
       <PageTitle title={TEXT_CONVERT_ITEM} />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="sm">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
+      <Container sx={classes.container} component="main" maxWidth="sm">
+        <Backdrop sx={classes.backdrop} open={state.isLoading}>
           <CircularProgress color="inherit" />
         </Backdrop>
         {state.error && (
@@ -576,8 +575,6 @@ const ConvertItemBase: React.FC<
         <Tabs
           value={tabValue}
           onChange={handleTabChange}
-          indicatorColor="primary"
-          textColor="primary"
           centered
           style={{marginBottom: theme.spacing(2)}}
         >
@@ -647,11 +644,11 @@ const PanelConvertProductToMaterial = ({
   onConvertProduct,
   onChangeMaterialType,
 }: PanelConvertProductToMaterialProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
-    <Card className={classes.card} key={"cardInfo"}>
-      <CardContent className={classes.cardContent} key={"cardContentInfo"}>
+    <Card sx={classes.card} key={"cardInfo"}>
+      <CardContent sx={classes.cardContent} key={"cardContentInfo"}>
         <Typography gutterBottom={true} variant="h5" component="h2">
           {TEXT_MERGE_PRODUCT_SELECTION}
         </Typography>
@@ -681,13 +678,13 @@ const PanelConvertProductToMaterial = ({
           >
             <FormControlLabel
               value={MaterialType.consumable}
-              control={<Radio color="primary" required />}
+              control={<Radio required />}
               label={TEXT_MATERIAL_TYPE_CONSUMABLE}
               id="materialtype"
             />
             <FormControlLabel
               value={MaterialType.usage}
-              control={<Radio color="primary" required />}
+              control={<Radio required />}
               label={TEXT_MATERIAL_TYPE_USAGE}
               id="materialtype"
             />
@@ -706,7 +703,7 @@ const PanelConvertProductToMaterial = ({
           }
           variant="contained"
           color="primary"
-          className={classes.submit}
+          sx={classes.submit}
           onClick={onConvertProduct}
         >
           {TEXT_CONVERT_ITEM}
@@ -714,7 +711,7 @@ const PanelConvertProductToMaterial = ({
         {convertProtocol !== null && (
           <React.Fragment>
             <br />
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <List
                 subheader={
                   <ListSubheader component="div" id="subheader-log-result">
@@ -731,7 +728,7 @@ const PanelConvertProductToMaterial = ({
               </List>
               <br />
             </Grid>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <List
                 subheader={
                   <ListSubheader component="div" id="subheader-merge-result">
@@ -791,13 +788,13 @@ const PanelConvertMaterialToProduct = ({
   onConvertMaterial,
 }: // onChangeMaterialType,
 PanelConvertMaterialToProductProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
-    <Card className={classes.card} key={"cardInfo"}>
-      <CardContent className={classes.cardContent} key={"cardContentInfo"}>
+    <Card sx={classes.card} key={"cardInfo"}>
+      <CardContent sx={classes.cardContent} key={"cardContentInfo"}>
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <Typography gutterBottom={true} variant="h5" component="h2">
               {TEXT_MERGE_MATERIAL_SELECTION}
             </Typography>
@@ -806,7 +803,7 @@ PanelConvertMaterialToProductProps) => {
               {TEXT_CONVERT_ITEM_EXPLANATION(TEXT_MATERIAL, TEXT_PRODUCT)}
             </Typography>
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <MaterialAutocomplete
               material={material}
               materials={materials}
@@ -815,14 +812,14 @@ PanelConvertMaterialToProductProps) => {
               disabled={false}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <MaterialDetailList
               materialUid={material.uid}
               materials={materials}
             />
           </Grid>
           <br />
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <DepartmentAutocomplete
               department={productProperty.department}
               departments={departments}
@@ -830,7 +827,7 @@ PanelConvertMaterialToProductProps) => {
               onChange={onChangeAutocompleteSelection}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <UnitAutocomplete
               unitKey={productProperty.unit.key}
               units={units}
@@ -838,7 +835,7 @@ PanelConvertMaterialToProductProps) => {
             />
           </Grid>
           <br />
-          <Grid item xs={12} sm={6}>
+          <Grid xs={12} sm={6}>
             <FormControl fullWidth>
               <FormLabel component="legend">{TEXT_INTOLERANCES}</FormLabel>
               <FormGroup>
@@ -851,7 +848,6 @@ PanelConvertMaterialToProductProps) => {
                       onChange={onChangeAllergens}
                       name="dietProperties.allergens.containsLactose"
                       id="dietProperties.allergens.containsLactose"
-                      color="primary"
                     />
                   }
                   label={TEXT_HAS_LACTOSE}
@@ -865,7 +861,6 @@ PanelConvertMaterialToProductProps) => {
                       onChange={onChangeAllergens}
                       name="dietProperties.allergens.containsGluten"
                       id="dietProperties.allergens.containsGluten"
-                      color="primary"
                     />
                   }
                   label={TEXT_HAS_GLUTEN}
@@ -873,7 +868,7 @@ PanelConvertMaterialToProductProps) => {
               </FormGroup>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid xs={12} sm={6}>
             <FormControl fullWidth>
               <FormGroup>
                 <FormLabel component="legend">
@@ -888,17 +883,17 @@ PanelConvertMaterialToProductProps) => {
                 >
                   <FormControlLabel
                     value={Diet.Meat}
-                    control={<Radio size="small" color="primary" />}
+                    control={<Radio size="small" />}
                     label={TEXT_IS_MEAT}
                   />
                   <FormControlLabel
                     value={Diet.Vegetarian}
-                    control={<Radio size="small" color="primary" />}
+                    control={<Radio size="small" />}
                     label={TEXT_IS_VEGETARIAN}
                   />
                   <FormControlLabel
                     value={Diet.Vegan}
-                    control={<Radio size="small" color="primary" />}
+                    control={<Radio size="small" />}
                     label={TEXT_IS_VEGAN}
                   />
                 </RadioGroup>
@@ -918,7 +913,7 @@ PanelConvertMaterialToProductProps) => {
             }
             variant="contained"
             color="primary"
-            className={classes.submit}
+            sx={classes.submit}
             onClick={onConvertMaterial}
           >
             {TEXT_CONVERT_ITEM}
@@ -926,7 +921,7 @@ PanelConvertMaterialToProductProps) => {
           {convertProtocol !== null && (
             <React.Fragment>
               <br />
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <List
                   subheader={
                     <ListSubheader component="div" id="subheader-log-result">
@@ -943,7 +938,7 @@ PanelConvertMaterialToProductProps) => {
                 </List>
                 <br />
               </Grid>
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <List
                   subheader={
                     <ListSubheader component="div" id="subheader-merge-result">

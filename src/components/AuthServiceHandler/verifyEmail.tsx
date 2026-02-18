@@ -3,8 +3,8 @@ import {compose} from "react-recompose";
 
 import {useHistory} from "react-router";
 
-import {Alert, AlertTitle} from "@material-ui/lab";
-import Container from "@material-ui/core/Container";
+import {Alert, AlertTitle} from "@mui/lab";
+import Container from "@mui/material/Container";
 import {withFirebase} from "../Firebase/firebaseContext";
 import FirebaseMessageHandler from "../Firebase/firebaseMessageHandler.class";
 
@@ -16,12 +16,15 @@ import {
   AYE_AYE_CAPTAIN as TEXT_AYE_AYE_CAPTAIN,
   THANK_YOU_FOR_VERIFYING_YOUR_EMAIL as TEXT_THANK_YOU_FOR_VERIFYING_YOUR_EMAIL,
 } from "../../constants/text";
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
+
 import PageTitle from "../Shared/pageTitle";
-import {Typography} from "@material-ui/core";
+import {Typography} from "@mui/material";
 import qs from "qs";
 import {CustomRouterProps} from "../Shared/global.interface";
 import User from "../User/user.class";
+import {checkActionCode, applyActionCode} from "firebase/auth";
+
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
@@ -34,7 +37,7 @@ const VerifyEmailPage: React.FC<CustomRouterProps> = ({...props}) => {
     ROUTES.SIGN_IN
   );
   const {push} = useHistory();
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   let oobCode = "";
   // Die URL enthält einen ObjektCode. Mit diesem kann die Adresse
@@ -46,16 +49,15 @@ const VerifyEmailPage: React.FC<CustomRouterProps> = ({...props}) => {
   React.useEffect(() => {
     // Zuerst Infos holen, damit wir anhand des Action-Codes
     // Die E-Mailadresse des Users erhalten
-    firebase
-      .checkActionCode(oobCode)
+
+    checkActionCode(firebase.auth, oobCode)
       .then(async (actionCodeInfo) => {
-        await firebase
-          .applyActionCode(oobCode)
+        applyActionCode(firebase.auth, oobCode)
           .then(async () => {
             setIsVerified(true);
             await User.createUserPublicData({
               firebase: firebase,
-              email: actionCodeInfo.data.email,
+              email: actionCodeInfo.data.email as string,
             });
           })
           .then(() => {
@@ -93,7 +95,7 @@ const VerifyEmailPage: React.FC<CustomRouterProps> = ({...props}) => {
         title={TEXT_AYE_AYE_CAPTAIN}
         subTitle={TEXT_THANK_YOU_FOR_VERIFYING_YOUR_EMAIL}
       />
-      <Container className={classes.container} component="main" maxWidth="xs">
+      <Container sx={classes.container} component="main" maxWidth="xs">
         {error ? (
           <Alert severity="error">
             <AlertTitle>{TEXT_ALERT_TITLE_UUPS}</AlertTitle>

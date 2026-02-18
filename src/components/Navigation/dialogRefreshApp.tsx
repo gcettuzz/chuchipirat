@@ -1,11 +1,13 @@
 import React from "react";
 
-import Dialog from "@material-ui/core/Dialog";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogActions from "@material-ui/core/DialogActions";
-
-import Button from "@material-ui/core/Button";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+} from "@mui/material";
 
 import {
   REFRESH_APP_TEXT as TEXT_REFRESH_APP_TEXT,
@@ -13,7 +15,6 @@ import {
   CANCEL as TEXT_CANCEL,
   OK as TEXT_OK,
 } from "../../constants/text";
-import {Typography} from "@material-ui/core";
 
 /* ===================================================================
 // ========================== Pop App Updaten ========================

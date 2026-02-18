@@ -3,7 +3,6 @@ import {compose} from "react-recompose";
 
 import {
   Container,
-  Grid,
   Typography,
   TextField,
   Button,
@@ -12,7 +11,8 @@ import {
   CardContent,
   useTheme,
   LinearProgress,
-} from "@material-ui/core";
+  Stack,
+} from "@mui/material";
 
 import {
   ACTIVATE_SUPPORT_USER as TEXT_ACTIVATE_SUPPORT_USER,
@@ -23,8 +23,6 @@ import {
 } from "../../constants/text";
 import Role from "../../constants/roles";
 
-import useStyles from "../../constants/styles";
-
 import {withFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import withEmailVerification from "../Session/withEmailVerification";
@@ -32,7 +30,8 @@ import {CustomRouterProps} from "../Shared/global.interface";
 import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
 import PageTitle from "../Shared/pageTitle";
 import Event from "../Event/Event/event.class";
-import {Alert} from "@material-ui/lab";
+import {Alert} from "@mui/lab";
+import useCustomStyles from "../../constants/styles";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
@@ -91,7 +90,7 @@ const activateSupportUserReducer = (
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const ActivateSupportUserPage = (props) => {
+const ActivateSupportUserPage: React.FC<CustomRouterProps> = (props) => {
   return (
     <AuthUserContext.Consumer>
       {(authUser) => <ActivateSupportUserBase {...props} authUser={authUser} />}
@@ -105,7 +104,7 @@ const ActivateSupportUserBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(
     activateSupportUserReducer,
@@ -155,19 +154,17 @@ const ActivateSupportUserBase: React.FC<
       {/*===== HEADER ===== */}
       <PageTitle title={TEXT_ACTIVATE_SUPPORT_USER} subTitle="" />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="sm">
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <PanelActivateSupportUser
-              eventUid={state.eventUid}
-              activationComplete={state.activationComplete}
-              errorMessage={state.errorMessage}
-              isActivating={state.isActivating}
-              onChangeField={onChangeEventUidField}
-              onRegisterSupportUser={onRegisterSupportUser}
-            />
-          </Grid>
-        </Grid>
+      <Container sx={classes.container} component="main" maxWidth="sm">
+        <Stack spacing={2}>
+          <PanelActivateSupportUser
+            eventUid={state.eventUid}
+            activationComplete={state.activationComplete}
+            errorMessage={state.errorMessage}
+            isActivating={state.isActivating}
+            onChangeField={onChangeEventUidField}
+            onRegisterSupportUser={onRegisterSupportUser}
+          />
+        </Stack>
       </Container>
     </React.Fragment>
   );
@@ -191,12 +188,12 @@ const PanelActivateSupportUser = ({
   onChangeField,
   onRegisterSupportUser,
 }: PanelActivateSupportUserProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const theme = useTheme();
   return (
-    <Card className={classes.card} key={"cardInfo"}>
+    <Card sx={classes.card} key={"cardInfo"}>
       <CardHeader title={TEXT_ACTIVATE_SUPPORT_MODE} />
-      <CardContent className={classes.cardContent} key={"cardContentInfo"}>
+      <CardContent sx={classes.cardContent} key={"cardContentInfo"}>
         <Typography style={{marginBottom: theme.spacing(2)}}>
           {TEXT_ACTIVATE_SUPPORT_MODE_DESCRIPTION}
         </Typography>
@@ -245,4 +242,5 @@ export default compose(
   withEmailVerification,
   withAuthorization(condition),
   withFirebase
-)(ActivateSupportUserPage);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+)(ActivateSupportUserPage as React.ComponentType<any>);

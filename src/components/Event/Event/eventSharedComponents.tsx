@@ -2,7 +2,6 @@ import React from "react";
 import Menuplan, {Menue, MenueCoordinates} from "../Menuplan/menuplan.class";
 
 import {
-  Grid,
   Button,
   Card,
   CardHeader,
@@ -22,7 +21,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-} from "@material-ui/core";
+} from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 
 import {
   MENUE_SELECTION as TEXT_MENUE_SELECTION,
@@ -44,7 +44,7 @@ import {
   ErrorOutline as ErrorOutlineIcon,
   CallSplit as CallSplitIcon,
   Info as InfoIcon,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 import {decodeSelectedMeals} from "../Menuplan/dialogSelectMenues";
 import ShoppingListCollection, {
@@ -54,7 +54,7 @@ import UsedRecipes from "../UsedRecipes/usedRecipes.class";
 import MaterialList from "../MaterialList/materialList.class";
 import Action from "../../../constants/actions";
 import Recipe from "../../Recipe/recipe.class";
-import useStyles from "../../../constants/styles";
+import useCustomStyles from "../../../constants/styles";
 /* ===================================================================
 // ===================== Globale Einstellungen ======================
 // =================================================================== */
@@ -63,7 +63,10 @@ export enum OperationType {
   Create,
   Update,
 }
-
+export enum ListMode {
+  VIEW = "view",
+  EDIT = "edit",
+}
 /* ===================================================================
 // ======================= Einstellungen-Card ========================
 // =================================================================== */
@@ -80,7 +83,7 @@ interface EventListCardProps {
   menuplan: Menuplan;
   onCreateList: () => void;
   onListElementSelect: (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
+    event: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => void;
   onListElementDelete: (event: React.MouseEvent<HTMLElement>) => void;
   onListElementEdit: (event: React.MouseEvent<HTMLElement>) => void;
@@ -131,12 +134,14 @@ export const EventListCard = ({
                   <IconButton
                     id={"EditBtn_" + list?.properties.uid}
                     onClick={onListElementEdit}
+                    size="large"
                   >
                     <EditIcon />
                   </IconButton>
                   <IconButton
                     id={"DeleteBtn_" + list?.properties.uid}
                     onClick={onListElementDelete}
+                    size="large"
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -153,7 +158,6 @@ export const EventListCard = ({
           noOfLists > 0 && (
             <Grid container>
               <Grid
-                item
                 xs={1}
                 style={{
                   display: "flex",
@@ -163,7 +167,7 @@ export const EventListCard = ({
               >
                 <ErrorOutlineIcon color="error" />
               </Grid>
-              <Grid item xs={11}>
+              <Grid xs={11}>
                 <Typography color="error">{outOfDateWarnMessage}</Typography>
               </Grid>
             </Grid>
@@ -202,12 +206,14 @@ export const EventListCard = ({
 // =================================================================== */
 interface PositionContextMenuProps {
   itemType: string;
+  listMode?: ListMode;
   anchorEl: HTMLElement | null;
   handleMenuClick: (event: React.MouseEvent<HTMLElement>) => void;
   handleMenuClose: () => void;
 }
 export const PositionContextMenu = ({
   itemType,
+  listMode,
   anchorEl,
   handleMenuClick,
   handleMenuClose,
@@ -220,12 +226,17 @@ export const PositionContextMenu = ({
       open={Boolean(anchorEl)}
       onClose={handleMenuClose}
     >
-      <MenuItem id={"ContextMenuItem_" + Action.EDIT} onClick={handleMenuClick}>
-        <ListItemIcon>
-          <EditIcon fontSize="small" />
-        </ListItemIcon>
-        <Typography variant="inherit">{TEXT_CHANGE}</Typography>
-      </MenuItem>
+      {(listMode == ListMode.VIEW || listMode == undefined) && (
+        <MenuItem
+          id={"ContextMenuItem_" + Action.EDIT}
+          onClick={handleMenuClick}
+        >
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <Typography variant="inherit">{TEXT_CHANGE}</Typography>
+        </MenuItem>
+      )}
       <MenuItem
         id={"ContextMenuItem_" + Action.TRACE}
         onClick={handleMenuClick}
@@ -268,13 +279,13 @@ export const DialogTraceItem = ({
   handleClose,
   onShowRecipe,
 }: DialogTraceItem) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   /* ------------------------------------------
   // Rezept Handler
   // ------------------------------------------ */
   const onListItemClick = (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
+    event: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
     const pressedButton = event.currentTarget.id.split("_");
 
@@ -282,7 +293,7 @@ export const DialogTraceItem = ({
       onShowRecipe(pressedButton[1], pressedButton[3]);
     }
   };
-
+  console.log("trace", trace);
   return (
     <Dialog open={dialogOpen} maxWidth="xs" fullWidth style={{zIndex: 500}}>
       <DialogTitle>{TEXT_WHERE_DOES_THIS_ITEM_COME_FROM}</DialogTitle>
@@ -290,7 +301,7 @@ export const DialogTraceItem = ({
         <Grid container spacing={2}>
           {hasBeenManualyEdited && (
             <React.Fragment>
-              <Grid item xs={2}>
+              <Grid xs={2}>
                 <InfoIcon fontSize="small" color="disabled" />
               </Grid>
               <Grid xs={10}>
@@ -300,11 +311,11 @@ export const DialogTraceItem = ({
               </Grid>
             </React.Fragment>
           )}
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <List key={`list_for_trace`}>
               {sortedMenues.map((menue) => {
                 const traceItems = trace?.filter(
-                  (item) => item.menueUid == menue.menueUid
+                  (item) => item.menueUid == menue.menueUid,
                 );
                 return (
                   <React.Fragment key={`menue_container_${menue.menueUid}`}>
@@ -351,7 +362,7 @@ export const DialogTraceItem = ({
                                           maximumSignificantDigits: 3,
                                         }).format(item.quantity)
                                   } ${item.unit}`}
-                                  className={classes.listItemTextAlignRight}
+                                  sx={classes.textAlignRight}
                                   id={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
                                   key={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
                                 />
@@ -383,7 +394,7 @@ export const DialogTraceItem = ({
                                           maximumSignificantDigits: 3,
                                         }).format(item.quantity)
                                   } ${item.unit}`}
-                                  className={classes.listItemTextAlignRight}
+                                  sx={classes.textAlignRight}
                                   id={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
                                   key={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
                                 />
@@ -414,7 +425,7 @@ export const DialogTraceItem = ({
                                 maximumSignificantDigits: 3,
                               }).format(item.quantity)
                         } ${item.unit}`}
-                        className={classes.listItemTextAlignRight}
+                        sx={classes.textAlignRight}
                         key={`manualItemTextQuantity_${counter}`}
                       />
                     </ListItem>

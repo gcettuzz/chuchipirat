@@ -3,11 +3,12 @@ import {compose} from "react-recompose";
 
 import {
   Container,
-  Grid,
+  Stack,
   Card,
   CardContent,
   Typography,
-} from "@material-ui/core";
+  Box,
+} from "@mui/material";
 
 import {
   DONATE as TEXT_DONATE,
@@ -17,7 +18,7 @@ import {
   PLEASE_DONATE as TEXT_PLEASE_DONATE,
 } from "../../constants/text";
 
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
 
 import PageTitle from "../Shared/pageTitle";
 import withEmailVerification from "../Session/withEmailVerification";
@@ -47,7 +48,7 @@ const DonatePage = (props) => {
 const DonateBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
   authUser,
 }) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   if (!authUser) {
     return null;
@@ -58,40 +59,36 @@ const DonateBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
       {/*===== HEADER ===== */}
       <PageTitle title={TEXT_DONATE} subTitle={TEXT_THANK_YOU_1000} />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="sm">
-        <Card className={classes.card} key={"cardInfo"}>
-          <CardContent className={classes.cardContent} key={"cardContentInfo"}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <Typography>
-                  <strong>{TEXT_PLEASE_DONATE}</strong>
-                  <br />
-                  {TEXT_WHY_DONATE}
-                  <br />
-                  {TEXT_NEED_A_RECEIPT}
-                  <br />
-                  <br />
-                  {TEXT_THANK_YOU_1000}
-                </Typography>
-              </Grid>
-              <Grid item xs={12}>
-                <Grid container justifyContent="center">
-                  <img
-                    src={
-                      ImageRepository.getEnviromentRelatedPicture()
-                        .TWINT_QR_CODE
-                    }
-                    className={classes.cardMediaQrCode}
-                    style={{maxWidth: "100%", height: "auto"}}
-                  />
-                </Grid>
-              </Grid>
-              <Grid item xs={12}>
-                <Grid container justifyContent="center">
-                  <TwintButton />
-                </Grid>
-              </Grid>
-            </Grid>
+      <Container sx={classes.container} component="main" maxWidth="sm">
+        <Card sx={classes.card} key={"cardInfo"}>
+          <CardContent sx={classes.cardContent} key={"cardContentInfo"}>
+            <Stack
+              spacing={2}
+              sx={{
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Typography>
+                <strong>{TEXT_PLEASE_DONATE}</strong>
+                <br />
+                {TEXT_WHY_DONATE}
+                <br />
+                {TEXT_NEED_A_RECEIPT}
+                <br />
+                <br />
+                {TEXT_THANK_YOU_1000}
+              </Typography>
+              <Box
+                component="img"
+                src={
+                  ImageRepository.getEnviromentRelatedPicture().TWINT_QR_CODE
+                }
+                sx={classes.cardMediaQrCode}
+                style={{maxWidth: "100%", height: "auto"}}
+              />
+              <TwintButton />
+            </Stack>
           </CardContent>
         </Card>
       </Container>

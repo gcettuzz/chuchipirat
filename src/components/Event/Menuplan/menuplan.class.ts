@@ -25,6 +25,15 @@ export interface MealType {
   uid: string;
   name: string;
 }
+
+export enum MenueListOrderTypes {
+  mealRecipeOrder = "mealRecipeOrder",
+  materialOrder = "materialOrder",
+  productOrder = "productOrder",
+  mealTypeOrder = "order",
+  menuOrder = "menuOrder",
+}
+
 export interface Menue {
   uid: string;
   name: string;
@@ -230,7 +239,7 @@ interface RecalculateSinglePortion {
   groupConfig: EventGroupConfiguration;
 }
 
-interface _GetEventDateList {
+interface GetEventDateList {
   event: Event;
 }
 interface AdjustMenuplanWithNewDays {
@@ -251,6 +260,21 @@ interface SortSelectedMenues {
   menueList: string[];
   menuplan: Menuplan;
 }
+
+interface ConsistencyReport {
+  menues: string[];
+  mealRecipes: string[];
+  materials: string[];
+  products: string[];
+}
+
+interface FixMenuplan {
+  menuplan: Menuplan;
+  report: ConsistencyReport;
+  /** true, wenn keine Inkonsistenzen gefunden wurden */
+  isConsistent: boolean;
+}
+
 export default class Menuplan {
   // HINT: Änderungen müssen auch im Cloud-FX-Type nachgeführt werden
   uid: string;
@@ -308,7 +332,7 @@ export default class Menuplan {
     };
 
     // Datumsliste generieren
-    menuplan.dates = Menuplan._getEventDateList({event: event});
+    menuplan.dates = Menuplan.getEventDateList({event: event});
 
     // Mahlzeiten generieren (aus Default)
     DEFAULT_VALUES.MENUPLAN_MEALS.forEach((mealType) => {
@@ -482,7 +506,7 @@ export default class Menuplan {
 
     // Mahlzeittyp löschen
     newMealTypes.order = mealTypes.order.filter(
-      (mealType) => mealType != mealTypeToDelete.uid
+      (mealType) => mealType != mealTypeToDelete.uid,
     );
     delete newMealTypes.entries[mealTypeToDelete.uid];
 
@@ -493,15 +517,15 @@ export default class Menuplan {
         meals[mealUid].menuOrder.forEach((menuUid) => {
           // Alle Rezepte löschen
           menues[menuUid].mealRecipeOrder.forEach(
-            (mealRecipeUid) => delete newMealRecipes[mealRecipeUid]
+            (mealRecipeUid) => delete newMealRecipes[mealRecipeUid],
           );
           // Alle Produkte löschen
           menues[menuUid].productOrder.forEach(
-            (productUid) => delete newProducts[productUid]
+            (productUid) => delete newProducts[productUid],
           );
           // Alle Materialien löschen
           menues[menuUid].materialOrder.forEach(
-            (materialUid) => delete newMaterials[materialUid]
+            (materialUid) => delete newMaterials[materialUid],
           );
           delete newMenues[menuUid];
         });
@@ -602,7 +626,7 @@ export default class Menuplan {
     menues,
   }: FindMenueOfMealRecipe) => {
     const menue = Object.values(menues).find((menue) =>
-      menue.mealRecipeOrder.includes(mealRecipeUid)
+      menue.mealRecipeOrder.includes(mealRecipeUid),
     );
     return menue;
   };
@@ -617,7 +641,7 @@ export default class Menuplan {
     menues,
   }: FindMenueOfMealProduct) => {
     const menue = Object.values(menues).find((menue) =>
-      menue.productOrder.includes(productUid)
+      menue.productOrder.includes(productUid),
     );
     return menue;
   };
@@ -632,7 +656,7 @@ export default class Menuplan {
     menues,
   }: FindMenueOfMealMaterial) => {
     const menue = Object.values(menues).find((menue) =>
-      menue.materialOrder.includes(materialUid)
+      menue.materialOrder.includes(materialUid),
     );
     return menue;
   };
@@ -648,14 +672,13 @@ export default class Menuplan {
 
     menues.forEach((menueUid) => {
       const meal = Object.values(menuplan.meals).find((meal) =>
-        meal.menuOrder.includes(menueUid)
+        meal.menuOrder.includes(menueUid),
       );
 
       if (meal && !mealsOfMenues.includes(meal.uid)) {
         mealsOfMenues.push(meal.uid);
       }
     });
-
     return mealsOfMenues;
   };
   // ===================================================================== */
@@ -666,10 +689,9 @@ export default class Menuplan {
    */
   static getMenuesOfMeals = ({menuplan, meals}: GetMenuesOfMeals) => {
     const menuesOfMeals: Menue["uid"][] = [];
-
     meals.forEach((mealUid) => {
       menuplan.meals[mealUid].menuOrder.forEach((menueUid) =>
-        menuesOfMeals.push(menueUid)
+        menuesOfMeals.push(menueUid),
       );
     });
 
@@ -689,7 +711,7 @@ export default class Menuplan {
         intolerance: intoleranceUid,
         factor: parseFloat(plan[intoleranceUid].factor),
         totalPortions: plan[intoleranceUid].total,
-      })
+      }),
     );
 
     mealRecipe.uid = Utils.generateUid(5);
@@ -710,7 +732,7 @@ export default class Menuplan {
         runningSum = runningSum + intolerance.totalPortions;
         return runningSum;
       },
-      0
+      0,
     );
 
     return mealRecipe;
@@ -747,7 +769,7 @@ export default class Menuplan {
         intolerance: intoleranceUid,
         factor: parseFloat(plan[intoleranceUid].factor),
         totalPortions: plan[intoleranceUid].total,
-      })
+      }),
     );
 
     good.totalQuantity = good.plan.reduce((runningSum, intolerance) => {
@@ -805,7 +827,7 @@ export default class Menuplan {
       mealRecipe.totalPortions = totalPortions;
       // Aus der Einplanung löschen, was es nicht mehr gibt
       mealRecipe.plan = mealRecipe.plan.filter(
-        (plan) => plan.diet != "" && plan.intolerance != ""
+        (plan) => plan.diet != "" && plan.intolerance != "",
       );
     });
 
@@ -831,7 +853,7 @@ export default class Menuplan {
       product.totalQuantity = totalPortions;
       // Aus der Einplanung löschen, was es nicht mehr gibt
       product.plan = product.plan.filter(
-        (plan) => plan.diet != "" && plan.intolerance != ""
+        (plan) => plan.diet != "" && plan.intolerance != "",
       );
     });
 
@@ -857,14 +879,14 @@ export default class Menuplan {
       material.totalQuantity = totalPortions;
       // Aus der Einplanung löschen, was es nicht mehr gibt
       material.plan = material.plan.filter(
-        (plan) => plan.diet != "" && plan.intolerance != ""
+        (plan) => plan.diet != "" && plan.intolerance != "",
       );
     });
 
     // Analytics mitführen
     logEvent(
       firebase.analytics,
-      FirebaseAnalyticEvent.eventGroupConifgRecalculated
+      FirebaseAnalyticEvent.eventGroupConifgRecalculated,
     );
 
     return menuplan;
@@ -883,7 +905,7 @@ export default class Menuplan {
       const dateAsString = Utils.dateAsString(date);
       menuplan.mealTypes.order.forEach((mealTypeUid) => {
         const meal = Object.values(menuplan.meals).find(
-          (meal) => meal.date == dateAsString && meal.mealType == mealTypeUid
+          (meal) => meal.date == dateAsString && meal.mealType == mealTypeUid,
         );
         if (meal) {
           meal.menuOrder.forEach((menueUid) => {
@@ -920,7 +942,7 @@ export default class Menuplan {
       portionPlan.diet != PlanedDiet.ALL &&
       portionPlan.diet != PlanedDiet.FIX &&
       !Object.values(groupConfig.diets.entries).some(
-        (entry) => entry.uid == portionPlan.diet
+        (entry) => entry.uid == portionPlan.diet,
       )
     ) {
       portionPlan.diet = "";
@@ -934,7 +956,7 @@ export default class Menuplan {
       portionPlan.intolerance != PlanedIntolerances.ALL &&
       portionPlan.intolerance != PlanedIntolerances.FIX &&
       !Object.values(groupConfig.intolerances.entries).some(
-        (entry) => entry.uid == portionPlan.intolerance
+        (entry) => entry.uid == portionPlan.intolerance,
       )
     ) {
       portionPlan.diet = "";
@@ -988,23 +1010,23 @@ export default class Menuplan {
   }: AdjustMenuplanWithNewDays) => {
     const updatedMenuplan = _.cloneDeep(menuplan) as Menuplan;
 
-    const newDayList = Menuplan._getEventDateList({event: newEvent}).map(
-      (date) => Utils.dateAsString(date)
+    const newDayList = Menuplan.getEventDateList({event: newEvent}).map(
+      (date) => Utils.dateAsString(date),
     );
-    const oldDayList = Menuplan._getEventDateList({event: existingEvent}).map(
-      (date) => Utils.dateAsString(date)
+    const oldDayList = Menuplan.getEventDateList({event: existingEvent}).map(
+      (date) => Utils.dateAsString(date),
     );
     const datesToDAdd = newDayList.filter((date) => !oldDayList.includes(date));
 
     updatedMenuplan.dates = newDayList.map(
-      (date) => new Date(new Date(date).setUTCHours(0, 0, 0, 0))
+      (date) => new Date(new Date(date).setUTCHours(0, 0, 0, 0)),
     );
     const mealsToDelete = Object.values(menuplan.meals).filter(
-      (meal) => !newDayList.includes(meal.date)
+      (meal) => !newDayList.includes(meal.date),
     );
     const menueUidsToDelete = mealsToDelete.reduce<Meal["uid"][]>(
       (accumulator, meal) => accumulator.concat(meal.menuOrder),
-      []
+      [],
     );
 
     const mealRecipeUidsToDelete = menueUidsToDelete.reduce<
@@ -1012,7 +1034,7 @@ export default class Menuplan {
     >(
       (accumulator, menuUid) =>
         accumulator.concat(menuplan.menues[menuUid].mealRecipeOrder),
-      []
+      [],
     );
 
     const productUidsToDelete = menueUidsToDelete.reduce<
@@ -1020,7 +1042,7 @@ export default class Menuplan {
     >(
       (accumulator, menuUid) =>
         accumulator.concat(menuplan.menues[menuUid].productOrder),
-      []
+      [],
     );
 
     const materialUidToDelete = menueUidsToDelete.reduce<
@@ -1028,25 +1050,25 @@ export default class Menuplan {
     >(
       (accumulator, menuUid) =>
         accumulator.concat(menuplan.menues[menuUid].materialOrder),
-      []
+      [],
     );
 
     const notesToDelete = Object.values(menuplan.notes).filter((note) =>
-      menueUidsToDelete.includes(note.menueUid)
+      menueUidsToDelete.includes(note.menueUid),
     );
 
     mealsToDelete.forEach((meal) => delete updatedMenuplan.meals[meal.uid]);
     menueUidsToDelete.forEach(
-      (menueUid) => delete updatedMenuplan.menues[menueUid]
+      (menueUid) => delete updatedMenuplan.menues[menueUid],
     );
     mealRecipeUidsToDelete.forEach(
-      (mealRecipeUid) => delete updatedMenuplan.mealRecipes[mealRecipeUid]
+      (mealRecipeUid) => delete updatedMenuplan.mealRecipes[mealRecipeUid],
     );
     productUidsToDelete.forEach(
-      (productUid) => delete updatedMenuplan.products[productUid]
+      (productUid) => delete updatedMenuplan.products[productUid],
     );
     materialUidToDelete.forEach(
-      (materialUid) => delete updatedMenuplan.materials[materialUid]
+      (materialUid) => delete updatedMenuplan.materials[materialUid],
     );
     notesToDelete.forEach((note) => delete updatedMenuplan.notes[note.uid]);
 
@@ -1065,15 +1087,12 @@ export default class Menuplan {
     });
     return updatedMenuplan;
   };
-  /* =====================================================================
-  // PRIVAT: 
-  // ===================================================================== */
   /**
    * Datumsliste generieren
    * Anhand der Zeitscheiben, ein Array mit allen Daten erstellen
    * @param {event}
    */
-  static _getEventDateList = ({event}: _GetEventDateList) => {
+  static getEventDateList = ({event}: GetEventDateList) => {
     const dateList: Date[] = [];
 
     const dateRanges = Event.deleteEmptyDates(event.dates);
@@ -1085,5 +1104,151 @@ export default class Menuplan {
       }
     });
     return dateList;
+  };
+  //  ================================================================================================
+  /**
+   * Entfernt aus einem Order-Array alle Einträge, deren Key nicht in `objectKeys` enthalten ist.
+   *
+   * @param order Das ursprüngliche Order-Array (z.B. `materialOrder`).
+   * @param objectKeys Set mit allen gültigen Keys (z.B. `new Set(Object.keys(materials))`).
+   *
+   * @returns
+   * - `order`: das bereinigte Order-Array (nur noch gültige Keys)
+   * - `removed`: Array der entfernten Keys (in gleicher Reihenfolge wie im ursprünglichen Order)
+   *
+   * @example
+   * const fixedMaterials = Menuplan.adjustConsistencyForOrderAndKeys({
+   *   order: Object.values(menuplan.menues).flatMap(
+   *     (menue) => menue.materialOrder,
+   *   ),
+   *   objectKeys: new Set(Object.keys(menuplan.materials)),
+   * });
+   *  if (fixedMaterials.removed.length > 0) {...
+   */
+  private static adjustConsistencyForOrderAndKeys = ({
+    order,
+    objectKeys,
+  }: {
+    order: string[];
+    objectKeys: Set<string>;
+  }) => {
+    const removed: string[] = [];
+
+    const adjustedOrder = order.filter((key) => {
+      const ok = objectKeys.has(key);
+      if (!ok) removed.push(key);
+      return ok;
+    });
+
+    return {
+      order: adjustedOrder,
+      removed,
+    };
+  };
+  //  ================================================================================================
+  /**
+   * Konsistenzcheck + Reparatur für alle Order-Arrays im Menuplan.
+   *
+   * Regel:
+   * - Alles, was in einem Order-Array referenziert wird, muss in der entsprechenden "Quelle"
+   *   (Entries/Objekte bzw. indirekte UID-Listen) existieren.
+   * - Fehlt ein referenziertes Element, wird es aus dem Order-Array entfernt.
+   *
+   * Aktuell prüft/bereinigt diese Funktion:
+   * - `meal.menuOrder` gegen `menuplan.menues` (Menue-UIDs)
+   * - `menue.productOrder` gegen `menuplan.products[*].productUid` (indirekte Referenz)
+   * - `menue.materialOrder` gegen `menuplan.materials[*].materialUid` (indirekte Referenz)
+   * - `menue.mealRecipeOrder` gegen `menuplan.mealRecipes[*].recipe.recipeUid` (indirekte Referenz)
+   *
+   * @param menuplan Der zu prüfende Menuplan.
+   *
+   * @returns
+   * - `menuplan`: bereinigte Kopie (immutable, Original bleibt unverändert)
+   * - `report`: Details, welche UIDs entfernt wurden (pro Bereich)
+   * - `isConsistent`: true, wenn nichts entfernt werden musste
+   *
+   * @example
+   * const { menuplan: fixed, isConsistent, report } = Menuplan.fixMenuplan(menuplan);
+   * if (!isConsistent) console.log("Bereinigt:", report);
+   */
+  static fixMenuplan = (menuplan: Menuplan): FixMenuplan => {
+    const report: ConsistencyReport = {
+      menues: [],
+      mealRecipes: [],
+      materials: [],
+      products: [],
+    };
+
+    const fixedMenuplan = _.cloneDeep(menuplan);
+    let didFix = false;
+
+    const fixedMaterials = Menuplan.adjustConsistencyForOrderAndKeys({
+      order: Object.values(menuplan.menues).flatMap(
+        (menue) => menue.materialOrder,
+      ),
+      objectKeys: new Set(Object.keys(menuplan.materials)),
+    });
+
+    // Materials
+    if (fixedMaterials.removed.length > 0) {
+      console.debug("Removed materials:", fixedMaterials.removed);
+      didFix = true;
+      report.materials = fixedMaterials.removed;
+      Object.values(fixedMenuplan.menues).forEach((menue) => {
+        fixedMaterials.removed.forEach((removedUid) => {
+          menue.materialOrder = menue.materialOrder.filter(
+            (uid) => uid !== removedUid,
+          );
+        });
+      });
+    }
+
+    //Produkte
+    const fixedProducts = Menuplan.adjustConsistencyForOrderAndKeys({
+      order: Object.values(menuplan.menues).flatMap(
+        (menue) => menue.productOrder,
+      ),
+      objectKeys: new Set(Object.keys(menuplan.products)),
+    });
+
+    if (fixedProducts.removed.length > 0) {
+      console.debug("Removed products:", fixedProducts.removed);
+      didFix = true;
+      report.products = fixedProducts.removed;
+      Object.values(fixedMenuplan.menues).forEach((menue) => {
+        fixedProducts.removed.forEach((removedUid) => {
+          menue.productOrder = menue.productOrder.filter(
+            (uid) => uid !== removedUid,
+          );
+        });
+      });
+    }
+
+    // MealRecipes
+    const fixedMealRecipes = Menuplan.adjustConsistencyForOrderAndKeys({
+      order: Object.values(menuplan.menues).flatMap(
+        (menue) => menue.mealRecipeOrder,
+      ),
+      objectKeys: new Set(Object.keys(menuplan.mealRecipes)),
+    });
+
+    if (fixedMealRecipes.removed.length > 0) {
+      console.debug("Removed mealRecipes:", fixedMealRecipes.removed);
+      didFix = true;
+      report.mealRecipes = fixedMealRecipes.removed;
+      Object.values(fixedMenuplan.menues).forEach((menue) => {
+        fixedMealRecipes.removed.forEach((removedUid) => {
+          menue.mealRecipeOrder = menue.mealRecipeOrder.filter(
+            (uid) => uid !== removedUid,
+          );
+        });
+      });
+    }
+
+    return {
+      menuplan: fixedMenuplan,
+      report,
+      isConsistent: !didFix,
+    };
   };
 }

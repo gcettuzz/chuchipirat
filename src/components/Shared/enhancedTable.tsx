@@ -1,18 +1,21 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import Table from "@material-ui/core/Table";
-import TableBody from "@material-ui/core/TableBody";
-import TableCell from "@material-ui/core/TableCell";
-import TableContainer from "@material-ui/core/TableContainer";
-import TableHead from "@material-ui/core/TableHead";
-import TableRow from "@material-ui/core/TableRow";
-import TableSortLabel from "@material-ui/core/TableSortLabel";
-import Checkbox from "@material-ui/core/Checkbox";
-import Chip from "@material-ui/core/Chip";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TableSortLabel,
+  Checkbox,
+  Chip,
+} from "@mui/material";
 
-import useStyles from "../../constants/styles";
-import {IconButton, Typography, Link} from "@material-ui/core";
+import useCustomStyles from "../../constants/styles";
+
+import {IconButton, Typography, Link} from "@mui/material";
 import Utils from "./utils.class";
 import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 
@@ -110,7 +113,7 @@ const EnhancedTable = ({
   onIconClick,
   onRowClick,
 }: EnhancedTableProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   const [order, setOrder] = React.useState<Order>("asc");
   const [orderBy, setOrderBy] = React.useState("pos");
@@ -127,7 +130,7 @@ const EnhancedTable = ({
   return (
     <TableContainer style={{width: "100%"}}>
       <Table
-        className={classes.table}
+        sx={classes.table}
         aria-labelledby="tableTitle"
         aria-label="enhanced table"
         style={{width: "100%"}}
@@ -252,7 +255,7 @@ const EnhancedTableBody = ({
   onIconClick,
   onRowClick,
 }: EnhancedTableBodyProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
     <TableBody>
@@ -296,7 +299,7 @@ const EnhancedTableBody = ({
                       <TableCell
                         align={column.textAlign}
                         key={row[keyColumn] + "_cell_" + column.id}
-                        className={classes.typographyCode}
+                        sx={classes.typographyCode}
                       >
                         {cellValue}
                       </TableCell>
@@ -330,6 +333,7 @@ const EnhancedTableBody = ({
                           component="span"
                           id={row[keyColumn] + "_button_" + column.id}
                           onClick={(event) => onIconClick!(event, row)}
+                          size="large"
                         >
                           {column.iconButton}
                         </IconButton>
@@ -344,7 +348,6 @@ const EnhancedTableBody = ({
                         <Checkbox
                           disabled
                           checked={row[column["id"]] as boolean}
-                          color="primary"
                         />
                       </TableCell>
                     );

@@ -1,22 +1,15 @@
-import {PaletteColorOptions} from "@material-ui/core";
+import {PaletteOptions} from "@mui/material";
 import Utils, {Enviroment} from "../Shared/utils.class";
-import red from "@material-ui/core/colors/red";
-
-interface CustomColorPalette {
-  type: string;
-  primary: PaletteColorOptions;
-  secondary: PaletteColorOptions;
-  error: PaletteColorOptions;
-}
+import {red} from "@mui/material/colors";
 
 export default class CustomTheme {
-  static getTheme = (prefersDarkMode: boolean): CustomColorPalette => {
+  static getTheme = (prefersDarkMode: boolean): PaletteOptions => {
     switch (Utils.getEnviroment()) {
       case Enviroment.production:
       case Enviroment.development:
         if (prefersDarkMode) {
           return {
-            type: "dark",
+            mode: "dark",
             primary: {
               main: "#00bcd4",
               light: "#fff",
@@ -33,7 +26,7 @@ export default class CustomTheme {
           };
         } else {
           return {
-            type: "light",
+            mode: "light",
             primary: {
               main: "#006064",
               light: "#428e92",
@@ -52,7 +45,7 @@ export default class CustomTheme {
       case Enviroment.test:
         if (prefersDarkMode) {
           return {
-            type: "dark",
+            mode: "dark",
             primary: {
               main: "#AB47BC",
               light: "#E1BEE7",
@@ -69,7 +62,7 @@ export default class CustomTheme {
           };
         } else {
           return {
-            type: "light",
+            mode: "light",
             primary: {
               main: "#6a1b9a",
               light: "#8748ae",

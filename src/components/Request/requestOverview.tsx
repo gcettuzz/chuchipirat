@@ -6,14 +6,15 @@ import {
   Container,
   Backdrop,
   CircularProgress,
-  Grid,
+  Stack,
   Card,
   CardContent,
   Chip,
   Typography,
-} from "@material-ui/core";
-
-import {ToggleButton, ToggleButtonGroup} from "@material-ui/lab";
+  ToggleButton,
+  ToggleButtonGroup,
+  useTheme,
+} from "@mui/material";
 
 import {
   REQUESTS as TEXT_REQUESTS,
@@ -32,7 +33,8 @@ import {
 
 import {RECIPE as ROUTES_RECIPE} from "../../constants/routes";
 
-import useStyles from "../../constants/styles";
+import useCustomStyles from "../../constants/styles";
+
 import PageTitle from "../Shared/pageTitle";
 
 import {Request} from "./internal";
@@ -239,7 +241,7 @@ const RequestOverviewBase: React.FC<
   CustomRouterProps & {authUser: AuthUser | null}
 > = ({authUser, ...props}) => {
   const firebase = props.firebase;
-  const classes = useStyles();
+  const classes = useCustomStyles();
   const {push} = useHistory();
 
   const navigationValuesContext = React.useContext(NavigationValuesContext);
@@ -468,20 +470,20 @@ const RequestOverviewBase: React.FC<
       {/*===== HEADER ===== */}
       <PageTitle title={TEXT_REQUESTS} />
       {/* ===== BODY ===== */}
-      <Container className={classes.container} component="main" maxWidth="md">
-        <Backdrop className={classes.backdrop} open={state.isLoading}>
-          <CircularProgress color="inherit" />
-        </Backdrop>
+      <Stack>
+        <Container sx={classes.container} component="main" maxWidth="md">
+          <Backdrop sx={classes.backdrop} open={state.isLoading}>
+            <CircularProgress color="inherit" />
+          </Backdrop>
 
-        {state.error && (
-          <AlertMessage
-            error={state.error}
-            severity="error"
-            messageTitle={TEXT_ALERT_TITLE_UUPS}
-          />
-        )}
+          {state.error && (
+            <AlertMessage
+              error={state.error}
+              severity="error"
+              messageTitle={TEXT_ALERT_TITLE_UUPS}
+            />
+          )}
 
-        <Grid item key={"RequestOverviewPanel"} xs={12}>
           <RequestTable
             requests={state.requests}
             onClick={onRowClick}
@@ -489,31 +491,31 @@ const RequestOverviewBase: React.FC<
             requestStateFilter={requestStateFilter}
             handleStateFilterChange={onStateFilterChange}
           />
-        </Grid>
-      </Container>
-      <RecipeDrawer
-        drawerSettings={recipeDrawerData}
-        recipe={recipeDrawerData.recipe}
-        mealPlan={recipeDrawerData.mealPlan}
-        groupConfiguration={{} as EventGroupConfiguration}
-        scaledPortions={recipeDrawerData.scaledPortions}
-        editMode={false}
-        disableFunctionality={true}
-        firebase={firebase}
-        authUser={authUser}
-        onClose={onRecipeDrawerClose}
-      />
+        </Container>
+        <RecipeDrawer
+          drawerSettings={recipeDrawerData}
+          recipe={recipeDrawerData.recipe}
+          mealPlan={recipeDrawerData.mealPlan}
+          groupConfiguration={{} as EventGroupConfiguration}
+          scaledPortions={recipeDrawerData.scaledPortions}
+          editMode={false}
+          disableFunctionality={true}
+          firebase={firebase}
+          authUser={authUser}
+          onClose={onRecipeDrawerClose}
+        />
 
-      <DialogRequest
-        request={requestPopupValues.selectedRequest}
-        dialogOpen={requestPopupValues.open}
-        authUser={authUser}
-        handleClose={onPopUpClose}
-        handleUpdateStatus={onUpdateStatus}
-        handleAssignToMe={onAssignToMe}
-        handleAddComment={onAddComment}
-        handleRecipeOpen={onRecipeDrawerOpen}
-      />
+        <DialogRequest
+          request={requestPopupValues.selectedRequest}
+          dialogOpen={requestPopupValues.open}
+          authUser={authUser}
+          handleClose={onPopUpClose}
+          handleUpdateStatus={onUpdateStatus}
+          handleAssignToMe={onAssignToMe}
+          handleAddComment={onAddComment}
+          handleRecipeOpen={onRecipeDrawerOpen}
+        />
+      </Stack>
     </React.Fragment>
   );
 };
@@ -586,7 +588,8 @@ const RequestTable = ({
       visible: true,
     },
   ];
-  const classes = useStyles();
+  const classes = useCustomStyles();
+  const theme = useTheme();
 
   const [searchString, setSearchString] = React.useState("");
   const [requestsUi, setRequestsUi] = React.useState<RequestUi[]>([]);
@@ -647,56 +650,48 @@ const RequestTable = ({
   }
 
   return (
-    <Card className={classes.card} key={"requestTablePanel"}>
-      <CardContent className={classes.cardContent} key={"requestTableContent"}>
-        <Grid container>
-          <Grid item xs={12} style={{marginBottom: "2ex"}}>
-            <SearchPanel
-              searchString={searchString}
-              onUpdateSearchString={updateSearchString}
-              onClearSearchString={clearSearchString}
-            />
-          </Grid>
-          <Grid item xs={12} style={{marginBottom: "2ex"}}>
-            <ToggleButtonGroup
-              value={requestStateFilter}
-              exclusive
-              onChange={handleStateFilterChange}
-              aria-label="text alignment"
-              size="small"
+    <Card sx={classes.card} key={"requestTablePanel"}>
+      <CardContent sx={classes.cardContent} key={"requestTableContent"}>
+        <Stack spacing={theme.spacing(2)}>
+          <SearchPanel
+            searchString={searchString}
+            onUpdateSearchString={updateSearchString}
+            onClearSearchString={clearSearchString}
+          />
+          <ToggleButtonGroup
+            value={requestStateFilter}
+            exclusive
+            onChange={handleStateFilterChange}
+            aria-label="text alignment"
+            size="small"
+            color="primary"
+          >
+            <ToggleButton
+              value={RequestStateFilter.Active}
+              aria-label="left aligned"
             >
-              <ToggleButton
-                value={RequestStateFilter.Active}
-                aria-label="left aligned"
-              >
-                {TEXT_ACTIVE_REQUESTS}
-              </ToggleButton>
-              <ToggleButton
-                value={RequestStateFilter.All}
-                aria-label="centered"
-              >
-                {TEXT_ALL_REQUESTS}
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Grid>
-          <Grid>
-            <EnhancedTable
-              tableData={requestsUi}
-              tableColumns={TABLE_COLUMS}
-              keyColum={"number"}
-              onRowClick={onClick}
-            />
-            {requestsUi.length == 0 && isLoading == false && !searchString && (
-              <Typography
-                variant="subtitle1"
-                align="center"
-                style={{marginTop: "2ex"}}
-              >
-                {TEXT_NO_OPEN_REQUESTS_FOUND}
-              </Typography>
-            )}
-          </Grid>
-        </Grid>
+              {TEXT_ACTIVE_REQUESTS}
+            </ToggleButton>
+            <ToggleButton value={RequestStateFilter.All} aria-label="centered">
+              {TEXT_ALL_REQUESTS}
+            </ToggleButton>
+          </ToggleButtonGroup>
+          <EnhancedTable
+            tableData={requestsUi}
+            tableColumns={TABLE_COLUMS}
+            keyColum={"number"}
+            onRowClick={onClick}
+          />
+          {requestsUi.length == 0 && isLoading == false && !searchString && (
+            <Typography
+              variant="subtitle1"
+              align="center"
+              style={{marginTop: "2ex"}}
+            >
+              {TEXT_NO_OPEN_REQUESTS_FOUND}
+            </Typography>
+          )}
+        </Stack>
       </CardContent>
     </Card>
   );
@@ -708,12 +703,12 @@ const RequestTable = ({
  * @param status - Status, für den der Style ermittelt werden soll.
  */
 export const StatusChips = ({status}: StatusChipsProps) => {
-  const classes = useStyles();
+  const classes = useCustomStyles();
 
   return (
     <Chip
       label={Request.translateStatus(status)}
-      className={
+      sx={
         status == RequestStatus.done
           ? classes.workflowChipDone
           : status == RequestStatus.declined

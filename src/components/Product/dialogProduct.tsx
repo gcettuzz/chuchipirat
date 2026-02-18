@@ -1,20 +1,20 @@
 import React from "react";
 
-import Grid from "@material-ui/core/Grid";
-
-import Dialog from "@material-ui/core/Dialog";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogContentText from "@material-ui/core/DialogContentText";
-import DialogActions from "@material-ui/core/DialogActions";
-import {Alert, AlertTitle} from "@material-ui/lab";
-
-import Button from "@material-ui/core/Button";
-import TextField from "@material-ui/core/TextField";
-import Checkbox from "@material-ui/core/Checkbox";
-
+import Grid from "@mui/material/Unstable_Grid2";
 import {
+  Button,
+  TextField,
+  Checkbox,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Alert,
+  AlertTitle,
   FormControl,
+  FormHelperText,
+  FormControlLabel,
   FormLabel,
   FormGroup,
   RadioGroup,
@@ -22,9 +22,7 @@ import {
   ListItem,
   List,
   Typography,
-} from "@material-ui/core";
-import FormHelperText from "@material-ui/core/FormHelperText";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
+} from "@mui/material";
 
 import Product, {Allergen, Diet} from "./product.class";
 import AlertMessage from "../Shared/AlertMessage";
@@ -46,7 +44,6 @@ import {
   HAS_LACTOSE as TEXT_HAS_LACTOSE,
   HAS_GLUTEN as TEXT_HAS_GLUTEN,
   PRODUCT_PROPERTY as TEXT_PRODUCT_PROPERTY,
-  // RECORD_INGREDIENT_WITH_NECCESSARY_INFO as TEXT_RECORD_INGREDIENT_WITH_NECCESSARY_INFO,
   IS_MEAT as TEXT_IS_MEAT,
   IS_VEGETARIAN as TEXT_IS_VEGETARIAN,
   IS_VEGAN as TEXT_IS_VEGAN,
@@ -482,7 +479,7 @@ const DialogProduct = ({
               />
             )}
           <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <TextField
                 error={validation.name.hasError}
                 margin="dense"
@@ -498,7 +495,7 @@ const DialogProduct = ({
                 autoFocus
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <FormControl fullWidth>
                 <DepartmentAutocomplete
                   department={productPopUpValues.department}
@@ -508,7 +505,7 @@ const DialogProduct = ({
                 />
               </FormControl>
             </Grid>
-            <Grid item xs={dialogType === PRODUCT_DIALOG_TYPE.EDIT ? 6 : 12}>
+            <Grid xs={dialogType === PRODUCT_DIALOG_TYPE.EDIT ? 6 : 12}>
               <FormControl fullWidth>
                 <UnitAutocomplete
                   componentKey={"shoppingUnit"}
@@ -520,7 +517,7 @@ const DialogProduct = ({
               </FormControl>
             </Grid>
             {dialogType === PRODUCT_DIALOG_TYPE.EDIT && (
-              <Grid item xs={6}>
+              <Grid xs={6}>
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -528,14 +525,13 @@ const DialogProduct = ({
                       checked={productPopUpValues.usable}
                       onChange={onChangeField}
                       name="usable"
-                      color="primary"
                     />
                   }
                   label={TEXT_USABLE}
                 />
               </Grid>
             )}
-            <Grid item xs={12} sm={6}>
+            <Grid xs={12} sm={6}>
               <FormControl fullWidth>
                 <FormLabel component="legend">{TEXT_INTOLERANCES}</FormLabel>
                 <FormGroup>
@@ -548,7 +544,6 @@ const DialogProduct = ({
                         onChange={onChangeDietCheckbox}
                         name="dietProperties.allergens.containsLactose"
                         id="dietProperties.allergens.containsLactose"
-                        color="primary"
                       />
                     }
                     label={TEXT_HAS_LACTOSE}
@@ -562,7 +557,6 @@ const DialogProduct = ({
                         onChange={onChangeDietCheckbox}
                         name="dietProperties.allergens.containsGluten"
                         id="dietProperties.allergens.containsGluten"
-                        color="primary"
                       />
                     }
                     label={TEXT_HAS_GLUTEN}
@@ -570,7 +564,7 @@ const DialogProduct = ({
                 </FormGroup>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid xs={12} sm={6}>
               <FormControl fullWidth>
                 <FormGroup>
                   <FormLabel component="legend">
@@ -585,17 +579,17 @@ const DialogProduct = ({
                   >
                     <FormControlLabel
                       value={Diet.Meat}
-                      control={<Radio size="small" color="primary" />}
+                      control={<Radio size="small" />}
                       label={TEXT_IS_MEAT}
                     />
                     <FormControlLabel
                       value={Diet.Vegetarian}
-                      control={<Radio size="small" color="primary" />}
+                      control={<Radio size="small" />}
                       label={TEXT_IS_VEGETARIAN}
                     />
                     <FormControlLabel
                       value={Diet.Vegan}
-                      control={<Radio size="small" color="primary" />}
+                      control={<Radio size="small" />}
                       label={TEXT_IS_VEGAN}
                     />
                   </RadioGroup>
@@ -603,7 +597,7 @@ const DialogProduct = ({
               </FormControl>
             </Grid>
             {dialogType === ProductDialog.CREATE && (
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <FormHelperText>{TEXT_INFO_DIET_PROPERTIES}</FormHelperText>
               </Grid>
             )}

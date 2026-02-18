@@ -23,6 +23,9 @@ export const BUTTON_DELETE = "Löschen";
 export const BUTTON_SCALE = "Skalieren";
 export const BUTTON_OWN_VARIANT = "Eigene Variante erstellen";
 export const ADD_DEPARTMENT = "Abteilung hinzufügen";
+export const SORT_ITEMS = "Einträge sortieren";
+export const SHOPPING_MODE = "Einkaufsmodus";
+export const EDIT_MODE = "Bearbeitungsmodus";
 export const BUTTON_ADD_PERSON = "Person hinzufügen";
 export const BUTTON_ADD_TO_EVENT = "Zu Anlass hinzufügen";
 export const BUTTON_UPLOAD = "Upload";
@@ -270,8 +273,10 @@ export const NO_OF_FEED_ENTRIES = "Anzahl Feed Einträge";
 export const TOOLTIP_ADD_POS = "Neue Position einfügen";
 export const TOOLTIP_ADD_SECTION = "Neuer Abschnitt einfügen";
 export const TOOLTIP_DEL_POS = "Position löschen";
-export const TOOLTIP_MOVE_POS_UP = "Position nach oben verschieben";
-export const TOOLTIP_MOVE_POS_DOWN = "Position nach unten verschieben";
+export const TOOLTIP_MOVE_UP = "Nach oben verschieben";
+export const TOOLTIP_MOVE_DOWN = "Nach unten verschieben";
+export const TOOLTIP_MOVE_OTHER_MENU = "In anderes Menü verschieben";
+export const TOOLTIP_MOVE_OTHER_MEAL = "In andere Mahlzeit verschieben";
 export const PRIVATE_RECIPE = "Privates Rezept";
 export const VARIANT_RECIPE = "Rezeptvariante";
 /* =====================================================================
@@ -536,6 +541,7 @@ export const MENUPLAN_DIALOG_ADD_RECIPE = (name: string) => {
 };
 export const MENUPLAN_DRAWER_SEARCH_RECIPE_TITLE = "Rezept suchen";
 export const SHOW_DETAILS = "Details anzeigen";
+export const ENABLE_DRAG_AND_DROP = "Drag & Drop aktivieren";
 export const ADD_MEAL = "Mahlzeit hinzufügen";
 export const COMMENT = "Kommentar";
 export const COMMENTS = "Kommentare";
@@ -546,6 +552,7 @@ export const ADD_PRODUCT = "Produkt hinzufügen";
 export const ADD_MATERIAL = "Material hinzufügen";
 export const RECIPES_DRAWER_TITLE = "Was für ein Rezept suchst du?";
 export const DIALOG_CHOOSE_MENUES_TITLE = "Wann gibt es dieses Rezept?";
+export const DIALOG_CHOOSE_MEALS_TITLE = "Welche Mahlzeit soll es sein?";
 export const DIALOG_PLAN_RECIPE_PORTIONS_TITLE =
   "Für wen planst du das Rezept ein?";
 export const DIALOG_PLAN_GOODS_PORTIONS_TITLE =
@@ -712,7 +719,7 @@ export const PASSWORD_RESET = "Passwort zurücksetzen";
 export const HAVE_YOU_FORGOTEN_YOUR_PASSWORD =
   "Hast du möglicherweise dein Passwort vergessen? ";
 
-export const PASSWORD_HOW_STRONG_IS_IT = "Wie stark ist dein Passwort: ";
+export const PASSWORD_HOW_STRONG_IS_IT = "Die Stärke deines Passwortes ist: ";
 export const PASSWORD_STRENGTH_METER = {
   WEAK: "Schwach",
   SUFFICENT: "Ausreichend",
@@ -783,6 +790,16 @@ export const PRODUCT_PROPERTY = "Produkteigenschaft";
 export const HELPTER_TEXT_RECIPE_SOURCE =
   "Woher hast du das Rezept? URL, Buch, Zeitschrift usw.";
 export const DELETE_EVENT = "Anlass löschen";
+export const CONSISTENCY_CHECK = "Konsistenzcheck";
+export const MENUPLAN_CONSISTENCY_CHECK_FIXES_APPLIED =
+  "Konsistenzcheck erfolgreich durchgeführt. Korrekturen wurden angewendet.";
+export const MENUPLAN_CONSISTENCY_CHECK_NO_ISSUES =
+  "Konsistenzcheck erfolgreich durchgeführt. Keine Probleme gefunden.";
+export const POSSIBLE_DUPLICATE_FOUND =
+  "Bevor wir’s zweimal kochen: Wir haben ähnliche Rezepte in der Sammlung:";
+export const PRO_TIP = "💡 Pro-Tipp ";
+export const PRO_TIP_ADD_ITEM_TO_MENUPLAN =
+  "Für «nur eine Zutat» musst du kein ganzes Rezept bauen. Füge Produkte und Materialien direkt im Menüplan hinzu. Details: ";
 // Für DB Errors
 export const DB_DOCUMENT_DELETED = "Dokument wurde gelöscht.";
 /* =====================================================================
@@ -1042,7 +1059,7 @@ export const ORIGINAL_QUANTITIES = "Original Mengen";
 export const SCALED_QUANTITIES = "Hochgerechnete Mengen";
 export const CONVERT_UNITS = "Einheiten umrechnen";
 export const CONVERT_UNITS_EXPLANATION =
-  "Wenn aktiviert, rechnet das System Einheiten in das metrische System um, z.B. Esslöffel in Gramm oder Deziliter.";
+  "Wenn aktiviert, rechnet das System Einheiten in das metrische System um (sofern möglich), z.B. Esslöffel in Gramm oder Deziliter.";
 export const ERROR_GIVE_FIELD_VALUE = (field: string) =>
   `Bitte ${field} angeben.`;
 export const WE_NEED_THIS_VALUE = "Wir brauchen diesen Wert.";
@@ -1107,7 +1124,7 @@ export const CREATE = "Erstellen";
 export const EDIT = "anpassen";
 export const NAME = "Name";
 export const CLOSE = "Schliessen";
-export const APPLY = "Übernehmenen";
+export const APPLY = "Übernehmen";
 export const PER_PORTION = "pro Portion";
 export const VARIANT = "Variante";
 export const VARIANT_NOTE = "Varianten-Notiz";
@@ -1163,6 +1180,11 @@ export const LIST_ENTRY_MAYBE_OUT_OF_DATE = (listName: string) =>
   `Bitte beachte, dass der Menüplan in der Zwischenzeit geändert wurde. Dadurch könnten die Werte der angezeigten ${listName} möglicherweise nicht mehr korrekt sein. Bitte wähle Aktualisieren, um die Auswahl neu zu berechnen.`;
 export const USED_RECIPES_OF_SHOPPINGLIST_POSSIBLE_OUT_OF_DATE =
   "Bitte beachte, dass der Menüplan in der Zwischenzeit geändert wurde. Dadurch könnten die angezeigten Mengen und Produkte möglicherweise nicht mehr korrekt sein. Bitte wähle Aktualisieren, um die Einkaufsliste neu zu generieren.";
+export const SHOPPINTLIST_ITEM_MOVED_TO_RIGHT_DEPARTMENT = (
+  itemName: string,
+  departmentName: string,
+) =>
+  `Der Produkt ${itemName} wurde automatisch in den Abschnitt ${departmentName} verschoben.`;
 export const PLANED_FOR = "Geplant für";
 export const FOR_DATIVE = "zum";
 export const UNIT = "Einheit";
@@ -1198,7 +1220,7 @@ export const ADD_OR_REPLACE_ARTICLE = (
   article: string,
   unit: string,
   oldQuantity: string,
-  newQuantity: string
+  newQuantity: string,
 ) =>
   `Das Produkt «${article}» ist in der Einheit «${unit}» in der Einkaufsliste bereits vorhanden. Wie soll mit der hinzufügenden Menge fortgefahren werden? Möchtest du die bestehende Menge von ${oldQuantity} ${unit} mit der neuen Menge von ${newQuantity} ${unit} überschreiben oder dazuzählen?`;
 export const REPLACE = "Ersetzen";
@@ -1207,9 +1229,17 @@ export const MANUALLY_ADDED_PRODUCTS = "Manuell hinzugefügte Artikel";
 export const KEEP_MANUALLY_ADDED_PRODUCTS = (listName: string) =>
   `Diese ${listName} beinhaltet manuell hinzugefügte Artikel. Sollen diese bei der Aktualisierung beibehalten oder sollen sie aus der Liste gelöscht werden?`;
 export const KEEP = "Behalten";
+export const CHECKED_ITEMS = "Abgehakte Artikel";
+export const CHECKED_ITEMS_EXPLANATION = (listName: string) =>
+  `Diese ${listName} beinhaltet bereits abgehakte Artikel. Sollen die Artikel auch nach der Aktualisierung abgehakt bleiben?`;
+
 export const MATERIAL_LIST_MENUE_SELECTION_DESCRIPTION =
   " Hier kannst du bereits generierte Materiallisten anzeigen lassen oder eine neue Liste erstellen. Eine Liste beinhaltet alle Materialien vom Typ «Gebrauchsmaterial» der gewählten Menüs. Bei bestehenden Listen hast du die Möglichkeit, die Liste zu aktualisieren.";
 export const LIST = "Liste";
+export const DIALOG_TITLE_SELECT_DEPARTMENT = "Abteilung wählen";
+export const DIALOG_SUBTITLE_SELECT_DEPARTMENT =
+  "Wähle die Abteilungen, die für die Generierung der Einkaufsliste berücksichtigt werden sollen.";
+export const NO_DEPARTMENTS_MARKED = "Keine Abteilungen ausgewählt";
 export const ATTENTION_ABOUT_TO_DELETE_PLANED_DAYS =
   "Achtung – Geplante Tage werden gelöscht!";
 export const DELETION_AFFECTS_PLANED_DAYS =
@@ -1297,6 +1327,7 @@ export const ERROR_NO_MATERIALS_FOUND =
 export const ERROR_NO_PRODUCTS_FOUND = "Die Auwahl beinhaltet keine Produkte.";
 export const ERROR_NO_RECIPE_PRODUCT_MATERIAL_FOUND =
   "Die Auswahl beinhaltet keine Artikel.";
+export const ERROR_NO_OPTIONS = "Keine Einträge";
 /* =====================================================================
 // Workflow
 // ===================================================================== */

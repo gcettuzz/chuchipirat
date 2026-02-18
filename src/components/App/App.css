@@ -1,4 +1,12 @@
 /* ===================================================================
+// ========================== Globale Variablen ======================
+// =================================================================== */
+:root {
+  --primary-color-light: #006064;
+  --primary-color-dark: #00bcd4;
+  --primary-color-hover-light: #00616433;
+  --primary-color-hover-dark: #00bcd480;
+} /* ===================================================================
 // ============================ Input Fields =========================
 // =================================================================== */
 input::-webkit-outer-spin-button,
@@ -418,12 +426,12 @@ input[type="number"] {
   color: #444 !important;
 }
 .ql-active {
-  color: #006064 !important;
+  color: var(--primary-color-light) !important;
 }
 /* Stile für den Dark Mode */
 @media (prefers-color-scheme: dark) {
   .ql-active {
-    color: #00bcd4 !important;
+    color: var(--primary-color-dark) !important;
   }
 }
 
@@ -443,4 +451,27 @@ input[type="number"] {
 #sentry-feedback {
   --font-family: "Roboto", "Helvetica", "Arial";
   --dialog-border-radius: 4px;
+}
+/* ===================================================================
+// =========================== Drag & Drop ==========================
+// =================================================================== */
+/* Wo wird das Item eingefügt */
+.custom-drop-indicator {
+  --ds-border-selected: var(--primary-color-light); /* Light-Mode Farbe */
+}
+@media (prefers-color-scheme: dark) {
+  .custom-drop-indicator {
+    --ds-border-selected: var(--primary-color-dark); /* Dark-Mode Farbe */
+  }
+}
+/* Blinken nach dem Drop --> Welches Item hat sich verändert? */
+.custom-drop-trigger-post-move-flash {
+  --ds-background-selected: var(
+    --primary-color-hover-light
+  ); /* Light-Mode Farbe */
+}
+@media (prefers-color-scheme: dark) {
+  .custom-drop-trigger-post-move-flash {
+    --ds-border-selected: var(--primary-color-hover-dark); /* Dark-Mode Farbe */
+  }
 }

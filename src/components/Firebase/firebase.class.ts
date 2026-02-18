@@ -309,7 +309,7 @@ export default class Firebase {
    */
   emailChange = (email: string) => {
     const auth = getAuth();
-    updateEmail(auth.currentUser!, email).catch((error) => {
+    return updateEmail(auth.currentUser!, email).catch((error) => {
       console.error(error);
       throw error;
     });
