@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import {useHistory} from "react-router";
 
@@ -53,11 +52,10 @@ import * as ROUTES from "../../constants/routes";
 import Action from "../../constants/actions";
 
 import Recipe, {RecipeType} from "../Recipe/recipe.class";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {ChangeRecord, CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
+import {ChangeRecord} from "../Shared/global.interface";
 import {
   DataGrid,
   GridColDef,
@@ -231,20 +229,13 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const OverviewRecipePage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <OverviewRecipeBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const OverviewRecipeBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const OverviewRecipePage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
 
   const classes = useCustomStyles();
   const {push} = useHistory();
@@ -635,13 +626,4 @@ const RecipesPanel = ({recipes, onRecipeOpen}: RecipesPanelProps) => {
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser &&
-  (!!authUser.roles.includes(Role.admin) ||
-    !!authUser.roles.includes(Role.communityLeader));
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(OverviewRecipePage);
+export default OverviewRecipePage;

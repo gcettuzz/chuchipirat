@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import {
   Container,
@@ -61,10 +60,8 @@ import Product from "../Product/product.class";
 
 import Utils from "../Shared/utils.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -396,20 +393,13 @@ const PRODUCT_TABLE_COLUMS: Column[] = [
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const UnitConversionPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <UnitConversionBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const UnitConversionBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const UnitConversionPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(
@@ -1061,10 +1051,4 @@ const ProductConversionEditRow = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(UnitConversionPage);
+export default UnitConversionPage;

@@ -34,14 +34,12 @@ import {HOME as ROUTE_HOME} from "../../constants/routes";
 import {ImageRepository} from "../../constants/imageRepository";
 import AlertMessage from "../Shared/AlertMessage";
 import {ForgotPasswordLink} from "../AuthServiceHandler/passwordReset";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import User from "../User/user.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {useHistory, withRouter} from "react-router";
+import {useHistory} from "react-router";
 import Utils from "../Shared/utils.class";
 import {Backdrop, CircularProgress} from "@mui/material";
-
-import {CustomRouterProps} from "../Shared/global.interface";
 import GlobalSettings from "../Admin/globalSettings.class";
 import useCustomStyles from "../../constants/styles";
 
@@ -119,8 +117,8 @@ const signInReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // ================================ Page =============================
 // =================================================================== */
-const SignInPage: React.FC<CustomRouterProps> = ({...props}) => {
-  const firebase = props.firebase;
+const SignInPage = () => {
+  const firebase = useFirebase();
   const classes = useCustomStyles();
   const {push} = useHistory();
 
@@ -359,4 +357,4 @@ export const AlertMaintenanceMode = () => {
   );
 };
 
-export default withRouter(withFirebase(SignInPage));
+export default SignInPage;

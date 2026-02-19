@@ -28,7 +28,7 @@ import FallbackLoading from "../Shared/fallbackLoading";
 import * as ROUTES from "../../constants/routes";
 
 import CustomDialog from "../Shared/customDialog";
-import publicProfile from "../User/publicProfile";
+import PublicProfile from "../User/publicProfile";
 import NoAuthPage from "../Session/noAuth";
 import CustomTheme from "./customTheme.class";
 // Für nachträglicher Load --> Code Splitting
@@ -38,8 +38,9 @@ import Fab from "@mui/material/Fab";
 import {FeedbackIcon} from "../Shared/icons";
 import * as Sentry from "@sentry/react";
 
-import {withAuthentication} from "../Session/authUserContext";
-import {SessionStorageHandler} from "../Firebase/Db/sessionStorageHandler.class";
+import {AuthorizationGuard} from "../Session/authUserContext";
+import {EmailVerificationGuard} from "../Session/emailVerificationGuard";
+import Role from "../../constants/roles";
 import {FEEDBACK as TEXT_FEEDBACK} from "../../constants/text";
 import {CssBaseline, useMediaQuery} from "@mui/material";
 import useCustomStyles from "../../constants/styles";
@@ -50,7 +51,7 @@ const UnitConversion = lazy(() => import("../Unit/unitConversion"));
 const Products = lazy(() => import("../Product/products"));
 const Materials = lazy(() => import("../Material/materials"));
 const Departments = lazy(() => import("../Department/departments"));
-const requestOverview = lazy(() => import("../Request/requestOverview"));
+const RequestOverview = lazy(() => import("../Request/requestOverview"));
 const HomePage = lazy(() => import("../Home/home"));
 const UserProfile = lazy(() => import("../User/userProfile"));
 const PrivacyPolicyPage = lazy(() => import("./privacyPolicy"));
@@ -84,6 +85,53 @@ const OverviewCloudFx = lazy(() => import("../Admin/overviewCloudFunctions"));
 const OverviewFeeds = lazy(() => import("../Admin/overviewFeeds"));
 const ActivateSupportUser = lazy(() => import("../Admin/activateSupportUser"));
 const MailConsole = lazy(() => import("../Admin/mailConsole"));
+
+/* ===================================================================
+// ====================== Authorization Conditions ===================
+// =================================================================== */
+const isAuthenticated = (authUser) => !!authUser;
+
+const isAdmin = (authUser) =>
+  !!authUser && !!authUser.roles.includes(Role.admin);
+
+const isAdminOrCommunityLeader = (authUser) =>
+  !!authUser &&
+  (!!authUser.roles.includes(Role.admin) ||
+    !!authUser.roles.includes(Role.communityLeader));
+
+const isCommunityLeader = (authUser) =>
+  !!authUser && !!authUser.roles.includes(Role.communityLeader);
+
+/* ===================================================================
+// ====================== Guarded Route Helpers ======================
+// =================================================================== */
+const GuardedRoute = ({condition, component: Component, ...rest}) => (
+  <Route
+    {...rest}
+    render={(props) => (
+      <AuthorizationGuard condition={condition}>
+        <EmailVerificationGuard>
+          <Component {...props} />
+        </EmailVerificationGuard>
+      </AuthorizationGuard>
+    )}
+  />
+);
+
+const GuardedRouteNoEmailVerification = ({
+  condition,
+  component: Component,
+  ...rest
+}) => (
+  <Route
+    {...rest}
+    render={(props) => (
+      <AuthorizationGuard condition={condition}>
+        <Component {...props} />
+      </AuthorizationGuard>
+    )}
+  />
+);
 
 const App = () => {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
@@ -167,9 +215,6 @@ const App = () => {
                 ROUTES.CREATE_NEW_EVENT,
                 ROUTES.EVENT,
                 ROUTES.EVENTS,
-                // ROUTES.MENUPLAN,
-                // ROUTES.QUANTITY_CALCULATION,
-                // ROUTES.SHOPPINGLIST,
                 ROUTES.UNITS,
                 ROUTES.UNITCONVERSION,
                 ROUTES.PRODUCTS,
@@ -216,6 +261,7 @@ const App = () => {
               component={FeedbackFab}
             />
             <Switch>
+              {/* Public routes */}
               <Route exact path={ROUTES.LANDING} component={LandingPage} />
               <Route path={ROUTES.SIGN_IN} component={SignInPage} />
               <Route path={ROUTES.SIGN_UP} component={SignUpPage} />
@@ -224,118 +270,236 @@ const App = () => {
                 component={PrivacyPolicyPage}
               />
               <Route path={ROUTES.TERM_OF_USE} component={TermOfUsePage} />
-              <Route path={ROUTES.HOME} component={HomePage} />
               <Route path={ROUTES.PASSWORD_RESET} component={PasswordReset} />
-              <Route path={ROUTES.PASSWORD_CHANGE} component={PasswordChange} />
               <Route
                 path={ROUTES.AUTH_SERVICE_HANDLER}
                 component={AuthServiceHandler}
               />
-              <Route
+              <Route path={ROUTES.NOT_FOUND} component={NotFound} />
+              <Route exact path={ROUTES.NO_AUTH} component={NoAuthPage} />
+
+              {/* Authenticated routes (isAuthenticated + EmailVerification) */}
+              <GuardedRoute
+                path={ROUTES.HOME}
+                condition={isAuthenticated}
+                component={HomePage}
+              />
+              <GuardedRoute
                 path={ROUTES.CREATE_NEW_EVENT}
+                condition={isAuthenticated}
                 component={CreateNewEvent}
               />
-              <Route path={ROUTES.EVENTS} component={Events} />
-              <Route exact path={ROUTES.EVENT_UID} component={Event} />
-              <Route path={ROUTES.RECIPES} component={Recipes} />
-              <Route
+              <GuardedRoute
+                path={ROUTES.EVENTS}
+                condition={isAuthenticated}
+                component={Events}
+              />
+              <GuardedRoute
+                exact
+                path={ROUTES.EVENT_UID}
+                condition={isAuthenticated}
+                component={Event}
+              />
+              <GuardedRoute
+                path={ROUTES.RECIPES}
+                condition={isAuthenticated}
+                component={Recipes}
+              />
+              <GuardedRoute
+                exact
+                path={ROUTES.RECIPE}
+                condition={isAuthenticated}
+                component={Recipe}
+              />
+              <GuardedRoute
+                exact
+                path={ROUTES.RECIPE_UID}
+                condition={isAuthenticated}
+                component={Recipe}
+              />
+              <GuardedRoute
+                exact
+                path={ROUTES.RECIPE_USER_UID}
+                condition={isAuthenticated}
+                component={Recipe}
+              />
+              <GuardedRoute
                 exact
                 path={ROUTES.USER_PUBLIC_PROFILE_UID}
-                component={publicProfile}
+                condition={isAuthenticated}
+                component={PublicProfile}
               />
-              <Route path={ROUTES.UNITS} component={Units} />
-              <Route path={ROUTES.UNITCONVERSION} component={UnitConversion} />
-              <Route path={ROUTES.PRODUCTS} component={Products} />
-              <Route path={ROUTES.MATERIALS} component={Materials} />
-              <Route path={ROUTES.DEPARTMENTS} component={Departments} />
-              <Route exact path={ROUTES.SYSTEM_JOBS} component={Jobs} />
-              <Route
-                path={ROUTES.SYSTEM_OVERVIEW_USERS}
-                component={OverviewUsers}
+              <GuardedRoute
+                path={ROUTES.UNITS}
+                condition={isAuthenticated}
+                component={Units}
               />
-              <Route
-                path={ROUTES.SYSTEM_OVERVIEW_MAILBOX}
-                component={OverviewMailbox}
+              <GuardedRoute
+                path={ROUTES.UNITCONVERSION}
+                condition={isAuthenticated}
+                component={UnitConversion}
               />
-              <Route exact path={ROUTES.SYSTEM} component={System} />
-              <Route
+              <GuardedRoute
                 path={ROUTES.REQUEST_OVERVIEW}
-                component={requestOverview}
+                condition={isAuthenticated}
+                component={RequestOverview}
               />
-              <Route path={ROUTES.DONATE} component={Donate} />
-              <Route
+              <GuardedRoute
                 exact
-                path={ROUTES.SYSTEM_GLOBAL_SETTINGS}
-                component={GlobalSettings}
-              />
-              <Route
-                exact
-                path={ROUTES.SYSTEM_SYSTEM_MESSAGE}
-                component={SystemMessage}
-              />
-              <Route
-                exact
-                path={ROUTES.SYSTEM_OVERVIEW_RECIPES}
-                component={OverviewRecipes}
-              />
-              <Route
-                exact
-                path={ROUTES.SYSTEM_OVERVIEW_EVENTS}
-                component={OverviewEvents}
-              />
-              <Route
-                exact
-                path={ROUTES.SYSTEM_OVERVIEW_CLOUDFX}
-                component={OverviewCloudFx}
-              />
-              <Route
-                exact
-                path={ROUTES.SYSTEM_OVERVIEW_FEEDS}
-                component={OverviewFeeds}
-              />
-              <Route
-                exact
-                path={ROUTES.SYSTEM_WHERE_USED}
-                component={WhereUsed}
-              />
-              <Route
-                exact
-                path={ROUTES.SYSTEM_MERGE_ITEM}
-                component={MergeItems}
-              />
-              <Route
-                exact
-                path={ROUTES.SYSTEM_CONVERT_ITEM}
-                component={ConvertItem}
-              />
-              <Route
-                exact
-                path={ROUTES.SYSTEM_DB_INDICES}
-                component={BuildDbIndices}
-              />
-              <Route
-                exact
-                path={ROUTES.SYSTEM_ACTIVATE_SUPPORT_USER}
-                component={ActivateSupportUser}
-              />
-              <Route
-                exact
-                path={ROUTES.SYSTEM_MAIL_CONSOLE}
-                component={MailConsole}
-              />
-              <Route exact path={ROUTES.USER_PROFILE} component={UserProfile} />
-              <Route
-                exact
-                path={ROUTES.USER_PROFILE_UID}
+                path={ROUTES.USER_PROFILE}
+                condition={isAuthenticated}
                 component={UserProfile}
               />
-              <Route path={ROUTES.TEMP} component={Temp} />
-              <Route path={ROUTES.SCHEMA} component={Schema} />
-              <Route path={ROUTES.NOT_FOUND} component={NotFound} />
-              <Route exact path={ROUTES.RECIPE} component={Recipe} />
-              <Route exact path={ROUTES.RECIPE_UID} component={Recipe} />
-              <Route exact path={ROUTES.RECIPE_USER_UID} component={Recipe} />
-              <Route exact path={ROUTES.NO_AUTH} component={NoAuthPage} />
+              <GuardedRoute
+                exact
+                path={ROUTES.USER_PROFILE_UID}
+                condition={isAuthenticated}
+                component={UserProfile}
+              />
+              <GuardedRoute
+                path={ROUTES.DONATE}
+                condition={isAuthenticated}
+                component={Donate}
+              />
+
+              {/* Password change: EmailVerification guard but no Authorization redirect */}
+              <Route
+                path={ROUTES.PASSWORD_CHANGE}
+                render={(props) => (
+                  <EmailVerificationGuard>
+                    <PasswordChange {...props} />
+                  </EmailVerificationGuard>
+                )}
+              />
+
+              {/* Admin or CommunityLeader routes */}
+              <GuardedRoute
+                path={ROUTES.PRODUCTS}
+                condition={isAdminOrCommunityLeader}
+                component={Products}
+              />
+              <GuardedRoute
+                path={ROUTES.MATERIALS}
+                condition={isAdminOrCommunityLeader}
+                component={Materials}
+              />
+              <GuardedRoute
+                path={ROUTES.DEPARTMENTS}
+                condition={isAdminOrCommunityLeader}
+                component={Departments}
+              />
+              <GuardedRoute
+                exact
+                path={ROUTES.SYSTEM}
+                condition={isAdminOrCommunityLeader}
+                component={System}
+              />
+              <GuardedRoute
+                exact
+                path={ROUTES.SYSTEM_WHERE_USED}
+                condition={isAdminOrCommunityLeader}
+                component={WhereUsed}
+              />
+              <GuardedRoute
+                exact
+                path={ROUTES.SYSTEM_MERGE_ITEM}
+                condition={isAdminOrCommunityLeader}
+                component={MergeItems}
+              />
+              <GuardedRoute
+                exact
+                path={ROUTES.SYSTEM_CONVERT_ITEM}
+                condition={isAdminOrCommunityLeader}
+                component={ConvertItem}
+              />
+              <GuardedRoute
+                exact
+                path={ROUTES.SYSTEM_SYSTEM_MESSAGE}
+                condition={isAdminOrCommunityLeader}
+                component={SystemMessage}
+              />
+              <GuardedRoute
+                exact
+                path={ROUTES.SYSTEM_OVERVIEW_RECIPES}
+                condition={isAdminOrCommunityLeader}
+                component={OverviewRecipes}
+              />
+              <GuardedRoute
+                exact
+                path={ROUTES.SYSTEM_OVERVIEW_EVENTS}
+                condition={isAdminOrCommunityLeader}
+                component={OverviewEvents}
+              />
+              <GuardedRoute
+                exact
+                path={ROUTES.SYSTEM_DB_INDICES}
+                condition={isAdminOrCommunityLeader}
+                component={BuildDbIndices}
+              />
+              <GuardedRoute
+                exact
+                path={ROUTES.SYSTEM_ACTIVATE_SUPPORT_USER}
+                condition={isAdminOrCommunityLeader}
+                component={ActivateSupportUser}
+              />
+              <GuardedRoute
+                exact
+                path={ROUTES.SYSTEM_MAIL_CONSOLE}
+                condition={isAdminOrCommunityLeader}
+                component={MailConsole}
+              />
+
+              {/* Admin-only routes */}
+              <GuardedRoute
+                exact
+                path={ROUTES.SYSTEM_GLOBAL_SETTINGS}
+                condition={isAdmin}
+                component={GlobalSettings}
+              />
+              <GuardedRoute
+                exact
+                path={ROUTES.SYSTEM_JOBS}
+                condition={isAdmin}
+                component={Jobs}
+              />
+              <GuardedRoute
+                path={ROUTES.SYSTEM_OVERVIEW_USERS}
+                condition={isAdmin}
+                component={OverviewUsers}
+              />
+              <GuardedRoute
+                exact
+                path={ROUTES.SYSTEM_OVERVIEW_MAILBOX}
+                condition={isAdmin}
+                component={OverviewMailbox}
+              />
+              <GuardedRoute
+                exact
+                path={ROUTES.SYSTEM_OVERVIEW_CLOUDFX}
+                condition={isAdmin}
+                component={OverviewCloudFx}
+              />
+
+              {/* CommunityLeader routes */}
+              <GuardedRoute
+                exact
+                path={ROUTES.SYSTEM_OVERVIEW_FEEDS}
+                condition={isCommunityLeader}
+                component={OverviewFeeds}
+              />
+
+              {/* Temp/Schema: admin only */}
+              <GuardedRoute
+                path={ROUTES.TEMP}
+                condition={isAdmin}
+                component={Temp}
+              />
+              <GuardedRoute
+                path={ROUTES.SCHEMA}
+                condition={isAdmin}
+                component={Schema}
+              />
+
               <Redirect to="404" />
             </Switch>
           </Suspense>
@@ -382,4 +546,4 @@ const FeedbackFab = () => {
   );
 };
 
-export default withAuthentication(App);
+export default App;

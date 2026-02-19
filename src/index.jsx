@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/react";
 
 import App from "../src/components/App/App";
 import {FirebaseContext} from "./components/Firebase/firebaseContext";
+import {AuthUserProvider} from "./components/Session/authUserContext";
 import packageJson from "../package.json";
 
 import "typeface-roboto";
@@ -43,11 +44,13 @@ root.render(
     <Sentry.ErrorBoundary fallback={<ErrorInfo />}>
       <LocalizationProvider dateAdapter={AdapterDateFns}>
         <FirebaseContext.Provider value={new Firebase()}>
-          <CustomDialogContextProvider>
-            <NavigationContextProvider>
-              <App />
-            </NavigationContextProvider>
-          </CustomDialogContextProvider>
+          <AuthUserProvider>
+            <CustomDialogContextProvider>
+              <NavigationContextProvider>
+                <App />
+              </NavigationContextProvider>
+            </CustomDialogContextProvider>
+          </AuthUserProvider>
         </FirebaseContext.Provider>
       </LocalizationProvider>
     </Sentry.ErrorBoundary>

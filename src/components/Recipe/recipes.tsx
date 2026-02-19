@@ -1,7 +1,6 @@
 import React, {SyntheticEvent} from "react";
-import {compose} from "react-recompose";
 
-import {useHistory} from "react-router";
+import {useHistory, useLocation} from "react-router";
 
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Unstable_Grid2";
@@ -74,16 +73,14 @@ import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
 
 import {Lock as LockIcon, Category as CategoryIcon} from "@mui/icons-material";
 
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import {Allergen, Diet} from "../Product/product.class";
 import {
   STORAGE_OBJECT_PROPERTY,
   SessionStorageHandler,
 } from "../Firebase/Db/sessionStorageHandler.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {useAuthUser} from "../Session/authUserContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../Shared/global.interface";
 import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 
 /* ===================================================================
@@ -179,34 +176,28 @@ interface LocationState {
 // =============================== Page ==============================
 // =================================================================== */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const RecipesPage = (props: any) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <RecipesBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const RecipesBase: React.FC<
-  CustomRouterProps<undefined, LocationState> & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const RecipesPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
+  const location = useLocation();
   const {push} = useHistory();
 
   const [state, dispatch] = React.useReducer(recipesReducer, inititialState);
   // Prüfen ob allenfalls eine Snackbar angezeigt werden soll
   // --> aus dem Prozess Rezept löschen
   if (
-    props.location.state &&
-    props.location.state.snackbar &&
+    location.state &&
+    location.state.snackbar &&
     !state.snackbar.open
   ) {
     dispatch({
       type: ReducerActions.SET_SNACKBAR,
-      payload: props.location.state.snackbar!,
+      payload: location.state.snackbar!,
     });
   }
 
@@ -287,7 +278,7 @@ const RecipesBase: React.FC<
     if (reason === "clickaway") {
       return;
     }
-    delete props.location.state?.snackbar;
+    delete location.state?.snackbar;
     dispatch({
       type: ReducerActions.CLOSE_SNACKBAR,
       payload: {},
@@ -1017,10 +1008,4 @@ export const RecipeSearch = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(RecipesPage);
+export default RecipesPage;

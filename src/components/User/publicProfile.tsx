@@ -1,6 +1,5 @@
 import React from "react";
-import {useHistory} from "react-router";
-import {compose} from "react-recompose";
+import {useHistory, useLocation, useRouteMatch} from "react-router";
 
 import {
   Container,
@@ -43,13 +42,11 @@ import {
 import Action from "../../constants/actions";
 import * as ROUTES from "../../constants/routes";
 import {ImageRepository} from "../../constants/imageRepository";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import UserPublicProfile from "./user.public.profile.class";
 import {FormListItem} from "../Shared/formListItem";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {useAuthUser} from "../Session/authUserContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../Shared/global.interface";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
@@ -111,21 +108,16 @@ interface LocationState {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const PublicProfilePage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <PublicProfileBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const PublicProfileBase: React.FC<
-  CustomRouterProps<MatchParams, LocationState> & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const PublicProfilePage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
+  const location = useLocation();
+  const match = useRouteMatch();
   const {push} = useHistory();
 
   const [state, dispatch] = React.useReducer(
@@ -136,22 +128,22 @@ const PublicProfileBase: React.FC<
   let urlUid = "";
 
   if (!urlUid) {
-    urlUid = props.match.params.id;
+    urlUid = match.params.id;
   }
   /* ------------------------------------------
   // Daten aus DB lesen
   // ------------------------------------------ */
   React.useEffect(() => {
     if (
-      props.location.state &&
-      props.location.state.displayName &&
-      props.location.state.pictureSrc
+      location.state &&
+      location.state.displayName &&
+      location.state.pictureSrc
     ) {
       dispatch({
         type: ReducerActions.FETCH_PUBLIC_PROFILE,
         payload: {
-          displayName: props.location.state.displayName,
-          pictureSrc: props.location.state.pictureSrc,
+          displayName: location.state.displayName,
+          pictureSrc: location.state.pictureSrc,
         },
       });
     }
@@ -328,10 +320,4 @@ export const AchievedRewardsList = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(PublicProfilePage);
+export default PublicProfilePage;

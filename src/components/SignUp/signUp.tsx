@@ -1,6 +1,5 @@
 import React from "react";
-import {useHistory, withRouter} from "react-router";
-import {compose} from "react-recompose";
+import {useHistory} from "react-router";
 
 import {
   Button,
@@ -30,7 +29,7 @@ import PageTitle from "../Shared/pageTitle";
 import PasswordStrengthMeter from "../Shared/passwordStrengthMeter";
 import AlertMessage from "../Shared/AlertMessage";
 
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import {
   SIGN_UP as ROUTE_SIGN_UP,
   HOME as ROUTE_HOME,
@@ -58,7 +57,7 @@ import User from "../User/user.class";
 import {PrivacyPolicyText} from "../App/privacyPolicy";
 import {TermOfUseText} from "../App/termOfUse";
 import Firebase from "../Firebase/firebase.class";
-import {AuthUserContext} from "../Session/authUserContext";
+import {useAuthUser} from "../Session/authUserContext";
 import Utils from "../Shared/utils.class";
 import {
   DialogType,
@@ -134,23 +133,8 @@ const signUpReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const SignUpPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <SignUpBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
-// ===================================================================
-// =============================== Page ==============================
-// ===================================================================
-interface CustomRouterProps {
-  history: History;
-  firebase: Firebase;
-}
-
-const SignUpBase: React.FC<CustomRouterProps> = (props) => {
-  const firebase = props.firebase;
+const SignUpPage = () => {
+  const firebase = useFirebase();
 
   const classes = useCustomStyles();
   const [state, dispatch] = React.useReducer(signUpReducer, inititialState);
@@ -529,4 +513,4 @@ export const DialogPrivacyPolicy = ({
     </Dialog>
   );
 };
-export default compose(withRouter, withFirebase)(SignUpPage);
+export default SignUpPage;

@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import {
   Container,
@@ -30,8 +29,7 @@ import {ImageRepository} from "../../constants/imageRepository";
 import {useHistory} from "react-router";
 import {FirebaseError} from "@firebase/util";
 import Utils from "../Shared/utils.class";
-import {CustomRouterProps} from "../Shared/global.interface";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 
 // ===================================================================
 // ======================== globale Funktionen =======================
@@ -80,8 +78,8 @@ const passwordResetReducer = (state: State, action: DispatchAction): State => {
 // ===================================================================
 // =============================== Page ==============================
 // ===================================================================
-const PasswordResetPage: React.FC<CustomRouterProps> = ({...props}) => {
-  const firebase = props.firebase;
+const PasswordResetPage = () => {
+  const firebase = useFirebase();
   const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(
@@ -227,4 +225,4 @@ export const ForgotPasswordLink = () => {
   );
 };
 
-export default compose(withFirebase)(PasswordResetPage);
+export default PasswordResetPage;

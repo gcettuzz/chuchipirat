@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import {
   MAILBOX as TEXT_MAILBOX,
@@ -61,10 +60,8 @@ import SearchPanel from "../Shared/searchPanel";
 
 import {FormListItem} from "../Shared/formListItem";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import {
   DataGrid,
   GridColDef,
@@ -187,13 +184,7 @@ const mailboxReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const OverviewMailboxPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <OverviewMailboxBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
@@ -201,10 +192,9 @@ interface MailProtocolDialogValues {
   selectedMailProtocoll: null | MailProtocol;
   open: boolean;
 }
-const OverviewMailboxBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const OverviewMailboxPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
   const theme = useTheme();
 
@@ -721,11 +711,4 @@ const DeleteMailsPanel = ({isDeleting, onDelete}: DeleteMailsPanelProps) => {
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser && !!authUser.roles.includes(Role.admin);
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(OverviewMailboxPage);
+export default OverviewMailboxPage;

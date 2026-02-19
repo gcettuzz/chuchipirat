@@ -1,6 +1,5 @@
 import React, {Suspense, SyntheticEvent, lazy} from "react";
-import {useHistory} from "react-router";
-import {compose} from "react-recompose";
+import {useHistory, useLocation} from "react-router";
 
 import Action from "../../constants/actions";
 import {Container, Divider, SnackbarCloseReason} from "@mui/material";
@@ -25,10 +24,8 @@ import {
   PUBLIC_RECIPE as TEXT_PUBLIC_RECIPE,
 } from "../../constants/text";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 
 // Lazy Loading
 const RecipeEdit = lazy(() => import("./recipe.edit"));
@@ -195,20 +192,14 @@ interface LocationState {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const RecipePage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <RecipeBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const RecipeBase: React.FC<
-  CustomRouterProps<undefined, LocationState> & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const RecipePage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
+  const location = useLocation();
   const {push} = useHistory();
   const {customDialog} = useCustomDialog();
 
@@ -221,15 +212,15 @@ const RecipeBase: React.FC<
   const [editMode, setEditMode] = React.useState(false);
   const [state, dispatch] = React.useReducer(recipeReducer, inititialState);
 
-  if (props.location.state) {
-    action = props.location?.state?.action;
+  if (location.state) {
+    action = location?.state?.action;
     if (
       Object.prototype.hasOwnProperty.call(
-        props.location.state,
+        location.state,
         "scaledPortions"
       )
     ) {
-      scaledPortions = parseInt(props.location.state!.scaledPortions!);
+      scaledPortions = parseInt(location.state!.scaledPortions!);
     } else {
       scaledPortions = 0;
     }
@@ -241,7 +232,7 @@ const RecipeBase: React.FC<
   // ------------------------------------------ */
   React.useEffect(() => {
     if (!recipeUid) {
-      const urlParameter: string[] = props.location.pathname.split("/");
+      const urlParameter: string[] = location.pathname.split("/");
       if (urlParameter.length === 2) {
         // Beispiel: /recipe/
         action = Action.NEW;
@@ -271,13 +262,13 @@ const RecipeBase: React.FC<
       dispatch({
         type: ReducerActions.SET_PROPS,
         payload: {
-          uid: props.location.state?.recipeShort?.uid,
-          name: props.location.state?.recipeShort?.name,
-          pictureSrc: props.location.state?.recipeShort?.pictureSrc,
-          recipe: props.location.state?.recipe,
+          uid: location.state?.recipeShort?.uid,
+          name: location.state?.recipeShort?.name,
+          pictureSrc: location.state?.recipeShort?.pictureSrc,
+          recipe: location.state?.recipe,
         },
       });
-      if (!props.location.state?.recipe) {
+      if (!location.state?.recipe) {
         //TODO: Wenn das ganze Rezept übergeben wird, muss nicht nachgelesen werden.
         dispatch({type: ReducerActions.RECIPE_FETCH_INIT, payload: {}});
         // Rezept lesen (es können auch fremde private Rezepte gelesen werden -
@@ -431,10 +422,4 @@ export const RecipeDivider = ({style}: RecipeDividerProps) => {
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(RecipePage);
+export default RecipePage;

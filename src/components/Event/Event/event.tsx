@@ -1,7 +1,6 @@
 import React, {SyntheticEvent} from "react";
-import {compose} from "react-recompose";
 
-import {useHistory} from "react-router";
+import {useHistory, useLocation} from "react-router";
 import _ from "lodash";
 
 import {
@@ -89,13 +88,8 @@ import {
 } from "../../Shared/customDialogContext";
 import Action from "../../../constants/actions";
 import {ValueObject} from "../../Firebase/Db/firebase.db.super.class";
-import {withFirebase} from "../../Firebase/firebaseContext";
-import {
-  AuthUserContext,
-  withAuthorization,
-} from "../../Session/authUserContext";
-import {CustomRouterProps} from "../../Shared/global.interface";
-import withEmailVerification from "../../Session/withEmailVerification";
+import {useFirebase} from "../../Firebase/firebaseContext";
+import {useAuthUser} from "../../Session/authUserContext";
 import AlertMessage from "../../Shared/AlertMessage";
 import Stats, {StatsField} from "../../Shared/stats.class";
 import {logEvent} from "firebase/analytics";
@@ -744,21 +738,15 @@ interface LocationState {
 // =============================== Page ==============================
 // =================================================================== */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const EventPage = (props: any) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <EventBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const EventBase: React.FC<
-  CustomRouterProps<undefined, LocationState> & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const EventPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const theme = useTheme();
+  const location = useLocation();
   const {customDialog} = useCustomDialog();
   const {push} = useHistory();
 
@@ -774,8 +762,8 @@ const EventBase: React.FC<
   // ------------------------------------------ */
   if (!eventUid) {
     eventUid = deriveEventUid({
-      event: props.location.state?.event,
-      pathname: props.location.pathname,
+      event: location.state?.event,
+      pathname: location.pathname,
     });
   }
 
@@ -1884,10 +1872,4 @@ const EventBase: React.FC<
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase,
-)(EventPage);
+export default EventPage;

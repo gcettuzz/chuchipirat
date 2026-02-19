@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import {
   DEPARTMENTS as TEXT_DEPARTMENTS,
@@ -17,7 +16,7 @@ import {
   SAVE_SUCCESS as TEXT_SAVE_SUCCESS,
 } from "../../constants/text";
 
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import CustomSnackbar, {
   SNACKBAR_INITIAL_STATE_VALUES,
   Snackbar,
@@ -52,9 +51,7 @@ import EnhancedTable, {
 } from "../Shared/enhancedTable";
 import Utils from "../Shared/utils.class";
 import DialogDepartment from "./dialogDepartment";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 
 /* ===================================================================
@@ -201,20 +198,13 @@ const createPositionList = (arrayLength: number) => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const DepartmentsPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <DepartmentsBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const DepartmentsBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const DepartmentsPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
 
   const [editMode, setEditMode] = React.useState(false);
@@ -525,13 +515,4 @@ const DepartmentTable = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser &&
-  (!!authUser.roles.includes(Role.admin) ||
-    !!authUser.roles.includes(Role.communityLeader));
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(DepartmentsPage);
+export default DepartmentsPage;

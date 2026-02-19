@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import {
   MONITOR as TEXT_MONITOR,
@@ -60,10 +59,8 @@ import SearchPanel from "../Shared/searchPanel";
 
 import {FormListItem} from "../Shared/formListItem";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import {
   DataGrid,
   GridColDef,
@@ -192,13 +189,7 @@ const cloudFxReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const OverviewCloudFxPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <OverviewCloudFxBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
@@ -207,10 +198,9 @@ interface OverviewCloudFxBaseProps {
   logEntry: CloudFxLogEntry | null;
   open: boolean;
 }
-const OverviewCloudFxBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const OverviewCloudFxPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
   const theme = useTheme();
 
@@ -798,11 +788,4 @@ const DeleteDocumentTriggerDocumentsPanel = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser && !!authUser.roles.includes(Role.admin);
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(OverviewCloudFxPage);
+export default OverviewCloudFxPage;

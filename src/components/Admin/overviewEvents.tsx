@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 import {pdf} from "@react-pdf/renderer";
 import fileSaver from "file-saver";
 
@@ -36,11 +35,10 @@ import PageTitle from "../Shared/pageTitle";
 
 import Role from "../../constants/roles";
 
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {ChangeRecord, CustomRouterProps} from "../Shared/global.interface";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {ChangeRecord} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
 import EventShort from "../Event/Event/eventShort.class";
 import {EVENT as ROUTE_EVENT} from "../../constants/routes";
 import {
@@ -234,20 +232,13 @@ const eventsReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const OverviewEventsPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <OverviewEventsBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const OverviewEventsBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const OverviewEventsPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const [state, dispatch] = React.useReducer(eventsReducer, inititialState);
   const [dialogQuickView, setDialogQuickView] =
     React.useState<DialogQuickViewState>(DIALOG_QUICK_VIEW_INITIAL_STATE);
@@ -836,13 +827,4 @@ const DialogCreateReceipt = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser &&
-  (!!authUser.roles.includes(Role.admin) ||
-    !!authUser.roles.includes(Role.communityLeader));
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(OverviewEventsPage);
+export default OverviewEventsPage;

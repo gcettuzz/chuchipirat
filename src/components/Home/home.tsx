@@ -1,8 +1,7 @@
 import React, {SyntheticEvent} from "react";
 import {useTheme} from "@mui/material/styles";
-import {compose} from "react-recompose";
 
-import {useHistory} from "react-router";
+import {useHistory, useLocation} from "react-router";
 
 import {
   Card,
@@ -49,7 +48,7 @@ import {ImageRepository} from "../../constants/imageRepository";
 import Event, {EventType} from "../Event/Event/event.class";
 import EventCard, {EventCardLoading} from "../Event/Event/eventCard";
 
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {useAuthUser} from "../Session/authUserContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import Feed, {FeedType} from "../Shared/feed.class";
 import {RecipeCardLoading} from "../Recipe/recipeCard";
@@ -66,9 +65,7 @@ import {
   NavigationObject,
 } from "../Navigation/navigationContext";
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
-import {withFirebase} from "../Firebase/firebaseContext";
-import withEmailVerification from "../Session/withEmailVerification";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useFirebase} from "../Firebase/firebaseContext";
 import Utils from "../Shared/utils.class";
 import SystemMessage from "../Admin/systemMessage.class";
 import {AlertSystemMessage} from "../Admin/systemMessage";
@@ -221,20 +218,10 @@ interface LocationState {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const HomePage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <HomeBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
-/* ===================================================================
-// =============================== Base ==============================
-// =================================================================== */
-const HomeBase: React.FC<
-  CustomRouterProps<undefined, LocationState> & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const HomePage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
+  const location = useLocation<LocationState>();
 
   const classes = useCustomStyles();
   const {push} = useHistory();
@@ -244,13 +231,13 @@ const HomeBase: React.FC<
   // Prüfen ob allenfalls eine Snackbar angezeigt werden soll
   // --> aus dem Prozess Anlass löschen
   if (
-    props.location.state &&
-    props.location.state?.["snackbar"] &&
+    location.state &&
+    location.state?.["snackbar"] &&
     !state.snackbar.open
   ) {
     dispatch({
       type: ReducerActions.SET_SNACKBAR,
-      payload: props.location.state?.["snackbar"],
+      payload: location.state?.["snackbar"],
     });
   }
 
@@ -489,7 +476,7 @@ const HomeBase: React.FC<
     if (reason === "clickaway") {
       return;
     }
-    delete props.location.state?.snackbar;
+    delete location.state?.snackbar;
     dispatch({
       type: ReducerActions.CLOSE_SNACKBAR,
       payload: {},
@@ -975,10 +962,4 @@ const HomeStats = ({stats, isLoadingStats}: HomeStatsProps) => {
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(HomePage);
+export default HomePage;

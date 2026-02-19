@@ -1,5 +1,4 @@
 import React, {memo, useEffect, useRef, useState} from "react"; //   useEffect, //   MutableRefObject, //   useRef, //   memo, //   useState,
-import {compose} from "react-recompose";
 
 // https://stackblitz.com/~/github.com/alexreardon/pragmatic-board?file=src/shared/column.tsx
 // https://atlassian.design/components/pragmatic-drag-and-drop/examples/
@@ -39,12 +38,10 @@ import {
 
 import Role from "../../constants/roles";
 
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 
-import withEmailVerification from "../Session/withEmailVerification";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../Shared/global.interface";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {useAuthUser} from "../Session/authUserContext";
 import PageTitle from "../Shared/pageTitle";
 import useCustomStyles from "../../constants/styles";
 import Grid from "@mui/material/Unstable_Grid2";
@@ -349,21 +346,12 @@ export const blockBoardPanningAttr = "data-block-board-panning" as const;
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const TempPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <TempBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const TempBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
-  authUser,
-  // ...props
-}) => {
-  // const firebase = props.firebase;
+const TempPage = () => {
+  const firebase = useFirebase();
   // const classes = useCustomStyles();
 
   const [data, setData] = useState(initialData);
@@ -1278,11 +1266,4 @@ const CardShadow = ({dragging}: {dragging: DOMRect}) => {
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser && !!authUser.roles.includes(Role.admin);
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(TempPage);
+export default TempPage;

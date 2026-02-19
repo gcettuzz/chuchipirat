@@ -1,7 +1,6 @@
 import React from "react";
 import {useLocation} from "react-router-dom";
 import {useHistory} from "react-router";
-import {withRouter} from "react-router-dom";
 
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
@@ -49,8 +48,8 @@ import DialogRefreshApp from "./dialogRefreshApp";
 import Role from "../../constants/roles";
 
 import {NavigationValuesContext} from "../Navigation/navigationContext";
-import {AuthUserContext} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 
 import Utils from "../Shared/utils.class";
 import {DonateIcon} from "../Shared/icons";
@@ -63,11 +62,6 @@ import Firebase from "../Firebase/firebase.class";
 // ============================= Global =============================
 // ===================================================================
 type Anchor = "top" | "left" | "bottom" | "right";
-
-interface NavigationAuthProps {
-  authUser: AuthUser;
-  firebase: Firebase;
-}
 
 // ===================================================================
 // ========================== Scroll to Top  =========================
@@ -114,18 +108,10 @@ interface NavigationAuthProps {
 // ======================= Navigation Komponente =====================
 // ===================================================================
 const NavigationComponent: React.FC = () => {
-  // const authUser = useAuthUser();
+  const authUser = useAuthUser();
   return (
     <div>
-      <AuthUserContext.Consumer>
-        {(authUser) =>
-          authUser ? (
-            <NavigationAuth authUser={authUser} />
-          ) : (
-            <NavigationNoAuth />
-          )
-        }
-      </AuthUserContext.Consumer>
+      {authUser ? <NavigationAuth /> : <NavigationNoAuth />}
     </div>
   );
 };
@@ -133,11 +119,11 @@ const NavigationComponent: React.FC = () => {
 // ===================================================================
 // ==================== Navigation mit Berechtigung ==================
 // ===================================================================
-const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
+const NavigationAuth: React.FC = () => {
   const location = useLocation();
   const classes = useCustomStyles();
-  const firebase = props.firebase;
-  const authUser = props.authUser;
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
 
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
   const navigationValuesContext = React.useContext(NavigationValuesContext);
@@ -552,7 +538,7 @@ const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
 // ================== Navigation ohne Berechtigung ===================
 // ===================================================================
 // Komponente für Navigation ohne Login//Ohne Berechtigungen
-const NavigationNoAuthBase: React.FC = () => {
+const NavigationNoAuth: React.FC = () => {
   const classes = useCustomStyles();
   const {push} = useHistory();
 
@@ -627,8 +613,5 @@ export const UpdateRibbon = ({onClick}: UpdateRibbonProps) => {
     </div>
   );
 };
-
-const NavigationAuth = withRouter(withFirebase(NavigationAuthBase));
-const NavigationNoAuth = withRouter(withFirebase(NavigationNoAuthBase));
 
 export default NavigationComponent;

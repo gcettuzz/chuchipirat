@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import Product, {
   Allergen,
@@ -8,7 +7,7 @@ import Product, {
   ConvertMaterialToProductCallbackDocument,
 } from "../Product/product.class";
 import Role from "../../constants/roles";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import PageTitle from "../Shared/pageTitle";
 
 import {
@@ -72,9 +71,7 @@ import {
   SessionStorageHandler,
 } from "../Firebase/Db/sessionStorageHandler.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
 import Department from "../Department/department.class";
 import Unit, {UnitDimension} from "../Unit/unit.class";
 import MaterialAutocomplete from "../Material/materialAutocomplete";
@@ -301,20 +298,13 @@ const convertProductToMaterialReducer = (
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const ConvertItemPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <ConvertItemBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const ConvertItemBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const ConvertItemPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
   const theme = useTheme();
 
@@ -964,13 +954,4 @@ PanelConvertMaterialToProductProps) => {
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser &&
-  (!!authUser.roles.includes(Role.admin) ||
-    !!authUser.roles.includes(Role.communityLeader));
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(ConvertItemPage);
+export default ConvertItemPage;

@@ -1,5 +1,4 @@
 import React, {SyntheticEvent} from "react";
-import {compose} from "react-recompose";
 
 import {
   Backdrop,
@@ -49,10 +48,8 @@ import AlertMessage from "../Shared/AlertMessage";
 
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import Role from "../../constants/roles";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import {DialogType, useCustomDialog} from "../Shared/customDialogContext";
 import useCustomStyles from "../../constants/styles";
 
@@ -159,20 +156,13 @@ const globalSettingsReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const GlobalSettingsPage: React.FC<CustomRouterProps> = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <GlobalSettingsBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const GlobalSettingsBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const GlobalSettingsPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
   const {customDialog} = useCustomDialog();
 
@@ -428,12 +418,4 @@ const PanelGlobalSettings = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser && !!authUser.roles.includes(Role.admin);
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-)(GlobalSettingsPage as React.ComponentType<any>);
+export default GlobalSettingsPage;

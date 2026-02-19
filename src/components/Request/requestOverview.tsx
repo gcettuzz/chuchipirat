@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 import {useHistory} from "react-router";
 
 import {
@@ -53,11 +52,9 @@ import {
   NavigationObject,
 } from "../Navigation/navigationContext";
 import Action from "../../constants/actions";
-import withEmailVerification from "../Session/withEmailVerification";
-import {withFirebase} from "../Firebase/firebaseContext";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
+import {useAuthUser} from "../Session/authUserContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../Shared/global.interface";
 import {
   RECIPE_DRAWER_DATA_INITIAL_VALUES,
   RecipeDrawer,
@@ -227,20 +224,13 @@ const requestReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const RequestOverviewPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <RequestOverviewBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const RequestOverviewBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const RequestOverviewPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
   const {push} = useHistory();
 
@@ -720,10 +710,4 @@ export const StatusChips = ({status}: StatusChipsProps) => {
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(RequestOverviewPage);
+export default RequestOverviewPage;

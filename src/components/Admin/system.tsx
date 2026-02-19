@@ -1,6 +1,5 @@
 import React from "react";
 import {useHistory} from "react-router";
-import {compose} from "react-recompose";
 
 import {
   Container,
@@ -85,11 +84,9 @@ import {
 import useCustomStyles from "../../constants/styles";
 
 import PageTitle from "../Shared/pageTitle";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../Shared/global.interface";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -98,19 +95,13 @@ import {CustomRouterProps} from "../Shared/global.interface";
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const SystemPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <SystemBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
-  authUser,
-}) => {
+const SystemPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
   const {push} = useHistory();
 
@@ -417,13 +408,5 @@ const OverviewTile = ({
     </Card>
   );
 };
-const condition = (authUser) =>
-  !!authUser &&
-  (!!authUser.roles?.includes(Role.admin) ||
-    !!authUser.roles?.includes(Role.communityLeader));
 
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(SystemPage);
+export default SystemPage;

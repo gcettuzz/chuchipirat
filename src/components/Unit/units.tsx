@@ -1,5 +1,4 @@
 import React, {SyntheticEvent} from "react";
-import {compose} from "react-recompose";
 
 import {
   Container,
@@ -47,11 +46,9 @@ import AlertMessage from "../Shared/AlertMessage";
 import useCustomStyles from "../../constants/styles";
 
 import Unit, {UnitDimension} from "./unit.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../Shared/global.interface";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -196,21 +193,13 @@ const TABLE_COLUMS: Column[] = [
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const UnitsPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <UnitsBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const UnitsBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
-  authUser,
-  ...props
-}) => {
-  const firebase = props.firebase;
+const UnitsPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(unitsReducer, inititialState);
@@ -492,10 +481,4 @@ const TablePanel = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(UnitsPage);
+export default UnitsPage;

@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import {useHistory} from "react-router";
 import {
@@ -28,20 +27,15 @@ import {
 import Event from "./event.class";
 import useCustomStyles from "../../../constants/styles";
 import AlertMessage from "../../Shared/AlertMessage";
-import {withFirebase} from "../../Firebase/firebaseContext";
+import {useFirebase} from "../../Firebase/firebaseContext";
 import EventCard, {EventCardLoading} from "./eventCard";
 import Action from "../../../constants/actions";
 import {
   EVENT as ROUTES_EVENT,
   CREATE_NEW_EVENT as ROUTES_CREATE_NEW_EVENT,
 } from "../../../constants/routes";
-import withEmailVerification from "../../Session/withEmailVerification";
-import {
-  AuthUserContext,
-  withAuthorization,
-} from "../../Session/authUserContext";
+import {useAuthUser} from "../../Session/authUserContext";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../../Shared/global.interface";
 import {ImageRepository} from "../../../constants/imageRepository";
 /* ===================================================================
 // ============================ Dispatcher ===========================
@@ -87,21 +81,13 @@ const eventsReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const EventsPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <EventsBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const EventsBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
-  authUser,
-  ...props
-}) => {
-  const firebase = props.firebase;
+const EventsPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
   const {push} = useHistory();
   const [state, dispatch] = React.useReducer(eventsReducer, inititialState);
@@ -281,10 +267,4 @@ const EventsGrid = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(EventsPage);
+export default EventsPage;

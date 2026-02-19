@@ -40,31 +40,20 @@ import {
 
 import {ImageRepository} from "../../constants/imageRepository";
 
+import {useHistory} from "react-router";
+
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
 import {HOME as ROUTE_HOME} from "../../constants/routes";
-import {AuthUserContext} from "../Session/authUserContext";
-import {CustomRouterProps} from "../Shared/global.interface";
-import AuthUser from "../Firebase/Authentication/authUser.class";
+import {useAuthUser} from "../Session/authUserContext";
 import useCustomStyles from "../../constants/styles";
 
 /* ===================================================================
-// ================================ Page =============================
+// =============================== Page ==============================
 // =================================================================== */
-const LandingPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <LandingBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
-
-/* ===================================================================
-// ================================ Base =============================
-// =================================================================== */
-export const LandingBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, history}) => {
+const LandingPage = () => {
+  const authUser = useAuthUser();
+  const history = useHistory();
   const classes = useCustomStyles();
 
   React.useEffect(() => {
