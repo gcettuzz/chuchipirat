@@ -16,7 +16,8 @@
     "noImplicitAny": false,
     "strictNullChecks": true,
     "noFallthroughCasesInSwitch": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["vite/client"]
   },
   "include": ["./src/**/*.ts", "../functions/**/*.ts"]
 }

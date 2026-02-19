@@ -3,7 +3,7 @@ export class ImageRepository {
   // Allgemeine Bilder
   // ===================================================================== */
   static getEnviromentRelatedPicture = () => {
-    switch (process.env.REACT_APP_ENVIROMENT) {
+    switch (import.meta.env.VITE_ENVIROMENT) {
       case "PRD":
         return PRODUCTION;
       case "TST":
@@ -18,7 +18,7 @@ export class ImageRepository {
   // Bilder für Landing-Page
   // ===================================================================== */
   static getLandingPageEnviromentRelatedPicture = () => {
-    switch (process.env.REACT_APP_ENVIROMENT) {
+    switch (import.meta.env.VITE_ENVIROMENT) {
       case "PRD":
         return LANDING_PAGE_PICTURES_PRODUCTION;
       case "TST":

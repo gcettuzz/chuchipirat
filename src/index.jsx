@@ -1,6 +1,5 @@
 import React from "react";
 import {createRoot} from "react-dom/client";
-import reportWebVitals from "./reportWebVitals";
 import * as Sentry from "@sentry/react";
 
 import App from "../src/components/App/App";
@@ -19,9 +18,9 @@ import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDateFns} from "@mui/x-date-pickers/AdapterDateFns";
 
 Sentry.init({
-  dsn: process.env.REACT_APP_SENTRY_DSN,
+  dsn: import.meta.env.VITE_SENTRY_DSN,
   enabled: !Utils.isDevEnviroment(),
-  environment: process.env.REACT_APP_ENVIROMENT,
+  environment: import.meta.env.VITE_ENVIROMENT,
   release: packageJson.version,
   integrations: [
     Sentry.browserTracingIntegration(),
@@ -55,7 +54,3 @@ root.render(
   </React.StrictMode>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();

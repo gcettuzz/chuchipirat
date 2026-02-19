@@ -268,7 +268,7 @@ export default class Utils {
    * @returns true/false ob wir in der Produktion sind
    */
   static isProductionEnviroment() {
-    if (!process.env.NODE_ENV || process.env.REACT_APP_ENVIROMENT === "PRD") {
+    if (import.meta.env.VITE_ENVIROMENT === "PRD") {
       return true;
     } else {
       return false;
@@ -280,7 +280,7 @@ export default class Utils {
    * @returns true/false ob wir in der Entwicklung sind
    */
   static isDevEnviroment() {
-    if (!process.env.NODE_ENV || process.env.REACT_APP_ENVIROMENT === "DEV") {
+    if (import.meta.env.VITE_ENVIROMENT === "DEV") {
       return true;
     } else {
       return false;
@@ -292,7 +292,7 @@ export default class Utils {
    * @returns true/false ob wir in der Entwicklung sind
    */
   static isTestEnviroment() {
-    if (!process.env.NODE_ENV || process.env.REACT_APP_ENVIROMENT === "TST") {
+    if (import.meta.env.VITE_ENVIROMENT === "TST") {
       return true;
     } else {
       return false;
@@ -476,7 +476,7 @@ export default class Utils {
    * @returns `true` if the browser is running on iOS (they are all Safari).
    */
   static isSafari = once(function isSafari(): boolean {
-    if (process.env.NODE_ENV === "test") {
+    if (import.meta.env.MODE === "test") {
       return false;
     }
 
