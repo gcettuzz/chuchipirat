@@ -297,7 +297,7 @@ export const CardRibbon = ({cssProperty, icon, tooltip}: CardRibbonProps) => {
           {icon}
         </Tooltip>
       ) : (
-        {icon}
+        icon
       )}
     </div>
   );

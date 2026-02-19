@@ -1,5 +1,5 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import {createRoot} from "react-dom/client";
 import reportWebVitals from "./reportWebVitals";
 import * as Sentry from "@sentry/react";
 
@@ -38,7 +38,8 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
 });
 
-ReactDOM.render(
+const root = createRoot(document.getElementById("root"));
+root.render(
   <React.StrictMode>
     <Sentry.ErrorBoundary fallback={<ErrorInfo />}>
       <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -51,8 +52,7 @@ ReactDOM.render(
         </FirebaseContext.Provider>
       </LocalizationProvider>
     </Sentry.ErrorBoundary>
-  </React.StrictMode>,
-  document.getElementById("root")
+  </React.StrictMode>
 );
 
 // If you want to start measuring performance in your app, pass a function

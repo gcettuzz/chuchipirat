@@ -1013,6 +1013,7 @@ const EventMaterialListPage = ({
       />
       {state.selectedListItem && contextMenuSelectedItem.materialUid && (
         <DialogTraceItem
+          itemType={TEXT_MATERIAL}
           dialogOpen={traceItemDialogValues.open}
           trace={
             materialList.lists[state.selectedListItem!]!.items.find(

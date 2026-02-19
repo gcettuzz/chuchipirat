@@ -582,6 +582,7 @@ const EventShoppingListPage = ({
       />
       {state.selectedListItem && contextMenuSelectedItem.productUid && (
         <DialogTraceItem
+          itemType={TEXT_ITEM}
           dialogOpen={traceItemDialogValues.open}
           trace={
             shoppingListCollection.lists[state.selectedListItem!].trace[

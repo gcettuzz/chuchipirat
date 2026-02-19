@@ -264,6 +264,7 @@ export const PositionContextMenu = ({
 // ================== Dialog Artikel Nachverfolgung ==================
 // =================================================================== */
 interface DialogTraceItem {
+  itemType: string;
   dialogOpen: boolean;
   trace: ProductTrace[];
   sortedMenues: MenueCoordinates[];
@@ -272,6 +273,7 @@ interface DialogTraceItem {
   onShowRecipe: (menuUid: Menue["uid"], recipeUid: Recipe["uid"]) => void;
 }
 export const DialogTraceItem = ({
+  itemType,
   dialogOpen,
   trace,
   sortedMenues,
@@ -296,7 +298,7 @@ export const DialogTraceItem = ({
   console.log("trace", trace);
   return (
     <Dialog open={dialogOpen} maxWidth="xs" fullWidth style={{zIndex: 500}}>
-      <DialogTitle>{TEXT_WHERE_DOES_THIS_ITEM_COME_FROM}</DialogTitle>
+      <DialogTitle>{TEXT_WHERE_DOES_THIS_ITEM_COME_FROM(itemType)}</DialogTitle>
       <DialogContent>
         <Grid container spacing={2}>
           {hasBeenManualyEdited && (
