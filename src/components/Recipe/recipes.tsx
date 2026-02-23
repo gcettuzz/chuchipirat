@@ -1,6 +1,6 @@
 import React, {SyntheticEvent} from "react";
 
-import {useHistory, useLocation} from "react-router";
+import {useNavigate, useLocation} from "react-router";
 
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Unstable_Grid2";
@@ -185,7 +185,7 @@ const RecipesPage = () => {
   const authUser = useAuthUser();
   const classes = useCustomStyles();
   const location = useLocation();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const [state, dispatch] = React.useReducer(recipesReducer, inititialState);
   // Prüfen ob allenfalls eine Snackbar angezeigt werden soll
@@ -236,9 +236,8 @@ const RecipesPage = () => {
  // Neues Rezept anlegen
  // ------------------------------------------ */
   const onNewClick = () => {
-    push({
-      pathname: ROUTE_RECIPE,
-      state: {action: Action.NEW},
+    navigate(ROUTE_RECIPE, {
+      state: {action: Action.NEW}
     });
   };
   /* ------------------------------------------
@@ -249,22 +248,20 @@ const RecipesPage = () => {
       return;
     }
     if (recipe.type === RecipeType.private) {
-      push({
-        pathname: `${ROUTE_RECIPE}/${authUser.uid}/${recipe.uid}`,
+      navigate(`${ROUTE_RECIPE}/${authUser.uid}/${recipe.uid}`, {
         state: {
           action: Action.VIEW,
           recipeShort: recipe,
           recipeType: recipe.type,
-        },
+        }
       });
     } else if (recipe.type === RecipeType.public) {
-      push({
-        pathname: `${ROUTE_RECIPE}/${recipe.uid}`,
+      navigate(`${ROUTE_RECIPE}/${recipe.uid}`, {
         state: {
           action: Action.VIEW,
           recipeShort: recipe,
           recipeType: recipe.type,
-        },
+        }
       });
     }
   };

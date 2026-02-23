@@ -1,5 +1,5 @@
 import React from "react";
-import {useHistory, useLocation, useRouteMatch} from "react-router";
+import {useNavigate, useLocation, useParams} from "react-router";
 
 import {
   Container,
@@ -117,19 +117,15 @@ const PublicProfilePage = () => {
   const authUser = useAuthUser();
   const classes = useCustomStyles();
   const location = useLocation();
-  const match = useRouteMatch();
-  const {push} = useHistory();
+  const {id} = useParams();
+  const navigate = useNavigate();
 
   const [state, dispatch] = React.useReducer(
     publicProfileReducer,
     inititialState
   );
 
-  let urlUid = "";
-
-  if (!urlUid) {
-    urlUid = match.params.id;
-  }
+  const urlUid = id ?? "";
   /* ------------------------------------------
   // Daten aus DB lesen
   // ------------------------------------------ */
@@ -164,9 +160,8 @@ const PublicProfilePage = () => {
   // Zu eigenem Profil wechseln
   // ------------------------------------------ */
   const onEditClick = () => {
-    push({
-      pathname: `${ROUTES.USER_PROFILE}/${authUser!.uid}`,
-      state: {action: Action.VIEW},
+    navigate(`${ROUTES.USER_PROFILE}/${authUser!.uid}`, {
+      state: {action: Action.VIEW}
     });
   };
   return (

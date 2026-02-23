@@ -23,12 +23,12 @@ import {
 import {Box, Container, IconButton} from "@mui/material";
 import {Instagram as IconInstagram} from "@mui/icons-material";
 import packageJson from "../../../package.json";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import useCustomStyles from "../../constants/styles";
 
 const Footer = () => {
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const onOpenInstagram = () => {
     window.open(DEFAULT_VALUES.INSTAGRAM_URL, "_blank");
@@ -117,7 +117,7 @@ const Footer = () => {
               <br />
               <Link
                 onClick={() => {
-                  push({pathname: ROUTE_TERM_OF_USE});
+                  navigate(ROUTE_TERM_OF_USE);
                 }}
               >
                 {TEXT_TERM_OF_USE}
@@ -125,7 +125,7 @@ const Footer = () => {
               {" | "}
               <Link
                 onClick={() => {
-                  push({pathname: ROUTE_PRIVACY_POLICY});
+                  navigate(ROUTE_PRIVACY_POLICY);
                 }}
               >
                 {TEXT_PRIVACY_POLICY}

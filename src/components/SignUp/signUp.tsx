@@ -1,5 +1,5 @@
 import React from "react";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 
 import {
   Button,
@@ -138,7 +138,7 @@ const SignUpPage = () => {
 
   const classes = useCustomStyles();
   const [state, dispatch] = React.useReducer(signUpReducer, inititialState);
-  const {push} = useHistory();
+  const navigate = useNavigate();
   const {customDialog} = useCustomDialog();
 
   const [smallPrintDialogs, setSmallPrintDialogs] = React.useState({
@@ -208,7 +208,7 @@ const SignUpPage = () => {
             email: state.signUpData.email,
           });
           firebase.sendEmailVerification();
-          push({pathname: ROUTE_HOME});
+          navigate(ROUTE_HOME);
         }
       })
       .catch((error) => {
@@ -456,12 +456,10 @@ const SignUpForm = ({
 // =============================== Link ==============================
 // ===================================================================
 export const SignUpLink = () => {
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const onSignUpClick = () => {
-    push({
-      pathname: ROUTE_SIGN_UP,
-    });
+    navigate(ROUTE_SIGN_UP);
   };
 
   return (

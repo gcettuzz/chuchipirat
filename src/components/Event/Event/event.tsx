@@ -1,6 +1,6 @@
 import React, {SyntheticEvent} from "react";
 
-import {useHistory, useLocation} from "react-router";
+import {useNavigate, useLocation} from "react-router";
 import _ from "lodash";
 
 import {
@@ -748,7 +748,7 @@ const EventPage = () => {
   const theme = useTheme();
   const location = useLocation();
   const {customDialog} = useCustomDialog();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const classes = useCustomStyles();
   let eventUid = "";
@@ -1316,8 +1316,7 @@ const EventPage = () => {
       .then(() => {
         // Kurzer Timeout, damit der Session-Storage nachmag
         setTimeout(function () {
-          push({
-            pathname: ROUTE_HOME,
+          navigate(ROUTE_HOME, {
             state: {
               acion: Action.DELETE,
               object: state.event.uid,

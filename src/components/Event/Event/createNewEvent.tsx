@@ -1,5 +1,5 @@
 import React from "react";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 
 import {
   Container,
@@ -188,7 +188,7 @@ const CreateEventPage = () => {
   const firebase = useFirebase();
   const authUser = useAuthUser();
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const [state, dispatch] = React.useReducer(eventReducer, inititialState);
   const navigationValuesContext = React.useContext(NavigationValuesContext);
@@ -230,9 +230,7 @@ const CreateEventPage = () => {
       });
     }
 
-    push({
-      pathname: `${ROUTE_HOME}`,
-    });
+    navigate(`${ROUTE_HOME}`);
   };
   const goToStepInfo = () => {
     setActiveStep(WizardSteps.info);
@@ -252,8 +250,7 @@ const CreateEventPage = () => {
       setTimeout(resolve, 1500);
     });
 
-    push({
-      pathname: `${ROUTE_EVENT}/${state.event.uid}`,
+    navigate(`${ROUTE_EVENT}/${state.event.uid}`, {
       state: {event: state.event, groupConfig: state.groupConfig},
     });
   };

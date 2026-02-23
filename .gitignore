@@ -18,11 +18,14 @@
 .DS_Store
 .env
 .env-cmdrc
-.env.development.local
-.env.test.local
-.env.production.local
 .env.development
+.env.development.local
+.env.development.react
+.env.test.local
+.env.test.react
 .env.production
+.env.production.react
+.env.production.local
 .env.test
 .firebaseerc
 .imageRepository.js

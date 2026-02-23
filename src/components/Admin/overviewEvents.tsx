@@ -77,7 +77,7 @@ import {
   deDE,
 } from "@mui/x-data-grid";
 import DialogEventQuickView from "../Event/Event/dialogEventQuickView";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import Action from "../../constants/actions";
 import User from "../User/user.class";
 
@@ -246,7 +246,7 @@ const OverviewEventsPage = () => {
     DIALOG_CREATE_RECEIPT_INITIAL_STATE
   );
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   /* ------------------------------------------
 	// Daten aus DB holen
@@ -296,12 +296,11 @@ const OverviewEventsPage = () => {
     actionEvent: React.MouseEvent<HTMLButtonElement, MouseEvent> | undefined,
     event: EventShort
   ) => {
-    push({
-      pathname: `${ROUTE_EVENT}/${event.uid}`,
+    navigate(`${ROUTE_EVENT}/${event.uid}`, {
       state: {
         action: Action.VIEW,
         event: event,
-      },
+      }
     });
   };
   /* ------------------------------------------

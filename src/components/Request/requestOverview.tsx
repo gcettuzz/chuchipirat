@@ -1,5 +1,5 @@
 import React from "react";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 
 import {
   Container,
@@ -232,7 +232,7 @@ const RequestOverviewPage = () => {
   const firebase = useFirebase();
   const authUser = useAuthUser();
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const navigationValuesContext = React.useContext(NavigationValuesContext);
 
@@ -436,12 +436,11 @@ const RequestOverviewPage = () => {
     // Wenn es der*die Autorin ist, auf die Seite abspringen --> um das Rezept
     // allenfalls zu bearbeiten
     if (requestPopupValues.selectedRequest.author.uid === authUser.uid) {
-      push({
-        pathname: `${ROUTES_RECIPE}/${requestPopupValues.selectedRequest.requestObject.uid}`,
+      navigate(`${ROUTES_RECIPE}/${requestPopupValues.selectedRequest.requestObject.uid}`, {
         state: {
           action: Action.VIEW,
           recipe: recipe,
-        },
+        }
       });
     } else {
       setRecipeDrawerData({

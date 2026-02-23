@@ -1,6 +1,6 @@
 import React from "react";
 
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router";
 
 import {
   Container,
@@ -145,7 +145,7 @@ interface PasswordChangePageProps {
 const PasswordChangePage: React.FC<PasswordChangePageProps> = ({oobCode}) => {
   const firebase = useFirebase();
   const authUser = useAuthUser();
-  const history = useHistory();
+  const navigate = useNavigate();
   const classes = useCustomStyles();
   let resetCode = oobCode as string;
 
@@ -289,7 +289,7 @@ const PasswordChangePage: React.FC<PasswordChangePageProps> = ({oobCode}) => {
 // Authentifzierung abbrechen
 // ------------------------------------------ */
   const onReauthenticattionCancel = () => {
-    history.goBack();
+    navigate(-1);
   };
   /* ------------------------------------------
   // Authentifzierung erledigt

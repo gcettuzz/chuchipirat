@@ -27,7 +27,7 @@ import {
 } from "../../constants/text";
 
 import {USER_PUBLIC_PROFILE as ROUTES_USER_PUBLIC_PROFILE} from "../../constants/routes";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import Action from "../../constants/actions";
 export interface DialogQuickViewActions {
   key: string;
@@ -63,7 +63,7 @@ const DialogRecipeQuickView = ({
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   if (recipeShort.uid && !recipe.uid) {
     Recipe.getRecipe({
@@ -132,12 +132,11 @@ const DialogRecipeQuickView = ({
               <Link
                 style={{cursor: "pointer"}}
                 onClick={() =>
-                  push({
-                    pathname: `${ROUTES_USER_PUBLIC_PROFILE}/${recipe.created.fromUid}`,
+                  navigate(`${ROUTES_USER_PUBLIC_PROFILE}/${recipe.created.fromUid}`, {
                     state: {
                       action: Action.VIEW,
                       displayName: recipe.created.fromDisplayName,
-                    },
+                    }
                   })
                 }
               >

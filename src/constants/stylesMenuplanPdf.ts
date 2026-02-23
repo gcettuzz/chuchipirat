@@ -31,7 +31,7 @@ export default class PdfStyles {
         fontSize: 18,
         textAlign: "center",
         fontFamily: "Roboto",
-        fontStyle: "thin",
+        fontStyle: "normal",
         fontWeight: 100,
         marginBottom: 10,
       },
@@ -41,7 +41,7 @@ export default class PdfStyles {
         marginTop: 10,
         marginBottom: 5,
         fontFamily: "Roboto",
-        fontStyle: "bold",
+        fontStyle: "normal",
         fontWeight: 700,
         textAlign: "left",
         flexDirection: "row",
@@ -103,7 +103,7 @@ export default class PdfStyles {
       body: {
         fontSize: 10,
         fontFamily: "Roboto",
-        fontStyle: "thin",
+        fontStyle: "normal",
         fontWeight: 100,
       },
 
@@ -111,10 +111,10 @@ export default class PdfStyles {
         fontStyle: "italic",
       },
       bold: {
-        fontStyle: "bold",
+        fontStyle: "normal",
       },
       thinItalic: {
-        fontStyle: "thinItalic",
+        fontStyle: "italic",
         fontWeight: 100,
       },
       marginTop6: {

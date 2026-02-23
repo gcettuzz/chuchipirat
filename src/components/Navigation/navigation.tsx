@@ -1,6 +1,5 @@
 import React from "react";
-import {useLocation} from "react-router-dom";
-import {useHistory} from "react-router";
+import {useLocation, useNavigate} from "react-router";
 
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
@@ -236,7 +235,7 @@ const NavigationAuth: React.FC = () => {
     window.open(helpPage, "_blank");
   };
 
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   /* ------------------------------------------
   // Navigation-Panel
@@ -261,8 +260,7 @@ const NavigationAuth: React.FC = () => {
 
     switch (pressedButton[0]) {
       case BUTTONTEXT.ACCOUNT:
-        push({
-          pathname: `${ROUTES.USER_PROFILE}/${authUser.uid}`,
+        navigate(`${ROUTES.USER_PROFILE}/${authUser.uid}`, {
           state: {action: Action.VIEW},
         });
         break;
@@ -275,9 +273,7 @@ const NavigationAuth: React.FC = () => {
           setTimeout(resolve, 1000);
         });
 
-        push({
-          pathname: ROUTES.LANDING,
-        });
+        navigate(ROUTES.LANDING);
         break;
       default:
     }
@@ -312,7 +308,7 @@ const NavigationAuth: React.FC = () => {
       onKeyDown={toggleDrawer(anchor, false)}
     >
       <List>
-        <ListItemButton key="Home" onClick={() => push(ROUTES.HOME)}>
+        <ListItemButton key="Home" onClick={() => navigate(ROUTES.HOME)}>
           <ListItemIcon>
             <HomeIcon />
           </ListItemIcon>
@@ -321,13 +317,13 @@ const NavigationAuth: React.FC = () => {
       </List>
       <Divider />
       <List>
-        <ListItemButton key="Recipes" onClick={() => push(ROUTES.RECIPES)}>
+        <ListItemButton key="Recipes" onClick={() => navigate(ROUTES.RECIPES)}>
           <ListItemIcon>
             <FastfoodIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.RECIPES} />
         </ListItemButton>
-        <ListItemButton key="Events" onClick={() => push(ROUTES.EVENTS)}>
+        <ListItemButton key="Events" onClick={() => navigate(ROUTES.EVENTS)}>
           <ListItemIcon>
             <EventIcon />
           </ListItemIcon>
@@ -338,7 +334,7 @@ const NavigationAuth: React.FC = () => {
       <List>
         <ListItemButton
           key="UnitConversion"
-          onClick={() => push(ROUTES.UNITCONVERSION)}
+          onClick={() => navigate(ROUTES.UNITCONVERSION)}
         >
           <ListItemIcon>
             <SwapHorizIcon />
@@ -350,7 +346,7 @@ const NavigationAuth: React.FC = () => {
       <List>
         <ListItemButton
           key="requestOverview"
-          onClick={() => push(ROUTES.REQUEST_OVERVIEW)}
+          onClick={() => navigate(ROUTES.REQUEST_OVERVIEW)}
         >
           <ListItemIcon>
             <DescriptionIcon />
@@ -360,7 +356,7 @@ const NavigationAuth: React.FC = () => {
       </List>
       <Divider />
       <List>
-        <ListItemButton key="donate" onClick={() => push(ROUTES.DONATE)}>
+        <ListItemButton key="donate" onClick={() => navigate(ROUTES.DONATE)}>
           <ListItemIcon>
             <DonateIcon />
           </ListItemIcon>
@@ -373,7 +369,7 @@ const NavigationAuth: React.FC = () => {
           <List>
             <ListItemButton
               key="Products"
-              onClick={() => push(ROUTES.PRODUCTS)}
+              onClick={() => navigate(ROUTES.PRODUCTS)}
             >
               <ListItemIcon>
                 <LoyaltyIcon />
@@ -382,7 +378,7 @@ const NavigationAuth: React.FC = () => {
             </ListItemButton>
             <ListItemButton
               key="Materials"
-              onClick={() => push(ROUTES.MATERIALS)}
+              onClick={() => navigate(ROUTES.MATERIALS)}
             >
               <ListItemIcon>
                 <BuildIcon />
@@ -395,7 +391,7 @@ const NavigationAuth: React.FC = () => {
               </ListItemIcon>
               <ListItemText
                 primary={TEXT.NAVIGATION_DEPARTMENTS}
-                onClick={() => push(ROUTES.DEPARTMENTS)}
+                onClick={() => navigate(ROUTES.DEPARTMENTS)}
               />
             </ListItemButton>
           </List>
@@ -403,7 +399,7 @@ const NavigationAuth: React.FC = () => {
       )}
       {authUser.roles?.includes(Role.communityLeader) && (
         <React.Fragment>
-          <ListItemButton key="Units" onClick={() => push(ROUTES.UNITS)}>
+          <ListItemButton key="Units" onClick={() => navigate(ROUTES.UNITS)}>
             <ListItemIcon>
               <StraightenIcon />
             </ListItemIcon>
@@ -411,7 +407,7 @@ const NavigationAuth: React.FC = () => {
           </ListItemButton>
           <Divider />
           <List>
-            <ListItemButton key="Admin" onClick={() => push(ROUTES.SYSTEM)}>
+            <ListItemButton key="Admin" onClick={() => navigate(ROUTES.SYSTEM)}>
               <ListItemIcon>
                 <SettingsIcon />
               </ListItemIcon>
@@ -420,7 +416,7 @@ const NavigationAuth: React.FC = () => {
             {authUser.roles?.includes(Role.admin) && (
               <ListItemButton
                 key="Users"
-                onClick={() => push(ROUTES.SYSTEM_OVERVIEW_USERS)}
+                onClick={() => navigate(ROUTES.SYSTEM_OVERVIEW_USERS)}
               >
                 <ListItemIcon>
                   <GroupIcon />
@@ -457,10 +453,7 @@ const NavigationAuth: React.FC = () => {
               variant="h6"
               color="inherit"
               underline="none"
-              onClick={() =>
-                push({
-                  pathname: ROUTES.HOME,
-                })
+              onClick={() => navigate(ROUTES.HOME)
               }
             >
               {TEXT.APP_NAME}
@@ -540,7 +533,7 @@ const NavigationAuth: React.FC = () => {
 // Komponente für Navigation ohne Login//Ohne Berechtigungen
 const NavigationNoAuth: React.FC = () => {
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   return (
     <React.Fragment>
@@ -552,11 +545,7 @@ const NavigationNoAuth: React.FC = () => {
               component="button"
               color="inherit"
               underline="none"
-              onClick={() =>
-                push({
-                  pathname: ROUTES.LANDING,
-                })
-              }
+              onClick={() => navigate(ROUTES.LANDING)}
             >
               {TEXT.APP_NAME}
             </Link>
@@ -569,11 +558,7 @@ const NavigationNoAuth: React.FC = () => {
                 component="button"
                 color="inherit"
                 underline="none"
-                onClick={() =>
-                  push({
-                    pathname: ROUTES.SIGN_IN,
-                  })
-                }
+                onClick={() => navigate(ROUTES.SIGN_IN)}
               >
                 {TEXT.SIGN_IN}
               </Link>

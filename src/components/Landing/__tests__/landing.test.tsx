@@ -1,42 +1,43 @@
 import React from "react";
 import {render, screen} from "@testing-library/react";
 import "@testing-library/jest-dom";
-import {LandingBase} from "../landing";
-import Firebase from "../../Firebase/firebase.class";
-import {createMemoryHistory} from "history";
+import LandingPage from "../landing";
 import userEvent from "@testing-library/user-event";
-import authUser from "../../Firebase/Authentication/__mocks__/authuser.mock";
 import {
   SIGN_IN as ROUTE_SIGN_IN,
   SIGN_UP as ROUTE_SIGN_UP,
   HOME as ROUTE_HOME,
 } from "../../../constants/routes";
 
-const history = createMemoryHistory();
+import {MemoryRouter, useLocation} from "react-router";
+import {AuthUserContext} from "../../Session/authUserContext";
+import {FirebaseContext} from "../../Firebase/firebaseContext";
+import authUser from "../../Firebase/Authentication/__mocks__/authuser.mock";
 
-const location = {
-  pathname: "/",
-  search: "",
-  hash: "",
-  state: {},
+let testLocation: ReturnType<typeof useLocation>;
+const LocationDisplay = () => {
+  testLocation = useLocation();
+  return null;
 };
 
-const mockProps = {
-  match: {
-    params: undefined,
-    isExact: true,
-    path: "",
-    url: "",
-  },
-  history: history,
-  location: location,
-  firebase: {} as Firebase, // Hier können Sie auch ein Mock-Firebase-Objekt bereitstellen, falls erforderlich
+const mockFirebase = {} as any;
+
+const renderLanding = (authUserValue: any = null) => {
+  return render(
+    <MemoryRouter initialEntries={["/"]}>
+      <FirebaseContext.Provider value={mockFirebase}>
+        <AuthUserContext.Provider value={authUserValue}>
+          <LandingPage />
+          <LocationDisplay />
+        </AuthUserContext.Provider>
+      </FirebaseContext.Provider>
+    </MemoryRouter>
+  );
 };
 
 test("Buttons aktiv", () => {
-  render(<LandingBase {...mockProps} authUser={null} />);
+  renderLanding(null);
 
-  // Test status of button here
   let button = screen.getByRole("button", {name: /Anmelden/i});
   expect(button).toBeEnabled();
   button = screen.getByRole("button", {name: /Registrieren/i});
@@ -44,18 +45,18 @@ test("Buttons aktiv", () => {
 });
 
 test("Navigation funktioniert", () => {
-  render(<LandingBase {...mockProps} authUser={null} />);
+  renderLanding(null);
   let button = screen.getByRole("button", {name: /Anmelden/i});
   userEvent.click(button);
 
-  expect(history.location.pathname).toBe(ROUTE_SIGN_IN);
+  expect(testLocation.pathname).toBe(ROUTE_SIGN_IN);
   button = screen.getByRole("button", {name: /Registrieren/i});
 
   userEvent.click(button);
-  expect(history.location.pathname).toBe(ROUTE_SIGN_UP);
+  expect(testLocation.pathname).toBe(ROUTE_SIGN_UP);
 });
 
 test("Authuser != null, Weiterleitung zu Home", () => {
-  render(<LandingBase {...mockProps} authUser={authUser} />);
-  expect(history.location.pathname).toBe(ROUTE_HOME);
+  renderLanding(authUser);
+  expect(testLocation.pathname).toBe(ROUTE_HOME);
 });

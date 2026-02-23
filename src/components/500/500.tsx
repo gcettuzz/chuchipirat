@@ -20,7 +20,7 @@ const ErrorInfo = () => {
           <Box
             component="img"
             src={ImageRepository.getEnviromentRelatedPicture().LANDING_LOGO}
-            width="350em"
+            width="35em"
             alt="Logo"
           />
 

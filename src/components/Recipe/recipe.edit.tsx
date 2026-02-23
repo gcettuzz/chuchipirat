@@ -9,7 +9,7 @@ import React, {
   useMemo,
 } from "react";
 
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import {useTheme} from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 
@@ -752,7 +752,7 @@ const RecipeEdit = ({
   authUser,
 }: RecipeEditProps) => {
   const classes = useCustomStyles();
-  const {replace} = useHistory();
+  const navigate = useNavigate();
 
   const navigationValuesContext = useContext(NavigationValuesContext);
 
@@ -1257,8 +1257,8 @@ const RecipeEdit = ({
             },
           });
           // Umleiten auf neue URL
-          replace({
-            pathname: `${ROUTES.RECIPE}/${result.created.fromUid}/${result.uid}`,
+          navigate(`${ROUTES.RECIPE}/${result.created.fromUid}/${result.uid}`, {
+            replace: true,
             state: {
               action: Action.VIEW,
               recipe: result,

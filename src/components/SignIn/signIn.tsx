@@ -37,7 +37,7 @@ import {ForgotPasswordLink} from "../AuthServiceHandler/passwordReset";
 import {useFirebase} from "../Firebase/firebaseContext";
 import User from "../User/user.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import Utils from "../Shared/utils.class";
 import {Backdrop, CircularProgress} from "@mui/material";
 import GlobalSettings from "../Admin/globalSettings.class";
@@ -120,7 +120,7 @@ const signInReducer = (state: State, action: DispatchAction): State => {
 const SignInPage = () => {
   const firebase = useFirebase();
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const [state, dispatch] = React.useReducer(signInReducer, inititialState);
   /* ------------------------------------------
@@ -188,7 +188,7 @@ const SignInPage = () => {
           setTimeout(resolve, 2000);
         });
 
-        push({pathname: ROUTE_HOME});
+        navigate(ROUTE_HOME);
       })
       .catch((error: FirebaseError) => {
         console.error(error);

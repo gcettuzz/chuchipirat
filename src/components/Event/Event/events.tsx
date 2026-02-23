@@ -1,6 +1,6 @@
 import React from "react";
 
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import {
   Backdrop,
   Button,
@@ -89,7 +89,7 @@ const EventsPage = () => {
   const firebase = useFirebase();
   const authUser = useAuthUser();
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
   const [state, dispatch] = React.useReducer(eventsReducer, inititialState);
   const actualDate = new Date(new Date().setHours(23, 59, 59, 999));
   /* ------------------------------------------
@@ -118,18 +118,15 @@ const EventsPage = () => {
     if (!event) {
       return;
     }
-    push({
-      pathname: `${ROUTES_EVENT}/${event.uid}`,
+    navigate(`${ROUTES_EVENT}/${event.uid}`, {
       state: {
         action: Action.VIEW,
         event: event,
-      },
+      }
     });
   };
   const onEventCreate = () => {
-    push({
-      pathname: `${ROUTES_CREATE_NEW_EVENT}`,
-    });
+    navigate(`${ROUTES_CREATE_NEW_EVENT}`);
   };
   return (
     <React.Fragment>

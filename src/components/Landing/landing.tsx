@@ -40,7 +40,7 @@ import {
 
 import {ImageRepository} from "../../constants/imageRepository";
 
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
@@ -53,15 +53,15 @@ import useCustomStyles from "../../constants/styles";
 // =================================================================== */
 const LandingPage = () => {
   const authUser = useAuthUser();
-  const history = useHistory();
+  const navigate = useNavigate();
   const classes = useCustomStyles();
 
   React.useEffect(() => {
     // Wenn angemeldet direkt weiterleiten
     if (authUser) {
-      history.push({pathname: ROUTE_HOME});
+      navigate(ROUTE_HOME);
     }
-  }, [authUser, history]);
+  }, [authUser, navigate]);
 
   return (
     <React.Fragment>
@@ -78,7 +78,7 @@ const LandingPage = () => {
             variant: "contained",
             color: "primary",
             onClick: () => {
-              history.push({pathname: ROUTE_SIGN_IN});
+              navigate(ROUTE_SIGN_IN);
             },
           },
           {
@@ -89,7 +89,7 @@ const LandingPage = () => {
             variant: "outlined",
             color: "primary",
             onClick: () => {
-              history.push({pathname: ROUTE_SIGN_UP});
+              navigate(ROUTE_SIGN_UP);
             },
           },
         ]}

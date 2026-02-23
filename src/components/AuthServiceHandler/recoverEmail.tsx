@@ -1,6 +1,6 @@
 import React from "react";
 
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 
 import {Container, Link} from "@mui/material";
 import {Alert, AlertTitle} from "@mui/lab";
@@ -39,7 +39,7 @@ const RecoverEmailPage: React.FC<RecoverEmailPageProps> = ({authUser: authUserPr
   const actionCode = oobCode;
   const [error, setError] = React.useState<Error | null>(null);
   const [isRecovered, setIsRecovered] = React.useState(false);
-  const {push} = useHistory();
+  const navigate = useNavigate();
   const classes = useCustomStyles();
 
   /* ------------------------------------------
@@ -112,7 +112,7 @@ const RecoverEmailPage: React.FC<RecoverEmailPageProps> = ({authUser: authUserPr
           <Alert severity="info">
             <AlertTitle>{TEXT_CHANGE_UNDONE}</AlertTitle>
             {TEXT_EMAIL_RECOVERED}
-            <Link onClick={() => push({pathname: ROUTE_SIGN_IN})}>
+            <Link onClick={() => navigate(ROUTE_SIGN_IN)}>
               {TEXT_SIGN_IN}
             </Link>
           </Alert>

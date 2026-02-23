@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from "react";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import {useFirebase} from "../Firebase/firebaseContext";
@@ -57,21 +57,21 @@ export const AuthorizationGuard: React.FC<AuthorizationGuardProps> = ({
 }) => {
   const authUser = useAuthUser();
   const firebase = useFirebase();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const listener = firebase.onAuthUserListener((authUser) => {
       if (authUser === null) {
-        history.push(ROUTE_SIGN_IN);
+        navigate(ROUTE_SIGN_IN);
       } else if (!condition(authUser)) {
-        history.push(ROUTE_NO_AUTH);
+        navigate(ROUTE_NO_AUTH);
       }
     });
 
     return () => {
       listener(); // Aufräumarbeiten beim Komponentenabbau
     };
-  }, [firebase.auth, history]);
+  }, [firebase.auth, navigate]);
 
   return condition(authUser) ? <>{children}</> : null;
 };

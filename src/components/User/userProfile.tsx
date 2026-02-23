@@ -1,6 +1,6 @@
 import React from "react";
 
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 
 import {
   Container,
@@ -212,7 +212,7 @@ const UserProfilePage = () => {
   const firebase = useFirebase();
   const authUser = useAuthUser();
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
   const {customDialog} = useCustomDialog();
 
   const [state, dispatch] = React.useReducer(
@@ -297,9 +297,7 @@ const UserProfilePage = () => {
   // Passwort ändern
   // ------------------------------------------ */
   const onPasswordChangeClick = () => {
-    push({
-      pathname: ROUTE_PASSWORD_CHANGE,
-    });
+    navigate(ROUTE_PASSWORD_CHANGE);
   };
   /* ------------------------------------------
   // Bild in Firebase Storage hochladen

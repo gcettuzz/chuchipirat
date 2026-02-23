@@ -9,7 +9,7 @@ import {
   Box,
 } from "@mui/material";
 import {PRIVACY_POLICY as ROUTE_PRIVACY_POLICY} from "../../constants/routes";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import PageTitle from "../Shared/pageTitle";
 import {
   PRIVACY_POLICY as TEXT_PRIVACY_POLICY,
@@ -74,7 +74,7 @@ const PrivacyPolicyPage = () => {
 // ======================= Datenschutzerklärung ======================
 // =================================================================== */
 export const PrivacyPolicyText = () => {
-  const {push} = useHistory();
+  const navigate = useNavigate();
   return (
     <React.Fragment>
       <Typography>Stand: 1. März 2024</Typography>
@@ -282,7 +282,7 @@ export const PrivacyPolicyText = () => {
           Diese Datenschutzerklärung kann sich aufgrund gesetzlicher Neuerungen
           oder Änderungen der Webapp chuchipirat ändern. Die jeweils aktuelle
           Datenschutzerklärung findest du jederzeit auf&nbsp;
-          <Link onClick={() => push({pathname: ROUTE_PRIVACY_POLICY})}>
+          <Link onClick={() => navigate(ROUTE_PRIVACY_POLICY)}>
             chuchipirat.ch/privacypolicy
           </Link>
           .

@@ -1,5 +1,5 @@
 import React, {Suspense, SyntheticEvent, lazy} from "react";
-import {useHistory, useLocation} from "react-router";
+import {useNavigate, useLocation} from "react-router";
 
 import Action from "../../constants/actions";
 import {Container, Divider, SnackbarCloseReason} from "@mui/material";
@@ -200,7 +200,7 @@ const RecipePage = () => {
   const firebase = useFirebase();
   const authUser = useAuthUser();
   const location = useLocation();
-  const {push} = useHistory();
+  const navigate = useNavigate();
   const {customDialog} = useCustomDialog();
 
   let action: Action;
@@ -315,9 +315,7 @@ const RecipePage = () => {
     // Wenn bei der Rezeptanalage abgrebrochen wird, muss
     // zurück zur Rezeptübersicht
     if (editMode == true && !state.recipe.uid && !ignoreState) {
-      push({
-        pathname: ROUTE_RECIPES,
-      });
+      navigate(ROUTE_RECIPES);
       return;
     }
 

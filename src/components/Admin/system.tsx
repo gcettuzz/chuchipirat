@@ -1,5 +1,5 @@
 import React from "react";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 
 import {
   Container,
@@ -103,7 +103,7 @@ const SystemPage = () => {
   const firebase = useFirebase();
   const authUser = useAuthUser();
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   if (!authUser) {
     return null;
@@ -113,9 +113,7 @@ const SystemPage = () => {
   // Ziel ansteuern
   // ------------------------------------------ */
   const goToDestination = (routeDestination: string) => {
-    push({
-      pathname: routeDestination,
-    });
+    navigate(routeDestination);
   };
 
   return (

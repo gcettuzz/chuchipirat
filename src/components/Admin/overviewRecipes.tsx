@@ -1,6 +1,6 @@
 import React from "react";
 
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 
 import useCustomStyles from "../../constants/styles";
 import {
@@ -238,7 +238,7 @@ const OverviewRecipePage = () => {
   const authUser = useAuthUser();
 
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const [state, dispatch] = React.useReducer(recipesReducer, inititialState);
   const [dialogQuickView, setDialogQuickView] =
@@ -352,20 +352,18 @@ const OverviewRecipePage = () => {
     recipe: Recipe
   ) => {
     if (recipe.type === RecipeType.public) {
-      push({
-        pathname: `${ROUTES.RECIPE}/${recipe.uid}`,
+      navigate(`${ROUTES.RECIPE}/${recipe.uid}`, {
         state: {
           action: Action.VIEW,
           recipe: recipe,
-        },
+        }
       });
     } else if (recipe.type === RecipeType.private) {
-      push({
-        pathname: `${ROUTES.RECIPE}/${recipe.created.fromUid}/${recipe.uid}`,
+      navigate(`${ROUTES.RECIPE}/${recipe.created.fromUid}/${recipe.uid}`, {
         state: {
           action: Action.VIEW,
           recipe: recipe,
-        },
+        }
       });
     }
   };

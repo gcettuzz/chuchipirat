@@ -1,7 +1,6 @@
 import React from "react";
 
-import {useHistory} from "react-router";
-import {useLocation} from "react-router-dom";
+import {useNavigate, useLocation} from "react-router";
 
 import {Alert, AlertTitle} from "@mui/lab";
 import Container from "@mui/material/Container";
@@ -36,7 +35,7 @@ const VerifyEmailPage = () => {
   const [forwardDestination, setForwardDestination] = React.useState(
     ROUTES.SIGN_IN
   );
-  const {push} = useHistory();
+  const navigate = useNavigate();
   const classes = useCustomStyles();
 
   let oobCode = "";
@@ -82,7 +81,7 @@ const VerifyEmailPage = () => {
   React.useEffect(() => {
     if (isVerified) {
       if (timer === 0) {
-        setTimeout(() => push({pathname: forwardDestination}), 500);
+        setTimeout(() => navigate(forwardDestination), 500);
       } else {
         setTimeout(() => setTimer(timer - 1), 1000);
       }

@@ -26,7 +26,7 @@ import {
   HAVE_YOU_FORGOTEN_YOUR_PASSWORD as TEXT_HAVE_YOU_FORGOTEN_YOUR_PASSWORD,
 } from "../../constants/text";
 import {ImageRepository} from "../../constants/imageRepository";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import {FirebaseError} from "@firebase/util";
 import Utils from "../Shared/utils.class";
 import {useFirebase} from "../Firebase/firebaseContext";
@@ -209,12 +209,10 @@ const PasswordResetForm = ({
 // ===================================================================
 
 export const ForgotPasswordLink = () => {
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const goToPasswordReset = () => {
-    push({
-      pathname: ROUTES_PASSWORD_RESET,
-    });
+    navigate(ROUTES_PASSWORD_RESET);
   };
 
   return (

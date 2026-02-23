@@ -1,5 +1,5 @@
 import React from "react";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 
 import {
   Dialog,
@@ -78,7 +78,7 @@ const DialogRequest = ({
   handleRecipeOpen,
 }: DialogRequestProps) => {
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const [comment, setComment] = React.useState("");
   /* ------------------------------------------
@@ -235,13 +235,12 @@ const DialogRequest = ({
               <Link
                 style={{cursor: "pointer"}}
                 onClick={() =>
-                  push({
-                    pathname: `${ROUTES_USER_PUBLIC_PROFILE}/${request.author.uid}`,
+                  navigate(`${ROUTES_USER_PUBLIC_PROFILE}/${request.author.uid}`, {
                     state: {
                       action: Action.VIEW,
                       displayName: request.author?.displayName,
                       pictureSrc: request.author?.pictureSrc,
-                    },
+                    }
                   })
                 }
               >
@@ -260,13 +259,12 @@ const DialogRequest = ({
                 <Link
                   style={{cursor: "pointer"}}
                   onClick={() =>
-                    push({
-                      pathname: `${ROUTES_USER_PUBLIC_PROFILE}/${request?.assignee?.uid}`,
+                    navigate(`${ROUTES_USER_PUBLIC_PROFILE}/${request?.assignee?.uid}`, {
                       state: {
                         action: Action.VIEW,
                         displayName: request.assignee?.displayName,
                         pictureSrc: request.assignee?.pictureSrc,
-                      },
+                      }
                     })
                   }
                 >

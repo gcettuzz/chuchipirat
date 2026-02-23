@@ -1,7 +1,7 @@
 import React, {SyntheticEvent} from "react";
 import {useTheme} from "@mui/material/styles";
 
-import {useHistory, useLocation} from "react-router";
+import {useNavigate, useLocation} from "react-router";
 
 import {
   Card,
@@ -221,10 +221,10 @@ interface LocationState {
 const HomePage = () => {
   const firebase = useFirebase();
   const authUser = useAuthUser();
-  const location = useLocation<LocationState>();
+  const location = useLocation();
 
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const navigationValuesContext = React.useContext(NavigationValuesContext);
   const [state, dispatch] = React.useReducer(homeReducer, inititialState);
@@ -400,18 +400,15 @@ const HomePage = () => {
     if (!event) {
       return;
     }
-    push({
-      pathname: `${ROUTES.EVENT}/${event.uid}`,
+    navigate(`${ROUTES.EVENT}/${event.uid}`, {
       state: {
         action: Action.VIEW,
         event: event,
-      },
+      }
     });
   };
   const onCreateNewEvent = () => {
-    push({
-      pathname: `${ROUTES.CREATE_NEW_EVENT}`,
-    });
+    navigate(`${ROUTES.CREATE_NEW_EVENT}`);
   };
   const onRecipeClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     const recipeUid = event.currentTarget.name.split("_")[1];
@@ -422,8 +419,7 @@ const HomePage = () => {
     if (!recipe) {
       return;
     }
-    push({
-      pathname: `${ROUTES.RECIPE}/${recipeUid}`,
+    navigate(`${ROUTES.RECIPE}/${recipeUid}`, {
       state: {
         action: Action.VIEW,
         recipeShort: {
@@ -432,7 +428,7 @@ const HomePage = () => {
           pictureSrc: recipe.sourceObject.pictureSrc,
         },
         recipeType: RecipeType.public,
-      },
+      }
     });
   };
   const onFeedEntryCllick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -446,23 +442,21 @@ const HomePage = () => {
     switch (feedEntry.type) {
       case FeedType.recipePublished:
         // Rezept anzeigen
-        push({
-          pathname: `${ROUTES.RECIPE}/${feedEntry.sourceObject.uid}`,
+        navigate(`${ROUTES.RECIPE}/${feedEntry.sourceObject.uid}`, {
           state: {
             action: Action.VIEW,
-          },
+          }
         });
         break;
       default:
         // Wenn nichts vorhanden, User anzeigen,
         // der/die den Feed generiert hat
-        push({
-          pathname: `${ROUTES.USER_PUBLIC_PROFILE}/${feedEntry.user.uid}`,
+        navigate(`${ROUTES.USER_PUBLIC_PROFILE}/${feedEntry.user.uid}`, {
           state: {
             action: Action.VIEW,
             displayName: feedEntry.user.displayName,
             pictureSrc: feedEntry.user.pictureSrc,
-          },
+          }
         });
     }
   };

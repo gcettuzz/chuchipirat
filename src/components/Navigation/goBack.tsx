@@ -2,7 +2,7 @@ import React from "react";
 import Fab from "@mui/material/Fab";
 
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import useCustomStyles from "../../constants/styles";
 
 // ===================================================================
@@ -10,12 +10,12 @@ import useCustomStyles from "../../constants/styles";
 // ===================================================================
 const GoBackFab = () => {
   const classes = useCustomStyles();
-  const history = useHistory();
+  const navigate = useNavigate();
   /* ------------------------------------------
   // zurück navigieren
   // ------------------------------------------ */
   const onBack = () => {
-    history.goBack();
+    navigate(-1);
   };
 
   return (

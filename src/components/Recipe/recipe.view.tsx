@@ -11,7 +11,7 @@ import Recipe, {
   RecipeObjectStructure,
   ScalingOptions,
 } from "./recipe.class";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 
 import {
   Button,
@@ -266,7 +266,7 @@ const RecipeView = ({
   authUser,
 }: RecipeViewProps) => {
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
   const {customDialog} = useCustomDialog();
   const navigationValuesContext = React.useContext(NavigationValuesContext);
 
@@ -631,8 +631,7 @@ const RecipeView = ({
     setPublishRecipeDialogOpen(false);
   };
   const onShowRequest = () => {
-    push({
-      pathname: ROUTES.REQUEST_OVERVIEW,
+    navigate(ROUTES.REQUEST_OVERVIEW, {
       state: {
         action: Action.VIEW,
         recipeUid: recipe.uid,
@@ -707,8 +706,7 @@ const RecipeView = ({
         setTimeout(function () {
           //Zurück zur Rezeptübersicht
           if (recipe.type !== RecipeType.variant) {
-            push({
-              pathname: ROUTES.RECIPES,
+            navigate(ROUTES.RECIPES, {
               state: {
                 acion: Action.DELETE,
                 object: recipe.uid,
@@ -1190,7 +1188,7 @@ export const RecipeInfoPanel = ({
   authUser,
 }: RecipeInfoPanelProps) => {
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const [tipsAndTagsSectionOpen, setTipsAndTagsSectionOpen] =
     React.useState(false);
@@ -1226,8 +1224,7 @@ export const RecipeInfoPanel = ({
               <Link
                 style={{cursor: "pointer"}}
                 onClick={() =>
-                  push({
-                    pathname: `${ROUTES.USER_PUBLIC_PROFILE}/${recipe.created.fromUid}`,
+                  navigate(`${ROUTES.USER_PUBLIC_PROFILE}/${recipe.created.fromUid}`, {
                     state: {
                       action: Action.VIEW,
                       displayName: recipe.created.fromDisplayName,

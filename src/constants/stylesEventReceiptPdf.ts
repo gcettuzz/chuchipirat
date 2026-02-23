@@ -46,7 +46,7 @@ export default class PdfStyles {
         fontSize: 32,
         textAlign: "left",
         fontFamily: "Roboto",
-        fontStyle: "bold",
+        fontStyle: "normal",
         fontWeight: 700,
         marginBottom: 10,
       },
@@ -158,7 +158,7 @@ export default class PdfStyles {
       dataKey: {
         fontSize: 16,
         fontFamily: "Roboto",
-        fontStyle: "light",
+        fontStyle: "normal",
         fontWeight: 300,
         marginBottom: 10,
         marginRight: 10,
@@ -168,7 +168,7 @@ export default class PdfStyles {
       dataValue: {
         fontSize: 16,
         fontFamily: "Roboto",
-        fontStyle: "bold",
+        fontStyle: "normal",
         fontWeight: 700,
         marginBottom: 10,
         marginLeft: 10,
