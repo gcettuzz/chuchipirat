@@ -277,7 +277,7 @@ export enum MenuplanDragDropTypes {
 }
 
 const getOrderListNameFromDragAndDropTypes = (
-  dragAndDropType: MenuplanDragDropTypes
+  dragAndDropType: MenuplanDragDropTypes,
 ) => {
   switch (dragAndDropType) {
     case MenuplanDragDropTypes.MEALRECIPE:
@@ -333,16 +333,16 @@ export const generatePlanedPortionsText = ({
         plan.diet == PlanedDiet.ALL
           ? TEXT_ALL
           : plan.diet == PlanedDiet.FIX
-          ? ""
-          : groupConfiguration.diets.entries[plan.diet].name
+            ? ""
+            : groupConfiguration.diets.entries[plan.diet].name
       }${
         plan.intolerance == PlanedIntolerances.ALL
           ? ""
           : plan.intolerance == PlanedIntolerances.FIX
-          ? ""
-          : `, ${
-              groupConfiguration.intolerances.entries[plan.intolerance].name
-            }`
+            ? ""
+            : `, ${
+                groupConfiguration.intolerances.entries[plan.intolerance].name
+              }`
       } (${plan.totalPortions.toFixed(1)} ${
         plan.totalPortions == 1 ? TEXT_PORTION : TEXT_PORTIONS
       })`}
@@ -389,7 +389,7 @@ function getItemData<Item>({
   };
 }
 function isItemData<T>(
-  data: Record<string | symbol, unknown>
+  data: Record<string | symbol, unknown>,
 ): data is ItemData<T> {
   return data[itemKey] === true;
 }
@@ -525,7 +525,7 @@ const MenuplanPage = ({
     });
 
   const [recipeDrawerData, setRecipeDrawerData] = useState<RecipeDrawerData>(
-    RECIPE_DRAWER_DATA_INITIAL_VALUES
+    RECIPE_DRAWER_DATA_INITIAL_VALUES,
   );
   const [dialogSelectMenueData, setDialogSelectMenueData] =
     useState<DialogSelectMenueData>({
@@ -569,9 +569,10 @@ const MenuplanPage = ({
   };
   // Dialog für Produkte und Material ==> Goods
   const [dialogGoodsData, setDialogGoodsData] = useState<DialogGoods>(
-    GOODS_DATA_DIALOG_INITIAL_DATA
+    GOODS_DATA_DIALOG_INITIAL_DATA,
   );
   const scrollableRef = useRef<HTMLDivElement | null>(null);
+  const headerScrollRef = useRef<HTMLDivElement | null>(null);
 
   /* ------------------------------------------
   // Navigation-Handler
@@ -582,6 +583,27 @@ const MenuplanPage = ({
       object: NavigationObject.menueplan,
     });
   }, []);
+  /* ------------------------------------------
+  // Auto-Scroll zum heutigen Tag
+  // ------------------------------------------ */
+  useEffect(() => {
+    if (!scrollableRef.current || menuplan.dates.length === 0) return;
+
+    const today = Utils.dateAsString(new Date());
+    const todayColumn = scrollableRef.current.querySelector(
+      `[data-date="${today}"]`
+    );
+
+    if (todayColumn) {
+      requestAnimationFrame(() => {
+        todayColumn.scrollIntoView({
+          behavior: "smooth",
+          inline: "start",
+          block: "nearest",
+        });
+      });
+    }
+  }, [menuplan.dates]);
   /* ------------------------------------------
   // Initiale-Einstellungen vornehmen
   // ------------------------------------------ */
@@ -667,7 +689,7 @@ const MenuplanPage = ({
           })();
 
           const orderListName = getOrderListNameFromDragAndDropTypes(
-            dragging.itemType
+            dragging.itemType,
           );
 
           if (
@@ -682,7 +704,7 @@ const MenuplanPage = ({
             return;
           }
           const homeListItemIndex = homeOrderList.findIndex(
-            (listItemUid) => listItemUid == dragging.listItem.id
+            (listItemUid) => listItemUid == dragging.listItem.id,
           );
 
           // Drop auf eine Liste
@@ -702,7 +724,7 @@ const MenuplanPage = ({
             // reordering in home column
             if (homeMenue === destinationMenue) {
               const destinationListItemIndex = homeOrderList.findIndex(
-                (listItemUid) => listItemUid === dropTargetData.listItem.id
+                (listItemUid) => listItemUid === dropTargetData.listItem.id,
               );
               // could not find cards needed
               if (homeListItemIndex === -1 || destinationListItemIndex === -1) {
@@ -749,7 +771,7 @@ const MenuplanPage = ({
             }
 
             const destinationListItemIndex = destinationOrderList.findIndex(
-              (listItemUid) => listItemUid == dropTargetData.listItem.id
+              (listItemUid) => listItemUid == dropTargetData.listItem.id,
             );
 
             const closestEdge = extractClosestEdge(dropTargetData);
@@ -766,7 +788,7 @@ const MenuplanPage = ({
             destinationReorderedList.splice(
               finalIndex,
               0,
-              dragging.listItem.id
+              dragging.listItem.id,
             );
 
             onMenuplanUpdateSuper({
@@ -825,7 +847,7 @@ const MenuplanPage = ({
             destinationReorderedList.splice(
               destinationReorderedList.length,
               0,
-              dragging.listItem.id
+              dragging.listItem.id,
             );
 
             onMenuplanUpdateSuper({
@@ -908,7 +930,7 @@ const MenuplanPage = ({
             }
 
             const homeMenuIndex = homeMeal.menuOrder.findIndex(
-              (menuUid) => menuUid == dragging.listItem.menue.uid
+              (menuUid) => menuUid == dragging.listItem.menue.uid,
             );
 
             if (homeMenuIndex === -1) {
@@ -955,12 +977,12 @@ const MenuplanPage = ({
           }
 
           const homeMenuIndex = homeMeal.menuOrder.findIndex(
-            (menuUid) => menuUid == dragging.listItem.menue.uid
+            (menuUid) => menuUid == dragging.listItem.menue.uid,
           );
           let destinationMenuIndex = -1;
           if (!isMenueCardContainerDropTargetData(dropTargetData)) {
             destinationMenuIndex = destinationMeal.menuOrder.findIndex(
-              (menuUid) => menuUid === dropTargetData.listItem.menue.uid
+              (menuUid) => menuUid === dropTargetData.listItem.menue.uid,
             );
           } else {
             destinationMenuIndex = destinationMeal.menuOrder.length;
@@ -1009,7 +1031,7 @@ const MenuplanPage = ({
           destinationReorderedList.splice(
             finalIndex,
             0,
-            dragging.listItem.menue.uid
+            dragging.listItem.menue.uid,
           );
 
           onMenuplanUpdateSuper({
@@ -1049,7 +1071,7 @@ const MenuplanPage = ({
             forRightEdge: {top: 1000, right: 1000, bottom: 1000},
           };
         },
-      })
+      }),
     );
   }, [menuplan.menues]);
 
@@ -1093,7 +1115,7 @@ const MenuplanPage = ({
         ],
         // need to make sure we are not after the "pointerdown" on the scrollable
         // Also this is helpful to make sure we always hear about events from this point
-        {capture: true}
+        {capture: true},
       );
 
       cleanupActive = cleanupEvents;
@@ -1239,7 +1261,7 @@ const MenuplanPage = ({
   // ------------------------------------------ */
   const onDragAndDropUpdate = (
     newOrder: string[],
-    dragAndDropListType: MenuplanDragDropTypes
+    dragAndDropListType: MenuplanDragDropTypes,
   ) => {
     switch (dragAndDropListType) {
       case MenuplanDragDropTypes.MEALTYPE:
@@ -1426,7 +1448,7 @@ const MenuplanPage = ({
       open: true,
       isLoadingData: !Object.prototype.hasOwnProperty.call(
         recipes,
-        recipeShort.uid
+        recipeShort.uid,
       ),
       recipe: recipe,
       scaledPortions: 0,
@@ -1686,7 +1708,7 @@ const MenuplanPage = ({
         newMaterial.plan = [];
         !dialogGoodsData.material &&
           newMenues[dialogGoodsData.menueUid].materialOrder.push(
-            newMaterial.uid
+            newMaterial.uid,
           );
 
         onMenuplanUpdateSuper({
@@ -1864,7 +1886,7 @@ const MenuplanPage = ({
     });
   };
   const onDialogSelectMenueContinue = (
-    selectedMenues: DialogSelectMenuesForRecipeDialogValues
+    selectedMenues: DialogSelectMenuesForRecipeDialogValues,
   ) => {
     if (dialogSelectMenueData.caller !== onMoveDragAndDropElement.name) {
       // Portionen Dialog anzeigen.
@@ -1887,7 +1909,7 @@ const MenuplanPage = ({
         destinationMenueUid !== dialogSelectMenueData.dragAndDropHandler.menuUid
       ) {
         const orderListName = getOrderListNameFromDragAndDropTypes(
-          dialogSelectMenueData.dragAndDropHandler.dragAndDropListType
+          dialogSelectMenueData.dragAndDropHandler.dragAndDropListType,
         );
 
         if (
@@ -1905,7 +1927,7 @@ const MenuplanPage = ({
           const homeReorderedList = homeMenue[orderListName].filter(
             (listElementUid) =>
               listElementUid !==
-              dialogSelectMenueData.dragAndDropHandler.listElementUid
+              dialogSelectMenueData.dragAndDropHandler.listElementUid,
           );
           // Eintrag in Destination anhängen
           const destinationMenue = menuplan.menues[destinationMenueUid];
@@ -1959,11 +1981,11 @@ const MenuplanPage = ({
       const reorderedHomeList = menuplan.meals[
         dialogSelectMealData.dragAndDropHandler.mealUid
       ].menuOrder.filter(
-        (menuUid) => menuUid != dialogSelectMealData.dragAndDropHandler.menuUid
+        (menuUid) => menuUid != dialogSelectMealData.dragAndDropHandler.menuUid,
       );
 
       const reorderedDestinationList = menuplan.meals[mealUid].menuOrder.concat(
-        dialogSelectMealData.dragAndDropHandler.menuUid
+        dialogSelectMealData.dragAndDropHandler.menuUid,
       );
 
       onMenuplanUpdateSuper({
@@ -2154,12 +2176,12 @@ const MenuplanPage = ({
       if (mealRecipe.recipe.recipeUid == recipe.uid) {
         // Menü suchen, in dem das Rezept eingefügt wurde
         menue = Object.values(menuplan.menues).find((menue) =>
-          menue.mealRecipeOrder.includes(mealRecipe.uid)
+          menue.mealRecipeOrder.includes(mealRecipe.uid),
         );
         if (menue != undefined) {
           // Die Mahlzeit suchen, in der das Menü ist
           meal = Object.values(menuplan.meals).find((meal) =>
-            meal.menuOrder.includes(menue!.uid!)
+            meal.menuOrder.includes(menue!.uid!),
           );
         }
         if (meal != undefined && menue != undefined) {
@@ -2218,7 +2240,7 @@ const MenuplanPage = ({
       mealPlan: mealPlan,
       scaledPortions: menuplan.mealRecipes[mealRecipeUid].plan.reduce(
         (runningSum, portion) => runningSum + portion.totalPortions,
-        0
+        0,
       ),
     });
   };
@@ -2317,16 +2339,17 @@ const MenuplanPage = ({
   }
   return (
     <React.Fragment key={"test"}>
+      {/* Sticky header — scrolls horizontally via JS sync */}
       <Box
-        component={"div"}
-        key={"container_menuplan_rows"}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          flexWrap: "nowrap",
-          width: "auto",
+        ref={headerScrollRef}
+        sx={{
+          position: "sticky",
+          top: "64px",
+          zIndex: 1000,
+          background: theme.palette.background.default,
+          overflowX: "hidden",
+          paddingX: theme.spacing(4),
         }}
-        ref={scrollableRef}
       >
         <MenuplanHeaderRow
           dates={menuplan.dates}
@@ -2338,6 +2361,27 @@ const MenuplanPage = ({
           onNoteUpdate={onNoteUpdate}
           onPrint={onPrint}
         />
+      </Box>
+      {/* Horizontally scrollable content */}
+      <Box
+        component={"div"}
+        key={"container_menuplan_rows"}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          flexWrap: "nowrap",
+          overflowX: "auto",
+          paddingLeft: theme.spacing(4),
+          paddingRight: theme.spacing(4),
+        }}
+        ref={scrollableRef}
+        onScroll={() => {
+          if (headerScrollRef.current && scrollableRef.current) {
+            headerScrollRef.current.scrollLeft =
+              scrollableRef.current.scrollLeft;
+          }
+        }}
+      >
         <MealTypeRows
           mealTypes={menuplan.mealTypes}
           dates={menuplan.dates}
@@ -2432,7 +2476,7 @@ const MenuplanPage = ({
         open={dialogEditMenue.open}
         menue={menuplan.menues[dialogEditMenue.menueUid]}
         note={Object.values(menuplan.notes).find(
-          (note) => note.menueUid == dialogEditMenue.menueUid
+          (note) => note.menueUid == dialogEditMenue.menueUid,
         )}
         mealRecipes={menuplan.mealRecipes}
         products={menuplan.products}
@@ -2542,7 +2586,7 @@ const MenuplanHeaderRow = ({
   // ------------------------------------------ */
   const onContextMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     const selectedDate = Utils.dateAsString(
-      new Date(event.currentTarget.id.split("_")[1])
+      new Date(event.currentTarget.id.split("_")[1]),
     );
 
     setContextMenuAnchorElement(event.currentTarget);
@@ -2605,7 +2649,9 @@ const MenuplanHeaderRow = ({
     <Box
       component="div"
       sx={{
-        ...classes.stickyHeaderRow,
+        display: "flex",
+        flexDirection: "row",
+        flexWrap: "nowrap",
         "&::after": scrolled
           ? {
               content: '""',
@@ -2674,12 +2720,14 @@ const MenuplanHeaderRow = ({
 
       {dates.map((date) => {
         const note = Object.values(notes).find(
-          (note) => note.date == Utils.dateAsString(date) && note.menueUid == ""
+          (note) =>
+            note.date == Utils.dateAsString(date) && note.menueUid == "",
         );
         return (
           <Container
             sx={classes.menuplanItem}
             key={"dayCardContainer_" + date}
+            data-date={Utils.dateAsString(date)}
             style={{
               display: "flex",
               padding: theme.spacing(1),
@@ -2785,7 +2833,7 @@ interface MealTypeRowsProps {
   onNoteUpdate: ({action, note}: OnNoteUpdate) => void;
   onDragAndDropUpdate: (
     newOrder: string[],
-    dragAndDropList: MenuplanDragDropTypes
+    dragAndDropList: MenuplanDragDropTypes,
   ) => void;
   onMoveDragAndDropElement: OnMoveDragAndDropElementFx;
 }
@@ -2853,7 +2901,7 @@ const MealTypeRows = ({
           startIndex,
           finishIndex,
         }),
-        MenuplanDragDropTypes.MEALTYPE
+        MenuplanDragDropTypes.MEALTYPE,
       );
       setLasCardMoved({
         item,
@@ -2862,7 +2910,7 @@ const MealTypeRows = ({
         numberOfItems: mealTypes.order.length,
       });
     },
-    [mealTypes]
+    [mealTypes],
   );
 
   useEffect(() => {
@@ -2887,7 +2935,7 @@ const MealTypeRows = ({
         }
 
         const indexOfTarget = mealTypes.order.findIndex(
-          (itemUiId) => itemUiId === (targetData.item as MealType).uid
+          (itemUiId) => itemUiId === (targetData.item as MealType).uid,
         );
         if (indexOfTarget < 0) {
           return;
@@ -2922,7 +2970,7 @@ const MealTypeRows = ({
 
   const getListLength = useCallback(
     () => mealTypes.order.length,
-    [mealTypes.order.length]
+    [mealTypes.order.length],
   );
 
   const contextValue: ListContextValue = useMemo(() => {
@@ -3114,7 +3162,7 @@ const MealTypeRow = ({
           setClosestEdge(null);
           setDraggableState(idleState);
         },
-      })
+      }),
     );
   }, [
     instanceId,
@@ -3130,7 +3178,7 @@ const MealTypeRow = ({
     const newMenu = Menuplan.createMenu();
     const mealsToUpdate = {...meals};
     const mealToUpdate = Object.values(mealsToUpdate).find(
-      (meal) => meal.uid == event.currentTarget.id.split("_")[1]
+      (meal) => meal.uid == event.currentTarget.id.split("_")[1],
     );
     const menuesToUpdate = {...menues};
 
@@ -3154,14 +3202,21 @@ const MealTypeRow = ({
     // Alle Rezepte, Produkte, Materialien entfernen,
     // die in diesem Menü sind
 
-    const isConfirmed = await customDialog({
-      dialogType: DialogType.Confirm,
-      text: TEXT_ALL_RECIPES_AND_VALUES_WILL_BE_DELETED,
-      title: `⚠️  ${TEXT_ATTENTION}`,
-      buttonTextConfirm: TEXT_DELETE,
-    });
-    if (!isConfirmed) {
-      return;
+    // Falls das Menue leer ist, braucht es keine Bestätigung
+    if (
+      menues[menueUid].mealRecipeOrder.length != 0 ||
+      menues[menueUid].productOrder.length != 0 ||
+      menues[menueUid].materialOrder.length != 0
+    ) {
+      const isConfirmed = await customDialog({
+        dialogType: DialogType.Confirm,
+        text: TEXT_ALL_RECIPES_AND_VALUES_WILL_BE_DELETED,
+        title: `⚠️  ${TEXT_ATTENTION}`,
+        buttonTextConfirm: TEXT_DELETE,
+      });
+      if (!isConfirmed) {
+        return;
+      }
     }
 
     const updatedMealRecipes = {...mealRecipes};
@@ -3171,20 +3226,20 @@ const MealTypeRow = ({
     const updateMaterials = {...materials};
     //
     menues[menueUid].mealRecipeOrder.forEach(
-      (recipeUid) => delete updatedMealRecipes[recipeUid]
+      (recipeUid) => delete updatedMealRecipes[recipeUid],
     );
     menues[menueUid].productOrder.forEach(
-      (productUid) => delete updateProducts[productUid]
+      (productUid) => delete updateProducts[productUid],
     );
     menues[menueUid].materialOrder.forEach(
-      (materialUid) => delete updateMaterials[materialUid]
+      (materialUid) => delete updateMaterials[materialUid],
     );
     delete updatedMenues[menueUid];
 
     Object.values(updatedMeals).forEach((meal) => {
       if (meal.menuOrder.includes(menueUid)) {
         meal.menuOrder = meal.menuOrder.filter(
-          (mealMenuUid) => mealMenuUid != menueUid
+          (mealMenuUid) => mealMenuUid != menueUid,
         );
       }
     });
@@ -3286,7 +3341,7 @@ const MealTypeRow = ({
                 />
               ) : (
                 // Kein Menü vorhanden - MenuCard erstellen.....
-                (<EmptyMealContainer
+                <EmptyMealContainer
                   mealUid={actualMeal.uid}
                   buttonText={TEXT_NEW_MENU}
                   onCreateMenu={(mealUid) => {
@@ -3295,7 +3350,7 @@ const MealTypeRow = ({
                     } as React.MouseEvent<HTMLButtonElement>;
                     onCreateMenu(event);
                   }}
-                />)
+                />
               )}
               {/* {closestEdge && (
                 <Box component="div" className="custom-drop-indicator">
@@ -3461,570 +3516,6 @@ const MealTypeCard = ({
     </React.Fragment>
   );
 };
-// /* ===================================================================
-// // ============================ Menü-Karte ===========================
-// // =================================================================== */
-// //FIXME: muss noch gelöscht werden. wurden ausgelagert
-// interface MenuCardProps {
-//   menue: Menue;
-//   notes: Menuplan["notes"];
-//   // recipeList: RecipeShort[];
-//   mealRecipes: Menuplan["mealRecipes"];
-//   // draggableProvided: DraggableProvided;
-//   menuplanSettings: MenuplanSettings;
-//   groupConfiguration: EventGroupConfiguration;
-//   products: Menuplan["products"];
-//   materials: Menuplan["materials"];
-//   onUpdateMenue: (menue: Menue) => void;
-//   onDeleteMenue: (menueUid: Menue["uid"]) => void;
-//   fetchMissingData: ({type, recipeShort}: FetchMissingDataProps) => void;
-//   onAddRecipe: (menue: Menue) => void;
-//   onAddProduct: (menueUid: Menue["uid"]) => void;
-//   onAddMaterial: (menueUid: Menue["uid"]) => void;
-//   onEditMenue: (menueUid: Menue["uid"]) => void;
-//   onMealRecipeOpen: (
-//     event: React.MouseEvent<HTMLDivElement, MouseEvent>
-//   ) => void;
-//   onMealProductOpen: (uid: MenuplanProduct["uid"]) => void;
-//   onMealMaterialOpen: (uid: MenuplanMaterial["uid"]) => void;
-//   onNoteUpdate: ({action, note}: OnNoteUpdate) => void;
-// }
-// const MenueCard = ({
-//   menue,
-//   notes,
-//   mealRecipes,
-//   menuplanSettings,
-//   // draggableProvided,
-//   groupConfiguration,
-//   products,
-//   materials,
-//   onUpdateMenue,
-//   onDeleteMenue: onDeleteMenueSuper,
-//   onMealRecipeOpen,
-//   onMealMaterialOpen,
-//   onMealProductOpen,
-//   onAddRecipe: onAddRecipeSuper,
-//   onAddProduct: onAddProductSuper,
-//   onAddMaterial: onAddMaterialSuper,
-//   onEditMenue: onEditMenueSuper,
-//   onNoteUpdate,
-// }: // onLoadRecipes,
-// MenuCardProps) => {
-//   const classes = useCustomStyles();
-//   const {customDialog} = useCustomDialog();
-//   const [contextMenuAnchorElement, setContextMenuAnchorElement] =
-//     useState<HTMLElement | null>(null);
-//   const [menueName, setMenueName] = useState<Menue["name"]>("");
-//   const theme = useTheme();
-
-//   if (menue.name && !menueName) {
-//     setMenueName(menue.name);
-//   }
-
-//   const note = Object.values(notes).find((note) => note.menueUid == menue.uid);
-//   /* ------------------------------------------
-//   // Kontexmenü
-//   // ------------------------------------------ */
-//   const onContextMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-//     setContextMenuAnchorElement(event.currentTarget);
-//   };
-//   const closeContextMenu = () => {
-//     setContextMenuAnchorElement(null);
-//   };
-//   /* ------------------------------------------
-//   // Kontex-Menü-Handler
-//   // ------------------------------------------ */
-//   const onEditMenue = () => {
-//     if (contextMenuAnchorElement?.id) {
-//       onEditMenueSuper(contextMenuAnchorElement.id.split("_")[1]);
-//     }
-//     setContextMenuAnchorElement(null);
-//   };
-//   const onDeleteMenue = () => {
-//     if (contextMenuAnchorElement?.id) {
-//       onDeleteMenueSuper(contextMenuAnchorElement.id.split("_")[1]);
-//     }
-//   };
-//   const onAddProduct = () => {
-//     if (contextMenuAnchorElement?.id) {
-//       onAddProductSuper(contextMenuAnchorElement.id.split("_")[1]);
-//     }
-//     setContextMenuAnchorElement(null);
-//   };
-//   const onAddMaterial = () => {
-//     if (contextMenuAnchorElement?.id) {
-//       onAddMaterialSuper(contextMenuAnchorElement.id.split("_")[1]);
-//     }
-//     setContextMenuAnchorElement(null);
-//   };
-//   const onEditNote = async () => {
-//     let userInput = {valid: false, input: ""} as SingleTextInputResult;
-
-//     const existingNote = Object.values(notes).find(
-//       (note) => note.menueUid == menue.uid
-//     );
-
-//     userInput = (await customDialog({
-//       dialogType: DialogType.SingleTextInput,
-//       title: `${TEXT_NOTE} ${existingNote?.text ? TEXT_EDIT : TEXT_ADD}`,
-//       singleTextInputProperties: {
-//         initialValue: existingNote?.text ? existingNote?.text : "",
-//         textInputLabel: TEXT_NOTE,
-//       },
-//     })) as SingleTextInputResult;
-
-//     if (userInput?.valid && userInput.input != "") {
-//       let note: Note;
-//       if (!existingNote?.text) {
-//         note = Menuplan.createEmptyNote();
-//       } else {
-//         note = existingNote;
-//       }
-//       note.text = userInput.input;
-//       note.menueUid = menue.uid;
-//       note.date = "";
-//       onNoteUpdate({
-//         action: existingNote?.text ? Action.EDIT : Action.ADD,
-//         note: note,
-//       });
-//     }
-//     setContextMenuAnchorElement(null);
-//   };
-//   /* ------------------------------------------
-//   // Input-Handler
-//   // ------------------------------------------ */
-//   const onChangeMenueName = (event: React.ChangeEvent<HTMLInputElement>) => {
-//     if (event.target.value == "") {
-//       // Wert gelöscht --> hochgeben
-//       onUpdateMenue({...menue, name: ""});
-//     }
-//     setMenueName(event.target.value);
-//   };
-//   const onMenueNameBlur = () => {
-//     // Name im Controller updaten, aber erst
-//     // wenn dieser fertig erfasst wurde
-//     onUpdateMenue({...menue, name: menueName});
-//   };
-//   const onAddRecipe = () => {
-//     // Drawer anzeigen
-//     onAddRecipeSuper(menue);
-//   };
-//   return (
-//     <React.Fragment>
-//       <Card
-//         sx={classes.menuCard}
-//         // innerRef={draggableProvided.innerRef}
-//         // {...draggableProvided.draggableProps}
-//         // {...draggableProvided.dragHandleProps}
-//       >
-//         <CardHeader
-//           key={"menu_cardHeader_" + menue.uid}
-//           action={
-//             <IconButton
-//               id={"MoreBtn_" + menue.uid}
-//               aria-label="settings"
-//               onClick={onContextMenuClick}
-//               size="large"
-//             >
-//               <MoreVertIcon />
-//             </IconButton>
-//           }
-//           title={
-//             <TextField
-//               fullWidth
-//               variant="standard"
-//               value={menueName}
-//               onChange={onChangeMenueName}
-//               onBlur={onMenueNameBlur}
-//               label={TEXT_MENUE}
-//             />
-//           }
-//         />
-
-//         <CardContent sx={classes.centerCenter}>
-//           <Grid container>
-//             {note && (
-//               <Grid size={12}>
-//                 <Typography
-//                   variant="body2"
-//                   color="textSecondary"
-//                   align="center"
-//                 >
-//                   <em>{note.text}</em>
-//                 </Typography>
-//               </Grid>
-//             )}
-//             <Grid size={12}>
-//               {/* <Droppable
-//                 droppableId={`${menue.uid}_${DragDropTypes.MEALRECIPE}`}
-//                 type={DragDropTypes.MEALRECIPE}
-//               >
-//                 {(provided, snapshot) => ( */}
-//               <List
-//                 key={"listMealRecipes_" + menue.uid}
-//                 // innerRef={provided.innerRef}
-//                 // {...provided.droppableProps}
-//                 // className={
-//                 //   snapshot.isDraggingOver
-//                 //     ? classes.ListOnDrop
-//                 //     : classes.ListNoDrop
-//                 // }
-//                 style={{minHeight: "3em"}}
-//               >
-//                 {menue.mealRecipeOrder.map((mealRecipeUid) => (
-//                   <React.Fragment
-//                     key={
-//                       "draggableMealRecipeDiv_" +
-//                       menue.uid +
-//                       "_" +
-//                       mealRecipeUid
-//                     }
-//                   >
-//                     {/* <Draggable
-//                           draggableId={mealRecipeUid}
-//                           index={index}
-//                           key={
-//                             "draggableMealRecipe_" +
-//                             menue.uid +
-//                             "_" +
-//                             mealRecipeUid
-//                           }
-//                         >
-//                           {(provided, snapshot) => ( */}
-//                     <ListItem
-//                       button
-//                       dense
-//                       key={"listitem_" + menue.uid + "_" + mealRecipeUid}
-//                       id={"listitem_" + menue.uid + "_" + mealRecipeUid}
-//                       // innerRef={provided.innerRef}
-//                       // {...provided.draggableProps}
-//                       // {...provided.dragHandleProps}
-//                       // className={
-//                       //   snapshot.isDragging
-//                       //     ? classes.listItemOnDrag
-//                       //     : classes.listItemNoDrag
-//                       // }
-//                       onClick={(event) => {
-//                         if (
-//                           !mealRecipes[
-//                             mealRecipeUid
-//                           ]?.recipe.recipeUid.includes(MealRecipeDeletedPrefix)
-//                         ) {
-//                           onMealRecipeOpen(event);
-//                         }
-//                       }}
-//                     >
-//                       <ListItemText
-//                         key={"listitemText_" + menue.uid + "_" + mealRecipeUid}
-//                         style={{margin: 0}}
-//                         primary={
-//                           mealRecipes[mealRecipeUid]?.recipe.recipeUid.includes(
-//                             MealRecipeDeletedPrefix
-//                           ) ? (
-//                             <span
-//                               style={{
-//                                 color: theme.palette.text.secondary,
-//                               }}
-//                             >
-//                               {/* Das Rezept wurde gelöscht... */}
-//                               {mealRecipes[mealRecipeUid]?.recipe.name}
-//                             </span>
-//                           ) : (
-//                             <span>
-//                               {mealRecipes[mealRecipeUid]?.recipe.name}
-//                               <span
-//                                 style={{
-//                                   color: theme.palette.text.secondary,
-//                                 }}
-//                               >
-//                                 {mealRecipes[mealRecipeUid]?.recipe.type ===
-//                                 RecipeType.variant
-//                                   ? ` [${TEXT_VARIANT}: ${mealRecipes[mealRecipeUid]?.recipe.variantName}]`
-//                                   : ``}
-//                               </span>
-//                             </span>
-//                           )
-//                         }
-//                         secondary={
-//                           mealRecipes[mealRecipeUid]?.plan.length == 0 ? (
-//                             <span
-//                               style={{
-//                                 color: theme.palette.error.main,
-//                               }}
-//                             >
-//                               {TEXT_RECIPE_WIHOUT_PORTIONPLAN}
-//                             </span>
-//                           ) : menuplanSettings.showDetails &&
-//                             mealRecipes[mealRecipeUid]?.plan.length > 0 ? (
-//                             generatePlanedPortionsText({
-//                               uid: mealRecipeUid,
-//                               portionPlan: mealRecipes[mealRecipeUid].plan,
-//                               groupConfiguration: groupConfiguration,
-//                             })
-//                           ) : null
-//                         }
-//                       />
-//                     </ListItem>
-//                     {/* )}
-//                         </Draggable> */}
-//                   </React.Fragment>
-//                 ))}
-//                 {/* {provided.placeholder} */}
-//               </List>
-//               {/* )} */}
-//               {/* </Droppable> */}
-//             </Grid>
-//             <Grid size={12} sx={classes.centerCenter}>
-//               <Button
-//                 onClick={onAddRecipe}
-//                 color="primary"
-//                 endIcon={<AddIcon />}
-//               >
-//                 {TEXT_ADD_RECIPE}
-//               </Button>
-//             </Grid>
-//             {/* Produkt-Liste */}
-//             <Grid size={12}>
-//               {/* <Droppable
-//                 droppableId={`${menue.uid}_${DragDropTypes.PRODUCT}`}
-//                 type={DragDropTypes.PRODUCT}
-//               > */}
-//               {/* {(provided, snapshot) => ( */}
-//               <List
-//                 key={"listMealProducts_" + menue.uid}
-//                 // innerRef={provided.innerRef}
-//                 // {...provided.droppableProps}
-//                 // className={
-//                 //   snapshot.isDraggingOver
-//                 //     ? classes.ListOnDrop
-//                 //     : classes.ListNoDrop
-//                 // }
-//                 style={{minHeight: "3em"}}
-//               >
-//                 {menue.productOrder.map((productUid) => (
-//                   // <Draggable
-//                   //   draggableId={productUid}
-//                   //   index={index}
-//                   //   key={
-//                   //     "draggableMealProduct" + menue.uid + "_" + productUid
-//                   //   }
-//                   // >
-//                   //   {(provided, snapshot) => (
-//                   <ListItem
-//                     button
-//                     dense
-//                     key={"listitem_" + menue.uid + "_" + productUid}
-//                     id={"listitem_" + menue.uid + "_" + productUid}
-//                     // innerRef={provided.innerRef}
-//                     // {...provided.draggableProps}
-//                     // {...provided.dragHandleProps}
-//                     // className={
-//                     //   snapshot.isDragging
-//                     //     ? classes.listItemOnDrag
-//                     //     : classes.listItemNoDrag
-//                     // }
-//                     onClick={() => onMealProductOpen(productUid)}
-//                   >
-//                     <ListItemText
-//                       key={"listitemText_" + menue.uid + "_" + productUid}
-//                       style={{margin: 0}}
-//                       primary={`${
-//                         menuplanSettings.showDetails &&
-//                         products[productUid]?.totalQuantity > 0
-//                           ? `${products[productUid]?.totalQuantity} ${
-//                               products[productUid].unit
-//                                 ? products[productUid].unit
-//                                 : " ×"
-//                             }`
-//                           : ``
-//                       } ${products[productUid]?.productName}
-//                                 ${
-//                                   products[productUid]?.planMode ==
-//                                     GoodsPlanMode.PER_PORTION &&
-//                                   menuplanSettings.showDetails
-//                                     ? `(${products[productUid].quantity} ${products[productUid].unit} ${TEXT_PER_PORTION})`
-//                                     : ``
-//                                 }`}
-//                       secondary={
-//                         menuplanSettings.showDetails
-//                           ? products[productUid]?.planMode ==
-//                             GoodsPlanMode.PER_PORTION
-//                             ? generatePlanedPortionsText({
-//                                 uid: productUid,
-//                                 portionPlan: products[productUid].plan,
-//                                 groupConfiguration: groupConfiguration,
-//                               })
-//                             : ``
-//                           : null
-//                       }
-//                     />
-//                   </ListItem>
-//                   //   )}
-//                   // </Draggable>
-//                 ))}
-//                 {/* {provided.placeholder} */}
-//               </List>
-//               {/* )}
-//               </Droppable> */}
-//             </Grid>
-//             {/* Material-Liste */}
-//             <Grid size={12}>
-//               {/* <Droppable
-//                 droppableId={`${menue.uid}_${DragDropTypes.MATERIAL}`}
-//                 type={DragDropTypes.MATERIAL}
-//               >
-//                 {(provided, snapshot) => ( */}
-//               <List
-//                 key={"listMealMaterials_" + menue.uid}
-//                 // innerRef={provided.innerRef}
-//                 // {...provided.droppableProps}
-//                 // className={
-//                 //   snapshot.isDraggingOver
-//                 //     ? classes.ListOnDrop
-//                 //     : classes.ListNoDrop
-//                 // }
-//                 style={{minHeight: "3em"}}
-//               >
-//                 {menue.materialOrder.map((materialUid) => (
-//                   // <Draggable
-//                   //   draggableId={materialUid}
-//                   //   index={index}
-//                   //   key={
-//                   //     "draggableMealMaterial_" + menue.uid + "_" + materialUid
-//                   //   }
-//                   // >
-//                   //   {(provided, snapshot) => (
-//                   <ListItem
-//                     button
-//                     dense
-//                     key={"listitem_" + menue.uid + "_" + materialUid}
-//                     id={"listitem_" + menue.uid + "_" + materialUid}
-//                     // innerRef={provided.innerRef}
-//                     // {...provided.draggableProps}
-//                     // {...provided.dragHandleProps}
-//                     // className={
-//                     //   snapshot.isDragging
-//                     //     ? classes.listItemOnDrag
-//                     //     : classes.listItemNoDrag
-//                     // }
-//                     onClick={() => onMealMaterialOpen(materialUid)}
-//                   >
-//                     <ListItemText
-//                       key={"listitemText_" + menue.uid + "_" + materialUid}
-//                       style={{margin: 0}}
-//                       primary={`${
-//                         menuplanSettings.showDetails &&
-//                         materials[materialUid]?.totalQuantity > 0
-//                           ? `${materials[materialUid]?.totalQuantity} ${
-//                               materials[materialUid].unit
-//                                 ? materials[materialUid].unit
-//                                 : " ×"
-//                             }`
-//                           : ``
-//                       } ${materials[materialUid]?.materialName}
-//                                 ${
-//                                   materials[materialUid]?.planMode ==
-//                                     GoodsPlanMode.PER_PORTION &&
-//                                   menuplanSettings.showDetails
-//                                     ? `(${materials[materialUid].quantity} ${materials[materialUid].unit} ${TEXT_PER_PORTION})`
-//                                     : ``
-//                                 }`}
-//                       secondary={
-//                         menuplanSettings.showDetails
-//                           ? materials[materialUid]?.planMode ==
-//                             GoodsPlanMode.PER_PORTION
-//                             ? generatePlanedPortionsText({
-//                                 uid: materialUid,
-//                                 portionPlan: materials[materialUid].plan,
-//                                 groupConfiguration: groupConfiguration,
-//                               })
-//                             : ``
-//                           : null
-//                       }
-//                     />
-//                   </ListItem>
-//                   //   )}
-//                   // </Draggable>
-//                 ))}
-//                 {/* {provided.placeholder} */}
-//               </List>
-//               {/* )}
-//               </Droppable> */}
-//             </Grid>
-//           </Grid>
-//         </CardContent>
-//       </Card>
-//       <Menu
-//         open={Boolean(contextMenuAnchorElement)}
-//         keepMounted
-//         anchorEl={contextMenuAnchorElement}
-//         onClose={closeContextMenu}
-//       >
-//         <MenuItem
-//           onClick={onEditMenue}
-//           disabled={
-//             menue.materialOrder.length == 0 &&
-//             menue.productOrder.length == 0 &&
-//             menue.mealRecipeOrder.length == 0 &&
-//             note == undefined
-//           }
-//         >
-//           <ListItemIcon>
-//             <EditIcon />
-//           </ListItemIcon>
-//           <Typography variant="inherit" noWrap>
-//             {TEXT_EDIT_MENUE}
-//           </Typography>
-//         </MenuItem>
-//         <MenuItem onClick={onAddProduct}>
-//           <ListItemIcon>
-//             <ShoppingCartIcon />
-//           </ListItemIcon>
-//           <Typography variant="inherit" noWrap>
-//             {TEXT_ADD_PRODUCT}
-//           </Typography>
-//         </MenuItem>
-//         <MenuItem onClick={onAddMaterial}>
-//           <ListItemIcon>
-//             <BuildIcon />
-//           </ListItemIcon>
-//           <Typography variant="inherit" noWrap>
-//             {TEXT_ADD_MATERIAL}
-//           </Typography>
-//         </MenuItem>
-//         <MenuItem onClick={onEditNote}>
-//           <ListItemIcon>
-//             <NotesIcon />
-//           </ListItemIcon>
-//           <Typography variant="inherit" noWrap>
-//             {`${TEXT_NOTE} ${note ? TEXT_EDIT : TEXT_ADD}`}
-//           </Typography>
-//         </MenuItem>
-//         {note && (
-//           <MenuItem
-//             onClick={() => onNoteUpdate({action: Action.DELETE, note: note})}
-//           >
-//             <ListItemIcon>
-//               <DeleteSweepIcon />
-//             </ListItemIcon>
-//             <Typography variant="inherit" noWrap>
-//               {`${TEXT_NOTE} ${TEXT_DELETE}`}
-//             </Typography>
-//           </MenuItem>
-//         )}
-
-//         <MenuItem onClick={onDeleteMenue}>
-//           <ListItemIcon>
-//             <DeleteIcon />
-//           </ListItemIcon>
-//           <Typography variant="inherit" noWrap>
-//             {TEXT_DELETE_MENUE}
-//           </Typography>
-//         </MenuItem>
-//       </Menu>
-//     </React.Fragment>
-//   );
-// };
 /* ===================================================================
 // ====================== Rezepte-Suchen-Drawer ======================
 // =================================================================== */
@@ -4067,7 +3558,10 @@ const RecipeSearchDrawer = ({
       >
         <CloseIcon fontSize="small" />
       </IconButton>
-      <Container style={{marginTop: "2rem", width: "100%", height: "100vh"}} maxWidth={false}>
+      <Container
+        style={{marginTop: "2rem", width: "100%", height: "100vh"}}
+        maxWidth={false}
+      >
         <Typography variant="h2" align="center" style={{marginBottom: "2rem"}}>
           {TEXT_RECIPES_DRAWER_TITLE}{" "}
         </Typography>
@@ -4149,7 +3643,10 @@ export const RecipeDrawer = ({
       >
         <CloseIcon fontSize="small" />
       </IconButton>
-      <Container style={{width: "100%", height: "100vh", padding: "0"}} maxWidth={false}>
+      <Container
+        style={{width: "100%", height: "100vh", padding: "0"}}
+        maxWidth={false}
+      >
         {editMode ? (
           <RecipeEdit
             dbRecipe={recipe}
@@ -4275,7 +3772,7 @@ const DialogPlanPortions = ({
         menueList[0] = KEEP_IN_SYNC_KEY;
       } else {
         Object.keys(selectedMenues).forEach((menueUid) =>
-          menueList.push(menueUid)
+          menueList.push(menueUid),
         );
       }
     } else {
@@ -4377,8 +3874,8 @@ const DialogPlanPortions = ({
                   mealPlan.intolerance == PlanedDiet.FIX
                     ? mealPlan.totalPortions
                     : planOfMenu[mealPlan.intolerance].portions,
-              })
-          )
+              }),
+          ),
       );
     }
     setDialogValues({
@@ -4494,7 +3991,7 @@ const DialogPlanPortions = ({
   // ------------------------------------------ */
   const onToggleButtonClick = (
     event: React.MouseEvent<HTMLElement>,
-    activeButton: string | null
+    activeButton: string | null,
   ) => {
     if (activeButton == null) {
       // Etwas muss markiert sein.
@@ -4532,7 +4029,7 @@ const DialogPlanPortions = ({
             }
             return innerRunningCounter;
           },
-          0
+          0,
         ) > 0
       ) {
         dialogValidationMessages.push({
@@ -4553,7 +4050,7 @@ const DialogPlanPortions = ({
             }
             return innerRunningCounter;
           },
-          0
+          0,
         ) == 0
       ) {
         dialogValidationMessages.push({
@@ -4704,7 +4201,7 @@ const DialogPlanPortions = ({
                                   "default",
                                   {
                                     weekday: "long",
-                                  }
+                                  },
                                 )}`}
                               </strong>
                               {` ${new Date(meal.date).toLocaleString("de-CH", {
@@ -4767,7 +4264,7 @@ const DialogPlanPortions = ({
                               color: theme.palette.primary.main,
                               backgroundColor: alpha(
                                 theme.palette.primary.main,
-                                0.1
+                                0.1,
                               ),
                             }),
                         }}
@@ -4800,7 +4297,7 @@ const DialogPlanPortions = ({
                                 color: theme.palette.primary.main,
                                 backgroundColor: alpha(
                                   theme.palette.primary.main,
-                                  0.1
+                                  0.1,
                                 ),
                               }),
                           }}
@@ -4825,7 +4322,7 @@ const DialogPlanPortions = ({
                               color: theme.palette.primary.main,
                               backgroundColor: alpha(
                                 theme.palette.primary.main,
-                                0.1
+                                0.1,
                               ),
                             }),
                         }}
@@ -4847,7 +4344,7 @@ const DialogPlanPortions = ({
                     {/* Fehlermeldung anzeigen falls notwendig */}
                     {dialogValidation.length > 0 &&
                       dialogValidation.some(
-                        (errorMessage) => errorMessage.fieldName === menueUid
+                        (errorMessage) => errorMessage.fieldName === menueUid,
                       ) && (
                         <Container
                           style={{
@@ -4877,13 +4374,13 @@ const DialogPlanPortions = ({
             {planedObject == PlanedObject.RECIPE &&
               planedMealRecipe.length == 0 && (
                 // Nur anzeigen, wenn neues Rezept hinzugeüfgt wird.
-                (<Button
+                <Button
                   onClick={onBackClick}
                   color="primary"
                   variant="outlined"
                 >
                   {TEXT_BACK}
-                </Button>)
+                </Button>
               )}
             <Button onClick={onAddClick} color="primary" variant="contained">
               {planedMealRecipe.length == 0 ? TEXT_ADD : TEXT_APPLY}
@@ -4917,7 +4414,7 @@ const DialogPlanPortionsMealBlock = ({
     plan &&
     (selectedDietUid == PlanedDiet.FIX ? (
       <Grid container spacing={2}>
- <Grid size={12} >
+        <Grid size={12}>
           <TextField
             id={
               "dialogPlanPortionsMealBlockIntolerance_total_" +
@@ -4941,8 +4438,8 @@ const DialogPlanPortionsMealBlock = ({
       </Grid>
     ) : (
       <Grid container spacing={2}>
- <Grid size={8} />
- <Grid size={2} >
+        <Grid size={8} />
+        <Grid size={2}>
           <Typography>
             <strong>{TEXT_FACTOR} </strong>
             <Tooltip title={TEXT_FACTOR_TOOLTIP} placement="bottom" arrow>
@@ -4950,7 +4447,7 @@ const DialogPlanPortionsMealBlock = ({
             </Tooltip>
           </Typography>
         </Grid>
- <Grid size={2} >
+        <Grid size={2}>
           <strong>{TEXT_TOTAL_PORTIONS}</strong>
         </Grid>
         {/* Zuerst eine Zeile mit für das Total der gewählten Diät-Gruppe */}
@@ -4999,16 +4496,16 @@ const DialogPlanPortionsMealBlock = ({
             onFieldUpdate={onFieldUpdate}
           />
         ))}
- <Grid size={12} >
+        <Grid size={12}>
           <Divider />
         </Grid>
- <Grid size={8} >
+        <Grid size={8}>
           <Typography>
             <strong>{TEXT_YOUR_SELECTION_MAKES_X_SERVINGS}</strong>
           </Typography>
         </Grid>
- <Grid size={2} />
- <Grid size={2} >
+        <Grid size={2} />
+        <Grid size={2}>
           <TextField
             fullWidth
             disabled
@@ -5018,7 +4515,7 @@ const DialogPlanPortionsMealBlock = ({
                     .filter((portion) => portion !== null && portion.active)
                     .reduce(
                       (runningSum, portion) => runningSum + portion.total,
-                      0
+                      0,
                     )
                 : ""
             }
@@ -5070,7 +4567,7 @@ export const DialogPlanPortionsMealBlockRow = ({
         intoleranceUid
       }
     >
- <Grid size={8} >
+      <Grid size={8}>
         <FormControlLabel
           key={
             "dialogPlanPortionsMealBlockIntoleranceFormcontroll_" +
@@ -5107,7 +4604,7 @@ export const DialogPlanPortionsMealBlockRow = ({
           }
         />
       </Grid>
- <Grid size={2} >
+      <Grid size={2}>
         <TextField
           id={
             "dialogPlanPortionsMealBlockIntolerance_factor_" +
@@ -5133,7 +4630,7 @@ export const DialogPlanPortionsMealBlockRow = ({
           label={TEXT_FACTOR}
         />
       </Grid>
- <Grid size={2} >
+      <Grid size={2}>
         <TextField
           id={
             "dialogPlanPortionsMealBlockIntolerance_totalPortions_" +
@@ -5503,7 +5000,7 @@ export const DialogGoods = ({
 }: DialogGoodsProps) => {
   const theme = useTheme();
   const [dialogValues, setDialogValues] = useState<DialogGoodsValues>(
-    DIALOG_VALUES_INITIAL_STATE
+    DIALOG_VALUES_INITIAL_STATE,
   );
   const [materialAddPopupValues, setMaterialAddPopupValues] = useState({
     ...MATERIAL_POP_UP_VALUES_INITIAL_STATE,
@@ -5521,7 +5018,7 @@ export const DialogGoods = ({
     !dialogValues.product
   ) {
     const product = products.find(
-      (product) => product.uid == productToUpdate.productUid
+      (product) => product.uid == productToUpdate.productUid,
     );
 
     if (product) {
@@ -5540,7 +5037,7 @@ export const DialogGoods = ({
     !dialogValues.material
   ) {
     const material = materials.find(
-      (material) => material.uid == materialToUpdate.materialUid
+      (material) => material.uid == materialToUpdate.materialUid,
     );
     if (material) {
       setDialogValues({
@@ -5561,7 +5058,7 @@ export const DialogGoods = ({
   // ------------------------------------------ */
   const onTypeChange = (
     event: React.MouseEvent<HTMLElement>,
-    newValue: string | null
+    newValue: string | null,
   ) => {
     if (newValue === null) {
       // Ein Button muss immer aktiv sein
@@ -5580,7 +5077,7 @@ export const DialogGoods = ({
     event: React.ChangeEvent<HTMLInputElement>,
     newValue?: string | Unit | Product | Material | null,
     action?: AutocompleteChangeReason,
-    objectId?: string
+    objectId?: string,
   ) => {
     let material: Material;
     let product: Product;
@@ -5799,13 +5296,13 @@ export const DialogGoods = ({
               ? TEXT_EXPLANATION_DIALOG_GOODS_OPTION_TOTAL(
                   goodsType == GoodsType.MATERIAL
                     ? TEXT_MATERIAL
-                    : TEXT_PRODUCTS
+                    : TEXT_PRODUCTS,
                 )
               : TEXT_EXPLANATION_DIALOG_GOODS_OPTION_PER_PORTION}
           </Typography>
           <br />
           <Grid container spacing={2}>
- <Grid size={12} >
+            <Grid size={12}>
               {goodsType === GoodsType.PRODUCT ? (
                 <ProductAutocomplete
                   componentKey={""}
@@ -5831,7 +5328,7 @@ export const DialogGoods = ({
               )}
             </Grid>
 
- <Grid size={goodsType === GoodsType.PRODUCT ? 6 : 12} >
+            <Grid size={goodsType === GoodsType.PRODUCT ? 6 : 12}>
               <TextField
                 key={"quantity"}
                 id={"quantity"}
@@ -5849,7 +5346,7 @@ export const DialogGoods = ({
               />
             </Grid>
             {goodsType === GoodsType.PRODUCT && (
- <Grid size={6} >
+              <Grid size={6}>
                 <UnitAutocomplete
                   componentKey={""}
                   unitKey={dialogValues.unit}
