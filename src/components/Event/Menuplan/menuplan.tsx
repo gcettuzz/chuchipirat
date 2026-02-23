@@ -587,19 +587,24 @@ const MenuplanPage = ({
   // Auto-Scroll zum heutigen Tag
   // ------------------------------------------ */
   useEffect(() => {
-    if (!scrollableRef.current || menuplan.dates.length === 0) return;
+    if (!headerScrollRef.current || !scrollableRef.current || menuplan.dates.length === 0) return;
 
     const today = Utils.dateAsString(new Date());
-    const todayColumn = scrollableRef.current.querySelector(
+    const todayColumn = headerScrollRef.current.querySelector(
       `[data-date="${today}"]`
     );
 
     if (todayColumn) {
       requestAnimationFrame(() => {
-        todayColumn.scrollIntoView({
+        const columnEl = todayColumn as HTMLElement;
+        const scrollTarget = columnEl.offsetLeft - parseInt(theme.spacing(4));
+        scrollableRef.current!.scrollTo({
+          left: scrollTarget,
           behavior: "smooth",
-          inline: "start",
-          block: "nearest",
+        });
+        headerScrollRef.current!.scrollTo({
+          left: scrollTarget,
+          behavior: "smooth",
         });
       });
     }
