@@ -2,7 +2,6 @@ import React from "react";
 
 import {useNavigate, useLocation} from "react-router";
 
-import {Alert, AlertTitle} from "@mui/lab";
 import Container from "@mui/material/Container";
 import {useFirebase} from "../Firebase/firebaseContext";
 import FirebaseMessageHandler from "../Firebase/firebaseMessageHandler.class";
@@ -18,7 +17,7 @@ import {
 import useCustomStyles from "../../constants/styles";
 
 import PageTitle from "../Shared/pageTitle";
-import {Typography} from "@mui/material";
+import { Typography, Alert, AlertTitle } from "@mui/material";
 import qs from "qs";
 import User from "../User/user.class";
 import {checkActionCode, applyActionCode} from "firebase/auth";

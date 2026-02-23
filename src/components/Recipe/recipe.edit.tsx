@@ -62,7 +62,7 @@ import {
   Alert,
   AlertColor,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import {AutocompleteChangeReason} from "@mui/material/Autocomplete";
 
@@ -1598,6 +1598,7 @@ const RecipeEdit = ({
 
   return (
     // <DragDropContext onDragEnd={onDragEnd}>
+    // </DragDropContext>
     <React.Fragment>
       {/* wenn Variante auch Komponenten aus dem View holen!*/}
       {state.recipe.type == RecipeType.variant ? (
@@ -1610,7 +1611,6 @@ const RecipeEdit = ({
           onBlur={onBlurRecipeName}
         />
       )}
-
       <RecipeButtonRow onSave={onSave} onCancel={onCancel} />
       <RecipeDivider />
       <Container sx={classes.container} component="main" maxWidth="lg">
@@ -1620,7 +1620,7 @@ const RecipeEdit = ({
 
         <Grid container spacing={4} justifyContent="center">
           {state.error && (
-            <Grid key={"error"} xs={12}>
+ <Grid size={12} key={"error"} >
               <AlertMessage
                 error={state.error}
                 messageTitle={TEXT.ALERT_TITLE_WAIT_A_MINUTE}
@@ -1628,22 +1628,22 @@ const RecipeEdit = ({
             </Grid>
           )}
           {mealPlan.length > 0 && groupConfiguration && (
-            <Grid xs={12} md={6}>
+ <Grid size={{ xs: 12, md: 6 }} >
               <MealPlanPanelView
                 mealPlan={mealPlan}
                 groupConfiguration={groupConfiguration}
               />
             </Grid>
           )}
-          <Grid xs={12} md={6}>
+ <Grid size={{ xs: 12, md: 6 }} >
             {state.recipe.type == RecipeType.variant ? (
               // Die Variante darf die generellen Infos nicht anpassen
-              <RecipeInfoPanelView
+              (<RecipeInfoPanelView
                 recipe={state.recipe}
                 onTagDelete={onTagDelete}
                 onTagAdd={onTagAdd}
                 authUser={authUser}
-              />
+              />)
             ) : (
               <RecipeInfoPanel
                 recipe={state.recipe}
@@ -1654,7 +1654,7 @@ const RecipeEdit = ({
             )}
           </Grid>
           <RecipeDivider style={{marginTop: "1em", marginBottom: "1em"}} />
-          <Grid xs={12}>
+ <Grid size={12} >
             <RecipeIngredients
               recipe={state.recipe}
               units={state.units}
@@ -1666,7 +1666,7 @@ const RecipeEdit = ({
             />
           </Grid>
           <RecipeDivider style={{marginTop: "1em", marginBottom: "1em"}} />
-          <Grid xs={12}>
+ <Grid size={12} >
             <RecipePreparationSteps
               recipe={state.recipe}
               onChange={onChangePreparationStep}
@@ -1675,7 +1675,7 @@ const RecipeEdit = ({
             />
           </Grid>
           <RecipeDivider style={{marginTop: "1em", marginBottom: "1em"}} />
-          <Grid xs={12}>
+ <Grid size={12} >
             <RecipeMaterials
               recipe={state.recipe}
               materials={state.materials}
@@ -1685,7 +1685,7 @@ const RecipeEdit = ({
             />
           </Grid>
           {state.recipe.type == RecipeType.variant && (
-            <Grid xs={12}>
+ <Grid size={12} >
               <RecipeVariantNote
                 recipe={state.recipe}
                 onChange={onChangeField}
@@ -1747,7 +1747,6 @@ const RecipeEdit = ({
         handleClose={handleSnackbarClose}
       />
     </React.Fragment>
-    // </DragDropContext>
   );
 };
 /* ===================================================================
@@ -2283,7 +2282,7 @@ const RecipeIngredients = ({
         {TEXT.INGREDIENTS}
       </Typography>
       <Grid container spacing={2} alignItems="center">
-        <Grid sx={classes.centerCenter} xs={6}>
+ <Grid size={6} sx={classes.centerCenter} >
           <TextField
             id={"portions"}
             key={"portions"}
@@ -2295,7 +2294,7 @@ const RecipeIngredients = ({
             disabled={recipe.type == RecipeType.variant}
           />
         </Grid>
-        <Grid sx={classes.centerCenter} xs={6}>
+ <Grid size={6} sx={classes.centerCenter} >
           <Typography variant="body2">
             {TEXT.FIELD_SHOW_SCALE_FACTORS}
           </Typography>
@@ -2306,7 +2305,7 @@ const RecipeIngredients = ({
           />
         </Grid>
 
-        <Grid sx={classes.centerCenter} xs={12}>
+ <Grid size={12} sx={classes.centerCenter} >
           <IngredientListContext.Provider value={contextValue}>
             <List key={"listIngredients"} style={{flexGrow: 1}}>
               {recipe.ingredients.order.map((ingredientUid, index) => (
@@ -2527,10 +2526,8 @@ const IngredientPosition = ({
     <ListItemText>
       <Grid container spacing={2} alignItems="center">
         {!breakpointIsXs && (
-          <Grid
+          <Grid size={{ xs: gridSize.pos.xs, sm: gridSize.pos.sm }}
             key={"ingredient_pos_grid_" + ingredient.uid}
-            xs={gridSize.pos.xs}
-            sm={gridSize.pos.sm}
             sx={classes.centerCenter}
           >
             <Typography
@@ -2541,10 +2538,8 @@ const IngredientPosition = ({
             </Typography>
           </Grid>
         )}
-        <Grid
+        <Grid size={{ xs: gridSize.quantity.xs, sm: gridSize.quantity.sm }}
           key={"ingredient_quantity_grid_" + ingredient.uid}
-          xs={gridSize.quantity.xs}
-          sm={gridSize.quantity.sm}
         >
           <TextField
             key={"quantity_" + ingredient.uid}
@@ -2563,10 +2558,8 @@ const IngredientPosition = ({
         </Grid>
 
         {/* Einheit */}
-        <Grid
+        <Grid size={{ xs: gridSize.unit.xs, sm: gridSize.unit.sm }}
           key={"ingredient_unit_grid_" + ingredient.uid}
-          xs={gridSize.unit.xs}
-          sm={gridSize.unit.sm}
           sx={[!showScaleFactors && {paddingRight: theme.spacing(2)}]}
         >
           <UnitAutocomplete
@@ -2578,10 +2571,8 @@ const IngredientPosition = ({
         </Grid>
         {/* Skalierungsfaktor */}
         {showScaleFactors && (
-          <Grid
+          <Grid size={{ xs: gridSize.scalingFactor.xs, sm: gridSize.scalingFactor.sm }}
             key={"ingredient_scalingFractor_grid_" + ingredient.uid}
-            xs={gridSize.scalingFactor.xs}
-            sm={gridSize.scalingFactor.sm}
             sx={{paddingRight: theme.spacing(2)}}
           >
             <TextField
@@ -2601,10 +2592,8 @@ const IngredientPosition = ({
           </Grid>
         )}
 
-        <Grid
+        <Grid size={{ xs: gridSize.product.xs, sm: gridSize.product.sm }}
           key={"ingredient_product_grid_" + ingredient.uid}
-          xs={gridSize.product.xs}
-          sm={gridSize.product.sm}
         >
           <ProductAutocomplete
             componentKey={ingredient.uid}
@@ -2613,10 +2602,8 @@ const IngredientPosition = ({
             onChange={onChangeIngredient}
           />
         </Grid>
-        <Grid
+        <Grid size={{ xs: gridSize.detail.xs, sm: gridSize.detail.sm }}
           key={"ingredient_detail_grid_" + ingredient.uid}
-          xs={gridSize.detail.xs}
-          sm={gridSize.detail.sm}
           // Sonst crasht das Feld in den Secondary-Action-Button
           sx={{paddingRight: theme.spacing(2)}}
         >
@@ -2781,7 +2768,7 @@ const RecipePreparationSteps = ({
         {TEXT.PREPARATION}
       </Typography>
       <Grid container spacing={2} alignItems="center">
-        <Grid sx={classes.centerCenter} xs={12}>
+ <Grid size={12} sx={classes.centerCenter} >
           <PreparationListContext.Provider value={contextValue}>
             <List key={"listPreparationSteps"} style={{flexGrow: 1}}>
               {/* Zutaten auflsiten */}
@@ -2974,9 +2961,8 @@ const PreparationStepPosition = ({
     <React.Fragment>
       <ListItemText>
         <Grid container spacing={2} alignItems="center">
-          <Grid
+          <Grid size={1}
             key={"preparationstep_pos_grid_" + preparationStep.uid}
-            xs={1}
             sx={classes.centerCenter}
           >
             <Typography
@@ -2987,9 +2973,8 @@ const PreparationStepPosition = ({
             </Typography>
           </Grid>
 
-          <Grid
+          <Grid size={11}
             key={"preparationstep_step_grid_" + preparationStep.uid}
-            xs={11}
             // Sonst crasht das Feld in den Secondary-Action-Button
             sx={{paddingRight: theme.spacing(2)}}
           >
@@ -3162,7 +3147,7 @@ const RecipeMaterials = ({
         {TEXT.MATERIAL}
       </Typography>
       <Grid container spacing={2} alignItems="center">
-        <Grid sx={classes.centerCenter} xs={12}>
+ <Grid size={12} sx={classes.centerCenter} >
           <MaterialListContext.Provider value={contextValue}>
             <List key={"listMaterials"} style={{flexGrow: 1}}>
               {recipe.materials.order.map((materialUid, index) => (
@@ -3337,9 +3322,8 @@ const MaterialPosition = ({
     <React.Fragment>
       <ListItemText>
         <Grid container spacing={2} alignItems="center">
-          <Grid
+          <Grid size={1}
             key={"material_pos_grid_" + material.uid}
-            xs={1}
             sx={classes.centerCenter}
           >
             <Typography key={"material_pos_" + material.uid} color="primary">
@@ -3347,7 +3331,7 @@ const MaterialPosition = ({
             </Typography>
           </Grid>
 
-          <Grid key={"material_quantity_grid_" + material.uid} xs={2}>
+ <Grid size={2} key={"material_quantity_grid_" + material.uid} >
             <TextField
               key={"quantity_" + material.uid}
               id={"quantity_" + material.uid}
@@ -3363,9 +3347,8 @@ const MaterialPosition = ({
               fullWidth
             />
           </Grid>
-          <Grid
+          <Grid size={9}
             key={"material_name_grid_" + material.uid}
-            xs={9}
             // Sonst crasht das Feld in den Secondary-Action-Button
             sx={{paddingRight: theme.spacing(2)}}
           >
@@ -3403,20 +3386,16 @@ const SectionPosition = ({
     <React.Fragment>
       <ListItemText>
         <Grid container spacing={2} alignItems="center">
-          {index !== 1 && <Grid xs={12} style={{marginTop: "0.5em"}} />}
+          {index !== 1 && <Grid size={12} style={{marginTop: "0.5em"}} />}
           {!breakpointIsXs && (
-            <Grid
+            <Grid size={{ xs: 1, sm: 1 }}
               key={"section_pos_grid_" + section.uid}
-              xs={1}
-              sm={1}
               sx={classes.centerCenter}
             />
           )}
 
-          <Grid
+          <Grid size={{ xs: breakpointIsXs ? 12 : 11, sm: breakpointIsXs ? 12 : 11 }}
             key={"section_name_grid_" + section.uid}
-            xs={breakpointIsXs ? 12 : 11}
-            sm={breakpointIsXs ? 12 : 11}
             // Sonst crasht das Feld in den Secondary-Action-Button
             sx={{paddingRight: theme.spacing(2)}}
           >
@@ -3541,8 +3520,8 @@ const RecipeVariantNote = ({recipe, onChange}: RecipeVariantNoteProps) => {
         {TEXT.VARIANT_NOTE}
       </Typography>
       <Grid container spacing={2} alignItems="center">
-        <Grid key={"grid_pos_note"} xs={1} />
-        <Grid key={"grid_note_note"} xs={11}>
+ <Grid size={1} key={"grid_pos_note"} />
+ <Grid size={11} key={"grid_note_note"} >
           <TextField
             id="variantProperties.note"
             key="variantProperties.note"

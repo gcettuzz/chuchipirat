@@ -59,9 +59,8 @@ import {ChangeRecord} from "../Shared/global.interface";
 import {
   DataGrid,
   GridColDef,
-  GridValueFormatterParams,
-  deDE,
 } from "@mui/x-data-grid";
+import {deDE} from "@mui/x-data-grid/locales";
 import Utils from "../Shared/utils.class";
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -557,18 +556,18 @@ const RecipesPanel = ({recipes, onRecipeOpen}: RecipesPanelProps) => {
       headerName: TEXT_SOURCE,
       editable: false,
       width: 150,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return Utils.isUrl(params?.value as string)
-          ? Utils.getDomain(params?.value as string)
-          : params.value;
+      valueGetter: (value) => {
+        return Utils.isUrl(value as string)
+          ? Utils.getDomain(value as string)
+          : value;
       },
     },
     {
       field: "create_date",
       headerName: TEXT_CREATED_AT,
       editable: false,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return params?.value?.toLocaleString("de-CH", {
+      valueGetter: (value) => {
+        return value?.toLocaleString("de-CH", {
           dateStyle: "medium",
         });
       },
@@ -579,8 +578,8 @@ const RecipesPanel = ({recipes, onRecipeOpen}: RecipesPanelProps) => {
       headerName: `${TEXT_CREATED_FROM} ${TEXT_UID}`,
       editable: false,
       cellClassName: () => `super-app ${classes.typographyCode}`,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return params.value;
+      valueGetter: (value) => {
+        return value;
       },
       width: 200,
     },
@@ -588,8 +587,8 @@ const RecipesPanel = ({recipes, onRecipeOpen}: RecipesPanelProps) => {
       field: "create_fromDisplayName",
       headerName: TEXT_CREATED_FROM,
       editable: false,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return params.value;
+      valueGetter: (value) => {
+        return value;
       },
       width: 200,
     },

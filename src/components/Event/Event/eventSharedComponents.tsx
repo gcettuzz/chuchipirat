@@ -11,6 +11,7 @@ import {
   List,
   ListSubheader,
   ListItem,
+  ListItemButton,
   ListItemText,
   ListItemSecondaryAction,
   ListItemIcon,
@@ -22,7 +23,7 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import {
   MENUE_SELECTION as TEXT_MENUE_SELECTION,
@@ -83,7 +84,7 @@ interface EventListCardProps {
   menuplan: Menuplan;
   onCreateList: () => void;
   onListElementSelect: (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    event: React.MouseEvent<HTMLElement, MouseEvent>,
   ) => void;
   onListElementDelete: (event: React.MouseEvent<HTMLElement>) => void;
   onListElementEdit: (event: React.MouseEvent<HTMLElement>) => void;
@@ -116,10 +117,9 @@ export const EventListCard = ({
           <List>
             <ListSubheader>{TEXT_EXISTING_LISTS}</ListSubheader>
             {Object.values(lists).map((list) => (
-              <ListItem
+              <ListItemButton
                 key={"listItem_" + list?.properties.uid}
                 id={"listItem_" + list?.properties.uid}
-                button
                 selected={selectedListItem == list?.properties.uid}
                 onClick={onListElementSelect}
               >
@@ -146,7 +146,7 @@ export const EventListCard = ({
                     <DeleteIcon />
                   </IconButton>
                 </ListItemSecondaryAction>
-              </ListItem>
+              </ListItemButton>
             ))}
           </List>
         )}
@@ -157,8 +157,7 @@ export const EventListCard = ({
             lists[selectedListItem]?.properties.generated.date &&
           noOfLists > 0 && (
             <Grid container>
-              <Grid
-                xs={1}
+              <Grid size={1}
                 style={{
                   display: "flex",
                   justifyContent: "center",
@@ -167,7 +166,7 @@ export const EventListCard = ({
               >
                 <ErrorOutlineIcon color="error" />
               </Grid>
-              <Grid xs={11}>
+ <Grid size={11} >
                 <Typography color="error">{outOfDateWarnMessage}</Typography>
               </Grid>
             </Grid>
@@ -287,7 +286,7 @@ export const DialogTraceItem = ({
   // Rezept Handler
   // ------------------------------------------ */
   const onListItemClick = (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    event: React.MouseEvent<HTMLElement, MouseEvent>,
   ) => {
     const pressedButton = event.currentTarget.id.split("_");
 
@@ -303,17 +302,17 @@ export const DialogTraceItem = ({
         <Grid container spacing={2}>
           {hasBeenManualyEdited && (
             <React.Fragment>
-              <Grid xs={2}>
+ <Grid size={2} >
                 <InfoIcon fontSize="small" color="disabled" />
               </Grid>
-              <Grid xs={10}>
+ <Grid size={10} >
                 <Typography variant="body1">
                   {TEXT_THE_QUANTITY_HAS_BEEN_MANUALY_EDITED}
                 </Typography>
               </Grid>
             </React.Fragment>
           )}
-          <Grid xs={12}>
+ <Grid size={12} >
             <List key={`list_for_trace`}>
               {sortedMenues.map((menue) => {
                 const traceItems = trace?.filter(
@@ -336,8 +335,7 @@ export const DialogTraceItem = ({
                           <React.Fragment key={`${item}_${counter}`}>
                             {item.recipe.uid ? (
                               // List-Item nur mit Button, wenn auch ein Rezept dahinter steckt
-                              <ListItem
-                                button
+                              (<ListItemButton
                                 onClick={onListItemClick}
                                 id={`listItemButton_${menue.menueUid}_${counter}_${item.recipe.uid}`}
                                 key={`listItemButton_${menue.menueUid}_${counter}_${item.recipe.uid}`}
@@ -368,7 +366,7 @@ export const DialogTraceItem = ({
                                   id={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
                                   key={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
                                 />
-                              </ListItem>
+                              </ListItemButton>)
                             ) : (
                               <ListItem
                                 id={`listItem_${menue.menueUid}_${counter}_${item.recipe.uid}`}

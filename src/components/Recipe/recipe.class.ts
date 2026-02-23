@@ -1814,7 +1814,7 @@ export default class Recipe {
   }: Scale) => {
     const scaledIngredients = {} as RecipeObjectStructure<Ingredient>;
 
-    Object.values(recipe?.ingredients.entries).forEach((ingredient) => {
+    Object.values(recipe?.ingredients?.entries ?? {}).forEach((ingredient) => {
       if (ingredient.posType == PositionType.ingredient) {
         ingredient = ingredient as Ingredient;
 

@@ -44,7 +44,7 @@ import AuthUser from "../Firebase/Authentication/authUser.class";
 import {useAuthUser} from "../Session/authUserContext";
 import PageTitle from "../Shared/pageTitle";
 import useCustomStyles from "../../constants/styles";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import {
   draggable,

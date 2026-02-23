@@ -70,6 +70,8 @@ import {
   Typography,
   useTheme,
   Stack,
+  Alert,
+  AlertTitle,
 } from "@mui/material";
 
 import AlertMessage from "../Shared/AlertMessage";
@@ -84,10 +86,8 @@ import {
   DataGrid,
   GridColDef,
   GridSortModel,
-  GridValueFormatterParams,
-  deDE,
 } from "@mui/x-data-grid";
-import {Alert, AlertTitle} from "@mui/lab";
+import {deDE} from "@mui/x-data-grid/locales";
 import Event from "../Event/Event/event.class";
 import isEqual from "lodash/isEqual";
 
@@ -574,9 +574,9 @@ const UsersTable = ({dbUsers, onUserSelect}: UsersTableProps) => {
       headerName: TEXT_MEMBER_SINCE,
       editable: false,
       width: 150,
-      valueFormatter: (params: GridValueFormatterParams) => {
-        if (params.value && params.value instanceof Date) {
-          return params.value.toLocaleString("de-CH", {
+      valueFormatter: (value) => {
+        if (value && value instanceof Date) {
+          return value.toLocaleString("de-CH", {
             dateStyle: "medium",
           });
         } else {

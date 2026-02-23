@@ -57,7 +57,7 @@ import {
   AutocompleteChangeReason,
 } from "@mui/material";
 
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import AlertMessage from "../Shared/AlertMessage";
 import ProductAutocomplete from "../Product/productAutocomplete";
@@ -701,7 +701,7 @@ const PanelConvertProductToMaterial = ({
         {convertProtocol !== null && (
           <React.Fragment>
             <br />
-            <Grid xs={12}>
+ <Grid size={12} >
               <List
                 subheader={
                   <ListSubheader component="div" id="subheader-log-result">
@@ -718,7 +718,7 @@ const PanelConvertProductToMaterial = ({
               </List>
               <br />
             </Grid>
-            <Grid xs={12}>
+ <Grid size={12} >
               <List
                 subheader={
                   <ListSubheader component="div" id="subheader-merge-result">
@@ -784,7 +784,7 @@ PanelConvertMaterialToProductProps) => {
     <Card sx={classes.card} key={"cardInfo"}>
       <CardContent sx={classes.cardContent} key={"cardContentInfo"}>
         <Grid container spacing={2}>
-          <Grid xs={12}>
+ <Grid size={12} >
             <Typography gutterBottom={true} variant="h5" component="h2">
               {TEXT_MERGE_MATERIAL_SELECTION}
             </Typography>
@@ -793,7 +793,7 @@ PanelConvertMaterialToProductProps) => {
               {TEXT_CONVERT_ITEM_EXPLANATION(TEXT_MATERIAL, TEXT_PRODUCT)}
             </Typography>
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <MaterialAutocomplete
               material={material}
               materials={materials}
@@ -802,14 +802,14 @@ PanelConvertMaterialToProductProps) => {
               disabled={false}
             />
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <MaterialDetailList
               materialUid={material.uid}
               materials={materials}
             />
           </Grid>
           <br />
-          <Grid xs={12}>
+ <Grid size={12} >
             <DepartmentAutocomplete
               department={productProperty.department}
               departments={departments}
@@ -817,7 +817,7 @@ PanelConvertMaterialToProductProps) => {
               onChange={onChangeAutocompleteSelection}
             />
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <UnitAutocomplete
               unitKey={productProperty.unit.key}
               units={units}
@@ -825,7 +825,7 @@ PanelConvertMaterialToProductProps) => {
             />
           </Grid>
           <br />
-          <Grid xs={12} sm={6}>
+ <Grid size={{ xs: 12, sm: 6 }} >
             <FormControl fullWidth>
               <FormLabel component="legend">{TEXT_INTOLERANCES}</FormLabel>
               <FormGroup>
@@ -858,7 +858,7 @@ PanelConvertMaterialToProductProps) => {
               </FormGroup>
             </FormControl>
           </Grid>
-          <Grid xs={12} sm={6}>
+ <Grid size={{ xs: 12, sm: 6 }} >
             <FormControl fullWidth>
               <FormGroup>
                 <FormLabel component="legend">
@@ -911,7 +911,7 @@ PanelConvertMaterialToProductProps) => {
           {convertProtocol !== null && (
             <React.Fragment>
               <br />
-              <Grid xs={12}>
+ <Grid size={12} >
                 <List
                   subheader={
                     <ListSubheader component="div" id="subheader-log-result">
@@ -928,7 +928,7 @@ PanelConvertMaterialToProductProps) => {
                 </List>
                 <br />
               </Grid>
-              <Grid xs={12}>
+ <Grid size={12} >
                 <List
                   subheader={
                     <ListSubheader component="div" id="subheader-merge-result">

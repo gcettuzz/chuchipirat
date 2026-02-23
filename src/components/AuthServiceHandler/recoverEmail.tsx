@@ -2,8 +2,7 @@ import React from "react";
 
 import {useNavigate} from "react-router";
 
-import {Container, Link} from "@mui/material";
-import {Alert, AlertTitle} from "@mui/lab";
+import { Container, Link, Alert, AlertTitle } from "@mui/material";
 
 import PageTitle from "../Shared/pageTitle";
 

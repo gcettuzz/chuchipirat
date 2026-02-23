@@ -187,10 +187,10 @@ const RecipeCard = ({
           <CardContent sx={classes.cardContent}>
             {infoLine ? (
               <Grid container spacing={1}>
-                <Grid item xs={2}>
+                <Grid size={2}>
                   <InfoIcon fontSize="small" color="action" />
                 </Grid>
-                <Grid item xs={10}>
+                <Grid size={10}>
                   <Typography>{infoLine}</Typography>
                 </Grid>
               </Grid>
@@ -202,7 +202,7 @@ const RecipeCard = ({
           {/* <CardActions> */}
           <CardActions sx={classes.cardActions}>
             <Grid container spacing={1}>
-              <Grid item xs={10}>
+              <Grid size={10}>
                 <div
                   style={{
                     display: "flex",
@@ -225,11 +225,7 @@ const RecipeCard = ({
                   </Typography>
                 </div>
               </Grid>
-              <Grid
-                item
-                xs={2}
-                style={{display: "flex", justifyContent: "flex-end"}}
-              >
+              <Grid style={{display: "flex", justifyContent: "flex-end"}} size={2}>
                 {onFabButtonClickSuper ? (
                   <Fab
                     component="a"

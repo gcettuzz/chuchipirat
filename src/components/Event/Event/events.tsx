@@ -13,7 +13,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import PageTitle from "../../Shared/pageTitle";
 
@@ -218,12 +218,12 @@ const EventsGrid = ({
       style={{marginBottom: "3rem"}}
     >
       {isLoading && (
-        <Grid xs={12} sm={6} md={4} lg={3}>
+ <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} >
           <EventCardLoading key={"loadingEventCard"} />
         </Grid>
       )}
       {events.map((event) => (
-        <Grid xs={12} sm={6} md={4} lg={3} key={"eventGrid_" + event.uid}>
+ <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={"eventGrid_" + event.uid}>
           <EventCard
             event={event}
             onCardClick={onCardClick}
@@ -233,11 +233,11 @@ const EventsGrid = ({
       ))}
       {/* Leere Grids erzeugen, damit die Karten in einem Tabellenlayout angezeigt werden */}
       {Array.from({length: events.length % rowSize}).map((index) => (
-        <Grid xs={12} sm={6} md={4} lg={3} key={"eventGridEmpty_" + index} />
+ <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={"eventGridEmpty_" + index} />
       ))}
 
       {showCreateNewCard && (
-        <Grid xs={12} sm={6} md={4} lg={3}>
+ <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} >
           <Card sx={classes.card} key={"eventCardNew"}>
             <CardMedia
               sx={classes.cardMedia}

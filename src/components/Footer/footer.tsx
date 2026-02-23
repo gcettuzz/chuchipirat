@@ -1,7 +1,7 @@
 import React from "react";
 
 import Link from "@mui/material/Link";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
@@ -38,11 +38,11 @@ const Footer = () => {
     <footer>
       <Container sx={classes.container}>
         <Grid container justifyContent="center" alignItems="center" spacing={4}>
-          <Grid xs={2} />
-          <Grid xs={3}>
+ <Grid size={2} />
+ <Grid size={3} >
             <Divider sx={classes.mediumDivider} key={"footerDividerLeft"} />
           </Grid>
-          <Grid container justifyContent="center" xs={2}>
+ <Grid size={2} container justifyContent="center" >
             <Box
               component="img"
               src={
@@ -52,12 +52,12 @@ const Footer = () => {
               width="50px"
             />
           </Grid>
-          <Grid xs={3}>
+ <Grid size={3} >
             <Divider sx={classes.mediumDivider} key={"footerDividerRight"} />
           </Grid>
-          <Grid xs={2} />
+ <Grid size={2} />
 
-          <Grid xs={12}>
+ <Grid size={12} >
             <Typography variant="h6" align="center" gutterBottom>
               {TEXT_APP_NAME}
             </Typography>
@@ -141,7 +141,7 @@ const Footer = () => {
               <IconInstagram />
             </IconButton>
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <Copyright />
             <br />
           </Grid>

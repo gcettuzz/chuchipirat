@@ -318,10 +318,9 @@ const SystemMessageForm = ({
           <DatePicker
             key={"validto"}
             label={TEXT_VALID_TO}
-            inputFormat="dd.MM.yyyy"
+            format="dd.MM.yyyy"
             value={systemMessage.validTo}
             onChange={onDatePickerUpdate}
-            renderInput={(params) => <TextField {...params} />}
           />
 
           <ReactQuill

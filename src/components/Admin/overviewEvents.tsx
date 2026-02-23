@@ -73,9 +73,8 @@ import {
   DataGrid,
   GridColDef,
   GridToolbar,
-  GridValueFormatterParams,
-  deDE,
 } from "@mui/x-data-grid";
+import {deDE} from "@mui/x-data-grid/locales";
 import DialogEventQuickView from "../Event/Event/dialogEventQuickView";
 import {useNavigate} from "react-router";
 import Action from "../../constants/actions";
@@ -555,9 +554,9 @@ const EventsPanel = ({
       headerName: TEXT_START_DATE,
       editable: false,
       width: 150,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return params?.value instanceof Date
-          ? params.value.toLocaleString("de-CH", {
+      valueGetter: (value) => {
+        return value instanceof Date
+          ? value.toLocaleString("de-CH", {
               dateStyle: "medium",
             })
           : "";
@@ -568,9 +567,9 @@ const EventsPanel = ({
       headerName: TEXT_END_DATE,
       editable: false,
       width: 150,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return params?.value instanceof Date
-          ? params.value.toLocaleString("de-CH", {
+      valueGetter: (value) => {
+        return value instanceof Date
+          ? value.toLocaleString("de-CH", {
               dateStyle: "medium",
             })
           : "";
@@ -587,9 +586,9 @@ const EventsPanel = ({
       field: "create_date",
       headerName: TEXT_CREATED_AT,
       editable: false,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return params?.value instanceof Date
-          ? params.value.toLocaleString("de-CH", {
+      valueGetter: (value) => {
+        return value instanceof Date
+          ? value.toLocaleString("de-CH", {
               dateStyle: "medium",
             })
           : "";
@@ -601,8 +600,8 @@ const EventsPanel = ({
       headerName: `${TEXT_CREATED_FROM} ${TEXT_UID}`,
       editable: false,
       cellClassName: () => `super-app ${classes.typographyCode}`,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return params.value;
+      valueGetter: (value) => {
+        return value;
       },
       width: 200,
     },
@@ -610,8 +609,8 @@ const EventsPanel = ({
       field: "create_fromDisplayName",
       headerName: TEXT_CREATED_FROM,
       editable: false,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return params.value;
+      valueGetter: (value) => {
+        return value;
       },
       width: 200,
     },
@@ -780,12 +779,11 @@ const DialogCreateReceipt = ({
           <DatePicker
             key={"payDate"}
             label={TEXT_PAY_DATE}
-            inputFormat="dd.MM.yyyy"
+            format="dd.MM.yyyy"
             value={dialogValues.payDate}
             onChange={(date) => {
               setDialogValues({...dialogValues, payDate: date as Date});
             }}
-            renderInput={(params) => <TextField {...params} />}
           />
           <TextField
             id="donorName"

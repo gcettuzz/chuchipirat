@@ -66,8 +66,15 @@ const UsedRecipesPdf = ({
       title={TEXT_SHOPPING_LIST + " " + eventName}
     >
       {sortedMenueList.map((menueCoordinate) => {
-        return menueplan.menues[menueCoordinate.menueUid].mealRecipeOrder.map(
-          (mealRecipeUid) => (
+        return menueplan.menues[menueCoordinate.menueUid].mealRecipeOrder
+          .filter((mealRecipeUid) => {
+            const mealRecipe = menueplan.mealRecipes[mealRecipeUid];
+            return (
+              mealRecipe &&
+              list.recipes[mealRecipe.recipe.recipeUid]
+            );
+          })
+          .map((mealRecipeUid) => (
             <RecipePage
               eventName={eventName}
               mealRecipe={menueplan.mealRecipes[mealRecipeUid]}
@@ -85,8 +92,7 @@ const UsedRecipesPdf = ({
               authUser={authUser}
               key={"recipePage_" + mealRecipeUid}
             />
-          )
-        );
+          ));
       })}
     </Document>
   );

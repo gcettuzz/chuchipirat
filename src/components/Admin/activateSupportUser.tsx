@@ -11,6 +11,7 @@ import {
   useTheme,
   LinearProgress,
   Stack,
+  Alert,
 } from "@mui/material";
 
 import {
@@ -27,7 +28,6 @@ import AuthUser from "../Firebase/Authentication/authUser.class";
 import {useAuthUser} from "../Session/authUserContext";
 import PageTitle from "../Shared/pageTitle";
 import Event from "../Event/Event/event.class";
-import {Alert} from "@mui/lab";
 import useCustomStyles from "../../constants/styles";
 /* ===================================================================
 // ======================== globale Funktionen =======================

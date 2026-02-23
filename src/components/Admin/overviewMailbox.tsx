@@ -65,9 +65,8 @@ import {useFirebase} from "../Firebase/firebaseContext";
 import {
   DataGrid,
   GridColDef,
-  GridValueFormatterParams,
-  deDE,
 } from "@mui/x-data-grid";
+import {deDE} from "@mui/x-data-grid/locales";
 
 import MailConsole, {
   MailLogEntry,
@@ -433,9 +432,9 @@ const MaillogTable = ({dbMaillog, onMailLogSelect}: MaillogTableProps) => {
       headerName: TEXT_TIMESTAMP,
       editable: false,
       width: 200,
-      valueFormatter: (params: GridValueFormatterParams) => {
-        if (params.value && params.value instanceof Date) {
-          return params.value.toLocaleString("de-CH", {
+      valueFormatter: (value) => {
+        if (value && value instanceof Date) {
+          return value.toLocaleString("de-CH", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",

@@ -172,7 +172,7 @@ const PublicProfilePage = () => {
       />
       {state.publicProfile.uid === authUser?.uid ? (
         // Nur Anzeigen wenn die Person das eigene Profil anschaut
-        <ButtonRow
+        (<ButtonRow
           key="buttons_view"
           buttons={[
             {
@@ -185,7 +185,7 @@ const PublicProfilePage = () => {
               onClick: onEditClick,
             },
           ]}
-        />
+        />)
       ) : null}
       {/* ===== BODY ===== */}
       <Container sx={classes.container} component="main" maxWidth="sm">

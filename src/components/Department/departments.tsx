@@ -392,14 +392,14 @@ const DepartmentsPage = () => {
         <Grid container spacing={2}>
           {/* Fehler anzeigen? */}
           {state.error && (
-            <Grid item key={"error"} xs={12}>
+            <Grid key={"error"} size={12}>
               <AlertMessage
                 error={state.error}
                 messageTitle={TEXT_ALERT_TITLE_UUPS}
               />
             </Grid>
           )}
-          <Grid item key={"DepartmentsPanel"} xs={12}>
+          <Grid key={"DepartmentsPanel"} size={12}>
             <br />
             <DepartmentTable
               departments={state.departments}
@@ -452,19 +452,19 @@ const DepartmentTable = ({
       <CardContent sx={classes.cardContent} key={"cardDepartments"}>
         {editMode ? (
           <Grid container spacing={2}>
-            <Grid item xs={8}>
+            <Grid size={8}>
               <Typography variant="subtitle1">{TEXT_DEPARTMENT}</Typography>
             </Grid>
-            <Grid item xs={4}>
+            <Grid size={4}>
               <Typography variant="subtitle1">{TEXT_ORDER}</Typography>
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Divider />
             </Grid>
 
             {departments.map((department) => (
               <React.Fragment key={"departmentFragment_" + department.uid}>
-                <Grid item xs={8} key={"gridItemName_" + department.uid}>
+                <Grid key={"gridItemName_" + department.uid} size={8}>
                   <TextField
                     id={"name_" + department.uid}
                     key={"name_" + department.uid}
@@ -474,7 +474,7 @@ const DepartmentTable = ({
                     fullWidth
                   />
                 </Grid>
-                <Grid item xs={4} key={"gridItemPos_" + department.uid}>
+                <Grid key={"gridItemPos_" + department.uid} size={4}>
                   <FormControl fullWidth sx={classes.formControl}>
                     <InputLabel key="label_pos">{TEXT_POSITION}</InputLabel>
                     <Select
@@ -497,7 +497,7 @@ const DepartmentTable = ({
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} key={"gridItemDivider_" + department.uid}>
+                <Grid key={"gridItemDivider_" + department.uid} size={12}>
                   <Divider />
                 </Grid>
               </React.Fragment>

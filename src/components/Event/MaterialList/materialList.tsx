@@ -22,7 +22,7 @@ import {
   Box,
   AlertColor,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
@@ -708,7 +708,7 @@ const EventMaterialListPage = ({
       });
   };
   const onListElementSelect = React.useCallback(
-    async (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    async (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
       const selectedListItem = event.currentTarget.id.split("_")[1];
       if (state.selectedListItem == selectedListItem) {
         return;
@@ -1201,14 +1201,14 @@ const EventMaterialListList = React.memo(
                     alignItems="center"
                     sx={{flex: 1, minWidth: 0}}
                   >
-                    <Grid key={"quantity_grid_" + material.uid} xs={4} sm={3}>
+                    <Grid size={{ xs: 4, sm: 3 }} key={"quantity_grid_" + material.uid}>
                       <QuantityField
                         materialUid={material.uid}
                         quantity={material.quantity}
                         onChangeItem={onChangeItem}
                       />
                     </Grid>
-                    <Grid key={"material_grid_" + material.uid} xs={8} sm={9}>
+                    <Grid size={{ xs: 8, sm: 9 }} key={"material_grid_" + material.uid}>
                       <MaterialAutocomplete
                         componentKey={material.uid}
                         material={

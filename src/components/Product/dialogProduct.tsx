@@ -1,6 +1,6 @@
 import React from "react";
 
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 import {
   Button,
   TextField,
@@ -19,7 +19,7 @@ import {
   FormGroup,
   RadioGroup,
   Radio,
-  ListItem,
+  ListItemButton,
   List,
   Typography,
 } from "@mui/material";
@@ -409,7 +409,7 @@ const DialogProduct = ({
   // Similar Product PopUp - Handling
   // ------------------------------------------ */
   const onSimilarProductPopUpChooseProduct = (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
+    event: React.MouseEvent<HTMLElement, MouseEvent>
   ) => {
     const proudctUid = event.currentTarget.id.split("_")[1];
     const product = products.find((product) => product.uid === proudctUid);
@@ -479,7 +479,7 @@ const DialogProduct = ({
               />
             )}
           <Grid container spacing={2}>
-            <Grid xs={12}>
+ <Grid size={12} >
               <TextField
                 error={validation.name.hasError}
                 margin="dense"
@@ -495,7 +495,7 @@ const DialogProduct = ({
                 autoFocus
               />
             </Grid>
-            <Grid xs={12}>
+ <Grid size={12} >
               <FormControl fullWidth>
                 <DepartmentAutocomplete
                   department={productPopUpValues.department}
@@ -505,7 +505,7 @@ const DialogProduct = ({
                 />
               </FormControl>
             </Grid>
-            <Grid xs={dialogType === PRODUCT_DIALOG_TYPE.EDIT ? 6 : 12}>
+ <Grid size={dialogType === PRODUCT_DIALOG_TYPE.EDIT ? 6 : 12} >
               <FormControl fullWidth>
                 <UnitAutocomplete
                   componentKey={"shoppingUnit"}
@@ -517,7 +517,7 @@ const DialogProduct = ({
               </FormControl>
             </Grid>
             {dialogType === PRODUCT_DIALOG_TYPE.EDIT && (
-              <Grid xs={6}>
+ <Grid size={6} >
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -531,7 +531,7 @@ const DialogProduct = ({
                 />
               </Grid>
             )}
-            <Grid xs={12} sm={6}>
+ <Grid size={{ xs: 12, sm: 6 }} >
               <FormControl fullWidth>
                 <FormLabel component="legend">{TEXT_INTOLERANCES}</FormLabel>
                 <FormGroup>
@@ -564,7 +564,7 @@ const DialogProduct = ({
                 </FormGroup>
               </FormControl>
             </Grid>
-            <Grid xs={12} sm={6}>
+ <Grid size={{ xs: 12, sm: 6 }} >
               <FormControl fullWidth>
                 <FormGroup>
                   <FormLabel component="legend">
@@ -597,7 +597,7 @@ const DialogProduct = ({
               </FormControl>
             </Grid>
             {dialogType === ProductDialog.CREATE && (
-              <Grid xs={12}>
+ <Grid size={12} >
                 <FormHelperText>{TEXT_INFO_DIET_PROPERTIES}</FormHelperText>
               </Grid>
             )}
@@ -629,14 +629,13 @@ const DialogProduct = ({
           <Typography variant="h6">{TEXT_EXISTING_PRODUCTS}</Typography>
           <List dense>
             {similarProductPopupValues.similarProducts.map((product) => (
-              <ListItem
+              <ListItemButton
                 key={"similarProduct_" + product.uid}
                 id={"similarProduct_" + product.uid}
-                button
                 onClick={onSimilarProductPopUpChooseProduct}
               >
                 {product.name}
-              </ListItem>
+              </ListItemButton>
             ))}
           </List>
         </DialogContent>

@@ -81,7 +81,8 @@ import {
 } from "../Shared/customDialogContext";
 import {useAuthUser} from "../Session/authUserContext";
 import {useFirebase} from "../Firebase/firebaseContext";
-import {DataGrid, GridColDef, deDE, gridClasses} from "@mui/x-data-grid";
+import {DataGrid, GridColDef, gridClasses} from "@mui/x-data-grid";
+import {deDE} from "@mui/x-data-grid/locales";
 import Feed, {FeedType} from "../Shared/feed.class";
 import Firebase from "../Firebase/firebase.class";
 

@@ -47,7 +47,7 @@ import {
   ListItemText,
   useMediaQuery,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import {alpha} from "@mui/system/colorManipulator";
 
@@ -3286,7 +3286,7 @@ const MealTypeRow = ({
                 />
               ) : (
                 // Kein Menü vorhanden - MenuCard erstellen.....
-                <EmptyMealContainer
+                (<EmptyMealContainer
                   mealUid={actualMeal.uid}
                   buttonText={TEXT_NEW_MENU}
                   onCreateMenu={(mealUid) => {
@@ -3295,7 +3295,7 @@ const MealTypeRow = ({
                     } as React.MouseEvent<HTMLButtonElement>;
                     onCreateMenu(event);
                   }}
-                />
+                />)
               )}
               {/* {closestEdge && (
                 <Box component="div" className="custom-drop-indicator">
@@ -3644,7 +3644,7 @@ const MealTypeCard = ({
 //         <CardContent sx={classes.centerCenter}>
 //           <Grid container>
 //             {note && (
-//               <Grid xs={12}>
+//               <Grid size={12}>
 //                 <Typography
 //                   variant="body2"
 //                   color="textSecondary"
@@ -3654,7 +3654,7 @@ const MealTypeCard = ({
 //                 </Typography>
 //               </Grid>
 //             )}
-//             <Grid xs={12}>
+//             <Grid size={12}>
 //               {/* <Droppable
 //                 droppableId={`${menue.uid}_${DragDropTypes.MEALRECIPE}`}
 //                 type={DragDropTypes.MEALRECIPE}
@@ -3774,7 +3774,7 @@ const MealTypeCard = ({
 //               {/* )} */}
 //               {/* </Droppable> */}
 //             </Grid>
-//             <Grid xs={12} sx={classes.centerCenter}>
+//             <Grid size={12} sx={classes.centerCenter}>
 //               <Button
 //                 onClick={onAddRecipe}
 //                 color="primary"
@@ -3784,7 +3784,7 @@ const MealTypeCard = ({
 //               </Button>
 //             </Grid>
 //             {/* Produkt-Liste */}
-//             <Grid xs={12}>
+//             <Grid size={12}>
 //               {/* <Droppable
 //                 droppableId={`${menue.uid}_${DragDropTypes.PRODUCT}`}
 //                 type={DragDropTypes.PRODUCT}
@@ -3868,7 +3868,7 @@ const MealTypeCard = ({
 //               </Droppable> */}
 //             </Grid>
 //             {/* Material-Liste */}
-//             <Grid xs={12}>
+//             <Grid size={12}>
 //               {/* <Droppable
 //                 droppableId={`${menue.uid}_${DragDropTypes.MATERIAL}`}
 //                 type={DragDropTypes.MATERIAL}
@@ -4067,7 +4067,7 @@ const RecipeSearchDrawer = ({
       >
         <CloseIcon fontSize="small" />
       </IconButton>
-      <Container style={{marginTop: "2rem", width: "100vw", height: "100vh"}}>
+      <Container style={{marginTop: "2rem", width: "100%", height: "100vh"}} maxWidth={false}>
         <Typography variant="h2" align="center" style={{marginBottom: "2rem"}}>
           {TEXT_RECIPES_DRAWER_TITLE}{" "}
         </Typography>
@@ -4149,7 +4149,7 @@ export const RecipeDrawer = ({
       >
         <CloseIcon fontSize="small" />
       </IconButton>
-      <Container style={{width: "100vw", height: "100vh", padding: "0"}}>
+      <Container style={{width: "100%", height: "100vh", padding: "0"}} maxWidth={false}>
         {editMode ? (
           <RecipeEdit
             dbRecipe={recipe}
@@ -4877,13 +4877,13 @@ const DialogPlanPortions = ({
             {planedObject == PlanedObject.RECIPE &&
               planedMealRecipe.length == 0 && (
                 // Nur anzeigen, wenn neues Rezept hinzugeüfgt wird.
-                <Button
+                (<Button
                   onClick={onBackClick}
                   color="primary"
                   variant="outlined"
                 >
                   {TEXT_BACK}
-                </Button>
+                </Button>)
               )}
             <Button onClick={onAddClick} color="primary" variant="contained">
               {planedMealRecipe.length == 0 ? TEXT_ADD : TEXT_APPLY}
@@ -4917,7 +4917,7 @@ const DialogPlanPortionsMealBlock = ({
     plan &&
     (selectedDietUid == PlanedDiet.FIX ? (
       <Grid container spacing={2}>
-        <Grid xs={12}>
+ <Grid size={12} >
           <TextField
             id={
               "dialogPlanPortionsMealBlockIntolerance_total_" +
@@ -4941,8 +4941,8 @@ const DialogPlanPortionsMealBlock = ({
       </Grid>
     ) : (
       <Grid container spacing={2}>
-        <Grid xs={8} />
-        <Grid xs={2}>
+ <Grid size={8} />
+ <Grid size={2} >
           <Typography>
             <strong>{TEXT_FACTOR} </strong>
             <Tooltip title={TEXT_FACTOR_TOOLTIP} placement="bottom" arrow>
@@ -4950,7 +4950,7 @@ const DialogPlanPortionsMealBlock = ({
             </Tooltip>
           </Typography>
         </Grid>
-        <Grid xs={2}>
+ <Grid size={2} >
           <strong>{TEXT_TOTAL_PORTIONS}</strong>
         </Grid>
         {/* Zuerst eine Zeile mit für das Total der gewählten Diät-Gruppe */}
@@ -4999,16 +4999,16 @@ const DialogPlanPortionsMealBlock = ({
             onFieldUpdate={onFieldUpdate}
           />
         ))}
-        <Grid xs={12}>
+ <Grid size={12} >
           <Divider />
         </Grid>
-        <Grid xs={8}>
+ <Grid size={8} >
           <Typography>
             <strong>{TEXT_YOUR_SELECTION_MAKES_X_SERVINGS}</strong>
           </Typography>
         </Grid>
-        <Grid xs={2} />
-        <Grid xs={2}>
+ <Grid size={2} />
+ <Grid size={2} >
           <TextField
             fullWidth
             disabled
@@ -5070,7 +5070,7 @@ export const DialogPlanPortionsMealBlockRow = ({
         intoleranceUid
       }
     >
-      <Grid xs={8}>
+ <Grid size={8} >
         <FormControlLabel
           key={
             "dialogPlanPortionsMealBlockIntoleranceFormcontroll_" +
@@ -5107,7 +5107,7 @@ export const DialogPlanPortionsMealBlockRow = ({
           }
         />
       </Grid>
-      <Grid xs={2}>
+ <Grid size={2} >
         <TextField
           id={
             "dialogPlanPortionsMealBlockIntolerance_factor_" +
@@ -5133,7 +5133,7 @@ export const DialogPlanPortionsMealBlockRow = ({
           label={TEXT_FACTOR}
         />
       </Grid>
-      <Grid xs={2}>
+ <Grid size={2} >
         <TextField
           id={
             "dialogPlanPortionsMealBlockIntolerance_totalPortions_" +
@@ -5805,7 +5805,7 @@ export const DialogGoods = ({
           </Typography>
           <br />
           <Grid container spacing={2}>
-            <Grid xs={12}>
+ <Grid size={12} >
               {goodsType === GoodsType.PRODUCT ? (
                 <ProductAutocomplete
                   componentKey={""}
@@ -5831,7 +5831,7 @@ export const DialogGoods = ({
               )}
             </Grid>
 
-            <Grid xs={goodsType === GoodsType.PRODUCT ? 6 : 12}>
+ <Grid size={goodsType === GoodsType.PRODUCT ? 6 : 12} >
               <TextField
                 key={"quantity"}
                 id={"quantity"}
@@ -5849,7 +5849,7 @@ export const DialogGoods = ({
               />
             </Grid>
             {goodsType === GoodsType.PRODUCT && (
-              <Grid xs={6}>
+ <Grid size={6} >
                 <UnitAutocomplete
                   componentKey={""}
                   unitKey={dialogValues.unit}

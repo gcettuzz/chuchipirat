@@ -28,7 +28,7 @@ import {
   Box,
 } from "@mui/material";
 
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import MailConsole, {Mail, RecipientType} from "./mailConsole.class";
 
@@ -243,7 +243,7 @@ const MailConsolePage = () => {
         </Backdrop>
 
         {state.error && (
-          <Grid key={"error"} xs={12}>
+ <Grid size={12} key={"error"} >
             <AlertMessage
               error={state.error!}
               messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
@@ -252,7 +252,7 @@ const MailConsolePage = () => {
         )}
 
         <Grid container spacing={2}>
-          <Grid xs={12}>
+ <Grid size={12} >
             <MailRecipients
               selectedRecipientType={state.recipientType}
               recipients={state.recipients}
@@ -276,7 +276,7 @@ const MailConsolePage = () => {
               }}
             />
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <MailEditor
               mailObject={state.mailObject}
               onFieldChange={onEditorFieldChange}
@@ -287,7 +287,7 @@ const MailConsolePage = () => {
               //TODO: Cloud-FX umschreiben, dass sie mit den verschiedenen Typen umgehen kann...
             />
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <Preview mailObject={state.mailObject} />
           </Grid>
         </Grid>
@@ -339,7 +339,7 @@ const MailRecipients = ({
       <CardHeader title={"Empfänger"} />
       <CardContent>
         <Grid container spacing={2}>
-          <Grid xs={12}>
+ <Grid size={12} >
             <FormControl component="fieldset">
               <RadioGroup
                 aria-label="recipient_type"
@@ -348,14 +348,14 @@ const MailRecipients = ({
                 onChange={onChangeRecipientType}
               >
                 <Grid container spacing={2}>
-                  <Grid xs={5} sm={3} md={2}>
+ <Grid size={{ xs: 5, sm: 3, md: 2 }} >
                     <FormControlLabel
                       value={RecipientType.email}
                       control={<Radio />}
                       label={TEXT_RECIPIENT_TYPE[RecipientType.email]}
                     />
                   </Grid>
-                  <Grid xs={7} sm={9} md={10}>
+ <Grid size={{ xs: 7, sm: 9, md: 10 }} >
                     <TextField
                       label={TEXT_RECIPIENT_TYPE[RecipientType.email]}
                       variant="outlined"
@@ -369,14 +369,14 @@ const MailRecipients = ({
                       disabled={selectedRecipientType !== RecipientType.email}
                     />
                   </Grid>
-                  <Grid xs={5} sm={3} md={2}>
+ <Grid size={{ xs: 5, sm: 3, md: 2 }} >
                     <FormControlLabel
                       value={RecipientType.uid}
                       control={<Radio />}
                       label={TEXT_RECIPIENT_TYPE[RecipientType.uid]}
                     />
                   </Grid>
-                  <Grid xs={7} sm={9} md={10}>
+ <Grid size={{ xs: 7, sm: 9, md: 10 }} >
                     <TextField
                       label="recipient_uids"
                       variant="outlined"
@@ -390,14 +390,14 @@ const MailRecipients = ({
                       disabled={selectedRecipientType !== RecipientType.uid}
                     />
                   </Grid>
-                  <Grid xs={5} sm={3} md={2}>
+ <Grid size={{ xs: 5, sm: 3, md: 2 }} >
                     <FormControlLabel
                       value={RecipientType.role}
                       control={<Radio />}
                       label={TEXT_RECIPIENT_TYPE[RecipientType.role]}
                     />
                   </Grid>
-                  <Grid xs={7} sm={9} md={10}>
+ <Grid size={{ xs: 7, sm: 9, md: 10 }} >
                     <FormControl
                       variant="outlined"
                       sx={classes.formControl}
@@ -432,7 +432,7 @@ const MailRecipients = ({
               </RadioGroup>
             </FormControl>
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <Typography color="textSecondary">
               {TEXT_DIVIDE_MULTIPLE_VALUES_BY_SEMICOLON}
             </Typography>
@@ -501,7 +501,7 @@ const MailEditor = ({
       <CardHeader title={TEXT_EDITOR} />
       <CardContent>
         <Grid container spacing={2}>
-          <Grid xs={12}>
+ <Grid size={12} >
             <TextField
               id="subject"
               key="subject"
@@ -514,10 +514,10 @@ const MailEditor = ({
               error={formValidation.subject}
             />
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <Divider style={{margin: theme.spacing(2)}} />
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <TextField
               id="title"
               key="title"
@@ -530,7 +530,7 @@ const MailEditor = ({
               error={formValidation.title}
             />
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <TextField
               id="subtitle"
               key="subtitle"
@@ -541,7 +541,7 @@ const MailEditor = ({
               label={TEXT_SUB_TITLE}
             />
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <TextField
               id="headerPictureSrc"
               key="headerPictureSrc"
@@ -552,7 +552,7 @@ const MailEditor = ({
               label={TEXT_MAIL_HEADER_PICTURE_SRC}
             />
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <Typography
               color={formValidation.mailtext ? "error" : "textSecondary"}
             >
@@ -560,7 +560,7 @@ const MailEditor = ({
             </Typography>
             <ReactQuill theme="snow" onChange={onMailTextChange} />
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <TextField
               id="buttonText"
               key="buttonText"
@@ -571,7 +571,7 @@ const MailEditor = ({
               label={TEXT_BUTTON_TEXT}
             />
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <TextField
               id="buttonLink"
               key="buttonLink"
@@ -627,13 +627,13 @@ const Preview = ({mailObject}: PreviewProps) => {
             alignItems="center"
             justifyContent="center"
           >
-            <Grid xs={12}>
+ <Grid size={12} >
               <Typography align="center" variant="h2">
                 {mailObject.title}
               </Typography>
             </Grid>
             {mailObject.subtitle && (
-              <Grid xs={12}>
+ <Grid size={12} >
                 <Typography align="center" variant="h4">
                   {mailObject.subtitle}
                 </Typography>
@@ -645,7 +645,7 @@ const Preview = ({mailObject}: PreviewProps) => {
       </Box>
       <CardContent>
         <Grid container>
-          <Grid xs={12}>
+ <Grid size={12} >
             <Typography
               variant="body1"
               component="div"
@@ -653,8 +653,7 @@ const Preview = ({mailObject}: PreviewProps) => {
             />
           </Grid>
           {mailObject.buttonLink && mailObject.buttonText && (
-            <Grid
-              xs={12}
+            <Grid size={12}
               alignContent="center"
               justifyContent="center"
               style={{display: "flex"}}

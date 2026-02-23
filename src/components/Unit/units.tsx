@@ -15,7 +15,7 @@ import {
   Stack,
   SelectChangeEvent,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import {
   NAME as TEXT_NAME,
@@ -410,19 +410,19 @@ const TablePanel = ({
         <CardContent sx={classes.cardContent} key={"cardContentUnits"}>
           {editMode ? (
             <Grid container spacing={2}>
-              <Grid xs={4}>
+ <Grid size={4} >
                 <Typography variant="subtitle1">{TEXT_UNIT}</Typography>
               </Grid>
-              <Grid xs={4}>
+ <Grid size={4} >
                 <Typography variant="subtitle1">{TEXT_NAME}</Typography>
               </Grid>
-              <Grid xs={4}>
+ <Grid size={4} >
                 <Typography variant="subtitle1">{TEXT_DIMENSION}</Typography>
               </Grid>
               <Divider />
               {units.map((unit) => (
                 <React.Fragment key={"unitFragment_" + unit.key}>
-                  <Grid xs={4} key={"gridItemKey_" + unit.key}>
+ <Grid size={4} key={"gridItemKey_" + unit.key}>
                     <TextField
                       id={"key_" + unit.key}
                       key={"key_" + unit.key}
@@ -432,7 +432,7 @@ const TablePanel = ({
                       fullWidth
                     />
                   </Grid>
-                  <Grid xs={4} key={"gridItemName_" + unit.key}>
+ <Grid size={4} key={"gridItemName_" + unit.key}>
                     <TextField
                       id={"name_" + unit.key}
                       key={"name_" + unit.key}
@@ -442,7 +442,7 @@ const TablePanel = ({
                       fullWidth
                     />
                   </Grid>
-                  <Grid xs={4} key={"gridItemDim_" + unit.key}>
+ <Grid size={4} key={"gridItemDim_" + unit.key}>
                     <Select
                       labelId="unit-dimension"
                       id={"dimension_" + unit.key}
@@ -462,7 +462,7 @@ const TablePanel = ({
                       </MenuItem>
                     </Select>
                   </Grid>
-                  <Grid xs={12} key={"gridItemDivider_" + unit.key}>
+ <Grid size={12} key={"gridItemDivider_" + unit.key}>
                     <Divider />
                   </Grid>
                 </React.Fragment>

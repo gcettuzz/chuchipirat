@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 
-import {Container, Stack} from "@mui/material";
+import { Container, Stack, Alert } from "@mui/material";
 
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
@@ -13,7 +13,6 @@ import {
 import LocalStorageKey from "../../constants/localStorage";
 import {useFirebase} from "../Firebase/firebaseContext";
 import {useAuthUser} from "./authUserContext";
-import {Alert} from "@mui/lab";
 import useCustomStyles from "../../constants/styles";
 
 /* ===================================================================

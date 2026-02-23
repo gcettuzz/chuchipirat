@@ -147,7 +147,7 @@ const CustomDialog = () => {
   const component = dialogState.visible ? (
     dialogState.dialogType == DialogType.Confirm ? (
       // Simpler Dialog
-      <Dialog
+      (<Dialog
         open={dialogState.visible}
         onClose={(event, reason) => reason !== "backdropClick" && onCancel()}
         aria-labelledby="confirm-dialog"
@@ -166,10 +166,10 @@ const CustomDialog = () => {
             {dialogState.buttonTextConfirm}
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog>)
     ) : dialogState.dialogType == DialogType.SingleTextInput ? (
       // Single Text Input Dialog
-      <Dialog open={dialogState.visible} maxWidth="xs" fullWidth>
+      (<Dialog open={dialogState.visible} maxWidth="xs" fullWidth>
         {dialogState.title != "" && (
           <DialogTitle id="dialogTitle">{dialogState.title}</DialogTitle>
         )}
@@ -207,10 +207,10 @@ const CustomDialog = () => {
             {dialogState.buttonTextConfirm}
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog>)
     ) : dialogState.dialogType == DialogType.ConfirmSecure ? (
       // Löschung bestätigen
-      <Dialog
+      (<Dialog
         open={dialogState.visible}
         onClose={onCancel}
         aria-labelledby="confirm-dialog"
@@ -270,7 +270,7 @@ const CustomDialog = () => {
             {dialogState.buttonTextConfirm}
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog>)
     ) : dialogState.dialogType == DialogType.selectOptions ? (
       <Dialog
         open={dialogState.visible}
