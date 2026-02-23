@@ -15,6 +15,7 @@ import {
   CardActions,
   Radio,
   RadioGroup,
+  Box,
   useTheme,
 } from "@mui/material";
 
@@ -326,92 +327,85 @@ export const DialogSelectMenues = ({
   // ------------------------------------------
   // Grid styles (einheitlich)
   // ------------------------------------------
-  const rowGridStyle: React.CSSProperties = {
+  const gridStyle: React.CSSProperties = {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+    gridTemplateColumns: `max-content repeat(${dates.length}, minmax(200px, 1fr))`,
     columnGap: theme.spacing(2),
-    // Wichtig: KEIN gridAutoFlow: "column" nötig, sonst kann es "spaltenweise" fuellen.
-    // Standard (row) ist fuer eine Matrix meistens besser.
+    rowGap: theme.spacing(1),
+    overflowX: "auto",
   };
+
+  const rowContentsStyle = {display: "contents"} as const;
+
   return (
     <Dialog open={open} maxWidth="xl">
       <DialogTitle>{title}</DialogTitle>
 
-      <DialogContent>
+      <DialogContent style={gridStyle}>
         {/* Header-Zeile: Wochentage / Datum */}
-        <Container sx={classes.dialogSelectMenueRow} style={rowGridStyle}>
-          <Container sx={classes.dialogSelectMenueItem}>
-            <span />
-          </Container>
+        <Box />
 
-          {dates.map((date) => (
-            <Container
-              sx={classes.dialogSelectMenueItem}
-              key={"dialogSelectMenueDayCardContainer_" + date.toISOString()}
+        {dates.map((date) => (
+          <Box
+            sx={{paddingBottom: theme.spacing(2)}}
+            key={"dialogSelectMenueDayCardContainer_" + date.toISOString()}
+          >
+            <Card
+              sx={classes.cardDate}
+              style={{width: "100%"}}
+              variant="outlined"
             >
-              <Card
-                sx={classes.cardDate}
-                style={{width: "100%"}}
-                variant="outlined"
-              >
-                <CardHeader
-                  align="center"
-                  title={date.toLocaleString("default", {weekday: "long"})}
-                  titleTypographyProps={{variant: "h6"}}
-                  subheader={date.toLocaleString("de-CH", {
-                    year: "numeric",
-                    month: "2-digit",
-                    day: "2-digit",
-                  })}
-                />
+              <CardHeader
+                align="center"
+                title={date.toLocaleString("default", {weekday: "long"})}
+                slotProps={{title: {variant: "h6"}}}
+                subheader={date.toLocaleString("de-CH", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                })}
+              />
 
-                {showSelectAll && (
-                  <CardActions
-                    style={{marginTop: "-3ex", justifyContent: "center"}}
+              {showSelectAll && (
+                <CardActions
+                  style={{marginTop: "-3ex", justifyContent: "center"}}
+                >
+                  <Button
+                    id={Utils.dateAsString(date)}
+                    color="primary"
+                    startIcon={<DoneAllIcon />}
+                    onClick={selectMenuesOfDay}
                   >
-                    <Button
-                      id={Utils.dateAsString(date)}
-                      color="primary"
-                      startIcon={<DoneAllIcon />}
-                      onClick={selectMenuesOfDay}
-                    >
-                      {TEXT_SELECT_DAY}
-                    </Button>
-                  </CardActions>
-                )}
-              </Card>
-            </Container>
-          ))}
-        </Container>
+                    {TEXT_SELECT_DAY}
+                  </Button>
+                </CardActions>
+              )}
+            </Card>
+          </Box>
+        ))}
 
         {/* MealType-Zeilen */}
         {mealTypes.order.map((mealTypeUid) => (
-          <Container
-            sx={classes.dialogSelectMenueRow}
-            key={"dialogSelectMenueRow_" + mealTypeUid}
-            style={rowGridStyle}
-          >
+          <React.Fragment key={"dialogSelectMenueRow_" + mealTypeUid}>
             {/* Erste Spalte: MealType */}
-            <Container sx={classes.dialogSelectMenueItem}>
+            <Box sx={{paddingBottom: theme.spacing(2)}}>
               <Card
                 sx={classes.dialogSelectMenuCardMealtype}
-                style={{width: "100%"}}
                 variant="outlined"
               >
                 <CardHeader
                   title={mealTypes.entries[mealTypeUid].name}
-                  titleTypographyProps={{variant: "h6"}}
+                  slotProps={{title: {variant: "h6"}}}
                 />
               </Card>
-            </Container>
+            </Box>
 
             {/* Restliche Spalten: pro Datum ein Feld */}
             {singleSelection ? (
               <RadioGroup
                 value={selectedMenueUid}
                 onChange={onRadioChange}
-                // Trick: macht RadioGroup layout-"transparent", damit das Grid greift
-                sx={{display: "contents"}}
+                sx={rowContentsStyle}
               >
                 {dates.map((date) => {
                   const actualMeal = getMealForMealTypeAndDate(
@@ -474,7 +468,10 @@ export const DialogSelectMenues = ({
                               ? menues[menueUid].name
                               : mealTypes.entries[mealTypeUid].name
                           }
-                          style={{width: "100%"}}
+                          sx={{
+                            width: "100%",
+                            paddingLeft: theme.spacing(2),
+                          }}
                         />
                       ))}
                     </Container>
@@ -482,11 +479,11 @@ export const DialogSelectMenues = ({
                 })}
               </>
             )}
-          </Container>
+          </React.Fragment>
         ))}
 
         {showSelectAll && !singleSelection && (
-          <Container>
+          <Container style={{gridColumn: "1 / -1"}}>
             <Button
               color="primary"
               startIcon={<DoneAllIcon />}
@@ -498,7 +495,7 @@ export const DialogSelectMenues = ({
         )}
 
         {dialogValidation[0]?.fieldName === "ERROR_MESSAGE_NO_MENUE_MARKED" && (
-          <Typography color="error">
+          <Typography color="error" style={{gridColumn: "1 / -1"}}>
             {dialogValidation[0].errorMessage}
           </Typography>
         )}

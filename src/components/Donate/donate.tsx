@@ -37,7 +37,6 @@ import {ImageRepository} from "../../constants/imageRepository";
 // =============================== Base ==============================
 // =================================================================== */
 const DonatePage = () => {
-  const firebase = useFirebase();
   const authUser = useAuthUser();
   const classes = useCustomStyles();
 

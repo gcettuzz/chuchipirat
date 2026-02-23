@@ -146,7 +146,7 @@ export function getMenueCardData({
   };
 }
 export function isMenueCardData(
-  value: Record<string | symbol, unknown>
+  value: Record<string | symbol, unknown>,
 ): value is TMenueCardData {
   return Boolean(value[menueCardKey]);
 }
@@ -191,7 +191,7 @@ export type TMenueCardDropTargetData = {
   rect: DOMRect;
 };
 export function isMenueCardDropTargetData(
-  value: Record<string | symbol, unknown>
+  value: Record<string | symbol, unknown>,
 ): value is TMenueCardDropTargetData {
   return Boolean(value[cardDropTargetKey]);
 }
@@ -233,13 +233,13 @@ export function getMenueCardContainerDropTargetData({
   };
 }
 export function isMenueCardContainerDropTargetData(
-  value: Record<string | symbol, unknown>
+  value: Record<string | symbol, unknown>,
 ): value is TMenueCardContainerDropTargetData {
   return Boolean(value[menueCardContainerKey]);
 }
 export function isShallowEqual(
   obj1: Record<string, unknown>,
-  obj2: Record<string, unknown>
+  obj2: Record<string, unknown>,
 ): boolean {
   const keys1 = Object.keys(obj1);
   const keys2 = Object.keys(obj2);
@@ -307,8 +307,7 @@ export const MenueListOfMeal = memo(function MenueListOfMeal({
 }: MenueListOfMealProps) {
   const theme = useTheme();
   const listRef = useRef<HTMLDivElement | null>(null);
-  // const [state, setState] = useState<TMenueCardDropState>({type: "idle"});
-  // Register list as drop target to allow drops into empty lists
+
   useEffect(() => {
     if (!menuplanSettings.enableDragAndDrop) {
       // Kein DnD
@@ -323,10 +322,10 @@ export const MenueListOfMeal = memo(function MenueListOfMeal({
       canDrop: ({source}) =>
         Boolean(
           isDraggingAMenueCard({source}) &&
-            isMenueCardType({
-              source: source,
-              cardType: MenuplanDragDropTypes.MENU,
-            })
+          isMenueCardType({
+            source: source,
+            cardType: MenuplanDragDropTypes.MENU,
+          }),
         ),
 
       getData: () =>
@@ -335,31 +334,6 @@ export const MenueListOfMeal = memo(function MenueListOfMeal({
           listType: MenuplanDragDropTypes.MENU,
           isEmpty: meal.menuOrder.length === 0,
         }),
-      // onDrag({source, self}) {
-      //   if (!isMenueCardContainerDropTargetData(self.data)) {
-      //     return;
-      //   }
-
-      //   if (!isMenueCardData(source.data)) {
-      //     return;
-      //   }
-
-      //   // Nur wenn in einer anderen Spalte
-      //   if (source.data.mealUid === self.data.mealUid) {
-      //     return;
-      //   }
-
-      // setState({
-      //   type: "is-dragging",
-      //   dragging: source.data.rect,
-      // });
-      // },
-      // onDragLeave() {
-      //   setState({type: "idle"});
-      // },
-      // onDrop() {
-      //   setState({type: "idle"});
-      // },
     });
   }, [meal.menuOrder]);
 
@@ -373,7 +347,6 @@ export const MenueListOfMeal = memo(function MenueListOfMeal({
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          // backgroundColor: "red",
         }}
       >
         {meal.menuOrder.map((menueUid: Menue["uid"], index) => (
@@ -411,9 +384,6 @@ export const MenueListOfMeal = memo(function MenueListOfMeal({
             onMoveDragAndDropElement={onMoveDragAndDropElement}
           />
         ))}
-        {/* {state.type == "is-dragging" && (
-          <MenueCardShadow dragging={state.dragging} />
-        )} */}
       </Box>
     </>
   );
@@ -421,8 +391,10 @@ export const MenueListOfMeal = memo(function MenueListOfMeal({
 /* ===================================================================
 // =============== Drag & Drop Menü-Card-Listeneintrag ===============
 // =================================================================== */
-interface DraggableMenueCardProps
-  extends Omit<MenueCardProps, "menue" | "outerRef" | "innerRef" | "state"> {
+interface DraggableMenueCardProps extends Omit<
+  MenueCardProps,
+  "menue" | "outerRef" | "innerRef" | "state"
+> {
   // listItemKey: string;
   listType: MenuplanDragDropTypes;
   listItem: TMenueCard;
@@ -524,7 +496,7 @@ const DraggableMenueCard = ({
         canDrop: ({source}) =>
           Boolean(
             isDraggingAMenueCard({source}) &&
-              isMenueCardType({source: source, cardType: listType})
+            isMenueCardType({source: source, cardType: listType}),
           ),
         getData: ({element, input}) => {
           const data = getMenueCardDropTargetData({
@@ -589,7 +561,7 @@ const DraggableMenueCard = ({
         onDrop() {
           setState(menueCardStateIdle);
         },
-      })
+      }),
     );
   }, [listItem, meal.uid]);
 
@@ -648,7 +620,7 @@ const DraggableMenueCard = ({
               onMoveDragAndDropElement={onMoveDragAndDropElement}
             />,
 
-            state.container
+            state.container,
           )
         : null}
     </>
@@ -786,7 +758,7 @@ const MenueCard = ({
     let userInput = {valid: false, input: ""} as SingleTextInputResult;
 
     const existingNote = Object.values(notes).find(
-      (note) => note.menueUid == menue.uid
+      (note) => note.menueUid == menue.uid,
     );
 
     userInput = (await customDialog({
