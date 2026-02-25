@@ -100,7 +100,7 @@ const DialogReauthenticate = ({
 }: DialogReauthenticateProps) => {
   const [state, dispatch] = React.useReducer(
     reAuthenticateReducer,
-    inititialState
+    inititialState,
   );
   const [showPassword, setShowPassword] = React.useState(false);
 
@@ -153,7 +153,7 @@ const DialogReauthenticate = ({
   // ------------------------------------------ */
   const handleClose = (
     event: React.SyntheticEvent | React.MouseEvent,
-    reason?: string
+    reason?: string,
   ) => {
     if (reason === "clickaway") {
       // Versehntliches Klicken ausserhalb des Dialog
@@ -168,7 +168,7 @@ const DialogReauthenticate = ({
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
-  const handleMouseDownPassword = (event) => {
+  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
   };
   return (
@@ -227,19 +227,21 @@ const DialogReauthenticate = ({
           autoComplete="new-password"
           value={state.reAuthData.password}
           onChange={onChangeField}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  aria-label={TEXT_SHOW_PASSWORD}
-                  onClick={handleClickShowPassword}
-                  onMouseDown={handleMouseDownPassword}
-                  size="large"
-                >
-                  {showPassword ? <Visibility /> : <VisibilityOff />}
-                </IconButton>
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label={TEXT_SHOW_PASSWORD}
+                    onClick={handleClickShowPassword}
+                    onMouseDown={handleMouseDownPassword}
+                    size="large"
+                  >
+                    {showPassword ? <Visibility /> : <VisibilityOff />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
           }}
         />
       </DialogContent>

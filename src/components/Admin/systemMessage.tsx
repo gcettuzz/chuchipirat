@@ -31,8 +31,6 @@ import AlertMessage from "../Shared/AlertMessage";
 import PageTitle from "../Shared/pageTitle";
 
 import SystemMessage from "./systemMessage.class";
-// TODO: Löschen in Package.json:
-// TODO: @material-ui/pickers
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
   EDITOR as TEXT_EDITOR,
@@ -47,8 +45,8 @@ import {
 } from "../../constants/text";
 import useCustomStyles from "../../constants/styles";
 import Role from "../../constants/roles";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import CustomSnackbar, {
   SNACKBAR_INITIAL_STATE_VALUES,
   Snackbar,

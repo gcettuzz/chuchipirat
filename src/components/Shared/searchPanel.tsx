@@ -43,23 +43,25 @@ const SearchPanel = ({
           fullWidth={true}
           autoComplete="off"
           onChange={onUpdateSearchString}
-          inputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  aria-label="clear Search Term"
-                  onClick={() => {
-                    if (searchString) {
-                      onClearSearchString();
-                    }
-                  }}
-                  edge="end"
-                  size="small"
-                >
-                  {!searchString ? <SearchIcon /> : <ClearIcon />}
-                </IconButton>
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="clear Search Term"
+                    onClick={() => {
+                      if (searchString) {
+                        onClearSearchString();
+                      }
+                    }}
+                    edge="end"
+                    size="small"
+                  >
+                    {!searchString ? <SearchIcon /> : <ClearIcon />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
           }}
         />
       </FormControl>

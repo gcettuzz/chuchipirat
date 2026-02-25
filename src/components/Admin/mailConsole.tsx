@@ -57,8 +57,8 @@ import {
   MAIL_SENT_TO_RECIPIENTS as TEXT_MAIL_SENT_TO_RECIPIENTS,
 } from "../../constants/text";
 import Role from "../../constants/roles";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import CustomSnackbar, {
   SNACKBAR_INITIAL_STATE_VALUES,
   Snackbar,

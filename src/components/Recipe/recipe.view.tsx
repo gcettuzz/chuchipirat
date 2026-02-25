@@ -21,7 +21,6 @@ import {
   Container,
   Divider,
   GridSize,
-  ListItem,
   ListItemButton,
   ListItemSecondaryAction,
   Chip,
@@ -168,10 +167,18 @@ enum ReducerActions {
   GENERIC_ERROR,
 }
 
-type DispatchAction = {
-  type: ReducerActions;
-  payload: {[key: string]: any};
-};
+type DispatchAction =
+  | {
+      type: ReducerActions.FETCH_MISSING_MASTERDATA;
+      payload: {
+        units: Unit[];
+        unitConversionBasic: UnitConversionBasic;
+        unitConversionProducts: UnitConversionProducts;
+        products: Product[];
+      };
+    }
+  | {type: ReducerActions.SET_IS_LOADING; payload: {isLoading: boolean}}
+  | {type: ReducerActions.GENERIC_ERROR; payload: Error};
 
 type State = {
   units: Unit[] | null;
@@ -206,11 +213,12 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoading: false,
-        error: action.payload as Error,
+        error: action.payload,
       };
-    default:
-      console.error("Unbekannter ActionType: ", action.type);
-      throw new Error();
+    default: {
+      const exhaustiveCheck: never = action;
+      throw new Error(`Unbekannter ActionType: ${exhaustiveCheck}`);
+    }
   }
 };
 
@@ -526,12 +534,12 @@ const RecipeView = ({
     setScaleRecipeDialogOpen(false);
   };
   const onMealPlanItemClick = (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
+    event: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
     const [, mealPlanRecipeUid] = event.currentTarget.id.split("_");
 
     const mealPlanRecipe = Object.values(mealPlan).find(
-      (plan) => plan.mealPlanRecipe == mealPlanRecipeUid
+      (plan) => plan.mealPlanRecipe == mealPlanRecipeUid,
     );
 
     if (mealPlanRecipe) {
@@ -539,7 +547,7 @@ const RecipeView = ({
       let scaledMaterials = {} as RecipeObjectStructure<RecipeMaterialPosition>;
       const scaledPortions = mealPlanRecipe.mealPlan.reduce(
         (runningSum, portion) => runningSum + portion.totalPortions,
-        0
+        0,
       );
       if (scaledPortions > 0) {
         scaledIngredients = Recipe.scaleIngredients({
@@ -579,7 +587,7 @@ const RecipeView = ({
   const onPrint = async () => {
     const pdfRecipeData = {...recipe};
     pdfRecipeData.ingredients = Recipe.deleteEmptyIngredients(
-      recipe.ingredients
+      recipe.ingredients,
     );
     pdfRecipeData.materials = Recipe.deleteEmptyMaterials(recipe.materials);
     pdf(
@@ -589,7 +597,7 @@ const RecipeView = ({
         scaledIngredients={scalingInformation.ingredients}
         scaledMaterials={scalingInformation.materials}
         authUser={authUser}
-      />
+      />,
     )
       .toBlob()
       .then((result) => {
@@ -762,7 +770,7 @@ const RecipeView = ({
         </Backdrop>
         <Grid container spacing={4} justifyContent="center">
           {(error || state.error) && (
- <Grid size={12} key={"error"} >
+            <Grid size={12} key={"error"}>
               <AlertMessage
                 error={error ? error : state.error}
                 messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
@@ -770,7 +778,7 @@ const RecipeView = ({
             </Grid>
           )}
           {mealPlan.length > 0 && groupConfiguration && (
- <Grid size={{ xs: 12, sm: 6 }} >
+            <Grid size={{xs: 12, sm: 6}}>
               <MealPlanPanel
                 mealPlan={mealPlan}
                 groupConfiguration={groupConfiguration}
@@ -780,7 +788,7 @@ const RecipeView = ({
               />
             </Grid>
           )}
- <Grid size={{ xs: 12, sm: 6 }} >
+          <Grid size={{xs: 12, sm: 6}}>
             <RecipeInfoPanel
               recipe={recipe}
               disableFunctionality={disableFunctionality}
@@ -790,20 +798,27 @@ const RecipeView = ({
             />
           </Grid>
           <RecipeDivider style={{marginTop: "1em", marginBottom: "1em"}} />
- <Grid size={{ xs: 12, sm: 6 }} style={{marginTop: "2em", marginBottom: "2em"}}>
+          <Grid
+            size={{xs: 12, sm: 6}}
+            style={{marginTop: "2em", marginBottom: "2em"}}
+          >
             <RecipeIngredients
               recipe={recipe}
               scaledPortions={scalingInformation.portions}
               scaledIngredients={scalingInformation.ingredients}
             />
           </Grid>
- <Grid size={{ xs: 12, sm: 6 }} style={{marginTop: "2em", marginBottom: "2em"}}>
+          <Grid
+            size={{xs: 12, sm: 6}}
+            style={{marginTop: "2em", marginBottom: "2em"}}
+          >
             <RecipePreparation recipe={recipe} />
           </Grid>
           {recipe.materials?.order.length > 0 &&
             recipe.materials.entries[recipe.materials.order[0]]?.material
               .uid !== "" && (
-              <Grid size={{ xs: 12, sm: 6 }}
+              <Grid
+                size={{xs: 12, sm: 6}}
                 style={{marginTop: "2em", marginBottom: "2em"}}
               >
                 <RecipeMaterial
@@ -815,7 +830,7 @@ const RecipeView = ({
             )}
           {recipe.type === RecipeType.variant &&
             recipe.variantProperties?.note && (
- <Grid size={12} style={{marginTop: "2em", marginBottom: "2em"}}>
+              <Grid size={12} style={{marginTop: "2em", marginBottom: "2em"}}>
                 <RecipeVariantNote recipe={recipe} />
               </Grid>
             )}
@@ -862,7 +877,7 @@ const RecipeHeader = ({
   const theme = useTheme();
 
   const [ratingAnchor, setRatingAnchor] = React.useState<null | HTMLElement>(
-    null
+    null,
   );
   /* ------------------------------------------
   // Menü für eigenes Rating zeigen/schliessen
@@ -878,7 +893,7 @@ const RecipeHeader = ({
   // ------------------------------------------ */
   const onUpdateMyRating = (
     event: React.SyntheticEvent,
-    value: number | null
+    value: number | null,
   ) => {
     if (value === recipe.rating.myRating || !value) {
       return;
@@ -913,7 +928,11 @@ const RecipeHeader = ({
             variant="h2"
             align="center"
             color="textPrimary"
-            style={{display: "block", overflowWrap: "break-word", wordBreak: "break-word"}}
+            style={{
+              display: "block",
+              overflowWrap: "break-word",
+              wordBreak: "break-word",
+            }}
             gutterBottom
           >
             {recipe.name}
@@ -1223,12 +1242,15 @@ export const RecipeInfoPanel = ({
               <Link
                 style={{cursor: "pointer"}}
                 onClick={() =>
-                  navigate(`${ROUTES.USER_PUBLIC_PROFILE}/${recipe.created.fromUid}`, {
-                    state: {
-                      action: Action.VIEW,
-                      displayName: recipe.created.fromDisplayName,
+                  navigate(
+                    `${ROUTES.USER_PUBLIC_PROFILE}/${recipe.created.fromUid}`,
+                    {
+                      state: {
+                        action: Action.VIEW,
+                        displayName: recipe.created.fromDisplayName,
+                      },
                     },
-                  })
+                  )
                 }
               >
                 {recipe.created?.fromDisplayName}
@@ -1304,9 +1326,9 @@ export const RecipeInfoPanel = ({
                               authUser.roles.includes(Role.communityLeader)
                               ? () => onTagDelete(tag)
                               : recipe.type === RecipeType.private &&
-                                authUser.uid === authUser.uid
-                              ? () => onTagDelete(tag)
-                              : undefined
+                                  authUser.uid === authUser.uid
+                                ? () => onTagDelete(tag)
+                                : undefined
                             : undefined
                         }
                         sx={classes.chip}
@@ -1346,7 +1368,7 @@ const DietProperties = ({recipe}: DietPropertiesProps) => {
   return (
     <React.Fragment>
       <Grid container spacing={2}>
- <Grid size={4} style={{textAlign: "center"}}>
+        <Grid size={4} style={{textAlign: "center"}}>
           {recipe.dietProperties.allergens.includes(Allergen.Lactose) ? (
             <React.Fragment>
               <LactoseIcon fontSize="large" />
@@ -1359,7 +1381,7 @@ const DietProperties = ({recipe}: DietPropertiesProps) => {
             </React.Fragment>
           )}
         </Grid>
- <Grid size={4} style={{textAlign: "center"}}>
+        <Grid size={4} style={{textAlign: "center"}}>
           {recipe.dietProperties.allergens.includes(Allergen.Gluten) ? (
             <React.Fragment>
               <GlutenIcon fontSize="large" />
@@ -1372,7 +1394,7 @@ const DietProperties = ({recipe}: DietPropertiesProps) => {
             </React.Fragment>
           )}
         </Grid>
- <Grid size={4} style={{textAlign: "center"}}>
+        <Grid size={4} style={{textAlign: "center"}}>
           {recipe.dietProperties.diet === Diet.Vegetarian ? (
             <React.Fragment>
               <VegetarianIcon fontSize="large" />
@@ -1402,7 +1424,7 @@ interface MealPlanPanelProps {
   groupConfiguration: EventGroupConfiguration;
   disableFunctionality?: boolean;
   onMealPlanItemClick?: (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
+    event: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => void;
   onEditRecipeMealPlan?: (mealRecipeUid: MealRecipe["uid"]) => void;
 }
@@ -1466,20 +1488,20 @@ export const MealPlanPanel = ({
                         singleMealPlan.diet == PlanedDiet.ALL
                           ? TEXT_ALL
                           : singleMealPlan.diet == PlanedDiet.FIX
-                          ? ""
-                          : groupConfiguration.diets.entries[
-                              singleMealPlan.diet
-                            ].name
+                            ? ""
+                            : groupConfiguration.diets.entries[
+                                singleMealPlan.diet
+                              ].name
                       }${
                         singleMealPlan.intolerance == PlanedIntolerances.ALL
                           ? ""
                           : singleMealPlan.intolerance == PlanedIntolerances.FIX
-                          ? ""
-                          : `, ${
-                              groupConfiguration.intolerances.entries[
-                                singleMealPlan.intolerance
-                              ].name
-                            }`
+                            ? ""
+                            : `, ${
+                                groupConfiguration.intolerances.entries[
+                                  singleMealPlan.intolerance
+                                ].name
+                              }`
                       } (${singleMealPlan.totalPortions} ${
                         singleMealPlan.totalPortions == 1
                           ? TEXT_PORTION
@@ -1541,7 +1563,7 @@ export const DialogTagAdd = ({
     setTags(tags.filter((tag) => tag != tagToDelete));
   };
   const handleInputChange = (
-    event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
+    event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
   ) => {
     if (event.target.value.toString().endsWith(" ")) {
       tags.push(event.target.value.toString().trim().toLowerCase());
@@ -1680,7 +1702,8 @@ export const RecipeIngredients = ({
       <Grid container spacing={1}>
         {scaledPortions && (
           <React.Fragment>
-            <Grid size={ingredientGridColumSize.scaledOn.originalHeader}
+            <Grid
+              size={ingredientGridColumSize.scaledOn.originalHeader}
               key={"ingredient_header_grid_original"}
               sx={classes.centerCenter}
             >
@@ -1691,7 +1714,8 @@ export const RecipeIngredients = ({
                 {TEXT_ORIGINAL}
               </Typography>
             </Grid>
-            <Grid size={ingredientGridColumSize.scaledOn.scaledHeader}
+            <Grid
+              size={ingredientGridColumSize.scaledOn.scaledHeader}
               key={"ingredient_header_grid_scaled"}
               sx={classes.centerCenter}
             >
@@ -1699,7 +1723,8 @@ export const RecipeIngredients = ({
                 {TEXT_SCALED}
               </Typography>
             </Grid>
-            <Grid size={ingredientGridColumSize.scaledOn.emptyHeaderSpace}
+            <Grid
+              size={ingredientGridColumSize.scaledOn.emptyHeaderSpace}
               key={"ingredient_header_grid_ingredient"}
               sx={classes.centerCenter}
             />
@@ -1726,7 +1751,8 @@ export const RecipeIngredients = ({
               <React.Fragment key={"ingredient_row_" + ingredientUid}>
                 {recipe.ingredients.entries[ingredientUid]?.posType ==
                 PositionType.section ? (
-                  <Grid size={12}
+                  <Grid
+                    size={12}
                     key={"ingredient_section_grid_" + ingredientUid}
                     style={{marginTop: "0.5em", paddingLeft: "1em"}}
                   >
@@ -1748,8 +1774,9 @@ export const RecipeIngredients = ({
                   <React.Fragment>
                     {scaledPortions && (
                       // Original Menge
-                      (<React.Fragment>
-                        <Grid size={ingredientGridColumSize.scaledOn.original}
+                      <React.Fragment>
+                        <Grid
+                          size={ingredientGridColumSize.scaledOn.original}
                           key={
                             "ingredient_quantity_original_grid_" + ingredientUid
                           }
@@ -1768,9 +1795,12 @@ export const RecipeIngredients = ({
                               : ingredient.quantity.toLocaleString("de-CH")}
                           </Typography>
                         </Grid>
-                        <Grid size={scaledPortions
+                        <Grid
+                          size={
+                            scaledPortions
                               ? ingredientGridColumSize.scaledOn.unitOriginal
-                              : ingredientGridColumSize.scaledOff.unit}
+                              : ingredientGridColumSize.scaledOff.unit
+                          }
                           key={
                             "ingredient_quantity_unitOriginal_grid_" +
                             ingredientUid
@@ -1786,12 +1816,15 @@ export const RecipeIngredients = ({
                             {ingredient.unit}
                           </Typography>
                         </Grid>
-                      </React.Fragment>)
+                      </React.Fragment>
                     )}
                     {/* zu kochende Menge (skaliert/Original)*/}
-                    <Grid size={scaledPortions
+                    <Grid
+                      size={
+                        scaledPortions
                           ? ingredientGridColumSize.scaledOn.scaled
-                          : ingredientGridColumSize.scaledOff.scaled}
+                          : ingredientGridColumSize.scaledOff.scaled
+                      }
                       key={"ingredient_quantity_scaled_grid_" + ingredientUid}
                       sx={classes.centerRight}
                     >
@@ -1803,23 +1836,26 @@ export const RecipeIngredients = ({
                         scaledIngredients &&
                         scaledIngredients[ingredientUid]?.quantity
                           ? Number.isNaN(
-                              scaledIngredients[ingredientUid].quantity
+                              scaledIngredients[ingredientUid].quantity,
                             ) || scaledIngredients[ingredientUid].quantity == 0
                             ? ""
                             : scaledIngredients[
                                 ingredientUid
                               ]?.quantity.toLocaleString("de-CH")
                           : !ingredient.quantity ||
-                            Number.isNaN(ingredient.quantity)
-                          ? ""
-                          : ingredient.quantity.toLocaleString("de-CH")}
+                              Number.isNaN(ingredient.quantity)
+                            ? ""
+                            : ingredient.quantity.toLocaleString("de-CH")}
                       </Typography>
                     </Grid>
 
                     {/* Einheit */}
-                    <Grid size={scaledPortions
+                    <Grid
+                      size={
+                        scaledPortions
                           ? ingredientGridColumSize.scaledOn.unitOriginal
-                          : ingredientGridColumSize.scaledOff.unit}
+                          : ingredientGridColumSize.scaledOff.unit
+                      }
                       key={"ingredient_quantity_unit_grid_" + ingredientUid}
                     >
                       <Typography
@@ -1835,9 +1871,12 @@ export const RecipeIngredients = ({
                     </Grid>
 
                     {/* Zutat */}
-                    <Grid size={scaledPortions
+                    <Grid
+                      size={
+                        scaledPortions
                           ? ingredientGridColumSize.scaledOn.ingredient
-                          : ingredientGridColumSize.scaledOff.ingrdient}
+                          : ingredientGridColumSize.scaledOff.ingrdient
+                      }
                       key={
                         "ingredient_quantity_ingredient_grid_" + ingredientUid
                       }
@@ -1911,7 +1950,8 @@ export const RecipePreparation = ({recipe}: RecipePreparationProps) => {
             >
               {recipe.preparationSteps.entries[preparationStepUid]?.posType ==
               PositionType.section ? (
-                <Grid size={12}
+                <Grid
+                  size={12}
                   key={"preparationStep_section_grid_" + section.uid}
                   style={{marginTop: "0.5em", paddingLeft: "1em"}}
                 >
@@ -1929,7 +1969,8 @@ export const RecipePreparation = ({recipe}: RecipePreparationProps) => {
                 </Grid>
               ) : (
                 <React.Fragment>
-                  <Grid size={1}
+                  <Grid
+                    size={1}
                     key={"preparationStep_pos_" + preparationStepUid}
                     sx={classes.topCenter}
                   >
@@ -1945,7 +1986,8 @@ export const RecipePreparation = ({recipe}: RecipePreparationProps) => {
                       </Typography>
                     )}
                   </Grid>
-                  <Grid size={11}
+                  <Grid
+                    size={11}
                     key={"preparationStep_step_" + preparationStepUid}
                   >
                     <Typography>{preparationStep.step}</Typography>
@@ -1991,7 +2033,8 @@ export const RecipeMaterial = ({
       <Grid container spacing={1}>
         {scaledPortions && (
           <React.Fragment>
-            <Grid size={2}
+            <Grid
+              size={2}
               key={"material_header_grid_original"}
               sx={classes.centerCenter}
             >
@@ -2002,7 +2045,8 @@ export const RecipeMaterial = ({
                 {TEXT_ORIGINAL}
               </Typography>
             </Grid>
-            <Grid size={2}
+            <Grid
+              size={2}
               key={"material_header_grid_scaled"}
               sx={classes.centerCenter}
             >
@@ -2010,11 +2054,13 @@ export const RecipeMaterial = ({
                 {TEXT_SCALED}
               </Typography>
             </Grid>
-            <Grid size={1}
+            <Grid
+              size={1}
               key={"material_header_grid_unit"}
               sx={classes.centerCenter}
             />
-            <Grid size={7}
+            <Grid
+              size={7}
               key={"material_header_grid_name"}
               sx={classes.centerCenter}
             />
@@ -2025,13 +2071,14 @@ export const RecipeMaterial = ({
           const material = recipe.materials.entries[materialUid];
           return (
             <React.Fragment key={"material_row_" + materialUid}>
-              <Grid size={2}
+              <Grid
+                size={2}
                 key={"material_quantity_original_grid_" + materialUid}
                 sx={classes.centerRight}
               >
                 {scaledPortions && material && (
                   // Original Menge
-                  (<Typography
+                  <Typography
                     key={"material_quantity_original_" + materialUid}
                     color="textSecondary"
                   >
@@ -2041,11 +2088,12 @@ export const RecipeMaterial = ({
                     material.quantity == undefined
                       ? ""
                       : material.quantity.toLocaleString("de-CH")}
-                  </Typography>)
+                  </Typography>
                 )}
               </Grid>
               {/* zu kochende Menge (skaliert/Original)*/}
-              <Grid size={2}
+              <Grid
+                size={2}
                 key={"material_quantity_grid_" + materialUid}
                 sx={classes.centerRight}
               >
@@ -2060,17 +2108,17 @@ export const RecipeMaterial = ({
                       scaledMaterials[materialUid].quantity == 0
                       ? ""
                       : scaledMaterials[materialUid].quantity.toLocaleString(
-                          "de-CH"
+                          "de-CH",
                         )
                     : Number.isNaN(material?.quantity) ||
-                      material?.quantity == 0 ||
-                      material?.quantity == null
-                    ? ""
-                    : material?.quantity.toLocaleString("de-CH")}
+                        material?.quantity == 0 ||
+                        material?.quantity == null
+                      ? ""
+                      : material?.quantity.toLocaleString("de-CH")}
                 </Typography>
               </Grid>
- <Grid size={1} key={"material_unit_grid_" + materialUid} ></Grid>
- <Grid size={7} key={"material_name_grid_" + materialUid} >
+              <Grid size={1} key={"material_unit_grid_" + materialUid}></Grid>
+              <Grid size={7} key={"material_name_grid_" + materialUid}>
                 <Typography
                   key={"ingredient_name_" + materialUid}
                   color="textPrimary"
@@ -2105,7 +2153,7 @@ const RecipeVariantNote = ({recipe}: RecipeVariantNoteProps) => {
         {TEXT_VARIANT_NOTE}
       </Typography>
       <Grid container spacing={1} alignItems="center">
- <Grid size={12} key={"recipe_variant_note_grid"} >
+        <Grid size={12} key={"recipe_variant_note_grid"}>
           <Typography key={"recipe_variant_note"} color="textPrimary">
             {recipe.variantProperties?.note}
           </Typography>

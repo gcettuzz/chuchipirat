@@ -16,6 +16,7 @@ import {
   useMediaQuery,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   ListItemAvatar,
   Avatar,
@@ -91,10 +92,21 @@ enum ReducerActions {
   CLOSE_SNACKBAR,
   GENERIC_ERROR,
 }
-type DispatchAction = {
-  type: ReducerActions;
-  payload: any;
-};
+type DispatchAction =
+  | {type: ReducerActions.EVENTS_FETCH_INIT}
+  | {type: ReducerActions.EVENTS_FETCH_SUCCESS; payload: Event[]}
+  | {type: ReducerActions.PASSED_EVENTS_FETCH_INIT}
+  | {type: ReducerActions.PASSED_EVENTS_FETCH_SUCCESS; payload: Event[]}
+  | {type: ReducerActions.NEWEST_RECIPES_FETCH_INIT}
+  | {type: ReducerActions.NEWEST_RECIPES_FETCH_SUCCESS; payload: Feed[]}
+  | {type: ReducerActions.FEED_FETCH_INIT}
+  | {type: ReducerActions.FEED_FETCH_SUCCESS; payload: Feed[]}
+  | {type: ReducerActions.STATS_FETCH_INIT}
+  | {type: ReducerActions.STATS_FETCH_SUCCESS; payload: Kpi[]}
+  | {type: ReducerActions.SYSTEM_MESSAGE_FETCH_SUCCESS; payload: SystemMessage}
+  | {type: ReducerActions.SET_SNACKBAR; payload: Snackbar}
+  | {type: ReducerActions.CLOSE_SNACKBAR}
+  | {type: ReducerActions.GENERIC_ERROR; payload: Error};
 
 type State = {
   events: Event[];
@@ -139,7 +151,7 @@ const homeReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoadingEvents: false,
-        events: action.payload as Event[],
+        events: action.payload,
       };
     case ReducerActions.PASSED_EVENTS_FETCH_INIT:
       return {
@@ -150,7 +162,7 @@ const homeReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoadingPassedEvents: false,
-        passedEvents: action.payload as Event[],
+        passedEvents: action.payload,
       };
     case ReducerActions.NEWEST_RECIPES_FETCH_INIT:
       return {
@@ -161,7 +173,7 @@ const homeReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoadingNewestRecipes: false,
-        recipes: action.payload as Feed[],
+        recipes: action.payload,
       };
     case ReducerActions.FEED_FETCH_INIT:
       return {
@@ -172,7 +184,7 @@ const homeReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoadingFeed: false,
-        feed: action.payload as Feed[],
+        feed: action.payload,
       };
     case ReducerActions.STATS_FETCH_INIT:
       return {
@@ -183,7 +195,7 @@ const homeReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoadingStats: false,
-        stats: action.payload as Kpi[],
+        stats: action.payload,
       };
     case ReducerActions.SYSTEM_MESSAGE_FETCH_SUCCESS:
       return {
@@ -193,7 +205,7 @@ const homeReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.SET_SNACKBAR:
       return {
         ...state,
-        snackbar: action.payload as Snackbar,
+        snackbar: action.payload,
       };
     case ReducerActions.CLOSE_SNACKBAR:
       return {
@@ -205,16 +217,13 @@ const homeReducer = (state: State, action: DispatchAction): State => {
         },
       };
     case ReducerActions.GENERIC_ERROR:
-      return {...state, error: action.payload as Error};
-    default:
-      console.error("Unbekannter ActionType: ", action.type);
-      throw new Error();
+      return {...state, error: action.payload};
+    default: {
+      const exhaustiveCheck: never = action;
+      throw new Error(`Unbekannter ActionType: ${exhaustiveCheck}`);
+    }
   }
 };
-interface LocationState {
-  snackbar?: Snackbar;
-}
-
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
@@ -258,7 +267,7 @@ const HomePage = () => {
     if (!authUser) {
       return;
     }
-    dispatch({type: ReducerActions.EVENTS_FETCH_INIT, payload: {}});
+    dispatch({type: ReducerActions.EVENTS_FETCH_INIT});
 
     Event.getEventsOfUser({
       firebase: firebase,
@@ -287,7 +296,7 @@ const HomePage = () => {
   }, [authUser]);
   React.useEffect(() => {
     //Neuster freigegebene Rezepte
-    dispatch({type: ReducerActions.NEWEST_RECIPES_FETCH_INIT, payload: {}});
+    dispatch({type: ReducerActions.NEWEST_RECIPES_FETCH_INIT});
 
     Feed.getNewestFeeds({
       firebase: firebase,
@@ -308,7 +317,7 @@ const HomePage = () => {
   }, []);
   React.useEffect(() => {
     //Feed Einträge
-    dispatch({type: ReducerActions.FEED_FETCH_INIT, payload: {}});
+    dispatch({type: ReducerActions.FEED_FETCH_INIT});
 
     Feed.getNewestFeeds({
       firebase: firebase,
@@ -328,7 +337,7 @@ const HomePage = () => {
   }, []);
   React.useEffect(() => {
     //Statistik Einträge
-    dispatch({type: ReducerActions.STATS_FETCH_INIT, payload: {}});
+    dispatch({type: ReducerActions.STATS_FETCH_INIT});
 
     Stats.getStats(firebase)
       .then((result) => {
@@ -366,7 +375,7 @@ const HomePage = () => {
   }
 
   const onShowPassedEvents = () => {
-    dispatch({type: ReducerActions.PASSED_EVENTS_FETCH_INIT, payload: {}});
+    dispatch({type: ReducerActions.PASSED_EVENTS_FETCH_INIT});
     Event.getEventsOfUser({
       firebase: firebase,
       userUid: authUser.uid,
@@ -431,7 +440,7 @@ const HomePage = () => {
       }
     });
   };
-  const onFeedEntryCllick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const onFeedEntryCllick = (event: React.MouseEvent<HTMLElement>) => {
     const feedEntry = state.feed.find(
       (feedEntry) => feedEntry.uid == event.currentTarget.id.split("_")[1]
     );
@@ -464,7 +473,7 @@ const HomePage = () => {
   // Snackback schliessen
   // ------------------------------------------ */
   const handleSnackbarClose = (
-    event: globalThis.Event | SyntheticEvent<any, globalThis.Event>,
+    _event: globalThis.Event | SyntheticEvent<Element, globalThis.Event>,
     reason: SnackbarCloseReason
   ) => {
     if (reason === "clickaway") {
@@ -473,7 +482,6 @@ const HomePage = () => {
     delete location.state?.snackbar;
     dispatch({
       type: ReducerActions.CLOSE_SNACKBAR,
-      payload: {},
     });
   };
   return (
@@ -816,7 +824,7 @@ const HomeNewestRecipes = ({
 interface HomeFeedProps {
   feed: Feed[];
   isLoadingFeed: boolean;
-  onListEntryClick: (event) => void;
+  onListEntryClick: (event: React.MouseEvent<HTMLElement>) => void;
 }
 const HomeFeed = ({feed, isLoadingFeed, onListEntryClick}: HomeFeedProps) => {
   const classes = useCustomStyles();
@@ -848,11 +856,10 @@ const HomeFeed = ({feed, isLoadingFeed, onListEntryClick}: HomeFeedProps) => {
               )}
             {feed.map((feedEntry, counter) => (
               <React.Fragment key={"feed_" + feedEntry.uid}>
-                <ListItem
+                <ListItemButton
                   alignItems="flex-start"
                   key={"feedListItem_" + feedEntry.uid}
                   id={"feedListItem_" + feedEntry.uid}
-                  button
                   onClick={onListEntryClick}
                 >
                   <ListItemAvatar>
@@ -882,7 +889,7 @@ const HomeFeed = ({feed, isLoadingFeed, onListEntryClick}: HomeFeedProps) => {
                       </React.Fragment>
                     }
                   />
-                </ListItem>
+                </ListItemButton>
                 {counter != feed.length - 1 && (
                   <Divider variant="inset" component="li" />
                 )}
