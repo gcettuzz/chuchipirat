@@ -44,7 +44,7 @@ import {USER_PUBLIC_PROFILE as ROUTES_USER_PUBLIC_PROFILE} from "../../constants
 import Action from "../../constants/actions";
 
 import {RequestStatus} from "./request.class";
-import {Request} from "./internal";
+import {Request} from "./request.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import Role from "../../constants/roles";
 import {StatusChips} from "./requestOverview";

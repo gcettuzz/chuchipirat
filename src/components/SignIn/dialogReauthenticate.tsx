@@ -49,10 +49,13 @@ type State = {
   error: FirebaseError | null;
 };
 
-type DispatchAction = {
-  type: ReducerActions;
-  payload: any;
-};
+type DispatchAction =
+  | {
+      type: ReducerActions.UPDATE_FIELD;
+      payload: {field: string; value: string};
+    }
+  | {type: ReducerActions.SET_INITIAL_VALUES; payload: Record<string, never>}
+  | {type: ReducerActions.GENERIC_ERROR; payload: FirebaseError};
 
 const inititialState: State = {
   reAuthData: {
@@ -74,10 +77,11 @@ const reAuthenticateReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.SET_INITIAL_VALUES:
       return inititialState;
     case ReducerActions.GENERIC_ERROR:
-      return {...state, error: action.payload as FirebaseError};
-    default:
-      console.error("Unbekannter ActionType: ", action.type);
-      throw new Error();
+      return {...state, error: action.payload};
+    default: {
+      const _exhaustiveCheck: never = action;
+      throw new Error(`Unbekannter ActionType: ${_exhaustiveCheck}`);
+    }
   }
 };
 

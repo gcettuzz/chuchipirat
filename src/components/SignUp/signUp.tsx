@@ -56,8 +56,6 @@ import {
 import User from "../User/user.class";
 import {PrivacyPolicyText} from "../App/privacyPolicy";
 import {TermOfUseText} from "../App/termOfUse";
-import Firebase from "../Firebase/firebase.class";
-import {useAuthUser} from "../Session/authUserContext";
 import Utils from "../Shared/utils.class";
 import {
   DialogType,
@@ -107,11 +105,7 @@ type DispatchAction =
     }
   | {
       type: ReducerActions.SET_SIGN_UP_ALLOWED;
-      payload: {
-        allowSignUp: boolean;
-        maintenanceMode: boolean;
-        allowUserCreatePassword: string;
-      };
+      payload: GlobalSettings;
     }
   | {type: ReducerActions.GENERIC_ERROR; payload: FirebaseError};
 
@@ -300,7 +294,9 @@ const SignUpForm = ({
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
-  const handleMouseDownPassword = (event) => {
+  const handleMouseDownPassword = (
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) => {
     event.preventDefault();
   };
 
