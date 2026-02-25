@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import {
   Container,
@@ -26,7 +25,7 @@ import {
 } from "../../constants/text";
 import Role from "../../constants/roles";
 
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import {
   collection,
   collectionGroup,
@@ -42,9 +41,7 @@ import {
   SingleTextInputResult,
 } from "../Shared/customDialogContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
 import useCustomStyles from "../../constants/styles";
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -270,20 +267,13 @@ const buildIndicesReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const BuildIndicesPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <BuildIndicesBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const BuildIndicesBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const BuildIndicesPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
   const {customDialog} = useCustomDialog();
   const [state, dispatch] = React.useReducer(
@@ -777,13 +767,4 @@ const ListItemBuildIndex = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser &&
-  (!!authUser.roles?.includes(Role.admin) ||
-    !!authUser.roles?.includes(Role.communityLeader));
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(BuildIndicesPage);
+export default BuildIndicesPage;

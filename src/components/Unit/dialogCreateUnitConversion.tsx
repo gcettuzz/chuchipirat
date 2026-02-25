@@ -12,7 +12,7 @@ import {
   Alert,
   AlertTitle,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import useCustomStyles from "../../constants/styles";
 
@@ -311,7 +311,7 @@ const DialogCreateUnitConversion = ({
         )}
         <Grid container spacing={2}>
           {unitConversionType === UnitConversionType.PRODUCT && (
-            <Grid xs={12}>
+ <Grid size={12} >
               <FormControl sx={classes.formSelect} margin="normal">
                 <Autocomplete
                   id={"product"}
@@ -338,7 +338,7 @@ const DialogCreateUnitConversion = ({
               </FormControl>
             </Grid>
           )}
-          <Grid xs={6}>
+ <Grid size={6} >
             <TextField
               error={validation.denominator.hasError}
               margin="dense"
@@ -352,7 +352,7 @@ const DialogCreateUnitConversion = ({
               helperText={validation.denominator.helperText}
             />
           </Grid>
-          <Grid xs={6}>
+ <Grid size={6} >
             <FormControl sx={classes.formSelect} margin="normal">
               <Autocomplete
                 id={"fromUnit"}
@@ -378,7 +378,7 @@ const DialogCreateUnitConversion = ({
               />
             </FormControl>
           </Grid>
-          <Grid xs={6}>
+ <Grid size={6} >
             <TextField
               error={validation.numerator.hasError}
               margin="dense"
@@ -392,7 +392,7 @@ const DialogCreateUnitConversion = ({
               helperText={validation.numerator.helperText}
             />
           </Grid>
-          <Grid xs={6}>
+ <Grid size={6} >
             <FormControl sx={classes.formSelect} margin="normal">
               <Autocomplete
                 id={"toUnit"}

@@ -5,7 +5,7 @@ import {
   HOME as ROUTE_HOME,
   SIGN_IN as ROUTE_SIGN_IN,
 } from "../../constants/routes";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
   ALERT_TITLE_MUTINY_ON_THE_HIGH_SEAS as TEXT_ALERT_TITLE_MUTINY_ON_THE_HIGH_SEAS,
@@ -16,11 +16,12 @@ import {
   HERE as TEXT_HERE,
 } from "../../constants/text";
 import useCustomStyles from "../../constants/styles";
+import {useAuthUser} from "./authUserContext";
 
 const NoAuthPage = () => {
-  const authUser = null;
+  const authUser = useAuthUser();
   const [timer, setTimer] = React.useState(20);
-  const {push} = useHistory();
+  const navigate = useNavigate();
   const classes = useCustomStyles();
 
   React.useEffect(() => {
@@ -28,8 +29,8 @@ const NoAuthPage = () => {
       setTimeout(
         () =>
           authUser !== null
-            ? push({pathname: ROUTE_HOME})
-            : push({pathname: ROUTE_SIGN_IN}),
+            ? navigate(ROUTE_HOME)
+            : navigate(ROUTE_SIGN_IN),
         500
       );
     } else {
@@ -51,10 +52,11 @@ const NoAuthPage = () => {
             <br />
             {TEXT_OR_CLICK}
             <Link
+              component="button"
               onClick={() => {
                 authUser !== null
-                  ? push({pathname: ROUTE_HOME})
-                  : push({pathname: ROUTE_SIGN_IN});
+                  ? navigate(ROUTE_HOME)
+                  : navigate(ROUTE_SIGN_IN);
               }}
             >
               {TEXT_HERE}

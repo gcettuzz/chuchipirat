@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import {
   Stack,
@@ -37,11 +36,9 @@ import useCustomStyles from "../../constants/styles";
 import PageTitle from "../Shared/pageTitle";
 
 import Product from "../Product/product.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../Shared/global.interface";
 import {
   SNACKBAR_INITIAL_STATE_VALUES,
   Snackbar,
@@ -178,20 +175,13 @@ const whereUsedReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const WhereUsedPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <WhereUsedBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const WhereUsedBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const WhereUsedPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(whereUsedReducer, inititialState);
@@ -466,13 +456,4 @@ const ResultPanel = ({documentList}: ResultPanelProps) => {
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser &&
-  (!!authUser.roles.includes(Role.admin) ||
-    !!authUser.roles.includes(Role.communityLeader));
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase,
-)(WhereUsedPage);
+export default WhereUsedPage;

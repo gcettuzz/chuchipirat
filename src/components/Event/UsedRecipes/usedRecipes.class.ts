@@ -5,7 +5,11 @@ import {ChangeRecord} from "../../Shared/global.interface";
 import Utils from "../../Shared/utils.class";
 import Event from "../Event/event.class";
 import _ from "lodash";
-import Menuplan, {Meal, Menue} from "../Menuplan/menuplan.class";
+import Menuplan, {
+  Meal,
+  MealRecipeDeletedPrefix,
+  Menue,
+} from "../Menuplan/menuplan.class";
 
 import {ERROR_NO_RECIPES_FOUND as TEXT_ERROR_NO_RECIPES_FOUND} from "../../../constants/text";
 
@@ -289,9 +293,11 @@ export default class UsedRecipes {
         //Hier nochmals darüberloopen und benötigte Rezepte hinzufügen....
         Object.values(usedRecipes.lists).forEach((list) => {
           list.recipes = {};
-          usedRecipesPerList[list.properties.uid].map(
-            (recipe) => (list.recipes[recipe.uid] = result[recipe.uid])
-          );
+          usedRecipesPerList[list.properties.uid].forEach((recipe) => {
+            if (result[recipe.uid]) {
+              list.recipes[recipe.uid] = result[recipe.uid];
+            }
+          });
         });
       })
       .catch((error) => {
@@ -355,7 +361,12 @@ export default class UsedRecipes {
 
     selectedMenues.forEach((menueUid) => {
       menueplan.menues[menueUid].mealRecipeOrder.forEach((mealRecipeUid) => {
-        if (menueplan.mealRecipes[mealRecipeUid].recipe) {
+        if (
+          menueplan.mealRecipes[mealRecipeUid].recipe &&
+          !menueplan.mealRecipes[
+            mealRecipeUid
+          ].recipe.recipeUid.includes(MealRecipeDeletedPrefix)
+        ) {
           usedRecipesList.push({
             uid: menueplan.mealRecipes[mealRecipeUid].recipe.recipeUid,
             recipeType: menueplan.mealRecipes[mealRecipeUid].recipe.type,

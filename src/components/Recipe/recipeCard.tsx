@@ -187,10 +187,10 @@ const RecipeCard = ({
           <CardContent sx={classes.cardContent}>
             {infoLine ? (
               <Grid container spacing={1}>
-                <Grid item xs={2}>
+                <Grid size={2}>
                   <InfoIcon fontSize="small" color="action" />
                 </Grid>
-                <Grid item xs={10}>
+                <Grid size={10}>
                   <Typography>{infoLine}</Typography>
                 </Grid>
               </Grid>
@@ -200,52 +200,42 @@ const RecipeCard = ({
           </CardContent>
 
           {/* <CardActions> */}
-          <CardActions sx={classes.cardActions}>
-            <Grid container spacing={1}>
-              <Grid item xs={10}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <Rating
-                    value={recipe.rating.avgRating}
-                    size="small"
-                    readOnly
-                  />
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    style={{marginLeft: "0.5rem"}}
-                  >
-                    {`${recipe.rating.noRatings} ${
-                      recipe.rating.noRatings === 1 ? TEXT_VOTE : TEXT_VOTES
-                    }`}
-                  </Typography>
-                </div>
-              </Grid>
-              <Grid
-                item
-                xs={2}
-                style={{display: "flex", justifyContent: "flex-end"}}
+          <CardActions
+            sx={{
+              ...classes.cardActions,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Box sx={{display: "flex", alignItems: "center"}}>
+              <Rating
+                value={recipe.rating.avgRating}
+                size="small"
+                readOnly
+              />
+              <Typography
+                variant="body2"
+                color="textSecondary"
+                sx={{marginLeft: "0.5rem"}}
               >
-                {onFabButtonClickSuper ? (
-                  <Fab
-                    component="a"
-                    id={"recipeCardFab_" + recipe.uid}
-                    size="small"
-                    color="primary"
-                    aria-label="add"
-                    style={{marginBottom: "1em"}}
-                    onMouseDown={(event) => event.stopPropagation()}
-                    onClick={onFabButtonClick}
-                  >
-                    {fabButtonIcon ? fabButtonIcon : <AddIcon />}
-                  </Fab>
-                ) : null}
-              </Grid>
-            </Grid>
+                {`${recipe.rating.noRatings} ${
+                  recipe.rating.noRatings === 1 ? TEXT_VOTE : TEXT_VOTES
+                }`}
+              </Typography>
+            </Box>
+            {onFabButtonClickSuper ? (
+              <Fab
+                id={"recipeCardFab_" + recipe.uid}
+                size="small"
+                color="primary"
+                aria-label="add"
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={onFabButtonClick}
+              >
+                {fabButtonIcon ? fabButtonIcon : <AddIcon />}
+              </Fab>
+            ) : null}
           </CardActions>
         </Box>
       </CardActionArea>
@@ -297,7 +287,7 @@ export const CardRibbon = ({cssProperty, icon, tooltip}: CardRibbonProps) => {
           {icon}
         </Tooltip>
       ) : (
-        {icon}
+        icon
       )}
     </div>
   );

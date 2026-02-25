@@ -1,10 +1,10 @@
 import React from "react";
-import ReactDOM from "react-dom";
-import reportWebVitals from "./reportWebVitals";
+import {createRoot} from "react-dom/client";
 import * as Sentry from "@sentry/react";
 
 import App from "../src/components/App/App";
 import {FirebaseContext} from "./components/Firebase/firebaseContext";
+import {AuthUserProvider} from "./components/Session/authUserContext";
 import packageJson from "../package.json";
 
 import "typeface-roboto";
@@ -19,9 +19,9 @@ import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDateFns} from "@mui/x-date-pickers/AdapterDateFns";
 
 Sentry.init({
-  dsn: process.env.REACT_APP_SENTRY_DSN,
+  dsn: import.meta.env.VITE_SENTRY_DSN,
   enabled: !Utils.isDevEnviroment(),
-  environment: process.env.REACT_APP_ENVIROMENT,
+  environment: import.meta.env.VITE_ENVIROMENT,
   release: packageJson.version,
   integrations: [
     Sentry.browserTracingIntegration(),
@@ -38,24 +38,22 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
 });
 
-ReactDOM.render(
+const root = createRoot(document.getElementById("root"));
+root.render(
   <React.StrictMode>
     <Sentry.ErrorBoundary fallback={<ErrorInfo />}>
       <LocalizationProvider dateAdapter={AdapterDateFns}>
         <FirebaseContext.Provider value={new Firebase()}>
-          <CustomDialogContextProvider>
-            <NavigationContextProvider>
-              <App />
-            </NavigationContextProvider>
-          </CustomDialogContextProvider>
+          <AuthUserProvider>
+            <CustomDialogContextProvider>
+              <NavigationContextProvider>
+                <App />
+              </NavigationContextProvider>
+            </CustomDialogContextProvider>
+          </AuthUserProvider>
         </FirebaseContext.Provider>
       </LocalizationProvider>
     </Sentry.ErrorBoundary>
-  </React.StrictMode>,
-  document.getElementById("root")
+  </React.StrictMode>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();

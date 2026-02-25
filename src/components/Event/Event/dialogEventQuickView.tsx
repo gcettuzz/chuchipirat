@@ -29,7 +29,7 @@ import {
 
 import EventShort from "./eventShort.class";
 import {ImageRepository} from "../../../constants/imageRepository";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import Action from "../../../constants/actions";
 import {USER_PUBLIC_PROFILE as ROUTES_USER_PUBLIC_PROFILE} from "../../../constants/routes";
 
@@ -61,7 +61,7 @@ const DialogEventQuickView = ({
   dialogActions,
 }: DialogEventQuickViewProps) => {
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   return (
     <Dialog
@@ -158,12 +158,11 @@ const DialogEventQuickView = ({
               <Link
                 style={{cursor: "pointer"}}
                 onClick={() =>
-                  push({
-                    pathname: `${ROUTES_USER_PUBLIC_PROFILE}/${eventShort.created.fromUid}`,
+                  navigate(`${ROUTES_USER_PUBLIC_PROFILE}/${eventShort.created.fromUid}`, {
                     state: {
                       action: Action.VIEW,
                       displayName: eventShort.created.fromDisplayName,
-                    },
+                    }
                   })
                 }
               >

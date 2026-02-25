@@ -1,6 +1,5 @@
 import React from "react";
-import {useHistory, withRouter} from "react-router";
-import {compose} from "react-recompose";
+import {useNavigate} from "react-router";
 
 import {
   Button,
@@ -30,7 +29,7 @@ import PageTitle from "../Shared/pageTitle";
 import PasswordStrengthMeter from "../Shared/passwordStrengthMeter";
 import AlertMessage from "../Shared/AlertMessage";
 
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import {
   SIGN_UP as ROUTE_SIGN_UP,
   HOME as ROUTE_HOME,
@@ -57,8 +56,6 @@ import {
 import User from "../User/user.class";
 import {PrivacyPolicyText} from "../App/privacyPolicy";
 import {TermOfUseText} from "../App/termOfUse";
-import Firebase from "../Firebase/firebase.class";
-import {AuthUserContext} from "../Session/authUserContext";
 import Utils from "../Shared/utils.class";
 import {
   DialogType,
@@ -73,7 +70,6 @@ import useCustomStyles from "../../constants/styles";
 // ===================================================================
 enum ReducerActions {
   UPDATE_FIELD,
-  UPDATE_CHECKBOX,
   SET_SIGN_UP_ALLOWED,
   GENERIC_ERROR,
 }
@@ -102,10 +98,16 @@ const inititialState: State = {
   maintenanceMode: false,
   allowUserCreatePassword: "",
 };
-type DispatchAction = {
-  type: ReducerActions;
-  payload: any;
-};
+type DispatchAction =
+  | {
+      type: ReducerActions.UPDATE_FIELD;
+      payload: {field: string; value: string};
+    }
+  | {
+      type: ReducerActions.SET_SIGN_UP_ALLOWED;
+      payload: GlobalSettings;
+    }
+  | {type: ReducerActions.GENERIC_ERROR; payload: FirebaseError};
 
 const signUpReducer = (state: State, action: DispatchAction): State => {
   switch (action.type) {
@@ -125,36 +127,22 @@ const signUpReducer = (state: State, action: DispatchAction): State => {
         allowUserCreatePassword: action.payload.allowUserCreatePassword,
       };
     case ReducerActions.GENERIC_ERROR:
-      return {...state, error: action.payload as FirebaseError};
-    default:
-      console.error("Unbekannter ActionType: ", action.type);
-      throw new Error();
+      return {...state, error: action.payload};
+    default: {
+      const exhaustiveCheck: never = action;
+      throw new Error(`Unbekannter ActionType: ${exhaustiveCheck}`);
+    }
   }
 };
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const SignUpPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <SignUpBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
-// ===================================================================
-// =============================== Page ==============================
-// ===================================================================
-interface CustomRouterProps {
-  history: History;
-  firebase: Firebase;
-}
-
-const SignUpBase: React.FC<CustomRouterProps> = (props) => {
-  const firebase = props.firebase;
+const SignUpPage = () => {
+  const firebase = useFirebase();
 
   const classes = useCustomStyles();
   const [state, dispatch] = React.useReducer(signUpReducer, inititialState);
-  const {push} = useHistory();
+  const navigate = useNavigate();
   const {customDialog} = useCustomDialog();
 
   const [smallPrintDialogs, setSmallPrintDialogs] = React.useState({
@@ -203,7 +191,7 @@ const SignUpBase: React.FC<CustomRouterProps> = (props) => {
       } else if (btoa(userInput.input) !== state.allowUserCreatePassword) {
         dispatch({
           type: ReducerActions.GENERIC_ERROR,
-          payload: {message: "Codewort falsch"},
+          payload: new FirebaseError("auth/wrong-code", "Codewort falsch"),
         });
         return;
       }
@@ -224,7 +212,7 @@ const SignUpBase: React.FC<CustomRouterProps> = (props) => {
             email: state.signUpData.email,
           });
           firebase.sendEmailVerification();
-          push({pathname: ROUTE_HOME});
+          navigate(ROUTE_HOME);
         }
       })
       .catch((error) => {
@@ -236,7 +224,7 @@ const SignUpBase: React.FC<CustomRouterProps> = (props) => {
   // Dialog-Handling
   // ------------------------------------------ */
   const onSmallPrintDialogOpen = (
-    event: React.MouseEvent<HTMLAnchorElement>
+    event: React.MouseEvent<HTMLAnchorElement>,
   ) => {
     setSmallPrintDialogs({
       ...smallPrintDialogs,
@@ -306,7 +294,9 @@ const SignUpForm = ({
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
-  const handleMouseDownPassword = (event) => {
+  const handleMouseDownPassword = (
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) => {
     event.preventDefault();
   };
 
@@ -392,19 +382,25 @@ const SignUpForm = ({
             value={signUpData.password}
             onChange={onFieldChange}
             disabled={!signUpAllowed || maintenanceMode}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    aria-label={TEXT_SHOW_PASSWORD}
-                    onClick={handleClickShowPassword}
-                    onMouseDown={handleMouseDownPassword}
-                    size="large"
-                  >
-                    {showPassword ? <VisibilityIcon /> : <VisibilityOffIcon />}
-                  </IconButton>
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label={TEXT_SHOW_PASSWORD}
+                      onClick={handleClickShowPassword}
+                      onMouseDown={handleMouseDownPassword}
+                      size="large"
+                    >
+                      {showPassword ? (
+                        <VisibilityIcon />
+                      ) : (
+                        <VisibilityOffIcon />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
             }}
           />
           <br />
@@ -472,12 +468,10 @@ const SignUpForm = ({
 // =============================== Link ==============================
 // ===================================================================
 export const SignUpLink = () => {
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const onSignUpClick = () => {
-    push({
-      pathname: ROUTE_SIGN_UP,
-    });
+    navigate(ROUTE_SIGN_UP);
   };
 
   return (
@@ -529,4 +523,4 @@ export const DialogPrivacyPolicy = ({
     </Dialog>
   );
 };
-export default compose(withRouter, withFirebase)(SignUpPage);
+export default SignUpPage;

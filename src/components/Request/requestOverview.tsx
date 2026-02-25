@@ -1,6 +1,5 @@
 import React from "react";
-import {compose} from "react-recompose";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 
 import {
   Container,
@@ -37,7 +36,7 @@ import useCustomStyles from "../../constants/styles";
 
 import PageTitle from "../Shared/pageTitle";
 
-import {Request} from "./internal";
+import {Request} from "./request.class";
 
 import {Snackbar} from "../Shared/customSnackbar";
 import AlertMessage from "../Shared/AlertMessage";
@@ -53,11 +52,8 @@ import {
   NavigationObject,
 } from "../Navigation/navigationContext";
 import Action from "../../constants/actions";
-import withEmailVerification from "../Session/withEmailVerification";
-import {withFirebase} from "../Firebase/firebaseContext";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import AuthUser from "../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useFirebase} from "../Firebase/firebaseContext";
+import {useAuthUser} from "../Session/authUserContext";
 import {
   RECIPE_DRAWER_DATA_INITIAL_VALUES,
   RecipeDrawer,
@@ -82,10 +78,19 @@ enum ReducerActions {
   UPDATE_SINGLE_REQUEST,
 }
 
-type DispatchAction = {
-  type: ReducerActions;
-  payload: {[key: string]: any};
-};
+type DispatchAction =
+  | {type: ReducerActions.FETCH_INIT; payload: Record<string, never>}
+  | {type: ReducerActions.FETCH_SUCCESS; payload: Request[]}
+  | {type: ReducerActions.FETCH_CLOSED_REQUESTS; payload: Request[]}
+  | {
+      type: ReducerActions.UPDATE_REQUEST_SELECTION;
+      payload: {newStateFilter: string};
+    }
+  | {type: ReducerActions.FETCH_RECIPE_INIT; payload: Record<string, never>}
+  | {type: ReducerActions.FETCH_RECIPE_SUCCESS; payload: Recipe}
+  | {type: ReducerActions.SNACKBAR_CLOSE; payload: Record<string, never>}
+  | {type: ReducerActions.UPDATE_SINGLE_REQUEST; payload: Request}
+  | {type: ReducerActions.GENERIC_ERROR; payload: Error};
 
 type State = {
   requests: Request[];
@@ -113,13 +118,13 @@ interface RequestTableProps {
   requests: Request[];
   onClick: (
     event: React.MouseEvent<HTMLTableRowElement, MouseEvent>,
-    name: string
+    name: string,
   ) => void;
   isLoading: State["isLoading"];
   requestStateFilter: RequestStateFilter;
   handleStateFilterChange: (
     event: React.MouseEvent<HTMLElement>,
-    newStateFilter: string
+    newStateFilter: string,
   ) => void;
 }
 // Interface für die Anzeige im UI
@@ -161,16 +166,16 @@ const requestReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoading: false,
-        requests: action.payload as Request[],
-        activeRequests: action.payload as Request[],
+        requests: action.payload,
+        activeRequests: action.payload,
       };
     case ReducerActions.FETCH_CLOSED_REQUESTS:
       return {
         ...state,
         isLoading: false,
         closedRequestsFetched: true,
-        requests: [...state.activeRequests, ...(action.payload as Request[])],
-        closedRequests: action.payload as Request[],
+        requests: [...state.activeRequests, ...action.payload],
+        closedRequests: action.payload,
       };
     case ReducerActions.UPDATE_REQUEST_SELECTION:
       action.payload.newStateFilter == RequestStateFilter.All
@@ -202,10 +207,10 @@ const requestReducer = (state: State, action: DispatchAction): State => {
       // Einzelner Request anpassen
       tmpRequests = state.requests;
       index = tmpRequests.findIndex(
-        (request) => request.uid === action.payload.uid
+        (request) => request.uid === action.payload.uid,
       );
       if (index !== -1) {
-        tmpRequests[index] = action.payload as Request;
+        tmpRequests[index] = action.payload;
       }
       return {
         ...state,
@@ -215,40 +220,34 @@ const requestReducer = (state: State, action: DispatchAction): State => {
       // allgemeiner Fehler
       return {
         ...state,
-        error: action.payload as Error,
+        error: action.payload,
         isLoading: false,
       };
-    default:
-      console.error("Unbekannter ActionType: ", action.type);
-      throw new Error();
+    default: {
+      const _exhaustiveCheck: never = action;
+      throw new Error(`Unbekannter ActionType: ${_exhaustiveCheck}`);
+    }
   }
 };
 
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const RequestOverviewPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <RequestOverviewBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const RequestOverviewBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const RequestOverviewPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const navigationValuesContext = React.useContext(NavigationValuesContext);
 
   const [state, dispatch] = React.useReducer(requestReducer, inititialState);
   const [requestStateFilter, setRequestStateFilter] = React.useState(
-    RequestStateFilter.Active
+    RequestStateFilter.Active,
   );
 
   const [requestPopupValues, setRequestPopupValues] = React.useState({
@@ -293,12 +292,12 @@ const RequestOverviewBase: React.FC<
   // ------------------------------------------ */
   const onRowClick = (
     event: React.MouseEvent<HTMLTableRowElement, MouseEvent>,
-    requestNumber: string
+    requestNumber: string,
   ) => {
     setRequestPopupValues({
       ...requestPopupValues,
       selectedRequest: state.requests.find(
-        (request) => request.number == parseInt(requestNumber)
+        (request) => request.number == parseInt(requestNumber),
       ) as Request,
       open: true,
     });
@@ -386,7 +385,7 @@ const RequestOverviewBase: React.FC<
   // ------------------------------------------ */
   const onStateFilterChange = (
     event: React.MouseEvent<HTMLElement>,
-    newStateFilter: string
+    newStateFilter: string,
   ) => {
     if (
       state.closedRequestsFetched == false &&
@@ -446,13 +445,15 @@ const RequestOverviewBase: React.FC<
     // Wenn es der*die Autorin ist, auf die Seite abspringen --> um das Rezept
     // allenfalls zu bearbeiten
     if (requestPopupValues.selectedRequest.author.uid === authUser.uid) {
-      push({
-        pathname: `${ROUTES_RECIPE}/${requestPopupValues.selectedRequest.requestObject.uid}`,
-        state: {
-          action: Action.VIEW,
-          recipe: recipe,
+      navigate(
+        `${ROUTES_RECIPE}/${requestPopupValues.selectedRequest.requestObject.uid}`,
+        {
+          state: {
+            action: Action.VIEW,
+            recipe: recipe,
+          },
         },
-      });
+      );
     } else {
       setRecipeDrawerData({
         ...recipeDrawerData,
@@ -604,7 +605,7 @@ const RequestTable = ({
   // Such-String löschen
   // ------------------------------------------ */
   const updateSearchString = (
-    event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
+    event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
   ) => {
     setSearchString(event.target.value);
     setRequestsUi(createRequestsForUi(requests, event.target.value));
@@ -612,7 +613,7 @@ const RequestTable = ({
   /* ------------------------------------------
   // Tabelleninhalt für UI anpassen
   // ------------------------------------------ */
-  const createRequestsForUi = (requests: Request[], searchString) => {
+  const createRequestsForUi = (requests: Request[], searchString: string) => {
     let filteredRequests: Request[] = [];
     if (searchString) {
       searchString = searchString.toLowerCase();
@@ -622,7 +623,7 @@ const RequestTable = ({
           request.number.toString().includes(searchString) ||
           request.requestObject.name.toLowerCase().includes(searchString) ||
           request.assignee.displayName.toLowerCase().includes(searchString) ||
-          request.author.displayName.toLowerCase().includes(searchString)
+          request.author.displayName.toLowerCase().includes(searchString),
       );
     } else {
       filteredRequests = requests;
@@ -712,18 +713,12 @@ export const StatusChips = ({status}: StatusChipsProps) => {
         status == RequestStatus.done
           ? classes.workflowChipDone
           : status == RequestStatus.declined
-          ? classes.workflowChipAborted
-          : classes.workflowChipActive
+            ? classes.workflowChipAborted
+            : classes.workflowChipActive
       }
       size="small"
     />
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(RequestOverviewPage);
+export default RequestOverviewPage;

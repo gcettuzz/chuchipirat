@@ -1,7 +1,6 @@
 import React from "react";
-import {compose} from "react-recompose";
 
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router";
 
 import {
   Container,
@@ -56,11 +55,9 @@ import {ForgotPasswordLink} from "../AuthServiceHandler/passwordReset";
 import Utils from "../Shared/utils.class";
 import User from "../User/user.class";
 import {FirebaseError} from "@firebase/util";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../Shared/global.interface";
 
 // ===================================================================
 // ======================== globale Funktionen =======================
@@ -141,22 +138,16 @@ const passwordChangeReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const PasswordChangePage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <PasswordChangeBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
-/* ===================================================================
-// =============================== Base ==============================
-// =================================================================== */
-const PasswordChangeBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+interface PasswordChangePageProps {
+  oobCode?: string;
+}
+
+const PasswordChangePage: React.FC<PasswordChangePageProps> = ({oobCode}) => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
+  const navigate = useNavigate();
   const classes = useCustomStyles();
-  let resetCode = props.oobCode as string;
+  let resetCode = oobCode as string;
 
   const [state, dispatch] = React.useReducer(
     passwordChangeReducer,
@@ -165,8 +156,8 @@ const PasswordChangeBase: React.FC<
 
   // kommt die Anfrage aus der Passwort-Zurücksetzen-Mail.
   // Dann ist in der URL der objektCode
-  if (props?.oobCode && !resetCode) {
-    resetCode = props.oobCode;
+  if (oobCode && !resetCode) {
+    resetCode = oobCode;
   }
   /* ------------------------------------------
   // Email-setzen
@@ -298,7 +289,7 @@ const PasswordChangeBase: React.FC<
 // Authentifzierung abbrechen
 // ------------------------------------------ */
   const onReauthenticattionCancel = () => {
-    props.history.goBack();
+    navigate(-1);
   };
   /* ------------------------------------------
   // Authentifzierung erledigt
@@ -514,4 +505,4 @@ export const PasswordChangeLink = () => (
   </Typography>
 );
 
-export default compose(withEmailVerification, withFirebase)(PasswordChangePage);
+export default PasswordChangePage;

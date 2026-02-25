@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
@@ -21,12 +20,10 @@ import {rebuildFile000AllFeeds} from "../../jobs/rebuildFile000AllFeeds";
 import PageTitle from "../Shared/pageTitle";
 import AlertMessage from "../Shared/AlertMessage";
 
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import Role from "../../constants/roles";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
 import Stats from "../Shared/stats.class";
 import {Container, Stack} from "@mui/material";
 import useCustomStyles from "../../constants/styles";
@@ -64,20 +61,13 @@ interface JobMonitor {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const ExecuteJobPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <ExecuteJobBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const ExecuteJobBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const ExecuteJobPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
   // const {customDialog} = useCustomDialog();
 
@@ -282,11 +272,4 @@ const JobEntry = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser && !!authUser.roles.includes(Role.admin);
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(ExecuteJobPage);
+export default ExecuteJobPage;

@@ -1,7 +1,6 @@
 import React from "react";
-import {compose} from "react-recompose";
 
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import {
   Backdrop,
   Button,
@@ -14,7 +13,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import PageTitle from "../../Shared/pageTitle";
 
@@ -28,20 +27,15 @@ import {
 import Event from "./event.class";
 import useCustomStyles from "../../../constants/styles";
 import AlertMessage from "../../Shared/AlertMessage";
-import {withFirebase} from "../../Firebase/firebaseContext";
+import {useFirebase} from "../../Firebase/firebaseContext";
 import EventCard, {EventCardLoading} from "./eventCard";
 import Action from "../../../constants/actions";
 import {
   EVENT as ROUTES_EVENT,
   CREATE_NEW_EVENT as ROUTES_CREATE_NEW_EVENT,
 } from "../../../constants/routes";
-import withEmailVerification from "../../Session/withEmailVerification";
-import {
-  AuthUserContext,
-  withAuthorization,
-} from "../../Session/authUserContext";
+import {useAuthUser} from "../../Session/authUserContext";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../../Shared/global.interface";
 import {ImageRepository} from "../../../constants/imageRepository";
 /* ===================================================================
 // ============================ Dispatcher ===========================
@@ -87,23 +81,15 @@ const eventsReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const EventsPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <EventsBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const EventsBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
-  authUser,
-  ...props
-}) => {
-  const firebase = props.firebase;
+const EventsPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
   const [state, dispatch] = React.useReducer(eventsReducer, inititialState);
   const actualDate = new Date(new Date().setHours(23, 59, 59, 999));
   /* ------------------------------------------
@@ -132,18 +118,15 @@ const EventsBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
     if (!event) {
       return;
     }
-    push({
-      pathname: `${ROUTES_EVENT}/${event.uid}`,
+    navigate(`${ROUTES_EVENT}/${event.uid}`, {
       state: {
         action: Action.VIEW,
         event: event,
-      },
+      }
     });
   };
   const onEventCreate = () => {
-    push({
-      pathname: `${ROUTES_CREATE_NEW_EVENT}`,
-    });
+    navigate(`${ROUTES_CREATE_NEW_EVENT}`);
   };
   return (
     <React.Fragment>
@@ -235,12 +218,12 @@ const EventsGrid = ({
       style={{marginBottom: "3rem"}}
     >
       {isLoading && (
-        <Grid xs={12} sm={6} md={4} lg={3}>
+ <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} >
           <EventCardLoading key={"loadingEventCard"} />
         </Grid>
       )}
       {events.map((event) => (
-        <Grid xs={12} sm={6} md={4} lg={3} key={"eventGrid_" + event.uid}>
+ <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={"eventGrid_" + event.uid}>
           <EventCard
             event={event}
             onCardClick={onCardClick}
@@ -250,11 +233,11 @@ const EventsGrid = ({
       ))}
       {/* Leere Grids erzeugen, damit die Karten in einem Tabellenlayout angezeigt werden */}
       {Array.from({length: events.length % rowSize}).map((index) => (
-        <Grid xs={12} sm={6} md={4} lg={3} key={"eventGridEmpty_" + index} />
+ <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={"eventGridEmpty_" + index} />
       ))}
 
       {showCreateNewCard && (
-        <Grid xs={12} sm={6} md={4} lg={3}>
+ <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} >
           <Card sx={classes.card} key={"eventCardNew"}>
             <CardMedia
               sx={classes.cardMedia}
@@ -281,10 +264,4 @@ const EventsGrid = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(EventsPage);
+export default EventsPage;

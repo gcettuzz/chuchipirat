@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import {
   Container,
@@ -61,10 +60,8 @@ import Product from "../Product/product.class";
 
 import Utils from "../Shared/utils.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -396,20 +393,13 @@ const PRODUCT_TABLE_COLUMS: Column[] = [
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const UnitConversionPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <UnitConversionBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const UnitConversionBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const UnitConversionPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(
@@ -725,7 +715,7 @@ const UnitConversionBase: React.FC<
           <CircularProgress color="inherit" />
         </Backdrop>
         <Grid container spacing={2}>
-          <Grid item key={"gridTabs"} xs={12}>
+          <Grid key={"gridTabs"} size={12}>
             <Tabs value={tabValue} onChange={onTabChange} centered>
               <Tab
                 // className={classes.tabs}
@@ -736,7 +726,7 @@ const UnitConversionBase: React.FC<
           </Grid>
 
           {state.error && (
-            <Grid item key={"error"} xs={12}>
+            <Grid key={"error"} size={12}>
               <AlertMessage
                 error={state.error}
                 messageTitle={TEXT_ALERT_TITLE_UUPS}
@@ -746,7 +736,7 @@ const UnitConversionBase: React.FC<
 
           {/* Tabs */}
           {tabValue === 0 && (
-            <Grid item key={"BasicConversionPanel"} xs={12}>
+            <Grid key={"BasicConversionPanel"} size={12}>
               <br />
               <BasicConversionPanel
                 unitConversions={state.unitConversionBasic}
@@ -757,7 +747,7 @@ const UnitConversionBase: React.FC<
             </Grid>
           )}
           {tabValue === 1 && (
-            <Grid item key={"BasicConversionPanel"} xs={12}>
+            <Grid key={"BasicConversionPanel"} size={12}>
               <br />
               <ProductConversionPanel
                 unitConversions={state.unitConversionProduct}
@@ -767,7 +757,7 @@ const UnitConversionBase: React.FC<
               />
             </Grid>
           )}
-          <Grid item key={"empty"} xs={12}></Grid>
+          <Grid key={"empty"} size={12}></Grid>
         </Grid>
       </Container>
       <DialogCreateUnitConversion
@@ -815,27 +805,27 @@ const BasicConversionPanel = ({
         {editMode ? (
           <Grid container spacing={2}>
             {/* Überschriften */}
-            <Grid item xs={3}>
+            <Grid size={3}>
               <Typography variant="subtitle1" align="center">
                 {TEXT_DENOMINATOR}
               </Typography>
             </Grid>
-            <Grid item xs={2}>
+            <Grid size={2}>
               <Typography variant="subtitle1" align="center">
                 {TEXT_UNIT_FROM}
               </Typography>
             </Grid>
-            <Grid item xs={3}>
+            <Grid size={3}>
               <Typography variant="subtitle1" align="center">
                 {TEXT_NUMERATOR}
               </Typography>
             </Grid>
-            <Grid item xs={2}>
+            <Grid size={2}>
               <Typography variant="subtitle1" align="center">
                 {TEXT_UNIT_TO}
               </Typography>
             </Grid>
-            <Grid item xs={2} />
+            <Grid size={2} />
 
             <Divider />
             {unitConversions.map((conversionRule) => (
@@ -874,7 +864,7 @@ const BasicConversionEditRow = ({
   return (
     <React.Fragment>
       {/* Überschriften */}
-      <Grid item xs={3} key={"grid_denominator_" + unitConversion.uid}>
+      <Grid key={"grid_denominator_" + unitConversion.uid} size={3}>
         <TextField
           id={"denominator_" + unitConversion.uid}
           key={"denominator_" + unitConversion.uid}
@@ -884,12 +874,12 @@ const BasicConversionEditRow = ({
           inputProps={{style: {textAlign: "center"}}}
         />
       </Grid>
-      <Grid item xs={2} key={"grid_fromUnit_" + unitConversion.uid}>
+      <Grid key={"grid_fromUnit_" + unitConversion.uid} size={2}>
         <Typography color="textSecondary" align="center">
           {unitConversion.fromUnit}
         </Typography>
       </Grid>
-      <Grid item xs={3} key={"grid_numerator_" + unitConversion.uid}>
+      <Grid key={"grid_numerator_" + unitConversion.uid} size={3}>
         <TextField
           id={"numerator_" + unitConversion.uid}
           key={"numerator_" + unitConversion.uid}
@@ -899,12 +889,12 @@ const BasicConversionEditRow = ({
           inputProps={{style: {textAlign: "center"}}}
         />
       </Grid>
-      <Grid item xs={2} key={"grid_toUnit_" + unitConversion.uid}>
+      <Grid key={"grid_toUnit_" + unitConversion.uid} size={2}>
         <Typography color="textSecondary" align="center">
           {unitConversion.toUnit}
         </Typography>
       </Grid>
-      <Grid item xs={2} key={"grid_deleteRow_" + unitConversion.uid}>
+      <Grid key={"grid_deleteRow_" + unitConversion.uid} size={2}>
         <IconButton
           color="primary"
           component="span"
@@ -915,7 +905,7 @@ const BasicConversionEditRow = ({
           <DeleteIcon fontSize="small" />
         </IconButton>
       </Grid>
-      <Grid item xs={12} key={"grid_divider" + unitConversion.uid}>
+      <Grid key={"grid_divider" + unitConversion.uid} size={12}>
         <Divider />
       </Grid>
     </React.Fragment>
@@ -947,30 +937,50 @@ const ProductConversionPanel = ({
         {editMode ? (
           <Grid container spacing={2}>
             {/* Überschriften */}
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <Typography variant="subtitle1">{TEXT_PRODUCT}</Typography>
             </Grid>
-            <Grid item xs={3} sm={2}>
+            <Grid
+              size={{
+                xs: 3,
+                sm: 2
+              }}>
               <Typography variant="subtitle1" align="center">
                 {TEXT_DENOMINATOR}
               </Typography>
             </Grid>
-            <Grid item xs={2} sm={1}>
+            <Grid
+              size={{
+                xs: 2,
+                sm: 1
+              }}>
               <Typography variant="subtitle1" align="center">
                 {TEXT_UNIT_FROM}
               </Typography>
             </Grid>
-            <Grid item xs={3} sm={2}>
+            <Grid
+              size={{
+                xs: 3,
+                sm: 2
+              }}>
               <Typography variant="subtitle1" align="center">
                 {TEXT_NUMERATOR}
               </Typography>
             </Grid>
-            <Grid item xs={2} sm={1}>
+            <Grid
+              size={{
+                xs: 2,
+                sm: 1
+              }}>
               <Typography variant="subtitle1" align="center">
                 {TEXT_UNIT_TO}
               </Typography>
             </Grid>
-            <Grid item xs={2} />
+            <Grid size={2} />
 
             <Divider />
             {unitConversions.map((conversionRule) => (
@@ -1008,12 +1018,22 @@ const ProductConversionEditRow = ({
 }: ProductConversionEditRowProps) => {
   return (
     <React.Fragment>
-      <Grid item xs={12} sm={4} key={"grid_productName_" + unitConversion.uid}>
+      <Grid
+        key={"grid_productName_" + unitConversion.uid}
+        size={{
+          xs: 12,
+          sm: 4
+        }}>
         <Typography color="textSecondary">
           {unitConversion.productName}
         </Typography>
       </Grid>
-      <Grid item xs={3} sm={2} key={"grid_denominator_" + unitConversion.uid}>
+      <Grid
+        key={"grid_denominator_" + unitConversion.uid}
+        size={{
+          xs: 3,
+          sm: 2
+        }}>
         <TextField
           id={"denominator_" + unitConversion.uid}
           key={"denominator_" + unitConversion.uid}
@@ -1023,12 +1043,22 @@ const ProductConversionEditRow = ({
           inputProps={{style: {textAlign: "center"}}}
         />
       </Grid>
-      <Grid item xs={2} sm={1} key={"grid_fromUnit_" + unitConversion.uid}>
+      <Grid
+        key={"grid_fromUnit_" + unitConversion.uid}
+        size={{
+          xs: 2,
+          sm: 1
+        }}>
         <Typography color="textSecondary" align="center">
           {unitConversion.fromUnit}
         </Typography>
       </Grid>
-      <Grid item xs={3} sm={2} key={"grid_numerator_" + unitConversion.uid}>
+      <Grid
+        key={"grid_numerator_" + unitConversion.uid}
+        size={{
+          xs: 3,
+          sm: 2
+        }}>
         <TextField
           id={"numerator_" + unitConversion.uid}
           key={"numerator_" + unitConversion.uid}
@@ -1038,12 +1068,22 @@ const ProductConversionEditRow = ({
           inputProps={{style: {textAlign: "center"}}}
         />
       </Grid>
-      <Grid item xs={2} sm={1} key={"grid_toUnit_" + unitConversion.uid}>
+      <Grid
+        key={"grid_toUnit_" + unitConversion.uid}
+        size={{
+          xs: 2,
+          sm: 1
+        }}>
         <Typography color="textSecondary" align="center">
           {unitConversion.toUnit}
         </Typography>
       </Grid>
-      <Grid item xs={2} sm={2} key={"grid_deleteRow_" + unitConversion.uid}>
+      <Grid
+        key={"grid_deleteRow_" + unitConversion.uid}
+        size={{
+          xs: 2,
+          sm: 2
+        }}>
         <IconButton
           color="primary"
           component="span"
@@ -1054,17 +1094,11 @@ const ProductConversionEditRow = ({
           <DeleteIcon fontSize="small" />
         </IconButton>
       </Grid>
-      <Grid item xs={12} key={"grid_divider" + unitConversion.uid}>
+      <Grid key={"grid_divider" + unitConversion.uid} size={12}>
         <Divider />
       </Grid>
     </React.Fragment>
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(UnitConversionPage);
+export default UnitConversionPage;

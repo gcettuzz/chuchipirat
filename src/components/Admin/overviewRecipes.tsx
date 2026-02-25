@@ -1,7 +1,6 @@
 import React from "react";
-import {compose} from "react-recompose";
 
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 
 import useCustomStyles from "../../constants/styles";
 import {
@@ -53,17 +52,15 @@ import * as ROUTES from "../../constants/routes";
 import Action from "../../constants/actions";
 
 import Recipe, {RecipeType} from "../Recipe/recipe.class";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {ChangeRecord, CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
+import {ChangeRecord} from "../Shared/global.interface";
 import {
   DataGrid,
   GridColDef,
-  GridValueFormatterParams,
-  deDE,
 } from "@mui/x-data-grid";
+import {deDE} from "@mui/x-data-grid/locales";
 import Utils from "../Shared/utils.class";
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -231,23 +228,16 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const OverviewRecipePage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <OverviewRecipeBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const OverviewRecipeBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const OverviewRecipePage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
 
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const [state, dispatch] = React.useReducer(recipesReducer, inititialState);
   const [dialogQuickView, setDialogQuickView] =
@@ -361,20 +351,18 @@ const OverviewRecipeBase: React.FC<
     recipe: Recipe
   ) => {
     if (recipe.type === RecipeType.public) {
-      push({
-        pathname: `${ROUTES.RECIPE}/${recipe.uid}`,
+      navigate(`${ROUTES.RECIPE}/${recipe.uid}`, {
         state: {
           action: Action.VIEW,
           recipe: recipe,
-        },
+        }
       });
     } else if (recipe.type === RecipeType.private) {
-      push({
-        pathname: `${ROUTES.RECIPE}/${recipe.created.fromUid}/${recipe.uid}`,
+      navigate(`${ROUTES.RECIPE}/${recipe.created.fromUid}/${recipe.uid}`, {
         state: {
           action: Action.VIEW,
           recipe: recipe,
-        },
+        }
       });
     }
   };
@@ -568,18 +556,18 @@ const RecipesPanel = ({recipes, onRecipeOpen}: RecipesPanelProps) => {
       headerName: TEXT_SOURCE,
       editable: false,
       width: 150,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return Utils.isUrl(params?.value as string)
-          ? Utils.getDomain(params?.value as string)
-          : params.value;
+      valueGetter: (value) => {
+        return Utils.isUrl(value as string)
+          ? Utils.getDomain(value as string)
+          : value;
       },
     },
     {
       field: "create_date",
       headerName: TEXT_CREATED_AT,
       editable: false,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return params?.value?.toLocaleString("de-CH", {
+      valueGetter: (value) => {
+        return value?.toLocaleString("de-CH", {
           dateStyle: "medium",
         });
       },
@@ -590,8 +578,8 @@ const RecipesPanel = ({recipes, onRecipeOpen}: RecipesPanelProps) => {
       headerName: `${TEXT_CREATED_FROM} ${TEXT_UID}`,
       editable: false,
       cellClassName: () => `super-app ${classes.typographyCode}`,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return params.value;
+      valueGetter: (value) => {
+        return value;
       },
       width: 200,
     },
@@ -599,8 +587,8 @@ const RecipesPanel = ({recipes, onRecipeOpen}: RecipesPanelProps) => {
       field: "create_fromDisplayName",
       headerName: TEXT_CREATED_FROM,
       editable: false,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return params.value;
+      valueGetter: (value) => {
+        return value;
       },
       width: 200,
     },
@@ -635,13 +623,4 @@ const RecipesPanel = ({recipes, onRecipeOpen}: RecipesPanelProps) => {
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser &&
-  (!!authUser.roles.includes(Role.admin) ||
-    !!authUser.roles.includes(Role.communityLeader));
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(OverviewRecipePage);
+export default OverviewRecipePage;

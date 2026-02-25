@@ -266,6 +266,7 @@ export default class ShoppingList {
 
                     if (
                       !department ||
+                      !selectedDepartments ||
                       (material?.type == MaterialType.consumable &&
                         selectedDepartments.includes(department!.uid))
                     ) {

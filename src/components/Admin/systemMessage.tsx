@@ -1,11 +1,8 @@
 import React from "react";
-import {compose} from "react-recompose";
 
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
 import {
   Backdrop,
   CardContent,
@@ -34,8 +31,6 @@ import AlertMessage from "../Shared/AlertMessage";
 import PageTitle from "../Shared/pageTitle";
 
 import SystemMessage from "./systemMessage.class";
-// TODO: Löschen in Package.json:
-// TODO: @material-ui/pickers
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
   EDITOR as TEXT_EDITOR,
@@ -50,8 +45,8 @@ import {
 } from "../../constants/text";
 import useCustomStyles from "../../constants/styles";
 import Role from "../../constants/roles";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import CustomSnackbar, {
   SNACKBAR_INITIAL_STATE_VALUES,
   Snackbar,
@@ -131,20 +126,13 @@ const mailConsoleReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const SystemMessagePage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <SystemMessageBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const SystemMessageBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const SystemMessagePage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(
@@ -328,10 +316,9 @@ const SystemMessageForm = ({
           <DatePicker
             key={"validto"}
             label={TEXT_VALID_TO}
-            inputFormat="dd.MM.yyyy"
+            format="dd.MM.yyyy"
             value={systemMessage.validTo}
             onChange={onDatePickerUpdate}
-            renderInput={(params) => <TextField {...params} />}
           />
 
           <ReactQuill
@@ -367,13 +354,4 @@ export const AlertSystemMessage = ({systemMessage}: PreviewProps) => {
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser &&
-  (!!authUser.roles.includes(Role.admin) ||
-    !!authUser.roles.includes(Role.communityLeader));
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(SystemMessagePage);
+export default SystemMessagePage;

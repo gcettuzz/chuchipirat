@@ -558,7 +558,7 @@ Font.register({
   fonts: [
     {
       src: "https://fonts.gstatic.com/s/roboto/v15/7MygqTe2zs9YkP0adA9QQQ.ttf",
-      fontStyle: "thin",
+      fontStyle: "normal",
       fontWeight: 100,
     },
     {
@@ -568,7 +568,7 @@ Font.register({
     },
     {
       src: "https://fonts.gstatic.com/s/roboto/v15/bdHGHleUa-ndQCOrdpfxfw.ttf",
-      fontStyle: "bold",
+      fontStyle: "normal",
       fontWeight: 700,
     },
   ],

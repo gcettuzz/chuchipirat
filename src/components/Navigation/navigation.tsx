@@ -1,7 +1,5 @@
 import React from "react";
-import {useLocation} from "react-router-dom";
-import {useHistory} from "react-router";
-import {withRouter} from "react-router-dom";
+import {useLocation, useNavigate} from "react-router";
 
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
@@ -49,8 +47,8 @@ import DialogRefreshApp from "./dialogRefreshApp";
 import Role from "../../constants/roles";
 
 import {NavigationValuesContext} from "../Navigation/navigationContext";
-import {AuthUserContext} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 
 import Utils from "../Shared/utils.class";
 import {DonateIcon} from "../Shared/icons";
@@ -63,11 +61,6 @@ import Firebase from "../Firebase/firebase.class";
 // ============================= Global =============================
 // ===================================================================
 type Anchor = "top" | "left" | "bottom" | "right";
-
-interface NavigationAuthProps {
-  authUser: AuthUser;
-  firebase: Firebase;
-}
 
 // ===================================================================
 // ========================== Scroll to Top  =========================
@@ -114,18 +107,10 @@ interface NavigationAuthProps {
 // ======================= Navigation Komponente =====================
 // ===================================================================
 const NavigationComponent: React.FC = () => {
-  // const authUser = useAuthUser();
+  const authUser = useAuthUser();
   return (
     <div>
-      <AuthUserContext.Consumer>
-        {(authUser) =>
-          authUser ? (
-            <NavigationAuth authUser={authUser} />
-          ) : (
-            <NavigationNoAuth />
-          )
-        }
-      </AuthUserContext.Consumer>
+      {authUser ? <NavigationAuth /> : <NavigationNoAuth />}
     </div>
   );
 };
@@ -133,11 +118,11 @@ const NavigationComponent: React.FC = () => {
 // ===================================================================
 // ==================== Navigation mit Berechtigung ==================
 // ===================================================================
-const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
+const NavigationAuth: React.FC = () => {
   const location = useLocation();
   const classes = useCustomStyles();
-  const firebase = props.firebase;
-  const authUser = props.authUser;
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
 
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
   const navigationValuesContext = React.useContext(NavigationValuesContext);
@@ -250,7 +235,7 @@ const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
     window.open(helpPage, "_blank");
   };
 
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   /* ------------------------------------------
   // Navigation-Panel
@@ -275,8 +260,7 @@ const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
 
     switch (pressedButton[0]) {
       case BUTTONTEXT.ACCOUNT:
-        push({
-          pathname: `${ROUTES.USER_PROFILE}/${authUser.uid}`,
+        navigate(`${ROUTES.USER_PROFILE}/${authUser.uid}`, {
           state: {action: Action.VIEW},
         });
         break;
@@ -289,9 +273,7 @@ const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
           setTimeout(resolve, 1000);
         });
 
-        push({
-          pathname: ROUTES.LANDING,
-        });
+        navigate(ROUTES.LANDING);
         break;
       default:
     }
@@ -326,7 +308,7 @@ const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
       onKeyDown={toggleDrawer(anchor, false)}
     >
       <List>
-        <ListItemButton key="Home" onClick={() => push(ROUTES.HOME)}>
+        <ListItemButton key="Home" onClick={() => navigate(ROUTES.HOME)}>
           <ListItemIcon>
             <HomeIcon />
           </ListItemIcon>
@@ -335,13 +317,13 @@ const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
       </List>
       <Divider />
       <List>
-        <ListItemButton key="Recipes" onClick={() => push(ROUTES.RECIPES)}>
+        <ListItemButton key="Recipes" onClick={() => navigate(ROUTES.RECIPES)}>
           <ListItemIcon>
             <FastfoodIcon />
           </ListItemIcon>
           <ListItemText primary={TEXT.RECIPES} />
         </ListItemButton>
-        <ListItemButton key="Events" onClick={() => push(ROUTES.EVENTS)}>
+        <ListItemButton key="Events" onClick={() => navigate(ROUTES.EVENTS)}>
           <ListItemIcon>
             <EventIcon />
           </ListItemIcon>
@@ -352,7 +334,7 @@ const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
       <List>
         <ListItemButton
           key="UnitConversion"
-          onClick={() => push(ROUTES.UNITCONVERSION)}
+          onClick={() => navigate(ROUTES.UNITCONVERSION)}
         >
           <ListItemIcon>
             <SwapHorizIcon />
@@ -364,7 +346,7 @@ const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
       <List>
         <ListItemButton
           key="requestOverview"
-          onClick={() => push(ROUTES.REQUEST_OVERVIEW)}
+          onClick={() => navigate(ROUTES.REQUEST_OVERVIEW)}
         >
           <ListItemIcon>
             <DescriptionIcon />
@@ -374,7 +356,7 @@ const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
       </List>
       <Divider />
       <List>
-        <ListItemButton key="donate" onClick={() => push(ROUTES.DONATE)}>
+        <ListItemButton key="donate" onClick={() => navigate(ROUTES.DONATE)}>
           <ListItemIcon>
             <DonateIcon />
           </ListItemIcon>
@@ -387,7 +369,7 @@ const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
           <List>
             <ListItemButton
               key="Products"
-              onClick={() => push(ROUTES.PRODUCTS)}
+              onClick={() => navigate(ROUTES.PRODUCTS)}
             >
               <ListItemIcon>
                 <LoyaltyIcon />
@@ -396,7 +378,7 @@ const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
             </ListItemButton>
             <ListItemButton
               key="Materials"
-              onClick={() => push(ROUTES.MATERIALS)}
+              onClick={() => navigate(ROUTES.MATERIALS)}
             >
               <ListItemIcon>
                 <BuildIcon />
@@ -409,7 +391,7 @@ const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
               </ListItemIcon>
               <ListItemText
                 primary={TEXT.NAVIGATION_DEPARTMENTS}
-                onClick={() => push(ROUTES.DEPARTMENTS)}
+                onClick={() => navigate(ROUTES.DEPARTMENTS)}
               />
             </ListItemButton>
           </List>
@@ -417,7 +399,7 @@ const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
       )}
       {authUser.roles?.includes(Role.communityLeader) && (
         <React.Fragment>
-          <ListItemButton key="Units" onClick={() => push(ROUTES.UNITS)}>
+          <ListItemButton key="Units" onClick={() => navigate(ROUTES.UNITS)}>
             <ListItemIcon>
               <StraightenIcon />
             </ListItemIcon>
@@ -425,7 +407,7 @@ const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
           </ListItemButton>
           <Divider />
           <List>
-            <ListItemButton key="Admin" onClick={() => push(ROUTES.SYSTEM)}>
+            <ListItemButton key="Admin" onClick={() => navigate(ROUTES.SYSTEM)}>
               <ListItemIcon>
                 <SettingsIcon />
               </ListItemIcon>
@@ -434,7 +416,7 @@ const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
             {authUser.roles?.includes(Role.admin) && (
               <ListItemButton
                 key="Users"
-                onClick={() => push(ROUTES.SYSTEM_OVERVIEW_USERS)}
+                onClick={() => navigate(ROUTES.SYSTEM_OVERVIEW_USERS)}
               >
                 <ListItemIcon>
                   <GroupIcon />
@@ -471,10 +453,7 @@ const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
               variant="h6"
               color="inherit"
               underline="none"
-              onClick={() =>
-                push({
-                  pathname: ROUTES.HOME,
-                })
+              onClick={() => navigate(ROUTES.HOME)
               }
             >
               {TEXT.APP_NAME}
@@ -552,9 +531,9 @@ const NavigationAuthBase: React.FC<NavigationAuthProps> = (props) => {
 // ================== Navigation ohne Berechtigung ===================
 // ===================================================================
 // Komponente für Navigation ohne Login//Ohne Berechtigungen
-const NavigationNoAuthBase: React.FC = () => {
+const NavigationNoAuth: React.FC = () => {
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   return (
     <React.Fragment>
@@ -566,11 +545,7 @@ const NavigationNoAuthBase: React.FC = () => {
               component="button"
               color="inherit"
               underline="none"
-              onClick={() =>
-                push({
-                  pathname: ROUTES.LANDING,
-                })
-              }
+              onClick={() => navigate(ROUTES.LANDING)}
             >
               {TEXT.APP_NAME}
             </Link>
@@ -583,11 +558,7 @@ const NavigationNoAuthBase: React.FC = () => {
                 component="button"
                 color="inherit"
                 underline="none"
-                onClick={() =>
-                  push({
-                    pathname: ROUTES.SIGN_IN,
-                  })
-                }
+                onClick={() => navigate(ROUTES.SIGN_IN)}
               >
                 {TEXT.SIGN_IN}
               </Link>
@@ -627,8 +598,5 @@ export const UpdateRibbon = ({onClick}: UpdateRibbonProps) => {
     </div>
   );
 };
-
-const NavigationAuth = withRouter(withFirebase(NavigationAuthBase));
-const NavigationNoAuth = withRouter(withFirebase(NavigationNoAuthBase));
 
 export default NavigationComponent;

@@ -10,7 +10,7 @@ import {
   InputLabel,
   IconButton,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -62,7 +62,7 @@ const SearchInputWithButton = ({
   return (
     <Container sx={classes.container} component="main">
       <Grid container spacing={2} sx={{paddingBottom: theme.spacing(2)}}>
-        <Grid xs={8} sm={9}>
+ <Grid size={{ xs: 8, sm: 9 }} >
           <FormControl fullWidth>
             <InputLabel id={id}>{label}</InputLabel>
             <Input
@@ -95,7 +95,7 @@ const SearchInputWithButton = ({
             />
           </FormControl>
         </Grid>
-        <Grid xs={4} sm={3}>
+ <Grid size={{ xs: 4, sm: 3 }} >
           {breakpointIsSm ? (
             <Button
               fullWidth

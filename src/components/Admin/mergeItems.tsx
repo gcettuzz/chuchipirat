@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import useCustomStyles from "../../constants/styles";
 
@@ -54,16 +53,14 @@ import {Role} from "../../constants/roles";
 
 import Product, {MergeProductsCallbackDocument} from "../Product/product.class";
 
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import ProductAutocomplete from "../Product/productAutocomplete";
 import {
   STORAGE_OBJECT_PROPERTY,
   SessionStorageHandler,
 } from "../Firebase/Db/sessionStorageHandler.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
 import Material, {
   MergeMaterialsCallbackDocument,
 } from "../Material/material.class";
@@ -251,20 +248,13 @@ const mergeProductsReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const MegeItemsPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <MergeItemsBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const MergeItemsBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const MegeItemsPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
   const theme = useTheme();
 
@@ -829,13 +819,4 @@ export const MaterialDetailList = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser &&
-  (!!authUser.roles.includes(Role.admin) ||
-    !!authUser.roles.includes(Role.communityLeader));
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(MegeItemsPage);
+export default MegeItemsPage;

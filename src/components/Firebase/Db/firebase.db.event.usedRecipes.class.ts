@@ -69,24 +69,29 @@ export class FirebaseDbEventUsedRecipes extends FirebaseDbSuper {
     Object.values(value.lists as UsedRecipeListEntry).forEach(
       (list: UsedRecipeListEntry) =>
         Object.values(list.recipes).forEach((recipe) => {
+          if (!recipe) return;
           // Produkte sammelnd
-          Object.values(recipe.ingredients.entries).forEach((position) => {
-            if (position.posType === PositionType.ingredient) {
-              const ingredient = position as Ingredient;
-              if (!usedProducts.includes(ingredient.product.uid)) {
-                usedProducts.push(ingredient.product.uid);
+          if (recipe.ingredients?.entries) {
+            Object.values(recipe.ingredients.entries).forEach((position) => {
+              if (position.posType === PositionType.ingredient) {
+                const ingredient = position as Ingredient;
+                if (!usedProducts.includes(ingredient.product.uid)) {
+                  usedProducts.push(ingredient.product.uid);
+                }
               }
-            }
-          });
+            });
+          }
           // Material sammeln
-          Object.values(
-            recipe.materials
-              .entries as RecipeObjectStructure<RecipeMaterialPosition>["entries"]
-          ).forEach((position) => {
-            if (!usedMaterials.includes(position.material.uid)) {
-              usedMaterials.push(position.material.uid);
-            }
-          });
+          if (recipe.materials?.entries) {
+            Object.values(
+              recipe.materials
+                .entries as RecipeObjectStructure<RecipeMaterialPosition>["entries"]
+            ).forEach((position) => {
+              if (!usedMaterials.includes(position.material.uid)) {
+                usedMaterials.push(position.material.uid);
+              }
+            });
+          }
         })
     );
 

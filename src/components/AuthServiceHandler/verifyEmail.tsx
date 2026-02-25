@@ -1,11 +1,9 @@
 import React from "react";
-import {compose} from "react-recompose";
 
-import {useHistory} from "react-router";
+import {useNavigate, useLocation} from "react-router";
 
-import {Alert, AlertTitle} from "@mui/lab";
 import Container from "@mui/material/Container";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import FirebaseMessageHandler from "../Firebase/firebaseMessageHandler.class";
 
 import * as ROUTES from "../../constants/routes";
@@ -19,31 +17,31 @@ import {
 import useCustomStyles from "../../constants/styles";
 
 import PageTitle from "../Shared/pageTitle";
-import {Typography} from "@mui/material";
+import { Typography, Alert, AlertTitle } from "@mui/material";
 import qs from "qs";
-import {CustomRouterProps} from "../Shared/global.interface";
 import User from "../User/user.class";
 import {checkActionCode, applyActionCode} from "firebase/auth";
 
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const VerifyEmailPage: React.FC<CustomRouterProps> = ({...props}) => {
-  const firebase = props.firebase;
+const VerifyEmailPage = () => {
+  const firebase = useFirebase();
+  const location = useLocation();
   const [timer, setTimer] = React.useState(10);
   const [isVerified, setIsVerified] = React.useState(false);
   const [error, setError] = React.useState(null);
   const [forwardDestination, setForwardDestination] = React.useState(
     ROUTES.SIGN_IN
   );
-  const {push} = useHistory();
+  const navigate = useNavigate();
   const classes = useCustomStyles();
 
   let oobCode = "";
   // Die URL enthält einen ObjektCode. Mit diesem kann die Adresse
   // verifziert werden....
-  props.location.search &&
-    (oobCode = qs.parse(props.location.search).oobCode as string);
+  location.search &&
+    (oobCode = qs.parse(location.search).oobCode as string);
 
   // Verifizierung ausführen
   React.useEffect(() => {
@@ -82,7 +80,7 @@ const VerifyEmailPage: React.FC<CustomRouterProps> = ({...props}) => {
   React.useEffect(() => {
     if (isVerified) {
       if (timer === 0) {
-        setTimeout(() => push({pathname: forwardDestination}), 500);
+        setTimeout(() => navigate(forwardDestination), 500);
       } else {
         setTimeout(() => setTimer(timer - 1), 1000);
       }
@@ -112,4 +110,4 @@ const VerifyEmailPage: React.FC<CustomRouterProps> = ({...props}) => {
   );
 };
 
-export default compose(withFirebase)(VerifyEmailPage);
+export default VerifyEmailPage;

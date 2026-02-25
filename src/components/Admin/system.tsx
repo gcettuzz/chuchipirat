@@ -1,6 +1,5 @@
 import React from "react";
-import {useHistory} from "react-router";
-import {compose} from "react-recompose";
+import {useNavigate} from "react-router";
 
 import {
   Container,
@@ -10,12 +9,12 @@ import {
   CardContent,
   CardActionArea,
   List,
-  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import {
   Forward as ForwardIcon,
@@ -85,11 +84,9 @@ import {
 import useCustomStyles from "../../constants/styles";
 
 import PageTitle from "../Shared/pageTitle";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../Shared/global.interface";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -98,21 +95,15 @@ import {CustomRouterProps} from "../Shared/global.interface";
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const SystemPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <SystemBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
-  authUser,
-}) => {
+const SystemPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   if (!authUser) {
     return null;
@@ -122,9 +113,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
   // Ziel ansteuern
   // ------------------------------------------ */
   const goToDestination = (routeDestination: string) => {
-    push({
-      pathname: routeDestination,
-    });
+    navigate(routeDestination);
   };
 
   return (
@@ -138,11 +127,11 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
       <Container sx={classes.container} component="main" maxWidth="md">
         <Grid container spacing={2}>
           {authUser.roles.includes(Role.admin) && (
-            <Grid xs={12} md={6}>
+ <Grid size={{ xs: 12, md: 6 }} >
               <SettingsTile goToDestination={goToDestination} />
             </Grid>
           )}
-          <Grid xs={12} md={6}>
+ <Grid size={{ xs: 12, md: 6 }} >
             <OverviewTile
               id={"overview"}
               onShowRecipes={goToDestination}
@@ -154,7 +143,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
               authUser={authUser}
             />
           </Grid>
-          <Grid xs={12} md={6}>
+ <Grid size={{ xs: 12, md: 6 }} >
             <AdminTile
               id={"support"}
               text={TEXT_ACTIVATE_SUPPORT_USER}
@@ -164,7 +153,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
               routeDestination={ROUTE_SYSTEM_ACTIVATE_SUPPORT_USER}
             />
           </Grid>
-          <Grid xs={12} md={6}>
+ <Grid size={{ xs: 12, md: 6 }} >
             <AdminTile
               id={"whereUsed"}
               text={TEXT_WHERE_USED}
@@ -174,7 +163,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
               routeDestination={ROUTE_SYSTEM_WHERE_USED}
             />
           </Grid>
-          <Grid xs={12} md={6} lg={4}>
+ <Grid size={{ xs: 12, md: 6, lg: 4 }} >
             <AdminTile
               id={"merge"}
               text={TEXT_MERGE_ITEMS}
@@ -184,7 +173,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
               routeDestination={ROUTE_SYSTEM_MERGE_PRODUCT}
             />
           </Grid>
-          <Grid xs={12} md={6} lg={4}>
+ <Grid size={{ xs: 12, md: 6, lg: 4 }} >
             <AdminTile
               id={"convert"}
               text={TEXT_CONVERT_ITEM}
@@ -196,7 +185,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
           </Grid>
           {authUser.roles.includes(Role.admin) && (
             <React.Fragment>
-              <Grid xs={12} md={6} lg={4}>
+ <Grid size={{ xs: 12, md: 6, lg: 4 }} >
                 <AdminTile
                   id={"jobs"}
                   text={TEXT_JOBS}
@@ -207,7 +196,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
                 />
               </Grid>
 
-              <Grid xs={12} md={6} lg={4}>
+ <Grid size={{ xs: 12, md: 6, lg: 4 }} >
                 <AdminTile
                   id={"dbIndices"}
                   text={TEXT_DB_INDICES}
@@ -217,7 +206,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
                   routeDestination={ROUTE_SYSTEM_DB_INDICES}
                 />
               </Grid>
-              <Grid xs={12} md={6} lg={4}>
+ <Grid size={{ xs: 12, md: 6, lg: 4 }} >
                 <AdminTile
                   id={"mailConsole"}
                   text={TEXT_MAIL_CONSOLE}
@@ -227,7 +216,7 @@ const SystemBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
                   routeDestination={ROUTE_SYSTEM_MAIL_CONSOLE}
                 />
               </Grid>
-              <Grid xs={12} md={6} lg={4}>
+ <Grid size={{ xs: 12, md: 6, lg: 4 }} >
                 <AdminTile
                   id={"temp"}
                   text={"Temp"}
@@ -304,7 +293,7 @@ const SettingsTile = ({goToDestination}: SettingsTileProps) => {
       />
       <CardContent>
         <List component="nav" aria-label="Mögliche Einstullen">
-          <ListItem button>
+          <ListItemButton>
             <ListItemIcon>
               <TuneIcon />
             </ListItemIcon>
@@ -312,8 +301,8 @@ const SettingsTile = ({goToDestination}: SettingsTileProps) => {
               primary={TEXT_GLOBAL_SETTINGS}
               onClick={() => goToDestination(ROUTE_SYSTEM_GLOBAL_SETTINGS)}
             />
-          </ListItem>
-          <ListItem button>
+          </ListItemButton>
+          <ListItemButton>
             <ListItemIcon>
               <FeedbackIcon />
             </ListItemIcon>
@@ -321,7 +310,7 @@ const SettingsTile = ({goToDestination}: SettingsTileProps) => {
               primary={TEXT_SYSTEM_MESSAGE}
               onClick={() => goToDestination(ROUTE_SYSTEM_SYSTEM_MESSAGE)}
             />
-          </ListItem>
+          </ListItemButton>
         </List>
       </CardContent>
     </Card>
@@ -363,7 +352,7 @@ const OverviewTile = ({
       />
       <CardContent>
         <List component="nav" aria-label="Mögliche Übersichtslisten">
-          <ListItem button>
+          <ListItemButton>
             <ListItemIcon>
               <FastfoodIcon />
             </ListItemIcon>
@@ -371,8 +360,8 @@ const OverviewTile = ({
               primary={TEXT_RECIPES}
               onClick={() => onShowRecipes(ROUTE_SYSTEM_OVERVIEW_RECIPES)}
             />
-          </ListItem>
-          <ListItem button>
+          </ListItemButton>
+          <ListItemButton>
             <ListItemIcon>
               <EventIcon />
             </ListItemIcon>
@@ -380,8 +369,8 @@ const OverviewTile = ({
               primary={TEXT_EVENTS}
               onClick={() => onShowEvents(ROUTE_SYSTEM_OVERVIEW_EVENTS)}
             />
-          </ListItem>
-          <ListItem button>
+          </ListItemButton>
+          <ListItemButton>
             <ListItemIcon>
               <RssFeedIcon />
             </ListItemIcon>
@@ -389,10 +378,10 @@ const OverviewTile = ({
               primary={TEXT_FEEDS}
               onClick={() => onShowFeeds(ROUTE_OVERVIEW_FEEDS)}
             />
-          </ListItem>
+          </ListItemButton>
           {authUser.roles.includes(Role.admin) && (
             <React.Fragment>
-              <ListItem button>
+              <ListItemButton>
                 <ListItemIcon>
                   <SendIcon />
                 </ListItemIcon>
@@ -400,8 +389,8 @@ const OverviewTile = ({
                   primary={TEXT_MAILBOX}
                   onClick={() => onShowMailbox(ROUTE_SYSTEM_OVERVIEW_MAILBOX)}
                 />
-              </ListItem>
-              <ListItem button>
+              </ListItemButton>
+              <ListItemButton>
                 <ListItemIcon>
                   <CloudIcon />
                 </ListItemIcon>
@@ -409,7 +398,7 @@ const OverviewTile = ({
                   primary={TEXT_CLOUD_FX}
                   onClick={() => onShowCloudFx(ROUTE_SYSTEM_OVERVIEW_CLOUDFX)}
                 />
-              </ListItem>
+              </ListItemButton>
             </React.Fragment>
           )}
         </List>
@@ -417,13 +406,5 @@ const OverviewTile = ({
     </Card>
   );
 };
-const condition = (authUser) =>
-  !!authUser &&
-  (!!authUser.roles?.includes(Role.admin) ||
-    !!authUser.roles?.includes(Role.communityLeader));
 
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(SystemPage);
+export default SystemPage;

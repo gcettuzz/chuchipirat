@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import {
   Container,
@@ -27,11 +26,10 @@ import {
   HAVE_YOU_FORGOTEN_YOUR_PASSWORD as TEXT_HAVE_YOU_FORGOTEN_YOUR_PASSWORD,
 } from "../../constants/text";
 import {ImageRepository} from "../../constants/imageRepository";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import {FirebaseError} from "@firebase/util";
 import Utils from "../Shared/utils.class";
-import {CustomRouterProps} from "../Shared/global.interface";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 
 // ===================================================================
 // ======================== globale Funktionen =======================
@@ -80,8 +78,8 @@ const passwordResetReducer = (state: State, action: DispatchAction): State => {
 // ===================================================================
 // =============================== Page ==============================
 // ===================================================================
-const PasswordResetPage: React.FC<CustomRouterProps> = ({...props}) => {
-  const firebase = props.firebase;
+const PasswordResetPage = () => {
+  const firebase = useFirebase();
   const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(
@@ -211,12 +209,10 @@ const PasswordResetForm = ({
 // ===================================================================
 
 export const ForgotPasswordLink = () => {
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const goToPasswordReset = () => {
-    push({
-      pathname: ROUTES_PASSWORD_RESET,
-    });
+    navigate(ROUTES_PASSWORD_RESET);
   };
 
   return (
@@ -227,4 +223,4 @@ export const ForgotPasswordLink = () => {
   );
 };
 
-export default compose(withFirebase)(PasswordResetPage);
+export default PasswordResetPage;

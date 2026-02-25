@@ -1,6 +1,5 @@
 import React from "react";
-import {useHistory} from "react-router";
-import {compose} from "react-recompose";
+import {useNavigate, useLocation, useParams} from "react-router";
 
 import {
   Container,
@@ -43,13 +42,11 @@ import {
 import Action from "../../constants/actions";
 import * as ROUTES from "../../constants/routes";
 import {ImageRepository} from "../../constants/imageRepository";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import UserPublicProfile from "./user.public.profile.class";
 import {FormListItem} from "../Shared/formListItem";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {useAuthUser} from "../Session/authUserContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../Shared/global.interface";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
@@ -111,47 +108,38 @@ interface LocationState {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const PublicProfilePage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <PublicProfileBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const PublicProfileBase: React.FC<
-  CustomRouterProps<MatchParams, LocationState> & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const PublicProfilePage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const location = useLocation();
+  const {id} = useParams();
+  const navigate = useNavigate();
 
   const [state, dispatch] = React.useReducer(
     publicProfileReducer,
     inititialState
   );
 
-  let urlUid = "";
-
-  if (!urlUid) {
-    urlUid = props.match.params.id;
-  }
+  const urlUid = id ?? "";
   /* ------------------------------------------
   // Daten aus DB lesen
   // ------------------------------------------ */
   React.useEffect(() => {
     if (
-      props.location.state &&
-      props.location.state.displayName &&
-      props.location.state.pictureSrc
+      location.state &&
+      location.state.displayName &&
+      location.state.pictureSrc
     ) {
       dispatch({
         type: ReducerActions.FETCH_PUBLIC_PROFILE,
         payload: {
-          displayName: props.location.state.displayName,
-          pictureSrc: props.location.state.pictureSrc,
+          displayName: location.state.displayName,
+          pictureSrc: location.state.pictureSrc,
         },
       });
     }
@@ -172,9 +160,8 @@ const PublicProfileBase: React.FC<
   // Zu eigenem Profil wechseln
   // ------------------------------------------ */
   const onEditClick = () => {
-    push({
-      pathname: `${ROUTES.USER_PROFILE}/${authUser!.uid}`,
-      state: {action: Action.VIEW},
+    navigate(`${ROUTES.USER_PROFILE}/${authUser!.uid}`, {
+      state: {action: Action.VIEW}
     });
   };
   return (
@@ -185,7 +172,7 @@ const PublicProfileBase: React.FC<
       />
       {state.publicProfile.uid === authUser?.uid ? (
         // Nur Anzeigen wenn die Person das eigene Profil anschaut
-        <ButtonRow
+        (<ButtonRow
           key="buttons_view"
           buttons={[
             {
@@ -198,7 +185,7 @@ const PublicProfileBase: React.FC<
               onClick: onEditClick,
             },
           ]}
-        />
+        />)
       ) : null}
       {/* ===== BODY ===== */}
       <Container sx={classes.container} component="main" maxWidth="sm">
@@ -328,10 +315,4 @@ export const AchievedRewardsList = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(PublicProfilePage);
+export default PublicProfilePage;

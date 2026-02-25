@@ -1,91 +1,77 @@
 import React, {useState, useEffect} from "react";
-import {compose} from "react-recompose";
-import {withRouter} from "react-router-dom";
+import {useNavigate} from "react-router";
 
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 
 import {
   SIGN_IN as ROUTE_SIGN_IN,
   NO_AUTH as ROUTE_NO_AUTH,
-  // VERIFY_EMAIL as ROUTE_VERIFY_EMAIL,
 } from "../../constants/routes";
-import {RouteComponentProps} from "react-router";
-import Firebase from "../Firebase/firebase.class";
 
 export const AuthUserContext = React.createContext<AuthUser | null>(null);
 
 /* ===================================================================
-// ============================ Prüfung User =========================
+// ============================== Hooks ==============================
 // =================================================================== */
-interface WithAuthenticationProps {
-  firebase: Firebase;
-}
-
-export const withAuthentication = <P extends WithAuthenticationProps>(
-  Component: React.ComponentType<P>
-) => {
-  const WithAuthentication: React.FC<Omit<P, keyof WithAuthenticationProps>> = (
-    props
-  ) => {
-    const {firebase, ...restProps} = props as P;
-    const [authUser, setAuthUser] = useState<AuthUser | null>(null);
-
-    useEffect(() => {
-      // wieso wird der auth listener nicht erneut gerufen....
-      const listener = firebase.onAuthUserListener((authUser) => {
-        setAuthUser(authUser);
-      });
-
-      return () => {
-        listener(); // Aufräumarbeiten beim Komponentenabbau
-      };
-    }, [firebase.auth]);
-
-    return (
-      <AuthUserContext.Provider value={authUser}>
-        <Component {...(restProps as P)} />
-      </AuthUserContext.Provider>
-    );
-  };
-
-  return withFirebase(WithAuthentication);
+export const useAuthUser = (): AuthUser | null => {
+  return React.useContext(AuthUserContext);
 };
 
 /* ===================================================================
-// ======================== Prüfung Berechtigung =====================
+// ========================= AuthUserProvider ========================
 // =================================================================== */
-export const withAuthorization =
-  (condition: (authUser: AuthUser | null) => boolean) =>
-  <P extends RouteComponentProps & {firebase: Firebase}>(
-    Component: React.ComponentType<P>
-  ) => {
-    const WithAuthorization: React.FC<P> = (props) => {
-      useEffect(() => {
-        const listener = props.firebase.onAuthUserListener((authUser) => {
-          if (authUser === null) {
-            props.history.push(ROUTE_SIGN_IN);
-          } else if (!condition(authUser)) {
-            props.history.push(ROUTE_NO_AUTH);
-          }
-        });
+export const AuthUserProvider: React.FC<{children: React.ReactNode}> = ({
+  children,
+}) => {
+  const firebase = useFirebase();
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 
-        return () => {
-          listener(); // Aufräumarbeiten beim Komponentenabbau
-        };
-      }, [props.firebase.auth, props.history]);
+  useEffect(() => {
+    const listener = firebase.onAuthUserListener((authUser) => {
+      setAuthUser(authUser);
+    });
 
-      return (
-        <AuthUserContext.Consumer>
-          {(authUser) =>
-            condition(authUser) ? <Component {...props} /> : null
-          }
-        </AuthUserContext.Consumer>
-      );
+    return () => {
+      listener(); // Aufräumarbeiten beim Komponentenabbau
     };
+  }, [firebase.auth]);
 
-    return compose(
-      withRouter,
-      withFirebase
-    )(WithAuthorization as React.ComponentType<any>);
-  };
+  return (
+    <AuthUserContext.Provider value={authUser}>
+      {children}
+    </AuthUserContext.Provider>
+  );
+};
+
+/* ===================================================================
+// ======================= AuthorizationGuard ========================
+// =================================================================== */
+interface AuthorizationGuardProps {
+  condition: (authUser: AuthUser | null) => boolean;
+  children: React.ReactNode;
+}
+export const AuthorizationGuard: React.FC<AuthorizationGuardProps> = ({
+  condition,
+  children,
+}) => {
+  const authUser = useAuthUser();
+  const firebase = useFirebase();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const listener = firebase.onAuthUserListener((authUser) => {
+      if (authUser === null) {
+        navigate(ROUTE_SIGN_IN);
+      } else if (!condition(authUser)) {
+        navigate(ROUTE_NO_AUTH);
+      }
+    });
+
+    return () => {
+      listener(); // Aufräumarbeiten beim Komponentenabbau
+    };
+  }, [firebase.auth, navigate]);
+
+  return condition(authUser) ? <>{children}</> : null;
+};

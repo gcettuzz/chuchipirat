@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import {
   MONITOR as TEXT_MONITOR,
@@ -62,16 +61,14 @@ import SearchPanel from "../Shared/searchPanel";
 
 import {FormListItem} from "../Shared/formListItem";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
-import {ChangeRecord, CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
+import {ChangeRecord} from "../Shared/global.interface";
 import {
   DataGrid,
   GridColDef,
-  GridValueFormatterParams,
-  deDE,
 } from "@mui/x-data-grid";
+import {deDE} from "@mui/x-data-grid/locales";
 import Feed, {FeedLogEntry} from "../Shared/feed.class";
 import {DialogType, useCustomDialog} from "../Shared/customDialogContext";
 
@@ -193,13 +190,7 @@ const feedsOverviewReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const OverviewFeedsPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <OverviewFeedsBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 
 /* ===================================================================
 // =============================== Base ==============================
@@ -209,10 +200,9 @@ interface OverviewFeedsBaseProps {
   logEntry: FeedLogEntry | null;
   open: boolean;
 }
-const OverviewFeedsBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const OverviewFeedsPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
   const theme = useTheme();
   const {customDialog} = useCustomDialog();
@@ -513,9 +503,9 @@ const FeedLogTable = ({dbFeedLog, onFeedLogSelect}: FeedLogTableProps) => {
       headerName: TEXT_DATE,
       editable: false,
       width: 200,
-      valueFormatter: (params: GridValueFormatterParams) => {
-        if (params.value && params.value instanceof Date) {
-          return params.value.toLocaleString("de-CH", {
+      valueFormatter: (value) => {
+        if (value && value instanceof Date) {
+          return value.toLocaleString("de-CH", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
@@ -849,11 +839,4 @@ const DeleteDocumentTriggerDocumentsPanel = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser && !!authUser.roles.includes(Role.communityLeader);
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(OverviewFeedsPage);
+export default OverviewFeedsPage;

@@ -34,14 +34,12 @@ import {HOME as ROUTE_HOME} from "../../constants/routes";
 import {ImageRepository} from "../../constants/imageRepository";
 import AlertMessage from "../Shared/AlertMessage";
 import {ForgotPasswordLink} from "../AuthServiceHandler/passwordReset";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import User from "../User/user.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {useHistory, withRouter} from "react-router";
+import {useNavigate} from "react-router";
 import Utils from "../Shared/utils.class";
 import {Backdrop, CircularProgress} from "@mui/material";
-
-import {CustomRouterProps} from "../Shared/global.interface";
 import GlobalSettings from "../Admin/globalSettings.class";
 import useCustomStyles from "../../constants/styles";
 
@@ -119,10 +117,10 @@ const signInReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // ================================ Page =============================
 // =================================================================== */
-const SignInPage: React.FC<CustomRouterProps> = ({...props}) => {
-  const firebase = props.firebase;
+const SignInPage = () => {
+  const firebase = useFirebase();
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const [state, dispatch] = React.useReducer(signInReducer, inititialState);
   /* ------------------------------------------
@@ -190,7 +188,7 @@ const SignInPage: React.FC<CustomRouterProps> = ({...props}) => {
           setTimeout(resolve, 2000);
         });
 
-        push({pathname: ROUTE_HOME});
+        navigate(ROUTE_HOME);
       })
       .catch((error: FirebaseError) => {
         console.error(error);
@@ -268,7 +266,9 @@ const SignInForm = ({
     setShowPassword(!showPassword);
   };
 
-  const handleMouseDownPassword = (event) => {
+  const handleMouseDownPassword = (
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) => {
     event.preventDefault();
   };
 
@@ -310,19 +310,21 @@ const SignInForm = ({
         value={signInData.password}
         onChange={onFieldChange}
         disabled={maintenanceMode}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton
-                aria-label={TEXT_SHOW_PASSWORD}
-                onClick={handleClickShowPassword}
-                onMouseDown={handleMouseDownPassword}
-                size="large"
-              >
-                {showPassword ? <Visibility /> : <VisibilityOff />}
-              </IconButton>
-            </InputAdornment>
-          ),
+        slotProps={{
+          input: {
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label={TEXT_SHOW_PASSWORD}
+                  onClick={handleClickShowPassword}
+                  onMouseDown={handleMouseDownPassword}
+                  size="large"
+                >
+                  {showPassword ? <Visibility /> : <VisibilityOff />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          },
         }}
       />
       <Button
@@ -359,4 +361,4 @@ export const AlertMaintenanceMode = () => {
   );
 };
 
-export default withRouter(withFirebase(SignInPage));
+export default SignInPage;

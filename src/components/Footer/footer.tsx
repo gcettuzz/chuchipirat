@@ -1,7 +1,7 @@
 import React from "react";
 
 import Link from "@mui/material/Link";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
@@ -23,12 +23,12 @@ import {
 import {Box, Container, IconButton} from "@mui/material";
 import {Instagram as IconInstagram} from "@mui/icons-material";
 import packageJson from "../../../package.json";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import useCustomStyles from "../../constants/styles";
 
 const Footer = () => {
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const onOpenInstagram = () => {
     window.open(DEFAULT_VALUES.INSTAGRAM_URL, "_blank");
@@ -38,11 +38,11 @@ const Footer = () => {
     <footer>
       <Container sx={classes.container}>
         <Grid container justifyContent="center" alignItems="center" spacing={4}>
-          <Grid xs={2} />
-          <Grid xs={3}>
+ <Grid size={2} />
+ <Grid size={3} >
             <Divider sx={classes.mediumDivider} key={"footerDividerLeft"} />
           </Grid>
-          <Grid container justifyContent="center" xs={2}>
+ <Grid size={2} container justifyContent="center" >
             <Box
               component="img"
               src={
@@ -52,12 +52,12 @@ const Footer = () => {
               width="50px"
             />
           </Grid>
-          <Grid xs={3}>
+ <Grid size={3} >
             <Divider sx={classes.mediumDivider} key={"footerDividerRight"} />
           </Grid>
-          <Grid xs={2} />
+ <Grid size={2} />
 
-          <Grid xs={12}>
+ <Grid size={12} >
             <Typography variant="h6" align="center" gutterBottom>
               {TEXT_APP_NAME}
             </Typography>
@@ -117,7 +117,7 @@ const Footer = () => {
               <br />
               <Link
                 onClick={() => {
-                  push({pathname: ROUTE_TERM_OF_USE});
+                  navigate(ROUTE_TERM_OF_USE);
                 }}
               >
                 {TEXT_TERM_OF_USE}
@@ -125,7 +125,7 @@ const Footer = () => {
               {" | "}
               <Link
                 onClick={() => {
-                  push({pathname: ROUTE_PRIVACY_POLICY});
+                  navigate(ROUTE_PRIVACY_POLICY);
                 }}
               >
                 {TEXT_PRIVACY_POLICY}
@@ -141,7 +141,7 @@ const Footer = () => {
               <IconInstagram />
             </IconButton>
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <Copyright />
             <br />
           </Grid>

@@ -1,8 +1,7 @@
 import React, {SyntheticEvent} from "react";
 import {useTheme} from "@mui/material/styles";
-import {compose} from "react-recompose";
 
-import {useHistory} from "react-router";
+import {useNavigate, useLocation} from "react-router";
 
 import {
   Card,
@@ -17,6 +16,7 @@ import {
   useMediaQuery,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   ListItemAvatar,
   Avatar,
@@ -26,7 +26,7 @@ import {
   SnackbarCloseReason,
 } from "@mui/material";
 
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import PageTitle from "../Shared/pageTitle";
 import AlertMessage from "../Shared/AlertMessage";
@@ -49,7 +49,7 @@ import {ImageRepository} from "../../constants/imageRepository";
 import Event, {EventType} from "../Event/Event/event.class";
 import EventCard, {EventCardLoading} from "../Event/Event/eventCard";
 
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {useAuthUser} from "../Session/authUserContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import Feed, {FeedType} from "../Shared/feed.class";
 import {RecipeCardLoading} from "../Recipe/recipeCard";
@@ -66,9 +66,7 @@ import {
   NavigationObject,
 } from "../Navigation/navigationContext";
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
-import {withFirebase} from "../Firebase/firebaseContext";
-import withEmailVerification from "../Session/withEmailVerification";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useFirebase} from "../Firebase/firebaseContext";
 import Utils from "../Shared/utils.class";
 import SystemMessage from "../Admin/systemMessage.class";
 import {AlertSystemMessage} from "../Admin/systemMessage";
@@ -94,10 +92,21 @@ enum ReducerActions {
   CLOSE_SNACKBAR,
   GENERIC_ERROR,
 }
-type DispatchAction = {
-  type: ReducerActions;
-  payload: any;
-};
+type DispatchAction =
+  | {type: ReducerActions.EVENTS_FETCH_INIT}
+  | {type: ReducerActions.EVENTS_FETCH_SUCCESS; payload: Event[]}
+  | {type: ReducerActions.PASSED_EVENTS_FETCH_INIT}
+  | {type: ReducerActions.PASSED_EVENTS_FETCH_SUCCESS; payload: Event[]}
+  | {type: ReducerActions.NEWEST_RECIPES_FETCH_INIT}
+  | {type: ReducerActions.NEWEST_RECIPES_FETCH_SUCCESS; payload: Feed[]}
+  | {type: ReducerActions.FEED_FETCH_INIT}
+  | {type: ReducerActions.FEED_FETCH_SUCCESS; payload: Feed[]}
+  | {type: ReducerActions.STATS_FETCH_INIT}
+  | {type: ReducerActions.STATS_FETCH_SUCCESS; payload: Kpi[]}
+  | {type: ReducerActions.SYSTEM_MESSAGE_FETCH_SUCCESS; payload: SystemMessage}
+  | {type: ReducerActions.SET_SNACKBAR; payload: Snackbar}
+  | {type: ReducerActions.CLOSE_SNACKBAR}
+  | {type: ReducerActions.GENERIC_ERROR; payload: Error};
 
 type State = {
   events: Event[];
@@ -142,7 +151,7 @@ const homeReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoadingEvents: false,
-        events: action.payload as Event[],
+        events: action.payload,
       };
     case ReducerActions.PASSED_EVENTS_FETCH_INIT:
       return {
@@ -153,7 +162,7 @@ const homeReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoadingPassedEvents: false,
-        passedEvents: action.payload as Event[],
+        passedEvents: action.payload,
       };
     case ReducerActions.NEWEST_RECIPES_FETCH_INIT:
       return {
@@ -164,7 +173,7 @@ const homeReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoadingNewestRecipes: false,
-        recipes: action.payload as Feed[],
+        recipes: action.payload,
       };
     case ReducerActions.FEED_FETCH_INIT:
       return {
@@ -175,7 +184,7 @@ const homeReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoadingFeed: false,
-        feed: action.payload as Feed[],
+        feed: action.payload,
       };
     case ReducerActions.STATS_FETCH_INIT:
       return {
@@ -186,7 +195,7 @@ const homeReducer = (state: State, action: DispatchAction): State => {
       return {
         ...state,
         isLoadingStats: false,
-        stats: action.payload as Kpi[],
+        stats: action.payload,
       };
     case ReducerActions.SYSTEM_MESSAGE_FETCH_SUCCESS:
       return {
@@ -196,7 +205,7 @@ const homeReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.SET_SNACKBAR:
       return {
         ...state,
-        snackbar: action.payload as Snackbar,
+        snackbar: action.payload,
       };
     case ReducerActions.CLOSE_SNACKBAR:
       return {
@@ -208,49 +217,36 @@ const homeReducer = (state: State, action: DispatchAction): State => {
         },
       };
     case ReducerActions.GENERIC_ERROR:
-      return {...state, error: action.payload as Error};
-    default:
-      console.error("Unbekannter ActionType: ", action.type);
-      throw new Error();
+      return {...state, error: action.payload};
+    default: {
+      const exhaustiveCheck: never = action;
+      throw new Error(`Unbekannter ActionType: ${exhaustiveCheck}`);
+    }
   }
 };
-interface LocationState {
-  snackbar?: Snackbar;
-}
-
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const HomePage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <HomeBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
-/* ===================================================================
-// =============================== Base ==============================
-// =================================================================== */
-const HomeBase: React.FC<
-  CustomRouterProps<undefined, LocationState> & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const HomePage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
+  const location = useLocation();
 
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const navigationValuesContext = React.useContext(NavigationValuesContext);
   const [state, dispatch] = React.useReducer(homeReducer, inititialState);
   // Prüfen ob allenfalls eine Snackbar angezeigt werden soll
   // --> aus dem Prozess Anlass löschen
   if (
-    props.location.state &&
-    props.location.state?.["snackbar"] &&
+    location.state &&
+    location.state?.["snackbar"] &&
     !state.snackbar.open
   ) {
     dispatch({
       type: ReducerActions.SET_SNACKBAR,
-      payload: props.location.state?.["snackbar"],
+      payload: location.state?.["snackbar"],
     });
   }
 
@@ -271,7 +267,7 @@ const HomeBase: React.FC<
     if (!authUser) {
       return;
     }
-    dispatch({type: ReducerActions.EVENTS_FETCH_INIT, payload: {}});
+    dispatch({type: ReducerActions.EVENTS_FETCH_INIT});
 
     Event.getEventsOfUser({
       firebase: firebase,
@@ -300,7 +296,7 @@ const HomeBase: React.FC<
   }, [authUser]);
   React.useEffect(() => {
     //Neuster freigegebene Rezepte
-    dispatch({type: ReducerActions.NEWEST_RECIPES_FETCH_INIT, payload: {}});
+    dispatch({type: ReducerActions.NEWEST_RECIPES_FETCH_INIT});
 
     Feed.getNewestFeeds({
       firebase: firebase,
@@ -321,7 +317,7 @@ const HomeBase: React.FC<
   }, []);
   React.useEffect(() => {
     //Feed Einträge
-    dispatch({type: ReducerActions.FEED_FETCH_INIT, payload: {}});
+    dispatch({type: ReducerActions.FEED_FETCH_INIT});
 
     Feed.getNewestFeeds({
       firebase: firebase,
@@ -341,7 +337,7 @@ const HomeBase: React.FC<
   }, []);
   React.useEffect(() => {
     //Statistik Einträge
-    dispatch({type: ReducerActions.STATS_FETCH_INIT, payload: {}});
+    dispatch({type: ReducerActions.STATS_FETCH_INIT});
 
     Stats.getStats(firebase)
       .then((result) => {
@@ -379,7 +375,7 @@ const HomeBase: React.FC<
   }
 
   const onShowPassedEvents = () => {
-    dispatch({type: ReducerActions.PASSED_EVENTS_FETCH_INIT, payload: {}});
+    dispatch({type: ReducerActions.PASSED_EVENTS_FETCH_INIT});
     Event.getEventsOfUser({
       firebase: firebase,
       userUid: authUser.uid,
@@ -413,18 +409,15 @@ const HomeBase: React.FC<
     if (!event) {
       return;
     }
-    push({
-      pathname: `${ROUTES.EVENT}/${event.uid}`,
+    navigate(`${ROUTES.EVENT}/${event.uid}`, {
       state: {
         action: Action.VIEW,
         event: event,
-      },
+      }
     });
   };
   const onCreateNewEvent = () => {
-    push({
-      pathname: `${ROUTES.CREATE_NEW_EVENT}`,
-    });
+    navigate(`${ROUTES.CREATE_NEW_EVENT}`);
   };
   const onRecipeClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     const recipeUid = event.currentTarget.name.split("_")[1];
@@ -435,8 +428,7 @@ const HomeBase: React.FC<
     if (!recipe) {
       return;
     }
-    push({
-      pathname: `${ROUTES.RECIPE}/${recipeUid}`,
+    navigate(`${ROUTES.RECIPE}/${recipeUid}`, {
       state: {
         action: Action.VIEW,
         recipeShort: {
@@ -445,10 +437,10 @@ const HomeBase: React.FC<
           pictureSrc: recipe.sourceObject.pictureSrc,
         },
         recipeType: RecipeType.public,
-      },
+      }
     });
   };
-  const onFeedEntryCllick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const onFeedEntryCllick = (event: React.MouseEvent<HTMLElement>) => {
     const feedEntry = state.feed.find(
       (feedEntry) => feedEntry.uid == event.currentTarget.id.split("_")[1]
     );
@@ -459,23 +451,21 @@ const HomeBase: React.FC<
     switch (feedEntry.type) {
       case FeedType.recipePublished:
         // Rezept anzeigen
-        push({
-          pathname: `${ROUTES.RECIPE}/${feedEntry.sourceObject.uid}`,
+        navigate(`${ROUTES.RECIPE}/${feedEntry.sourceObject.uid}`, {
           state: {
             action: Action.VIEW,
-          },
+          }
         });
         break;
       default:
         // Wenn nichts vorhanden, User anzeigen,
         // der/die den Feed generiert hat
-        push({
-          pathname: `${ROUTES.USER_PUBLIC_PROFILE}/${feedEntry.user.uid}`,
+        navigate(`${ROUTES.USER_PUBLIC_PROFILE}/${feedEntry.user.uid}`, {
           state: {
             action: Action.VIEW,
             displayName: feedEntry.user.displayName,
             pictureSrc: feedEntry.user.pictureSrc,
-          },
+          }
         });
     }
   };
@@ -483,16 +473,15 @@ const HomeBase: React.FC<
   // Snackback schliessen
   // ------------------------------------------ */
   const handleSnackbarClose = (
-    event: globalThis.Event | SyntheticEvent<any, globalThis.Event>,
+    _event: globalThis.Event | SyntheticEvent<Element, globalThis.Event>,
     reason: SnackbarCloseReason
   ) => {
     if (reason === "clickaway") {
       return;
     }
-    delete props.location.state?.snackbar;
+    delete location.state?.snackbar;
     dispatch({
       type: ReducerActions.CLOSE_SNACKBAR,
-      payload: {},
     });
   };
   return (
@@ -501,7 +490,7 @@ const HomeBase: React.FC<
       <Container sx={classes.container} component="main" maxWidth="md">
         <Grid container spacing={2} justifyContent="center">
           {state.error && (
-            <Grid key={"error"} xs={12}>
+ <Grid size={12} key={"error"} >
               <AlertMessage
                 error={state.error}
                 messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
@@ -509,11 +498,11 @@ const HomeBase: React.FC<
             </Grid>
           )}
           {state.systemMessage !== null && (
-            <Grid key="systemMessage" xs={12}>
+ <Grid size={12} key="systemMessage" >
               <AlertSystemMessage systemMessage={state.systemMessage} />
             </Grid>
           )}
-          <Grid xs={12}>
+ <Grid size={12} >
             <HomeNextEvents
               events={state.events}
               isLoadingEvents={state.isLoadingEvents}
@@ -521,7 +510,7 @@ const HomeBase: React.FC<
               onCreateNewEvent={onCreateNewEvent}
             />
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <HomePassedEvents
               events={state.passedEvents}
               isLoadingPassedEvents={state.isLoadingPassedEvents}
@@ -529,11 +518,11 @@ const HomeBase: React.FC<
               onShowPassedEvents={onShowPassedEvents}
             />
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <Divider style={{marginBottom: "2rem"}} />
           </Grid>
           {Utils.isTestEnviroment() && (
-            <Grid xs={12}>
+ <Grid size={12} >
               <Typography variant="h5" align="center" gutterBottom>
                 Testing
               </Typography>
@@ -549,21 +538,21 @@ const HomeBase: React.FC<
               <Divider style={{marginBottom: "2rem"}} />
             </Grid>
           )}
-          <Grid xs={12} md={4}>
+ <Grid size={{ xs: 12, md: 4 }} >
             <HomeNewestRecipes
               recipes={state.recipes}
               isLoadingRecipes={state.isLoadingEvents}
               onCardClick={onRecipeClick}
             />
           </Grid>
-          <Grid xs={12} md={4}>
+ <Grid size={{ xs: 12, md: 4 }} >
             <HomeFeed
               feed={state.feed}
               isLoadingFeed={state.isLoadingFeed}
               onListEntryClick={onFeedEntryCllick}
             />
           </Grid>
-          <Grid xs={12} md={4}>
+ <Grid size={{ xs: 12, md: 4 }} >
             <HomeStats
               stats={state.stats}
               isLoadingStats={state.isLoadingStats}
@@ -615,12 +604,12 @@ const HomeNextEvents = ({
     <React.Fragment>
       <Grid container spacing={2} justifyContent="center">
         {isLoadingEvents && (
-          <Grid xs={12} sm={6} md={4} lg={3}>
+ <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} >
             <EventCardLoading key={"loadingEventCard"} />
           </Grid>
         )}
         {events.map((event) => (
-          <Grid xs={12} sm={6} md={4} lg={3} key={"eventGrid_" + event.uid}>
+ <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={"eventGrid_" + event.uid}>
             <EventCard
               event={event}
               onCardClick={onCardClick}
@@ -628,7 +617,7 @@ const HomeNextEvents = ({
             />
           </Grid>
         ))}
-        <Grid xs={12} sm={6} md={4} lg={3}>
+ <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} >
           <Card sx={classes.card} key={"eventCardNew"}>
             <CardMedia
               sx={classes.cardMedia}
@@ -692,7 +681,7 @@ const HomePassedEvents = ({
     <React.Fragment>
       <Grid container spacing={2} justifyContent="center">
         {showLoadPassedEvents ? (
-          <Grid xs={12} sx={classes.centerCenter}>
+ <Grid size={12} sx={classes.centerCenter}>
             <Button
               color="primary"
               sx={classes.button}
@@ -702,7 +691,7 @@ const HomePassedEvents = ({
             </Button>
           </Grid>
         ) : (
-          <Grid xs={12} sx={classes.centerCenter}>
+ <Grid size={12} sx={classes.centerCenter}>
             <Typography
               variant="h5"
               align="center"
@@ -715,17 +704,17 @@ const HomePassedEvents = ({
         )}
         {isLoadingPassedEvents && (
           <React.Fragment>
-            <Grid xs={12} sm={6} md={4} lg={3}>
+ <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} >
               <EventCardLoading />
             </Grid>
-            <Grid xs={12} sm={6} md={4} lg={3}>
+ <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} >
               <EventCardLoading />
             </Grid>
           </React.Fragment>
         )}
         {!showLoadPassedEvents &&
           events.map((event) => (
-            <Grid xs={12} sm={6} md={4} lg={3} key={"eventGrid_" + event.uid}>
+ <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={"eventGrid_" + event.uid}>
               <EventCard
                 event={event}
                 onCardClick={onCardClick}
@@ -735,11 +724,7 @@ const HomePassedEvents = ({
           ))}
         {!showLoadPassedEvents &&
           rowFiller.map((number) => (
-            <Grid
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
               key={"gridRowFiller_" + number}
             />
           ))}
@@ -775,7 +760,7 @@ const HomeNewestRecipes = ({
 
   return (
     <Grid container spacing={2} justifyContent="center">
-      <Grid xs={12} key={"recipeTitle"}>
+ <Grid size={12} key={"recipeTitle"}>
         <Typography
           align="center"
           gutterBottom={true}
@@ -787,12 +772,12 @@ const HomeNewestRecipes = ({
       </Grid>
       {isLoadingRecipes &&
         Array(DEFAULT_RECIPE_DISPLAY).map((emptyCard) => (
-          <Grid xs={12} key={"emptyRecipeGrid_" + emptyCard}>
+ <Grid size={12} key={"emptyRecipeGrid_" + emptyCard}>
             <RecipeCardLoading key={"emptyRecipeCard_" + emptyCard} />
           </Grid>
         ))}
       {recipes.map((recipe) => (
-        <Grid xs={12} key={"recipeGrid_" + recipe.uid}>
+ <Grid size={12} key={"recipeGrid_" + recipe.uid}>
           <Card
             sx={classes.card}
             onMouseOver={() => handleHover(recipe.uid)}
@@ -839,13 +824,13 @@ const HomeNewestRecipes = ({
 interface HomeFeedProps {
   feed: Feed[];
   isLoadingFeed: boolean;
-  onListEntryClick: (event) => void;
+  onListEntryClick: (event: React.MouseEvent<HTMLElement>) => void;
 }
 const HomeFeed = ({feed, isLoadingFeed, onListEntryClick}: HomeFeedProps) => {
   const classes = useCustomStyles();
   return (
     <Grid container spacing={2} justifyContent="center">
-      <Grid xs={12}>
+ <Grid size={12} >
         <Typography
           align="center"
           gutterBottom={true}
@@ -855,7 +840,7 @@ const HomeFeed = ({feed, isLoadingFeed, onListEntryClick}: HomeFeedProps) => {
           {TEXT_FEED}
         </Typography>
       </Grid>
-      <Grid xs={12}>
+ <Grid size={12} >
         <Card sx={classes.card}>
           <List>
             {isLoadingFeed &&
@@ -871,11 +856,10 @@ const HomeFeed = ({feed, isLoadingFeed, onListEntryClick}: HomeFeedProps) => {
               )}
             {feed.map((feedEntry, counter) => (
               <React.Fragment key={"feed_" + feedEntry.uid}>
-                <ListItem
+                <ListItemButton
                   alignItems="flex-start"
                   key={"feedListItem_" + feedEntry.uid}
                   id={"feedListItem_" + feedEntry.uid}
-                  button
                   onClick={onListEntryClick}
                 >
                   <ListItemAvatar>
@@ -905,7 +889,7 @@ const HomeFeed = ({feed, isLoadingFeed, onListEntryClick}: HomeFeedProps) => {
                       </React.Fragment>
                     }
                   />
-                </ListItem>
+                </ListItemButton>
                 {counter != feed.length - 1 && (
                   <Divider variant="inset" component="li" />
                 )}
@@ -928,7 +912,7 @@ const HomeStats = ({stats, isLoadingStats}: HomeStatsProps) => {
   const classes = useCustomStyles();
   return (
     <Grid container spacing={2} justifyContent="center">
-      <Grid xs={12}>
+ <Grid size={12} >
         <Typography
           align="center"
           gutterBottom={true}
@@ -938,7 +922,7 @@ const HomeStats = ({stats, isLoadingStats}: HomeStatsProps) => {
           {TEXT_STATS}
         </Typography>
       </Grid>
-      <Grid xs={12}>
+ <Grid size={12} >
         <Card sx={classes.card}>
           <List>
             {isLoadingStats
@@ -975,10 +959,4 @@ const HomeStats = ({stats, isLoadingStats}: HomeStatsProps) => {
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(HomePage);
+export default HomePage;

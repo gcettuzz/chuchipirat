@@ -1,17 +1,15 @@
 import React from "react";
-import {compose} from "react-recompose";
 
-import {useHistory, withRouter} from "react-router";
+import {useNavigate} from "react-router";
 
-import {Container, Link} from "@mui/material";
-import {Alert, AlertTitle} from "@mui/lab";
+import { Container, Link, Alert, AlertTitle } from "@mui/material";
 
 import PageTitle from "../Shared/pageTitle";
 
 import useCustomStyles from "../../constants/styles";
 
 import FirebaseMessageHandler from "../Firebase/firebaseMessageHandler.class";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import User from "../User/user.class";
 
 import {SIGN_IN as ROUTE_SIGN_IN} from "../../constants/routes";
@@ -24,20 +22,23 @@ import {
 } from "../../constants/text";
 import LocalStorageKey from "../../constants/localStorage";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../Shared/global.interface";
 import {checkActionCode} from "firebase/auth";
 
 // ===================================================================
 // =============================== Page ==============================
 // ===================================================================
-const RecoverEmailPage: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
-  const actionCode = props?.oobCode;
+interface RecoverEmailPageProps {
+  authUser: AuthUser | null;
+  oobCode: string;
+}
+
+const RecoverEmailPage: React.FC<RecoverEmailPageProps> = ({authUser: authUserProp, oobCode}) => {
+  let authUser = authUserProp;
+  const firebase = useFirebase();
+  const actionCode = oobCode;
   const [error, setError] = React.useState<Error | null>(null);
   const [isRecovered, setIsRecovered] = React.useState(false);
-  const {push} = useHistory();
+  const navigate = useNavigate();
   const classes = useCustomStyles();
 
   /* ------------------------------------------
@@ -110,7 +111,7 @@ const RecoverEmailPage: React.FC<
           <Alert severity="info">
             <AlertTitle>{TEXT_CHANGE_UNDONE}</AlertTitle>
             {TEXT_EMAIL_RECOVERED}
-            <Link onClick={() => push({pathname: ROUTE_SIGN_IN})}>
+            <Link onClick={() => navigate(ROUTE_SIGN_IN)}>
               {TEXT_SIGN_IN}
             </Link>
           </Alert>
@@ -120,4 +121,4 @@ const RecoverEmailPage: React.FC<
   );
 };
 
-export default compose(withRouter, withFirebase)(RecoverEmailPage);
+export default RecoverEmailPage;

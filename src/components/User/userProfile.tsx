@@ -1,7 +1,6 @@
 import React from "react";
-import {compose} from "react-recompose";
 
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 
 import {
   Container,
@@ -67,10 +66,8 @@ import UserPublicProfile from "./user.public.profile.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import {FormListItem} from "../Shared/formListItem";
 import {DialogType, useCustomDialog} from "../Shared/customDialogContext";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import LocalStorageKey from "../../constants/localStorage";
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -207,22 +204,15 @@ const userProfileReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const UserProfilePage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <UserProfileBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const UserProfileBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const UserProfilePage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
   const {customDialog} = useCustomDialog();
 
   const [state, dispatch] = React.useReducer(
@@ -307,9 +297,7 @@ const UserProfileBase: React.FC<
   // Passwort ändern
   // ------------------------------------------ */
   const onPasswordChangeClick = () => {
-    push({
-      pathname: ROUTE_PASSWORD_CHANGE,
-    });
+    navigate(ROUTE_PASSWORD_CHANGE);
   };
   /* ------------------------------------------
   // Bild in Firebase Storage hochladen
@@ -699,10 +687,4 @@ const AchievedRewardsCard = ({publicProfile}: AchievedRewardsCard) => {
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(UserProfilePage);
+export default UserProfilePage;

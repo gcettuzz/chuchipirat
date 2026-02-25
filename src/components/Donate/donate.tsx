@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import {
   Container,
@@ -21,10 +20,8 @@ import {
 import useCustomStyles from "../../constants/styles";
 
 import PageTitle from "../Shared/pageTitle";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {useAuthUser} from "../Session/authUserContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../Shared/global.interface";
 import {TwintButton} from "../Event/Event/createNewEvent";
 import {ImageRepository} from "../../constants/imageRepository";
 
@@ -35,19 +32,12 @@ import {ImageRepository} from "../../constants/imageRepository";
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const DonatePage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <DonateBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const DonateBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
-  authUser,
-}) => {
+const DonatePage = () => {
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
 
   if (!authUser) {
@@ -96,9 +86,4 @@ const DonateBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition)
-)(DonatePage);
+export default DonatePage;

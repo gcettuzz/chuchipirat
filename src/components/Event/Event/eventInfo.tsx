@@ -23,8 +23,8 @@ import {
   useMediaQuery,
   Box,
   Stack,
+  Alert,
 } from "@mui/material";
-import {Alert} from "@mui/lab";
 import {Delete as DeleteIcon, Add as AddIcon} from "@mui/icons-material";
 
 import {
@@ -375,9 +375,13 @@ const EventBasicInfoCard = ({
       />
       <CardContent>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Grid container spacing={2}>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   id="name"
                   name="name"
@@ -398,7 +402,7 @@ const EventBasicInfoCard = ({
                   required
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   id="motto"
                   name="motto"
@@ -410,7 +414,7 @@ const EventBasicInfoCard = ({
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   id="location"
                   name="location"
@@ -422,18 +426,18 @@ const EventBasicInfoCard = ({
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <Grid container spacing={2}>
-                  <Grid item xs={12}>
+                  <Grid size={12}>
                     <Typography variant="h6">{TEXT_DATES}</Typography>
                   </Grid>
                   {event.dates.map((eventDate, counter) => (
                     <React.Fragment key={"date_" + eventDate.uid}>
-                      <Grid item xs={5}>
+                      <Grid size={5}>
                         <DatePicker
                           key={"dateFrom_" + eventDate.uid}
                           label={TEXT_FROM}
-                          inputFormat="dd.MM.yyyy"
+                          format="dd.MM.yyyy"
                           value={
                             eventDate.from?.getTime() == new Date(0).getTime()
                               ? null
@@ -442,26 +446,25 @@ const EventBasicInfoCard = ({
                           onChange={(date) =>
                             onDatePickerUpdate(date, "from_" + eventDate.uid)
                           }
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              helperText={FormValidatorUtil.getHelperText(
+                          slotProps={{
+                            textField: {
+                              helperText: FormValidatorUtil.getHelperText(
                                 formValidation,
                                 "dateFrom_" + eventDate.uid,
                                 ""
-                              )}
-                            />
-                          )}
+                              ),
+                            },
+                          }}
                         />
                       </Grid>
-                      <Grid item xs={1} sx={classes.centerCenter}>
+                      <Grid sx={classes.centerCenter} size={1}>
                         <Typography>-</Typography>
                       </Grid>
-                      <Grid item xs={5}>
+                      <Grid size={5}>
                         <DatePicker
                           key={"dateTo_" + eventDate.uid}
                           label={TEXT_TO}
-                          inputFormat="dd.MM.yyyy"
+                          format="dd.MM.yyyy"
                           value={
                             eventDate.to?.getTime() == new Date(0).getTime()
                               ? null
@@ -470,19 +473,18 @@ const EventBasicInfoCard = ({
                           onChange={(date) =>
                             onDatePickerUpdate(date, "to_" + eventDate.uid)
                           }
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              helperText={FormValidatorUtil.getHelperText(
+                          slotProps={{
+                            textField: {
+                              helperText: FormValidatorUtil.getHelperText(
                                 formValidation,
                                 "dateTo_" + eventDate.uid,
                                 ""
-                              )}
-                            />
-                          )}
+                              ),
+                            },
+                          }}
                         />
                       </Grid>
-                      <Grid item xs={1} sx={classes.centerCenter}>
+                      <Grid sx={classes.centerCenter} size={1}>
                         <React.Fragment>
                           <Tooltip title={TEXT_DELETE_DATES}>
                             <span>
@@ -507,7 +509,7 @@ const EventBasicInfoCard = ({
                         </React.Fragment>
                       </Grid>
                       {event.dates.length - 1 != counter ? (
-                        <Grid item xs={12}>
+                        <Grid size={12}>
                           <Divider />
                         </Grid>
                       ) : null}
@@ -517,13 +519,17 @@ const EventBasicInfoCard = ({
               </Grid>
             </Grid>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Typography variant="subtitle1">{TEXT_COVER_PICTURES}</Typography>
             <Typography color="textSecondary" gutterBottom>
               {TEXT_ADD_LOGO_OR_CAMP_PICTURE_HERE}{" "}
             </Typography>
             <Grid container spacing={1}>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <Box
                   component="div"
                   sx={[classes.cardMedia, classes.backgroundGrey]}
@@ -544,7 +550,7 @@ const EventBasicInfoCard = ({
                   }}
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={6}>
                 <input
                   accept="image/*"
                   style={{display: "none"}}
@@ -564,7 +570,7 @@ const EventBasicInfoCard = ({
                   </Button>
                 </label>
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={6}>
                 {(previewPictureUrl || event.pictureSrc) && (
                   <Button
                     color="primary"

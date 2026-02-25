@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import Product, {
   Allergen,
@@ -8,7 +7,7 @@ import Product, {
   ConvertMaterialToProductCallbackDocument,
 } from "../Product/product.class";
 import Role from "../../constants/roles";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import PageTitle from "../Shared/pageTitle";
 
 import {
@@ -58,7 +57,7 @@ import {
   AutocompleteChangeReason,
 } from "@mui/material";
 
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import AlertMessage from "../Shared/AlertMessage";
 import ProductAutocomplete from "../Product/productAutocomplete";
@@ -72,9 +71,7 @@ import {
   SessionStorageHandler,
 } from "../Firebase/Db/sessionStorageHandler.class";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
 import Department from "../Department/department.class";
 import Unit, {UnitDimension} from "../Unit/unit.class";
 import MaterialAutocomplete from "../Material/materialAutocomplete";
@@ -301,20 +298,13 @@ const convertProductToMaterialReducer = (
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const ConvertItemPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <ConvertItemBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const ConvertItemBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const ConvertItemPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
   const theme = useTheme();
 
@@ -711,7 +701,7 @@ const PanelConvertProductToMaterial = ({
         {convertProtocol !== null && (
           <React.Fragment>
             <br />
-            <Grid xs={12}>
+ <Grid size={12} >
               <List
                 subheader={
                   <ListSubheader component="div" id="subheader-log-result">
@@ -728,7 +718,7 @@ const PanelConvertProductToMaterial = ({
               </List>
               <br />
             </Grid>
-            <Grid xs={12}>
+ <Grid size={12} >
               <List
                 subheader={
                   <ListSubheader component="div" id="subheader-merge-result">
@@ -794,7 +784,7 @@ PanelConvertMaterialToProductProps) => {
     <Card sx={classes.card} key={"cardInfo"}>
       <CardContent sx={classes.cardContent} key={"cardContentInfo"}>
         <Grid container spacing={2}>
-          <Grid xs={12}>
+ <Grid size={12} >
             <Typography gutterBottom={true} variant="h5" component="h2">
               {TEXT_MERGE_MATERIAL_SELECTION}
             </Typography>
@@ -803,7 +793,7 @@ PanelConvertMaterialToProductProps) => {
               {TEXT_CONVERT_ITEM_EXPLANATION(TEXT_MATERIAL, TEXT_PRODUCT)}
             </Typography>
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <MaterialAutocomplete
               material={material}
               materials={materials}
@@ -812,14 +802,14 @@ PanelConvertMaterialToProductProps) => {
               disabled={false}
             />
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <MaterialDetailList
               materialUid={material.uid}
               materials={materials}
             />
           </Grid>
           <br />
-          <Grid xs={12}>
+ <Grid size={12} >
             <DepartmentAutocomplete
               department={productProperty.department}
               departments={departments}
@@ -827,7 +817,7 @@ PanelConvertMaterialToProductProps) => {
               onChange={onChangeAutocompleteSelection}
             />
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <UnitAutocomplete
               unitKey={productProperty.unit.key}
               units={units}
@@ -835,7 +825,7 @@ PanelConvertMaterialToProductProps) => {
             />
           </Grid>
           <br />
-          <Grid xs={12} sm={6}>
+ <Grid size={{ xs: 12, sm: 6 }} >
             <FormControl fullWidth>
               <FormLabel component="legend">{TEXT_INTOLERANCES}</FormLabel>
               <FormGroup>
@@ -868,7 +858,7 @@ PanelConvertMaterialToProductProps) => {
               </FormGroup>
             </FormControl>
           </Grid>
-          <Grid xs={12} sm={6}>
+ <Grid size={{ xs: 12, sm: 6 }} >
             <FormControl fullWidth>
               <FormGroup>
                 <FormLabel component="legend">
@@ -921,7 +911,7 @@ PanelConvertMaterialToProductProps) => {
           {convertProtocol !== null && (
             <React.Fragment>
               <br />
-              <Grid xs={12}>
+ <Grid size={12} >
                 <List
                   subheader={
                     <ListSubheader component="div" id="subheader-log-result">
@@ -938,7 +928,7 @@ PanelConvertMaterialToProductProps) => {
                 </List>
                 <br />
               </Grid>
-              <Grid xs={12}>
+ <Grid size={12} >
                 <List
                   subheader={
                     <ListSubheader component="div" id="subheader-merge-result">
@@ -964,13 +954,4 @@ PanelConvertMaterialToProductProps) => {
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser &&
-  (!!authUser.roles.includes(Role.admin) ||
-    !!authUser.roles.includes(Role.communityLeader));
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(ConvertItemPage);
+export default ConvertItemPage;

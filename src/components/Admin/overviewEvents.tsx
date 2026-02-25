@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 import {pdf} from "@react-pdf/renderer";
 import fileSaver from "file-saver";
 
@@ -36,11 +35,10 @@ import PageTitle from "../Shared/pageTitle";
 
 import Role from "../../constants/roles";
 
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {ChangeRecord, CustomRouterProps} from "../Shared/global.interface";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {ChangeRecord} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
 import EventShort from "../Event/Event/eventShort.class";
 import {EVENT as ROUTE_EVENT} from "../../constants/routes";
 import {
@@ -75,11 +73,10 @@ import {
   DataGrid,
   GridColDef,
   GridToolbar,
-  GridValueFormatterParams,
-  deDE,
 } from "@mui/x-data-grid";
+import {deDE} from "@mui/x-data-grid/locales";
 import DialogEventQuickView from "../Event/Event/dialogEventQuickView";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import Action from "../../constants/actions";
 import User from "../User/user.class";
 
@@ -234,20 +231,13 @@ const eventsReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const OverviewEventsPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <OverviewEventsBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const OverviewEventsBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const OverviewEventsPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const [state, dispatch] = React.useReducer(eventsReducer, inititialState);
   const [dialogQuickView, setDialogQuickView] =
     React.useState<DialogQuickViewState>(DIALOG_QUICK_VIEW_INITIAL_STATE);
@@ -255,7 +245,7 @@ const OverviewEventsBase: React.FC<
     DIALOG_CREATE_RECEIPT_INITIAL_STATE
   );
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   /* ------------------------------------------
 	// Daten aus DB holen
@@ -305,12 +295,11 @@ const OverviewEventsBase: React.FC<
     actionEvent: React.MouseEvent<HTMLButtonElement, MouseEvent> | undefined,
     event: EventShort
   ) => {
-    push({
-      pathname: `${ROUTE_EVENT}/${event.uid}`,
+    navigate(`${ROUTE_EVENT}/${event.uid}`, {
       state: {
         action: Action.VIEW,
         event: event,
-      },
+      }
     });
   };
   /* ------------------------------------------
@@ -565,9 +554,9 @@ const EventsPanel = ({
       headerName: TEXT_START_DATE,
       editable: false,
       width: 150,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return params?.value instanceof Date
-          ? params.value.toLocaleString("de-CH", {
+      valueGetter: (value) => {
+        return value instanceof Date
+          ? value.toLocaleString("de-CH", {
               dateStyle: "medium",
             })
           : "";
@@ -578,9 +567,9 @@ const EventsPanel = ({
       headerName: TEXT_END_DATE,
       editable: false,
       width: 150,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return params?.value instanceof Date
-          ? params.value.toLocaleString("de-CH", {
+      valueGetter: (value) => {
+        return value instanceof Date
+          ? value.toLocaleString("de-CH", {
               dateStyle: "medium",
             })
           : "";
@@ -597,9 +586,9 @@ const EventsPanel = ({
       field: "create_date",
       headerName: TEXT_CREATED_AT,
       editable: false,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return params?.value instanceof Date
-          ? params.value.toLocaleString("de-CH", {
+      valueGetter: (value) => {
+        return value instanceof Date
+          ? value.toLocaleString("de-CH", {
               dateStyle: "medium",
             })
           : "";
@@ -611,8 +600,8 @@ const EventsPanel = ({
       headerName: `${TEXT_CREATED_FROM} ${TEXT_UID}`,
       editable: false,
       cellClassName: () => `super-app ${classes.typographyCode}`,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return params.value;
+      valueGetter: (value) => {
+        return value;
       },
       width: 200,
     },
@@ -620,8 +609,8 @@ const EventsPanel = ({
       field: "create_fromDisplayName",
       headerName: TEXT_CREATED_FROM,
       editable: false,
-      valueGetter: (params: GridValueFormatterParams) => {
-        return params.value;
+      valueGetter: (value) => {
+        return value;
       },
       width: 200,
     },
@@ -790,12 +779,11 @@ const DialogCreateReceipt = ({
           <DatePicker
             key={"payDate"}
             label={TEXT_PAY_DATE}
-            inputFormat="dd.MM.yyyy"
+            format="dd.MM.yyyy"
             value={dialogValues.payDate}
             onChange={(date) => {
               setDialogValues({...dialogValues, payDate: date as Date});
             }}
-            renderInput={(params) => <TextField {...params} />}
           />
           <TextField
             id="donorName"
@@ -836,13 +824,4 @@ const DialogCreateReceipt = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser &&
-  (!!authUser.roles.includes(Role.admin) ||
-    !!authUser.roles.includes(Role.communityLeader));
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(OverviewEventsPage);
+export default OverviewEventsPage;

@@ -1,5 +1,4 @@
 import React, {SyntheticEvent} from "react";
-import {compose} from "react-recompose";
 
 import {
   Container,
@@ -16,7 +15,7 @@ import {
   Stack,
   SelectChangeEvent,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import {
   NAME as TEXT_NAME,
@@ -47,11 +46,9 @@ import AlertMessage from "../Shared/AlertMessage";
 import useCustomStyles from "../../constants/styles";
 
 import Unit, {UnitDimension} from "./unit.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../Shared/global.interface";
 
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -196,21 +193,13 @@ const TABLE_COLUMS: Column[] = [
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const UnitsPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <UnitsBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const UnitsBase: React.FC<CustomRouterProps & {authUser: AuthUser | null}> = ({
-  authUser,
-  ...props
-}) => {
-  const firebase = props.firebase;
+const UnitsPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(unitsReducer, inititialState);
@@ -421,19 +410,19 @@ const TablePanel = ({
         <CardContent sx={classes.cardContent} key={"cardContentUnits"}>
           {editMode ? (
             <Grid container spacing={2}>
-              <Grid xs={4}>
+ <Grid size={4} >
                 <Typography variant="subtitle1">{TEXT_UNIT}</Typography>
               </Grid>
-              <Grid xs={4}>
+ <Grid size={4} >
                 <Typography variant="subtitle1">{TEXT_NAME}</Typography>
               </Grid>
-              <Grid xs={4}>
+ <Grid size={4} >
                 <Typography variant="subtitle1">{TEXT_DIMENSION}</Typography>
               </Grid>
               <Divider />
               {units.map((unit) => (
                 <React.Fragment key={"unitFragment_" + unit.key}>
-                  <Grid xs={4} key={"gridItemKey_" + unit.key}>
+ <Grid size={4} key={"gridItemKey_" + unit.key}>
                     <TextField
                       id={"key_" + unit.key}
                       key={"key_" + unit.key}
@@ -443,7 +432,7 @@ const TablePanel = ({
                       fullWidth
                     />
                   </Grid>
-                  <Grid xs={4} key={"gridItemName_" + unit.key}>
+ <Grid size={4} key={"gridItemName_" + unit.key}>
                     <TextField
                       id={"name_" + unit.key}
                       key={"name_" + unit.key}
@@ -453,7 +442,7 @@ const TablePanel = ({
                       fullWidth
                     />
                   </Grid>
-                  <Grid xs={4} key={"gridItemDim_" + unit.key}>
+ <Grid size={4} key={"gridItemDim_" + unit.key}>
                     <Select
                       labelId="unit-dimension"
                       id={"dimension_" + unit.key}
@@ -473,7 +462,7 @@ const TablePanel = ({
                       </MenuItem>
                     </Select>
                   </Grid>
-                  <Grid xs={12} key={"gridItemDivider_" + unit.key}>
+ <Grid size={12} key={"gridItemDivider_" + unit.key}>
                     <Divider />
                   </Grid>
                 </React.Fragment>
@@ -492,10 +481,4 @@ const TablePanel = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(UnitsPage);
+export default UnitsPage;

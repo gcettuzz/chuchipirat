@@ -1,5 +1,4 @@
 import React, {SyntheticEvent} from "react";
-import {compose} from "react-recompose";
 
 import {
   Backdrop,
@@ -80,11 +79,10 @@ import {
   SingleTextInputResult,
   useCustomDialog,
 } from "../Shared/customDialogContext";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
-import {CustomRouterProps} from "../Shared/global.interface";
-import {DataGrid, GridColDef, deDE, gridClasses} from "@mui/x-data-grid";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
+import {DataGrid, GridColDef, gridClasses} from "@mui/x-data-grid";
+import {deDE} from "@mui/x-data-grid/locales";
 import Feed, {FeedType} from "../Shared/feed.class";
 import Firebase from "../Firebase/firebase.class";
 
@@ -304,20 +302,13 @@ const PRODUCT_POPUP_VALUES = {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const ProductsPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <ProductsBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const ProductsBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const ProductsPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
   const {customDialog} = useCustomDialog();
 
@@ -1199,13 +1190,4 @@ const ProductsTable = ({
   );
 };
 
-const condition = (authUser) =>
-  !!authUser &&
-  (!!authUser.roles.includes(Role.admin) ||
-    !!authUser.roles.includes(Role.communityLeader));
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(ProductsPage);
+export default ProductsPage;

@@ -40,39 +40,28 @@ import {
 
 import {ImageRepository} from "../../constants/imageRepository";
 
+import {useNavigate} from "react-router";
+
 import PageTitle from "../Shared/pageTitle";
 import ButtonRow from "../Shared/buttonRow";
 import {HOME as ROUTE_HOME} from "../../constants/routes";
-import {AuthUserContext} from "../Session/authUserContext";
-import {CustomRouterProps} from "../Shared/global.interface";
-import AuthUser from "../Firebase/Authentication/authUser.class";
+import {useAuthUser} from "../Session/authUserContext";
 import useCustomStyles from "../../constants/styles";
 
 /* ===================================================================
-// ================================ Page =============================
+// =============================== Page ==============================
 // =================================================================== */
-const LandingPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <LandingBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
-
-/* ===================================================================
-// ================================ Base =============================
-// =================================================================== */
-export const LandingBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, history}) => {
+const LandingPage = () => {
+  const authUser = useAuthUser();
+  const navigate = useNavigate();
   const classes = useCustomStyles();
 
   React.useEffect(() => {
     // Wenn angemeldet direkt weiterleiten
     if (authUser) {
-      history.push({pathname: ROUTE_HOME});
+      navigate(ROUTE_HOME);
     }
-  }, [authUser, history]);
+  }, [authUser, navigate]);
 
   return (
     <React.Fragment>
@@ -89,7 +78,7 @@ export const LandingBase: React.FC<
             variant: "contained",
             color: "primary",
             onClick: () => {
-              history.push({pathname: ROUTE_SIGN_IN});
+              navigate(ROUTE_SIGN_IN);
             },
           },
           {
@@ -100,7 +89,7 @@ export const LandingBase: React.FC<
             variant: "outlined",
             color: "primary",
             onClick: () => {
-              history.push({pathname: ROUTE_SIGN_UP});
+              navigate(ROUTE_SIGN_UP);
             },
           },
         ]}

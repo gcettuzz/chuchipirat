@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import {
   Container,
@@ -12,6 +11,7 @@ import {
   useTheme,
   LinearProgress,
   Stack,
+  Alert,
 } from "@mui/material";
 
 import {
@@ -23,14 +23,11 @@ import {
 } from "../../constants/text";
 import Role from "../../constants/roles";
 
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {CustomRouterProps} from "../Shared/global.interface";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {useAuthUser} from "../Session/authUserContext";
 import PageTitle from "../Shared/pageTitle";
 import Event from "../Event/Event/event.class";
-import {Alert} from "@mui/lab";
 import useCustomStyles from "../../constants/styles";
 /* ===================================================================
 // ======================== globale Funktionen =======================
@@ -90,20 +87,13 @@ const activateSupportUserReducer = (
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const ActivateSupportUserPage: React.FC<CustomRouterProps> = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <ActivateSupportUserBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const ActivateSupportUserBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const ActivateSupportUserPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(
@@ -233,14 +223,4 @@ const PanelActivateSupportUser = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser &&
-  (!!authUser.roles.includes(Role.communityLeader) ||
-    !!authUser.roles.includes(Role.admin));
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-)(ActivateSupportUserPage as React.ComponentType<any>);
+export default ActivateSupportUserPage;

@@ -14,7 +14,7 @@ import {
   Link,
   Box,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
@@ -356,7 +356,7 @@ const EventUsedRecipesPage = ({
   };
 
   const onListElementSelect = async (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>
+    event: React.MouseEvent<HTMLElement, MouseEvent>
   ) => {
     // Menües in der richtigen Reihenfolge aufbauen, damit diese dann auch richtig angezeigt werden
 
@@ -647,9 +647,7 @@ const EventUsedMealRecipe = ({
           groupConfiguration={groupConfiguration}
         />
         {/* Zutaten */}
-        <Grid
-          xs={12}
-          sm={6}
+        <Grid size={{ xs: 12, sm: 6 }}
           style={{marginTop: "2em", marginBottom: "2em"}}
           key={"recipeGridIngredients_" + mealRecipe.uid}
         >
@@ -663,9 +661,7 @@ const EventUsedMealRecipe = ({
           />
         </Grid>
         {/* Zubereitung */}
-        <Grid
-          xs={12}
-          sm={6}
+        <Grid size={{ xs: 12, sm: 6 }}
           style={{marginTop: "2em", marginBottom: "2em"}}
           key={"recipeGridPreparations_" + mealRecipe.uid}
         >
@@ -673,8 +669,7 @@ const EventUsedMealRecipe = ({
         </Grid>
         {/* Material */}
         {recipe?.materials?.order.length > 0 && (
-          <Grid
-            xs={12}
+          <Grid size={12}
             style={{marginTop: "2em", marginBottom: "2em"}}
             key={"recipeGridMaterials_" + mealRecipe.uid}
           >
@@ -685,7 +680,7 @@ const EventUsedMealRecipe = ({
           </Grid>
         )}
         {/* Divider */}
-        <Grid key={"recipeGridDividerLeft_" + mealRecipe.uid} xs={12}>
+        <Grid size={12} key={"recipeGridDividerLeft_" + mealRecipe.uid}>
           <Divider key={"recipeDividerLeft_" + mealRecipe.uid}>
             <Box
               component="img"
@@ -715,7 +710,7 @@ const EventUsedMealRecipeTitle = ({
 }: EventUsedMealRecipeTitleProps) => {
   const theme = useTheme();
   return (
-    <Grid key={"recipeName_" + recipe.uid} xs={12}>
+    <Grid size={12} key={"recipeName_" + recipe.uid}>
       <Typography
         component="h1"
         variant="h4"
@@ -773,7 +768,7 @@ const EventUsedMealRecipeInfoBlock = ({
   groupConfiguration,
 }: EventUsedMealRecipeInfoBlockProps) => {
   return (
-    <Grid key={"recipeInfoBlockTime" + mealRecipe.uid} xs={12}>
+    <Grid size={12} key={"recipeInfoBlockTime" + mealRecipe.uid}>
       <Container maxWidth="sm">
         <List dense>
           <FormListItem

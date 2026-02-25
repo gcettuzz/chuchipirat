@@ -49,10 +49,13 @@ type State = {
   error: FirebaseError | null;
 };
 
-type DispatchAction = {
-  type: ReducerActions;
-  payload: any;
-};
+type DispatchAction =
+  | {
+      type: ReducerActions.UPDATE_FIELD;
+      payload: {field: string; value: string};
+    }
+  | {type: ReducerActions.SET_INITIAL_VALUES; payload: Record<string, never>}
+  | {type: ReducerActions.GENERIC_ERROR; payload: FirebaseError};
 
 const inititialState: State = {
   reAuthData: {
@@ -74,10 +77,11 @@ const reAuthenticateReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.SET_INITIAL_VALUES:
       return inititialState;
     case ReducerActions.GENERIC_ERROR:
-      return {...state, error: action.payload as FirebaseError};
-    default:
-      console.error("Unbekannter ActionType: ", action.type);
-      throw new Error();
+      return {...state, error: action.payload};
+    default: {
+      const _exhaustiveCheck: never = action;
+      throw new Error(`Unbekannter ActionType: ${_exhaustiveCheck}`);
+    }
   }
 };
 
@@ -100,7 +104,7 @@ const DialogReauthenticate = ({
 }: DialogReauthenticateProps) => {
   const [state, dispatch] = React.useReducer(
     reAuthenticateReducer,
-    inititialState
+    inititialState,
   );
   const [showPassword, setShowPassword] = React.useState(false);
 
@@ -153,7 +157,7 @@ const DialogReauthenticate = ({
   // ------------------------------------------ */
   const handleClose = (
     event: React.SyntheticEvent | React.MouseEvent,
-    reason?: string
+    reason?: string,
   ) => {
     if (reason === "clickaway") {
       // Versehntliches Klicken ausserhalb des Dialog
@@ -168,7 +172,7 @@ const DialogReauthenticate = ({
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
-  const handleMouseDownPassword = (event) => {
+  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
   };
   return (
@@ -227,19 +231,21 @@ const DialogReauthenticate = ({
           autoComplete="new-password"
           value={state.reAuthData.password}
           onChange={onChangeField}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  aria-label={TEXT_SHOW_PASSWORD}
-                  onClick={handleClickShowPassword}
-                  onMouseDown={handleMouseDownPassword}
-                  size="large"
-                >
-                  {showPassword ? <Visibility /> : <VisibilityOff />}
-                </IconButton>
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label={TEXT_SHOW_PASSWORD}
+                    onClick={handleClickShowPassword}
+                    onMouseDown={handleMouseDownPassword}
+                    size="large"
+                  >
+                    {showPassword ? <Visibility /> : <VisibilityOff />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
           }}
         />
       </DialogContent>

@@ -1,6 +1,5 @@
 import React from "react";
-import {useHistory} from "react-router";
-import {compose} from "react-recompose";
+import {useNavigate} from "react-router";
 
 import {
   Container,
@@ -52,7 +51,7 @@ import {
   EVENT as ROUTE_EVENT,
 } from "../../../constants/routes";
 
-import {withFirebase} from "../../Firebase/firebaseContext";
+import {useFirebase} from "../../Firebase/firebaseContext";
 
 import {
   NavigationValuesContext,
@@ -65,13 +64,8 @@ import FieldValidationError, {
   FormValidationFieldError,
 } from "../../Shared/fieldValidation.error.class";
 import EventGroupConfiguration from "../GroupConfiguration/groupConfiguration.class";
-import withEmailVerification from "../../Session/withEmailVerification";
-import {
-  AuthUserContext,
-  withAuthorization,
-} from "../../Session/authUserContext";
+import {useAuthUser} from "../../Session/authUserContext";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../../Shared/global.interface";
 import {ImageRepository} from "../../../constants/imageRepository";
 import {TWINT_PAYLINK} from "../../../constants/defaultValues";
 /* ===================================================================
@@ -186,22 +180,15 @@ const eventReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const CreateEventPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <CreateEventBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const CreateEventBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const CreateEventPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const navigate = useNavigate();
 
   const [state, dispatch] = React.useReducer(eventReducer, inititialState);
   const navigationValuesContext = React.useContext(NavigationValuesContext);
@@ -243,9 +230,7 @@ const CreateEventBase: React.FC<
       });
     }
 
-    push({
-      pathname: `${ROUTE_HOME}`,
-    });
+    navigate(`${ROUTE_HOME}`);
   };
   const goToStepInfo = () => {
     setActiveStep(WizardSteps.info);
@@ -265,8 +250,7 @@ const CreateEventBase: React.FC<
       setTimeout(resolve, 1500);
     });
 
-    push({
-      pathname: `${ROUTE_EVENT}/${state.event.uid}`,
+    navigate(`${ROUTE_EVENT}/${state.event.uid}`, {
       state: {event: state.event, groupConfig: state.groupConfig},
     });
   };
@@ -554,10 +538,4 @@ const CreateEventStepper = ({activeStep}: CreateEventStepperProps) => {
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(CreateEventPage);
+export default CreateEventPage;

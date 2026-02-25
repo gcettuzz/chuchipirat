@@ -10,10 +10,10 @@ import {
   Switch,
   Typography,
   useTheme,
+  Alert,
+  AlertTitle,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
-
-import {Alert, AlertTitle} from "@mui/lab";
+import Grid from "@mui/material/Grid";
 
 import {
   PORTIONS_TO_SCALE as TEXT_PORTIONS_TO_SCALE,
@@ -114,7 +114,7 @@ const DialogScaleRecipe = ({
       </DialogTitle>
       <DialogContent>
         <Grid container alignItems="center" spacing={1}>
-          <Grid xs={12}>
+ <Grid size={12} >
             <TextField
               margin="dense"
               id="scaledPortions"
@@ -127,21 +127,21 @@ const DialogScaleRecipe = ({
               type="number"
             />
           </Grid>
-          <Grid xs={10}>
+ <Grid size={10} >
             <Typography variant="body1">{TEXT_CONVERT_UNITS}</Typography>
           </Grid>
-          <Grid xs={2} style={{textAlign: "right"}}>
+ <Grid size={2} style={{textAlign: "right"}}>
             <Switch
               checked={formFields.convertUnits}
               onChange={onChangeSwitch}
             />
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <Typography variant="body2" color="textSecondary">
               {TEXT_CONVERT_UNITS_EXPLANATION}
             </Typography>
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <Alert severity="info" style={{marginTop: theme.spacing(1)}}>
               <AlertTitle>{TEXT_INFO_PANEL_TITLE_SCALE}</AlertTitle>
               {TEXT_INFO_PANEL_TEXT_SCALE}

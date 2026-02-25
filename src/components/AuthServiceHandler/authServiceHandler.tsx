@@ -1,5 +1,6 @@
 import React from "react";
 import qs from "qs";
+import {useLocation} from "react-router";
 
 import VerifyEmail from "./verifyEmail";
 import RecoverEmail from "./recoverEmail";
@@ -8,7 +9,6 @@ import AlertMessage from "../Shared/AlertMessage";
 
 import * as TEXT from "../../constants/text";
 
-import {RouteComponentProps} from "react-router";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
@@ -20,7 +20,8 @@ const AUTH_SERVICE_HANDLER_MODE = {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const AuthServiceHandlerPage: React.FC<RouteComponentProps> = (props) => {
+const AuthServiceHandlerPage = () => {
+  const location = useLocation();
   // Anhand des Actions-Mode entscheiden welche Seite angezeigt wird.
   let mode = "";
   let queryString = "";
@@ -28,8 +29,8 @@ const AuthServiceHandlerPage: React.FC<RouteComponentProps> = (props) => {
 
   // Die URL enthält den Actioncode, --> Mode entscheidet welche Aktion
   // nötig ist.
-  if (props.location.search && (!mode || !oobCode)) {
-    queryString = props.location.search;
+  if (location.search && (!mode || !oobCode)) {
+    queryString = location.search;
     if (queryString.charAt(0) === "?") {
       queryString = queryString.slice(1, -1);
     }
@@ -38,9 +39,7 @@ const AuthServiceHandlerPage: React.FC<RouteComponentProps> = (props) => {
   }
   return (
     <React.Fragment>
-      {mode === AUTH_SERVICE_HANDLER_MODE.VERIFY_EMAIL && (
-        <VerifyEmail {...props} />
-      )}
+      {mode === AUTH_SERVICE_HANDLER_MODE.VERIFY_EMAIL && <VerifyEmail />}
       {mode === AUTH_SERVICE_HANDLER_MODE.RESET_PASSWORD && (
         <ChangePassword oobCode={oobCode} />
       )}

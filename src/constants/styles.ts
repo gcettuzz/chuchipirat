@@ -588,8 +588,11 @@ const useCustomStyles = () => {
       alignItems: "stretch",
     },
     recipeDrawerBackground: {
-      backgroundColor: theme.palette.background.default,
-      height: "100%",
+      "& .MuiDrawer-paper": {
+        backgroundColor: theme.palette.background.default,
+        height: "100%",
+        overflowX: "hidden",
+      },
     },
     menuCard: {
       position: "relative",

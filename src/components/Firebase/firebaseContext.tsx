@@ -3,16 +3,10 @@ import Firebase from "./firebase.class";
 
 export const FirebaseContext = React.createContext<Firebase | null>(null);
 
-export const withFirebase = (Component) => {
-  const WithFirebase = (props) => (
-    <FirebaseContext.Consumer>
-      {(firebase) => <Component {...props} firebase={firebase} />}
-    </FirebaseContext.Consumer>
-  );
-
-  WithFirebase.displayName = `WithFirebase(${
-    Component.displayName || Component.name || "Component"
-  })`;
-
-  return WithFirebase;
+export const useFirebase = (): Firebase => {
+  const firebase = React.useContext(FirebaseContext);
+  if (!firebase)
+    throw new Error("useFirebase must be used within FirebaseContext.Provider");
+  return firebase;
 };
+

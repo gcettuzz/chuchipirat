@@ -1,5 +1,4 @@
 import React, {SyntheticEvent} from "react";
-import {compose} from "react-recompose";
 
 import {
   Container,
@@ -37,10 +36,8 @@ import SearchPanel from "../Shared/searchPanel";
 
 import AuthUser from "../Firebase/Authentication/authUser.class";
 import Material, {MaterialType} from "./material.class";
-import {withFirebase} from "../Firebase/firebaseContext";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useFirebase} from "../Firebase/firebaseContext";
+import {useAuthUser} from "../Session/authUserContext";
 /* ===================================================================
 // ======================== globale Funktionen =======================
 // =================================================================== */
@@ -128,20 +125,13 @@ const MATERIAL_POPUP_VALUES = {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const MaterialPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <MaterialBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const MaterialBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const MaterialPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
 
   const [state, dispatch] = React.useReducer(materialsReducer, inititialState);
@@ -670,13 +660,4 @@ const MaterialsTable = ({
   );
 };
 
-const condition = (authUser) =>
-  !!authUser &&
-  (!!authUser.roles.includes(Role.admin) ||
-    !!authUser.roles.includes(Role.communityLeader));
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(MaterialPage);
+export default MaterialPage;

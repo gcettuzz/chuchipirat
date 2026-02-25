@@ -17,10 +17,12 @@ interface SignOutAllUsers {
 class GlobalSettings {
   allowSignUp: boolean;
   maintenanceMode: boolean;
+  allowUserCreatePassword: string;
 
   constructor() {
     this.allowSignUp = false;
     this.maintenanceMode = false;
+    this.allowUserCreatePassword = "";
   }
 
   static getGlobalSettings = async ({firebase}: GetGlobalSettings) => {

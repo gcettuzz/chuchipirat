@@ -1,5 +1,4 @@
 import React from "react";
-import {compose} from "react-recompose";
 
 import {
   MAILBOX as TEXT_MAILBOX,
@@ -61,16 +60,13 @@ import SearchPanel from "../Shared/searchPanel";
 
 import {FormListItem} from "../Shared/formListItem";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
-import {withFirebase} from "../Firebase/firebaseContext";
-import {CustomRouterProps} from "../Shared/global.interface";
+import {useAuthUser} from "../Session/authUserContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import {
   DataGrid,
   GridColDef,
-  GridValueFormatterParams,
-  deDE,
 } from "@mui/x-data-grid";
+import {deDE} from "@mui/x-data-grid/locales";
 
 import MailConsole, {
   MailLogEntry,
@@ -187,13 +183,7 @@ const mailboxReducer = (state: State, action: DispatchAction): State => {
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-const OverviewMailboxPage = (props) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <OverviewMailboxBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
@@ -201,10 +191,9 @@ interface MailProtocolDialogValues {
   selectedMailProtocoll: null | MailProtocol;
   open: boolean;
 }
-const OverviewMailboxBase: React.FC<
-  CustomRouterProps & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const OverviewMailboxPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
   const theme = useTheme();
 
@@ -443,9 +432,9 @@ const MaillogTable = ({dbMaillog, onMailLogSelect}: MaillogTableProps) => {
       headerName: TEXT_TIMESTAMP,
       editable: false,
       width: 200,
-      valueFormatter: (params: GridValueFormatterParams) => {
-        if (params.value && params.value instanceof Date) {
-          return params.value.toLocaleString("de-CH", {
+      valueFormatter: (value) => {
+        if (value && value instanceof Date) {
+          return value.toLocaleString("de-CH", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
@@ -721,11 +710,4 @@ const DeleteMailsPanel = ({isDeleting, onDelete}: DeleteMailsPanelProps) => {
   );
 };
 
-const condition = (authUser: AuthUser | null) =>
-  !!authUser && !!authUser.roles.includes(Role.admin);
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(OverviewMailboxPage);
+export default OverviewMailboxPage;

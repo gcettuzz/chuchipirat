@@ -497,7 +497,7 @@ const useShoppingListDialogs = ({
   // List Element Handlers
   // ------------------------------------------ */
   const onListElementSelect = React.useCallback(
-    async (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    async (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
       const pressedElementId = event.currentTarget.id.split("_")[1];
 
       if (selectedListItem == pressedElementId) {
@@ -559,7 +559,7 @@ const useShoppingListDialogs = ({
         return;
       }
       onListElementSelect(
-        actionEvent as React.MouseEvent<HTMLDivElement, MouseEvent>,
+        actionEvent as React.MouseEvent<HTMLElement, MouseEvent>,
       );
 
       const selectedMenuesForDialog: DialogSelectMenuesForRecipeDialogValues =

@@ -1,10 +1,9 @@
 import React, {SyntheticEvent} from "react";
-import {compose} from "react-recompose";
 
-import {useHistory} from "react-router";
+import {useNavigate, useLocation} from "react-router";
 
 import Container from "@mui/material/Container";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 import {
   Button,
   ToggleButton,
@@ -74,16 +73,14 @@ import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
 
 import {Lock as LockIcon, Category as CategoryIcon} from "@mui/icons-material";
 
-import {withFirebase} from "../Firebase/firebaseContext";
+import {useFirebase} from "../Firebase/firebaseContext";
 import {Allergen, Diet} from "../Product/product.class";
 import {
   STORAGE_OBJECT_PROPERTY,
   SessionStorageHandler,
 } from "../Firebase/Db/sessionStorageHandler.class";
-import withEmailVerification from "../Session/withEmailVerification";
-import {AuthUserContext, withAuthorization} from "../Session/authUserContext";
+import {useAuthUser} from "../Session/authUserContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {CustomRouterProps} from "../Shared/global.interface";
 import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 
 /* ===================================================================
@@ -179,34 +176,28 @@ interface LocationState {
 // =============================== Page ==============================
 // =================================================================== */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const RecipesPage = (props: any) => {
-  return (
-    <AuthUserContext.Consumer>
-      {(authUser) => <RecipesBase {...props} authUser={authUser} />}
-    </AuthUserContext.Consumer>
-  );
-};
+
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
-const RecipesBase: React.FC<
-  CustomRouterProps<undefined, LocationState> & {authUser: AuthUser | null}
-> = ({authUser, ...props}) => {
-  const firebase = props.firebase;
+const RecipesPage = () => {
+  const firebase = useFirebase();
+  const authUser = useAuthUser();
   const classes = useCustomStyles();
-  const {push} = useHistory();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [state, dispatch] = React.useReducer(recipesReducer, inititialState);
   // Prüfen ob allenfalls eine Snackbar angezeigt werden soll
   // --> aus dem Prozess Rezept löschen
   if (
-    props.location.state &&
-    props.location.state.snackbar &&
+    location.state &&
+    location.state.snackbar &&
     !state.snackbar.open
   ) {
     dispatch({
       type: ReducerActions.SET_SNACKBAR,
-      payload: props.location.state.snackbar!,
+      payload: location.state.snackbar!,
     });
   }
 
@@ -245,9 +236,8 @@ const RecipesBase: React.FC<
  // Neues Rezept anlegen
  // ------------------------------------------ */
   const onNewClick = () => {
-    push({
-      pathname: ROUTE_RECIPE,
-      state: {action: Action.NEW},
+    navigate(ROUTE_RECIPE, {
+      state: {action: Action.NEW}
     });
   };
   /* ------------------------------------------
@@ -258,22 +248,20 @@ const RecipesBase: React.FC<
       return;
     }
     if (recipe.type === RecipeType.private) {
-      push({
-        pathname: `${ROUTE_RECIPE}/${authUser.uid}/${recipe.uid}`,
+      navigate(`${ROUTE_RECIPE}/${authUser.uid}/${recipe.uid}`, {
         state: {
           action: Action.VIEW,
           recipeShort: recipe,
           recipeType: recipe.type,
-        },
+        }
       });
     } else if (recipe.type === RecipeType.public) {
-      push({
-        pathname: `${ROUTE_RECIPE}/${recipe.uid}`,
+      navigate(`${ROUTE_RECIPE}/${recipe.uid}`, {
         state: {
           action: Action.VIEW,
           recipeShort: recipe,
           recipeType: recipe.type,
-        },
+        }
       });
     }
   };
@@ -287,7 +275,7 @@ const RecipesBase: React.FC<
     if (reason === "clickaway") {
       return;
     }
-    delete props.location.state?.snackbar;
+    delete location.state?.snackbar;
     dispatch({
       type: ReducerActions.CLOSE_SNACKBAR,
       payload: {},
@@ -723,19 +711,19 @@ export const RecipeSearch = ({
     <React.Fragment>
       <Container maxWidth="md" style={{marginBottom: "4em"}}>
         <Grid container spacing={2}>
-          <Grid xs={9}>
+ <Grid size={9} >
             <SearchPanel
               searchString={searchSettings.searchString}
               onUpdateSearchString={onSearch}
               onClearSearchString={onClearSearchString}
             />
           </Grid>
-          <Grid xs={3} sx={classes.centerCenter}>
+ <Grid size={3} sx={classes.centerCenter}>
             <Button color="primary" onClick={onAdvancedSearchClick}>
               {TEXT_ADVANCED_SEARCH}
             </Button>
           </Grid>
-          <Grid xs={12}>
+ <Grid size={12} >
             <Typography variant="subtitle2">{`${filteredData.length} ${
               filteredData.length != 1 ? TEXT_RECIPES : TEXT_RECIPE
             }`}</Typography>
@@ -747,10 +735,10 @@ export const RecipeSearch = ({
           style={{marginTop: "1em"}}
         >
           <Grid container spacing={2}>
-            <Grid xs={4} sm={2} md={2} sx={classes.centerCenter}>
+ <Grid size={{ xs: 4, sm: 2, md: 2 }} sx={classes.centerCenter}>
               <Typography variant="body2">{TEXT_RESTRICTIONS}</Typography>
             </Grid>
-            <Grid xs={8} sm={4} md={3}>
+ <Grid size={{ xs: 8, sm: 4, md: 3 }} >
               <ToggleButtonGroup
                 color="primary"
                 value={searchSettings.diet}
@@ -772,12 +760,12 @@ export const RecipeSearch = ({
                 </ToggleButton>
               </ToggleButtonGroup>
             </Grid>
-            <Grid xs={4} sm={2} md={2} sx={classes.centerCenter}>
+ <Grid size={{ xs: 4, sm: 2, md: 2 }} sx={classes.centerCenter}>
               <Typography variant="body2">
                 {TEXT_CONSIDER_INTOLERANCES}
               </Typography>
             </Grid>
-            <Grid xs={8} sm={4} md={3}>
+ <Grid size={{ xs: 8, sm: 4, md: 3 }} >
               <ToggleButtonGroup
                 color="primary"
                 value={searchSettings.allergens}
@@ -798,7 +786,7 @@ export const RecipeSearch = ({
                 </ToggleButton>
               </ToggleButtonGroup>
             </Grid>
-            <Grid xs={12} sm={12} md={2}>
+ <Grid size={{ xs: 12, sm: 12, md: 2 }} >
               <FormControl
                 variant="outlined"
                 sx={classes.formControl}
@@ -844,7 +832,7 @@ export const RecipeSearch = ({
               </FormControl>
             </Grid>
             {/* Ideal für Outdoorküche */}
-            <Grid xs={12} sm={12} md={3}>
+ <Grid size={{ xs: 12, sm: 12, md: 3 }} >
               <FormControl sx={classes.formControl} fullWidth size="small">
                 <FormControlLabel
                   checked={searchSettings.outdoorKitchenSuitable}
@@ -860,10 +848,10 @@ export const RecipeSearch = ({
               </FormControl>
             </Grid>
             {/* Rezept-Typ */}
-            <Grid xs={4} sm={1} md={1} sx={classes.centerCenter}>
+ <Grid size={{ xs: 4, sm: 1, md: 1 }} sx={classes.centerCenter}>
               <Typography variant="body2">{TEXT_RECIPETYPE}</Typography>
             </Grid>
-            <Grid xs={8} sm={4} md={4}>
+ <Grid size={{ xs: 8, sm: 4, md: 4 }} >
               <ToggleButtonGroup
                 color="primary"
                 value={searchSettings.recipeType}
@@ -890,18 +878,18 @@ export const RecipeSearch = ({
                 </ToggleButton>
                 {embeddedMode && (
                   // in der allgemeinen Rezeptübersicht mach dieser Button keinen Sinn
-                  <ToggleButton
+                  (<ToggleButton
                     value={RecipeType.variant}
                     aria-label="Variante"
                   >
                     {TEXT_VARIANT}
-                  </ToggleButton>
+                  </ToggleButton>)
                 )}
               </ToggleButtonGroup>
             </Grid>
 
             {/* Nur Meine Rezept anzeigen */}
-            <Grid xs={12} sm={12} md={3}>
+ <Grid size={{ xs: 12, sm: 12, md: 3 }} >
               <FormControl sx={classes.formControl} fullWidth size="small">
                 <FormControlLabel
                   checked={searchSettings.showOnlyMyRecipes}
@@ -919,7 +907,7 @@ export const RecipeSearch = ({
           </Grid>
         </Collapse>
         <Grid container>
-          <Grid xs={12} sx={classes.centerCenter}>
+ <Grid size={12} sx={classes.centerCenter}>
             <Button
               sx={classes.button}
               id={"new_recipe"}
@@ -936,27 +924,20 @@ export const RecipeSearch = ({
       <Grid container spacing={2}>
         {isLoading ? (
           // 8 Karten zum Überbrücken, bis die Daten da sind
-          [1, 2, 3, 4, 5, 6, 7, 8].map((counter) => (
-            <Grid
+          ([1, 2, 3, 4, 5, 6, 7, 8].map((counter) => (
+            <Grid size={{ xs: 12, sm: embeddedMode ? 12 : 6, md: embeddedMode ? 6 : 4, lg: embeddedMode ? 4 : 3 }}
               key={"recipeLoadingCardGrid_" + counter}
-              xs={12}
-              sm={embeddedMode ? 12 : 6}
-              md={embeddedMode ? 6 : 4}
-              lg={embeddedMode ? 4 : 3}
             >
               <RecipeCardLoading key={"recipeLoadingCard_" + counter} />
             </Grid>
-          ))
+          )))
         ) : (
           <React.Fragment>
             {filteredData.map((recipe) => (
-              <Grid
+              <Grid size={{ xs: 12, sm: embeddedMode ? 6 : 4, md: embeddedMode ? 4 : 3, lg: embeddedMode ? 4 : 3, xl: embeddedMode ? 3 : 2 }}
                 key={"recipe_" + recipe.uid}
-                xs={12}
-                sm={embeddedMode ? 6 : 4}
-                md={embeddedMode ? 4 : 3}
-                // lg={embeddedMode ? 4 : 3}
-                // xl={embededMode ? 3 : 2}
+                //
+                //
               >
                 <RecipeCard
                   key={"recipe_card_" + recipe.uid}
@@ -984,7 +965,7 @@ export const RecipeSearch = ({
             ))}
             {/* Keine Rezepte gefunden --> Neues Erfassen? */}
             {filteredData.length === 0 && (
-              <Grid key={"noRecipe"} xs={12} sm={12} md={12}>
+ <Grid size={{ xs: 12, sm: 12, md: 12 }} key={"noRecipe"} >
                 <Typography
                   variant="h5"
                   align="center"
@@ -1017,10 +998,4 @@ export const RecipeSearch = ({
   );
 };
 
-const condition = (authUser: AuthUser | null) => !!authUser;
-
-export default compose(
-  withEmailVerification,
-  withAuthorization(condition),
-  withFirebase
-)(RecipesPage);
+export default RecipesPage;

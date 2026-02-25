@@ -28,7 +28,7 @@ import {
   ToggleButton,
   AlertColor,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 
 import {
   ALERT_TITLE_WAIT_A_MINUTE as TEXT_ALERT_TITLE_WAIT_A_MINUTE,
@@ -582,6 +582,7 @@ const EventShoppingListPage = ({
       />
       {state.selectedListItem && contextMenuSelectedItem.productUid && (
         <DialogTraceItem
+          itemType={TEXT_ITEM}
           dialogOpen={traceItemDialogValues.open}
           trace={
             shoppingListCollection.lists[state.selectedListItem!].trace[
@@ -916,10 +917,8 @@ const EventShoppingListList = React.memo(
                         alignItems="center"
                         sx={{flex: 1, minWidth: 0}}
                       >
-                        <Grid
+                        <Grid size={{ xs: 5, sm: 3 }}
                           key={"quantity_grid_" + item.item.uid}
-                          xs={5}
-                          sm={3}
                         >
                           <QuantityField
                             departmentKey={departmentKey}
@@ -928,7 +927,7 @@ const EventShoppingListList = React.memo(
                             onChangeItem={onChangeItem}
                           />
                         </Grid>
-                        <Grid key={"unit_grid_" + item.item.uid} xs={4} sm={3}>
+ <Grid size={{ xs: 4, sm: 3 }} key={"unit_grid_" + item.item.uid} >
                           <UnitAutocomplete
                             componentKey={departmentKey + "_" + item.item.uid}
                             unitKey={item.unit}
@@ -945,10 +944,8 @@ const EventShoppingListList = React.memo(
                             }
                           />
                         </Grid>
-                        <Grid
+                        <Grid size={{ xs: 12, sm: 6 }}
                           key={"item_grid_" + item.item.uid}
-                          xs={12}
-                          sm={6}
                         >
                           <ItemAutocomplete
                             componentKey={departmentKey + "_" + item.item.uid}
@@ -1221,7 +1218,7 @@ const DialogHandleItem = ({
         <DialogTitle>{TEXT_ADD_ITEM}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2}>
-            <Grid xs={12}>
+ <Grid size={12} >
               <ItemAutocomplete
                 componentKey={"x"}
                 item={dialogValues.item}
@@ -1233,7 +1230,7 @@ const DialogHandleItem = ({
                 error={dialogValidation}
               />
             </Grid>
-            <Grid xs={6}>
+ <Grid size={6} >
               <TextField
                 margin="normal"
                 id={"quantity"}
@@ -1246,7 +1243,7 @@ const DialogHandleItem = ({
                 onChange={onQuantityChange}
               />
             </Grid>
-            <Grid xs={6}>
+ <Grid size={6} >
               <FormControl fullWidth margin="normal">
                 <UnitAutocomplete
                   componentKey="unit_"
