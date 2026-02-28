@@ -183,17 +183,28 @@ type DispatchAction =
   | {type: ReducerActions.SET_RECIPE; payload: {recipe: Recipe}}
   | {
       type: ReducerActions.ON_FIELD_CHANGE;
-      payload: {field: string; value: string | number | boolean | string[] | MenuType[]};
+      payload: {
+        field: string;
+        value: string | number | boolean | string[] | MenuType[];
+      };
     }
   | {
       type: ReducerActions.ON_INGREDIENT_CHANGE;
-      payload: {uid: string; field: string; value: string | number | IngredientProduct};
+      payload: {
+        uid: string;
+        field: string;
+        value: string | number | IngredientProduct;
+      };
     }
   | {type: ReducerActions.ON_INGREDIENT_DELETE_NAME; payload: {uid: string}}
   | {type: ReducerActions.ON_INGREDIENT_ADD_NEW_PRODUCT; payload: Product}
   | {
       type: ReducerActions.ON_MATERIAL_CHANGE;
-      payload: {uid: string; field: string; value: string | number | RecipeProduct};
+      payload: {
+        uid: string;
+        field: string;
+        value: string | number | RecipeProduct;
+      };
     }
   | {type: ReducerActions.ON_MATERIAL_DELETE_NAME; payload: {uid: string}}
   | {type: ReducerActions.ON_MATERIAL_ADD_NEW_PRODUCT; payload: Material}
@@ -205,7 +216,8 @@ type DispatchAction =
       type: ReducerActions.ON_UPDATE_LIST;
       payload: {
         fieldName: string;
-        value: RecipeObjectStructure<Ingredient | Section>
+        value:
+          | RecipeObjectStructure<Ingredient | Section>
           | RecipeObjectStructure<PreparationStep | Section>
           | RecipeObjectStructure<RecipeMaterialPosition | Section>;
       };
@@ -294,7 +306,13 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
       return {...state, recipe: action.payload.recipe};
     case ReducerActions.ON_FIELD_CHANGE: {
       let field: string;
-      let value: string | number | boolean | string[] | MenuType[] | Record<string, unknown>;
+      let value:
+        | string
+        | number
+        | boolean
+        | string[]
+        | MenuType[]
+        | Record<string, unknown>;
       if (action.payload.field.includes(".")) {
         //ATTENTION:
         // Verschachtelter Wert --> Attribut holen
@@ -302,7 +320,10 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
         // 💥 Achtung! Funktioniert nur mit einer Verschachtelungs-
         //             tiefe von 1.
         field = action.payload.field.split(".")[0];
-        const nested = Object.assign({}, state.recipe[field as keyof Recipe]) as Record<string, unknown>;
+        const nested = Object.assign(
+          {},
+          state.recipe[field as keyof Recipe],
+        ) as Record<string, unknown>;
         nested[action.payload.field.split(".")[1]] = action.payload.value;
         value = nested;
       } else {
@@ -319,10 +340,12 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     }
     case ReducerActions.ON_INGREDIENT_CHANGE:
       tmpIngredients = {...state.recipe.ingredients};
-      (tmpIngredients.entries[action.payload.uid] as unknown as
-        Record<string, string | number | IngredientProduct>)[
-        action.payload.field
-      ] = action.payload.value;
+      (
+        tmpIngredients.entries[action.payload.uid] as unknown as Record<
+          string,
+          string | number | IngredientProduct
+        >
+      )[action.payload.field] = action.payload.value;
 
       // Prüfen ob es das Produkt in der Liste gibt. Sonst hizufügen
       // Wenn das die letzte Zutat (also kein Abschnitt) ist, automatisch eine neue einfügen
@@ -396,10 +419,11 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.ON_PREPARATIONSTEP_CHANGE:
       preparationStepsToUpdate = {...state.recipe.preparationSteps};
 
-      (preparationStepsToUpdate.entries[action.payload.uid] as unknown as
-        Record<string, string>)[
-        action.payload.fieldName
-      ] = action.payload.value;
+      (
+        preparationStepsToUpdate.entries[
+          action.payload.uid
+        ] as unknown as Record<string, string>
+      )[action.payload.fieldName] = action.payload.value;
       // Wenn das die letzte Zeile ist, automatisch eine neue einfügen
       // Wenn das die letzte Zutat (also kein Abschnitt) ist, automatisch eine neue einfügen
       if (
@@ -431,9 +455,12 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.ON_MATERIAL_CHANGE:
       tmpMaterials = {...state.recipe.materials};
 
-      (tmpMaterials.entries[action.payload.uid] as unknown as
-        Record<string, string | number | RecipeProduct>)[action.payload.field] =
-        action.payload.value;
+      (
+        tmpMaterials.entries[action.payload.uid] as unknown as Record<
+          string,
+          string | number | RecipeProduct
+        >
+      )[action.payload.field] = action.payload.value;
 
       // Wenn das die letzte Zeile ist, automatisch eine neue einfügen
       if (
@@ -1191,7 +1218,6 @@ const RecipeEdit = ({
   const onSave = async () => {
     if (state.recipe.uid === "") {
       // Wenn nur eine Zutat Hinweis auf Doku
-      console.log(state.recipe);
       if (
         Object.values(state.recipe.ingredients.entries).filter(
           (entry) =>
@@ -1245,18 +1271,11 @@ const RecipeEdit = ({
           result.type !== RecipeType.variant &&
           !isEmbedded
         ) {
+          // ignoreState: true umgeht die Abbruch-Logik in switchEditMode,
+          // die bei leerer UID zur Rezeptübersicht navigieren würde.
           if (switchEditMode) {
-            switchEditMode({});
+            switchEditMode({ignoreState: true});
           }
-
-          dispatch({
-            type: ReducerActions.SNACKBAR_SHOW,
-            payload: {
-              severity: "success",
-              message: TEXT.RECIPE_SAVE_SUCCESS,
-            },
-          });
-          // Umleiten auf neue URL
           navigate(`${ROUTES.RECIPE}/${result.created.fromUid}/${result.uid}`, {
             replace: true,
             state: {
@@ -1620,7 +1639,7 @@ const RecipeEdit = ({
 
         <Grid container spacing={4} justifyContent="center">
           {state.error && (
- <Grid size={12} key={"error"} >
+            <Grid size={12} key={"error"}>
               <AlertMessage
                 error={state.error}
                 messageTitle={TEXT.ALERT_TITLE_WAIT_A_MINUTE}
@@ -1628,22 +1647,22 @@ const RecipeEdit = ({
             </Grid>
           )}
           {mealPlan.length > 0 && groupConfiguration && (
- <Grid size={{ xs: 12, md: 6 }} >
+            <Grid size={{xs: 12, md: 6}}>
               <MealPlanPanelView
                 mealPlan={mealPlan}
                 groupConfiguration={groupConfiguration}
               />
             </Grid>
           )}
- <Grid size={{ xs: 12, md: 6 }} >
+          <Grid size={{xs: 12, md: 6}}>
             {state.recipe.type == RecipeType.variant ? (
               // Die Variante darf die generellen Infos nicht anpassen
-              (<RecipeInfoPanelView
+              <RecipeInfoPanelView
                 recipe={state.recipe}
                 onTagDelete={onTagDelete}
                 onTagAdd={onTagAdd}
                 authUser={authUser}
-              />)
+              />
             ) : (
               <RecipeInfoPanel
                 recipe={state.recipe}
@@ -1654,7 +1673,7 @@ const RecipeEdit = ({
             )}
           </Grid>
           <RecipeDivider style={{marginTop: "1em", marginBottom: "1em"}} />
- <Grid size={12} >
+          <Grid size={12}>
             <RecipeIngredients
               recipe={state.recipe}
               units={state.units}
@@ -1666,7 +1685,7 @@ const RecipeEdit = ({
             />
           </Grid>
           <RecipeDivider style={{marginTop: "1em", marginBottom: "1em"}} />
- <Grid size={12} >
+          <Grid size={12}>
             <RecipePreparationSteps
               recipe={state.recipe}
               onChange={onChangePreparationStep}
@@ -1675,7 +1694,7 @@ const RecipeEdit = ({
             />
           </Grid>
           <RecipeDivider style={{marginTop: "1em", marginBottom: "1em"}} />
- <Grid size={12} >
+          <Grid size={12}>
             <RecipeMaterials
               recipe={state.recipe}
               materials={state.materials}
@@ -1685,7 +1704,7 @@ const RecipeEdit = ({
             />
           </Grid>
           {state.recipe.type == RecipeType.variant && (
- <Grid size={12} >
+            <Grid size={12}>
               <RecipeVariantNote
                 recipe={state.recipe}
                 onChange={onChangeField}
@@ -2282,7 +2301,7 @@ const RecipeIngredients = ({
         {TEXT.INGREDIENTS}
       </Typography>
       <Grid container spacing={2} alignItems="center">
- <Grid size={6} sx={classes.centerCenter} >
+        <Grid size={6} sx={classes.centerCenter}>
           <TextField
             id={"portions"}
             key={"portions"}
@@ -2294,7 +2313,7 @@ const RecipeIngredients = ({
             disabled={recipe.type == RecipeType.variant}
           />
         </Grid>
- <Grid size={6} sx={classes.centerCenter} >
+        <Grid size={6} sx={classes.centerCenter}>
           <Typography variant="body2">
             {TEXT.FIELD_SHOW_SCALE_FACTORS}
           </Typography>
@@ -2305,7 +2324,7 @@ const RecipeIngredients = ({
           />
         </Grid>
 
- <Grid size={12} sx={classes.centerCenter} >
+        <Grid size={12} sx={classes.centerCenter}>
           <IngredientListContext.Provider value={contextValue}>
             <List key={"listIngredients"} style={{flexGrow: 1}}>
               {recipe.ingredients.order.map((ingredientUid, index) => (
@@ -2526,7 +2545,8 @@ const IngredientPosition = ({
     <ListItemText>
       <Grid container spacing={2} alignItems="center">
         {!breakpointIsXs && (
-          <Grid size={{ xs: gridSize.pos.xs, sm: gridSize.pos.sm }}
+          <Grid
+            size={{xs: gridSize.pos.xs, sm: gridSize.pos.sm}}
             key={"ingredient_pos_grid_" + ingredient.uid}
             sx={classes.centerCenter}
           >
@@ -2538,7 +2558,8 @@ const IngredientPosition = ({
             </Typography>
           </Grid>
         )}
-        <Grid size={{ xs: gridSize.quantity.xs, sm: gridSize.quantity.sm }}
+        <Grid
+          size={{xs: gridSize.quantity.xs, sm: gridSize.quantity.sm}}
           key={"ingredient_quantity_grid_" + ingredient.uid}
         >
           <TextField
@@ -2558,7 +2579,8 @@ const IngredientPosition = ({
         </Grid>
 
         {/* Einheit */}
-        <Grid size={{ xs: gridSize.unit.xs, sm: gridSize.unit.sm }}
+        <Grid
+          size={{xs: gridSize.unit.xs, sm: gridSize.unit.sm}}
           key={"ingredient_unit_grid_" + ingredient.uid}
           sx={[!showScaleFactors && {paddingRight: theme.spacing(2)}]}
         >
@@ -2571,7 +2593,11 @@ const IngredientPosition = ({
         </Grid>
         {/* Skalierungsfaktor */}
         {showScaleFactors && (
-          <Grid size={{ xs: gridSize.scalingFactor.xs, sm: gridSize.scalingFactor.sm }}
+          <Grid
+            size={{
+              xs: gridSize.scalingFactor.xs,
+              sm: gridSize.scalingFactor.sm,
+            }}
             key={"ingredient_scalingFractor_grid_" + ingredient.uid}
             sx={{paddingRight: theme.spacing(2)}}
           >
@@ -2592,7 +2618,8 @@ const IngredientPosition = ({
           </Grid>
         )}
 
-        <Grid size={{ xs: gridSize.product.xs, sm: gridSize.product.sm }}
+        <Grid
+          size={{xs: gridSize.product.xs, sm: gridSize.product.sm}}
           key={"ingredient_product_grid_" + ingredient.uid}
         >
           <ProductAutocomplete
@@ -2602,7 +2629,8 @@ const IngredientPosition = ({
             onChange={onChangeIngredient}
           />
         </Grid>
-        <Grid size={{ xs: gridSize.detail.xs, sm: gridSize.detail.sm }}
+        <Grid
+          size={{xs: gridSize.detail.xs, sm: gridSize.detail.sm}}
           key={"ingredient_detail_grid_" + ingredient.uid}
           // Sonst crasht das Feld in den Secondary-Action-Button
           sx={{paddingRight: theme.spacing(2)}}
@@ -2768,7 +2796,7 @@ const RecipePreparationSteps = ({
         {TEXT.PREPARATION}
       </Typography>
       <Grid container spacing={2} alignItems="center">
- <Grid size={12} sx={classes.centerCenter} >
+        <Grid size={12} sx={classes.centerCenter}>
           <PreparationListContext.Provider value={contextValue}>
             <List key={"listPreparationSteps"} style={{flexGrow: 1}}>
               {/* Zutaten auflsiten */}
@@ -2961,7 +2989,8 @@ const PreparationStepPosition = ({
     <React.Fragment>
       <ListItemText>
         <Grid container spacing={2} alignItems="center">
-          <Grid size={1}
+          <Grid
+            size={1}
             key={"preparationstep_pos_grid_" + preparationStep.uid}
             sx={classes.centerCenter}
           >
@@ -2973,7 +3002,8 @@ const PreparationStepPosition = ({
             </Typography>
           </Grid>
 
-          <Grid size={11}
+          <Grid
+            size={11}
             key={"preparationstep_step_grid_" + preparationStep.uid}
             // Sonst crasht das Feld in den Secondary-Action-Button
             sx={{paddingRight: theme.spacing(2)}}
@@ -3147,7 +3177,7 @@ const RecipeMaterials = ({
         {TEXT.MATERIAL}
       </Typography>
       <Grid container spacing={2} alignItems="center">
- <Grid size={12} sx={classes.centerCenter} >
+        <Grid size={12} sx={classes.centerCenter}>
           <MaterialListContext.Provider value={contextValue}>
             <List key={"listMaterials"} style={{flexGrow: 1}}>
               {recipe.materials.order.map((materialUid, index) => (
@@ -3322,7 +3352,8 @@ const MaterialPosition = ({
     <React.Fragment>
       <ListItemText>
         <Grid container spacing={2} alignItems="center">
-          <Grid size={1}
+          <Grid
+            size={1}
             key={"material_pos_grid_" + material.uid}
             sx={classes.centerCenter}
           >
@@ -3331,7 +3362,7 @@ const MaterialPosition = ({
             </Typography>
           </Grid>
 
- <Grid size={2} key={"material_quantity_grid_" + material.uid} >
+          <Grid size={2} key={"material_quantity_grid_" + material.uid}>
             <TextField
               key={"quantity_" + material.uid}
               id={"quantity_" + material.uid}
@@ -3347,7 +3378,8 @@ const MaterialPosition = ({
               fullWidth
             />
           </Grid>
-          <Grid size={9}
+          <Grid
+            size={9}
             key={"material_name_grid_" + material.uid}
             // Sonst crasht das Feld in den Secondary-Action-Button
             sx={{paddingRight: theme.spacing(2)}}
@@ -3388,13 +3420,15 @@ const SectionPosition = ({
         <Grid container spacing={2} alignItems="center">
           {index !== 1 && <Grid size={12} style={{marginTop: "0.5em"}} />}
           {!breakpointIsXs && (
-            <Grid size={{ xs: 1, sm: 1 }}
+            <Grid
+              size={{xs: 1, sm: 1}}
               key={"section_pos_grid_" + section.uid}
               sx={classes.centerCenter}
             />
           )}
 
-          <Grid size={{ xs: breakpointIsXs ? 12 : 11, sm: breakpointIsXs ? 12 : 11 }}
+          <Grid
+            size={{xs: breakpointIsXs ? 12 : 11, sm: breakpointIsXs ? 12 : 11}}
             key={"section_name_grid_" + section.uid}
             // Sonst crasht das Feld in den Secondary-Action-Button
             sx={{paddingRight: theme.spacing(2)}}
@@ -3520,8 +3554,8 @@ const RecipeVariantNote = ({recipe, onChange}: RecipeVariantNoteProps) => {
         {TEXT.VARIANT_NOTE}
       </Typography>
       <Grid container spacing={2} alignItems="center">
- <Grid size={1} key={"grid_pos_note"} />
- <Grid size={11} key={"grid_note_note"} >
+        <Grid size={1} key={"grid_pos_note"} />
+        <Grid size={11} key={"grid_note_note"}>
           <TextField
             id="variantProperties.note"
             key="variantProperties.note"

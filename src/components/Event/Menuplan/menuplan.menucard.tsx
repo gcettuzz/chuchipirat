@@ -86,7 +86,11 @@ import {
   SingleTextInputResult,
   useCustomDialog,
 } from "../../Shared/customDialogContext";
-import {MenueCardList} from "./menuplan.menucard.list";
+import {
+  MenueCardList,
+  isDraggingACardListItem,
+  getListContainerDropTargetData,
+} from "./menuplan.menucard.list";
 import Action from "../../../constants/actions";
 import Utils from "../../Shared/utils.class";
 
@@ -562,6 +566,27 @@ const DraggableMenueCard = ({
           setState(menueCardStateIdle);
         },
       }),
+      // Fallback-Drop-Target: Nimmt Produkte/Materialien entgegen,
+      // wenn die jeweilige Liste leer (und daher nicht gerendert) ist.
+      dropTargetForElements({
+        element: inner,
+        canDrop: ({source}) => {
+          if (!isDraggingACardListItem({source})) return false;
+          const itemType = source.data.itemType as MenuplanDragDropTypes;
+          return (
+            (itemType === MenuplanDragDropTypes.PRODUCT &&
+              listItem.menue.productOrder.length === 0) ||
+            (itemType === MenuplanDragDropTypes.MATERIAL &&
+              listItem.menue.materialOrder.length === 0)
+          );
+        },
+        getData: ({source}) =>
+          getListContainerDropTargetData({
+            menueUid: listItem.menue.uid,
+            listType: source.data.itemType as MenuplanDragDropTypes,
+            isEmpty: true,
+          }),
+      }),
     );
   }, [listItem, meal.uid]);
 
@@ -807,7 +832,12 @@ const MenueCard = ({
       <Box
         component="div"
         ref={outerRef}
-        sx={classes.menueCardDragBox[state.type]}
+        sx={{
+          ...classes.menueCardDragBox[state.type],
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+        }}
       >
         {/* Put a shadow before the item if closer to the top edge */}
         {state.type === "is-over" && state.closestEdge === "top" ? (
@@ -817,11 +847,14 @@ const MenueCard = ({
         <Box
           component="div"
           ref={innerRef}
-          sx={
-            state.type === "preview"
+          sx={{
+            ...(state.type === "preview"
               ? classes.menueCardListItemDrag.preview(state.dragging)
-              : classes.menueCardListItemDrag[state.type]
-          }
+              : classes.menueCardListItemDrag[state.type]),
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+          }}
         >
           <Card
             sx={{
@@ -886,26 +919,30 @@ const MenueCard = ({
                   {TEXT_ADD_RECIPE}
                 </Button>
               </Box>
-              {/* Produkte */}
-              <MenueCardList
-                menue={menue}
-                products={products}
-                listType={MenuplanDragDropTypes.PRODUCT}
-                menuplanSettings={menuplanSettings}
-                groupConfiguration={groupConfiguration}
-                onListElementClick={onMealProductOpen}
-                onMoveDragAndDropElement={onMoveDragAndDropElement!}
-              />
-              {/* Material */}
-              <MenueCardList
-                menue={menue}
-                materials={materials}
-                listType={MenuplanDragDropTypes.MATERIAL}
-                menuplanSettings={menuplanSettings}
-                groupConfiguration={groupConfiguration}
-                onListElementClick={onMealMaterialOpen}
-                onMoveDragAndDropElement={onMoveDragAndDropElement!}
-              />
+              {/* Produkte – nur anzeigen, wenn vorhanden */}
+              {menue.productOrder.length > 0 && (
+                <MenueCardList
+                  menue={menue}
+                  products={products}
+                  listType={MenuplanDragDropTypes.PRODUCT}
+                  menuplanSettings={menuplanSettings}
+                  groupConfiguration={groupConfiguration}
+                  onListElementClick={onMealProductOpen}
+                  onMoveDragAndDropElement={onMoveDragAndDropElement!}
+                />
+              )}
+              {/* Material – nur anzeigen, wenn vorhanden */}
+              {menue.materialOrder.length > 0 && (
+                <MenueCardList
+                  menue={menue}
+                  materials={materials}
+                  listType={MenuplanDragDropTypes.MATERIAL}
+                  menuplanSettings={menuplanSettings}
+                  groupConfiguration={groupConfiguration}
+                  onListElementClick={onMealMaterialOpen}
+                  onMoveDragAndDropElement={onMoveDragAndDropElement!}
+                />
+              )}
             </CardContent>
             <Menu
               open={Boolean(contextMenuAnchorElement)}

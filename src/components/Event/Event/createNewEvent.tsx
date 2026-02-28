@@ -43,7 +43,7 @@ import useCustomStyles from "../../../constants/styles";
 
 import PageTitle from "../../Shared/pageTitle";
 import EventInfoPage from "./eventInfo";
-import EventGroupConfigurationPage from "../GroupConfiguration/groupConfigruation";
+import EventGroupConfigurationPage from "../GroupConfiguration/groupConfiguration";
 import Event from "./event.class";
 
 import {
@@ -71,6 +71,7 @@ import {TWINT_PAYLINK} from "../../../constants/defaultValues";
 /* ===================================================================
 // ============================== Global =============================
 // =================================================================== */
+/** Schritte des Event-Erstellungsassistenten. */
 enum WizardSteps {
   info,
   groupConfig,
@@ -79,6 +80,7 @@ enum WizardSteps {
 /* ===================================================================
 // ============================ Dispatcher ===========================
 // =================================================================== */
+/** Alle verfügbaren Aktionstypen für den Event-Reducer. */
 enum ReducerActions {
   SET_EVENT,
   SET_GROUP_CONFIG,
@@ -90,24 +92,58 @@ enum ReducerActions {
   SAVE_EVENT_INIT,
   SAVE_EVENT_SUCCESS,
   FORM_FIELD_ERROR,
+  UPDATE_DATE_VALIDATION,
   GENERIC_ERROR,
 }
-type DispatchAction = {
-  type: ReducerActions;
-  payload: any;
-};
+/**
+ * Typisierte Reducer-Aktionen als Discriminated Union.
+ * Jede Aktion hat einen eigenen Payload-Typ, payload-lose Aktionen
+ * haben kein `payload`-Feld.
+ */
+type DispatchAction =
+  | {type: ReducerActions.SET_EVENT; payload: Event}
+  | {type: ReducerActions.SET_GROUP_CONFIG; payload: EventGroupConfiguration}
+  | {
+      type: ReducerActions.FIELD_UPDATE;
+      payload: {field: string; value: Event[keyof Event]};
+    }
+  | {type: ReducerActions.SET_PICTURE; payload: File | null}
+  | {type: ReducerActions.UPLOAD_PICTURE_INIT}
+  | {
+      type: ReducerActions.UPLOAD_PICTURE_SUCCESS;
+      payload: {pictureSrc: string};
+    }
+  | {type: ReducerActions.SHOW_LOADING}
+  | {type: ReducerActions.SAVE_EVENT_INIT}
+  | {type: ReducerActions.SAVE_EVENT_SUCCESS; payload: Event}
+  | {type: ReducerActions.FORM_FIELD_ERROR; payload: FieldValidationError}
+  | {
+      type: ReducerActions.UPDATE_DATE_VALIDATION;
+      payload: FormValidationFieldError[];
+    }
+  | {type: ReducerActions.GENERIC_ERROR; payload: Error};
+/** Zustand des Event-Erstellungsassistenten. */
 type State = {
+  /** Das aktuelle Event-Objekt. */
   event: Event;
+  /** Konfiguration der Gruppen (Portionen, Intoleranzen, Diäten). */
   groupConfig: EventGroupConfiguration;
+  /** Lokal ausgewähltes Bild (noch nicht hochgeladen). */
   localPicture: File | null;
+  /** Allgemeiner Ladeindikator. */
   isLoading: boolean;
+  /** Indikator für laufenden Bild-Upload. */
   isUpLoadingPicture: boolean;
+  /** Indikator für laufenden Speichervorgang. */
   isSaving: boolean;
+  /** Ob ein Fehler aufgetreten ist. */
   isError: boolean;
+  /** Liste der Formular-Validierungsfehler. */
   eventFormValidation: FormValidationFieldError[];
+  /** Aktuelles Fehler-Objekt (falls vorhanden). */
   error: Error | null;
 };
-const inititialState: State = {
+const initialState: State = {
   event: new Event(),
   groupConfig: new EventGroupConfiguration(),
   localPicture: null,
@@ -119,19 +155,28 @@ const inititialState: State = {
   error: null,
 };
 
+/**
+ * Reducer für den Event-Erstellungsassistenten.
+ * Verwaltet den Zustand über alle Wizard-Schritte hinweg.
+ *
+ * @param state Aktueller State.
+ * @param action Typisierte Aktion (Discriminated Union).
+ * @returns Neuer State.
+ * @throws {Error} Bei unbekanntem Aktionstyp.
+ */
 const eventReducer = (state: State, action: DispatchAction): State => {
   switch (action.type) {
     case ReducerActions.SET_EVENT:
-      return {...state, event: action.payload as Event};
+      return {...state, event: action.payload};
     case ReducerActions.SET_GROUP_CONFIG:
-      return {...state, groupConfig: action.payload as EventGroupConfiguration};
+      return {...state, groupConfig: action.payload};
     case ReducerActions.FIELD_UPDATE:
       return {
         ...state,
         event: {...state.event, [action.payload.field]: action.payload.value},
       };
     case ReducerActions.SET_PICTURE:
-      return {...state, localPicture: action.payload as File | null};
+      return {...state, localPicture: action.payload};
     case ReducerActions.UPLOAD_PICTURE_INIT:
       return {
         ...state,
@@ -142,22 +187,33 @@ const eventReducer = (state: State, action: DispatchAction): State => {
         ...state,
         event: {
           ...state.event,
-          pictureSrc: action.payload.pictureSrc as string,
+          pictureSrc: action.payload.pictureSrc,
         },
         isUpLoadingPicture: false,
       };
     case ReducerActions.SAVE_EVENT_INIT:
       return {...state, isSaving: true};
     case ReducerActions.SAVE_EVENT_SUCCESS:
-      return {...state, isSaving: false, event: action.payload as Event};
+      return {
+        ...state,
+        isSaving: false,
+        isError: false,
+        error: null,
+        eventFormValidation: [],
+        event: action.payload,
+      };
     case ReducerActions.FORM_FIELD_ERROR:
       return {
         ...state,
         isSaving: false,
         isError: true,
-        error: action.payload as Error,
-        eventFormValidation: action.payload
-          .formValidation as FormValidationFieldError[],
+        error: action.payload,
+        eventFormValidation: action.payload.formValidation,
+      };
+    case ReducerActions.UPDATE_DATE_VALIDATION:
+      return {
+        ...state,
+        eventFormValidation: action.payload,
       };
     case ReducerActions.SHOW_LOADING:
       return {
@@ -169,7 +225,7 @@ const eventReducer = (state: State, action: DispatchAction): State => {
         ...state,
         isSaving: false,
         isError: true,
-        error: action.payload as Error,
+        error: action.payload,
       };
     default:
       console.error("Unbekannter ActionType: ", action.type);
@@ -181,16 +237,17 @@ const eventReducer = (state: State, action: DispatchAction): State => {
 // =============================== Page ==============================
 // =================================================================== */
 
-/* ===================================================================
-// =============================== Base ==============================
-// =================================================================== */
+/**
+ * Hauptkomponente für den 3-Schritt-Event-Erstellungsassistenten.
+ * Führt den Benutzer durch: Event-Info → Gruppenkonfiguration → Abschluss.
+ */
 const CreateEventPage = () => {
   const firebase = useFirebase();
   const authUser = useAuthUser();
   const classes = useCustomStyles();
   const navigate = useNavigate();
 
-  const [state, dispatch] = React.useReducer(eventReducer, inititialState);
+  const [state, dispatch] = React.useReducer(eventReducer, initialState);
   const navigationValuesContext = React.useContext(NavigationValuesContext);
   const [activeStep, setActiveStep] = React.useState(WizardSteps.info);
 
@@ -220,7 +277,7 @@ const CreateEventPage = () => {
   const goToStepGroup = () => {
     setActiveStep(WizardSteps.groupConfig);
   };
-  const goToOvierview = () => {
+  const goToOverview = () => {
     if (state.event.uid) {
       // Event wieder löschen
       Event.delete({
@@ -236,14 +293,15 @@ const CreateEventPage = () => {
     setActiveStep(WizardSteps.info);
   };
   const goToResume = (
-    event: React.MouseEvent<HTMLButtonElement>,
-    value?: any
+    _event: React.MouseEvent<HTMLButtonElement>,
+    value?: {[key: string]: any},
   ) => {
-    dispatch({type: ReducerActions.SET_GROUP_CONFIG, payload: value});
+    const groupConfig = value as EventGroupConfiguration;
+    dispatch({type: ReducerActions.SET_GROUP_CONFIG, payload: groupConfig});
     setActiveStep(WizardSteps.completion);
   };
   const goToMenuplan = async () => {
-    dispatch({type: ReducerActions.SHOW_LOADING, payload: {}});
+    dispatch({type: ReducerActions.SHOW_LOADING});
 
     // Kurz warten, dass auch alles ready ist
     await new Promise(function (resolve) {
@@ -261,7 +319,10 @@ const CreateEventPage = () => {
     dispatch({type: ReducerActions.SET_EVENT, payload: event});
   };
   const onUpdatePicture = (picture: File | null) => {
-    dispatch({type: ReducerActions.SET_PICTURE, payload: picture!});
+    dispatch({type: ReducerActions.SET_PICTURE, payload: picture});
+  };
+  const onFormValidationUpdate = (errors: FormValidationFieldError[]) => {
+    dispatch({type: ReducerActions.UPDATE_DATE_VALIDATION, payload: errors});
   };
   const onEventError = (error: Error) => {
     dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
@@ -270,17 +331,20 @@ const CreateEventPage = () => {
   // Event Speicherung
   // ------------------------------------------ */
   const onCreateEvent = async () => {
-    dispatch({type: ReducerActions.SAVE_EVENT_INIT, payload: {}});
+    dispatch({type: ReducerActions.SAVE_EVENT_INIT});
 
-    await Event.save({
-      firebase: firebase,
-      event: state.event,
-      authUser: authUser,
-      localPicture: state.localPicture ? state.localPicture : ({} as File),
-    })
-      .then(async (result) => {
-        dispatch({type: ReducerActions.SAVE_EVENT_SUCCESS, payload: result});
-        // Menüplan erstellen und speichern.
+    try {
+      const result = await Event.save({
+        firebase: firebase,
+        event: state.event,
+        authUser: authUser,
+        localPicture: state.localPicture ? state.localPicture : ({} as File),
+      });
+
+      dispatch({type: ReducerActions.SAVE_EVENT_SUCCESS, payload: result});
+
+      // Menüplan erstellen und speichern
+      try {
         await Menuplan.save({
           menuplan: Menuplan.factory({
             event: {...state.event, uid: result.uid},
@@ -288,31 +352,29 @@ const CreateEventPage = () => {
           }),
           firebase: firebase,
           authUser: authUser,
-        })
-          .catch((error) => {
-            console.error(error);
-            throw error;
-          })
-          .finally(() => {
-            // Einen Schritt weiter
-            goToStepGroup();
-          });
-      })
-      .catch((error: FieldValidationError) => {
+        });
+      } catch (error) {
         console.error(error);
-        if (error.formValidation) {
-          dispatch({type: ReducerActions.FORM_FIELD_ERROR, payload: error});
-          // setFormValidation(error.formValidation);
-          // Zum 1. Fehler-Feld scrollen
-          const element = document.getElementById(
-            error.formValidation[0].fieldName
-          );
-          element && element.scrollIntoView({behavior: "smooth"});
-          return;
-        }
-        // Neuer Fehler // ValidationError im Reducer
-        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
-      });
+        throw error;
+      } finally {
+        // Einen Schritt weiter
+        goToStepGroup();
+      }
+    } catch (error) {
+      const fieldError = error as FieldValidationError;
+      console.error(fieldError);
+
+      if (fieldError.formValidation) {
+        dispatch({type: ReducerActions.FORM_FIELD_ERROR, payload: fieldError});
+        // Zum 1. Fehler-Feld scrollen
+        const element = document.getElementById(
+          fieldError.formValidation[0].fieldName,
+        );
+        element?.scrollIntoView({behavior: "smooth"});
+        return;
+      }
+      dispatch({type: ReducerActions.GENERIC_ERROR, payload: fieldError});
+    }
   };
 
   return (
@@ -344,7 +406,7 @@ const CreateEventPage = () => {
             />
           )}
 
-          {activeStep == WizardSteps.info ? (
+          {activeStep === WizardSteps.info ? (
             <Stack spacing={2}>
               <EventInfoPage
                 event={state.event}
@@ -354,6 +416,7 @@ const CreateEventPage = () => {
                 authUser={authUser}
                 onUpdateEvent={onUpdateEvent}
                 onUpdatePicture={onUpdatePicture}
+                onFormValidationUpdate={onFormValidationUpdate}
                 onError={onEventError}
               />
               <Box
@@ -363,7 +426,7 @@ const CreateEventPage = () => {
                 <Button
                   variant="outlined"
                   color="primary"
-                  onClick={goToOvierview}
+                  onClick={goToOverview}
                 >
                   {TEXT_BACK_TO_OVERVIEW}
                 </Button>
@@ -404,11 +467,21 @@ const CreateEventPage = () => {
 /* ===================================================================
 // =============================== Resume ============================
 // =================================================================== */
+/**
+ * Props für die Abschluss-Seite des Event-Erstellungsassistenten.
+ */
 interface CreateEventCompletionProps {
+  /** Das erstellte Event. */
   event: Event;
+  /** Callback zum Zurückkehren zur Gruppenkonfiguration. */
   onReturn: () => void;
+  /** Callback zum Fortfahren zum Menüplan. */
   onProceed: () => void;
 }
+/**
+ * Abschluss-Seite des Event-Erstellungsassistenten.
+ * Zeigt eine Zusammenfassung und Spendenoptionen (TWINT QR-Code).
+ */
 const CreateEventCompletion = ({
   event,
   onProceed,
@@ -480,15 +553,13 @@ const CreateEventCompletion = ({
 // ===================================================================
 // ============================ Twint Button =========================
 // =================================================================== */
+/**
+ * TWINT-Zahlungsbutton mit Dark-Mode-Unterstützung.
+ * Öffnet den TWINT-Paylink in einem neuen Tab.
+ */
 export const TwintButton = () => {
   const classes = useCustomStyles();
-  const [darkMode, setDarkMode] = React.useState(false);
-
-  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-
-  React.useEffect(() => {
-    setDarkMode(prefersDarkMode);
-  }, [prefersDarkMode]);
+  const darkMode = useMediaQuery("(prefers-color-scheme: dark)");
 
   return (
     <Button
@@ -519,12 +590,17 @@ export const TwintButton = () => {
 /* ===================================================================
 // ============================== Stepper ============================
 // =================================================================== */
+/** Props für die Stepper-Komponente. */
 interface CreateEventStepperProps {
+  /** Aktuell aktiver Wizard-Schritt. */
   activeStep: WizardSteps;
 }
+/**
+ * Fortschrittsanzeige (Stepper) für den Event-Erstellungsassistenten.
+ */
 const CreateEventStepper = ({activeStep}: CreateEventStepperProps) => {
   return (
-    <Stepper activeStep={activeStep} alternativeLabel>
+    <Stepper activeStep={activeStep} alternativeLabel sx={{mb: 2}}>
       <Step key={WizardSteps.info}>
         <StepLabel>{TEXT_EVENT_INFO}</StepLabel>
       </Step>

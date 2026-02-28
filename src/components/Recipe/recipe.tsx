@@ -10,7 +10,6 @@ import FallbackLoading from "../Shared/fallbackLoading";
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
 
 import {RECIPES as ROUTE_RECIPES} from "../../constants/routes";
-import RecipeShort from "./recipeShort.class";
 import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 import {
   DialogType,
@@ -23,7 +22,6 @@ import {
   ARE_YOU_SURE_YOU_WANT_TO_CHANGE as TEXT_ARE_YOU_SURE_YOU_WANT_TO_CHANGE,
   PUBLIC_RECIPE as TEXT_PUBLIC_RECIPE,
 } from "../../constants/text";
-import AuthUser from "../Firebase/Authentication/authUser.class";
 import {useAuthUser} from "../Session/authUserContext";
 import {useFirebase} from "../Firebase/firebaseContext";
 
@@ -51,6 +49,7 @@ export interface OnUpdateRecipeProps {
 
 type DispatchAction = {
   type: ReducerActions;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: {[key: string]: any};
 };
 type State = {
@@ -143,8 +142,6 @@ const recipeReducer = (state: State, action: DispatchAction): State => {
           materials: tempMaterials,
         },
       };
-
-      break;
     case ReducerActions.MANAGE_LOADING_SCREEN:
       return {
         ...state,
@@ -181,13 +178,6 @@ const recipeReducer = (state: State, action: DispatchAction): State => {
       throw new Error();
   }
 };
-
-interface LocationState {
-  action: any;
-  scaledPortions?: string;
-  recipeShort?: RecipeShort;
-  recipe?: Recipe;
-}
 
 /* ===================================================================
 // =============================== Page ==============================
@@ -358,7 +348,7 @@ const RecipePage = () => {
   // Snackback schliessen
   // ------------------------------------------ */
   const handleSnackbarClose = (
-    event: Event | SyntheticEvent<any, Event>,
+    _event: Event | SyntheticEvent<Element, Event>,
     reason: SnackbarCloseReason
   ) => {
     if (reason === "clickaway") {

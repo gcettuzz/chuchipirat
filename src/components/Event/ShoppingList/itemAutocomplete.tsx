@@ -159,13 +159,22 @@ const ItemAutocomplete: React.FC<ItemAutocompleteProps> = ({
   onChange,
   size = TextFieldSize.medium,
 }: ItemAutocompleteProps) => {
-  // Handler für Zutaten/Produkt hinzufügen
-  const filter = createFilterOptions<Item>();
+  // ignoreAccents deaktivieren: MUI's Default (true) entfernt Umlaute vor dem Vergleich,
+  // d.h. "ä"→"a", "ö"→"o", "ü"→"u". Damit matcht z.B. "ä" auf alle Einträge mit "a"
+  // im Namen — z.B. "Spätzlisieb". Im Deutschen sind Umlaute eigenständige Buchstaben.
+  const filter = createFilterOptions<Item>({
+    ignoreAccents: false,
+    stringify: (option) => option.name,
+  });
   const [items, setItems] = React.useState<Item[]>([]);
 
   const [inputValue, setInputValue] = React.useState<string>(
     typeof item === "string" ? item : (item?.name ?? ""),
   );
+
+  // Merkt sich den Namen des zuletzt per Dropdown ausgewählten Eintrags,
+  // damit onBlur die Auswahl nicht ein zweites Mal verarbeitet.
+  const lastSelectedNameRef = React.useRef<string>("");
 
   // Items sauber initialisieren/aktualisieren
   React.useEffect(() => {
@@ -231,8 +240,15 @@ const ItemAutocomplete: React.FC<ItemAutocompleteProps> = ({
         return option.name;
       }}
       onChange={(event, newValue, action) => {
-        // Wenn Freitext erlaubt ist: string einfach durchreichen.
-        // MUI liefert bei Enter oft action="createOption" und newValue als string.
+        // Bei Auswahl aus der Liste merken, damit onBlur nicht doppelt feuert
+        if (
+          action === "selectOption" &&
+          newValue &&
+          typeof newValue !== "string"
+        ) {
+          lastSelectedNameRef.current = newValue.name;
+        }
+
         onChange(
           event as unknown as React.ChangeEvent<HTMLInputElement>,
           newValue as any,
@@ -246,6 +262,7 @@ const ItemAutocomplete: React.FC<ItemAutocompleteProps> = ({
 
         const text = inputValue?.trim();
         if (text === "") {
+          lastSelectedNameRef.current = "";
           onChange(
             event as unknown as React.ChangeEvent<HTMLInputElement>,
             null,
@@ -254,6 +271,17 @@ const ItemAutocomplete: React.FC<ItemAutocompleteProps> = ({
           );
           return;
         }
+
+        // Auswahl wurde bereits via onChange("selectOption") verarbeitet —
+        // onBlur soll nicht ein zweites Mal feuern.
+        if (
+          lastSelectedNameRef.current &&
+          lastSelectedNameRef.current.toLowerCase() === text.toLowerCase()
+        ) {
+          lastSelectedNameRef.current = "";
+          return;
+        }
+        lastSelectedNameRef.current = "";
 
         // Wenn exakt ein bestehender Eintrag passt, optional den nehmen
         const existing = items.find(

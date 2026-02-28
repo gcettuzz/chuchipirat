@@ -30,7 +30,7 @@ interface CustomSnackbarProps {
   severity: AlertColor;
   snackbarOpen: boolean;
   handleClose: (
-    event: Event | SyntheticEvent<any, Event>,
+    event: Event | SyntheticEvent<Element, Event>,
     reason: SnackbarCloseReason
   ) => void;
 }

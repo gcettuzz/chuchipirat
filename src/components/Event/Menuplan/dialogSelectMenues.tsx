@@ -343,7 +343,18 @@ export const DialogSelectMenues = ({
 
       <DialogContent style={gridStyle}>
         {/* Header-Zeile: Wochentage / Datum */}
-        <Box />
+        <Box sx={{display: "flex", alignItems: "flex-end"}}>
+          {showSelectAll && !singleSelection && (
+            <Button
+              color="primary"
+              startIcon={<DoneAllIcon />}
+              onClick={selectAllMenues}
+              sx={{mb: "26px"}}
+            >
+              {TEXT_SELECT_ALL}
+            </Button>
+          )}
+        </Box>
 
         {dates.map((date) => (
           <Box
@@ -481,18 +492,6 @@ export const DialogSelectMenues = ({
             )}
           </React.Fragment>
         ))}
-
-        {showSelectAll && !singleSelection && (
-          <Container style={{gridColumn: "1 / -1"}}>
-            <Button
-              color="primary"
-              startIcon={<DoneAllIcon />}
-              onClick={selectAllMenues}
-            >
-              {TEXT_SELECT_ALL}
-            </Button>
-          </Container>
-        )}
 
         {dialogValidation[0]?.fieldName === "ERROR_MESSAGE_NO_MENUE_MARKED" && (
           <Typography color="error" style={{gridColumn: "1 / -1"}}>

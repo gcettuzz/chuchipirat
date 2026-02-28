@@ -24,6 +24,7 @@ import {
   CircularProgress,
   SelectChangeEvent,
   SnackbarCloseReason,
+  Paper,
 } from "@mui/material";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -57,6 +58,7 @@ import {
   MENU_TYPES as TEXT_MENU_TYPES,
   OUTDOOR_KITCHEN_SUITABLE as TEXT_OUTDOOR_KITCHEN_SUITABLE,
   SHOW_ONLY_MY_RECIPES as TEXT_SHOW_ONLY_MY_RECIPES,
+  RESET as TEXT_RESET,
 } from "../../constants/text";
 
 import useCustomStyles from "../../constants/styles";
@@ -81,11 +83,12 @@ import {
 } from "../Firebase/Db/sessionStorageHandler.class";
 import {useAuthUser} from "../Session/authUserContext";
 import AuthUser from "../Firebase/Authentication/authUser.class";
-import {ValueObject} from "../Firebase/Db/firebase.db.super.class";
 
 /* ===================================================================
 // ============================ Dispatcher ===========================
 // =================================================================== */
+
+/** Aktionen für den Rezepte-Reducer. */
 enum ReducerActions {
   RECIPES_FETCH_INIT = "RECIPES_FETCH_INIT",
   RECIPES_FETCH_SUCCESS = "RECIPES_FETCH_SUCCESS",
@@ -94,12 +97,25 @@ enum ReducerActions {
   CLOSE_SNACKBAR = "CLOSE_SNACKBAR",
 }
 
-type DispatchAction = {
-  type: ReducerActions;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload: any;
-};
+/**
+ * Diskriminierte Union für Reducer-Aktionen.
+ * Jede Aktion hat einen eindeutigen Typ und optional ein typsicheres Payload.
+ */
+type DispatchAction =
+  | {type: ReducerActions.RECIPES_FETCH_INIT}
+  | {type: ReducerActions.RECIPES_FETCH_SUCCESS; payload: RecipeShort[]}
+  | {type: ReducerActions.RECIPES_FETCH_ERROR; payload: Error}
+  | {type: ReducerActions.SET_SNACKBAR; payload: Snackbar}
+  | {type: ReducerActions.CLOSE_SNACKBAR};
 
+/**
+ * Zustand der Rezeptseite.
+ *
+ * @param recipes Liste der geladenen Kurz-Rezepte.
+ * @param isLoading Ob gerade Daten geladen werden.
+ * @param snackbar Aktueller Snackbar-Zustand.
+ * @param error Fehler beim Laden, falls vorhanden.
+ */
 type State = {
   recipes: RecipeShort[];
   isLoading: boolean;
@@ -107,18 +123,32 @@ type State = {
   error: Error | null;
 };
 
-const inititialState: State = {
+const initialState: State = {
   recipes: [],
   isLoading: false,
   snackbar: {} as Snackbar,
   error: null,
 };
 
+/**
+ * Props für die Filterfunktion der Rezepte.
+ *
+ * @param searchSettings Aktuelle Sucheinstellungen.
+ * @param recipes Liste der zu filternden Rezepte.
+ */
 interface FilterRecipesProps {
   searchSettings: SearchSettings;
   recipes: RecipeShort[];
 }
 
+/**
+ * Reducer für die Rezeptseite. Verwaltet Lade-, Fehler- und Snackbar-Zustände.
+ *
+ * @param state Aktueller Zustand.
+ * @param action Auszuführende Aktion.
+ * @returns Neuer Zustand.
+ * @throws {Error} Bei unbekanntem Aktionstyp.
+ */
 const recipesReducer = (state: State, action: DispatchAction): State => {
   switch (action.type) {
     case ReducerActions.RECIPES_FETCH_INIT:
@@ -129,7 +159,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.RECIPES_FETCH_SUCCESS:
       return {
         ...state,
-        recipes: action.payload as RecipeShort[],
+        recipes: action.payload,
         error: null,
         isLoading: false,
       };
@@ -142,7 +172,7 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
     case ReducerActions.SET_SNACKBAR:
       return {
         ...state,
-        snackbar: action.payload as Snackbar,
+        snackbar: action.payload,
       };
     case ReducerActions.CLOSE_SNACKBAR:
       return {
@@ -153,11 +183,17 @@ const recipesReducer = (state: State, action: DispatchAction): State => {
           open: false,
         },
       };
-    default:
-      console.error("Unbekannter ActionType: ", action.type);
-      throw new Error();
+    default: {
+      const _exhaustive: never = action;
+      throw new Error(`Unbekannter ActionType: ${JSON.stringify(_exhaustive)}`);
+    }
   }
 };
+
+/**
+ * Initiale Sucheinstellungen für die Rezeptsuche.
+ * Wird als Ausgangszustand und beim Zurücksetzen der erweiterten Suche verwendet.
+ */
 export const INITIAL_SEARCH_SETTINGS: SearchSettings = {
   showAdvancedSearch: false,
   searchString: "",
@@ -169,17 +205,37 @@ export const INITIAL_SEARCH_SETTINGS: SearchSettings = {
   showOnlyMyRecipes: false,
 };
 
-interface LocationState {
-  snackbar?: Snackbar;
-}
+/* ===================================================================
+// ========================= Menü-Konstanten =========================
+// =================================================================== */
+
+/** Höhe eines einzelnen Menüeintrags in der Menütyp-Auswahl. */
+const ITEM_HEIGHT = 48;
+
+/** Oberer Abstand im Menütyp-Dropdown. */
+const ITEM_PADDING_TOP = 8;
+
+/** Konfiguration für das Menütyp-Dropdown-Menü (maximale Höhe und Breite). */
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+
 /* ===================================================================
 // =============================== Page ==============================
 // =================================================================== */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
+
+/**
+ * Hauptseite für die Rezeptübersicht. Lädt alle Rezepte und zeigt sie
+ * mit Suchfunktion und Filtermöglichkeiten an.
+ */
 const RecipesPage = () => {
   const firebase = useFirebase();
   const authUser = useAuthUser();
@@ -187,19 +243,17 @@ const RecipesPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [state, dispatch] = React.useReducer(recipesReducer, inititialState);
-  // Prüfen ob allenfalls eine Snackbar angezeigt werden soll
-  // --> aus dem Prozess Rezept löschen
-  if (
-    location.state &&
-    location.state.snackbar &&
-    !state.snackbar.open
-  ) {
-    dispatch({
-      type: ReducerActions.SET_SNACKBAR,
-      payload: location.state.snackbar!,
-    });
-  }
+  const [state, dispatch] = React.useReducer(recipesReducer, initialState);
+
+  // Snackbar aus dem location.state anzeigen (z.B. nach Rezept-Löschung)
+  React.useEffect(() => {
+    if (location.state?.snackbar && !state.snackbar.open) {
+      dispatch({
+        type: ReducerActions.SET_SNACKBAR,
+        payload: location.state.snackbar!,
+      });
+    }
+  }, [location.state]);
 
   /* ------------------------------------------
   // Daten aus der DB lesen
@@ -209,7 +263,7 @@ const RecipesPage = () => {
       return;
     }
 
-    dispatch({type: ReducerActions.RECIPES_FETCH_INIT, payload: {}});
+    dispatch({type: ReducerActions.RECIPES_FETCH_INIT});
     RecipeShort.getShortRecipes({
       firebase: firebase,
       authUser: authUser,
@@ -237,7 +291,7 @@ const RecipesPage = () => {
  // ------------------------------------------ */
   const onNewClick = () => {
     navigate(ROUTE_RECIPE, {
-      state: {action: Action.NEW}
+      state: {action: Action.NEW},
     });
   };
   /* ------------------------------------------
@@ -253,7 +307,7 @@ const RecipesPage = () => {
           action: Action.VIEW,
           recipeShort: recipe,
           recipeType: recipe.type,
-        }
+        },
       });
     } else if (recipe.type === RecipeType.public) {
       navigate(`${ROUTE_RECIPE}/${recipe.uid}`, {
@@ -261,16 +315,16 @@ const RecipesPage = () => {
           action: Action.VIEW,
           recipeShort: recipe,
           recipeType: recipe.type,
-        }
+        },
       });
     }
   };
   /* ------------------------------------------
-  // Snackback schliessen
+  // Snackbar schliessen
   // ------------------------------------------ */
   const handleSnackbarClose = (
     _event: Event | SyntheticEvent<Element, Event>,
-    reason: SnackbarCloseReason
+    reason: SnackbarCloseReason,
   ) => {
     if (reason === "clickaway") {
       return;
@@ -278,7 +332,6 @@ const RecipesPage = () => {
     delete location.state?.snackbar;
     dispatch({
       type: ReducerActions.CLOSE_SNACKBAR,
-      payload: {},
     });
   };
   return (
@@ -302,13 +355,8 @@ const RecipesPage = () => {
         )}
         <RecipeSearch
           recipes={state.recipes}
-          // filteredData={filteredData}
           onNewClick={onNewClick}
           onCardClick={onCardClick}
-          // onSearch={onSearch}
-          // onSearchSettings={onSearchSettings}
-          // searchSettings={searchSettings}
-          // onClearSearchString={onClearSearchString}
           isLoading={state.isLoading}
           authUser={authUser}
         />
@@ -322,9 +370,35 @@ const RecipesPage = () => {
     </React.Fragment>
   );
 };
-// /* ===================================================================
-// // ============================ Rezept Suche =========================
-// // =================================================================== */
+
+/* ===================================================================
+// ============================ Rezept Suche =========================
+// =================================================================== */
+
+/**
+ * Props für die Rezept-Karten-Klick-Aktion.
+ *
+ * @param event Das Maus-Event des Klicks.
+ * @param recipe Das angeklickte Kurz-Rezept.
+ */
+export interface OnRecipeCardClickProps {
+  event: React.MouseEvent<HTMLButtonElement>;
+  recipe: RecipeShort;
+}
+
+/**
+ * Props für die RecipeSearch-Komponente.
+ *
+ * @param recipes Liste aller verfügbaren Rezepte.
+ * @param onNewClick Callback zum Erstellen eines neuen Rezepts.
+ * @param onCardClick Callback beim Klick auf eine Rezept-Karte.
+ * @param onFabButtonClick Optionaler Callback für den FAB-Button auf der Karte.
+ * @param embeddedMode Ob die Komponente eingebettet angezeigt wird (z.B. im Menüplan).
+ * @param fabButtonIcon Optionales Icon für den FAB-Button.
+ * @param error Optionaler Fehler.
+ * @param isLoading Ob Daten geladen werden.
+ * @param authUser Angemeldeter Benutzer.
+ */
 interface RecipeSearchProps {
   recipes: RecipeShort[];
   onNewClick: () => void;
@@ -336,10 +410,19 @@ interface RecipeSearchProps {
   isLoading?: boolean;
   authUser: AuthUser;
 }
-export interface OnRecipeCardClickProps {
-  event: React.MouseEvent<HTMLButtonElement>;
-  recipe: RecipeShort;
-}
+
+/**
+ * Sucheinstellungen für die Rezeptsuche inkl. erweiterte Filter.
+ *
+ * @param showAdvancedSearch Ob die erweiterte Suche angezeigt wird.
+ * @param searchString Freitextsuche.
+ * @param allergens Ausgewählte Allergene zum Ausfiltern.
+ * @param diet Gewählte Ernährungsform (Fleisch, Vegetarisch, Vegan).
+ * @param menuTypes Ausgewählte Menütypen.
+ * @param outdoorKitchenSuitable Nur Rezepte für Outdoorküche anzeigen.
+ * @param recipeType Filterung nach Rezepttyp (alle, öffentlich, privat).
+ * @param showOnlyMyRecipes Nur eigene Rezepte anzeigen.
+ */
 interface SearchSettings {
   showAdvancedSearch: boolean;
   searchString: string;
@@ -351,11 +434,16 @@ interface SearchSettings {
   showOnlyMyRecipes: boolean;
 }
 
+/**
+ * Rezeptsuche mit Freitext, erweiterten Filtern und Ergebnisanzeige als Kartenraster.
+ * Unterstützt eingebetteten Modus (z.B. im Menüplan) und persistiert
+ * Sucheinstellungen im Session Storage.
+ */
 export const RecipeSearch = ({
   recipes,
-  onNewClick: onNewClickSuper,
-  onCardClick: onCardClickSuper,
-  onFabButtonClick: onFabButtonClickSuper,
+  onNewClick,
+  onCardClick,
+  onFabButtonClick,
   embeddedMode = false,
   fabButtonIcon,
   isLoading = false,
@@ -363,227 +451,21 @@ export const RecipeSearch = ({
 }: RecipeSearchProps) => {
   const classes = useCustomStyles();
   const [searchSettings, setSearchSettings] = React.useState<SearchSettings>(
-    INITIAL_SEARCH_SETTINGS
+    INITIAL_SEARCH_SETTINGS,
   );
-  const [filteredData, setFilteredData] = React.useState([] as RecipeShort[]);
+  const [filteredData, setFilteredData] = React.useState<RecipeShort[]>([]);
 
-  /* ------------------------------------------
-  // Update der Sucheigenschaften
-  // ------------------------------------------ */
-  const onAdvancedSearchClick = () => {
-    // wenn die Erweiterte Suche geschlossen wird, die Einstellungen löschen
-    if (searchSettings.showAdvancedSearch) {
-      const searchString = searchSettings.searchString;
-      setSearchSettings({
-        ...INITIAL_SEARCH_SETTINGS,
-        searchString: searchString,
-        showAdvancedSearch: false,
-      });
-
-      SessionStorageHandler.deleteDocument({
-        storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-        documentUid: "searchSettings",
-        prefix: "",
-      });
-
-      // Die Daten wieder alle anzeigen....
-      setFilteredData(recipes);
-    } else {
-      setSearchSettings({
-        ...searchSettings,
-        showAdvancedSearch: true,
-      });
-    }
-  };
-  const onSearch = (
-    event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
-  ) => {
-    const newSearchSettings = {
-      ...searchSettings,
-      searchString: event.target.value,
-    };
-    setSearchSettings(newSearchSettings);
-    setFilteredData(
-      filterRecipes({
-        searchSettings: newSearchSettings,
-        recipes: recipes,
-      })
-    );
-  };
-  const onClearSearchString = () => {
-    const newSearchSettings = {...searchSettings, searchString: ""};
-    setSearchSettings(newSearchSettings);
-    setFilteredData(recipes);
-  };
-  const onSearchSettingDietUpdate = (
-    _event: React.MouseEvent<HTMLElement>,
-    value: string
-  ) => {
-    if (!value) {
-      value = Diet.Meat.toString();
-    }
-    const newSearchSettings = {...searchSettings, diet: parseInt(value)};
-    setSearchSettings(newSearchSettings);
-    setFilteredData(
-      filterRecipes({
-        searchSettings: newSearchSettings,
-        recipes: recipes,
-      })
-    );
-  };
-  const onSearchSettingAllergensUpdate = (
-    _event: React.MouseEvent<HTMLElement>,
-    values: string[]
-  ) => {
-    let selectedAllergens: Allergen[] = [];
-    if (values.length == 0) {
-      selectedAllergens.push(0);
-    } else {
-      // Neuer Wert herausfinden
-      const newValue = parseInt(
-        values.filter(
-          (value) => !searchSettings.allergens.includes(parseInt(value))
-        )[0]
-      );
-
-      if (newValue === Allergen.None) {
-        // Keine - Reset der anderen Buttons
-        selectedAllergens = [Allergen.None];
-      } else {
-        // Keine wieder entfernen
-        selectedAllergens = values.map((allergen) => parseInt(allergen));
-        selectedAllergens = selectedAllergens.filter(
-          (allergen) => allergen != Allergen.None
-        );
-      }
-    }
-    const newSearchSettings = {...searchSettings, allergens: selectedAllergens};
-    setSearchSettings(newSearchSettings);
-    setFilteredData(
-      filterRecipes({
-        searchSettings: newSearchSettings,
-        recipes: recipes,
-      })
-    );
-  };
-
-  const onSearchSettingMenuTypeUpdate = (
-    event: SelectChangeEvent<MenuType[]>
-  ) => {
-    let selectedMenuTypes: MenuType[] = (
-      event.target.value as unknown as string[]
-    ).map((value: string) => parseInt(value));
-    let newValue: MenuType;
-    // Der Wert wird als String zurückgegeben, wir speichern ihn aber als Number
-    // Wenn das Array nun zwei mal den gleichen Wert hat (als String und als Number)
-    // müssen beide Werte entfernt werden --> Checkbox deselektiert.
-    // der Neuste Wert ist immer der letzte im Array. Nach diesem kann gesucht werden
-    if (selectedMenuTypes.length > 0) {
-      newValue = selectedMenuTypes.slice(-1)[0];
-    }
-    if (selectedMenuTypes.filter((value) => value == newValue).length > 1) {
-      // Mehrere Einträge... alles löschen was dem neuen Wert entspricht
-      selectedMenuTypes = selectedMenuTypes.filter(
-        (value) => value != newValue
-      );
-    }
-
-    selectedMenuTypes.sort();
-    const newSearchSettings = {...searchSettings, menuTypes: selectedMenuTypes};
-    setSearchSettings(newSearchSettings);
-    setFilteredData(
-      filterRecipes({
-        searchSettings: newSearchSettings,
-        recipes: recipes,
-      })
-    );
-  };
-  const onSearchSettingOutdoorKitchenSuitableUpdate = () => {
-    const newSearchSettings = {
-      ...searchSettings,
-      outdoorKitchenSuitable: !searchSettings.outdoorKitchenSuitable,
-    };
-    setSearchSettings(newSearchSettings);
-    setFilteredData(
-      filterRecipes({
-        searchSettings: newSearchSettings,
-        recipes: recipes,
-      })
-    );
-  };
-  const onSearchSettingRecipeTypeUpdate = (
-    _event: React.MouseEvent<HTMLElement>,
-    value: SearchSettings["recipeType"]
-  ) => {
-    if (!value) {
-      value = "all";
-    }
-    const newSearchSettings = {...searchSettings, recipeType: value};
-    setSearchSettings(newSearchSettings);
-
-    setFilteredData(
-      filterRecipes({
-        searchSettings: newSearchSettings,
-        recipes: recipes,
-      })
-    );
-  };
-  const onSearchSettingShowOnlyMyRecipesUpdate = () => {
-    const newSearchSettings: SearchSettings = {
-      ...searchSettings,
-      showOnlyMyRecipes: !searchSettings.showOnlyMyRecipes,
-    };
-    setSearchSettings(newSearchSettings);
-    setFilteredData(
-      filterRecipes({
-        searchSettings: newSearchSettings,
-        recipes: recipes,
-      })
-    );
-  };
-  /* ------------------------------------------
-  // Card-Aktionen
-  // ------------------------------------------ */
-  const onCardClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "searchSettings",
-      value: searchSettings,
-    });
-
-    // Neben dem Event auch recipeShort miteben
-    const selectedRecipe = recipes.find(
-      (recipe) => recipe.uid == event.currentTarget.id.split("_")[1]
-    );
-    if (!selectedRecipe) {
-      return;
-    }
-    onCardClickSuper({event: event, recipe: selectedRecipe});
-  };
-  const onFabButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    const selectedRecipe = recipes.find(
-      (recipe) => recipe.uid == event.currentTarget.id.split("_")[1]
-    );
-
-    if (!selectedRecipe || !onFabButtonClickSuper) {
-      return;
-    }
-    onFabButtonClickSuper({event: event, recipe: selectedRecipe});
-  };
-
-  const onNewClick = () => {
-    // Sucheinstellungen speichern
-    SessionStorageHandler.upsertDocument({
-      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
-      documentUid: "searchSettings",
-      value: searchSettings,
-    });
-
-    onNewClickSuper();
-  };
   /* ------------------------------------------
   // Rezepte filtern
   // ------------------------------------------ */
+  /**
+   * Filtert die Rezeptliste anhand der aktuellen Sucheinstellungen.
+   * Prüft nacheinander: Suchtext, Diät, Allergene, Menütypen,
+   * Outdoorküche, Rezepttyp und "nur eigene Rezepte".
+   *
+   * @param params Sucheinstellungen und Rezeptliste.
+   * @returns Gefilterte Rezeptliste.
+   */
   const filterRecipes = ({searchSettings, recipes}: FilterRecipesProps) => {
     return recipes.filter((recipe) => {
       // Zuerst prüfen ob Text stimmt
@@ -599,15 +481,15 @@ export const RecipeSearch = ({
               .includes(searchSettings.searchString.toLocaleLowerCase()) ||
             recipe.variantName
               ?.toLowerCase()
-              .includes(searchSettings.searchString.toLocaleLowerCase())
-        ).length == 0
+              .includes(searchSettings.searchString.toLocaleLowerCase()),
+        ).length === 0
       ) {
         return false;
       }
 
       // prüfen ob Diät passt
       if (
-        searchSettings.diet != Diet.Meat &&
+        searchSettings.diet !== Diet.Meat &&
         recipe.dietProperties?.diet !== searchSettings.diet
       ) {
         return false;
@@ -617,7 +499,7 @@ export const RecipeSearch = ({
       if (
         !searchSettings.allergens.includes(Allergen.None) &&
         searchSettings.allergens.filter((allergen) =>
-          recipe.dietProperties.allergens.includes(allergen)
+          recipe.dietProperties.allergens.includes(allergen),
         ).length > 0
       ) {
         return false;
@@ -627,8 +509,8 @@ export const RecipeSearch = ({
       if (
         searchSettings.menuTypes.length > 0 &&
         searchSettings.menuTypes.filter((menuType) =>
-          recipe.menuTypes.includes(menuType)
-        ).length == 0
+          recipe.menuTypes.includes(menuType),
+        ).length === 0
       ) {
         return false;
       }
@@ -660,341 +542,664 @@ export const RecipeSearch = ({
       return true;
     });
   };
-  /* ------------------------------------------
-  // Select Menü - für Menütyp
-  // ------------------------------------------ */
-  const ITEM_HEIGHT = 48;
-  const ITEM_PADDING_TOP = 8;
-  const MenuProps = {
-    PaperProps: {
-      style: {
-        maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-        width: 250,
-      },
-    },
-  };
-  /* ------------------------------------------
-  // Zwischenspeichern der übergeordneten Werte
-  // ------------------------------------------ */
-  if (
-    recipes.length > 0 &&
-    searchSettings == INITIAL_SEARCH_SETTINGS &&
-    filteredData.length == 0
-  ) {
-    // Schauen ob was im SessionStorage ist
-    let sessionStorage: ValueObject | null = null;
 
+  /* ------------------------------------------
+  // Sucheinstellungen aus Session Storage wiederherstellen
+  // ------------------------------------------ */
+  React.useEffect(() => {
+    if (recipes.length === 0 || filteredData.length > 0) return;
+
+    let restoredSettings: SearchSettings | null = null;
     if (!embeddedMode) {
-      sessionStorage = SessionStorageHandler.getDocument({
+      const stored = SessionStorageHandler.getDocument({
         storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
         documentUid: "searchSettings",
       });
+      if (stored) {
+        restoredSettings = stored as SearchSettings;
+      }
     }
-    if (sessionStorage) {
-      setSearchSettings(sessionStorage as SearchSettings);
-      setFilteredData(
-        filterRecipes({
-          searchSettings: sessionStorage as SearchSettings,
-          recipes: recipes,
-        })
-      );
+
+    const settings = restoredSettings ?? INITIAL_SEARCH_SETTINGS;
+    setSearchSettings(settings);
+    setFilteredData(filterRecipes({searchSettings: settings, recipes}));
+  }, [recipes]); // eslint-disable-line
+
+  /* ------------------------------------------
+  // Hilfsfunktion: Sucheinstellungen anwenden und filtern
+  // ------------------------------------------ */
+  /**
+   * Wendet eine partielle Aktualisierung der Sucheinstellungen an
+   * und filtert die Rezeptliste entsprechend neu.
+   *
+   * @param update Teilweise Sucheinstellungen zum Zusammenführen.
+   */
+  const applySearchSettings = (update: Partial<SearchSettings>) => {
+    const newSettings = {...searchSettings, ...update};
+    setSearchSettings(newSettings);
+    setFilteredData(filterRecipes({searchSettings: newSettings, recipes}));
+  };
+
+  /* ------------------------------------------
+  // Update der Sucheigenschaften
+  // ------------------------------------------ */
+  const onAdvancedSearchClick = () => {
+    // wenn die Erweiterte Suche geschlossen wird, die Einstellungen zurücksetzen
+    if (searchSettings.showAdvancedSearch) {
+      const newSettings = {
+        ...INITIAL_SEARCH_SETTINGS,
+        searchString: searchSettings.searchString,
+        showAdvancedSearch: false,
+      };
+      setSearchSettings(newSettings);
+      setFilteredData(filterRecipes({searchSettings: newSettings, recipes}));
+
+      SessionStorageHandler.deleteDocument({
+        storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
+        documentUid: "searchSettings",
+        prefix: "",
+      });
     } else {
-      setFilteredData(
-        filterRecipes({
-          searchSettings: INITIAL_SEARCH_SETTINGS,
-          recipes: recipes,
-        })
+      setSearchSettings({
+        ...searchSettings,
+        showAdvancedSearch: true,
+      });
+    }
+  };
+
+  const onResetFilters = () => {
+    const newSettings = {
+      ...INITIAL_SEARCH_SETTINGS,
+      searchString: searchSettings.searchString,
+      showAdvancedSearch: true,
+    };
+    setSearchSettings(newSettings);
+    setFilteredData(filterRecipes({searchSettings: newSettings, recipes}));
+
+    SessionStorageHandler.deleteDocument({
+      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
+      documentUid: "searchSettings",
+      prefix: "",
+    });
+  };
+
+  const onSearch = (
+    event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
+  ) => {
+    applySearchSettings({searchString: event.target.value});
+  };
+
+  const onClearSearchString = () => {
+    applySearchSettings({searchString: ""});
+  };
+
+  const onSearchSettingDietUpdate = (
+    _event: React.MouseEvent<HTMLElement>,
+    value: string,
+  ) => {
+    if (!value) {
+      value = Diet.Meat.toString();
+    }
+    applySearchSettings({diet: parseInt(value)});
+  };
+
+  const onSearchSettingAllergensUpdate = (
+    _event: React.MouseEvent<HTMLElement>,
+    values: string[],
+  ) => {
+    let selectedAllergens: Allergen[] = [];
+    if (values.length === 0) {
+      selectedAllergens.push(0);
+    } else {
+      // Neuer Wert herausfinden
+      const newValue = parseInt(
+        values.filter(
+          (value) => !searchSettings.allergens.includes(parseInt(value)),
+        )[0],
+      );
+
+      if (newValue === Allergen.None) {
+        // Keine - Reset der anderen Buttons
+        selectedAllergens = [Allergen.None];
+      } else {
+        // Keine wieder entfernen
+        selectedAllergens = values.map((allergen) => parseInt(allergen));
+        selectedAllergens = selectedAllergens.filter(
+          (allergen) => allergen !== Allergen.None,
+        );
+      }
+    }
+    applySearchSettings({allergens: selectedAllergens});
+  };
+
+  const onSearchSettingMenuTypeUpdate = (
+    event: SelectChangeEvent<MenuType[]>,
+  ) => {
+    let selectedMenuTypes: MenuType[] = (
+      event.target.value as unknown as string[]
+    ).map((value: string) => parseInt(value));
+    let newValue: MenuType;
+    // Der Wert wird als String zurückgegeben, wir speichern ihn aber als Number
+    // Wenn das Array nun zwei mal den gleichen Wert hat (als String und als Number)
+    // müssen beide Werte entfernt werden --> Checkbox deselektiert.
+    // der Neuste Wert ist immer der letzte im Array. Nach diesem kann gesucht werden
+    if (selectedMenuTypes.length > 0) {
+      newValue = selectedMenuTypes.slice(-1)[0];
+    }
+    if (selectedMenuTypes.filter((value) => value === newValue!).length > 1) {
+      // Mehrere Einträge... alles löschen was dem neuen Wert entspricht
+      selectedMenuTypes = selectedMenuTypes.filter(
+        (value) => value !== newValue!,
       );
     }
-  }
+
+    selectedMenuTypes.sort();
+    applySearchSettings({menuTypes: selectedMenuTypes});
+  };
+
+  const onSearchSettingOutdoorKitchenSuitableUpdate = () => {
+    applySearchSettings({
+      outdoorKitchenSuitable: !searchSettings.outdoorKitchenSuitable,
+    });
+  };
+
+  const onSearchSettingRecipeTypeUpdate = (
+    _event: React.MouseEvent<HTMLElement>,
+    value: SearchSettings["recipeType"],
+  ) => {
+    if (!value) {
+      value = "all";
+    }
+    applySearchSettings({recipeType: value});
+  };
+
+  const onSearchSettingShowOnlyMyRecipesUpdate = () => {
+    applySearchSettings({
+      showOnlyMyRecipes: !searchSettings.showOnlyMyRecipes,
+    });
+  };
+
+  /* ------------------------------------------
+  // Card-Aktionen
+  // ------------------------------------------ */
+  const handleCardClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    SessionStorageHandler.upsertDocument({
+      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
+      documentUid: "searchSettings",
+      value: searchSettings,
+    });
+
+    // Neben dem Event auch recipeShort mitgeben
+    const selectedRecipe = recipes.find(
+      (recipe) => recipe.uid === event.currentTarget.id.split("_")[1],
+    );
+    if (!selectedRecipe) {
+      return;
+    }
+    onCardClick({event: event, recipe: selectedRecipe});
+  };
+
+  const handleFabButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const selectedRecipe = recipes.find(
+      (recipe) => recipe.uid === event.currentTarget.id.split("_")[1],
+    );
+
+    if (!selectedRecipe || !onFabButtonClick) {
+      return;
+    }
+    onFabButtonClick({event: event, recipe: selectedRecipe});
+  };
+
+  const handleNewClick = () => {
+    // Sucheinstellungen speichern
+    SessionStorageHandler.upsertDocument({
+      storageObjectProperty: STORAGE_OBJECT_PROPERTY.SEARCH_SETTINGS,
+      documentUid: "searchSettings",
+      value: searchSettings,
+    });
+
+    onNewClick();
+  };
+
   return (
     <React.Fragment>
-      <Container maxWidth="md" style={{marginBottom: "4em"}}>
-        <Grid container spacing={2}>
- <Grid size={9} >
-            <SearchPanel
-              searchString={searchSettings.searchString}
-              onUpdateSearchString={onSearch}
-              onClearSearchString={onClearSearchString}
+      <Grid container spacing={2} sx={{mb: 4}}>
+        <Grid size={9}>
+          <SearchPanel
+            searchString={searchSettings.searchString}
+            onUpdateSearchString={onSearch}
+            onClearSearchString={onClearSearchString}
+          />
+        </Grid>
+        <Grid size={3} sx={classes.centerCenter}>
+          <ToggleButton
+            value="advancedSearch"
+            selected={searchSettings.showAdvancedSearch}
+            onClick={onAdvancedSearchClick}
+            color="primary"
+            size="small"
+          >
+            {TEXT_ADVANCED_SEARCH}
+          </ToggleButton>
+        </Grid>
+        <Grid size={12}>
+          <Typography variant="subtitle2">{`${filteredData.length} ${
+            filteredData.length !== 1 ? TEXT_RECIPES : TEXT_RECIPE
+          }`}</Typography>
+        </Grid>
+      </Grid>
+
+      <RecipeFilterPanel
+        searchSettings={searchSettings}
+        embeddedMode={embeddedMode}
+        onDietUpdate={onSearchSettingDietUpdate}
+        onAllergensUpdate={onSearchSettingAllergensUpdate}
+        onMenuTypeUpdate={onSearchSettingMenuTypeUpdate}
+        onOutdoorKitchenToggle={onSearchSettingOutdoorKitchenSuitableUpdate}
+        onRecipeTypeUpdate={onSearchSettingRecipeTypeUpdate}
+        onShowOnlyMyRecipesToggle={onSearchSettingShowOnlyMyRecipesUpdate}
+        onResetFilters={onResetFilters}
+      />
+
+      <Grid container sx={{mb: 2, mt: 2}}>
+        <Grid size={12} sx={classes.centerCenter}>
+          <Button
+            sx={classes.button}
+            id={"new_recipe"}
+            key={"new_recipe"}
+            variant={"outlined"}
+            color={"primary"}
+            onClick={handleNewClick}
+          >
+            {TEXT_CREATE_RECIPE}
+          </Button>
+        </Grid>
+      </Grid>
+      <RecipeResultsGrid
+        recipes={filteredData}
+        isLoading={isLoading}
+        embeddedMode={embeddedMode}
+        fabButtonIcon={fabButtonIcon}
+        onCardClick={handleCardClick}
+        onFabButtonClick={onFabButtonClick ? handleFabButtonClick : undefined}
+        onNewClick={handleNewClick}
+      />
+    </React.Fragment>
+  );
+};
+
+/* ===================================================================
+// ======================== Rezept-Filterpanel ========================
+// =================================================================== */
+
+/**
+ * Props für das Filterpanel der Rezeptsuche.
+ *
+ * @param searchSettings Aktuelle Sucheinstellungen.
+ * @param embeddedMode Ob die Komponente eingebettet angezeigt wird.
+ * @param onDietUpdate Callback bei Änderung der Diät-Einstellung.
+ * @param onAllergensUpdate Callback bei Änderung der Allergen-Filter.
+ * @param onMenuTypeUpdate Callback bei Änderung der Menütyp-Auswahl.
+ * @param onOutdoorKitchenToggle Callback beim Umschalten des Outdoorküche-Filters.
+ * @param onRecipeTypeUpdate Callback bei Änderung des Rezepttyp-Filters.
+ * @param onShowOnlyMyRecipesToggle Callback beim Umschalten von "nur eigene Rezepte".
+ * @param onResetFilters Callback zum Zurücksetzen aller Filter auf die Standardwerte.
+ */
+interface RecipeFilterPanelProps {
+  searchSettings: SearchSettings;
+  embeddedMode: boolean;
+  onDietUpdate: (event: React.MouseEvent<HTMLElement>, value: string) => void;
+  onAllergensUpdate: (
+    event: React.MouseEvent<HTMLElement>,
+    values: string[],
+  ) => void;
+  onMenuTypeUpdate: (event: SelectChangeEvent<MenuType[]>) => void;
+  onOutdoorKitchenToggle: () => void;
+  onRecipeTypeUpdate: (
+    event: React.MouseEvent<HTMLElement>,
+    value: SearchSettings["recipeType"],
+  ) => void;
+  onShowOnlyMyRecipesToggle: () => void;
+  onResetFilters: () => void;
+}
+
+/**
+ * Filterpanel mit Diät-, Allergen-, Menütyp-, Outdoorküche-,
+ * Rezepttyp- und "nur eigene Rezepte"-Filtern.
+ * Wird über die erweiterte Suche ein-/ausgeklappt.
+ */
+const RecipeFilterPanel = ({
+  searchSettings,
+  embeddedMode,
+  onDietUpdate,
+  onAllergensUpdate,
+  onMenuTypeUpdate,
+  onOutdoorKitchenToggle,
+  onRecipeTypeUpdate,
+  onShowOnlyMyRecipesToggle,
+  onResetFilters,
+}: RecipeFilterPanelProps) => {
+  const classes = useCustomStyles();
+
+  return (
+    <Collapse in={searchSettings.showAdvancedSearch} sx={{mt: 1}}>
+      <Paper variant="outlined" sx={{p: 2, borderRadius: 2}}>
+        <Grid container spacing={4} alignItems="center">
+          {/* Ernährung */}
+          <Grid size="auto">
+            <Typography
+              variant="caption"
+              display="block"
+              color="textSecondary"
+              sx={{mb: 0.5}}
+            >
+              {TEXT_RESTRICTIONS}
+            </Typography>
+            <ToggleButtonGroup
+              color="primary"
+              value={searchSettings.diet}
+              exclusive
+              onChange={onDietUpdate}
+              size="small"
+              aria-label="Diät"
+              id="diet"
+              key="diet"
+            >
+              <ToggleButton value={Diet.Meat} aria-label="Keine">
+                {TEXT_NONE_RESTRICTION}
+              </ToggleButton>
+              <ToggleButton value={Diet.Vegetarian} aria-label="Vegetarisch">
+                {TEXT_IS_VEGETARIAN}
+              </ToggleButton>
+              <ToggleButton value={Diet.Vegan} aria-label="Vegan">
+                {TEXT_IS_VEGAN}
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Grid>
+
+          {/* Allergene */}
+          <Grid size="auto">
+            <Typography
+              variant="caption"
+              display="block"
+              color="textSecondary"
+              sx={{mb: 0.5}}
+            >
+              {TEXT_CONSIDER_INTOLERANCES}
+            </Typography>
+            <ToggleButtonGroup
+              color="primary"
+              value={searchSettings.allergens}
+              onChange={onAllergensUpdate}
+              size="small"
+              aria-label="Allergene"
+              id="allergens"
+              key="allergens"
+            >
+              <ToggleButton value={0} aria-label="Keine">
+                {TEXT_NONE_RESTRICTION}
+              </ToggleButton>
+              <ToggleButton value={Allergen.Lactose} aria-label="Laktose">
+                {TEXT_LACTOSE}
+              </ToggleButton>
+              <ToggleButton value={Allergen.Gluten} aria-label="Gluten">
+                {TEXT_GLUTEN}
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Grid>
+
+          {/* Menütyp */}
+          <Grid size={{xs: 12, sm: 6, md: 3}}>
+            <FormControl variant="outlined" fullWidth size="small">
+              <InputLabel id="menuTypesLabel">{TEXT_MENU_TYPE}</InputLabel>
+              <Select
+                labelId="menuTypesLabel"
+                id="menuTypes"
+                key="menuTypes"
+                name="menuTypes"
+                multiple
+                value={searchSettings.menuTypes}
+                onChange={onMenuTypeUpdate}
+                input={<OutlinedInput fullWidth label={TEXT_MENU_TYPE} />}
+                renderValue={(selected) => {
+                  const selectedValues = selected as unknown as string[];
+                  const textArray = selectedValues.map(
+                    (value) => TEXT_MENU_TYPES[value],
+                  ) as string[];
+                  return (textArray as string[]).join(", ");
+                }}
+                MenuProps={MenuProps}
+                fullWidth
+              >
+                {Object.keys(MenuType).map(
+                  (menuType) =>
+                    parseInt(menuType) > 0 && (
+                      <MenuItem key={menuType} value={menuType}>
+                        <Checkbox
+                          checked={
+                            searchSettings.menuTypes.indexOf(
+                              parseInt(menuType),
+                            ) > -1
+                          }
+                        />
+                        <ListItemText primary={TEXT_MENU_TYPES[menuType]} />
+                      </MenuItem>
+                    ),
+                )}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* Outdoorküche */}
+          <Grid size="auto">
+            <FormControlLabel
+              checked={searchSettings.outdoorKitchenSuitable}
+              onChange={onOutdoorKitchenToggle}
+              control={<Switch size="small" />}
+              label={
+                <Typography variant="caption" color="textSecondary">
+                  {TEXT_OUTDOOR_KITCHEN_SUITABLE}
+                </Typography>
+              }
             />
           </Grid>
- <Grid size={3} sx={classes.centerCenter}>
-            <Button color="primary" onClick={onAdvancedSearchClick}>
-              {TEXT_ADVANCED_SEARCH}
-            </Button>
-          </Grid>
- <Grid size={12} >
-            <Typography variant="subtitle2">{`${filteredData.length} ${
-              filteredData.length != 1 ? TEXT_RECIPES : TEXT_RECIPE
-            }`}</Typography>
-          </Grid>
-        </Grid>
 
-        <Collapse
-          in={searchSettings.showAdvancedSearch}
-          style={{marginTop: "1em"}}
-        >
-          <Grid container spacing={2}>
- <Grid size={{ xs: 4, sm: 2, md: 2 }} sx={classes.centerCenter}>
-              <Typography variant="body2">{TEXT_RESTRICTIONS}</Typography>
-            </Grid>
- <Grid size={{ xs: 8, sm: 4, md: 3 }} >
-              <ToggleButtonGroup
+          {/* Rezept-Typ */}
+          <Grid size="auto">
+            <Typography
+              variant="caption"
+              display="block"
+              color="textSecondary"
+              sx={{mb: 0.5}}
+            >
+              {TEXT_RECIPETYPE}
+            </Typography>
+            <ToggleButtonGroup
+              color="primary"
+              value={searchSettings.recipeType}
+              exclusive
+              onChange={onRecipeTypeUpdate}
+              size="small"
+              aria-label="Rezepttyp"
+              id="recipeType"
+              key="recipeType"
+            >
+              <ToggleButton value={"all"} aria-label="Alle">
+                {TEXT_ALL}
+              </ToggleButton>
+              <ToggleButton
                 color="primary"
-                value={searchSettings.diet}
-                exclusive
-                onChange={onSearchSettingDietUpdate}
-                size="small"
-                aria-label="Diät"
-                id="diet"
-                key="diet"
+                value={RecipeType.public}
+                aria-label="öffentlich"
               >
-                <ToggleButton value={Diet.Meat} aria-label="Keine">
-                  {TEXT_NONE_RESTRICTION}
+                {TEXT_PUBLIC}
+              </ToggleButton>
+              <ToggleButton value={RecipeType.private} aria-label="Privat">
+                {TEXT_PRIVATE}
+              </ToggleButton>
+              {embeddedMode && (
+                <ToggleButton value={RecipeType.variant} aria-label="Variante">
+                  {TEXT_VARIANT}
                 </ToggleButton>
-                <ToggleButton value={Diet.Vegetarian} aria-label="Vegetarisch">
-                  {TEXT_IS_VEGETARIAN}
-                </ToggleButton>
-                <ToggleButton value={Diet.Vegan} aria-label="Vegan">
-                  {TEXT_IS_VEGAN}
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </Grid>
- <Grid size={{ xs: 4, sm: 2, md: 2 }} sx={classes.centerCenter}>
-              <Typography variant="body2">
-                {TEXT_CONSIDER_INTOLERANCES}
-              </Typography>
-            </Grid>
- <Grid size={{ xs: 8, sm: 4, md: 3 }} >
-              <ToggleButtonGroup
-                color="primary"
-                value={searchSettings.allergens}
-                onChange={onSearchSettingAllergensUpdate}
-                size="small"
-                aria-label="Allergene"
-                id="allergens"
-                key="allergens"
-              >
-                <ToggleButton value={0} aria-label="Keine">
-                  {TEXT_NONE_RESTRICTION}
-                </ToggleButton>
-                <ToggleButton value={Allergen.Lactose} aria-label="Laktose">
-                  {TEXT_LACTOSE}
-                </ToggleButton>
-                <ToggleButton value={Allergen.Gluten} aria-label="Gluten">
-                  {TEXT_GLUTEN}
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </Grid>
- <Grid size={{ xs: 12, sm: 12, md: 2 }} >
-              <FormControl
-                variant="outlined"
-                sx={classes.formControl}
-                fullWidth
-                size="small"
-              >
-                <InputLabel id="menuTypesLabel">{TEXT_MENU_TYPE}</InputLabel>
-                <Select
-                  labelId="menuTypesLabel"
-                  id="menuTypes"
-                  key="menuTypes"
-                  name="menuTypes"
-                  multiple
-                  value={searchSettings.menuTypes}
-                  onChange={onSearchSettingMenuTypeUpdate}
-                  input={<OutlinedInput fullWidth label={TEXT_MENU_TYPE} />}
-                  renderValue={(selected) => {
-                    const selectedValues = selected as unknown as string[];
-                    const textArray = selectedValues.map(
-                      (value) => TEXT_MENU_TYPES[value]
-                    ) as string[];
-                    return (textArray as string[]).join(", ");
-                  }}
-                  MenuProps={MenuProps}
-                  fullWidth
-                >
-                  {Object.keys(MenuType).map(
-                    (menuType) =>
-                      parseInt(menuType) > 0 && (
-                        <MenuItem key={menuType} value={menuType}>
-                          <Checkbox
-                            checked={
-                              searchSettings.menuTypes.indexOf(
-                                parseInt(menuType)
-                              ) > -1
-                            }
-                          />
-                          <ListItemText primary={TEXT_MENU_TYPES[menuType]} />
-                        </MenuItem>
-                      )
-                  )}
-                </Select>
-              </FormControl>
-            </Grid>
-            {/* Ideal für Outdoorküche */}
- <Grid size={{ xs: 12, sm: 12, md: 3 }} >
-              <FormControl sx={classes.formControl} fullWidth size="small">
-                <FormControlLabel
-                  checked={searchSettings.outdoorKitchenSuitable}
-                  onChange={onSearchSettingOutdoorKitchenSuitableUpdate}
-                  control={<Switch />}
-                  label={
-                    <Typography variant="body2">
-                      {TEXT_OUTDOOR_KITCHEN_SUITABLE}
-                    </Typography>
-                  }
-                  labelPlacement="start"
-                />
-              </FormControl>
-            </Grid>
-            {/* Rezept-Typ */}
- <Grid size={{ xs: 4, sm: 1, md: 1 }} sx={classes.centerCenter}>
-              <Typography variant="body2">{TEXT_RECIPETYPE}</Typography>
-            </Grid>
- <Grid size={{ xs: 8, sm: 4, md: 4 }} >
-              <ToggleButtonGroup
-                color="primary"
-                value={searchSettings.recipeType}
-                exclusive
-                onChange={onSearchSettingRecipeTypeUpdate}
-                size="small"
-                aria-label="Diät"
-                // color="primary"
-                id="recipeType"
-                key="recipeType"
-              >
-                <ToggleButton value={"all"} aria-label="Alle">
-                  {TEXT_ALL}
-                </ToggleButton>
-                <ToggleButton
-                  color="primary"
-                  value={RecipeType.public}
-                  aria-label="öffentlich"
-                >
-                  {TEXT_PUBLIC}
-                </ToggleButton>
-                <ToggleButton value={RecipeType.private} aria-label="Privat">
-                  {TEXT_PRIVATE}
-                </ToggleButton>
-                {embeddedMode && (
-                  // in der allgemeinen Rezeptübersicht mach dieser Button keinen Sinn
-                  (<ToggleButton
-                    value={RecipeType.variant}
-                    aria-label="Variante"
-                  >
-                    {TEXT_VARIANT}
-                  </ToggleButton>)
-                )}
-              </ToggleButtonGroup>
-            </Grid>
-
-            {/* Nur Meine Rezept anzeigen */}
- <Grid size={{ xs: 12, sm: 12, md: 3 }} >
-              <FormControl sx={classes.formControl} fullWidth size="small">
-                <FormControlLabel
-                  checked={searchSettings.showOnlyMyRecipes}
-                  onChange={onSearchSettingShowOnlyMyRecipesUpdate}
-                  control={<Switch />}
-                  label={
-                    <Typography variant="body2">
-                      {TEXT_SHOW_ONLY_MY_RECIPES}
-                    </Typography>
-                  }
-                  labelPlacement="start"
-                />
-              </FormControl>
-            </Grid>
+              )}
+            </ToggleButtonGroup>
           </Grid>
-        </Collapse>
-        <Grid container>
- <Grid size={12} sx={classes.centerCenter}>
+
+          {/* Nur Meine Rezepte */}
+          <Grid size="auto">
+            <FormControlLabel
+              checked={searchSettings.showOnlyMyRecipes}
+              onChange={onShowOnlyMyRecipesToggle}
+              control={<Switch size="small" />}
+              label={
+                <Typography variant="caption" color="textSecondary">
+                  {TEXT_SHOW_ONLY_MY_RECIPES}
+                </Typography>
+              }
+            />
+          </Grid>
+
+          {/* Filter zurücksetzen */}
+          <Grid size={"auto"} sx={classes.centerCenter}>
             <Button
-              sx={classes.button}
-              id={"new_recipe"}
-              key={"new_recipe"}
-              variant={"outlined"}
-              color={"primary"}
-              onClick={onNewClick}
+              variant="text"
+              color="primary"
+              size="small"
+              onClick={onResetFilters}
             >
-              {TEXT_CREATE_RECIPE}
+              {TEXT_RESET}
             </Button>
           </Grid>
         </Grid>
-      </Container>
-      <Grid container spacing={2}>
-        {isLoading ? (
-          // 8 Karten zum Überbrücken, bis die Daten da sind
-          ([1, 2, 3, 4, 5, 6, 7, 8].map((counter) => (
-            <Grid size={{ xs: 12, sm: embeddedMode ? 12 : 6, md: embeddedMode ? 6 : 4, lg: embeddedMode ? 4 : 3 }}
-              key={"recipeLoadingCardGrid_" + counter}
+      </Paper>
+    </Collapse>
+  );
+};
+
+/* ===================================================================
+// ====================== Rezept-Ergebnisraster ======================
+// =================================================================== */
+
+/**
+ * Props für das Ergebnisraster der Rezeptsuche.
+ *
+ * @param recipes Gefilterte Rezeptliste zur Anzeige.
+ * @param isLoading Ob gerade geladen wird (zeigt Skeleton-Karten).
+ * @param embeddedMode Ob die Komponente eingebettet angezeigt wird.
+ * @param fabButtonIcon Optionales Icon für den FAB-Button auf jeder Karte.
+ * @param onCardClick Callback beim Klick auf eine Rezept-Karte.
+ * @param onFabButtonClick Optionaler Callback für den FAB-Button.
+ * @param onNewClick Callback zum Erstellen eines neuen Rezepts.
+ */
+interface RecipeResultsGridProps {
+  recipes: RecipeShort[];
+  isLoading: boolean;
+  embeddedMode: boolean;
+  fabButtonIcon?: JSX.Element;
+  onCardClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onFabButtonClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onNewClick: () => void;
+}
+
+/**
+ * Zeigt die Rezepte als Kartenraster an. Während des Ladens werden
+ * Skeleton-Karten angezeigt. Bei leerer Ergebnisliste wird eine
+ * Leer-Zustand-Nachricht mit FAB zum Erstellen angezeigt.
+ */
+const RecipeResultsGrid = ({
+  recipes,
+  isLoading,
+  embeddedMode,
+  fabButtonIcon,
+  onCardClick,
+  onFabButtonClick,
+  onNewClick,
+}: RecipeResultsGridProps) => {
+  return (
+    <Grid container spacing={2}>
+      {isLoading ? (
+        // 8 Karten zum Überbrücken, bis die Daten da sind
+        [1, 2, 3, 4, 5, 6, 7, 8].map((counter) => (
+          <Grid
+            size={{
+              xs: 12,
+              sm: embeddedMode ? 12 : 6,
+              md: embeddedMode ? 6 : 4,
+              lg: embeddedMode ? 4 : 3,
+            }}
+            key={"recipeLoadingCardGrid_" + counter}
+          >
+            <RecipeCardLoading key={"recipeLoadingCard_" + counter} />
+          </Grid>
+        ))
+      ) : (
+        <React.Fragment>
+          {recipes.map((recipe) => (
+            <Grid
+              size={{
+                xs: 12,
+                sm: embeddedMode ? 6 : 4,
+                md: embeddedMode ? 4 : 3,
+                lg: embeddedMode ? 4 : 3,
+                xl: embeddedMode ? 3 : 2,
+              }}
+              key={"recipe_" + recipe.uid}
             >
-              <RecipeCardLoading key={"recipeLoadingCard_" + counter} />
-            </Grid>
-          )))
-        ) : (
-          <React.Fragment>
-            {filteredData.map((recipe) => (
-              <Grid size={{ xs: 12, sm: embeddedMode ? 6 : 4, md: embeddedMode ? 4 : 3, lg: embeddedMode ? 4 : 3, xl: embeddedMode ? 3 : 2 }}
-                key={"recipe_" + recipe.uid}
-                //
-                //
-              >
-                <RecipeCard
-                  key={"recipe_card_" + recipe.uid}
-                  recipe={recipe}
-                  onCardClick={onCardClick}
-                  ribbon={
-                    recipe.type === RecipeType.private
-                      ? {
-                          tooltip: TEXT_PRIVATE_RECIPE,
-                          cssProperty: "cardRibbon  cardRibbon--red",
-                          icon: <LockIcon fontSize="small" />,
-                        }
-                      : recipe.type === RecipeType.variant
+              <RecipeCard
+                key={"recipe_card_" + recipe.uid}
+                recipe={recipe}
+                onCardClick={onCardClick}
+                ribbon={
+                  recipe.type === RecipeType.private
+                    ? {
+                        tooltip: TEXT_PRIVATE_RECIPE,
+                        cssProperty: "cardRibbon  cardRibbon--red",
+                        icon: <LockIcon fontSize="small" />,
+                      }
+                    : recipe.type === RecipeType.variant
                       ? {
                           tooltip: TEXT_VARIANT_RECIPE,
                           cssProperty: "cardRibbon  cardRibbon--purple",
                           icon: <CategoryIcon fontSize="small" />,
                         }
                       : undefined
-                  }
-                  fabButtonIcon={fabButtonIcon}
-                  onFabButtonClick={onFabButtonClickSuper && onFabButtonClick}
-                />
-              </Grid>
-            ))}
-            {/* Keine Rezepte gefunden --> Neues Erfassen? */}
-            {filteredData.length === 0 && (
- <Grid size={{ xs: 12, sm: 12, md: 12 }} key={"noRecipe"} >
-                <Typography
-                  variant="h5"
-                  align="center"
-                  color="textSecondary"
-                  paragraph
-                >
-                  {TEXT_NO_RECIPE_FOUND}
-                </Typography>
+                }
+                fabButtonIcon={fabButtonIcon}
+                onFabButtonClick={onFabButtonClick}
+              />
+            </Grid>
+          ))}
+          {/* Keine Rezepte gefunden --> Neues Erfassen? */}
+          {recipes.length === 0 && (
+            <Grid size={{xs: 12, sm: 12, md: 12}} key={"noRecipe"}>
+              <Typography
+                variant="h5"
+                align="center"
+                color="textSecondary"
+                sx={{mb: 2}}
+              >
+                {TEXT_NO_RECIPE_FOUND}
+              </Typography>
 
-                <Typography align="center" paragraph>
-                  {TEXT_CREATE_A_NEW_ONE}
-                </Typography>
-                <Grid container spacing={2} justifyContent="center">
-                  <Grid>
-                    <Fab
-                      onClick={onNewClick}
-                      color="primary"
-                      aria-label="neues Rezept"
-                    >
-                      <AddIcon />
-                    </Fab>
-                  </Grid>
+              <Typography align="center" sx={{mb: 2}}>
+                {TEXT_CREATE_A_NEW_ONE}
+              </Typography>
+              <Grid container spacing={2} justifyContent="center">
+                <Grid>
+                  <Fab
+                    onClick={onNewClick}
+                    color="primary"
+                    aria-label="neues Rezept"
+                  >
+                    <AddIcon />
+                  </Fab>
                 </Grid>
               </Grid>
-            )}
-          </React.Fragment>
-        )}
-      </Grid>
-    </React.Fragment>
+            </Grid>
+          )}
+        </React.Fragment>
+      )}
+    </Grid>
   );
 };
 

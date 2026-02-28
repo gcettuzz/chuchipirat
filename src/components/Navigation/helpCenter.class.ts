@@ -48,7 +48,7 @@ export default class HelpCenter {
           case NavigationObject.menueplan:
             page = "menueplan";
             break;
-          case NavigationObject.groupConfigruation:
+          case NavigationObject.groupConfiguration:
             page = "groupconfiguration";
             break;
           case NavigationObject.usedRecipes:

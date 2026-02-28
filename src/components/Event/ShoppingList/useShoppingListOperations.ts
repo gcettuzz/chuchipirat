@@ -24,6 +24,7 @@ import {
   SUM as TEXT_SUM,
   ADD_OR_REPLACE_ARTICLE,
   SHOPPINTLIST_ITEM_MOVED_TO_RIGHT_DEPARTMENT as TEXT_SHOPPINTLIST_ITEM_MOVED_TO_RIGHT_DEPARTMENT,
+  ARTICLE_ALREADY_IN_LIST as TEXT_ARTICLE_ALREADY_IN_LIST,
 } from "../../../constants/text";
 
 /* ===================================================================
@@ -338,10 +339,32 @@ const useShoppingListOperations = ({
               existingShoppingListItem?.quantity == 0 &&
               item.quantity == 0
             ) {
+              // Duplikat entfernen, Snackbar anzeigen und zum bestehenden Artikel scrollen
               shoppingList.list[department.pos].items = shoppingList.list[
                 department.pos
               ].items.filter((listItem) => listItem !== item);
-              itemMovedToRightDepartment = false;
+
+              // Neue Referenz erzwingen, damit displayDataByDepartment-Memo
+              // neu berechnet wird. Sonst bleibt die Eingabezeile (Template-Row)
+              // mit dem ausgewählten Produktnamen stehen, weil der Memo-Cache
+              // die alte Item-Liste zurückgibt.
+              shoppingList.list = {...shoppingList.list};
+
+              onShoppingListUpdate(shoppingList);
+
+              onSnackbarShow(
+                "info",
+                TEXT_ARTICLE_ALREADY_IN_LIST(
+                  existingShoppingListItem.item.name,
+                ),
+              );
+
+              const targetId = `MoreBtn_${department.pos}_${existingShoppingListItem.item.uid}_${existingShoppingListItem.unit}`;
+              setTimeout(() => {
+                document
+                  .getElementById(targetId)
+                  ?.scrollIntoView({behavior: "smooth", block: "center"});
+              }, 100);
               return;
             }
 
@@ -389,6 +412,9 @@ const useShoppingListOperations = ({
                 department.pos
               ].items.filter((listItem) => listItem !== item);
               existingShoppingListItem.manualEdit = true;
+              // "Artikel verschoben"-Snackbar unterdrücken — der Dialog hat bereits klargemacht,
+              // dass der Artikel schon existiert.
+              itemMovedToRightDepartment = false;
             }
           }
           break;
@@ -402,16 +428,39 @@ const useShoppingListOperations = ({
           break;
       }
 
-      // Create trace for new items with a name
-      if (newItem && item.item.name) {
-        const trace = createTraceEntry({
-          shoppingListCollection,
-          selectedListItem: selectedListItem!,
-          item,
-        });
-        const tempShoppingListCollection = {...shoppingListCollection};
-        tempShoppingListCollection.lists[selectedListItem!].trace = trace;
-        onShoppingCollectionUpdate(tempShoppingListCollection);
+      // Collection aktualisieren: Trace für neue Artikel und/oder hasManuallyAddedItems
+      const needsTraceUpdate = newItem && item.item.name;
+      const needsManualFlag =
+        selectedListItem &&
+        !shoppingListCollection.lists[selectedListItem]?.properties
+          .hasManuallyAddedItems &&
+        (!newItem || needsTraceUpdate);
+
+      if (needsTraceUpdate || needsManualFlag) {
+        const currentEntry = shoppingListCollection.lists[selectedListItem!];
+        const updatedTrace = needsTraceUpdate
+          ? createTraceEntry({
+              shoppingListCollection,
+              selectedListItem: selectedListItem!,
+              item,
+            })
+          : currentEntry.trace;
+
+        const updatedCollection = {
+          ...shoppingListCollection,
+          lists: {
+            ...shoppingListCollection.lists,
+            [selectedListItem!]: {
+              ...currentEntry,
+              trace: updatedTrace,
+              properties: {
+                ...currentEntry.properties,
+                hasManuallyAddedItems: true,
+              },
+            },
+          },
+        };
+        onShoppingCollectionUpdate(updatedCollection);
       }
 
       onShoppingListUpdate(shoppingList!);

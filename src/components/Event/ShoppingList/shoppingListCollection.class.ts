@@ -68,6 +68,7 @@ interface RefreshLists {
   shoppingListCollection: ShoppingListCollection;
   shoppingList: ShoppingList;
   keepManuallyAddedItems?: boolean;
+  keepManuallyEditedItems?: boolean;
   menueplan: Menuplan;
   eventUid: Event["uid"];
   products: Product[];
@@ -396,6 +397,7 @@ export default class ShoppingListCollection {
     shoppingListCollection,
     shoppingList,
     keepManuallyAddedItems = false,
+    keepManuallyEditedItems = false,
     menueplan,
     products,
     materials,
@@ -417,14 +419,16 @@ export default class ShoppingListCollection {
     let itemToInsert: ShoppingListItem | undefined = undefined;
     const listToUpdate = updatedShoppingListCollection.lists[shoppingList.uid];
 
-    if (keepManuallyAddedItems) {
-      // die manuell hinzugefügten Elemente behalten
+    if (keepManuallyAddedItems || keepManuallyEditedItems) {
+      // die manuell hinzugefügten/bearbeiteten Elemente behalten
       manuallyAddedItems = _.cloneDeep(shoppingList.list);
 
       Object.entries(manuallyAddedItems).forEach(
         ([departmentPos, department]) => {
           department.items = department.items.filter(
-            (item) => item?.manualAdd == true,
+            (item) =>
+              (keepManuallyAddedItems && item?.manualAdd === true) ||
+              (keepManuallyEditedItems && item?.manualEdit === true),
           );
 
           if (department.items.length == 0) {
@@ -434,18 +438,19 @@ export default class ShoppingListCollection {
         },
       );
 
-      // Trace-Elemente auch behalten
+      // Trace-Elemente für manualAdd-Items behalten (manualEdit-Items
+      // werden beim Refresh neu generiert, brauchen keinen eigenen Trace)
       Object.values(manuallyAddedItems).forEach((department) => {
         department.items.forEach((item) => {
-          manuallyAddedItemsTrace[item.item.uid] =
+          if (!item.manualAdd) return; // Nur Traces von manualAdd-Items behalten
+          const traceEntries =
             shoppingListCollection.lists[shoppingList.uid].trace[item.item.uid];
+          if (traceEntries) {
+            manuallyAddedItemsTrace[item.item.uid] = traceEntries.filter(
+              (entry) => entry.manualAdd,
+            );
+          }
         });
-      });
-
-      Object.keys(manuallyAddedItemsTrace).forEach((key) => {
-        manuallyAddedItemsTrace[key] = manuallyAddedItemsTrace[key].filter(
-          (item) => item.manualAdd,
-        );
       });
     }
 
@@ -494,7 +499,7 @@ export default class ShoppingListCollection {
         updatedShoppingList.uid = shoppingList.uid;
         updatedTrace = result.trace;
 
-        if (keepManuallyAddedItems) {
+        if (keepManuallyAddedItems || keepManuallyEditedItems) {
           // Liste mit manuellen Einträgen mergen
           Object.entries(manuallyAddedItems).forEach(
             ([departmentKey, department]) => {
@@ -508,19 +513,35 @@ export default class ShoppingListCollection {
                   itemToInsert = undefined;
                   updatedShoppingList.list[departmentKey] = {...department};
                 } else {
-                  // Prüfen ob es das in der neuen Liste auch gibt -- dann dazuzählen
-                  itemToInsert = updatedShoppingList.list[
-                    departmentKey
-                  ].items.find(
-                    (updatedListItem: ShoppingListItem) =>
-                      updatedListItem.item.uid == item.item.uid &&
-                      updatedListItem.quantity == item.quantity,
-                  );
-                  if (itemToInsert) {
-                    // Gibt es schon (mit dem Update dazugekommen) --> Menge dazuzählen
-                    itemToInsert.quantity += item.quantity;
+                  if (item.manualEdit) {
+                    // Manuell bearbeiteter Artikel: In der neuen Liste per UID suchen
+                    // und die bearbeitete Menge beibehalten
+                    itemToInsert = updatedShoppingList.list[
+                      departmentKey
+                    ].items.find(
+                      (updatedListItem: ShoppingListItem) =>
+                        updatedListItem.item.uid == item.item.uid,
+                    );
+                    if (itemToInsert) {
+                      itemToInsert.quantity = item.quantity;
+                      itemToInsert.manualEdit = true;
+                    } else {
+                      updatedShoppingList.list[departmentKey].items.push(item);
+                    }
                   } else {
-                    updatedShoppingList.list[departmentKey].items.push(item);
+                    // Manuell hinzugefügter Artikel: prüfen ob identisch vorhanden
+                    itemToInsert = updatedShoppingList.list[
+                      departmentKey
+                    ].items.find(
+                      (updatedListItem: ShoppingListItem) =>
+                        updatedListItem.item.uid == item.item.uid &&
+                        updatedListItem.quantity == item.quantity,
+                    );
+                    if (itemToInsert) {
+                      itemToInsert.quantity += item.quantity;
+                    } else {
+                      updatedShoppingList.list[departmentKey].items.push(item);
+                    }
                   }
                 }
               });
@@ -544,6 +565,11 @@ export default class ShoppingListCollection {
         updatedShoppingListCollection.lists[
           shoppingList.uid
         ].properties.generated = Utils.createChangeRecord(authUser);
+
+        // Flag zurücksetzen, wenn manuell hinzugefügte Artikel gelöscht wurden
+        updatedShoppingListCollection.lists[
+          shoppingList.uid
+        ].properties.hasManuallyAddedItems = keepManuallyAddedItems;
 
         logEvent(
           firebase.analytics,

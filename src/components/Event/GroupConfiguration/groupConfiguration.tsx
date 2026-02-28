@@ -12,7 +12,6 @@ import {
   Divider,
   IconButton,
   Tooltip,
-  GridSize,
   TextField,
   InputAdornment,
   Menu,
@@ -68,7 +67,6 @@ import {
   SingleTextInputResult,
   useCustomDialog,
 } from "../../Shared/customDialogContext";
-import _ from "lodash";
 import CustomSnackbar, {Snackbar} from "../../Shared/customSnackbar";
 import {
   NavigationValuesContext,
@@ -81,34 +79,50 @@ import Action from "../../../constants/actions";
 /* ===================================================================
 // ============================ Dispatcher ===========================
 // =================================================================== */
+/** Alle verfügbaren Aktionstypen für den Gruppen-Konfiguration-Reducer. */
 enum ReducerActions {
   UPDATE_FIELD = "UPDATE_FIELD",
   UPDATE_GROUP_CONFIG = "UPDATE_GROUP_CONFIG",
-  SAVE_EVENT_INIT = "SAVE_EVENT_INIT",
-  SAVE_EVENT_SUCCESS = "SAVE_EVENT_SUCCESS",
   GENERIC_ERROR = "GENERIC_ERROR",
   SNACKBAR_SHOW = "SNACKBAR_SHOW",
   SNACKBAR_CLOSE = "SNACKBAR_CLOSE",
 }
 
+/** Dimension der Gruppenkonfiguration (Diätgruppe oder Unverträglichkeit). */
 enum GroupConfigDimension {
   diet,
   intolerance,
 }
 
-type DispatchAction = {
-  type: ReducerActions;
-  payload: {[key: string]: any};
-};
+/**
+ * Typisierte Reducer-Aktionen als Discriminated Union.
+ * Jede Aktion hat einen eigenen Payload-Typ, damit der Reducer
+ * den Payload automatisch einschränken kann (kein `as`-Cast nötig).
+ */
+type DispatchAction =
+  | {type: ReducerActions.UPDATE_FIELD; payload: {field: string; value: unknown}}
+  | {type: ReducerActions.UPDATE_GROUP_CONFIG; payload: EventGroupConfiguration}
+  | {type: ReducerActions.GENERIC_ERROR; payload: Error}
+  | {
+      type: ReducerActions.SNACKBAR_SHOW;
+      payload: {severity: Snackbar["severity"]; message: string};
+    }
+  | {type: ReducerActions.SNACKBAR_CLOSE};
+/** Zustand der Gruppenkonfiguration-Komponente. */
 type State = {
+  /** Aktuelle Gruppenkonfiguration (Diäten, Intoleranzen, Portionen). */
   groupConfig: EventGroupConfiguration;
+  /** Ob ein Fehler aufgetreten ist. */
   isError: boolean;
+  /** Ob gerade geladen wird. */
   isLoading: boolean;
+  /** Aktuelles Fehler-Objekt (falls vorhanden). */
   error: Error | null;
+  /** Snackbar-Zustand für Benachrichtigungen. */
   snackbar: Snackbar;
 };
 
-const inititialState: State = {
+const initialState: State = {
   groupConfig: EventGroupConfiguration.factory(),
   isError: false,
   isLoading: false,
@@ -116,6 +130,15 @@ const inititialState: State = {
   snackbar: {open: false, severity: "success", message: ""},
 };
 
+/**
+ * Reducer für die Gruppenkonfiguration.
+ * Verwaltet Zustandsänderungen für Diäten, Intoleranzen und Portionen.
+ *
+ * @param state Aktueller State.
+ * @param action Typisierte Aktion (Discriminated Union).
+ * @returns Neuer State.
+ * @throws {Error} Bei unbekanntem Aktionstyp.
+ */
 const groupConfigurationReducer = (
   state: State,
   action: DispatchAction
@@ -133,12 +156,12 @@ const groupConfigurationReducer = (
       return {
         ...state,
         isError: true,
-        error: action.payload as Error,
+        error: action.payload,
       };
     case ReducerActions.UPDATE_GROUP_CONFIG:
       return {
         ...state,
-        groupConfig: action.payload as EventGroupConfiguration,
+        groupConfig: action.payload,
       };
     case ReducerActions.SNACKBAR_SHOW:
       return {
@@ -158,26 +181,42 @@ const groupConfigurationReducer = (
           open: false,
         },
       };
-    default:
-      console.error("Unbekannter ActionType: ", action.type);
+    default: {
+      const _exhaustiveCheck: never = action;
+      console.error("Unbekannter ActionType: ", _exhaustiveCheck);
       throw new Error();
+    }
   }
 };
 
 /* ===================================================================
 // =============================== Base ==============================
 // =================================================================== */
+/** Props für die Gruppenkonfiguration-Seite. */
 interface EventGroupConfigurationPageProps {
+  /** Firebase-Instanz für DB-Zugriffe. */
   firebase: Firebase;
+  /** Authentifizierter Benutzer. */
   authUser: AuthUser;
+  /** Das zugehörige Event. */
   event: Event;
+  /** Bestehende Gruppenkonfiguration (beim Bearbeiten). */
   groupConfiguration?: EventGroupConfiguration;
+  /** Callback und Button-Text für die Bestätigungs-Aktion. */
   onConfirm?: ButtonAction;
+  /** Callback und Button-Text für die Abbruch-Aktion. */
   onCancel?: ButtonAction;
+  /** Callback bei Änderung der Portionen (löst Neuberechnung im Menüplan aus). */
   onGroupConfigurationUpdate?: (
     groupConfiguration: EventGroupConfiguration
   ) => void;
 }
+
+/**
+ * Hauptseite für die Gruppenkonfiguration eines Events.
+ * Erlaubt das Erfassen und Bearbeiten von Diätgruppen, Intoleranzen
+ * und deren Portionenzuordnung.
+ */
 const EventGroupConfigurationPage = ({
   firebase,
   authUser,
@@ -194,7 +233,7 @@ const EventGroupConfigurationPage = ({
 
   const [state, dispatch] = React.useReducer(
     groupConfigurationReducer,
-    inititialState
+    initialState
   );
   const [contextMenuAnchorElement, setContextMenuAnchorElement] =
     React.useState<HTMLElement | null>(null);
@@ -205,31 +244,34 @@ const EventGroupConfigurationPage = ({
   const [showUpdateConfigButtons, setShowUpdateConfigButtons] =
     React.useState(false);
 
-  if (!state.groupConfig.uid) {
-    // UID des Events aufnhemen
-    dispatch({
-      type: ReducerActions.UPDATE_FIELD,
-      payload: {field: "uid", value: event.uid},
-    });
-    if (groupConfiguration) {
+  // Einmalige Initialisierung beim Mounten
+  React.useEffect(() => {
+    if (!state.groupConfig.uid) {
       dispatch({
-        type: ReducerActions.UPDATE_GROUP_CONFIG,
-        payload: groupConfiguration,
+        type: ReducerActions.UPDATE_FIELD,
+        payload: {field: "uid", value: event.uid},
       });
+      if (groupConfiguration) {
+        dispatch({
+          type: ReducerActions.UPDATE_GROUP_CONFIG,
+          payload: structuredClone(groupConfiguration),
+        });
+      }
     }
-  }
-  if (groupConfiguration) {
+  }, []);
+
+  // Externe Änderungen synchronisieren (z.B. durch andere Benutzer)
+  React.useEffect(() => {
     if (
-      // Wenn die Config von jemand anderem geändert wurde,
-      // muss der State auch angepasst werden
+      groupConfiguration &&
       state.groupConfig.lastChange.date < groupConfiguration.lastChange.date
     ) {
       dispatch({
         type: ReducerActions.UPDATE_GROUP_CONFIG,
-        payload: _.cloneDeep(groupConfiguration),
+        payload: structuredClone(groupConfiguration),
       });
     }
-  }
+  }, [groupConfiguration]);
 
   /* ------------------------------------------
   // Navigation-Handler
@@ -237,24 +279,23 @@ const EventGroupConfigurationPage = ({
   React.useEffect(() => {
     navigationValuesContext?.setNavigationValues({
       action: Action.NONE,
-      object: NavigationObject.groupConfigruation,
+      object: NavigationObject.groupConfiguration,
     });
   }, []);
   /* ------------------------------------------
   // Weiter // Zurück
   // ------------------------------------------ */
-  const saveEvent = (event: React.MouseEvent<HTMLButtonElement>) => {
-    EventGroupConfiguration.save({
+  const saveEvent = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    await EventGroupConfiguration.save({
       firebase: firebase,
       authUser: authUser,
       groupConfig: state.groupConfig,
-    }).then(() => {
-      onConfirm?.onClick && onConfirm.onClick(event, state.groupConfig);
     });
+    onConfirm?.onClick && onConfirm.onClick(event, state.groupConfig);
   };
   const cancelCreate = async (event: React.MouseEvent<HTMLButtonElement>) => {
     if (onCancel?.onClick) {
-      if (state.groupConfig.totalPortions != 0) {
+      if (state.groupConfig.totalPortions !== 0) {
         const isConfirmed = await customDialog({
           dialogType: DialogType.Confirm,
           text: TEXT_CONFIRM_CHANGES_ARE_LOST,
@@ -273,32 +314,32 @@ const EventGroupConfigurationPage = ({
   const onDiscardChanges = () => {
     dispatch({
       type: ReducerActions.UPDATE_GROUP_CONFIG,
-      payload: _.cloneDeep(groupConfiguration as EventGroupConfiguration),
+      payload: structuredClone(groupConfiguration as EventGroupConfiguration),
     });
   };
-  const onRecalculatePortions = () => {
+  const onRecalculatePortions = async () => {
     if (!onGroupConfigurationUpdate) {
       return;
     }
 
-    // Speichern
-    EventGroupConfiguration.save({
-      firebase: firebase,
-      authUser: authUser,
-      groupConfig: state.groupConfig,
-    }).catch((error) =>
-      dispatch({type: ReducerActions.GENERIC_ERROR, payload: error})
-    );
+    try {
+      await EventGroupConfiguration.save({
+        firebase: firebase,
+        authUser: authUser,
+        groupConfig: state.groupConfig,
+      });
 
-    // Neue Mengen hochgeben, damit der Menüplan neu berechnet wird!
-    onGroupConfigurationUpdate(state.groupConfig);
+      // Neue Mengen hochgeben, damit der Menüplan neu berechnet wird
+      onGroupConfigurationUpdate(state.groupConfig);
 
-    // Meldung ausgeben
-    dispatch({
-      type: ReducerActions.SNACKBAR_SHOW,
-      payload: {severity: "success", message: TEXT_PORTIONS_RECALCULATED},
-    });
-    setShowUpdateConfigButtons(false);
+      dispatch({
+        type: ReducerActions.SNACKBAR_SHOW,
+        payload: {severity: "success", message: TEXT_PORTIONS_RECALCULATED},
+      });
+      setShowUpdateConfigButtons(false);
+    } catch (error) {
+      dispatch({type: ReducerActions.GENERIC_ERROR, payload: error as Error});
+    }
   };
   /* ------------------------------------------
   // Portion anpassen
@@ -319,13 +360,26 @@ const EventGroupConfigurationPage = ({
       groupConfig: updatedGroupConfig,
     });
 
-    // Nur wenn die FX versorgt ist
-    onGroupConfigurationUpdate && setShowUpdateConfigButtons(true);
+    markConfigDirty();
 
     dispatch({
       type: ReducerActions.UPDATE_GROUP_CONFIG,
       payload: updatedGroupConfig,
     });
+  };
+  /* ------------------------------------------
+  // Hilfsfunktionen
+  // ------------------------------------------ */
+  /** Setzt das Kontextmenü und die Auswahl zurück. */
+  const resetContextMenu = () => {
+    setContextMenuAnchorElement(null);
+    setContextMenuSelectedItem({intoleranceUid: "", dietUid: ""});
+  };
+  /** Markiert die Konfiguration als geändert, wenn ein Update-Callback vorhanden ist. */
+  const markConfigDirty = () => {
+    if (onGroupConfigurationUpdate) {
+      setShowUpdateConfigButtons(true);
+    }
   };
   /* ------------------------------------------
   // Kontex-Menü-Befehle
@@ -340,7 +394,6 @@ const EventGroupConfigurationPage = ({
   };
   const openDietContextMenu = (event: React.MouseEvent<HTMLElement>) => {
     const pressedButton = event.currentTarget.id.split("_");
-
     setContextMenuSelectedItem({
       intoleranceUid: "",
       dietUid: pressedButton[2],
@@ -348,13 +401,10 @@ const EventGroupConfigurationPage = ({
     setContextMenuAnchorElement(event.currentTarget);
   };
   const closeContextMenu = () => {
-    setContextMenuAnchorElement(null);
-    setContextMenuSelectedItem({intoleranceUid: "", dietUid: ""});
+    resetContextMenu();
   };
   const onRenameItem = async () => {
-    let userInput = {valid: false, input: ""} as SingleTextInputResult;
-
-    userInput = (await customDialog({
+    const userInput = (await customDialog({
       dialogType: DialogType.SingleTextInput,
       title: `${
         contextMenuSelectedItem.dietUid ? TEXT_DIET_GROUP : TEXT_INTOLERANCE
@@ -371,7 +421,7 @@ const EventGroupConfigurationPage = ({
       },
     })) as SingleTextInputResult;
 
-    if (userInput.valid && userInput.input != "") {
+    if (userInput.valid && userInput.input !== "") {
       if (contextMenuSelectedItem.dietUid) {
         const diets = {...state.groupConfig.diets};
         const diet = diets.entries[contextMenuSelectedItem.dietUid];
@@ -391,13 +441,10 @@ const EventGroupConfigurationPage = ({
         });
       }
     }
-    // Nur wenn die FX versorgt ist
-    onGroupConfigurationUpdate && setShowUpdateConfigButtons(true);
-    setContextMenuAnchorElement(null);
-    setContextMenuSelectedItem({intoleranceUid: "", dietUid: ""});
+    markConfigDirty();
+    resetContextMenu();
   };
   const onDeleteItem = () => {
-    setContextMenuAnchorElement(null);
     let updatedGroupConfig = {...state.groupConfig};
     if (contextMenuSelectedItem.intoleranceUid) {
       updatedGroupConfig = EventGroupConfiguration.deleteIntolerance({
@@ -414,17 +461,14 @@ const EventGroupConfigurationPage = ({
       type: ReducerActions.UPDATE_GROUP_CONFIG,
       payload: updatedGroupConfig,
     });
-    // Nur wenn die FX versorgt ist
-    onGroupConfigurationUpdate && setShowUpdateConfigButtons(true);
-    setContextMenuSelectedItem({intoleranceUid: "", dietUid: ""});
+    markConfigDirty();
+    resetContextMenu();
   };
   const onAddItem = async (type: GroupConfigDimension) => {
-    let userInput = {valid: false, input: ""} as SingleTextInputResult;
-
-    userInput = (await customDialog({
+    const userInput = (await customDialog({
       dialogType: DialogType.SingleTextInput,
       title: `${
-        type == GroupConfigDimension.diet ? TEXT_DIET_GROUP : TEXT_INTOLERANCE
+        type === GroupConfigDimension.diet ? TEXT_DIET_GROUP : TEXT_INTOLERANCE
       } ${TEXT_ADD}`,
       text: "",
       singleTextInputProperties: {
@@ -433,10 +477,9 @@ const EventGroupConfigurationPage = ({
       },
     })) as SingleTextInputResult;
 
-    if (userInput.valid && userInput.input != "") {
-      if (type == GroupConfigDimension.diet) {
-        let groupConfig = state.groupConfig;
-        groupConfig = EventGroupConfiguration.addDietGroup({
+    if (userInput.valid && userInput.input !== "") {
+      if (type === GroupConfigDimension.diet) {
+        const groupConfig = EventGroupConfiguration.addDietGroup({
           groupConfig: state.groupConfig,
           dietGroupName: userInput.input,
         });
@@ -444,10 +487,9 @@ const EventGroupConfigurationPage = ({
           type: ReducerActions.UPDATE_GROUP_CONFIG,
           payload: groupConfig,
         });
-      } else if (type == GroupConfigDimension.intolerance) {
-        let updatedGroupConfig = {...state.groupConfig};
-        updatedGroupConfig = EventGroupConfiguration.addIntolerance({
-          groupConfig: updatedGroupConfig,
+      } else if (type === GroupConfigDimension.intolerance) {
+        const updatedGroupConfig = EventGroupConfiguration.addIntolerance({
+          groupConfig: {...state.groupConfig},
           intoleranceName: userInput.input,
         });
         dispatch({
@@ -456,10 +498,8 @@ const EventGroupConfigurationPage = ({
         });
       }
     }
-    // Nur wenn die FX versorgt ist
-    onGroupConfigurationUpdate && setShowUpdateConfigButtons(true);
-    setContextMenuAnchorElement(null);
-    setContextMenuSelectedItem({intoleranceUid: "", dietUid: ""});
+    markConfigDirty();
+    resetContextMenu();
   };
   /* ------------------------------------------
   // Snackback schliessen
@@ -471,10 +511,7 @@ const EventGroupConfigurationPage = ({
     if (reason === "clickaway") {
       return;
     }
-    dispatch({
-      type: ReducerActions.SNACKBAR_CLOSE,
-      payload: {},
-    });
+    dispatch({type: ReducerActions.SNACKBAR_CLOSE});
   };
   return (
     <React.Fragment>
@@ -536,13 +573,10 @@ const EventGroupConfigurationPage = ({
         <MenuItem
           onClick={onDeleteItem}
           disabled={
-            contextMenuSelectedItem.dietUid &&
-            Object.keys(state.groupConfig.diets.entries).length == 1
-              ? true
-              : contextMenuSelectedItem.intoleranceUid &&
-                Object.keys(state.groupConfig.intolerances.entries).length == 1
-              ? true
-              : false
+            (!!contextMenuSelectedItem.dietUid &&
+              Object.keys(state.groupConfig.diets.entries).length === 1) ||
+            (!!contextMenuSelectedItem.intoleranceUid &&
+              Object.keys(state.groupConfig.intolerances.entries).length === 1)
           }
         >
           <ListItemIcon>
@@ -565,16 +599,30 @@ const EventGroupConfigurationPage = ({
 /* ===================================================================
 // ========================= Group-Config-Card =======================
 // =================================================================== */
+/** Props für die Gruppenkonfiguration-Karte. */
 interface EventGroupConfigurationCardProps {
+  /** Aktuelle Gruppenkonfiguration. */
   groupConfig: EventGroupConfiguration;
+  /** Callback zum Hinzufügen eines neuen Elements (Diät oder Intoleranz). */
   onAddItem: (type: GroupConfigDimension) => void;
+  /** Öffnet das Kontextmenü für eine Intoleranz. */
   openIntoleranceContextMenu: (event: React.MouseEvent<HTMLElement>) => void;
+  /** Öffnet das Kontextmenü für eine Diätgruppe. */
   openDietContextMenu: (event: React.MouseEvent<HTMLElement>) => void;
+  /** Callback bei Änderung einer Portionenzahl. */
   onPortionChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  /** Verwirft alle Änderungen und stellt den Originalzustand wieder her. */
   onDiscardChanges: () => void;
+  /** Speichert die Änderungen und berechnet die Portionen im Menüplan neu. */
   onRecalculatePortions: () => void;
+  /** Ob die Buttons zum Speichern/Verwerfen angezeigt werden sollen. */
   showUpdateConfigButtons?: boolean;
 }
+
+/**
+ * Karte mit der tabellarischen Darstellung der Gruppenkonfiguration.
+ * Zeigt Intoleranzen (Zeilen), Diätgruppen (Spalten) und Total-Spalte.
+ */
 const EventGroupConfigurationCard = ({
   groupConfig,
   onAddItem,
@@ -588,8 +636,12 @@ const EventGroupConfigurationCard = ({
   const classes = useCustomStyles();
   const theme = useTheme();
 
+  // Mindestbreite dynamisch anpassen, damit jede Diät-Spalte genug Platz hat
+  const dietCount = Object.keys(groupConfig.diets.entries).length;
+  const dynamicMinWidth = Math.max(750, 550 + dietCount * 150);
+
   return (
-    <div style={{overflowX: "scroll", minWidth: "750px"}}>
+    <div style={{overflowX: "auto", minWidth: `${dynamicMinWidth}px`, padding: "1px"}}>
       <Card sx={classes.card}>
         <CardHeader
           title={TEXT_GROUP_CONFIGURATION_SETTINGS}
@@ -597,63 +649,53 @@ const EventGroupConfigurationCard = ({
         />
         <CardContent>
           <Grid container spacing={2}>
- <Grid size={3} >
+            <Grid size={3}>
               <EventGroupConfigLeadColumn
                 groupConfig={groupConfig}
                 onAddIntolerance={() =>
                   onAddItem(GroupConfigDimension.intolerance)
                 }
-              />
-            </Grid>
- <Grid size={5} >
-              <EventGroupConfigDietColumn
-                groupConfig={groupConfig}
-                openDietContextMenu={openDietContextMenu}
-                onFieldChange={onPortionChange}
-              />
-            </Grid>
- <Grid size={1} style={{justifyContent: "center"}}>
-              <Grid
-                container
-                direction="column"
-                justifyContent="center"
-                alignItems="center"
-              >
-                <Grid sx={classes.itemGroupConfigurationRow}>
-                  <Tooltip title={TEXT_ADD_DIET}>
-                    <IconButton
-                      aria-label="Diät hinzufügen"
-                      color="primary"
-                      onClick={() => onAddItem(GroupConfigDimension.diet)}
-                      size="large"
-                    >
-                      <AddIcon />
-                    </IconButton>
-                  </Tooltip>
-                </Grid>
-              </Grid>
-              <Box
-                component="div"
-                style={{
-                  marginTop: "1rem",
-                  width: "100%",
-                  height: "100%",
-                  display: "flex",
-                  justifyContent: "center",
-                }}
-              >
-                <Divider
-                  orientation="vertical"
-                  flexItem
-                  style={{height: "80%", display: "flex"}}
-                />
-              </Box>
-            </Grid>
- <Grid size={2} >
-              <EventGroupConfigTotalColumn
-                groupConfig={groupConfig}
                 openIntoleranceContextMenu={openIntoleranceContextMenu}
               />
+            </Grid>
+            <Grid size={9}>
+              <Box sx={{display: "flex", gap: 2}}>
+                <EventGroupConfigDietColumn
+                  groupConfig={groupConfig}
+                  openDietContextMenu={openDietContextMenu}
+                  onFieldChange={onPortionChange}
+                />
+                {/* Trennlinie mit Diät-hinzufügen-Button */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Box sx={classes.itemGroupConfigurationRow}>
+                    <Tooltip title={TEXT_ADD_DIET}>
+                      <IconButton
+                        aria-label="Diät hinzufügen"
+                        color="primary"
+                        onClick={() => onAddItem(GroupConfigDimension.diet)}
+                        size="large"
+                      >
+                        <AddIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  <Divider
+                    orientation="vertical"
+                    flexItem
+                    sx={{flexGrow: 1}}
+                  />
+                </Box>
+                <EventGroupConfigTotalColumn
+                  groupConfig={groupConfig}
+                />
+              </Box>
             </Grid>
           </Grid>
         </CardContent>
@@ -690,13 +732,25 @@ const EventGroupConfigurationCard = ({
 /* ===================================================================
 // ============================ Lead-Spalte ==========================
 // =================================================================== */
+/** Props für die Lead-Spalte (Intoleranzen + Total-Label). */
 interface EventGroupConfigLeadColumnProps {
+  /** Aktuelle Gruppenkonfiguration. */
   groupConfig: EventGroupConfiguration;
+  /** Callback zum Hinzufügen einer neuen Intoleranz. */
   onAddIntolerance: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  /** Öffnet das Kontextmenü für eine Intoleranz. */
+  openIntoleranceContextMenu: (event: React.MouseEvent<HTMLElement>) => void;
 }
+
+/**
+ * Erste Spalte der Gruppenkonfigurations-Tabelle.
+ * Zeigt die Intoleranznamen mit Kontextmenü-Button und einen
+ * Button zum Hinzufügen neuer Intoleranzen.
+ */
 const EventGroupConfigLeadColumn = ({
   groupConfig,
   onAddIntolerance,
+  openIntoleranceContextMenu,
 }: EventGroupConfigLeadColumnProps) => {
   const classes = useCustomStyles();
 
@@ -713,9 +767,23 @@ const EventGroupConfigLeadColumn = ({
             sx={classes.itemGroupConfigurationRow}
             key={"intolerance_grid_" + intoleranceUid}
           >
-            <Typography variant="body1">
-              {groupConfig.intolerances.entries[intoleranceUid].name}
-            </Typography>
+            <Grid container alignItems="center" wrap="nowrap" sx={{width: "100%"}}>
+              <Grid sx={{overflow: "hidden", flex: 1, minWidth: 0}}>
+                <Typography variant="body1">
+                  {groupConfig.intolerances.entries[intoleranceUid].name}
+                </Typography>
+              </Grid>
+              <Grid>
+                <IconButton
+                  id={"MoreBtn_intolerance_" + intoleranceUid}
+                  aria-label="position-options"
+                  onClick={openIntoleranceContextMenu}
+                  size="small"
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+              </Grid>
+            </Grid>
           </Grid>
         ))}
         <Grid
@@ -747,11 +815,21 @@ const EventGroupConfigLeadColumn = ({
 /* ===================================================================
 // =========================== Diät-Spalte ===========================
 // =================================================================== */
+/** Props für die Diät-Spalten (je eine pro Diätgruppe). */
 interface EventGroupConfigDietColumnProps {
+  /** Aktuelle Gruppenkonfiguration. */
   groupConfig: EventGroupConfiguration;
+  /** Öffnet das Kontextmenü für eine Diätgruppe. */
   openDietContextMenu: (event: React.MouseEvent<HTMLElement>) => void;
+  /** Callback bei Änderung einer Portionenzahl im Eingabefeld. */
   onFieldChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
+
+/**
+ * Spalten für die einzelnen Diätgruppen.
+ * Pro Diätgruppe wird eine Spalte mit Portioneneingabefeldern
+ * (je Intoleranz) und dem Spaltentotal dargestellt.
+ */
 const EventGroupConfigDietColumn = ({
   groupConfig,
   openDietContextMenu,
@@ -759,112 +837,119 @@ const EventGroupConfigDietColumn = ({
 }: EventGroupConfigDietColumnProps) => {
   const classes = useCustomStyles();
 
-  const gridSize = Math.floor(
-    12 / Object.keys(groupConfig.diets.entries).length
-  ) as GridSize;
   return (
     <React.Fragment>
-      <Grid container spacing={2}>
-        {groupConfig.diets.order.map((dietUid) => (
- <Grid size={gridSize} key={"grid_diet" + dietUid}>
-            <Grid container spacing={2}>
-              <Grid size={12} sx={classes.itemGroupConfigurationRow}>
-                <Grid container alignItems="center" wrap="nowrap">
-                  <Grid size="grow">
-                    <Typography variant="h6" component="h2">
+      {groupConfig.diets.order.map((dietUid) => (
+        <Box key={"grid_diet" + dietUid} sx={{flex: 1, minWidth: 0}}>
+          <Grid container spacing={2}>
+            <Grid size={12} sx={classes.itemGroupConfigurationRow}>
+              <Grid container alignItems="center" wrap="nowrap" sx={{width: "100%"}}>
+                <Grid sx={{overflow: "hidden", flex: 1, minWidth: 0}}>
+                  <Tooltip title={groupConfig.diets.entries[dietUid].name}>
+                    <Typography
+                      variant="h6"
+                      component="h2"
+                      noWrap
+                    >
                       {groupConfig.diets.entries[dietUid].name}
                     </Typography>
-                  </Grid>
-                  <Grid>
-                    <IconButton
-                      id={"MoreBtn_diet_" + dietUid}
-                      aria-label="position-options"
-                      style={{paddingRight: "0px"}}
-                      size="small"
-                      onClick={openDietContextMenu}
-                    >
-                      <MoreVertIcon fontSize="small" />
-                    </IconButton>
-                  </Grid>
+                  </Tooltip>
                 </Grid>
-              </Grid>
-
-              {groupConfig.intolerances.order.map((intoleranceUid) => (
-                <Grid size={12}
-                  sx={classes.itemGroupConfigurationRow}
-                  key={
-                    "grid_column_" + dietUid + "_intolerance_" + intoleranceUid
-                  }
-                >
-                  <TextField
-                    key={"portions_" + dietUid + "_" + intoleranceUid}
-                    id={"portions_" + dietUid + "_" + intoleranceUid}
-                    label={TEXT_PORTIONS}
-                    variant="outlined"
+                <Grid>
+                  <IconButton
+                    id={"MoreBtn_diet_" + dietUid}
+                    aria-label="position-options"
+                    style={{paddingRight: "0px"}}
                     size="small"
-                    fullWidth
-                    InputProps={{
-                      inputProps: {
-                        min: 0,
-                        step: 1,
-                      },
-                      inputComponent: "input",
-                    }}
-                    onWheel={(event) =>
-                      event.target instanceof HTMLElement && event.target.blur()
-                    }
-                    value={groupConfig.portions[dietUid][intoleranceUid]}
-                    onChange={onFieldChange}
-                  />
+                    onClick={openDietContextMenu}
+                  >
+                    <MoreVertIcon fontSize="small" />
+                  </IconButton>
                 </Grid>
-              ))}
-
-              <Grid size={12} sx={classes.itemGroupConfigurationRow} />
-              {/* Leer da Button nicht nötig */}
-              <Grid size={12}>
-                <Divider />
               </Grid>
-              <Grid size={12} sx={classes.itemGroupConfigurationRow}>
+            </Grid>
+
+            {groupConfig.intolerances.order.map((intoleranceUid) => (
+              <Grid size={12}
+                sx={classes.itemGroupConfigurationRow}
+                key={
+                  "grid_column_" + dietUid + "_intolerance_" + intoleranceUid
+                }
+              >
                 <TextField
-                  key={"total_diet_" + dietUid}
-                  id={"total_diet_" + dietUid}
+                  key={"portions_" + dietUid + "_" + intoleranceUid}
+                  id={"portions_" + dietUid + "_" + intoleranceUid}
                   label={TEXT_PORTIONS}
                   variant="outlined"
-                  disabled
                   size="small"
                   fullWidth
                   InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <strong>=</strong>
-                      </InputAdornment>
-                    ),
+                    inputProps: {
+                      min: 0,
+                      step: 1,
+                    },
+                    inputComponent: "input",
                   }}
-                  value={groupConfig.diets.entries[dietUid].totalPortions}
+                  onWheel={(event) =>
+                    event.target instanceof HTMLElement && event.target.blur()
+                  }
+                  value={groupConfig.portions[dietUid][intoleranceUid]}
+                  onChange={onFieldChange}
                 />
               </Grid>
+            ))}
+
+            <Grid size={12} sx={classes.itemGroupConfigurationRow} />
+            {/* Leer da Button nicht nötig */}
+            <Grid size={12}>
+              <Divider />
+            </Grid>
+            <Grid size={12} sx={classes.itemGroupConfigurationRow}>
+              <TextField
+                key={"total_diet_" + dietUid}
+                id={"total_diet_" + dietUid}
+                label={TEXT_PORTIONS}
+                variant="outlined"
+                disabled
+                size="small"
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <strong>=</strong>
+                    </InputAdornment>
+                  ),
+                }}
+                value={groupConfig.diets.entries[dietUid].totalPortions}
+              />
             </Grid>
           </Grid>
-        ))}
-      </Grid>
+        </Box>
+      ))}
     </React.Fragment>
   );
 };
 /* ===================================================================
-// =========================== Diät-Spalte ===========================
+// =========================== Total-Spalte ==========================
 // =================================================================== */
+/** Props für die Total-Spalte. */
 interface EventGroupConfigTotalColumnProps {
+  /** Aktuelle Gruppenkonfiguration. */
   groupConfig: EventGroupConfiguration;
-  openIntoleranceContextMenu: (event: React.MouseEvent<HTMLElement>) => void;
 }
+
+/**
+ * Letzte Spalte der Gruppenkonfigurations-Tabelle.
+ * Zeigt die Zeilensummen pro Intoleranz und die Gesamtsumme
+ * aller Portionen.
+ */
 const EventGroupConfigTotalColumn = ({
   groupConfig,
-  openIntoleranceContextMenu,
 }: EventGroupConfigTotalColumnProps) => {
   const classes = useCustomStyles();
 
   return (
-    <React.Fragment>
+    <Box sx={{flex: 1, minWidth: 0}}>
       <Grid container spacing={2}>
         <Grid size={12} sx={classes.itemGroupConfigurationRow}>
           <Typography variant="h6" component="h2">
@@ -873,41 +958,27 @@ const EventGroupConfigTotalColumn = ({
         </Grid>
         {groupConfig.intolerances.order.map((intoleranceUid) => (
           <Grid size={12}
-            sx={[classes.itemGroupConfigurationRow, {gap: 0}]}
+            sx={classes.itemGroupConfigurationRow}
             key={"grid_total_colum_" + intoleranceUid}
           >
-            <Grid container alignItems="center" wrap="nowrap">
-              <Grid size="grow">
-                <TextField
-                  key={"intolerance_total_" + intoleranceUid}
-                  label={TEXT_PORTIONS}
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  disabled
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <strong>=</strong>
-                      </InputAdornment>
-                    ),
-                  }}
-                  value={
-                    groupConfig.intolerances.entries[intoleranceUid].totalPortions
-                  }
-                />
-              </Grid>
-              <Grid>
-                <IconButton
-                  id={"MoreBtn_intolerance_" + intoleranceUid}
-                  aria-label="position-options"
-                  onClick={openIntoleranceContextMenu}
-                  size="large"
-                >
-                  <MoreVertIcon />
-                </IconButton>
-              </Grid>
-            </Grid>
+            <TextField
+              key={"intolerance_total_" + intoleranceUid}
+              label={TEXT_PORTIONS}
+              variant="outlined"
+              size="small"
+              fullWidth
+              disabled
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <strong>=</strong>
+                  </InputAdornment>
+                ),
+              }}
+              value={
+                groupConfig.intolerances.entries[intoleranceUid].totalPortions
+              }
+            />
           </Grid>
         ))}
         <Grid size={12}
@@ -937,7 +1008,7 @@ const EventGroupConfigTotalColumn = ({
           />
         </Grid>
       </Grid>
-    </React.Fragment>
+    </Box>
   );
 };
 

@@ -2,7 +2,6 @@ import React from "react";
 
 import {
   TextField,
-  InputLabel,
   IconButton,
   InputAdornment,
   FormControl,
@@ -31,10 +30,6 @@ const SearchPanel = ({
   return (
     <React.Fragment>
       <FormControl variant="outlined" fullWidth>
-        <InputLabel htmlFor="searchString_input">
-          {TEXT.SEARCH_STRING}
-        </InputLabel>
-
         <TextField
           label={TEXT.SEARCH_STRING}
           id={"searchString_input"}
