@@ -60,7 +60,7 @@ import Unit from "../../Unit/unit.class";
 import AuthUser from "../../Firebase/Authentication/authUser.class";
 import EventGroupConfiguration from "../GroupConfiguration/groupConfiguration.class";
 import MenuplanPage from "../Menuplan/menuplan";
-import EventGroupConfigurationPage from "../GroupConfiguration/groupConfigruation";
+import EventGroupConfigurationPage from "../GroupConfiguration/groupConfiguration";
 import EventUsedRecipesPage from "../UsedRecipes/usedRecipes";
 import Menuplan from "../Menuplan/menuplan.class";
 import UsedRecipes from "../UsedRecipes/usedRecipes.class";
@@ -804,10 +804,10 @@ const EventPage = () => {
       EventGroupConfiguration.getGroupConfigurationListener({
         firebase: firebase,
         uid: eventUid,
-        callback: (groupConfigruation) => {
+        callback: (groupConfiguration) => {
           dispatch({
             type: ReducerActions.GROUP_CONFIG_FETCH_SUCCESS,
-            payload: groupConfigruation,
+            payload: groupConfiguration,
           });
         },
         errorCallback: (error) => {
@@ -1216,6 +1216,9 @@ const EventPage = () => {
     // bewusst auf speichern Klicken und der State-Wert des Events wird auf
     // die DB gespeichert und in den Globalen State übertragen
     setEventDraft({...eventDraft, event: event});
+  };
+  const onFormValidationUpdate = (errors: FormValidationFieldError[]) => {
+    setEventDraft((prev) => ({...prev, formValidation: errors}));
   };
   const onEventSave = async (event: Event) => {
     dispatch({type: ReducerActions.EVENT_SAVE_INIT, payload: {}});
@@ -1805,6 +1808,7 @@ const EventPage = () => {
                   authUser={authUser}
                   onUpdateEvent={onEventUpdate}
                   onUpdatePicture={onEventPictureUpdate}
+                  onFormValidationUpdate={onFormValidationUpdate}
                 />
                 {state.event != eventDraft.event && (
                   <Box

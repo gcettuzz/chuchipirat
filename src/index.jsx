@@ -17,6 +17,7 @@ import ErrorInfo from "./components/500/500";
 import Utils from "./components/Shared/utils.class";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDateFns} from "@mui/x-date-pickers/AdapterDateFns";
+import {de} from "date-fns/locale";
 
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
@@ -42,7 +43,7 @@ const root = createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <Sentry.ErrorBoundary fallback={<ErrorInfo />}>
-      <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={de}>
         <FirebaseContext.Provider value={new Firebase()}>
           <AuthUserProvider>
             <CustomDialogContextProvider>

@@ -159,6 +159,8 @@ import {
   PRODUCT as TEXT_PRODUCT,
   TOOLTIP_MOVE_UP as TEXT_TOOLTIP_MOVE_UP,
   TOOLTIP_MOVE_DOWN as TEXT_TOOLTIP_MOVE_DOWN,
+  CONFIRM_DIET_SWITCH as TEXT_CONFIRM_DIET_SWITCH,
+  PROCEED as TEXT_PROCEED,
 } from "../../../constants/text";
 import {
   FetchMissingDataType,
@@ -523,6 +525,8 @@ const MenuplanPage = ({
       isLoadingData: false,
       menue: null,
     });
+  // Zähler zum Zurücksetzen der Suche im Rezept-Drawer nach dem Hinzufügen
+  const [recipeSearchResetKey, setRecipeSearchResetKey] = useState(0);
 
   const [recipeDrawerData, setRecipeDrawerData] = useState<RecipeDrawerData>(
     RECIPE_DRAWER_DATA_INITIAL_VALUES,
@@ -2065,6 +2069,8 @@ const MenuplanPage = ({
           updatedMealRecipes[mealRecipe.uid] = mealRecipe;
           updatedMenues[menuUid].mealRecipeOrder.push(mealRecipe.uid);
         });
+        // Suche im Rezept-Drawer zurücksetzen
+        setRecipeSearchResetKey((prev) => prev + 1);
       } else {
         // Eintrag wird geändert
         Object.values(plan).forEach((planOfMealRecipe) => {
@@ -2421,6 +2427,7 @@ const MenuplanPage = ({
         onRecipeSelection={onRecipeSelection}
         onNewRecipe={onNewRecipe}
         authUser={authUser}
+        searchResetKey={recipeSearchResetKey}
       />
       {/* Rezept-Drawer */}
       <RecipeDrawer
@@ -3532,6 +3539,7 @@ interface RecipeSearchDrawerProps {
   onRecipeCardClick: ({event, recipe}: OnRecipeCardClickProps) => void;
   onRecipeSelection: ({recipe}: OnRecipeSelection) => void;
   onNewRecipe: () => void;
+  searchResetKey?: number;
 }
 const RecipeSearchDrawer = ({
   drawerSettings,
@@ -3541,6 +3549,7 @@ const RecipeSearchDrawer = ({
   onRecipeSelection,
   onNewRecipe,
   authUser,
+  searchResetKey = 0,
 }: RecipeSearchDrawerProps) => {
   const classes = useCustomStyles();
 
@@ -3571,6 +3580,7 @@ const RecipeSearchDrawer = ({
           {TEXT_RECIPES_DRAWER_TITLE}{" "}
         </Typography>
         <RecipeSearch
+          key={searchResetKey}
           recipes={recipes}
           embeddedMode={true}
           fabButtonIcon={<AddIcon />}
@@ -3753,6 +3763,7 @@ const DialogPlanPortions = ({
     plan: null,
   };
 
+  const {customDialog} = useCustomDialog();
   const [dialogValues, setDialogValues] =
     useState<DialogPlanPortionsDialogValues>(DIALOG_VALUES_INITIAL_VALUES);
   const [dialogValidation, setDialogValidation] = useState<
@@ -3994,7 +4005,32 @@ const DialogPlanPortions = ({
   /* ------------------------------------------
   // ToggleButton-Handling
   // ------------------------------------------ */
-  const onToggleButtonClick = (
+  /**
+   * Prüft ob der Benutzer im aktuellen Plan für ein Menü bereits
+   * Werte eingegeben hat (Checkbox aktiviert, Faktor geändert, etc.).
+   *
+   * @param menuUid UID des Menüs, dessen Plan geprüft wird.
+   * @returns `true` wenn Änderungen vorliegen.
+   */
+  const hasUserModifiedPlan = (menuUid: string): boolean => {
+    const mealPlan = dialogValues.plan?.[menuUid];
+    if (!mealPlan) {
+      return false;
+    }
+    const currentDiet = dialogValues.selectedDiets?.[menuUid];
+    if (currentDiet === PlanedDiet.FIX) {
+      // Bei Fix-Portionen: geändert, sobald Portionen eingegeben wurden
+      const fixEntry = mealPlan[PlanedDiet.FIX];
+      return fixEntry != null && fixEntry.portions > 0;
+    }
+    // Bei Diät-Modus: geändert, sobald eine Checkbox aktiviert oder
+    // ein Faktor angepasst wurde
+    return Object.values(mealPlan).some(
+      (entry) => entry.active || entry.factor !== "1.0",
+    );
+  };
+
+  const onToggleButtonClick = async (
     event: React.MouseEvent<HTMLElement>,
     activeButton: string | null,
   ) => {
@@ -4004,14 +4040,28 @@ const DialogPlanPortions = ({
     }
     const [, menuUid] = event.currentTarget.id.split("_");
 
+    // Prüfen ob Benutzer bereits Werte geändert hat
+    if (hasUserModifiedPlan(menuUid)) {
+      const isConfirmed = (await customDialog({
+        dialogType: DialogType.Confirm,
+        title: `⚠️  ${TEXT_ATTENTION}`,
+        text: TEXT_CONFIRM_DIET_SWITCH,
+        buttonTextConfirm: TEXT_PROCEED,
+      })) as boolean;
+
+      if (!isConfirmed) {
+        return;
+      }
+    }
+
     setDialogValues({
       ...dialogValues,
       selectedDiets: {
         ...dialogValues.selectedDiets,
         [menuUid]: activeButton,
       },
-      //  Darf nur für das Menü neu aufebaut werden, für das eine neue Diät-Gruppe gewählt wurde
-      plan: {...dialogValues.plan, [menuUid]: null}, // sicherstellen, dass dieser neu-aufgebaut wird
+      //  Darf nur für das Menü neu aufgebaut werden, für das eine neue Diät-Gruppe gewählt wurde
+      plan: {...dialogValues.plan, [menuUid]: null},
     });
   };
   /* ------------------------------------------

@@ -420,25 +420,38 @@ export const MenueCardList = memo(function MenueCardList({
           key={"menuplanlist_" + listType + "_" + menue.uid}
           style={{minHeight: "3em"}}
         >
-          {menue[memberName].map((uid: string, index) => (
-            <DraggableListItem
-              key={uid}
-              index={index}
-              listItem={{
-                primaryText: getPrimaryText(menue, memberName, uid),
-                secondaryText: getSecondaryText(menue, memberName, uid),
-                id: uid,
-                type: listType,
-              }}
-              menueUid={menue.uid}
-              listType={listType}
-              listItemKey={uid}
-              lastElement={index === menue[memberName].length - 1}
-              menuplanSettings={menuplanSettings}
-              onListElementClick={onListElementClick}
-              onMoveDragAndDropElement={onMoveDragAndDropElement}
-            />
-          ))}
+          {menue[memberName].map((uid: string, index) => {
+            // Kein Rendering, solange Daten noch nicht verfügbar
+            if (
+              listType === MenuplanDragDropTypes.PRODUCT &&
+              !products?.[uid]
+            )
+              return null;
+            if (
+              listType === MenuplanDragDropTypes.MATERIAL &&
+              !materials?.[uid]
+            )
+              return null;
+            return (
+              <DraggableListItem
+                key={uid}
+                index={index}
+                listItem={{
+                  primaryText: getPrimaryText(menue, memberName, uid),
+                  secondaryText: getSecondaryText(menue, memberName, uid),
+                  id: uid,
+                  type: listType,
+                }}
+                menueUid={menue.uid}
+                listType={listType}
+                listItemKey={uid}
+                lastElement={index === menue[memberName].length - 1}
+                menuplanSettings={menuplanSettings}
+                onListElementClick={onListElementClick}
+                onMoveDragAndDropElement={onMoveDragAndDropElement}
+              />
+            );
+          })}
         </List>
       </Box>
     </>
@@ -724,10 +737,12 @@ const MenuCardListItem = ({
               alignItems: "center",
             }}
             dense
+            disablePadding
           >
             <ListItemButton
               key={listItemKey}
               onClick={() => onListElementClick!(listItemKey)}
+              sx={{py: 0.25}}
             >
               <ListItemText
                 primary={primaryText}

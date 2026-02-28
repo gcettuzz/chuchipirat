@@ -157,7 +157,8 @@ export const EventListCard = ({
             lists[selectedListItem]?.properties.generated.date &&
           noOfLists > 0 && (
             <Grid container>
-              <Grid size={1}
+              <Grid
+                size={1}
                 style={{
                   display: "flex",
                   justifyContent: "center",
@@ -166,7 +167,7 @@ export const EventListCard = ({
               >
                 <ErrorOutlineIcon color="error" />
               </Grid>
- <Grid size={11} >
+              <Grid size={11}>
                 <Typography color="error">{outOfDateWarnMessage}</Typography>
               </Grid>
             </Grid>
@@ -294,7 +295,7 @@ export const DialogTraceItem = ({
       onShowRecipe(pressedButton[1], pressedButton[3]);
     }
   };
-  console.log("trace", trace);
+
   return (
     <Dialog open={dialogOpen} maxWidth="xs" fullWidth style={{zIndex: 500}}>
       <DialogTitle>{TEXT_WHERE_DOES_THIS_ITEM_COME_FROM(itemType)}</DialogTitle>
@@ -302,17 +303,17 @@ export const DialogTraceItem = ({
         <Grid container spacing={2}>
           {hasBeenManualyEdited && (
             <React.Fragment>
- <Grid size={2} >
+              <Grid size={2}>
                 <InfoIcon fontSize="small" color="disabled" />
               </Grid>
- <Grid size={10} >
+              <Grid size={10}>
                 <Typography variant="body1">
                   {TEXT_THE_QUANTITY_HAS_BEEN_MANUALY_EDITED}
                 </Typography>
               </Grid>
             </React.Fragment>
           )}
- <Grid size={12} >
+          <Grid size={12}>
             <List key={`list_for_trace`}>
               {sortedMenues.map((menue) => {
                 const traceItems = trace?.filter(
@@ -335,7 +336,7 @@ export const DialogTraceItem = ({
                           <React.Fragment key={`${item}_${counter}`}>
                             {item.recipe.uid ? (
                               // List-Item nur mit Button, wenn auch ein Rezept dahinter steckt
-                              (<ListItemButton
+                              <ListItemButton
                                 onClick={onListItemClick}
                                 id={`listItemButton_${menue.menueUid}_${counter}_${item.recipe.uid}`}
                                 key={`listItemButton_${menue.menueUid}_${counter}_${item.recipe.uid}`}
@@ -366,7 +367,7 @@ export const DialogTraceItem = ({
                                   id={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
                                   key={`listItemTextQuantity_${menue.menueUid}_${counter}_${item.recipe.uid}`}
                                 />
-                              </ListItemButton>)
+                              </ListItemButton>
                             ) : (
                               <ListItem
                                 id={`listItem_${menue.menueUid}_${counter}_${item.recipe.uid}`}

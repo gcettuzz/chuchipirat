@@ -45,11 +45,14 @@ import {
   DELETE as TEXT_DELETE,
   ERROR_NO_RECIPES_FOUND as TEXT_ERROR_NO_RECIPES_FOUND,
   ARTICLE_ALREADY_ADDED as TEXT_ARTICLE_ALREADY_ADDED,
+  ARTICLE_ALREADY_IN_LIST as TEXT_ARTICLE_ALREADY_IN_LIST,
   REPLACE as TEXT_REPLACE,
   SUM as TEXT_SUM,
   ADD_OR_REPLACE_ARTICLE,
   KEEP_MANUALLY_ADDED_PRODUCTS as TEXT_KEEP_MANUALLY_ADDED_PRODUCTS,
   MANUALLY_ADDED_PRODUCTS as TEXT_MANUALLY_ADDED_PRODUCTS,
+  KEEP_MANUALLY_EDITED_PRODUCTS as TEXT_KEEP_MANUALLY_EDITED_PRODUCTS,
+  MANUALLY_EDITED_PRODUCTS as TEXT_MANUALLY_EDITED_PRODUCTS,
   CHECKED_ITEMS as TEXT_CHECKED_ITEMS,
   CHECKED_ITEMS_EXPLANATION as TEXT_CHECKED_ITEMS_EXPLANATION,
   KEEP as TEXT_KEEP,
@@ -146,6 +149,17 @@ interface UseShoppingListDialogsProps {
   onDispatchError: (error: Error) => void;
   onDispatchSnackbar: (severity: AlertColor, message: string) => void;
 }
+
+/**
+ * Prüft, ob eine Einkaufsliste manuell bearbeitete Artikel enthält.
+ *
+ * @param shoppingList Die zu prüfende Einkaufsliste.
+ * @returns `true`, wenn mindestens ein Artikel `manualEdit === true` hat.
+ */
+const hasManuallyEditedItems = (shoppingList: ShoppingList): boolean =>
+  Object.values(shoppingList.list).some((dept) =>
+    dept.items.some((item) => item.manualEdit === true),
+  );
 
 /* ===================================================================
 // ================================ Hook =============================
@@ -268,6 +282,25 @@ const useShoppingListDialogs = ({
         keepManuallyAddedItems = userInput.input == Action.KEEP ? true : false;
       }
 
+      let keepManuallyEditedItems = false;
+
+      if (shoppingList && hasManuallyEditedItems(shoppingList)) {
+        const userInput = (await customDialog({
+          dialogType: DialogType.selectOptions,
+          title: TEXT_MANUALLY_EDITED_PRODUCTS,
+          text: TEXT_KEEP_MANUALLY_EDITED_PRODUCTS(TEXT_SHOPPING_LIST),
+          options: [
+            {key: Action.DELETE, text: TEXT_DELETE},
+            {key: Action.KEEP, text: TEXT_KEEP},
+          ],
+        })) as SingleTextInputResult;
+
+        if (!userInput.valid) {
+          return;
+        }
+        keepManuallyEditedItems = userInput.input == Action.KEEP ? true : false;
+      }
+
       if (Object.values(checkedItems).length > 0) {
         const userInput = (await customDialog({
           dialogType: DialogType.selectOptions,
@@ -314,6 +347,7 @@ const useShoppingListDialogs = ({
         shoppingListCollection: shoppingListCollectionToRefresh,
         shoppingList: shoppingList!,
         keepManuallyAddedItems: keepManuallyAddedItems,
+        keepManuallyEditedItems: keepManuallyEditedItems,
         menueplan: menuplan,
         eventUid: event.uid,
         products: products,
@@ -754,16 +788,16 @@ const useShoppingListDialogs = ({
 
   const onDialogHandleItemOk = React.useCallback(
     async ({item, quantity, unit}: OnDialogAddItemOk) => {
+      let trace: ShoppingListTrace | undefined;
+      let collectionNeedsUpdate = false;
+
       if (!handleItemDialogValues.item.uid) {
         let product: ProductItem;
         let department: Department | undefined;
-        let trace: ShoppingListTrace | undefined;
         let userInput = {valid: false, input: ""} as SingleTextInputResult;
         let shoppingListItem: ShoppingListItem | undefined = undefined;
 
-        shoppingListCollection.lists[
-          selectedListItem!
-        ].properties.hasManuallyAddedItems = true;
+        collectionNeedsUpdate = true;
 
         if (item.itemType == ItemType.food) {
           product = item as ProductItem;
@@ -780,13 +814,15 @@ const useShoppingListDialogs = ({
           return;
         }
 
+        // Wenn eine Einheit angegeben ist, exakt nach UID + Einheit suchen;
+        // ohne Einheit reicht die UID, um ein Duplikat zu erkennen.
         shoppingListItem = shoppingList?.list[department.pos]?.items.find(
           (shoppingListItem) =>
             shoppingListItem.item.uid == item.uid &&
-            shoppingListItem.unit == unit,
+            (unit === "" || shoppingListItem.unit == unit),
         );
 
-        if (shoppingListItem && quantity != 0) {
+        if (shoppingListItem && quantity > 0) {
           userInput = (await customDialog({
             dialogType: DialogType.selectOptions,
             title: TEXT_ARTICLE_ALREADY_ADDED,
@@ -822,6 +858,25 @@ const useShoppingListDialogs = ({
               return;
           }
           shoppingListItem.manualEdit = true;
+        } else if (shoppingListItem) {
+          // Artikel existiert bereits, keine Menge eingegeben — Snackbar anzeigen und zum Artikel scrollen
+          onDispatchSnackbar(
+            "info",
+            TEXT_ARTICLE_ALREADY_IN_LIST(shoppingListItem.item.name),
+          );
+
+          // Dialog schliessen und zum bestehenden Artikel scrollen
+          setContextMenuSelectedItem(CONTEXT_MENU_SELECTED_ITEM_INITIAL_STATE);
+          setHandleItemDialogValues(ADD_ITEM_DIALOG_INITIAL_VALUES);
+
+          // Zum Artikel in der Liste scrollen (nutzt bestehendes MoreBtn-ID-Schema)
+          const targetId = `MoreBtn_${department!.pos}_${item.uid}_${shoppingListItem.unit}`;
+          setTimeout(() => {
+            document
+              .getElementById(targetId)
+              ?.scrollIntoView({behavior: "smooth", block: "center"});
+          }, 100);
+          return;
         } else {
           ShoppingList.addItem({
             shoppingListReference: shoppingList!,
@@ -849,11 +904,6 @@ const useShoppingListDialogs = ({
             itemType: item.itemType,
           });
         }
-        if (trace) {
-          const tempShoppingListCollection = {...shoppingListCollection};
-          tempShoppingListCollection.lists[selectedListItem!].trace = trace;
-          onShoppingCollectionUpdate(tempShoppingListCollection);
-        }
       } else {
         const existingItem = shoppingList?.list[
           contextMenuSelectedItem.departmentKey
@@ -866,10 +916,31 @@ const useShoppingListDialogs = ({
         if (existingItem) {
           if (existingItem.quantity !== quantity || existingItem.unit !== unit) {
             existingItem.manualEdit = true;
+            collectionNeedsUpdate = true;
           }
           existingItem.quantity = quantity;
           existingItem.unit = unit;
         }
+      }
+
+      // Collection aktualisieren: hasManuallyAddedItems setzen und/oder Trace updaten
+      if (collectionNeedsUpdate) {
+        const currentEntry = shoppingListCollection.lists[selectedListItem!];
+        const updatedCollection = {
+          ...shoppingListCollection,
+          lists: {
+            ...shoppingListCollection.lists,
+            [selectedListItem!]: {
+              ...currentEntry,
+              properties: {
+                ...currentEntry.properties,
+                hasManuallyAddedItems: true,
+              },
+              ...(trace && {trace}),
+            },
+          },
+        };
+        onShoppingCollectionUpdate(updatedCollection);
       }
 
       ShoppingList.save({
@@ -898,6 +969,7 @@ const useShoppingListDialogs = ({
       authUser,
       onShoppingCollectionUpdate,
       onDispatchError,
+      onDispatchSnackbar,
     ],
   );
 

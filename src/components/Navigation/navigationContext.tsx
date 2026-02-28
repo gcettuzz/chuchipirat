@@ -5,7 +5,7 @@ export enum NavigationObject {
   none = 0,
   home,
   menueplan,
-  groupConfigruation,
+  groupConfiguration,
   usedRecipes,
   shoppingList,
   materialList,

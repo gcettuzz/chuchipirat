@@ -1151,6 +1151,8 @@ export const DESCRIBE_YOUR_VARIANT =
   "Beschreibe, was deine Variante ausmacht. z.B. «laktosefrei», «ohne Erdnüsse» usw.";
 export const UNSAVED_CHANGES = "Ungespeicherte Änderungen";
 export const DISCARD_CHANGES = "Änderungen verwerfen";
+export const CONFIRM_DIET_SWITCH =
+  "Du hast bereits Werte eingegeben. Beim Wechsel gehen diese verloren. Möchtest du fortfahren?";
 export const RECALCULATE_PORTIONS = "Portionen neu berechnen";
 export const PORTIONS_RECALCULATED =
   "Portionen im Menüplan neu berechnet und die neuen Einstellungen wurden gespeichert.";
@@ -1216,6 +1218,15 @@ export const THE_QUANTITY_HAS_BEEN_MANUALY_EDITED =
   "Die automatische berechnete Menge wurde manuell angepasst.";
 export const ADDED_MANUALY = "manuell hinzugefügt";
 export const ARTICLE_ALREADY_ADDED = "Artikel bereits vorhanden";
+/**
+ * Snackbar-Meldung, wenn ein Artikel mit Menge 0 hinzugefügt wird,
+ * der bereits in der Einkaufsliste existiert.
+ *
+ * @param article Name des Artikels.
+ * @returns Formatierter Hinweistext.
+ */
+export const ARTICLE_ALREADY_IN_LIST = (article: string) =>
+  `«${article}» ist bereits in der Einkaufsliste vorhanden.`;
 export const ADD_OR_REPLACE_ARTICLE = (
   article: string,
   unit: string,
@@ -1228,6 +1239,9 @@ export const SUM = "Dazuzählen";
 export const MANUALLY_ADDED_PRODUCTS = "Manuell hinzugefügte Artikel";
 export const KEEP_MANUALLY_ADDED_PRODUCTS = (listName: string) =>
   `Diese ${listName} beinhaltet manuell hinzugefügte Artikel. Sollen diese bei der Aktualisierung beibehalten oder sollen sie aus der Liste gelöscht werden?`;
+export const MANUALLY_EDITED_PRODUCTS = "Manuell bearbeitete Artikel";
+export const KEEP_MANUALLY_EDITED_PRODUCTS = (listName: string) =>
+  `Diese ${listName} beinhaltet manuell bearbeitete Artikel. Sollen die Anpassungen bei der Aktualisierung beibehalten oder durch die neu berechneten Werte ersetzt werden?`;
 export const KEEP = "Behalten";
 export const CHECKED_ITEMS = "Abgehakte Artikel";
 export const CHECKED_ITEMS_EXPLANATION = (listName: string) =>

@@ -20,7 +20,6 @@ import {
   ListItemText,
   ListItemAvatar,
   Avatar,
-  Link,
   Box,
   Skeleton,
   SnackbarCloseReason,
@@ -67,7 +66,6 @@ import {
 } from "../Navigation/navigationContext";
 import CustomSnackbar, {Snackbar} from "../Shared/customSnackbar";
 import {useFirebase} from "../Firebase/firebaseContext";
-import Utils from "../Shared/utils.class";
 import SystemMessage from "../Admin/systemMessage.class";
 import {AlertSystemMessage} from "../Admin/systemMessage";
 import {General} from "../../constants/firebaseMessages";
@@ -239,11 +237,7 @@ const HomePage = () => {
   const [state, dispatch] = React.useReducer(homeReducer, inititialState);
   // Prüfen ob allenfalls eine Snackbar angezeigt werden soll
   // --> aus dem Prozess Anlass löschen
-  if (
-    location.state &&
-    location.state?.["snackbar"] &&
-    !state.snackbar.open
-  ) {
+  if (location.state && location.state?.["snackbar"] && !state.snackbar.open) {
     dispatch({
       type: ReducerActions.SET_SNACKBAR,
       payload: location.state?.["snackbar"],
@@ -388,7 +382,7 @@ const HomePage = () => {
         });
       })
       .catch((error) =>
-        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error})
+        dispatch({type: ReducerActions.GENERIC_ERROR, payload: error}),
       );
   };
   /* ------------------------------------------
@@ -398,11 +392,11 @@ const HomePage = () => {
     let event: Event | undefined;
 
     event = state.events.find(
-      (event) => event.uid === raisedEvent.currentTarget.name.split("_")[1]
+      (event) => event.uid === raisedEvent.currentTarget.name.split("_")[1],
     );
     if (!event && state.passedEvents.length > 0) {
       event = state.passedEvents.find(
-        (event) => event.uid === raisedEvent.currentTarget.name.split("_")[1]
+        (event) => event.uid === raisedEvent.currentTarget.name.split("_")[1],
       );
     }
 
@@ -413,7 +407,7 @@ const HomePage = () => {
       state: {
         action: Action.VIEW,
         event: event,
-      }
+      },
     });
   };
   const onCreateNewEvent = () => {
@@ -422,7 +416,7 @@ const HomePage = () => {
   const onRecipeClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     const recipeUid = event.currentTarget.name.split("_")[1];
     const recipe = state.recipes.find(
-      (recipe) => recipe.sourceObject.uid == recipeUid
+      (recipe) => recipe.sourceObject.uid == recipeUid,
     );
 
     if (!recipe) {
@@ -437,12 +431,12 @@ const HomePage = () => {
           pictureSrc: recipe.sourceObject.pictureSrc,
         },
         recipeType: RecipeType.public,
-      }
+      },
     });
   };
   const onFeedEntryCllick = (event: React.MouseEvent<HTMLElement>) => {
     const feedEntry = state.feed.find(
-      (feedEntry) => feedEntry.uid == event.currentTarget.id.split("_")[1]
+      (feedEntry) => feedEntry.uid == event.currentTarget.id.split("_")[1],
     );
     if (!feedEntry) {
       return;
@@ -454,7 +448,7 @@ const HomePage = () => {
         navigate(`${ROUTES.RECIPE}/${feedEntry.sourceObject.uid}`, {
           state: {
             action: Action.VIEW,
-          }
+          },
         });
         break;
       default:
@@ -465,7 +459,7 @@ const HomePage = () => {
             action: Action.VIEW,
             displayName: feedEntry.user.displayName,
             pictureSrc: feedEntry.user.pictureSrc,
-          }
+          },
         });
     }
   };
@@ -474,7 +468,7 @@ const HomePage = () => {
   // ------------------------------------------ */
   const handleSnackbarClose = (
     _event: globalThis.Event | SyntheticEvent<Element, globalThis.Event>,
-    reason: SnackbarCloseReason
+    reason: SnackbarCloseReason,
   ) => {
     if (reason === "clickaway") {
       return;
@@ -490,7 +484,7 @@ const HomePage = () => {
       <Container sx={classes.container} component="main" maxWidth="md">
         <Grid container spacing={2} justifyContent="center">
           {state.error && (
- <Grid size={12} key={"error"} >
+            <Grid size={12} key={"error"}>
               <AlertMessage
                 error={state.error}
                 messageTitle={TEXT_ALERT_TITLE_WAIT_A_MINUTE}
@@ -498,11 +492,11 @@ const HomePage = () => {
             </Grid>
           )}
           {state.systemMessage !== null && (
- <Grid size={12} key="systemMessage" >
+            <Grid size={12} key="systemMessage">
               <AlertSystemMessage systemMessage={state.systemMessage} />
             </Grid>
           )}
- <Grid size={12} >
+          <Grid size={12}>
             <HomeNextEvents
               events={state.events}
               isLoadingEvents={state.isLoadingEvents}
@@ -510,7 +504,7 @@ const HomePage = () => {
               onCreateNewEvent={onCreateNewEvent}
             />
           </Grid>
- <Grid size={12} >
+          <Grid size={12}>
             <HomePassedEvents
               events={state.passedEvents}
               isLoadingPassedEvents={state.isLoadingPassedEvents}
@@ -518,41 +512,24 @@ const HomePage = () => {
               onShowPassedEvents={onShowPassedEvents}
             />
           </Grid>
- <Grid size={12} >
+          <Grid size={12}>
             <Divider style={{marginBottom: "2rem"}} />
           </Grid>
-          {Utils.isTestEnviroment() && (
- <Grid size={12} >
-              <Typography variant="h5" align="center" gutterBottom>
-                Testing
-              </Typography>
-              <Typography variant="h5" align="center" gutterBottom>
-                <Link
-                  href="https://help.chuchipirat.ch/known_errors"
-                  target="_blank"
-                >
-                  --» Aktuell bekannte Fehler «--
-                </Link>
-              </Typography>
-              <br />
-              <Divider style={{marginBottom: "2rem"}} />
-            </Grid>
-          )}
- <Grid size={{ xs: 12, md: 4 }} >
+          <Grid size={{xs: 12, md: 4}}>
             <HomeNewestRecipes
               recipes={state.recipes}
               isLoadingRecipes={state.isLoadingEvents}
               onCardClick={onRecipeClick}
             />
           </Grid>
- <Grid size={{ xs: 12, md: 4 }} >
+          <Grid size={{xs: 12, md: 4}}>
             <HomeFeed
               feed={state.feed}
               isLoadingFeed={state.isLoadingFeed}
               onListEntryClick={onFeedEntryCllick}
             />
           </Grid>
- <Grid size={{ xs: 12, md: 4 }} >
+          <Grid size={{xs: 12, md: 4}}>
             <HomeStats
               stats={state.stats}
               isLoadingStats={state.isLoadingStats}
@@ -604,12 +581,15 @@ const HomeNextEvents = ({
     <React.Fragment>
       <Grid container spacing={2} justifyContent="center">
         {isLoadingEvents && (
- <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} >
+          <Grid size={{xs: 12, sm: 6, md: 4, lg: 3}}>
             <EventCardLoading key={"loadingEventCard"} />
           </Grid>
         )}
         {events.map((event) => (
- <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={"eventGrid_" + event.uid}>
+          <Grid
+            size={{xs: 12, sm: 6, md: 4, lg: 3}}
+            key={"eventGrid_" + event.uid}
+          >
             <EventCard
               event={event}
               onCardClick={onCardClick}
@@ -617,7 +597,7 @@ const HomeNextEvents = ({
             />
           </Grid>
         ))}
- <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} >
+        <Grid size={{xs: 12, sm: 6, md: 4, lg: 3}}>
           <Card sx={classes.card} key={"eventCardNew"}>
             <CardMedia
               sx={classes.cardMedia}
@@ -674,14 +654,14 @@ const HomePassedEvents = ({
   breakpointIsXs
     ? (rowFiller = [])
     : breakpointIsSm
-    ? (rowFiller = [...Array(events.length % 2).keys()])
-    : (rowFiller = [...Array(events.length % 3).keys()]);
+      ? (rowFiller = [...Array(events.length % 2).keys()])
+      : (rowFiller = [...Array(events.length % 3).keys()]);
 
   return (
     <React.Fragment>
       <Grid container spacing={2} justifyContent="center">
         {showLoadPassedEvents ? (
- <Grid size={12} sx={classes.centerCenter}>
+          <Grid size={12} sx={classes.centerCenter}>
             <Button
               color="primary"
               sx={classes.button}
@@ -691,7 +671,7 @@ const HomePassedEvents = ({
             </Button>
           </Grid>
         ) : (
- <Grid size={12} sx={classes.centerCenter}>
+          <Grid size={12} sx={classes.centerCenter}>
             <Typography
               variant="h5"
               align="center"
@@ -704,17 +684,20 @@ const HomePassedEvents = ({
         )}
         {isLoadingPassedEvents && (
           <React.Fragment>
- <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} >
+            <Grid size={{xs: 12, sm: 6, md: 4, lg: 3}}>
               <EventCardLoading />
             </Grid>
- <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} >
+            <Grid size={{xs: 12, sm: 6, md: 4, lg: 3}}>
               <EventCardLoading />
             </Grid>
           </React.Fragment>
         )}
         {!showLoadPassedEvents &&
           events.map((event) => (
- <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={"eventGrid_" + event.uid}>
+            <Grid
+              size={{xs: 12, sm: 6, md: 4, lg: 3}}
+              key={"eventGrid_" + event.uid}
+            >
               <EventCard
                 event={event}
                 onCardClick={onCardClick}
@@ -724,7 +707,8 @@ const HomePassedEvents = ({
           ))}
         {!showLoadPassedEvents &&
           rowFiller.map((number) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+            <Grid
+              size={{xs: 12, sm: 6, md: 4, lg: 3}}
               key={"gridRowFiller_" + number}
             />
           ))}
@@ -760,7 +744,7 @@ const HomeNewestRecipes = ({
 
   return (
     <Grid container spacing={2} justifyContent="center">
- <Grid size={12} key={"recipeTitle"}>
+      <Grid size={12} key={"recipeTitle"}>
         <Typography
           align="center"
           gutterBottom={true}
@@ -772,12 +756,12 @@ const HomeNewestRecipes = ({
       </Grid>
       {isLoadingRecipes &&
         Array(DEFAULT_RECIPE_DISPLAY).map((emptyCard) => (
- <Grid size={12} key={"emptyRecipeGrid_" + emptyCard}>
+          <Grid size={12} key={"emptyRecipeGrid_" + emptyCard}>
             <RecipeCardLoading key={"emptyRecipeCard_" + emptyCard} />
           </Grid>
         ))}
       {recipes.map((recipe) => (
- <Grid size={12} key={"recipeGrid_" + recipe.uid}>
+        <Grid size={12} key={"recipeGrid_" + recipe.uid}>
           <Card
             sx={classes.card}
             onMouseOver={() => handleHover(recipe.uid)}
@@ -830,7 +814,7 @@ const HomeFeed = ({feed, isLoadingFeed, onListEntryClick}: HomeFeedProps) => {
   const classes = useCustomStyles();
   return (
     <Grid container spacing={2} justifyContent="center">
- <Grid size={12} >
+      <Grid size={12}>
         <Typography
           align="center"
           gutterBottom={true}
@@ -840,7 +824,7 @@ const HomeFeed = ({feed, isLoadingFeed, onListEntryClick}: HomeFeedProps) => {
           {TEXT_FEED}
         </Typography>
       </Grid>
- <Grid size={12} >
+      <Grid size={12}>
         <Card sx={classes.card}>
           <List>
             {isLoadingFeed &&
@@ -852,7 +836,7 @@ const HomeFeed = ({feed, isLoadingFeed, onListEntryClick}: HomeFeedProps) => {
                       secondary={<Skeleton />}
                     />
                   </ListItem>
-                )
+                ),
               )}
             {feed.map((feedEntry, counter) => (
               <React.Fragment key={"feed_" + feedEntry.uid}>
@@ -912,7 +896,7 @@ const HomeStats = ({stats, isLoadingStats}: HomeStatsProps) => {
   const classes = useCustomStyles();
   return (
     <Grid container spacing={2} justifyContent="center">
- <Grid size={12} >
+      <Grid size={12}>
         <Typography
           align="center"
           gutterBottom={true}
@@ -922,7 +906,7 @@ const HomeStats = ({stats, isLoadingStats}: HomeStatsProps) => {
           {TEXT_STATS}
         </Typography>
       </Grid>
- <Grid size={12} >
+      <Grid size={12}>
         <Card sx={classes.card}>
           <List>
             {isLoadingStats

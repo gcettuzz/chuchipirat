@@ -50,4 +50,8 @@ jest_html_reporters.html
 mailTemplates/
 .vscode/launch.json
 
-
+# Supabase local dev (runtime data, secrets)
+supabase/volumes/
+supabase/dev/
+supabase/.env
+supabase/.temp/

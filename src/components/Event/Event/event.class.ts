@@ -28,7 +28,6 @@ import UserPublicProfile, {
 import {
   Operator,
   SortOrder,
-  ValueObject,
 } from "../../Firebase/Db/firebase.db.super.class";
 import Role from "../../../constants/roles";
 import {ChangeRecord} from "../../Shared/global.interface";
@@ -36,7 +35,6 @@ import FieldValidationError, {
   FormValidationFieldError,
 } from "../../Shared/fieldValidation.error.class";
 import EventShort from "./eventShort.class";
-import _ from "lodash";
 import Menuplan, {Menue} from "../Menuplan/menuplan.class";
 import ShoppingListCollection from "../ShoppingList/shoppingListCollection.class";
 import Recipe from "../../Recipe/recipe.class";
@@ -47,16 +45,18 @@ import {getSupportUserUid} from "../../../constants/defaultValues";
 import {CloudFunctionActivateSupportUserDocumentStructure} from "../../Firebase/Db/firebase.db.cloudfunction.activateSupportUser.class";
 import {logEvent} from "firebase/analytics";
 
-export const EVENT_TYPES = {
-  TYPE_ACTUAL: "actual",
-  TYPE_HISTORY: "history",
-};
-
+/**
+ * Typ eines Events – unterscheidet zwischen aktuellem und historischem Anlass.
+ */
 export enum EventType {
   actual = "actual",
   history = "history",
 }
 
+/**
+ * Dokumententypen, die einem Event zugeordnet werden können.
+ * Wird verwendet, um zu tracken, welche Sub-Dokumente für einen Event existieren.
+ */
 export enum EventRefDocuments {
   usedRecipes = 1,
   shoppingList,
@@ -65,22 +65,28 @@ export enum EventRefDocuments {
   receipt,
 }
 
+/**
+ * Koch/Teammitglied eines Events mit öffentlichem Profil und UID.
+ */
 export interface Cook extends AuthUserPublicProfile {
+  /** Eindeutige Benutzer-ID des Kochs. */
   uid: string;
 }
 
+/**
+ * Zeitscheibe eines Events mit Von-/Bis-Datum und Positionierung.
+ */
 export interface EventDate {
+  /** Eindeutige ID der Zeitscheibe. */
   uid: string;
+  /** Position in der sortierten Reihenfolge. */
   pos: number;
+  /** Startdatum der Zeitscheibe. */
   from: Date;
+  /** Enddatum der Zeitscheibe. */
   to: Date;
 }
-interface AddEmptyEntry {
-  array: ValueObject[];
-  pos: number;
-  emptyObject: ValueObject;
-  renumberByField: string;
-}
+
 interface AddCookToEvent {
   firebase: Firebase;
   authUser: AuthUser;
@@ -164,6 +170,12 @@ interface RegisterSupportUser {
   }: CloudFunctionActivateSupportUserDocumentStructure) => void;
   errorCallback: (error: Error) => void;
 }
+
+/**
+ * Zentrale Modellklasse für einen Event (Anlass).
+ * Enthält CRUD-Operationen, Bildverwaltung, Validierung und Analytik.
+ * Alle Datenbankzugriffe laufen über die Firebase-Abstraktion.
+ */
 export default class Event {
   uid: string;
   name: string;
@@ -181,6 +193,9 @@ export default class Event {
   /* =====================================================================
   // Constructor
   // ===================================================================== */
+  /**
+   * Erstellt eine neue, leere Event-Instanz mit Standardwerten.
+   */
   constructor() {
     this.uid = "";
     this.name = "";
@@ -198,6 +213,13 @@ export default class Event {
   /* =====================================================================
   // Factory
   // ===================================================================== */
+  /**
+   * Erzeugt ein neues Event mit dem angemeldeten Benutzer als erstem Koch
+   * und einer leeren Datumszeile.
+   *
+   * @param authUser Der aktuell angemeldete Benutzer.
+   * @returns Neues Event mit Standardwerten und einem Koch.
+   */
   static factory(authUser: AuthUser) {
     const event = new Event();
     if (authUser) {
@@ -219,6 +241,11 @@ export default class Event {
   /* =====================================================================
   // Leere Datumszeile erzeugen
   // ===================================================================== */
+  /**
+   * Erzeugt einen leeren Datumseintrag mit generierter UID.
+   *
+   * @returns Neuer Datumseintrag mit Epoch-Daten (1.1.1970) und Position 0.
+   */
   static createDateEntry(): EventDate {
     return {
       uid: Utils.generateUid(5),
@@ -228,25 +255,116 @@ export default class Event {
     };
   }
   /* =====================================================================
-  // Eintrag in Array hinzufügen
+  // Datumsfelder validieren (Von/Bis-Konsistenz und Überlappungen)
   // ===================================================================== */
-  static addEmptyEntry({
-    array,
-    pos,
-    emptyObject,
-    renumberByField,
-  }: AddEmptyEntry) {
-    array = Utils.insertArrayElementAtPosition({
-      array: array,
-      indexToInsert: pos - 1,
-      newElement: emptyObject,
+  /**
+   * Validiert die Datumseinträge eines Events auf Konsistenz und Überlappungen.
+   * Prüft ob Von-/Bis-Daten gesetzt sind, ob Von vor Bis liegt und ob sich
+   * Zeitscheiben überschneiden.
+   *
+   * @param dates Array der zu prüfenden Datumseinträge.
+   * @returns Array mit Validierungsfehlern (leer wenn alles korrekt).
+   */
+  static validateDates(dates: EventDate[]): FormValidationFieldError[] {
+    const errors: FormValidationFieldError[] = [];
+
+    // Prüfen ob Von- und Bis-Datum konsistent
+    const epoch = new Date(0).getTime();
+    dates.forEach((date) => {
+      const fromEmpty = date.from.getTime() === epoch;
+      const toEmpty = date.to.getTime() === epoch;
+
+      // Komplett leere Zeile überspringen – kein Fehler
+      if (fromEmpty && toEmpty) {
+        return;
+      }
+
+      if (fromEmpty) {
+        errors.push({
+          priority: 2,
+          fieldName: "dateFrom_" + date.uid,
+          errorMessage: TEXT_ERROR_FROM_DATE_EMPTY,
+          errorObject: date,
+        });
+      }
+      if (toEmpty) {
+        errors.push({
+          priority: 2,
+          fieldName: "dateTo_" + date.uid,
+          errorMessage: TEXT_ERROR_TO_DATE_EMPTY,
+          errorObject: date,
+        });
+      }
+      if (date.from > date.to && date.to.getFullYear() !== 1970) {
+        errors.push({
+          priority: 3,
+          fieldName: "dateFrom_" + date.uid,
+          errorMessage: TEXT_ERROR_FROM_DATE_BIGGER_THAN_TO_DATE,
+          errorObject: date,
+        });
+        // Beide Felder als Fehler markieren
+        errors.push({
+          priority: 3,
+          fieldName: "dateTo_" + date.uid,
+          errorMessage: "",
+          errorObject: date,
+        });
+      }
     });
-    array = Utils.renumberArray({array: array, field: renumberByField});
-    return array;
+
+    // Prüfen ob Zeitscheiben überlappend (leere Zeilen ignorieren)
+    const nonEmptyDates = dates.filter(
+      (d) => d.from.getTime() !== epoch || d.to.getTime() !== epoch,
+    );
+    nonEmptyDates.forEach((outerDate, outerCounter) => {
+      nonEmptyDates.forEach((innerDate, innerCounter) => {
+        if (outerCounter !== innerCounter) {
+          if (
+            outerDate.from >= innerDate.from &&
+            outerDate.from <= innerDate.to
+          ) {
+            errors.push({
+              priority: 3,
+              fieldName: "dateFrom_" + outerDate.uid,
+              errorMessage: TEXT_ERROR_OVERLAPPING_DATES(innerCounter + 1),
+              errorObject: outerDate,
+            });
+            errors.push({
+              priority: 3,
+              fieldName: "dateTo_" + outerDate.uid,
+              errorMessage: "",
+              errorObject: outerDate,
+            });
+            // Die Überlappung auch als Fehler markieren
+            errors.push({
+              priority: 3,
+              fieldName: "dateFrom_" + innerDate.uid,
+              errorMessage: TEXT_ERROR_OVERLAPPING_DATES(outerCounter + 1),
+              errorObject: innerCounter,
+            });
+            errors.push({
+              priority: 3,
+              fieldName: "dateTo_" + innerDate.uid,
+              errorMessage: "",
+              errorObject: innerCounter,
+            });
+          }
+        }
+      });
+    });
+
+    return errors;
   }
   /* =====================================================================
   // Daten prüfen
   // ===================================================================== */
+  /**
+   * Prüft die Pflichtfelder eines Events und wirft eine Exception bei Fehlern.
+   * Validiert Name, Köche und Datumsangaben.
+   *
+   * @param event Das zu prüfende Event.
+   * @throws {FieldValidationError} Wenn Pflichtfelder fehlen oder Daten ungültig sind.
+   */
   static checkEventData(event: Event) {
     const formValidation: FormValidationFieldError[] = [];
     if (!event.name) {
@@ -265,81 +383,10 @@ export default class Event {
       });
     }
 
-    // Prüfen ob Von- und Bis-Datum konsistent
-    event.dates.forEach((date) => {
-      if (date.from.getTime() == new Date(0).getTime()) {
-        formValidation.push({
-          priority: 2,
-          fieldName: "dateFrom_" + date.uid,
-          errorMessage: TEXT_ERROR_FROM_DATE_EMPTY,
-          errorObject: date,
-        });
-        // throw new Error(`Bei der Position ${counter + 1} fehlt das Von-Datum.`);
-      }
-      if (date.to.getTime() == new Date(0).getTime()) {
-        formValidation.push({
-          priority: 2,
-          fieldName: "dateTo_" + date.uid,
-          errorMessage: TEXT_ERROR_TO_DATE_EMPTY,
-          errorObject: date,
-        });
-      }
-      if (date.from > date.to && date.to.getFullYear() != 1970) {
-        formValidation.push({
-          priority: 3,
-          fieldName: "dateFrom_" + date.uid,
-          errorMessage: TEXT_ERROR_FROM_DATE_BIGGER_THAN_TO_DATE,
-          errorObject: date,
-        });
-        // Beide Felder als Fehler markieren
-        formValidation.push({
-          priority: 3,
-          fieldName: "dateTo_" + date.uid,
-          errorMessage: "",
-          errorObject: date,
-        });
-      }
-    });
+    // Datumsvalidierung delegieren
+    formValidation.push(...Event.validateDates(event.dates));
 
-    // Prüfen ob Zeitscheiben überlappend
-    event.dates.forEach((outerDate, outerCounter) => {
-      event.dates.forEach((innerDate, innerCounter) => {
-        if (outerCounter !== innerCounter) {
-          if (
-            outerDate.from >= innerDate.from &&
-            outerDate.from <= innerDate.to
-          ) {
-            formValidation.push({
-              priority: 3,
-              fieldName: "dateFrom_" + outerDate.uid,
-              errorMessage: TEXT_ERROR_OVERLAPPING_DATES(innerCounter + 1),
-              errorObject: outerDate,
-            });
-            formValidation.push({
-              priority: 3,
-              fieldName: "dateTo_" + outerDate.uid,
-              errorMessage: "",
-              errorObject: outerDate,
-            });
-            // Die Überlappung auch als Fehler markieren
-            formValidation.push({
-              priority: 3,
-              fieldName: "dateFrom_" + innerDate.uid,
-              errorMessage: TEXT_ERROR_OVERLAPPING_DATES(outerCounter + 1),
-              errorObject: innerCounter,
-            });
-            formValidation.push({
-              priority: 3,
-              fieldName: "dateTo_" + innerDate.uid,
-              errorMessage: "",
-              errorObject: innerCounter,
-            });
-          }
-        }
-      });
-    });
-    // wenn nicht leer, Exception
-    if (formValidation.length != 0) {
+    if (formValidation.length !== 0) {
       throw new FieldValidationError(
         TEXT_ERROR_FORM_VALIDATION,
         formValidation,
@@ -349,14 +396,25 @@ export default class Event {
   /* =====================================================================
   // Person/Koch hinzufügen
   // ===================================================================== */
+  /**
+   * Fügt einen Koch zur Kochmannschaft des Events hinzu.
+   * Speichert die Änderung in der DB (falls der Event bereits existiert),
+   * vergibt Credits und erstellt einen Feed-Eintrag.
+   *
+   * @param firebase Firebase-Instanz für DB-Zugriff.
+   * @param authUser Der aktuell angemeldete Benutzer.
+   * @param cookPublicProfile Öffentliches Profil des neuen Kochs.
+   * @param event Der Event, dem der Koch hinzugefügt wird.
+   * @returns Aktualisiertes Array der Köche.
+   */
   /* istanbul ignore next */
   /* DB-Methode wird zur Zeit nicht geprüft */
-  static addCookToEvent = async ({
+  static async addCookToEvent({
     firebase,
     authUser,
     cookPublicProfile,
     event,
-  }: AddCookToEvent) => {
+  }: AddCookToEvent) {
     // Neue Person in Kochmannschaft aufnehmen
     event.cooks.push({
       displayName: cookPublicProfile.displayName,
@@ -397,20 +455,30 @@ export default class Event {
       });
       logEvent(firebase.analytics, FirebaseAnalyticEvent.eventCookAdded);
     }
-    // Analytik
 
     return event.cooks;
-  };
+  }
 
   /* =====================================================================
   // Person/Koch entfernen
   // ===================================================================== */
-  static removeCookFromEvent = async ({
+  /**
+   * Entfernt einen Koch aus der Kochmannschaft des Events.
+   * Speichert die Änderung in der DB (falls der Event bereits existiert)
+   * und reduziert die Credits des entfernten Kochs.
+   *
+   * @param firebase Firebase-Instanz für DB-Zugriff.
+   * @param authUser Der aktuell angemeldete Benutzer.
+   * @param cookUidToRemove UID des zu entfernenden Kochs.
+   * @param event Der Event, aus dem der Koch entfernt wird.
+   * @returns Aktualisiertes Array der Köche.
+   */
+  static async removeCookFromEvent({
     firebase,
     authUser,
     cookUidToRemove,
     event,
-  }: RemoveCookFromEvent) => {
+  }: RemoveCookFromEvent) {
     event.cooks = event.cooks.filter((cook) => cook.uid !== cookUidToRemove);
 
     if (event.uid) {
@@ -423,51 +491,56 @@ export default class Event {
       });
 
       // Dem User Credit nehmen
-      UserPublicProfile.incrementField({
+      await UserPublicProfile.incrementField({
         firebase: firebase,
         field: UserPublicProfileStatsFields.noEvents,
         uid: cookUidToRemove,
         step: -1,
-      }).catch((error) => {
-        console.error(error);
-        throw error;
       });
     }
     logEvent(firebase.analytics, FirebaseAnalyticEvent.eventCookRemoved);
 
     return event.cooks;
-  };
+  }
   /* =====================================================================
   // Daten in Firebase SPEICHERN
   // ===================================================================== */
+  /**
+   * Speichert einen Event in Firebase (neu anlegen oder aktualisieren).
+   * Verwaltet auch das Hochladen/Löschen von Bildern, EventShort-Übersicht,
+   * Statistiken, Credits und Feed-Einträge.
+   *
+   * @param firebase Firebase-Instanz für DB-Zugriff.
+   * @param event Der zu speichernde Event.
+   * @param authUser Der aktuell angemeldete Benutzer.
+   * @param localPicture Optionales lokales Bild zum Hochladen.
+   * @returns Der gespeicherte Event mit aktualisierter UID.
+   * @throws {FieldValidationError} Wenn die Event-Daten ungültig sind.
+   */
   static async save({firebase, event, authUser, localPicture}: Save) {
     let newEvent = false;
-    let eventData = _.cloneDeep(event);
+    let eventData = structuredClone(event);
     eventData.dates = Event.deleteEmptyDates(eventData.dates);
     eventData = Event.prepareSave(eventData);
     Event.checkEventData(eventData);
 
     if (!eventData.uid) {
       newEvent = true;
-      await firebase.event
-        .create<Event>({value: eventData, authUser: authUser})
-        .then(async (result) => {
-          eventData = result.value;
+      const createResult = await firebase.event.create<Event>({
+        value: eventData,
+        authUser: authUser,
+      });
+      eventData = createResult.value;
 
-          // Bild hochladen, wenn vorhanden
-          if (localPicture instanceof File) {
-            await Event.uploadPicture({
-              firebase: firebase,
-              event: eventData,
-              file: localPicture,
-              authUser: authUser,
-            }).then((result) => (event.pictureSrc = result));
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-          throw error;
+      // Bild hochladen, wenn vorhanden
+      if (localPicture instanceof File) {
+        event.pictureSrc = await Event.uploadPicture({
+          firebase: firebase,
+          event: eventData,
+          file: localPicture,
+          authUser: authUser,
         });
+      }
     } else {
       if (localPicture instanceof File) {
         // Falls ein Bild bereits vorhanden ist, zuerst löschen
@@ -479,31 +552,24 @@ export default class Event {
           });
         }
 
-        await Event.uploadPicture({
+        eventData.pictureSrc = await Event.uploadPicture({
           firebase: firebase,
           event: eventData,
           file: localPicture,
           authUser: authUser,
-        }).then((result) => {
-          eventData.pictureSrc = result;
         });
       }
 
-      await firebase.event
-        .update<Event>({
-          uids: [event.uid],
-          value: eventData,
-          authUser: authUser,
-        })
-        .catch((error) => {
-          console.error(error);
-          throw error;
-        });
+      await firebase.event.update<Event>({
+        uids: [event.uid],
+        value: eventData,
+        authUser: authUser,
+      });
     }
 
-    // übersichtsfile anpassen
+    // Übersichtsfile anpassen
     await firebase.eventShort.updateFields({
-      uids: [""], // wird in der Klasse bestimmt,
+      uids: [""], // wird in der Klasse bestimmt
       values: {
         [eventData.uid]: EventShort.createShortEventFromEvent(eventData),
       },
@@ -511,9 +577,7 @@ export default class Event {
     });
 
     if (newEvent) {
-      // Event auslösen
       logEvent(firebase.analytics, FirebaseAnalyticEvent.eventCreated);
-      // Statistik
       Stats.incrementStats({
         firebase: firebase,
         values: [
@@ -531,7 +595,7 @@ export default class Event {
           step: 1,
         }),
       );
-      // Feed Eintrag
+      // Feed-Eintrag
       Feed.createFeedEntry({
         firebase: firebase,
         authUser: authUser,
@@ -548,7 +612,7 @@ export default class Event {
       });
     }
 
-    // sicherstellen, dass Daten mindestens einen Eintrag haben
+    // Sicherstellen, dass Daten mindestens einen Eintrag haben
     if (eventData.dates.length === 0) {
       event.dates.push(Event.createDateEntry());
     }
@@ -557,12 +621,15 @@ export default class Event {
   /* =====================================================================
   // Speichern vorbereiten
   // ===================================================================== */
+  /**
+   * Bereitet einen Event fürs Speichern vor: berechnet maxDate,
+   * Anzahl Tage, sortiert Dates und extrahiert berechtigte Benutzer.
+   *
+   * @param event Der vorzubereitende Event (wird mutiert).
+   * @returns Der angepasste Event.
+   */
   static prepareSave(event: Event) {
     // Max-Datum bestimmen
-    event.maxDate = event.dates.reduce((max, date) => {
-      return date.to > max ? date.to : max;
-    }, new Date());
-
     event.maxDate = event.dates.reduce((maxDate, currentDate) => {
       // Vergleiche das "To Date" des aktuellen Elements mit dem bisher höchsten "To Date"
       return currentDate.to > maxDate.to ? currentDate : maxDate;
@@ -585,133 +652,104 @@ export default class Event {
     event.authUsers = this.getAuthUsersFromCooks(event.cooks);
     return event;
   }
+  /* =====================================================================
+  // Anlass löschen
   // ===================================================================== */
   /**
-   * Anlass löschen
-   * @param Object - Objekt mit Event, Firebase, Authuser
+   * Löscht einen Event und alle zugehörigen Dokumente (Rezeptvarianten,
+   * Einkaufsliste, Materialliste, Menüplan, Gruppenkonfiguration, Bild).
+   * Passt Statistiken und Credits an.
+   *
+   * @param event Der zu löschende Event.
+   * @param firebase Firebase-Instanz für DB-Zugriff.
+   * @param authUser Der aktuell angemeldete Benutzer (muss Koch des Events sein).
    */
-  static delete = async ({event, firebase, authUser}: Delete) => {
-    if (!event.cooks.find((cook) => cook.uid == authUser.uid)) {
+  static async delete({event, firebase, authUser}: Delete) {
+    if (!event.cooks.find((cook) => cook.uid === authUser.uid)) {
       return;
     }
 
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(1);
-      }, 1);
-    })
-      .then(async () => {
-        // Zuerst alle angehörigen Dokumente löschen
-        if (event.refDocuments?.includes(EventRefDocuments.recipeVariants)) {
-          await Recipe.deleteAllVariants({
-            eventUid: event.uid,
-            firebase: firebase,
-            authUser: authUser,
-          });
-        }
-      })
-      .then(async () => {
-        if (event.refDocuments?.includes(EventRefDocuments.usedRecipes)) {
-          await UsedRecipes.delete({
-            eventUid: event.uid,
-            firebase: firebase,
-          }).catch((error) => {
-            console.error(error);
-            throw error;
-          });
-        }
-      })
-      .then(async () => {
-        if (event.refDocuments?.includes(EventRefDocuments.shoppingList)) {
-          await ShoppingListCollection.delete({
-            eventUid: event.uid,
-            firebase: firebase,
-          }).catch((error) => {
-            console.error(error);
-            throw error;
-          });
-        }
-      })
-      .then(async () => {
-        if (event.refDocuments?.includes(EventRefDocuments.materialList)) {
-          await MaterialList.delete({
-            eventUid: event.uid,
-            firebase: firebase,
-          }).catch((error) => {
-            console.error(error);
-            throw error;
-          });
-        }
-      })
-      .then(async () => {
-        await EventGroupConfiguration.delete({
-          eventUid: event.uid,
-          firebase: firebase,
-        }).catch((error) => {
-          console.error(error);
-          throw error;
-        });
-      })
-      .then(async () => {
-        await Menuplan.delete({eventUid: event.uid, firebase: firebase}).catch(
-          (error) => {
-            console.error(error);
-            throw error;
-          },
-        );
-      })
-      .then(async () => {
-        // Feld aus übersicht löschen
-        await EventShort.delete({event: event, firebase: firebase}).catch(
-          (error) => {
-            console.error(error);
-            throw error;
-          },
-        );
-      })
-      .then(async () => {
-        // Statistik anpassen
-        Stats.incrementStats({
-          firebase: firebase,
-          values: [
-            {field: StatsField.noEvents, value: -1},
-            {field: StatsField.noPlanedDays, value: event.numberOfDays * -1},
-          ],
-        });
-      })
-      .then(async () => {
-        // Credits den Köchen wieder enthnehmen
-        event.cooks.forEach((cook) =>
-          UserPublicProfile.incrementField({
-            firebase: firebase,
-            field: UserPublicProfileStatsFields.noEvents,
-            uid: cook.uid,
-            step: -1,
-          }),
-        );
-      })
-      .then(async () => {
-        if (event.pictureSrc) {
-          Event.deletePicture({
-            firebase: firebase,
-            event: event,
-            authUser: authUser,
-            updateEventDocument: false,
-          });
-        }
-      })
-      .then(async () => {
-        await firebase.event.delete({uids: [event.uid]}).catch((error) => {
-          console.error(error);
-          throw error;
-        });
+    // Zuerst alle angehörigen Dokumente löschen
+    if (event.refDocuments?.includes(EventRefDocuments.recipeVariants)) {
+      await Recipe.deleteAllVariants({
+        eventUid: event.uid,
+        firebase: firebase,
+        authUser: authUser,
       });
+    }
+
+    if (event.refDocuments?.includes(EventRefDocuments.usedRecipes)) {
+      await UsedRecipes.delete({
+        eventUid: event.uid,
+        firebase: firebase,
+      });
+    }
+
+    if (event.refDocuments?.includes(EventRefDocuments.shoppingList)) {
+      await ShoppingListCollection.delete({
+        eventUid: event.uid,
+        firebase: firebase,
+      });
+    }
+
+    if (event.refDocuments?.includes(EventRefDocuments.materialList)) {
+      await MaterialList.delete({
+        eventUid: event.uid,
+        firebase: firebase,
+      });
+    }
+
+    await EventGroupConfiguration.delete({
+      eventUid: event.uid,
+      firebase: firebase,
+    });
+
+    await Menuplan.delete({eventUid: event.uid, firebase: firebase});
+
+    // Feld aus Übersicht löschen
+    await EventShort.delete({event: event, firebase: firebase});
+
+    // Statistik anpassen
+    Stats.incrementStats({
+      firebase: firebase,
+      values: [
+        {field: StatsField.noEvents, value: -1},
+        {field: StatsField.noPlanedDays, value: event.numberOfDays * -1},
+      ],
+    });
+
+    // Credits den Köchen wieder entziehen
+    event.cooks.forEach((cook) =>
+      UserPublicProfile.incrementField({
+        firebase: firebase,
+        field: UserPublicProfileStatsFields.noEvents,
+        uid: cook.uid,
+        step: -1,
+      }),
+    );
+
+    if (event.pictureSrc) {
+      await Event.deletePicture({
+        firebase: firebase,
+        event: event,
+        authUser: authUser,
+        updateEventDocument: false,
+      });
+    }
+
+    await firebase.event.delete({uids: [event.uid]});
 
     logEvent(firebase.analytics, FirebaseAnalyticEvent.eventDeleted);
-  };
+  }
   /* =====================================================================
-  // Dauer des Event bestimmen
+  // Dauer des Events bestimmen
   // ===================================================================== */
+  /**
+   * Berechnet die Gesamtdauer eines Events in Tagen anhand der Zeitscheiben.
+   *
+   * @param dates Array der Datumseinträge des Events.
+   * @returns Gesamtanzahl Tage über alle Zeitscheiben.
+   */
   static defineEventDuration(dates: Event["dates"]) {
     return dates.reduce((result, dateSlice) => {
       const difference = Utils.differenceBetweenTwoDates({
@@ -727,283 +765,273 @@ export default class Event {
     }, 0);
   }
   /* =====================================================================
-  // Bild in Firebase Storage hochladen
+  // Berechtigte Benutzer aus Kochmannschaft extrahieren
   // ===================================================================== */
+  /**
+   * Extrahiert die UIDs aller Köche als Array berechtigter Benutzer.
+   *
+   * @param cooks Array der Köche des Events.
+   * @returns Array mit den UIDs der Köche.
+   */
   static getAuthUsersFromCooks(cooks: Cook[]) {
-    const authUsers: string[] = [];
-    // Berechtigte Users in Array speicher
-    cooks.forEach((cook) => authUsers.push(cook.uid));
-    return authUsers;
+    return cooks.map((cook) => cook.uid);
   }
   /* =====================================================================
   // Leere Daten löschen
   // ===================================================================== */
+  /**
+   * Entfernt leere Datumszeilen (Von und Bis = 1.1.1970), behält aber immer
+   * den ersten Eintrag, damit mindestens eine Zeile vorhanden bleibt.
+   *
+   * @param dates Array der Datumseinträge.
+   * @returns Gefiltertes Array ohne leere Einträge (ausser dem ersten).
+   */
   static deleteEmptyDates(dates: EventDate[]) {
-    return dates.filter((date, counter) => {
-      if (
-        date.from.getFullYear() == 1970 &&
-        date.to.getFullYear() == 1970 &&
-        counter != 0
-      ) {
-        return false;
-      } else {
-        return true;
-      }
-    });
+    return dates.filter(
+      (date, index) =>
+        date.from.getFullYear() !== 1970 ||
+        date.to.getFullYear() !== 1970 ||
+        index === 0,
+    );
   }
-  // /* =====================================================================
-  // // Bild in Firebase Storage hochladen
-  // // ===================================================================== */
-  // HACK: Wegen Fehler im Firebase Interface kann hier nicht auf das Klassen-
-  // HACK: konstukt firebase.storage.class gewechselt werden. nach dem Upgrade
-  // HACK: wieder prüfen.
+  /* =====================================================================
+  // Bild in Firebase Storage hochladen
+  // ===================================================================== */
+  /**
+   * Lädt ein Bild in Firebase Storage hoch, holt die redimensionierte
+   * Variante und aktualisiert das Event-Dokument mit der neuen Bild-URL.
+   *
+   * @param firebase Firebase-Instanz für Storage- und DB-Zugriff.
+   * @param file Die hochzuladende Bilddatei.
+   * @param event Der Event, dem das Bild zugeordnet wird.
+   * @param authUser Der aktuell angemeldete Benutzer.
+   * @returns Die Download-URL des hochgeladenen Bilds.
+   */
   static async uploadPicture({firebase, file, event, authUser}: UploadPicture) {
-    let pictureSrc = "";
-    // const eventDoc = firebase.eventDoc(event.uid);
+    await firebase.fileStore.events.uploadFile({
+      file: file,
+      filename: event.uid,
+    });
 
-    await firebase.fileStore.events
-      .uploadFile({file: file, filename: event.uid})
-      .then(async () => {
-        // Redimensionierte Varianten holen
-        await firebase.fileStore.events
-          .getPictureVariants({
-            uid: event.uid,
-            sizes: [ImageSize.size_500],
-            // oldDownloadUrl: result,
-          })
-          .then((result) => {
-            // Wir wollen nur eine Grösse
-            pictureSrc = result[0].downloadURL;
-          });
-      })
-      .then(() => {
-        // Den Wert updaten
-        firebase.event.updateFields({
-          uids: [event.uid],
-          authUser: authUser,
-          values: {pictureSrc: pictureSrc, lastChange: {}},
-          updateChangeFields: true,
-        });
-      })
-      .catch((error) => {
-        console.error(error);
-        throw error;
-      });
+    // Redimensionierte Varianten holen
+    const variants = await firebase.fileStore.events.getPictureVariants({
+      uid: event.uid,
+      sizes: [ImageSize.size_500],
+    });
+    const pictureSrc = variants[0].downloadURL;
+
+    // Den Wert in der DB aktualisieren
+    await firebase.event.updateFields({
+      uids: [event.uid],
+      authUser: authUser,
+      values: {pictureSrc: pictureSrc, lastChange: {}},
+      updateChangeFields: true,
+    });
 
     return pictureSrc;
   }
   /* =====================================================================
   // Bild löschen
   // ===================================================================== */
-  static deletePicture = async ({
+  /**
+   * Löscht das Bild eines Events aus Firebase Storage und setzt optional
+   * die Bild-URL im Event-Dokument zurück.
+   *
+   * @param firebase Firebase-Instanz für Storage- und DB-Zugriff.
+   * @param event Der Event, dessen Bild gelöscht wird.
+   * @param authUser Der aktuell angemeldete Benutzer.
+   * @param updateEventDocument Ob das Event-Dokument aktualisiert werden soll (Standard: true).
+   */
+  static async deletePicture({
     firebase,
     event,
     authUser,
     updateEventDocument = true,
-  }: DeletePicture) => {
-    await firebase.fileStore.events
-      .deleteFile(`${event.uid}${IMAGES_SUFFIX.size500.suffix}`)
-      .then(() => {
-        // Event-Doc updaten
-        if (updateEventDocument) {
-          firebase.event.updateFields({
-            uids: [event.uid],
-            authUser: authUser,
-            values: {pictureSrc: "", lastChange: {}},
-            updateChangeFields: true,
-          });
-        }
-      })
-      .catch((error) => {
-        throw error;
+  }: DeletePicture) {
+    await firebase.fileStore.events.deleteFile(
+      `${event.uid}${IMAGES_SUFFIX.size500.suffix}`,
+    );
+
+    if (updateEventDocument) {
+      await firebase.event.updateFields({
+        uids: [event.uid],
+        authUser: authUser,
+        values: {pictureSrc: "", lastChange: {}},
+        updateChangeFields: true,
       });
-  };
+    }
+  }
   /* =====================================================================
   // Event lesen
   // ===================================================================== */
-  static getEvent = async ({firebase, uid}: GetEvent) => {
-    let event = <Event>{};
-
-    await firebase.event
-      .read<Event>({uids: [uid]})
-      .then((result) => {
-        event = result;
-      })
-      .catch((error) => {
-        console.error(error);
-        throw error;
-      });
+  /**
+   * Liest ein einzelnes Event anhand seiner UID aus Firebase.
+   *
+   * @param firebase Firebase-Instanz für DB-Zugriff.
+   * @param uid Die UID des zu lesenden Events.
+   * @returns Das gelesene Event.
+   */
+  static async getEvent({firebase, uid}: GetEvent) {
+    const event = await firebase.event.read<Event>({uids: [uid]});
     return event;
-  };
+  }
   /* =====================================================================
   // Alle Events holen
   // ===================================================================== */
-  static getAllEvents = async ({firebase}: GetAllEvents) => {
-    let eventList: Event[] = [];
-    await firebase.event
-      .readCollection<Event>({
-        uids: [],
-        orderBy: {field: "name", sortOrder: SortOrder.desc},
-        ignoreCache: true,
-      })
-      .then((result) => {
-        eventList = result;
-      })
-      .catch((error) => {
-        console.error(error);
-        throw error;
-      });
+  /**
+   * Liest alle Events aus Firebase (absteigend nach Name sortiert).
+   *
+   * @param firebase Firebase-Instanz für DB-Zugriff.
+   * @returns Array aller Events.
+   */
+  static async getAllEvents({firebase}: GetAllEvents) {
+    const eventList = await firebase.event.readCollection<Event>({
+      uids: [],
+      orderBy: {field: "name", sortOrder: SortOrder.desc},
+      ignoreCache: true,
+    });
     return eventList;
-  };
-
+  }
+  /* =====================================================================
+  // Event-Listener registrieren
   // ===================================================================== */
   /**
-   * Listener holen
-   * @param object - Objekt mit Firebase, UID, und Callback-Funktion
-   * @returns listener
+   * Registriert einen Echtzeit-Listener auf ein Event-Dokument.
+   * Bei jeder Änderung wird der Callback mit dem aktualisierten Event aufgerufen.
+   *
+   * @param firebase Firebase-Instanz für DB-Zugriff.
+   * @param uid Die UID des zu beobachtenden Events.
+   * @param callback Funktion, die bei Änderungen aufgerufen wird.
+   * @param errorCallback Funktion, die bei Fehlern aufgerufen wird.
+   * @returns Unsubscribe-Funktion zum Abmelden des Listeners.
    */
-  static getEventListener = async ({
+  static async getEventListener({
     firebase,
     uid,
     callback,
     errorCallback,
-  }: GetEventListener) => {
-    let eventListener: (() => void) | undefined;
-
+  }: GetEventListener) {
     const eventCallback = (event: Event) => {
-      // Menüplan mit UID anreichern
+      // Event mit UID anreichern
       event.uid = uid;
       callback(event);
     };
 
-    await firebase.event
-      .listen<Event>({
-        uids: [uid],
-        callback: eventCallback,
-        errorCallback: errorCallback,
-      })
-      .then((result) => {
-        return (eventListener = result);
-      })
-      .catch((error) => {
-        console.error(error);
-        throw error;
-      });
+    const eventListener = await firebase.event.listen<Event>({
+      uids: [uid],
+      callback: eventCallback,
+      errorCallback: errorCallback,
+    });
     return eventListener;
-  };
-
+  }
+  /* =====================================================================
+  // Events einer Person lesen
   // ===================================================================== */
   /**
-   * getEventsOfUser: Event einer Person lesen
-   * @param firebase Referenz zur DB
-   * @param userUid UID des Users
-   * @param eventType Type der Events, die gelesen werden sollen (siehe enum EventType )
+   * Liest alle Events eines Benutzers eines bestimmten Typs (aktuell oder historisch).
+   * Filtert nach dem maxDate des Events relativ zum heutigen Datum.
+   *
+   * @param firebase Firebase-Instanz für DB-Zugriff.
+   * @param userUid UID des Benutzers.
+   * @param eventType Typ der Events (aktuell oder historisch).
+   * @returns Array der gefilterten Events.
    */
-  // ===================================================================== */
   static async getEventsOfUser({
     firebase,
     userUid,
     eventType = EventType.actual,
   }: GetEvents) {
-    let events: Event[] = [];
     let whereOperator: Operator;
 
     switch (eventType) {
       case EventType.actual:
-        // Analytik
         logEvent(firebase.analytics, FirebaseAnalyticEvent.eventGetActual);
         whereOperator = Operator.GE;
         break;
       case EventType.history:
-        // Analytik
         logEvent(firebase.analytics, FirebaseAnalyticEvent.eventGetHistory);
         whereOperator = Operator.LE;
         break;
     }
 
-    await firebase.event
-      .readCollection<Event>({
-        uids: [""],
-        orderBy: {field: "maxDate", sortOrder: SortOrder.asc},
-        where: [
-          {
-            field: "authUsers",
-            operator: Operator.ArrayContains,
-            value: userUid,
-          },
-          {
-            field: "maxDate",
-            operator: whereOperator,
-            value: new Date(new Date().setHours(0, 0, 0, 0)),
-          },
-        ],
-      })
-      .then((result) => {
-        events = result as Event[];
-      })
-      .catch((error) => {
-        console.error(error);
-        throw error;
-      });
+    const events = await firebase.event.readCollection<Event>({
+      uids: [""],
+      orderBy: {field: "maxDate", sortOrder: SortOrder.asc},
+      where: [
+        {
+          field: "authUsers",
+          operator: Operator.ArrayContains,
+          value: userUid,
+        },
+        {
+          field: "maxDate",
+          operator: whereOperator,
+          value: new Date(new Date().setHours(0, 0, 0, 0)),
+        },
+      ],
+    });
 
     return events;
   }
+  /* =====================================================================
+  // Alle Events einer Person holen
   // ===================================================================== */
   /**
-   * Alle Events einer Person holen
-   * @param firebase Referenz zur DB
-   * @param userUid UID des Users
-   * @param eventType Type der Events, die gelesen werden sollen (siehe enum EventType )
+   * Liest alle Events eines Benutzers (sowohl aktuelle als auch historische).
+   *
+   * @param firebase Firebase-Instanz für DB-Zugriff.
+   * @param userUid UID des Benutzers.
+   * @returns Array aller Events des Benutzers.
    */
-  // ===================================================================== */
   static async getAllEventsOfUser({firebase, userUid}: GetAllEventsOfUser) {
-    let events: Event[] = [];
-
-    await firebase.event
-      .readCollection<Event>({
-        uids: [""],
-        orderBy: {field: "maxDate", sortOrder: SortOrder.asc},
-        where: [
-          {
-            field: "authUsers",
-            operator: Operator.ArrayContains,
-            value: userUid,
-          },
-        ],
-      })
-      .then((result) => {
-        events = result as Event[];
-      });
+    const events = await firebase.event.readCollection<Event>({
+      uids: [""],
+      orderBy: {field: "maxDate", sortOrder: SortOrder.asc},
+      where: [
+        {
+          field: "authUsers",
+          operator: Operator.ArrayContains,
+          value: userUid,
+        },
+      ],
+    });
 
     return events;
   }
+  /* =====================================================================
+  // Neuen Dokumententyp hinzufügen
   // ===================================================================== */
   /**
-   * Neuer Dokumententyp hinzufügen
-   * @param object - Objekt mit RefDocumentes und neuer Typ zum hinzufügen
-   * @returns angepasstes Array mit RefDocuments
+   * Fügt einen neuen Dokumententyp zur Liste der Referenzdokumente eines Events hinzu.
+   *
+   * @param refDocuments Bisherige Liste der Referenzdokumente.
+   * @param newDocumentType Der neue Dokumententyp.
+   * @returns Aktualisiertes Array der Referenzdokumente.
    */
-  static addRefDocument = ({refDocuments, newDocumentType}: AddRefDocument) => {
+  static addRefDocument({refDocuments, newDocumentType}: AddRefDocument) {
     let updatedDocuments: Event["refDocuments"] = [];
     if (refDocuments) {
       updatedDocuments = [...refDocuments];
     }
     updatedDocuments.push(newDocumentType);
     return updatedDocuments;
-  };
+  }
+  /* =====================================================================
+  // Prüfen ob gelöschte Tage bereits geplant sind
   // ===================================================================== */
   /**
-   * Prüfung ob die angepassten Tage (allenfalls gelöscht) - bereits geplante
-   * Tage sind
-   * Anhand der Zeitscheiben, ein Array mit allen Daten erstellen
-   * @param Object - Objekt mit Angepasstem Event und Menüplan
-   * @returns boolean - Hat die Anpassung zur Folge, dass geplante Tage
-   *                    gelöscht werden.
+   * Prüft, ob durch die Anpassung der Event-Daten bereits geplante Menüplan-Tage
+   * gelöscht würden. Vergleicht die neuen Datumsangaben mit den bestehenden
+   * Menüplan-Daten.
+   *
+   * @param event Der angepasste Event.
+   * @param menuplan Der bestehende Menüplan.
+   * @returns `true` wenn geplante Tage betroffen wären, `false` sonst.
    */
-  static checkIfDeletedDayArePlanned = ({
+  static checkIfDeletedDayArePlanned({
     event,
     menuplan,
-  }: CheckIfDeletedDayArePlanned) => {
+  }: CheckIfDeletedDayArePlanned) {
     const newDayList = Menuplan.getEventDateList({event: event}).map((date) =>
       Utils.dateAsString(date),
     );
@@ -1035,59 +1063,53 @@ export default class Event {
       0,
     );
     return Boolean(planedObjects !== 0);
-  };
+  }
+  /* =====================================================================
+  // Support-User aktivieren
   // ===================================================================== */
   /**
-   * Für den angegebenen Anlass den Support-User aktivieren
-   * Der Support User wird in die Auth-User des Anlasses eingefügt. Dieser
-   * wird dann im Daily-Summary wieder abgebaut.
-   * @param Object - Objekt Firebase und Event-UID, authUser und Callback
+   * Aktiviert den Support-User für einen Event via Cloud Function.
+   * Registriert einen Listener, der bei Fertigstellung den Callback aufruft.
+   *
+   * @param firebase Firebase-Instanz für DB-Zugriff.
+   * @param eventUid UID des Events.
+   * @param authUser Der aktuell angemeldete Benutzer.
+   * @param callback Wird aufgerufen, wenn die Aktivierung abgeschlossen ist.
+   * @param errorCallback Wird bei Fehlern aufgerufen.
    */
-  static activateSupportUser = async ({
+  static async activateSupportUser({
     firebase,
     eventUid,
     authUser,
     callback,
     errorCallback,
-  }: RegisterSupportUser) => {
-    let unsubscribe: () => void;
-    let documentId = "";
-
-    await firebase.cloudFunction.activateSupportUser
-      .triggerCloudFunction({
+  }: RegisterSupportUser) {
+    const documentId =
+      await firebase.cloudFunction.activateSupportUser.triggerCloudFunction({
         values: {
           date: new Date(),
           eventUid: eventUid,
           supportUserUid: getSupportUserUid(),
         },
         authUser: authUser,
-      })
-      .then((result) => {
-        documentId = result;
-      })
-      .then(() => {
-        // Melden wenn fertig
-        const callbackCaller = (data) => {
-          if (data?.done) {
-            callback(data);
-            unsubscribe();
-          }
-        };
-
-        firebase.cloudFunction.activateSupportUser
-          .listen({
-            uids: [documentId],
-            callback: callbackCaller,
-            errorCallback: errorCallback,
-          })
-          .then((result) => {
-            console.warn(result);
-            unsubscribe = result;
-          });
-      })
-      .catch((error) => {
-        console.error(error);
-        throw error;
       });
-  };
+
+    let unsubscribe: () => void;
+
+    // Listener für Fertigstellungsnachricht registrieren
+    const callbackCaller = (
+      data: CloudFunctionActivateSupportUserDocumentStructure,
+    ) => {
+      if (data?.done) {
+        callback(data);
+        unsubscribe();
+      }
+    };
+
+    unsubscribe = await firebase.cloudFunction.activateSupportUser.listen({
+      uids: [documentId],
+      callback: callbackCaller,
+      errorCallback: errorCallback,
+    });
+  }
 }

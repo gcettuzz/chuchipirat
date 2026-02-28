@@ -74,10 +74,7 @@ import {
 import Action from "../../../constants/actions";
 import AlertMessage from "../../Shared/AlertMessage";
 import ShoppingListCollection from "./shoppingListCollection.class";
-import ShoppingList, {
-  ItemType,
-  ShoppingListItem,
-} from "./shoppingList.class";
+import ShoppingList, {ItemType, ShoppingListItem} from "./shoppingList.class";
 
 import {DialogSelectMenues} from "../Menuplan/dialogSelectMenues";
 import Product from "../../Product/product.class";
@@ -88,10 +85,7 @@ import {
 import Department from "../../Department/department.class";
 import Event from "../Event/event.class";
 import UnitAutocomplete from "../../Unit/unitAutocomplete";
-import ItemAutocomplete, {
-  MaterialItem,
-  ProductItem,
-} from "./itemAutocomplete";
+import ItemAutocomplete, {MaterialItem, ProductItem} from "./itemAutocomplete";
 import Unit from "../../Unit/unit.class";
 import {Recipes} from "../../Recipe/recipe.class";
 import DialogMaterial, {
@@ -103,9 +97,7 @@ import DialogProduct, {
   PRODUCT_POP_UP_VALUES_INITIAL_STATE,
   ProductDialog,
 } from "../../Product/dialogProduct";
-import {
-  RecipeDrawer,
-} from "../Menuplan/menuplan";
+import {RecipeDrawer} from "../Menuplan/menuplan";
 import EventGroupConfiguration from "../GroupConfiguration/groupConfiguration.class";
 import ShoppingListPdf from "./shoppingListPdf";
 import {
@@ -116,9 +108,7 @@ import {
 } from "../Event/eventSharedComponents";
 import Material from "../../Material/material.class";
 import {TextFieldSize} from "../../../constants/defaultValues";
-import {
-  DialogSelectDepartments,
-} from "./dialogSelectDepartments";
+import {DialogSelectDepartments} from "./dialogSelectDepartments";
 
 // Custom hooks
 import useRecipeDrawer from "./useRecipeDrawer";
@@ -126,7 +116,9 @@ import useShoppingListDialogs, {
   DialogSelectDepartmentsCaller,
   OnDialogAddItemOk,
 } from "./useShoppingListDialogs";
-import useShoppingListOperations, {ItemChange} from "./useShoppingListOperations";
+import useShoppingListOperations, {
+  ItemChange,
+} from "./useShoppingListOperations";
 
 /* ===================================================================
 // ============================ Dispatcher ===========================
@@ -261,28 +253,19 @@ const EventShoppingListPage = ({
   );
 
   // Dispatch helper callbacks (stable references for hooks)
-  const onDispatchLoading = React.useCallback(
-    (isLoading: boolean) => {
-      dispatch({type: ReducerActions.SHOW_LOADING, payload: {isLoading}});
-    },
-    [],
-  );
-  const onDispatchSetSelectedListItem = React.useCallback(
-    (uid: string) => {
-      dispatch({
-        type: ReducerActions.SET_SELECTED_LIST_ITEM,
-        payload: {uid},
-      });
-      setShoppingListModus(ListMode.EDIT);
-    },
-    [],
-  );
-  const onDispatchError = React.useCallback(
-    (error: Error) => {
-      dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
-    },
-    [],
-  );
+  const onDispatchLoading = React.useCallback((isLoading: boolean) => {
+    dispatch({type: ReducerActions.SHOW_LOADING, payload: {isLoading}});
+  }, []);
+  const onDispatchSetSelectedListItem = React.useCallback((uid: string) => {
+    dispatch({
+      type: ReducerActions.SET_SELECTED_LIST_ITEM,
+      payload: {uid},
+    });
+    setShoppingListModus(ListMode.EDIT);
+  }, []);
+  const onDispatchError = React.useCallback((error: Error) => {
+    dispatch({type: ReducerActions.GENERIC_ERROR, payload: error});
+  }, []);
   const onDispatchSnackbar = React.useCallback(
     (severity: AlertColor, message: string) => {
       dispatch({
@@ -765,10 +748,17 @@ const EventShoppingListList = React.memo(
 
     // Memoize display data per department (sorted items + template row UIDs)
     const displayDataByDepartment = React.useMemo(() => {
-      const result: Record<string, {items: ShoppingListItem[]; templateRowUid: string}> = {};
-      Object.entries(shoppingList.list).forEach(([departmentKey, department]) => {
-        result[departmentKey] = prepareDepartmentItemsForDisplay(department.items);
-      });
+      const result: Record<
+        string,
+        {items: ShoppingListItem[]; templateRowUid: string}
+      > = {};
+      Object.entries(shoppingList.list).forEach(
+        ([departmentKey, department]) => {
+          result[departmentKey] = prepareDepartmentItemsForDisplay(
+            department.items,
+          );
+        },
+      );
       return result;
     }, [shoppingList.list, prepareDepartmentItemsForDisplay]);
 
@@ -777,7 +767,8 @@ const EventShoppingListList = React.memo(
       if (shouldFocusDepartmentRef.current) {
         const departmentKey = shouldFocusDepartmentRef.current;
         shouldFocusDepartmentRef.current = null;
-        const templateRowUid = displayDataByDepartment[departmentKey]?.templateRowUid;
+        const templateRowUid =
+          displayDataByDepartment[departmentKey]?.templateRowUid;
         if (templateRowUid) {
           const el = document.getElementById(
             "quantity_" + departmentKey + "_" + templateRowUid,
@@ -796,219 +787,231 @@ const EventShoppingListList = React.memo(
         maxWidth="sm"
         key={"ShoppingListContainer"}
       >
-        {Object.entries(shoppingList.list).map(([departmentKey, department]) => {
-          const departmentDisplayData = displayDataByDepartment[departmentKey];
-          if (!departmentDisplayData) return null;
-          return (
-          <React.Fragment key={"GridItemDepartment_" + departmentKey}>
-            <Typography
-              component={"h2"}
-              variant={"h5"}
-              align="center"
-              gutterBottom
-              sx={{marginTop: theme.spacing(4)}}
-            >
-              {department.departmentName}
-            </Typography>
-            <List
-              sx={classes.eventList}
-              key={"shoppingListList_" + department.departmentUid}
-            >
-              {departmentDisplayData.items.map(
-                (item) => (
-                  <ListItem
-                    key={"shoppingListItem_" + item.item.uid + "_" + item.unit}
-                    sx={
-                      shoppingListModus === ListMode.VIEW
-                        ? viewModeItemSx
-                        : classes.eventListItem
-                    }
-                  >
-                    <ListItemIcon
+        {Object.entries(shoppingList.list).map(
+          ([departmentKey, department]) => {
+            const departmentDisplayData =
+              displayDataByDepartment[departmentKey];
+            if (!departmentDisplayData) return null;
+            return (
+              <React.Fragment key={"GridItemDepartment_" + departmentKey}>
+                <Typography
+                  component={"h2"}
+                  variant={"h5"}
+                  align="center"
+                  gutterBottom
+                  sx={{marginTop: theme.spacing(4)}}
+                >
+                  {department.departmentName}
+                </Typography>
+                <List
+                  sx={classes.eventList}
+                  key={"shoppingListList_" + department.departmentUid}
+                >
+                  {departmentDisplayData.items.map((item) => (
+                    <ListItem
+                      key={
+                        "shoppingListItem_" + item.item.uid + "_" + item.unit
+                      }
                       sx={
                         shoppingListModus === ListMode.VIEW
-                          ? viewModeIconSx
-                          : undefined
+                          ? viewModeItemSx
+                          : classes.eventListItem
                       }
                     >
-                      <Checkbox
-                        key={"checkbox_" + item.item.uid + "_" + item.unit}
-                        name={
-                          "checkbox_" +
+                      <ListItemIcon
+                        sx={
+                          shoppingListModus === ListMode.VIEW
+                            ? viewModeIconSx
+                            : undefined
+                        }
+                      >
+                        <Checkbox
+                          key={"checkbox_" + item.item.uid + "_" + item.unit}
+                          name={
+                            "checkbox_" +
+                            departmentKey +
+                            "_" +
+                            item.item.uid +
+                            "_" +
+                            item.unit
+                          }
+                          onChange={onCheckboxClick}
+                          checked={item.checked}
+                          disableRipple
+                          size={
+                            shoppingListModus === ListMode.VIEW
+                              ? "small"
+                              : "medium"
+                          }
+                        />
+                      </ListItemIcon>
+                      {shoppingListModus === ListMode.VIEW ? (
+                        <>
+                          <ListItemText
+                            sx={classes.eventListItemTextQuantity}
+                            primaryTypographyProps={
+                              item.checked
+                                ? {color: "textSecondary"}
+                                : {color: "textPrimary"}
+                            }
+                            key={"quantity" + item.item.uid + "_" + item.unit}
+                            primary={
+                              item.checked ? (
+                                <del>
+                                  {Number.isNaN(item.quantity) ||
+                                  item.quantity == 0
+                                    ? ""
+                                    : new Intl.NumberFormat("de-CH", {
+                                        maximumSignificantDigits: 3,
+                                      }).format(item.quantity)}
+                                </del>
+                              ) : Number.isNaN(item.quantity) ||
+                                item.quantity == 0 ? (
+                                ""
+                              ) : (
+                                new Intl.NumberFormat("de-CH", {
+                                  maximumSignificantDigits: 2,
+                                }).format(item.quantity)
+                              )
+                            }
+                          />
+                          <ListItemText
+                            sx={classes.eventListItemTextUnit}
+                            primaryTypographyProps={
+                              item.checked
+                                ? {color: "textSecondary"}
+                                : {color: "textPrimary"}
+                            }
+                            key={"unit_" + item.item.uid + "_" + item.unit}
+                            primary={
+                              item.checked ? <del>{item.unit}</del> : item.unit
+                            }
+                          />
+                          <ListItemText
+                            sx={classes.eventListItemTextProduct}
+                            primaryTypographyProps={
+                              item.checked
+                                ? {color: "textSecondary"}
+                                : {color: "textPrimary"}
+                            }
+                            key={"itemName_" + item.item.uid + "_" + item.unit}
+                            primary={
+                              item.checked ? (
+                                <del>{item.item.name}</del>
+                              ) : (
+                                item.item.name
+                              )
+                            }
+                          />
+                        </>
+                      ) : (
+                        <Grid
+                          container
+                          spacing={2}
+                          alignItems="center"
+                          sx={{flex: 1, minWidth: 0}}
+                        >
+                          <Grid
+                            size={{xs: 5, sm: 3}}
+                            key={"quantity_grid_" + item.item.uid}
+                          >
+                            <QuantityField
+                              departmentKey={departmentKey}
+                              itemUid={item.item.uid}
+                              quantity={item.quantity}
+                              onChangeItem={onChangeItem}
+                            />
+                          </Grid>
+                          <Grid
+                            size={{xs: 4, sm: 3}}
+                            key={"unit_grid_" + item.item.uid}
+                          >
+                            <UnitAutocomplete
+                              componentKey={departmentKey + "_" + item.item.uid}
+                              unitKey={item.unit}
+                              units={units}
+                              size={TextFieldSize.small}
+                              onChange={(event, newValue, reason, objectId) =>
+                                onChangeItem({
+                                  source: "autocompleteUnit",
+                                  event,
+                                  value: newValue,
+                                  reason,
+                                  objectId,
+                                })
+                              }
+                            />
+                          </Grid>
+                          <Grid
+                            size={{xs: 12, sm: 6}}
+                            key={"item_grid_" + item.item.uid}
+                          >
+                            <ItemAutocomplete
+                              componentKey={departmentKey + "_" + item.item.uid}
+                              item={toAutocompleteItem(item)}
+                              materials={materials}
+                              products={products}
+                              disabled={false}
+                              allowCreateNewItem={false}
+                              allowFreeText={true}
+                              error={{isError: false, errorText: ""}}
+                              size={TextFieldSize.small}
+                              onChange={(event, newValue, reason, objectId) => {
+                                if (
+                                  item.item.uid ===
+                                    departmentDisplayData.templateRowUid &&
+                                  newValue
+                                ) {
+                                  shouldFocusDepartmentRef.current =
+                                    departmentKey;
+                                }
+                                onChangeItem({
+                                  source: "autocompleteItem",
+                                  event,
+                                  value: newValue,
+                                  reason,
+                                  objectId,
+                                });
+                              }}
+                            />
+                          </Grid>
+                        </Grid>
+                      )}
+                      <IconButton
+                        key={
+                          "MoreBtn_" +
                           departmentKey +
                           "_" +
                           item.item.uid +
                           "_" +
                           item.unit
                         }
-                        onChange={onCheckboxClick}
-                        checked={item.checked}
-                        disableRipple
+                        id={
+                          "MoreBtn_" +
+                          departmentKey +
+                          "_" +
+                          item.item.uid +
+                          "_" +
+                          item.unit
+                        }
+                        aria-label="settings"
+                        onClick={onOpenContexMenü}
                         size={
                           shoppingListModus === ListMode.VIEW
                             ? "small"
-                            : "medium"
+                            : "large"
                         }
-                      />
-                    </ListItemIcon>
-                    {shoppingListModus === ListMode.VIEW ? (
-                      <>
-                        <ListItemText
-                          sx={classes.eventListItemTextQuantity}
-                          primaryTypographyProps={
-                            item.checked
-                              ? {color: "textSecondary"}
-                              : {color: "textPrimary"}
-                          }
-                          key={"quantity" + item.item.uid + "_" + item.unit}
-                          primary={
-                            item.checked ? (
-                              <del>
-                                {Number.isNaN(item.quantity) ||
-                                item.quantity == 0
-                                  ? ""
-                                  : new Intl.NumberFormat("de-CH", {
-                                      maximumSignificantDigits: 3,
-                                    }).format(item.quantity)}
-                              </del>
-                            ) : Number.isNaN(item.quantity) ||
-                              item.quantity == 0 ? (
-                              ""
-                            ) : (
-                              new Intl.NumberFormat("de-CH", {
-                                maximumSignificantDigits: 2,
-                              }).format(item.quantity)
-                            )
-                          }
-                        />
-                        <ListItemText
-                          sx={classes.eventListItemTextUnit}
-                          primaryTypographyProps={
-                            item.checked
-                              ? {color: "textSecondary"}
-                              : {color: "textPrimary"}
-                          }
-                          key={"unit_" + item.item.uid + "_" + item.unit}
-                          primary={
-                            item.checked ? <del>{item.unit}</del> : item.unit
-                          }
-                        />
-                        <ListItemText
-                          sx={classes.eventListItemTextProduct}
-                          primaryTypographyProps={
-                            item.checked
-                              ? {color: "textSecondary"}
-                              : {color: "textPrimary"}
-                          }
-                          key={"itemName_" + item.item.uid + "_" + item.unit}
-                          primary={
-                            item.checked ? (
-                              <del>{item.item.name}</del>
-                            ) : (
-                              item.item.name
-                            )
-                          }
-                        />
-                      </>
-                    ) : (
-                      <Grid
-                        container
-                        spacing={2}
-                        alignItems="center"
-                        sx={{flex: 1, minWidth: 0}}
+                        sx={{flexShrink: 0}}
                       >
-                        <Grid size={{ xs: 5, sm: 3 }}
-                          key={"quantity_grid_" + item.item.uid}
-                        >
-                          <QuantityField
-                            departmentKey={departmentKey}
-                            itemUid={item.item.uid}
-                            quantity={item.quantity}
-                            onChangeItem={onChangeItem}
-                          />
-                        </Grid>
- <Grid size={{ xs: 4, sm: 3 }} key={"unit_grid_" + item.item.uid} >
-                          <UnitAutocomplete
-                            componentKey={departmentKey + "_" + item.item.uid}
-                            unitKey={item.unit}
-                            units={units}
-                            size={TextFieldSize.small}
-                            onChange={(event, newValue, reason, objectId) =>
-                              onChangeItem({
-                                source: "autocompleteUnit",
-                                event,
-                                value: newValue,
-                                reason,
-                                objectId,
-                              })
-                            }
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}
-                          key={"item_grid_" + item.item.uid}
-                        >
-                          <ItemAutocomplete
-                            componentKey={departmentKey + "_" + item.item.uid}
-                            item={toAutocompleteItem(item)}
-                            materials={materials}
-                            products={products}
-                            disabled={false}
-                            allowCreateNewItem={false}
-                            allowFreeText={true}
-                            error={{isError: false, errorText: ""}}
-                            size={TextFieldSize.small}
-                            onChange={(event, newValue, reason, objectId) => {
-                              if (
-                                item.item.uid === departmentDisplayData.templateRowUid &&
-                                newValue
-                              ) {
-                                shouldFocusDepartmentRef.current = departmentKey;
-                              }
-                              onChangeItem({
-                                source: "autocompleteItem",
-                                event,
-                                value: newValue,
-                                reason,
-                                objectId,
-                              });
-                            }}
-                          />
-                        </Grid>
-                      </Grid>
-                    )}
-                    <IconButton
-                      key={
-                        "MoreBtn_" +
-                        departmentKey +
-                        "_" +
-                        item.item.uid +
-                        "_" +
-                        item.unit
-                      }
-                      id={
-                        "MoreBtn_" +
-                        departmentKey +
-                        "_" +
-                        item.item.uid +
-                        "_" +
-                        item.unit
-                      }
-                      aria-label="settings"
-                      onClick={onOpenContexMenü}
-                      size={
-                        shoppingListModus === ListMode.VIEW ? "small" : "large"
-                      }
-                      sx={{flexShrink: 0}}
-                    >
-                      <MoreVertIcon />
-                    </IconButton>
-                  </ListItem>
-                ),
-              )}
-            </List>
-          </React.Fragment>
-          );
-        })}
+                        <MoreVertIcon />
+                      </IconButton>
+                    </ListItem>
+                  ))}
+                </List>
+              </React.Fragment>
+            );
+          },
+        )}
       </Container>
     );
   },
@@ -1218,7 +1221,7 @@ const DialogHandleItem = ({
         <DialogTitle>{TEXT_ADD_ITEM}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2}>
- <Grid size={12} >
+            <Grid size={12}>
               <ItemAutocomplete
                 componentKey={"x"}
                 item={dialogValues.item}
@@ -1230,7 +1233,7 @@ const DialogHandleItem = ({
                 error={dialogValidation}
               />
             </Grid>
- <Grid size={6} >
+            <Grid size={6}>
               <TextField
                 margin="normal"
                 id={"quantity"}
@@ -1243,7 +1246,7 @@ const DialogHandleItem = ({
                 onChange={onQuantityChange}
               />
             </Grid>
- <Grid size={6} >
+            <Grid size={6}>
               <FormControl fullWidth margin="normal">
                 <UnitAutocomplete
                   componentKey="unit_"
